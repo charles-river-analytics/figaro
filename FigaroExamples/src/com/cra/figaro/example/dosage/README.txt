@@ -1,0 +1,1 @@
+The BLOSUM62.txt file must be placed in your run directory, or add the path to the BLOSUM62.txt file in the ScoringMatrix.scala file.
