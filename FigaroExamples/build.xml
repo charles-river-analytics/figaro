@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="FigaroExamples" default="build" basedir=".">
+	<description>Project Build Script</description>
+	<property name="version" value="2.0.0.0" />
+	<property environment="env" />
+
+	<!-- variables for paths and files -->
+	<property name="src.dir" location="${basedir}/src" />
+	<property name="lib.dir" location="${basedir}/lib" />
+	<property name="build.dir" location="${basedir}/build" />
+	
+	<property name="build-classes.dir" location="${build.dir}/classes" />
+	<property name="build-lib.dir" location="${build.dir}/lib" />
+	<property name="build-doc.dir" location="${build.dir}/doc" />
+
+	<!--
+	<property name="test-src.dir" location="${basedir}/test" />
+	<property name="test-classes.dir" location="${build.dir}/test_classes" />
+	<property name="test-reports.dir" location="${basedir}/reports" />
+	-->
+	
+	<property name="scala.dir" location="${env.SCALA_HOME}" />
+
+	<property name="figaro-lib.dir" location="${basedir}/../Figaro/build/lib" />
+
+	<path id="scala-library">
+		<pathelement location="${scala.dir}/lib/scala-library.jar" />
+		<pathelement location="${scala.dir}/lib/scala-reflect.jar" />
+		<pathelement location="${scala.dir}/lib/scala-actors.jar" />
+	</path>
+	
+	<path id="project.classpath">
+		<path refid="scala-library" />
+		<pathelement location="${lib.dir}/figaro_2.0.0.0.jar" />
+		<pathelement location="${build-classes.dir}" />
+	</path>
+
+	<path id="compile.classpath">
+		<path refid="scala-library" />
+		<pathelement location="${scala.dir}/lib/scala-compiler.jar" />
+	</path>
+
+<!--
+	<path id="test.classpath">
+		<path refid="compile.classpath" />
+
+		<pathelement location="${lib.dir}/scalatest_2.10-2.0.M6.jar" />
+		<pathelement location="${build-classes.dir}" />
+	</path>
+-->
+
+	<!-- load scala's ant tasks -->
+	<taskdef resource="scala/tools/ant/antlib.xml" classpathref="compile.classpath" />
+
+	<!-- load scalatest's ant tasks -->
+	<!--
+	<taskdef name="scalatest" classname="org.scalatest.tools.ScalaTestAntTask">
+		<classpath refid="test.classpath" />
+	</taskdef>
+	-->
+
+	<!-- targets -->
+	<target name="build" depends="package" description="Build whole project" />
+
+	<target name="clean" description="Remove previous build files">
+		<delete dir="${build.dir}" includeemptydirs="true" quiet="true" />
+	</target>
+
+	<target name="init">
+
+		<!-- check for required tools -->
+		<fail message="Missing SCALA_HOME variable in OS environment">
+			<condition>
+				<isset property="${env.SCALA_HOME}" />
+			</condition>
+		</fail>
+
+		<!-- print where this project will get scala from -->
+		<echo message="Init project" />
+		<echo message=" with scala.dir = ${scala.dir}" />
+
+		<!-- Copy the latest Figaro library -->
+		<copy todir="${lib.dir}">
+            <fileset dir="${figaro-lib.dir}" >
+                <include name="figaro_*.jar" />
+			</fileset>
+        </copy>
+
+		<!-- check if any files has been modified since last build -->
+		<uptodate property="build.uptodate" targetfile="${build.dir}/build.done">
+			<srcfiles dir="${src.dir}" includes="**" />
+			<srcfiles dir="${lib.dir}" includes="**" />
+		</uptodate>
+	</target>
+
+	<target name="compile" depends="init" unless="build.uptodate">
+		<mkdir dir="${build-classes.dir}" />
+		
+		<scalac destdir="${build-classes.dir}" classpathref="project.classpath">
+			<include name="**/*.scala" />
+			<src>
+				<pathelement location="${src.dir}" />
+			</src>
+		</scalac>
+	</target>
+
+<!--
+	<target name="test" depends="compile" unless="build.updodate">
+		<delete dir="${test.dir}" includeemptydirs="true" quiet="true" />
+
+		<mkdir dir="${test-classes.dir}" />
+		
+		<scalac destdir="${test-classes.dir}" classpathref="test.classpath">
+			<include name="**/*.scala" />
+			<src>
+				<pathelement location="${test-src.dir}" />
+			</src>
+		</scalac>
+
+		<mkdir dir="${test-reports.dir}" />
+		<scalatest>
+			<runpath>
+				<pathelement location="${test-classes.dir}" />
+			</runpath>
+			<reporter type="html" directory="${test-reports.dir}" />
+		</scalatest>
+	</target>
+-->
+
+	<target name="doc" depends="compile" unless="build.uptodate">
+		<mkdir dir="${build-doc.dir}" />
+		<scaladoc srcdir="${src.dir}" destdir="${build-doc.dir}" doctitle="Project API documentation" classpathref="project.classpath">
+			<include name="**/*.scala" />
+		</scaladoc>
+	</target>
+
+	<target name="package" depends="doc" unless="build.uptodate">
+		<mkdir dir="${build-lib.dir}" />
+		
+		<jar destfile="${build-lib.dir}/figaroexamples_${version}.jar" manifest="${basedir}/META-INF/MANIFEST.MF">
+			<fileset dir="${build-classes.dir}" />
+			<!--
+			<fileset dir="${basedir}">
+				<include name="**/jsci*" />
+			</fileset>
+			-->
+		</jar>
+		<checksum todir="${build-lib.dir}" file="${build-lib.dir}/figaroexamples_${version}.jar"/>
+		
+		<jar destfile="${build-lib.dir}/figaroexamples-src_${version}.jar">
+			<fileset dir="${src.dir}" includes="**/*.scala" />
+		</jar>
+		<checksum todir="${build-lib.dir}" file="${build-lib.dir}/figaroexamples-src_${version}.jar"/>
+		
+		<jar destfile="${build-lib.dir}/figaroexamples-doc_${version}.jar">
+			<fileset dir="${build-doc.dir}" />
+		</jar>
+		<checksum todir="${build-lib.dir}" file="${build-lib.dir}/figaroexamples-doc_${version}.jar"/>
+
+		<!-- mark build as up-to-date -->
+		<touch file="${build.dir}/build.done" />
+	</target>
+</project>

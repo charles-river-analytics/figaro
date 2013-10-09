@@ -1,0 +1,426 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html>
+        <head>
+          <title>continuous - Project API documentation - com.cra.figaro.library.atomic.continuous</title>
+          <meta name="description" content="continuous - Project API documentation - com.cra.figaro.library.atomic.continuous" />
+          <meta name="keywords" content="continuous Project API documentation com.cra.figaro.library.atomic.continuous" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../../../../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../../../../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript" src="../../../../../../lib/jquery.js" id="jquery-js"></script>
+      <script type="text/javascript" src="../../../../../../lib/jquery-ui.js"></script>
+      <script type="text/javascript" src="../../../../../../lib/template.js"></script>
+      <script type="text/javascript" src="../../../../../../lib/tools.tooltip.js"></script>
+      
+      <script type="text/javascript">
+         if(top === self) {
+            var url = '../../../../../../index.html';
+            var hash = 'com.cra.figaro.library.atomic.continuous.package';
+            var anchor = window.location.hash;
+            var anchor_opt = '';
+            if (anchor.length >= 1)
+              anchor_opt = '@' + anchor.substring(1);
+            window.location.href = url + '#' + hash + anchor_opt;
+         }
+   	  </script>
+    
+        </head>
+        <body class="value">
+      <div id="definition">
+        <img src="../../../../../../lib/package_big.png" />
+        <p id="owner"><a href="../../../../../package.html" class="extype" name="com">com</a>.<a href="../../../../package.html" class="extype" name="com.cra">cra</a>.<a href="../../../package.html" class="extype" name="com.cra.figaro">figaro</a>.<a href="../../package.html" class="extype" name="com.cra.figaro.library">library</a>.<a href="../package.html" class="extype" name="com.cra.figaro.library.atomic">atomic</a></p>
+        <h1>continuous</h1>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <span class="name">continuous</span>
+      </span>
+      </h4>
+      
+          <div id="comment" class="fullcommenttop"></div>
+        
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input id="mbrsel-input" type="text" accesskey="/" /></span><span class="post"></span></div>
+        
+        
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        
+
+        <div id="types" class="types members">
+              <h3>Type Members</h3>
+              <ol><li name="com.cra.figaro.library.atomic.continuous.AtomicBeta" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="AtomicBetaextendsElement[Double]withAtomic[Double]"></a>
+      <a id="AtomicBeta:AtomicBeta"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="AtomicBeta.html"><span class="name">AtomicBeta</span></a><span class="result"> extends <a href="../../../language/Element.html" class="extype" name="com.cra.figaro.language.Element">Element</a>[<span class="extype" name="scala.Double">Double</span>] with <a href="../../../language/Atomic.html" class="extype" name="com.cra.figaro.language.Atomic">Atomic</a>[<span class="extype" name="scala.Double">Double</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A Beta distribution in which the parameters are constants.</p>
+    </li><li name="com.cra.figaro.library.atomic.continuous.AtomicBetaParameter" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="AtomicBetaParameterextendsAtomicBetawithParameter[Double]withValuesMaker[Double]"></a>
+      <a id="AtomicBetaParameter:AtomicBetaParameter"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="AtomicBetaParameter.html"><span class="name">AtomicBetaParameter</span></a><span class="result"> extends <a href="AtomicBeta.html" class="extype" name="com.cra.figaro.library.atomic.continuous.AtomicBeta">AtomicBeta</a> with <a href="../../../language/Parameter.html" class="extype" name="com.cra.figaro.language.Parameter">Parameter</a>[<span class="extype" name="scala.Double">Double</span>] with <a href="../../../algorithm/ValuesMaker.html" class="extype" name="com.cra.figaro.algorithm.ValuesMaker">ValuesMaker</a>[<span class="extype" name="scala.Double">Double</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A learnable beta distribution, which can be learned by observing elements which use it as a parameter.</p>
+    </li><li name="com.cra.figaro.library.atomic.continuous.AtomicDirichlet" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="AtomicDirichletextendsElement[Array[Double]]withAtomic[Array[Double]]"></a>
+      <a id="AtomicDirichlet:AtomicDirichlet"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="AtomicDirichlet.html"><span class="name">AtomicDirichlet</span></a><span class="result"> extends <a href="../../../language/Element.html" class="extype" name="com.cra.figaro.language.Element">Element</a>[<span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Double">Double</span>]] with <a href="../../../language/Atomic.html" class="extype" name="com.cra.figaro.language.Atomic">Atomic</a>[<span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Double">Double</span>]]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Dirichlet distributions in which the parameters are constants.</p>
+    </li><li name="com.cra.figaro.library.atomic.continuous.AtomicDirichletParameter" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="AtomicDirichletParameterextendsAtomicDirichletwithParameter[Array[Double]]withValuesMaker[Array[Double]]"></a>
+      <a id="AtomicDirichletParameter:AtomicDirichletParameter"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="AtomicDirichletParameter.html"><span class="name">AtomicDirichletParameter</span></a><span class="result"> extends <a href="AtomicDirichlet.html" class="extype" name="com.cra.figaro.library.atomic.continuous.AtomicDirichlet">AtomicDirichlet</a> with <a href="../../../language/Parameter.html" class="extype" name="com.cra.figaro.language.Parameter">Parameter</a>[<span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Double">Double</span>]] with <a href="../../../algorithm/ValuesMaker.html" class="extype" name="com.cra.figaro.algorithm.ValuesMaker">ValuesMaker</a>[<span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Double">Double</span>]]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A Dirichlet distribution which can be learned by observing elements which use it as a parameter.</p>
+    </li><li name="com.cra.figaro.library.atomic.continuous.AtomicExponential" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="AtomicExponentialextendsElement[Double]withAtomic[Double]"></a>
+      <a id="AtomicExponential:AtomicExponential"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="AtomicExponential.html"><span class="name">AtomicExponential</span></a><span class="result"> extends <a href="../../../language/Element.html" class="extype" name="com.cra.figaro.language.Element">Element</a>[<span class="extype" name="scala.Double">Double</span>] with <a href="../../../language/Atomic.html" class="extype" name="com.cra.figaro.language.Atomic">Atomic</a>[<span class="extype" name="scala.Double">Double</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">An exponential distribution in which the parameter is a constant.</p>
+    </li><li name="com.cra.figaro.library.atomic.continuous.AtomicGamma" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="AtomicGammaextendsElement[Double]withAtomic[Double]"></a>
+      <a id="AtomicGamma:AtomicGamma"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="AtomicGamma.html"><span class="name">AtomicGamma</span></a><span class="result"> extends <a href="../../../language/Element.html" class="extype" name="com.cra.figaro.language.Element">Element</a>[<span class="extype" name="scala.Double">Double</span>] with <a href="../../../language/Atomic.html" class="extype" name="com.cra.figaro.language.Atomic">Atomic</a>[<span class="extype" name="scala.Double">Double</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A Gamma distribution in which both the k and theta parameters are constants.</p>
+    </li><li name="com.cra.figaro.library.atomic.continuous.AtomicNormal" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="AtomicNormalextendsElement[Double]withAtomic[Double]"></a>
+      <a id="AtomicNormal:AtomicNormal"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="AtomicNormal.html"><span class="name">AtomicNormal</span></a><span class="result"> extends <a href="../../../language/Element.html" class="extype" name="com.cra.figaro.language.Element">Element</a>[<span class="extype" name="scala.Double">Double</span>] with <a href="../../../language/Atomic.html" class="extype" name="com.cra.figaro.language.Atomic">Atomic</a>[<span class="extype" name="scala.Double">Double</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A normal distribution in which the mean and variance are constants.</p>
+    </li><li name="com.cra.figaro.library.atomic.continuous.AtomicUniform" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="AtomicUniformextendsElement[Double]withAtomic[Double]"></a>
+      <a id="AtomicUniform:AtomicUniform"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="AtomicUniform.html"><span class="name">AtomicUniform</span></a><span class="result"> extends <a href="../../../language/Element.html" class="extype" name="com.cra.figaro.language.Element">Element</a>[<span class="extype" name="scala.Double">Double</span>] with <a href="../../../language/Atomic.html" class="extype" name="com.cra.figaro.language.Atomic">Atomic</a>[<span class="extype" name="scala.Double">Double</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A continuous uniform distribution in which the parameters are constants.</p>
+    </li><li name="com.cra.figaro.library.atomic.continuous.CompoundBeta" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="CompoundBetaextendsNonCachingChain[Double,Double]"></a>
+      <a id="CompoundBeta:CompoundBeta"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="CompoundBeta.html"><span class="name">CompoundBeta</span></a><span class="result"> extends <a href="../../../language/NonCachingChain.html" class="extype" name="com.cra.figaro.language.NonCachingChain">NonCachingChain</a>[<span class="extype" name="scala.Double">Double</span>, <span class="extype" name="scala.Double">Double</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A Beta distribution in which the parameters are elements.</p>
+    </li><li name="com.cra.figaro.library.atomic.continuous.CompoundDirichlet" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="CompoundDirichletextendsNonCachingChain[List[Double],Array[Double]]"></a>
+      <a id="CompoundDirichlet:CompoundDirichlet"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="CompoundDirichlet.html"><span class="name">CompoundDirichlet</span></a><span class="result"> extends <a href="../../../language/NonCachingChain.html" class="extype" name="com.cra.figaro.language.NonCachingChain">NonCachingChain</a>[<span class="extype" name="scala.List">List</span>[<span class="extype" name="scala.Double">Double</span>], <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Double">Double</span>]]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Dirichlet distributions in which the parameters are elements.</p>
+    </li><li name="com.cra.figaro.library.atomic.continuous.CompoundExponential" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="CompoundExponentialextendsNonCachingChain[Double,Double]"></a>
+      <a id="CompoundExponential:CompoundExponential"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="CompoundExponential.html"><span class="name">CompoundExponential</span></a><span class="result"> extends <a href="../../../language/NonCachingChain.html" class="extype" name="com.cra.figaro.language.NonCachingChain">NonCachingChain</a>[<span class="extype" name="scala.Double">Double</span>, <span class="extype" name="scala.Double">Double</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">An exponential distribution in which the parameter is an element.</p>
+    </li><li name="com.cra.figaro.library.atomic.continuous.CompoundGamma" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="CompoundGammaextendsNonCachingChain[Double,Double]"></a>
+      <a id="CompoundGamma:CompoundGamma"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="CompoundGamma.html"><span class="name">CompoundGamma</span></a><span class="result"> extends <a href="../../../language/NonCachingChain.html" class="extype" name="com.cra.figaro.language.NonCachingChain">NonCachingChain</a>[<span class="extype" name="scala.Double">Double</span>, <span class="extype" name="scala.Double">Double</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A Gamma distribution in which k and theta are both elements.</p>
+    </li><li name="com.cra.figaro.library.atomic.continuous.CompoundNormal" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="CompoundNormalextendsNonCachingChain[Double,Double]"></a>
+      <a id="CompoundNormal:CompoundNormal"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="CompoundNormal.html"><span class="name">CompoundNormal</span></a><span class="result"> extends <a href="../../../language/NonCachingChain.html" class="extype" name="com.cra.figaro.language.NonCachingChain">NonCachingChain</a>[<span class="extype" name="scala.Double">Double</span>, <span class="extype" name="scala.Double">Double</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A normal distribution in which the mean and variance are both elements.</p>
+    </li><li name="com.cra.figaro.library.atomic.continuous.CompoundUniform" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="CompoundUniformextendsNonCachingChain[Double,Double]"></a>
+      <a id="CompoundUniform:CompoundUniform"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="CompoundUniform.html"><span class="name">CompoundUniform</span></a><span class="result"> extends <a href="../../../language/NonCachingChain.html" class="extype" name="com.cra.figaro.language.NonCachingChain">NonCachingChain</a>[<span class="extype" name="scala.Double">Double</span>, <span class="extype" name="scala.Double">Double</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A continuous uniform distribution in which the parameters are elements.</p>
+    </li><li name="com.cra.figaro.library.atomic.continuous.GammaCompoundK" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="GammaCompoundKextendsNonCachingChain[Double,Double]"></a>
+      <a id="GammaCompoundK:GammaCompoundK"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="GammaCompoundK.html"><span class="name">GammaCompoundK</span></a><span class="result"> extends <a href="../../../language/NonCachingChain.html" class="extype" name="com.cra.figaro.language.NonCachingChain">NonCachingChain</a>[<span class="extype" name="scala.Double">Double</span>, <span class="extype" name="scala.Double">Double</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A Gamma distribution in which the k parameter is an element and theta is constant.</p>
+    </li><li name="com.cra.figaro.library.atomic.continuous.NormalCompoundMean" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="NormalCompoundMeanextendsNonCachingChain[Double,Double]"></a>
+      <a id="NormalCompoundMean:NormalCompoundMean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="NormalCompoundMean.html"><span class="name">NormalCompoundMean</span></a><span class="result"> extends <a href="../../../language/NonCachingChain.html" class="extype" name="com.cra.figaro.language.NonCachingChain">NonCachingChain</a>[<span class="extype" name="scala.Double">Double</span>, <span class="extype" name="scala.Double">Double</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A normal distribution in which the mean is an element and the variance is constant.</p>
+    </li></ol>
+            </div>
+
+        
+
+        <div id="values" class="values members">
+              <h3>Value Members</h3>
+              <ol><li name="com.cra.figaro.library.atomic.continuous.Beta" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Beta"></a>
+      <a id="Beta:Beta"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Beta$.html"><span class="name">Beta</span></a><span class="result"> extends <a href="../../../language/Creatable.html" class="extype" name="com.cra.figaro.language.Creatable">Creatable</a></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.library.atomic.continuous.BetaParameter" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="BetaParameter"></a>
+      <a id="BetaParameter:BetaParameter"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="BetaParameter$.html"><span class="name">BetaParameter</span></a><span class="result"> extends <a href="../../../language/Creatable.html" class="extype" name="com.cra.figaro.language.Creatable">Creatable</a></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.library.atomic.continuous.Dirichlet" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Dirichlet"></a>
+      <a id="Dirichlet:Dirichlet"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Dirichlet$.html"><span class="name">Dirichlet</span></a><span class="result"> extends <a href="../../../language/Creatable.html" class="extype" name="com.cra.figaro.language.Creatable">Creatable</a></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.library.atomic.continuous.DirichletParameter" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DirichletParameter"></a>
+      <a id="DirichletParameter:DirichletParameter"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="DirichletParameter$.html"><span class="name">DirichletParameter</span></a><span class="result"> extends <a href="../../../language/Creatable.html" class="extype" name="com.cra.figaro.language.Creatable">Creatable</a></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.library.atomic.continuous.Exponential" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Exponential"></a>
+      <a id="Exponential:Exponential"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Exponential$.html"><span class="name">Exponential</span></a><span class="result"> extends <a href="../../../language/Creatable.html" class="extype" name="com.cra.figaro.language.Creatable">Creatable</a></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.library.atomic.continuous.Gamma" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Gamma"></a>
+      <a id="Gamma:Gamma"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Gamma$.html"><span class="name">Gamma</span></a><span class="result"> extends <a href="../../../language/Creatable.html" class="extype" name="com.cra.figaro.language.Creatable">Creatable</a></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.library.atomic.continuous.Normal" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Normal"></a>
+      <a id="Normal:Normal"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Normal$.html"><span class="name">Normal</span></a><span class="result"> extends <a href="../../../language/Creatable.html" class="extype" name="com.cra.figaro.language.Creatable">Creatable</a></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.library.atomic.continuous.Uniform" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Uniform"></a>
+      <a id="Uniform:Uniform"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Uniform$.html"><span class="name">Uniform</span></a><span class="result"> extends <a href="../../../language/Creatable.html" class="extype" name="com.cra.figaro.language.Creatable">Creatable</a></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.library.atomic.continuous.Util" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Util"></a>
+      <a id="Util:Util"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Util$.html"><span class="name">Util</span></a>
+      </span>
+      </h4>
+      
+    </li></ol>
+            </div>
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+
+
+    </body>
+      </html>

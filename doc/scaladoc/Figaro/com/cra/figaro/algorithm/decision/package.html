@@ -1,0 +1,429 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html>
+        <head>
+          <title>decision - Project API documentation - com.cra.figaro.algorithm.decision</title>
+          <meta name="description" content="decision - Project API documentation - com.cra.figaro.algorithm.decision" />
+          <meta name="keywords" content="decision Project API documentation com.cra.figaro.algorithm.decision" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../../../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../../../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript" src="../../../../../lib/jquery.js" id="jquery-js"></script>
+      <script type="text/javascript" src="../../../../../lib/jquery-ui.js"></script>
+      <script type="text/javascript" src="../../../../../lib/template.js"></script>
+      <script type="text/javascript" src="../../../../../lib/tools.tooltip.js"></script>
+      
+      <script type="text/javascript">
+         if(top === self) {
+            var url = '../../../../../index.html';
+            var hash = 'com.cra.figaro.algorithm.decision.package';
+            var anchor = window.location.hash;
+            var anchor_opt = '';
+            if (anchor.length >= 1)
+              anchor_opt = '@' + anchor.substring(1);
+            window.location.href = url + '#' + hash + anchor_opt;
+         }
+   	  </script>
+    
+        </head>
+        <body class="value">
+      <div id="definition">
+        <img src="../../../../../lib/package_big.png" />
+        <p id="owner"><a href="../../../../package.html" class="extype" name="com">com</a>.<a href="../../../package.html" class="extype" name="com.cra">cra</a>.<a href="../../package.html" class="extype" name="com.cra.figaro">figaro</a>.<a href="../package.html" class="extype" name="com.cra.figaro.algorithm">algorithm</a></p>
+        <h1>decision</h1>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <span class="name">decision</span>
+      </span>
+      </h4>
+      
+          <div id="comment" class="fullcommenttop"></div>
+        
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input id="mbrsel-input" type="text" accesskey="/" /></span><span class="post"></span></div>
+        
+        
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        
+
+        <div id="types" class="types members">
+              <h3>Type Members</h3>
+              <ol><li name="com.cra.figaro.algorithm.decision.AnytimeDecisionMetropolisHastings" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="AnytimeDecisionMetropolisHastings[T,U]extendsDecisionMetropolisHastings[T,U]withAnytimeProbQuerySampler"></a>
+      <a id="AnytimeDecisionMetropolisHastings[T,U]:AnytimeDecisionMetropolisHastings[T,U]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="AnytimeDecisionMetropolisHastings.html"><span class="name">AnytimeDecisionMetropolisHastings</span></a><span class="tparams">[<span name="T">T</span>, <span name="U">U</span>]</span><span class="result"> extends <a href="DecisionMetropolisHastings.html" class="extype" name="com.cra.figaro.algorithm.decision.DecisionMetropolisHastings">DecisionMetropolisHastings</a>[<span class="extype" name="com.cra.figaro.algorithm.decision.AnytimeDecisionMetropolisHastings.T">T</span>, <span class="extype" name="com.cra.figaro.algorithm.decision.AnytimeDecisionMetropolisHastings.U">U</span>] with <a href="../sampling/AnytimeProbQuerySampler.html" class="extype" name="com.cra.figaro.algorithm.sampling.AnytimeProbQuerySampler">AnytimeProbQuerySampler</a></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Anytime Decision Metropolis-Hastings sampler.</p>
+    </li><li name="com.cra.figaro.algorithm.decision.DecisionAlgorithm" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="DecisionAlgorithm[T,U]extendsAlgorithm"></a>
+      <a id="DecisionAlgorithm[T,U]:DecisionAlgorithm[T,U]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="DecisionAlgorithm.html"><span class="name">DecisionAlgorithm</span></a><span class="tparams">[<span name="T">T</span>, <span name="U">U</span>]</span><span class="result"> extends <a href="../Algorithm.html" class="extype" name="com.cra.figaro.algorithm.Algorithm">Algorithm</a></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Trait that defines some common interface functions for decision algorithms.</p>
+    </li><li name="com.cra.figaro.algorithm.decision.DecisionImportance" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="DecisionImportance[T,U]extendsWeightedSamplerwithDecisionAlgorithm[T,U]"></a>
+      <a id="DecisionImportance[T,U]:DecisionImportance[T,U]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="DecisionImportance.html"><span class="name">DecisionImportance</span></a><span class="tparams">[<span name="T">T</span>, <span name="U">U</span>]</span><span class="result"> extends <a href="../sampling/WeightedSampler.html" class="extype" name="com.cra.figaro.algorithm.sampling.WeightedSampler">WeightedSampler</a> with <a href="DecisionAlgorithm.html" class="extype" name="com.cra.figaro.algorithm.decision.DecisionAlgorithm">DecisionAlgorithm</a>[<span class="extype" name="com.cra.figaro.algorithm.decision.DecisionImportance.T">T</span>, <span class="extype" name="com.cra.figaro.algorithm.decision.DecisionImportance.U">U</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Importance sampling for decisions.</p>
+    </li><li name="com.cra.figaro.algorithm.decision.DecisionMetropolisHastings" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="DecisionMetropolisHastings[T,U]extendsUnweightedSamplerwithDecisionAlgorithm[T,U]"></a>
+      <a id="DecisionMetropolisHastings[T,U]:DecisionMetropolisHastings[T,U]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="DecisionMetropolisHastings.html"><span class="name">DecisionMetropolisHastings</span></a><span class="tparams">[<span name="T">T</span>, <span name="U">U</span>]</span><span class="result"> extends <a href="../sampling/UnweightedSampler.html" class="extype" name="com.cra.figaro.algorithm.sampling.UnweightedSampler">UnweightedSampler</a> with <a href="DecisionAlgorithm.html" class="extype" name="com.cra.figaro.algorithm.decision.DecisionAlgorithm">DecisionAlgorithm</a>[<span class="extype" name="com.cra.figaro.algorithm.decision.DecisionMetropolisHastings.T">T</span>, <span class="extype" name="com.cra.figaro.algorithm.decision.DecisionMetropolisHastings.U">U</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Metropolis-Hastings Decision sampler.</p>
+    </li><li name="com.cra.figaro.algorithm.decision.DecisionPolicy" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="DecisionPolicy[T,U]extendsAnyRef"></a>
+      <a id="DecisionPolicy[T,U]:DecisionPolicy[T,U]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="DecisionPolicy.html"><span class="name">DecisionPolicy</span></a><span class="tparams">[<span name="T">T</span>, <span name="U">U</span>]</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Abstract base class for all Decision Policies.</p>
+    </li><li name="com.cra.figaro.algorithm.decision.DecisionPolicyExact" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DecisionPolicyExact[T,U]extendsDecisionPolicy[T,U]"></a>
+      <a id="DecisionPolicyExact[T,U]:DecisionPolicyExact[T,U]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="DecisionPolicyExact.html"><span class="name">DecisionPolicyExact</span></a><span class="tparams">[<span name="T">T</span>, <span name="U">U</span>]</span><span class="result"> extends <a href="DecisionPolicy.html" class="extype" name="com.cra.figaro.algorithm.decision.DecisionPolicy">DecisionPolicy</a>[<span class="extype" name="com.cra.figaro.algorithm.decision.DecisionPolicyExact.T">T</span>, <span class="extype" name="com.cra.figaro.algorithm.decision.DecisionPolicyExact.U">U</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">An exact decision policy.</p>
+    </li><li name="com.cra.figaro.algorithm.decision.DecisionPolicyNN" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DecisionPolicyNN[T,U]extendsDecisionPolicy[T,U]"></a>
+      <a id="DecisionPolicyNN[T,U]:DecisionPolicyNN[T,U]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="DecisionPolicyNN.html"><span class="name">DecisionPolicyNN</span></a><span class="tparams">[<span name="T">T</span>, <span name="U">U</span>]</span><span class="result"> extends <a href="DecisionPolicy.html" class="extype" name="com.cra.figaro.algorithm.decision.DecisionPolicy">DecisionPolicy</a>[<span class="extype" name="com.cra.figaro.algorithm.decision.DecisionPolicyNN.T">T</span>, <span class="extype" name="com.cra.figaro.algorithm.decision.DecisionPolicyNN.U">U</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A nearest neighbor decision policy.</p>
+    </li><li name="com.cra.figaro.algorithm.decision.MultiDecisionAlgorithm" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="MultiDecisionAlgorithmextendsOneTime"></a>
+      <a id="MultiDecisionAlgorithm:MultiDecisionAlgorithm"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="MultiDecisionAlgorithm.html"><span class="name">MultiDecisionAlgorithm</span></a><span class="result"> extends <a href="../OneTime.html" class="extype" name="com.cra.figaro.algorithm.OneTime">OneTime</a></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Abstract class common to all multi-decision algorithms.</p>
+    </li><li name="com.cra.figaro.algorithm.decision.MultiDecisionVariableElimination" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="MultiDecisionVariableEliminationextendsMultiDecisionAlgorithm"></a>
+      <a id="MultiDecisionVariableElimination:MultiDecisionVariableElimination"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="MultiDecisionVariableElimination.html"><span class="name">MultiDecisionVariableElimination</span></a><span class="result"> extends <a href="MultiDecisionAlgorithm.html" class="extype" name="com.cra.figaro.algorithm.decision.MultiDecisionAlgorithm">MultiDecisionAlgorithm</a></span>
+      </span>
+      </h4>
+      <p class="comment cmt">A multi-decision algorithm that uses Variable Elimination for each decision.</p>
+    </li><li name="com.cra.figaro.algorithm.decision.OneTimeDecisionMetropolisHastings" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="OneTimeDecisionMetropolisHastings[T,U]extendsDecisionMetropolisHastings[T,U]withOneTimeProbQuerySampler"></a>
+      <a id="OneTimeDecisionMetropolisHastings[T,U]:OneTimeDecisionMetropolisHastings[T,U]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="OneTimeDecisionMetropolisHastings.html"><span class="name">OneTimeDecisionMetropolisHastings</span></a><span class="tparams">[<span name="T">T</span>, <span name="U">U</span>]</span><span class="result"> extends <a href="DecisionMetropolisHastings.html" class="extype" name="com.cra.figaro.algorithm.decision.DecisionMetropolisHastings">DecisionMetropolisHastings</a>[<span class="extype" name="com.cra.figaro.algorithm.decision.OneTimeDecisionMetropolisHastings.T">T</span>, <span class="extype" name="com.cra.figaro.algorithm.decision.OneTimeDecisionMetropolisHastings.U">U</span>] with <a href="../sampling/OneTimeProbQuerySampler.html" class="extype" name="com.cra.figaro.algorithm.sampling.OneTimeProbQuerySampler">OneTimeProbQuerySampler</a></span>
+      </span>
+      </h4>
+      <p class="comment cmt">One-time Decision Metropolis-Hastings sampler.</p>
+    </li><li name="com.cra.figaro.algorithm.decision.OneTimeMultiDecisionImportance" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="OneTimeMultiDecisionImportanceextendsMultiDecisionAlgorithm"></a>
+      <a id="OneTimeMultiDecisionImportance:OneTimeMultiDecisionImportance"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="OneTimeMultiDecisionImportance.html"><span class="name">OneTimeMultiDecisionImportance</span></a><span class="result"> extends <a href="MultiDecisionAlgorithm.html" class="extype" name="com.cra.figaro.algorithm.decision.MultiDecisionAlgorithm">MultiDecisionAlgorithm</a></span>
+      </span>
+      </h4>
+      <p class="comment cmt">A OneTime multi-decision algorithm that uses Importance sampling for each decision
+</p>
+    </li><li name="com.cra.figaro.algorithm.decision.OneTimeMultiDecisionMetropolisHastings" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="OneTimeMultiDecisionMetropolisHastingsextendsMultiDecisionAlgorithm"></a>
+      <a id="OneTimeMultiDecisionMetropolisHastings:OneTimeMultiDecisionMetropolisHastings"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="OneTimeMultiDecisionMetropolisHastings.html"><span class="name">OneTimeMultiDecisionMetropolisHastings</span></a><span class="result"> extends <a href="MultiDecisionAlgorithm.html" class="extype" name="com.cra.figaro.algorithm.decision.MultiDecisionAlgorithm">MultiDecisionAlgorithm</a></span>
+      </span>
+      </h4>
+      <p class="comment cmt">A OneTime multi-decision algorithm that uses Metropolis-Hastings sampling for each decision.</p>
+    </li><li name="com.cra.figaro.algorithm.decision.OneTimeProbQueryDecision" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="OneTimeProbQueryDecision[T,U]extendsProbQueryAlgorithmwithOneTimeProbQuerywithDecisionAlgorithm[T,U]"></a>
+      <a id="OneTimeProbQueryDecision[T,U]:OneTimeProbQueryDecision[T,U]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="OneTimeProbQueryDecision.html"><span class="name">OneTimeProbQueryDecision</span></a><span class="tparams">[<span name="T">T</span>, <span name="U">U</span>]</span><span class="result"> extends <a href="../ProbQueryAlgorithm.html" class="extype" name="com.cra.figaro.algorithm.ProbQueryAlgorithm">ProbQueryAlgorithm</a> with <a href="../OneTimeProbQuery.html" class="extype" name="com.cra.figaro.algorithm.OneTimeProbQuery">OneTimeProbQuery</a> with <a href="DecisionAlgorithm.html" class="extype" name="com.cra.figaro.algorithm.decision.DecisionAlgorithm">DecisionAlgorithm</a>[<span class="extype" name="com.cra.figaro.algorithm.decision.OneTimeProbQueryDecision.T">T</span>, <span class="extype" name="com.cra.figaro.algorithm.decision.OneTimeProbQueryDecision.U">U</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Trait for one time Decision Algorithms
+</p>
+    </li><li name="com.cra.figaro.algorithm.decision.ProbQueryVariableEliminationDecision" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ProbQueryVariableEliminationDecision[T,U]extendsProbQueryAlgorithmwithOneTimeProbQuerywithProbabilisticVariableEliminationDecisionwithDecisionAlgorithm[T,U]"></a>
+      <a id="ProbQueryVariableEliminationDecision[T,U]:ProbQueryVariableEliminationDecision[T,U]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="ProbQueryVariableEliminationDecision.html"><span class="name">ProbQueryVariableEliminationDecision</span></a><span class="tparams">[<span name="T">T</span>, <span name="U">U</span>]</span><span class="result"> extends <a href="../ProbQueryAlgorithm.html" class="extype" name="com.cra.figaro.algorithm.ProbQueryAlgorithm">ProbQueryAlgorithm</a> with <a href="../OneTimeProbQuery.html" class="extype" name="com.cra.figaro.algorithm.OneTimeProbQuery">OneTimeProbQuery</a> with <a href="ProbabilisticVariableEliminationDecision.html" class="extype" name="com.cra.figaro.algorithm.decision.ProbabilisticVariableEliminationDecision">ProbabilisticVariableEliminationDecision</a> with <a href="DecisionAlgorithm.html" class="extype" name="com.cra.figaro.algorithm.decision.DecisionAlgorithm">DecisionAlgorithm</a>[<span class="extype" name="com.cra.figaro.algorithm.decision.ProbQueryVariableEliminationDecision.T">T</span>, <span class="extype" name="com.cra.figaro.algorithm.decision.ProbQueryVariableEliminationDecision.U">U</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Decision VariableElimination algorithm that computes the expected utility of decision elements using the default
+elimination order.</p>
+    </li><li name="com.cra.figaro.algorithm.decision.ProbabilisticVariableEliminationDecision" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="ProbabilisticVariableEliminationDecisionextendsVariableElimination[(Double,Double)]"></a>
+      <a id="ProbabilisticVariableEliminationDecision:ProbabilisticVariableEliminationDecision"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="ProbabilisticVariableEliminationDecision.html"><span class="name">ProbabilisticVariableEliminationDecision</span></a><span class="result"> extends <a href="../factored/VariableElimination.html" class="extype" name="com.cra.figaro.algorithm.factored.VariableElimination">VariableElimination</a>[(<span class="extype" name="scala.Double">Double</span>, <span class="extype" name="scala.Double">Double</span>)]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Trait for Decision based Variable Elimination.</p>
+    </li></ol>
+            </div>
+
+        
+
+        <div id="values" class="values members">
+              <h3>Value Members</h3>
+              <ol><li name="com.cra.figaro.algorithm.decision.DecisionImportance" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DecisionImportance"></a>
+      <a id="DecisionImportance:DecisionImportance"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="DecisionImportance$.html"><span class="name">DecisionImportance</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.algorithm.decision.DecisionMetropolisHastings" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DecisionMetropolisHastings"></a>
+      <a id="DecisionMetropolisHastings:DecisionMetropolisHastings"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="DecisionMetropolisHastings$.html"><span class="name">DecisionMetropolisHastings</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.algorithm.decision.DecisionPolicy" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DecisionPolicy"></a>
+      <a id="DecisionPolicy:DecisionPolicy"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="DecisionPolicy$.html"><span class="name">DecisionPolicy</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.algorithm.decision.DecisionPolicyExact" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DecisionPolicyExact"></a>
+      <a id="DecisionPolicyExact:DecisionPolicyExact"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="DecisionPolicyExact$.html"><span class="name">DecisionPolicyExact</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.algorithm.decision.DecisionPolicyNN" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DecisionPolicyNN"></a>
+      <a id="DecisionPolicyNN:DecisionPolicyNN"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="DecisionPolicyNN$.html"><span class="name">DecisionPolicyNN</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.algorithm.decision.DecisionVariableElimination" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DecisionVariableElimination"></a>
+      <a id="DecisionVariableElimination:DecisionVariableElimination"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="DecisionVariableElimination$.html"><span class="name">DecisionVariableElimination</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.algorithm.decision.MultiDecisionImportance" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="MultiDecisionImportance"></a>
+      <a id="MultiDecisionImportance:MultiDecisionImportance"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="MultiDecisionImportance$.html"><span class="name">MultiDecisionImportance</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.algorithm.decision.MultiDecisionMetropolisHastings" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="MultiDecisionMetropolisHastings"></a>
+      <a id="MultiDecisionMetropolisHastings:MultiDecisionMetropolisHastings"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="MultiDecisionMetropolisHastings$.html"><span class="name">MultiDecisionMetropolisHastings</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.algorithm.decision.MultiDecisionVariableElimination" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="MultiDecisionVariableElimination"></a>
+      <a id="MultiDecisionVariableElimination:MultiDecisionVariableElimination"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="MultiDecisionVariableElimination$.html"><span class="name">MultiDecisionVariableElimination</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.algorithm.decision.index" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="index"></a>
+      <a id="index:index"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a href="index/package.html"><span class="name">index</span></a>
+      </span>
+      </h4>
+      
+    </li></ol>
+            </div>
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+
+
+    </body>
+      </html>

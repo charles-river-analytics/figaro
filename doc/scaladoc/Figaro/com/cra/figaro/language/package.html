@@ -1,0 +1,885 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html>
+        <head>
+          <title>language - Project API documentation - com.cra.figaro.language</title>
+          <meta name="description" content="language - Project API documentation - com.cra.figaro.language" />
+          <meta name="keywords" content="language Project API documentation com.cra.figaro.language" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript" src="../../../../lib/jquery.js" id="jquery-js"></script>
+      <script type="text/javascript" src="../../../../lib/jquery-ui.js"></script>
+      <script type="text/javascript" src="../../../../lib/template.js"></script>
+      <script type="text/javascript" src="../../../../lib/tools.tooltip.js"></script>
+      
+      <script type="text/javascript">
+         if(top === self) {
+            var url = '../../../../index.html';
+            var hash = 'com.cra.figaro.language.package';
+            var anchor = window.location.hash;
+            var anchor_opt = '';
+            if (anchor.length >= 1)
+              anchor_opt = '@' + anchor.substring(1);
+            window.location.href = url + '#' + hash + anchor_opt;
+         }
+   	  </script>
+    
+        </head>
+        <body class="value">
+      <div id="definition">
+        <img src="../../../../lib/package_big.png" />
+        <p id="owner"><a href="../../../package.html" class="extype" name="com">com</a>.<a href="../../package.html" class="extype" name="com.cra">cra</a>.<a href="../package.html" class="extype" name="com.cra.figaro">figaro</a></p>
+        <h1>language</h1>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <span class="name">language</span>
+      </span>
+      </h4>
+      
+          <div id="comment" class="fullcommenttop"></div>
+        
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input id="mbrsel-input" type="text" accesskey="/" /></span><span class="post"></span></div>
+        
+        
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        
+
+        <div id="types" class="types members">
+              <h3>Type Members</h3>
+              <ol><li name="com.cra.figaro.language.Aggregate" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Aggregate[T,U]extendsReferenceElement[T,U]withValuesMaker[U]withProbFactorMaker"></a>
+      <a id="Aggregate[T,U]:Aggregate[T,U]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="Aggregate.html"><span class="name">Aggregate</span></a><span class="tparams">[<span name="T">T</span>, <span name="U">U</span>]</span><span class="result"> extends <a href="ReferenceElement.html" class="extype" name="com.cra.figaro.language.ReferenceElement">ReferenceElement</a>[<span class="extype" name="com.cra.figaro.language.Aggregate.T">T</span>, <span class="extype" name="com.cra.figaro.language.Aggregate.U">U</span>] with <a href="../algorithm/ValuesMaker.html" class="extype" name="com.cra.figaro.algorithm.ValuesMaker">ValuesMaker</a>[<span class="extype" name="com.cra.figaro.language.Aggregate.U">U</span>] with <a href="../algorithm/factored/ProbFactorMaker.html" class="extype" name="com.cra.figaro.algorithm.factored.ProbFactorMaker">ProbFactorMaker</a></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Aggregate elements based on multi-valued references.</p>
+    </li><li name="com.cra.figaro.language.Apply" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="Apply[U]extendsDeterministic[U]withIfArgsCacheable[U]"></a>
+      <a id="Apply[U]:Apply[U]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="Apply.html"><span class="name">Apply</span></a><span class="tparams">[<span name="U">U</span>]</span><span class="result"> extends <a href="Deterministic.html" class="extype" name="com.cra.figaro.language.Deterministic">Deterministic</a>[<span class="extype" name="com.cra.figaro.language.Apply.U">U</span>] with <a href="IfArgsCacheable.html" class="extype" name="com.cra.figaro.language.IfArgsCacheable">IfArgsCacheable</a>[<span class="extype" name="com.cra.figaro.language.Apply.U">U</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Abstract base class for elements representing function application.</p>
+    </li><li name="com.cra.figaro.language.Apply1" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Apply1[T1,U]extendsApply[U]"></a>
+      <a id="Apply1[T1,U]:Apply1[T1,U]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="Apply1.html"><span class="name">Apply1</span></a><span class="tparams">[<span name="T1">T1</span>, <span name="U">U</span>]</span><span class="result"> extends <a href="Apply.html" class="extype" name="com.cra.figaro.language.Apply">Apply</a>[<span class="extype" name="com.cra.figaro.language.Apply1.U">U</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Application of a function to one argument.</p>
+    </li><li name="com.cra.figaro.language.Apply2" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Apply2[T1,T2,U]extendsApply[U]"></a>
+      <a id="Apply2[T1,T2,U]:Apply2[T1,T2,U]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="Apply2.html"><span class="name">Apply2</span></a><span class="tparams">[<span name="T1">T1</span>, <span name="T2">T2</span>, <span name="U">U</span>]</span><span class="result"> extends <a href="Apply.html" class="extype" name="com.cra.figaro.language.Apply">Apply</a>[<span class="extype" name="com.cra.figaro.language.Apply2.U">U</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Application of a function to two arguments.</p>
+    </li><li name="com.cra.figaro.language.Apply3" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Apply3[T1,T2,T3,U]extendsApply[U]"></a>
+      <a id="Apply3[T1,T2,T3,U]:Apply3[T1,T2,T3,U]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="Apply3.html"><span class="name">Apply3</span></a><span class="tparams">[<span name="T1">T1</span>, <span name="T2">T2</span>, <span name="T3">T3</span>, <span name="U">U</span>]</span><span class="result"> extends <a href="Apply.html" class="extype" name="com.cra.figaro.language.Apply">Apply</a>[<span class="extype" name="com.cra.figaro.language.Apply3.U">U</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Application of a function to three arguments.</p>
+    </li><li name="com.cra.figaro.language.Apply4" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Apply4[T1,T2,T3,T4,U]extendsApply[U]"></a>
+      <a id="Apply4[T1,T2,T3,T4,U]:Apply4[T1,T2,T3,T4,U]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="Apply4.html"><span class="name">Apply4</span></a><span class="tparams">[<span name="T1">T1</span>, <span name="T2">T2</span>, <span name="T3">T3</span>, <span name="T4">T4</span>, <span name="U">U</span>]</span><span class="result"> extends <a href="Apply.html" class="extype" name="com.cra.figaro.language.Apply">Apply</a>[<span class="extype" name="com.cra.figaro.language.Apply4.U">U</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Application of a function to four arguments.</p>
+    </li><li name="com.cra.figaro.language.Apply5" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Apply5[T1,T2,T3,T4,T5,U]extendsApply[U]"></a>
+      <a id="Apply5[T1,T2,T3,T4,T5,U]:Apply5[T1,T2,T3,T4,T5,U]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="Apply5.html"><span class="name">Apply5</span></a><span class="tparams">[<span name="T1">T1</span>, <span name="T2">T2</span>, <span name="T3">T3</span>, <span name="T4">T4</span>, <span name="T5">T5</span>, <span name="U">U</span>]</span><span class="result"> extends <a href="Apply.html" class="extype" name="com.cra.figaro.language.Apply">Apply</a>[<span class="extype" name="com.cra.figaro.language.Apply5.U">U</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Application of a function to five arguments.</p>
+    </li><li name="com.cra.figaro.language.Atomic" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="Atomic[T]extendsElement[T]"></a>
+      <a id="Atomic[T]:Atomic[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Atomic.html"><span class="name">Atomic</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="Element.html" class="extype" name="com.cra.figaro.language.Element">Element</a>[<span class="extype" name="com.cra.figaro.language.Atomic.T">T</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">The Atomic trait characterizes elements that do not depend on any related elements.</p>
+    </li><li name="com.cra.figaro.language.AtomicDist" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="AtomicDist[T]extendsDist[Double,T]"></a>
+      <a id="AtomicDist[T]:AtomicDist[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="AtomicDist.html"><span class="name">AtomicDist</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="Dist.html" class="extype" name="com.cra.figaro.language.Dist">Dist</a>[<span class="extype" name="scala.Double">Double</span>, <span class="extype" name="com.cra.figaro.language.AtomicDist.T">T</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A distribution in which the probabilities are constants and the outcomes are Elements.</p>
+    </li><li name="com.cra.figaro.language.AtomicFlip" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="AtomicFlipextendsElement[Boolean]withAtomic[Boolean]withFlip"></a>
+      <a id="AtomicFlip:AtomicFlip"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="AtomicFlip.html"><span class="name">AtomicFlip</span></a><span class="result"> extends <a href="Element.html" class="extype" name="com.cra.figaro.language.Element">Element</a>[<span class="extype" name="scala.Boolean">Boolean</span>] with <a href="Atomic.html" class="extype" name="com.cra.figaro.language.Atomic">Atomic</a>[<span class="extype" name="scala.Boolean">Boolean</span>] with <a href="Flip.html" class="extype" name="com.cra.figaro.language.Flip">Flip</a></span>
+      </span>
+      </h4>
+      <p class="comment cmt">A coin toss in which the weight is a fixed constant.</p>
+    </li><li name="com.cra.figaro.language.AtomicSelect" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="AtomicSelect[T]extendsSelect[Double,T]withAtomic[T]"></a>
+      <a id="AtomicSelect[T]:AtomicSelect[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="AtomicSelect.html"><span class="name">AtomicSelect</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="Select.html" class="extype" name="com.cra.figaro.language.Select">Select</a>[<span class="extype" name="scala.Double">Double</span>, <span class="extype" name="com.cra.figaro.language.AtomicSelect.T">T</span>] with <a href="Atomic.html" class="extype" name="com.cra.figaro.language.Atomic">Atomic</a>[<span class="extype" name="com.cra.figaro.language.AtomicSelect.T">T</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A distribution in which both the probabilities and the outcomes are values.</p>
+    </li><li name="com.cra.figaro.language.Cacheable" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="Cacheable[V]extendsElement[V]"></a>
+      <a id="Cacheable[V]:Cacheable[V]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Cacheable.html"><span class="name">Cacheable</span></a><span class="tparams">[<span name="V">V</span>]</span><span class="result"> extends <a href="Element.html" class="extype" name="com.cra.figaro.language.Element">Element</a>[<span class="extype" name="com.cra.figaro.language.Cacheable.V">V</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Elements whose values can be cached and reused.</p>
+    </li><li name="com.cra.figaro.language.CachingChain" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="CachingChain[T,U]extendsChain[T,U]"></a>
+      <a id="CachingChain[T,U]:CachingChain[T,U]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="CachingChain.html"><span class="name">CachingChain</span></a><span class="tparams">[<span name="T">T</span>, <span name="U">U</span>]</span><span class="result"> extends <a href="Chain.html" class="extype" name="com.cra.figaro.language.Chain">Chain</a>[<span class="extype" name="com.cra.figaro.language.CachingChain.T">T</span>, <span class="extype" name="com.cra.figaro.language.CachingChain.U">U</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A CachingChain is an implementation of Chain with a 1000 element cache
+</p>
+    </li><li name="com.cra.figaro.language.Chain" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Chain[T,U]extendsDeterministic[U]"></a>
+      <a id="Chain[T,U]:Chain[T,U]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="Chain.html"><span class="name">Chain</span></a><span class="tparams">[<span name="T">T</span>, <span name="U">U</span>]</span><span class="result"> extends <a href="Deterministic.html" class="extype" name="com.cra.figaro.language.Deterministic">Deterministic</a>[<span class="extype" name="com.cra.figaro.language.Chain.U">U</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A Chain(parent, fcn) represents the process that first generates a value for the parent, then
+applies fcn to get a new Element, and finally generates a value from that new Element.</p>
+    </li><li name="com.cra.figaro.language.CompoundDist" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="CompoundDist[T]extendsDist[com.cra.figaro.language.Element[Double],T]"></a>
+      <a id="CompoundDist[T]:CompoundDist[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="CompoundDist.html"><span class="name">CompoundDist</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="Dist.html" class="extype" name="com.cra.figaro.language.Dist">Dist</a>[<a href="Element.html" class="extype" name="com.cra.figaro.language.Element">Element</a>[<span class="extype" name="scala.Double">Double</span>], <span class="extype" name="com.cra.figaro.language.CompoundDist.T">T</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A distribution in which both the probabilities and outcomes are Elements.</p>
+    </li><li name="com.cra.figaro.language.CompoundFlip" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="CompoundFlipextendsElement[Boolean]withFlip"></a>
+      <a id="CompoundFlip:CompoundFlip"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="CompoundFlip.html"><span class="name">CompoundFlip</span></a><span class="result"> extends <a href="Element.html" class="extype" name="com.cra.figaro.language.Element">Element</a>[<span class="extype" name="scala.Boolean">Boolean</span>] with <a href="Flip.html" class="extype" name="com.cra.figaro.language.Flip">Flip</a></span>
+      </span>
+      </h4>
+      <p class="comment cmt">A coin toss where the weight is itself an element.</p>
+    </li><li name="com.cra.figaro.language.CompoundSelect" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="CompoundSelect[T]extendsSelect[com.cra.figaro.language.Element[Double],T]"></a>
+      <a id="CompoundSelect[T]:CompoundSelect[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="CompoundSelect.html"><span class="name">CompoundSelect</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="Select.html" class="extype" name="com.cra.figaro.language.Select">Select</a>[<a href="Element.html" class="extype" name="com.cra.figaro.language.Element">Element</a>[<span class="extype" name="scala.Double">Double</span>], <span class="extype" name="com.cra.figaro.language.CompoundSelect.T">T</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A distribution in which the probabilities are Elements and the outcomes are values.</p>
+    </li><li name="com.cra.figaro.language.Condition" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Condition[T]extendsEvidence[T]withProductwithSerializable"></a>
+      <a id="Condition[T]:Condition[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Condition.html"><span class="name">Condition</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="predicate">predicate: (<span class="extype" name="com.cra.figaro.language.Condition.T">T</span>) ⇒ <span class="extype" name="scala.Boolean">Boolean</span></span>)</span><span class="result"> extends <a href="Evidence.html" class="extype" name="com.cra.figaro.language.Evidence">Evidence</a>[<span class="extype" name="com.cra.figaro.language.Condition.T">T</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Evidence representing a condition on an element.</p>
+    </li><li name="com.cra.figaro.language.Constant" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Constant[T]extendsDeterministic[T]withAtomic[T]withCacheable[T]"></a>
+      <a id="Constant[T]:Constant[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="Constant.html"><span class="name">Constant</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="Deterministic.html" class="extype" name="com.cra.figaro.language.Deterministic">Deterministic</a>[<span class="extype" name="com.cra.figaro.language.Constant.T">T</span>] with <a href="Atomic.html" class="extype" name="com.cra.figaro.language.Atomic">Atomic</a>[<span class="extype" name="com.cra.figaro.language.Constant.T">T</span>] with <a href="Cacheable.html" class="extype" name="com.cra.figaro.language.Cacheable">Cacheable</a>[<span class="extype" name="com.cra.figaro.language.Constant.T">T</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Elements that always produce the same value.</p>
+    </li><li name="com.cra.figaro.language.Constraint" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Constraint[T]extendsEvidence[T]withProductwithSerializable"></a>
+      <a id="Constraint[T]:Constraint[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Constraint.html"><span class="name">Constraint</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="function">function: (<span class="extype" name="com.cra.figaro.language.Constraint.T">T</span>) ⇒ <span class="extype" name="scala.Double">Double</span></span>)</span><span class="result"> extends <a href="Evidence.html" class="extype" name="com.cra.figaro.language.Evidence">Evidence</a>[<span class="extype" name="com.cra.figaro.language.Constraint.T">T</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Evidence representing a constraint on an element.</p>
+    </li><li name="com.cra.figaro.language.Creatable" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="CreatableextendsAnyRef"></a>
+      <a id="Creatable:Creatable"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Creatable.html"><span class="name">Creatable</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Figaro's reflection allows you to create a Figaro element by providing the name of the element class as a string and its arguments as elements.</p>
+    </li><li name="com.cra.figaro.language.Deterministic" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="Deterministic[Value]extendsElement[Value]"></a>
+      <a id="Deterministic[Value]:Deterministic[Value]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="Deterministic.html"><span class="name">Deterministic</span></a><span class="tparams">[<span name="Value">Value</span>]</span><span class="result"> extends <a href="Element.html" class="extype" name="com.cra.figaro.language.Element">Element</a>[<span class="extype" name="com.cra.figaro.language.Deterministic.Value">Value</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Elements with no randomness.</p>
+    </li><li name="com.cra.figaro.language.Dist" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="Dist[P,T]extendsElement[T]withIfArgsCacheable[T]"></a>
+      <a id="Dist[P,T]:Dist[P,T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="Dist.html"><span class="name">Dist</span></a><span class="tparams">[<span name="P">P</span>, <span name="T">T</span>]</span><span class="result"> extends <a href="Element.html" class="extype" name="com.cra.figaro.language.Element">Element</a>[<span class="extype" name="com.cra.figaro.language.Dist.T">T</span>] with <a href="IfArgsCacheable.html" class="extype" name="com.cra.figaro.language.IfArgsCacheable">IfArgsCacheable</a>[<span class="extype" name="com.cra.figaro.language.Dist.T">T</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Distributions with randomly chosen outcomes that are themselves specified by Elements.</p>
+    </li><li name="com.cra.figaro.language.Element" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="Element[T]extendsAnyRef"></a>
+      <a id="Element[T]:Element[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="Element.html"><span class="name">Element</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">An Element is the core component of a probabilistic model.</p>
+    </li><li name="com.cra.figaro.language.ElementCollection" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="ElementCollectionextendsAnyRef"></a>
+      <a id="ElementCollection:ElementCollection"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="ElementCollection.html"><span class="name">ElementCollection</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">An element collection contains elements.</p>
+    </li><li name="com.cra.figaro.language.Evidence" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="Evidence[T]extendsAnyRef"></a>
+      <a id="Evidence[T]:Evidence[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">sealed abstract </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="Evidence.html"><span class="name">Evidence</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Evidence that can be associated with an element.</p>
+    </li><li name="com.cra.figaro.language.Flip" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="FlipextendsElement[Boolean]withCacheable[Boolean]"></a>
+      <a id="Flip:Flip"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Flip.html"><span class="name">Flip</span></a><span class="result"> extends <a href="Element.html" class="extype" name="com.cra.figaro.language.Element">Element</a>[<span class="extype" name="scala.Boolean">Boolean</span>] with <a href="Cacheable.html" class="extype" name="com.cra.figaro.language.Cacheable">Cacheable</a>[<span class="extype" name="scala.Boolean">Boolean</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Weighted coin tosses, where the weight itself might be random.</p>
+    </li><li name="com.cra.figaro.language.IfArgsCacheable" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="IfArgsCacheable[V]extendsElement[V]"></a>
+      <a id="IfArgsCacheable[V]:IfArgsCacheable[V]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="IfArgsCacheable.html"><span class="name">IfArgsCacheable</span></a><span class="tparams">[<span name="V">V</span>]</span><span class="result"> extends <a href="Element.html" class="extype" name="com.cra.figaro.language.Element">Element</a>[<span class="extype" name="com.cra.figaro.language.IfArgsCacheable.V">V</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Elements whose values can be cached and reused as long as the arguments are cacheable.</p>
+    </li><li name="com.cra.figaro.language.Indirect" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Indirect[+T]extendsReference[T]withProductwithSerializable"></a>
+      <a id="Indirect[+T]:Indirect[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Indirect.html"><span class="name">Indirect</span></a><span class="tparams">[<span name="T">+T</span>]</span><span class="params">(<span name="head">head: <a href="Name.html" class="extype" name="com.cra.figaro.language.Name">Name</a>[<a href="ElementCollection.html" class="extype" name="com.cra.figaro.language.ElementCollection">ElementCollection</a>]</span>, <span name="tail">tail: <a href="Reference.html" class="extype" name="com.cra.figaro.language.Reference">Reference</a>[<span class="extype" name="com.cra.figaro.language.Indirect.T">T</span>]</span>)</span><span class="result"> extends <a href="Reference.html" class="extype" name="com.cra.figaro.language.Reference">Reference</a>[<span class="extype" name="com.cra.figaro.language.Indirect.T">T</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">An indirect reference to an element, first using the head to refer to an element collection, and then
+referring to the tail from within the element collection.</p>
+    </li><li name="com.cra.figaro.language.Inject" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Inject[T]extendsDeterministic[List[T]]withIfArgsCacheable[List[T]]"></a>
+      <a id="Inject[T]:Inject[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="Inject.html"><span class="name">Inject</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="Deterministic.html" class="extype" name="com.cra.figaro.language.Deterministic">Deterministic</a>[<span class="extype" name="scala.List">List</span>[<span class="extype" name="com.cra.figaro.language.Inject.T">T</span>]] with <a href="IfArgsCacheable.html" class="extype" name="com.cra.figaro.language.IfArgsCacheable">IfArgsCacheable</a>[<span class="extype" name="scala.List">List</span>[<span class="extype" name="com.cra.figaro.language.Inject.T">T</span>]]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Element that converts a sequence of elements into an element over sequences.</p>
+    </li><li name="com.cra.figaro.language.InvalidEvidenceException" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="InvalidEvidenceExceptionextendsIllegalArgumentException"></a>
+      <a id="InvalidEvidenceException:InvalidEvidenceException"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="InvalidEvidenceException.html"><span class="name">InvalidEvidenceException</span></a><span class="result"> extends <span class="extype" name="java.lang.IllegalArgumentException">IllegalArgumentException</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.language.Name" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Name[+T]extendsReference[T]withProductwithSerializable"></a>
+      <a id="Name[+T]:Name[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Name.html"><span class="name">Name</span></a><span class="tparams">[<span name="T">+T</span>]</span><span class="params">(<span name="string">string: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="Reference.html" class="extype" name="com.cra.figaro.language.Reference">Reference</a>[<span class="extype" name="com.cra.figaro.language.Name.T">T</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">A direct reference to an element by its name.</p>
+    </li><li name="com.cra.figaro.language.NamedEvidence" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="NamedEvidence[T]extendsProductwithSerializable"></a>
+      <a id="NamedEvidence[T]:NamedEvidence[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="NamedEvidence.html"><span class="name">NamedEvidence</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="reference">reference: <a href="Reference.html" class="extype" name="com.cra.figaro.language.Reference">Reference</a>[<span class="extype" name="com.cra.figaro.language.NamedEvidence.T">T</span>]</span>, <span name="evidence">evidence: <a href="Evidence.html" class="extype" name="com.cra.figaro.language.Evidence">Evidence</a>[<span class="extype" name="com.cra.figaro.language.NamedEvidence.T">T</span>]</span>, <span name="contingency">contingency: <a href="Element$.html#Contingency=List[com.cra.figaro.language.Element.ElemVal[_]]" class="extmbr" name="com.cra.figaro.language.Element.Contingency">Contingency</a> = <span class="symbol">immutable.this.Nil</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Association of evidence with a reference.</p>
+    </li><li name="com.cra.figaro.language.NonCachingChain" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="NonCachingChain[T,U]extendsChain[T,U]"></a>
+      <a id="NonCachingChain[T,U]:NonCachingChain[T,U]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="NonCachingChain.html"><span class="name">NonCachingChain</span></a><span class="tparams">[<span name="T">T</span>, <span name="U">U</span>]</span><span class="result"> extends <a href="Chain.html" class="extype" name="com.cra.figaro.language.Chain">Chain</a>[<span class="extype" name="com.cra.figaro.language.NonCachingChain.T">T</span>, <span class="extype" name="com.cra.figaro.language.NonCachingChain.U">U</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A NonCachingChain is an implementation of Chain with a single element cache
+</p>
+    </li><li name="com.cra.figaro.language.Observation" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Observation[T]extendsEvidence[T]withProductwithSerializable"></a>
+      <a id="Observation[T]:Observation[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Observation.html"><span class="name">Observation</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="value">value: <span class="extype" name="com.cra.figaro.language.Observation.T">T</span></span>)</span><span class="result"> extends <a href="Evidence.html" class="extype" name="com.cra.figaro.language.Evidence">Evidence</a>[<span class="extype" name="com.cra.figaro.language.Observation.T">T</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Evidence representing observing a particular value for the element.</p>
+    </li><li name="com.cra.figaro.language.Parameter" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="Parameter[T]extendsElement[T]"></a>
+      <a id="Parameter[T]:Parameter[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Parameter.html"><span class="name">Parameter</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="Element.html" class="extype" name="com.cra.figaro.language.Element">Element</a>[<span class="extype" name="com.cra.figaro.language.Parameter.T">T</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Trait of learnable parameters.</p>
+    </li><li name="com.cra.figaro.language.Parameterized" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="Parameterized[T]extendsElement[T]"></a>
+      <a id="Parameterized[T]:Parameterized[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Parameterized.html"><span class="name">Parameterized</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="Element.html" class="extype" name="com.cra.figaro.language.Element">Element</a>[<span class="extype" name="com.cra.figaro.language.Parameterized.T">T</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Trait of elements which accept learnable parameters.</p>
+    </li><li name="com.cra.figaro.language.ParameterizedFlip" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ParameterizedFlipextendsElement[Boolean]withFlipwithParameterized[Boolean]"></a>
+      <a id="ParameterizedFlip:ParameterizedFlip"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="ParameterizedFlip.html"><span class="name">ParameterizedFlip</span></a><span class="result"> extends <a href="Element.html" class="extype" name="com.cra.figaro.language.Element">Element</a>[<span class="extype" name="scala.Boolean">Boolean</span>] with <a href="Flip.html" class="extype" name="com.cra.figaro.language.Flip">Flip</a> with <a href="Parameterized.html" class="extype" name="com.cra.figaro.language.Parameterized">Parameterized</a>[<span class="extype" name="scala.Boolean">Boolean</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A coin toss where the weight is specified by a learnable parameter.</p>
+    </li><li name="com.cra.figaro.language.ParameterizedSelect" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ParameterizedSelect[T]extendsSelect[Double,T]withParameterized[T]"></a>
+      <a id="ParameterizedSelect[T]:ParameterizedSelect[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="ParameterizedSelect.html"><span class="name">ParameterizedSelect</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="Select.html" class="extype" name="com.cra.figaro.language.Select">Select</a>[<span class="extype" name="scala.Double">Double</span>, <span class="extype" name="com.cra.figaro.language.ParameterizedSelect.T">T</span>] with <a href="Parameterized.html" class="extype" name="com.cra.figaro.language.Parameterized">Parameterized</a>[<span class="extype" name="com.cra.figaro.language.ParameterizedSelect.T">T</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A distribution in which the probabilities are learnable parameters and the outcomes are values.</p>
+    </li><li name="com.cra.figaro.language.Pragma" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="Pragma[T]extendsAnyRef"></a>
+      <a id="Pragma[T]:Pragma[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Pragma.html"><span class="name">Pragma</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Pragmas are hints to algorithms that are associated with elements.</p>
+    </li><li name="com.cra.figaro.language.Reference" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="Reference[+T]extendsAnyRef"></a>
+      <a id="Reference[+T]:Reference[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">sealed </span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Reference.html"><span class="name">Reference</span></a><span class="tparams">[<span name="T">+T</span>]</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">A reference to an element.</p>
+    </li><li name="com.cra.figaro.language.ReferenceElement" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="ReferenceElement[T,U]extendsDeterministic[U]withIfArgsCacheable[U]"></a>
+      <a id="ReferenceElement[T,U]:ReferenceElement[T,U]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="ReferenceElement.html"><span class="name">ReferenceElement</span></a><span class="tparams">[<span name="T">T</span>, <span name="U">U</span>]</span><span class="result"> extends <a href="Deterministic.html" class="extype" name="com.cra.figaro.language.Deterministic">Deterministic</a>[<span class="extype" name="com.cra.figaro.language.ReferenceElement.U">U</span>] with <a href="IfArgsCacheable.html" class="extype" name="com.cra.figaro.language.IfArgsCacheable">IfArgsCacheable</a>[<span class="extype" name="com.cra.figaro.language.ReferenceElement.U">U</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Element representing the value of a reference.</p>
+    </li><li name="com.cra.figaro.language.Select" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="Select[P,T]extendsElement[T]withCacheable[T]"></a>
+      <a id="Select[P,T]:Select[P,T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="Select.html"><span class="name">Select</span></a><span class="tparams">[<span name="P">P</span>, <span name="T">T</span>]</span><span class="result"> extends <a href="Element.html" class="extype" name="com.cra.figaro.language.Element">Element</a>[<span class="extype" name="com.cra.figaro.language.Select.T">T</span>] with <a href="Cacheable.html" class="extype" name="com.cra.figaro.language.Cacheable">Cacheable</a>[<span class="extype" name="com.cra.figaro.language.Select.T">T</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Distributions with randomly chosen outcomes.</p>
+    </li><li name="com.cra.figaro.language.SingleValuedReferenceElement" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SingleValuedReferenceElement[T]extendsReferenceElement[T,T]withValuesMaker[T]withProbFactorMaker"></a>
+      <a id="SingleValuedReferenceElement[T]:SingleValuedReferenceElement[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="SingleValuedReferenceElement.html"><span class="name">SingleValuedReferenceElement</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="ReferenceElement.html" class="extype" name="com.cra.figaro.language.ReferenceElement">ReferenceElement</a>[<span class="extype" name="com.cra.figaro.language.SingleValuedReferenceElement.T">T</span>, <span class="extype" name="com.cra.figaro.language.SingleValuedReferenceElement.T">T</span>] with <a href="../algorithm/ValuesMaker.html" class="extype" name="com.cra.figaro.algorithm.ValuesMaker">ValuesMaker</a>[<span class="extype" name="com.cra.figaro.language.SingleValuedReferenceElement.T">T</span>] with <a href="../algorithm/factored/ProbFactorMaker.html" class="extype" name="com.cra.figaro.algorithm.factored.ProbFactorMaker">ProbFactorMaker</a></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Element representing a single-valued reference.</p>
+    </li><li name="com.cra.figaro.language.Universe" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="UniverseextendsElementCollection"></a>
+      <a id="Universe:Universe"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="Universe.html"><span class="name">Universe</span></a><span class="result"> extends <a href="ElementCollection.html" class="extype" name="com.cra.figaro.language.ElementCollection">ElementCollection</a></span>
+      </span>
+      </h4>
+      <p class="comment cmt">A universe is a collection of elements that can be used by a reasoning algorithm.</p>
+    </li></ol>
+            </div>
+
+        
+
+        <div id="values" class="values members">
+              <h3>Value Members</h3>
+              <ol><li name="com.cra.figaro.language.Apply" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Apply"></a>
+      <a id="Apply:Apply"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Apply$.html"><span class="name">Apply</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.language.CachingChain" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="CachingChain"></a>
+      <a id="CachingChain:CachingChain"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="CachingChain$.html"><span class="name">CachingChain</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.language.Chain" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Chain"></a>
+      <a id="Chain:Chain"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Chain$.html"><span class="name">Chain</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.language.Constant" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Constant"></a>
+      <a id="Constant:Constant"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Constant$.html"><span class="name">Constant</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.language.Create" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Create"></a>
+      <a id="Create:Create"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Create$.html"><span class="name">Create</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.language.Dist" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Dist"></a>
+      <a id="Dist:Dist"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Dist$.html"><span class="name">Dist</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.language.Element" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Element"></a>
+      <a id="Element:Element"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Element$.html"><span class="name">Element</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.language.ElementCollection" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ElementCollection"></a>
+      <a id="ElementCollection:ElementCollection"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="ElementCollection$.html"><span class="name">ElementCollection</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.language.Flip" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Flip"></a>
+      <a id="Flip:Flip"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Flip$.html"><span class="name">Flip</span></a><span class="result"> extends <a href="Creatable.html" class="extype" name="com.cra.figaro.language.Creatable">Creatable</a></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.language.Inject" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Inject"></a>
+      <a id="Inject:Inject"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Inject$.html"><span class="name">Inject</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.language.Name" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Name"></a>
+      <a id="Name:Name"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Name$.html"><span class="name">Name</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.language.NonCachingChain" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="NonCachingChain"></a>
+      <a id="NonCachingChain:NonCachingChain"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="NonCachingChain$.html"><span class="name">NonCachingChain</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.language.Reference" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Reference"></a>
+      <a id="Reference:Reference"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Reference$.html"><span class="name">Reference</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.language.Select" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Select"></a>
+      <a id="Select:Select"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Select$.html"><span class="name">Select</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.language.Universe" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Universe"></a>
+      <a id="Universe:Universe"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Universe$.html"><span class="name">Universe</span></a>
+      </span>
+      </h4>
+      
+    </li></ol>
+            </div>
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+
+
+    </body>
+      </html>

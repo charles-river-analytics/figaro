@@ -1,0 +1,1056 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html>
+        <head>
+          <title>Protein - Project API documentation - com.cra.figaro.example.dosage.Protein</title>
+          <meta name="description" content="Protein - Project API documentation - com.cra.figaro.example.dosage.Protein" />
+          <meta name="keywords" content="Protein Project API documentation com.cra.figaro.example.dosage.Protein" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../../../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../../../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript" src="../../../../../lib/jquery.js" id="jquery-js"></script>
+      <script type="text/javascript" src="../../../../../lib/jquery-ui.js"></script>
+      <script type="text/javascript" src="../../../../../lib/template.js"></script>
+      <script type="text/javascript" src="../../../../../lib/tools.tooltip.js"></script>
+      
+      <script type="text/javascript">
+         if(top === self) {
+            var url = '../../../../../index.html';
+            var hash = 'com.cra.figaro.example.dosage.Protein';
+            var anchor = window.location.hash;
+            var anchor_opt = '';
+            if (anchor.length >= 1)
+              anchor_opt = '@' + anchor.substring(1);
+            window.location.href = url + '#' + hash + anchor_opt;
+         }
+   	  </script>
+    
+        </head>
+        <body class="type">
+      <div id="definition">
+        <a href="Protein$.html" title="Go to companion"><img src="../../../../../lib/class_to_object_big.png" /></a>
+        <p id="owner"><a href="../../../../package.html" class="extype" name="com">com</a>.<a href="../../../package.html" class="extype" name="com.cra">cra</a>.<a href="../../package.html" class="extype" name="com.cra.figaro">figaro</a>.<a href="../package.html" class="extype" name="com.cra.figaro.example">example</a>.<a href="package.html" class="extype" name="com.cra.figaro.example.dosage">dosage</a></p>
+        <h1><a href="Protein$.html" title="Go to companion">Protein</a></h1>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <span class="name">Protein</span><span class="result"> extends <span class="extype" name="com.cra.figaro.language.Apply1">Apply1</span>[<span class="extype" name="scala.List">List</span>[<a href="AminoAcidSequence.html" class="extype" name="com.cra.figaro.example.dosage.AminoAcidSequence">AminoAcidSequence</a>], <a href="AminoAcidSequence.html" class="extype" name="com.cra.figaro.example.dosage.AminoAcidSequence">AminoAcidSequence</a>]</span>
+      </span>
+      </h4>
+      
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>A protein class, which is an Element[AminoAcidSequence].
+Given an input string, the protein represents a distribution over
+the possible AminoAcidSequences that can be generated from the string
+</p></div><div class="toggleContainer block">
+          <span class="toggle">Linear Supertypes</span>
+          <div class="superTypes hiddenContent"><span class="extype" name="com.cra.figaro.language.Apply1">Apply1</span>[<span class="extype" name="scala.List">List</span>[<a href="AminoAcidSequence.html" class="extype" name="com.cra.figaro.example.dosage.AminoAcidSequence">AminoAcidSequence</a>], <a href="AminoAcidSequence.html" class="extype" name="com.cra.figaro.example.dosage.AminoAcidSequence">AminoAcidSequence</a>], <span class="extype" name="com.cra.figaro.language.Apply">Apply</span>[<a href="AminoAcidSequence.html" class="extype" name="com.cra.figaro.example.dosage.AminoAcidSequence">AminoAcidSequence</a>], <span class="extype" name="com.cra.figaro.language.IfArgsCacheable">IfArgsCacheable</span>[<a href="AminoAcidSequence.html" class="extype" name="com.cra.figaro.example.dosage.AminoAcidSequence">AminoAcidSequence</a>], <span class="extype" name="com.cra.figaro.language.Deterministic">Deterministic</span>[<a href="AminoAcidSequence.html" class="extype" name="com.cra.figaro.example.dosage.AminoAcidSequence">AminoAcidSequence</a>], <span class="extype" name="com.cra.figaro.language.Element">Element</span>[<a href="AminoAcidSequence.html" class="extype" name="com.cra.figaro.example.dosage.AminoAcidSequence">AminoAcidSequence</a>], <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+        </div></div>
+        
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input id="mbrsel-input" type="text" accesskey="/" /></span><span class="post"></span></div>
+        <div id="order">
+              <span class="filtertype">Ordering</span>
+              <ol>
+                
+                <li class="alpha in"><span>Alphabetic</span></li>
+                <li class="inherit out"><span>By inheritance</span></li>
+              </ol>
+            </div>
+        <div id="ancestors">
+                <span class="filtertype">Inherited<br />
+                </span>
+                <ol id="linearization">
+                  <li class="in" name="com.cra.figaro.example.dosage.Protein"><span>Protein</span></li><li class="in" name="com.cra.figaro.language.Apply1"><span>Apply1</span></li><li class="in" name="com.cra.figaro.language.Apply"><span>Apply</span></li><li class="in" name="com.cra.figaro.language.IfArgsCacheable"><span>IfArgsCacheable</span></li><li class="in" name="com.cra.figaro.language.Deterministic"><span>Deterministic</span></li><li class="in" name="com.cra.figaro.language.Element"><span>Element</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                </ol>
+              </div><div id="ancestors">
+            <span class="filtertype"></span>
+            <ol>
+              <li class="hideall out"><span>Hide All</span></li>
+              <li class="showall in"><span>Show all</span></li>
+            </ol>
+            <a href="http://docs.scala-lang.org/overviews/scaladoc/usage.html#members" target="_blank">Learn more about member selection</a>
+          </div>
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        <div id="constructors" class="members">
+              <h3>Instance Constructors</h3>
+              <ol><li name="com.cra.figaro.example.dosage.Protein#&lt;init&gt;" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="&lt;init&gt;(name:com.cra.figaro.language.Name[com.cra.figaro.example.dosage.AminoAcidSequence],arg1:String,collection:com.cra.figaro.language.ElementCollection):com.cra.figaro.example.dosage.Protein"></a>
+      <a id="&lt;init&gt;:Protein"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">new</span>
+      </span>
+      <span class="symbol">
+        <span class="name">Protein</span><span class="params">(<span name="name">name: <span class="extype" name="com.cra.figaro.language.Name">Name</span>[<a href="AminoAcidSequence.html" class="extype" name="com.cra.figaro.example.dosage.AminoAcidSequence">AminoAcidSequence</a>]</span>, <span name="arg1">arg1: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="collection">collection: <span class="extype" name="com.cra.figaro.language.ElementCollection">ElementCollection</span></span>)</span>
+      </span>
+      </h4>
+      
+    </li></ol>
+            </div>
+
+        <div id="types" class="types members">
+              <h3>Type Members</h3>
+              <ol><li name="com.cra.figaro.language.Apply1.Arg1Type" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="Arg1Type=T1"></a>
+      <a id="Arg1Type:Arg1Type"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">type</span>
+      </span>
+      <span class="symbol">
+        <span class="name">Arg1Type</span><span class="result"> = <span class="extype" name="scala.List">List</span>[<a href="AminoAcidSequence.html" class="extype" name="com.cra.figaro.example.dosage.AminoAcidSequence">AminoAcidSequence</a>]</span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Apply1</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element.Condition" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="Condition=T=&gt;Boolean"></a>
+      <a id="Condition:(AminoAcidSequence)⇒Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">type</span>
+      </span>
+      <span class="symbol">
+        <span class="name">Condition</span><span class="result"> = (<a href="AminoAcidSequence.html" class="extype" name="com.cra.figaro.example.dosage.AminoAcidSequence">AminoAcidSequence</a>) ⇒ <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element.Constraint" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="Constraint=T=&gt;Double"></a>
+      <a id="Constraint:(AminoAcidSequence)⇒Double"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">type</span>
+      </span>
+      <span class="symbol">
+        <span class="name">Constraint</span><span class="result"> = (<a href="AminoAcidSequence.html" class="extype" name="com.cra.figaro.example.dosage.AminoAcidSequence">AminoAcidSequence</a>) ⇒ <span class="extype" name="scala.Double">Double</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Deterministic.Randomness" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="Randomness=Null"></a>
+      <a id="Randomness:Randomness"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">type</span>
+      </span>
+      <span class="symbol">
+        <span class="name">Randomness</span><span class="result"> = <span class="extype" name="scala.Null">Null</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Deterministic → Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element.Value" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="Value=T"></a>
+      <a id="Value:Value"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">type</span>
+      </span>
+      <span class="symbol">
+        <span class="name">Value</span><span class="result"> = <a href="AminoAcidSequence.html" class="extype" name="com.cra.figaro.example.dosage.AminoAcidSequence">AminoAcidSequence</a></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li></ol>
+            </div>
+
+        
+
+        <div id="values" class="values members">
+              <h3>Value Members</h3>
+              <ol><li name="scala.AnyRef#!=" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="!=(x$1:AnyRef):Boolean"></a>
+      <a id="!=(AnyRef):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.AnyRef">AnyRef</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="scala.Any#!=" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="!=(x$1:Any):Boolean"></a>
+      <a id="!=(Any):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#!==" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="!==(that:&lt;?&gt;)(implicituniverse:&lt;?&gt;):com.cra.figaro.library.compound.Neq[Element.this.Value]"></a>
+      <a id="!==(Element[Value])(Universe):Neq[Value]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $bang$eq$eq" class="name">!==</span><span class="params">(<span name="that">that: <span class="extype" name="com.cra.figaro.language.Element">Element</span>[<a href="#Value=T" class="extmbr" name="com.cra.figaro.example.dosage.Protein.Value">Value</a>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="universe">universe: <span class="extype" name="com.cra.figaro.language.Universe">Universe</span></span>)</span><span class="result">: <span class="extype" name="com.cra.figaro.library.compound.Neq">Neq</span>[<a href="#Value=T" class="extmbr" name="com.cra.figaro.example.dosage.Protein.Value">Value</a>]</span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="scala.AnyRef###" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="##():Int"></a>
+      <a id="##():Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.AnyRef#==" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="==(x$1:AnyRef):Boolean"></a>
+      <a id="==(AnyRef):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.AnyRef">AnyRef</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="scala.Any#==" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="==(x$1:Any):Boolean"></a>
+      <a id="==(Any):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#===" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="===(that:com.cra.figaro.language.Element[Element.this.Value])(implicituniverse:com.cra.figaro.language.Universe):com.cra.figaro.library.compound.Eq[Element.this.Value]"></a>
+      <a id="===(Element[Value])(Universe):Eq[Value]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $eq$eq$eq" class="name">===</span><span class="params">(<span name="that">that: <span class="extype" name="com.cra.figaro.language.Element">Element</span>[<a href="#Value=T" class="extmbr" name="com.cra.figaro.example.dosage.Protein.Value">Value</a>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="universe">universe: <span class="extype" name="com.cra.figaro.language.Universe">Universe</span></span>)</span><span class="result">: <span class="extype" name="com.cra.figaro.library.compound.Eq">Eq</span>[<a href="#Value=T" class="extmbr" name="com.cra.figaro.example.dosage.Protein.Value">Value</a>]</span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#activate" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="activate():Unit"></a>
+      <a id="activate():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">activate</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#active" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="active:Boolean"></a>
+      <a id="active:Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">var</span>
+      </span>
+      <span class="symbol">
+        <span class="name">active</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#addCondition" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="addCondition(condition:T=&gt;Boolean,contingency:Element.this.Contingency):Unit"></a>
+      <a id="addCondition((AminoAcidSequence)⇒Boolean,Contingency):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">addCondition</span><span class="params">(<span name="condition">condition: (<a href="AminoAcidSequence.html" class="extype" name="com.cra.figaro.example.dosage.AminoAcidSequence">AminoAcidSequence</a>) ⇒ <span class="extype" name="scala.Boolean">Boolean</span></span>, <span name="contingency">contingency: <span class="extype" name="com.cra.figaro.language.Element.Contingency">Contingency</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#addConstraint" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="addConstraint(constraint:&lt;?&gt;,contingency:&lt;?&gt;):Unit"></a>
+      <a id="addConstraint((AminoAcidSequence)⇒Double,Contingency):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">addConstraint</span><span class="params">(<span name="constraint">constraint: (<a href="AminoAcidSequence.html" class="extype" name="com.cra.figaro.example.dosage.AminoAcidSequence">AminoAcidSequence</a>) ⇒ <span class="extype" name="scala.Double">Double</span></span>, <span name="contingency">contingency: <span class="extype" name="com.cra.figaro.language.Element.Contingency">Contingency</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#addPragma" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="addPragma(pragma:&lt;?&gt;):Unit"></a>
+      <a id="addPragma(Pragma[Value]):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">addPragma</span><span class="params">(<span name="pragma">pragma: <span class="extype" name="com.cra.figaro.language.Pragma">Pragma</span>[<a href="#Value=T" class="extmbr" name="com.cra.figaro.example.dosage.Protein.Value">Value</a>]</span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#allConditions" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="allConditions:List[(T=&gt;Boolean,Element.this.Contingency)]"></a>
+      <a id="allConditions:List[((AminoAcidSequence)⇒Boolean,Contingency)]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">allConditions</span><span class="result">: <span class="extype" name="scala.List">List</span>[((<a href="AminoAcidSequence.html" class="extype" name="com.cra.figaro.example.dosage.AminoAcidSequence">AminoAcidSequence</a>) ⇒ <span class="extype" name="scala.Boolean">Boolean</span>, <span class="extype" name="com.cra.figaro.language.Element.Contingency">Contingency</span>)]</span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#allConstraints" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="allConstraints:List[(T=&gt;Double,Element.this.Contingency)]"></a>
+      <a id="allConstraints:List[((AminoAcidSequence)⇒Double,Contingency)]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">allConstraints</span><span class="result">: <span class="extype" name="scala.List">List</span>[((<a href="AminoAcidSequence.html" class="extype" name="com.cra.figaro.example.dosage.AminoAcidSequence">AminoAcidSequence</a>) ⇒ <span class="extype" name="scala.Double">Double</span>, <span class="extype" name="com.cra.figaro.language.Element.Contingency">Contingency</span>)]</span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Apply1#args" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="args:List[com.cra.figaro.language.Element[_]]"></a>
+      <a id="args:List[Element[_]]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">args</span><span class="result">: <span class="extype" name="scala.List">List</span>[<span class="extype" name="com.cra.figaro.language.Element">Element</span>[_]]</span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Apply1 → Element</dd></dl></div>
+    </li><li name="scala.Any#asInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="asInstanceOf[T0]:T0"></a>
+      <a id="asInstanceOf[T0]:T0"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">asInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <span class="extype" name="scala.Any.asInstanceOf.T0">T0</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#clearContext" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="clearContext():Unit"></a>
+      <a id="clearContext():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">clearContext</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="scala.AnyRef#clone" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="clone():Object"></a>
+      <a id="clone():AnyRef"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#condition" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="condition(value:&lt;?&gt;):Boolean"></a>
+      <a id="condition(Any):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">condition</span><span class="params">(<span name="value">value: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#conditionSatisfied" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="conditionSatisfied:Boolean"></a>
+      <a id="conditionSatisfied:Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">conditionSatisfied</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#constraint" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="constraint(value:&lt;?&gt;):Double"></a>
+      <a id="constraint(Any):Double"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">constraint</span><span class="params">(<span name="value">value: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Double">Double</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#constraintValue" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="constraintValue:Double"></a>
+      <a id="constraintValue:Double"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">constraintValue</span><span class="result">: <span class="extype" name="scala.Double">Double</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#context" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="context:List[com.cra.figaro.language.Element[_]]"></a>
+      <a id="context:List[Element[_]]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">context</span><span class="result">: <span class="extype" name="scala.List">List</span>[<span class="extype" name="com.cra.figaro.language.Element">Element</span>[_]]</span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#deactivate" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="deactivate():Unit"></a>
+      <a id="deactivate():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">deactivate</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#directContextContents" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="directContextContents:scala.collection.mutable.Set[com.cra.figaro.language.Element[_]]"></a>
+      <a id="directContextContents:Set[Element[_]]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">directContextContents</span><span class="result">: <span class="extype" name="scala.collection.mutable.Set">Set</span>[<span class="extype" name="com.cra.figaro.language.Element">Element</span>[_]]</span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="scala.AnyRef#eq" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="eq(x$1:AnyRef):Boolean"></a>
+      <a id="eq(AnyRef):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.AnyRef">AnyRef</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="scala.AnyRef#equals" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="equals(x$1:Any):Boolean"></a>
+      <a id="equals(Any):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.AnyRef#finalize" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="finalize():Unit"></a>
+      <a id="finalize():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li name="com.cra.figaro.language.Apply1#fn" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="fn:T1=&gt;U"></a>
+      <a id="fn:(List[AminoAcidSequence])⇒AminoAcidSequence"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">fn</span><span class="result">: (<span class="extype" name="scala.List">List</span>[<a href="AminoAcidSequence.html" class="extype" name="com.cra.figaro.example.dosage.AminoAcidSequence">AminoAcidSequence</a>]) ⇒ <a href="AminoAcidSequence.html" class="extype" name="com.cra.figaro.example.dosage.AminoAcidSequence">AminoAcidSequence</a></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Apply1</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#generate" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="generate():Unit"></a>
+      <a id="generate():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">generate</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Deterministic#generateRandomness" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="generateRandomness():Null"></a>
+      <a id="generateRandomness():Null"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">generateRandomness</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Null">Null</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Deterministic → Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Apply1#generateValue" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="generateValue():U"></a>
+      <a id="generateValue():AminoAcidSequence"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">generateValue</span><span class="params">()</span><span class="result">: <a href="AminoAcidSequence.html" class="extype" name="com.cra.figaro.example.dosage.AminoAcidSequence">AminoAcidSequence</a></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Apply1 → Deterministic</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Deterministic#generateValue" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="generateValue(rand:Deterministic.this.Randomness):Deterministic.this.Value"></a>
+      <a id="generateValue(Randomness):Value"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">generateValue</span><span class="params">(<span name="rand">rand: <a href="#Randomness=Null" class="extmbr" name="com.cra.figaro.example.dosage.Protein.Randomness">Randomness</a></span>)</span><span class="result">: <a href="#Value=T" class="extmbr" name="com.cra.figaro.example.dosage.Protein.Value">Value</a></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Deterministic → Element</dd></dl></div>
+    </li><li name="scala.AnyRef#getClass" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="getClass():Class[_]"></a>
+      <a id="getClass():Class[_]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">getClass</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.Class">Class</span>[_]</span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#hashCode" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="hashCode:Int"></a>
+      <a id="hashCode:Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">hashCode</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element → AnyRef → Any</dd></dl></div>
+    </li><li name="com.cra.figaro.language.IfArgsCacheable#isCachable" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="isCachable():Boolean"></a>
+      <a id="isCachable():Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">isCachable</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>IfArgsCacheable → Element</dd></dl></div>
+    </li><li name="scala.Any#isInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="isInstanceOf[T0]:Boolean"></a>
+      <a id="isInstanceOf[T0]:Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#isTemporary" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="isTemporary:Boolean"></a>
+      <a id="isTemporary:Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">isTemporary</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#myContigentElements" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="myContigentElements:List[com.cra.figaro.language.Element[_]]"></a>
+      <a id="myContigentElements:List[Element[_]]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">myContigentElements</span><span class="result">: <span class="extype" name="scala.List">List</span>[<span class="extype" name="com.cra.figaro.language.Element">Element</span>[_]]</span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="scala.AnyRef#ne" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="ne(x$1:AnyRef):Boolean"></a>
+      <a id="ne(AnyRef):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.AnyRef">AnyRef</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#nextRandomness" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="nextRandomness(rand:&lt;?&gt;):(Element.this.Randomness,Double,Double)"></a>
+      <a id="nextRandomness(Randomness):(Randomness,Double,Double)"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">nextRandomness</span><span class="params">(<span name="rand">rand: <a href="#Randomness=Null" class="extmbr" name="com.cra.figaro.example.dosage.Protein.Randomness">Randomness</a></span>)</span><span class="result">: (<a href="#Randomness=Null" class="extmbr" name="com.cra.figaro.example.dosage.Protein.Randomness">Randomness</a>, <span class="extype" name="scala.Double">Double</span>, <span class="extype" name="scala.Double">Double</span>)</span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="scala.AnyRef#notify" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="notify():Unit"></a>
+      <a id="notify():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="scala.AnyRef#notifyAll" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="notifyAll():Unit"></a>
+      <a id="notifyAll():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#observe" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="observe(observation:Element.this.Value):Unit"></a>
+      <a id="observe(Value):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">observe</span><span class="params">(<span name="observation">observation: <a href="#Value=T" class="extmbr" name="com.cra.figaro.example.dosage.Protein.Value">Value</a></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#pragmas" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="pragmas:List[com.cra.figaro.language.Pragma[Element.this.Value]]"></a>
+      <a id="pragmas:List[Pragma[Value]]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">pragmas</span><span class="result">: <span class="extype" name="scala.List">List</span>[<span class="extype" name="com.cra.figaro.language.Pragma">Pragma</span>[<a href="#Value=T" class="extmbr" name="com.cra.figaro.example.dosage.Protein.Value">Value</a>]]</span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#randomness" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="randomness:Element.this.Randomness"></a>
+      <a id="randomness:Randomness"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">var</span>
+      </span>
+      <span class="symbol">
+        <span class="name">randomness</span><span class="result">: <a href="#Randomness=Null" class="extmbr" name="com.cra.figaro.example.dosage.Protein.Randomness">Randomness</a></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#removeConditions" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="removeConditions(contingency:&lt;?&gt;):Unit"></a>
+      <a id="removeConditions(Contingency):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">removeConditions</span><span class="params">(<span name="contingency">contingency: <span class="extype" name="com.cra.figaro.language.Element.Contingency">Contingency</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#removeConstraints" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="removeConstraints(contingency:&lt;?&gt;):Unit"></a>
+      <a id="removeConstraints(Contingency):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">removeConstraints</span><span class="params">(<span name="contingency">contingency: <span class="extype" name="com.cra.figaro.language.Element.Contingency">Contingency</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#removePragma" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="removePragma(pragma:&lt;?&gt;):Unit"></a>
+      <a id="removePragma(Pragma[Value]):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">removePragma</span><span class="params">(<span name="pragma">pragma: <span class="extype" name="com.cra.figaro.language.Pragma">Pragma</span>[<a href="#Value=T" class="extmbr" name="com.cra.figaro.example.dosage.Protein.Value">Value</a>]</span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#score" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="score(oldValue:&lt;?&gt;,newValue:&lt;?&gt;):Double"></a>
+      <a id="score(Value,Value):Double"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">score</span><span class="params">(<span name="oldValue">oldValue: <a href="#Value=T" class="extmbr" name="com.cra.figaro.example.dosage.Protein.Value">Value</a></span>, <span name="newValue">newValue: <a href="#Value=T" class="extmbr" name="com.cra.figaro.example.dosage.Protein.Value">Value</a></span>)</span><span class="result">: <span class="extype" name="scala.Double">Double</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#set" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="set(newValue:&lt;?&gt;):Unit"></a>
+      <a id="set(Value):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">set</span><span class="params">(<span name="newValue">newValue: <a href="#Value=T" class="extmbr" name="com.cra.figaro.example.dosage.Protein.Value">Value</a></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#setCondition" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="setCondition(newCondition:T=&gt;Boolean,contingency:Element.this.Contingency):Unit"></a>
+      <a id="setCondition((AminoAcidSequence)⇒Boolean,Contingency):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">setCondition</span><span class="params">(<span name="newCondition">newCondition: (<a href="AminoAcidSequence.html" class="extype" name="com.cra.figaro.example.dosage.AminoAcidSequence">AminoAcidSequence</a>) ⇒ <span class="extype" name="scala.Boolean">Boolean</span></span>, <span name="contingency">contingency: <span class="extype" name="com.cra.figaro.language.Element.Contingency">Contingency</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#setConstraint" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="setConstraint(newConstraint:T=&gt;Double,contingency:Element.this.Contingency):Unit"></a>
+      <a id="setConstraint((AminoAcidSequence)⇒Double,Contingency):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">setConstraint</span><span class="params">(<span name="newConstraint">newConstraint: (<a href="AminoAcidSequence.html" class="extype" name="com.cra.figaro.example.dosage.AminoAcidSequence">AminoAcidSequence</a>) ⇒ <span class="extype" name="scala.Double">Double</span></span>, <span name="contingency">contingency: <span class="extype" name="com.cra.figaro.language.Element.Contingency">Contingency</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#setRandomness" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="setRandomness(newRandomness:&lt;?&gt;):Unit"></a>
+      <a id="setRandomness(Randomness):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">setRandomness</span><span class="params">(<span name="newRandomness">newRandomness: <a href="#Randomness=Null" class="extmbr" name="com.cra.figaro.example.dosage.Protein.Randomness">Randomness</a></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="scala.AnyRef#synchronized" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="synchronized[T0](x$1:=&gt;T0):T0"></a>
+      <a id="synchronized[T0](⇒T0):T0"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">synchronized</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="params">(<span name="arg0">arg0: ⇒ <span class="extype" name="java.lang.AnyRef.synchronized.T0">T0</span></span>)</span><span class="result">: <span class="extype" name="java.lang.AnyRef.synchronized.T0">T0</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Apply1#toString" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="toString():String"></a>
+      <a id="toString():String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">toString</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.String">String</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Apply1 → AnyRef → Any</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#universe" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="universe:com.cra.figaro.language.Universe"></a>
+      <a id="universe:Universe"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">universe</span><span class="result">: <span class="extype" name="com.cra.figaro.language.Universe">Universe</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#unobserve" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="unobserve():Unit"></a>
+      <a id="unobserve():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">unobserve</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#unset" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="unset():Unit"></a>
+      <a id="unset():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">unset</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="com.cra.figaro.language.Element#value" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="value:Element.this.Value"></a>
+      <a id="value:Value"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">var</span>
+      </span>
+      <span class="symbol">
+        <span class="name">value</span><span class="result">: <a href="#Value=T" class="extmbr" name="com.cra.figaro.example.dosage.Protein.Value">Value</a></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Element</dd></dl></div>
+    </li><li name="scala.AnyRef#wait" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="wait():Unit"></a>
+      <a id="wait():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li name="scala.AnyRef#wait" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="wait(x$1:Long,x$2:Int):Unit"></a>
+      <a id="wait(Long,Int):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Long">Long</span></span>, <span name="arg1">arg1: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li name="scala.AnyRef#wait" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="wait(x$1:Long):Unit"></a>
+      <a id="wait(Long):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Long">Long</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li></ol>
+            </div>
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        <div class="parent" name="com.cra.figaro.language.Apply1">
+              <h3>Inherited from <span class="extype" name="com.cra.figaro.language.Apply1">Apply1</span>[<span class="extype" name="scala.List">List</span>[<a href="AminoAcidSequence.html" class="extype" name="com.cra.figaro.example.dosage.AminoAcidSequence">AminoAcidSequence</a>], <a href="AminoAcidSequence.html" class="extype" name="com.cra.figaro.example.dosage.AminoAcidSequence">AminoAcidSequence</a>]</h3>
+            </div><div class="parent" name="com.cra.figaro.language.Apply">
+              <h3>Inherited from <span class="extype" name="com.cra.figaro.language.Apply">Apply</span>[<a href="AminoAcidSequence.html" class="extype" name="com.cra.figaro.example.dosage.AminoAcidSequence">AminoAcidSequence</a>]</h3>
+            </div><div class="parent" name="com.cra.figaro.language.IfArgsCacheable">
+              <h3>Inherited from <span class="extype" name="com.cra.figaro.language.IfArgsCacheable">IfArgsCacheable</span>[<a href="AminoAcidSequence.html" class="extype" name="com.cra.figaro.example.dosage.AminoAcidSequence">AminoAcidSequence</a>]</h3>
+            </div><div class="parent" name="com.cra.figaro.language.Deterministic">
+              <h3>Inherited from <span class="extype" name="com.cra.figaro.language.Deterministic">Deterministic</span>[<a href="AminoAcidSequence.html" class="extype" name="com.cra.figaro.example.dosage.AminoAcidSequence">AminoAcidSequence</a>]</h3>
+            </div><div class="parent" name="com.cra.figaro.language.Element">
+              <h3>Inherited from <span class="extype" name="com.cra.figaro.language.Element">Element</span>[<a href="AminoAcidSequence.html" class="extype" name="com.cra.figaro.example.dosage.AminoAcidSequence">AminoAcidSequence</a>]</h3>
+            </div><div class="parent" name="scala.AnyRef">
+              <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
+            </div><div class="parent" name="scala.Any">
+              <h3>Inherited from <span class="extype" name="scala.Any">Any</span></h3>
+            </div>
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+
+
+    </body>
+      </html>

@@ -1,0 +1,454 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html>
+        <head>
+          <title>factored - Project API documentation - com.cra.figaro.algorithm.factored</title>
+          <meta name="description" content="factored - Project API documentation - com.cra.figaro.algorithm.factored" />
+          <meta name="keywords" content="factored Project API documentation com.cra.figaro.algorithm.factored" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../../../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../../../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript" src="../../../../../lib/jquery.js" id="jquery-js"></script>
+      <script type="text/javascript" src="../../../../../lib/jquery-ui.js"></script>
+      <script type="text/javascript" src="../../../../../lib/template.js"></script>
+      <script type="text/javascript" src="../../../../../lib/tools.tooltip.js"></script>
+      
+      <script type="text/javascript">
+         if(top === self) {
+            var url = '../../../../../index.html';
+            var hash = 'com.cra.figaro.algorithm.factored.package';
+            var anchor = window.location.hash;
+            var anchor_opt = '';
+            if (anchor.length >= 1)
+              anchor_opt = '@' + anchor.substring(1);
+            window.location.href = url + '#' + hash + anchor_opt;
+         }
+   	  </script>
+    
+        </head>
+        <body class="value">
+      <div id="definition">
+        <img src="../../../../../lib/package_big.png" />
+        <p id="owner"><a href="../../../../package.html" class="extype" name="com">com</a>.<a href="../../../package.html" class="extype" name="com.cra">cra</a>.<a href="../../package.html" class="extype" name="com.cra.figaro">figaro</a>.<a href="../package.html" class="extype" name="com.cra.figaro.algorithm">algorithm</a></p>
+        <h1>factored</h1>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <span class="name">factored</span>
+      </span>
+      </h4>
+      
+          <div id="comment" class="fullcommenttop"></div>
+        
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input id="mbrsel-input" type="text" accesskey="/" /></span><span class="post"></span></div>
+        
+        
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        
+
+        <div id="types" class="types members">
+              <h3>Type Members</h3>
+              <ol><li name="com.cra.figaro.algorithm.factored.AbstractFactor" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="AbstractFactorextendsProductwithSerializable"></a>
+      <a id="AbstractFactor:AbstractFactor"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="AbstractFactor.html"><span class="name">AbstractFactor</span></a><span class="params">(<span name="variables">variables: <span class="extype" name="scala.List">List</span>[<a href="Variable.html" class="extype" name="com.cra.figaro.algorithm.factored.Variable">Variable</a>[_]]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Abstract factors with no rows associated with variables.</p>
+    </li><li name="com.cra.figaro.algorithm.factored.ElementVariable" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ElementVariable[T]extendsVariable[T]"></a>
+      <a id="ElementVariable[T]:ElementVariable[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="ElementVariable.html"><span class="name">ElementVariable</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="Variable.html" class="extype" name="com.cra.figaro.algorithm.factored.Variable">Variable</a>[<span class="extype" name="com.cra.figaro.algorithm.factored.ElementVariable.T">T</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Variables generated from elements.</p>
+    </li><li name="com.cra.figaro.algorithm.factored.Factor" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Factor[T]extendsAnyRef"></a>
+      <a id="Factor[T]:Factor[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="Factor.html"><span class="name">Factor</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">General class of factors.</p>
+    </li><li name="com.cra.figaro.algorithm.factored.FactoredAlgorithm" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="FactoredAlgorithm[T]extendsAlgorithm"></a>
+      <a id="FactoredAlgorithm[T]:FactoredAlgorithm[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="FactoredAlgorithm.html"><span class="name">FactoredAlgorithm</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="../Algorithm.html" class="extype" name="com.cra.figaro.algorithm.Algorithm">Algorithm</a></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Trait for algorithms that use factors.</p>
+    </li><li name="com.cra.figaro.algorithm.factored.MPEVariableElimination" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="MPEVariableEliminationextendsMPEAlgorithmwithOneTimeMPEwithProbabilisticVariableElimination"></a>
+      <a id="MPEVariableElimination:MPEVariableElimination"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="MPEVariableElimination.html"><span class="name">MPEVariableElimination</span></a><span class="result"> extends <a href="../MPEAlgorithm.html" class="extype" name="com.cra.figaro.algorithm.MPEAlgorithm">MPEAlgorithm</a> with <a href="../OneTimeMPE.html" class="extype" name="com.cra.figaro.algorithm.OneTimeMPE">OneTimeMPE</a> with <a href="ProbabilisticVariableElimination.html" class="extype" name="com.cra.figaro.algorithm.factored.ProbabilisticVariableElimination">ProbabilisticVariableElimination</a></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Variable elimination algorithm to compute the most probable explanation.</p>
+    </li><li name="com.cra.figaro.algorithm.factored.ParameterizedVariable" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ParameterizedVariable[T]extendsElementVariable[T]"></a>
+      <a id="ParameterizedVariable[T]:ParameterizedVariable[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="ParameterizedVariable.html"><span class="name">ParameterizedVariable</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="ElementVariable.html" class="extype" name="com.cra.figaro.algorithm.factored.ElementVariable">ElementVariable</a>[<span class="extype" name="com.cra.figaro.algorithm.factored.ParameterizedVariable.T">T</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Variables generated from parameterized elements
+</p>
+    </li><li name="com.cra.figaro.algorithm.factored.ProbFactorMaker" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="ProbFactorMakerextendsAnyRef"></a>
+      <a id="ProbFactorMaker:ProbFactorMaker"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="ProbFactorMaker.html"><span class="name">ProbFactorMaker</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Trait of elements for which probabilistic factors can be created.</p>
+    </li><li name="com.cra.figaro.algorithm.factored.ProbQueryVariableElimination" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ProbQueryVariableEliminationextendsProbQueryAlgorithmwithOneTimeProbQuerywithProbabilisticVariableElimination"></a>
+      <a id="ProbQueryVariableElimination:ProbQueryVariableElimination"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="ProbQueryVariableElimination.html"><span class="name">ProbQueryVariableElimination</span></a><span class="result"> extends <a href="../ProbQueryAlgorithm.html" class="extype" name="com.cra.figaro.algorithm.ProbQueryAlgorithm">ProbQueryAlgorithm</a> with <a href="../OneTimeProbQuery.html" class="extype" name="com.cra.figaro.algorithm.OneTimeProbQuery">OneTimeProbQuery</a> with <a href="ProbabilisticVariableElimination.html" class="extype" name="com.cra.figaro.algorithm.factored.ProbabilisticVariableElimination">ProbabilisticVariableElimination</a></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Variable elimination algorithm that computes the conditional probability of query elements.</p>
+    </li><li name="com.cra.figaro.algorithm.factored.ProbabilisticVariableElimination" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="ProbabilisticVariableEliminationextendsVariableElimination[Double]"></a>
+      <a id="ProbabilisticVariableElimination:ProbabilisticVariableElimination"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="ProbabilisticVariableElimination.html"><span class="name">ProbabilisticVariableElimination</span></a><span class="result"> extends <a href="VariableElimination.html" class="extype" name="com.cra.figaro.algorithm.factored.VariableElimination">VariableElimination</a>[<span class="extype" name="scala.Double">Double</span>]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Variable elimination over probabilistic factors.</p>
+    </li><li name="com.cra.figaro.algorithm.factored.Semiring" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="Semiring[T]extendsAnyRef"></a>
+      <a id="Semiring[T]:Semiring[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Semiring.html"><span class="name">Semiring</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Operations in factored algorithms are defined by a semiring algebraic structure.</p>
+    </li><li name="com.cra.figaro.algorithm.factored.SufficientStatisticsSemiring" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SufficientStatisticsSemiringextendsSemiring[(Double,scala.collection.mutable.Map[com.cra.figaro.language.Parameter[_],Seq[Double]])]"></a>
+      <a id="SufficientStatisticsSemiring:SufficientStatisticsSemiring"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="SufficientStatisticsSemiring.html"><span class="name">SufficientStatisticsSemiring</span></a><span class="result"> extends <a href="Semiring.html" class="extype" name="com.cra.figaro.algorithm.factored.Semiring">Semiring</a>[(<span class="extype" name="scala.Double">Double</span>, <span class="extype" name="scala.collection.mutable.Map">Map</span>[<a href="../../language/Parameter.html" class="extype" name="com.cra.figaro.language.Parameter">Parameter</a>[_], <span class="extype" name="scala.collection.Seq">Seq</span>[<span class="extype" name="scala.Double">Double</span>]])]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Sum and product operations defined for sufficient statistics.</p>
+    </li><li name="com.cra.figaro.algorithm.factored.SufficientStatisticsVariableElimination" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SufficientStatisticsVariableEliminationextendsVariableElimination[(Double,scala.collection.mutable.Map[com.cra.figaro.language.Parameter[_],Seq[Double]])]withAlgorithm"></a>
+      <a id="SufficientStatisticsVariableElimination:SufficientStatisticsVariableElimination"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="SufficientStatisticsVariableElimination.html"><span class="name">SufficientStatisticsVariableElimination</span></a><span class="result"> extends <a href="VariableElimination.html" class="extype" name="com.cra.figaro.algorithm.factored.VariableElimination">VariableElimination</a>[(<span class="extype" name="scala.Double">Double</span>, <span class="extype" name="scala.collection.mutable.Map">Map</span>[<a href="../../language/Parameter.html" class="extype" name="com.cra.figaro.language.Parameter">Parameter</a>[_], <span class="extype" name="scala.collection.Seq">Seq</span>[<span class="extype" name="scala.Double">Double</span>]])] with <a href="../Algorithm.html" class="extype" name="com.cra.figaro.algorithm.Algorithm">Algorithm</a></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Variable elimination for sufficient statistics factors.</p>
+    </li><li name="com.cra.figaro.algorithm.factored.VEGraph" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="VEGraphextendsAnyRef"></a>
+      <a id="VEGraph:VEGraph"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="VEGraph.html"><span class="name">VEGraph</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Induced graph for variable elimination.</p>
+    </li><li name="com.cra.figaro.algorithm.factored.Variable" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Variable[T]extendsAnyRef"></a>
+      <a id="Variable[T]:Variable[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="Variable.html"><span class="name">Variable</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Variables that appear in factors.</p>
+    </li><li name="com.cra.figaro.algorithm.factored.VariableElimination" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="VariableElimination[T]extendsFactoredAlgorithm[T]withOneTime"></a>
+      <a id="VariableElimination[T]:VariableElimination[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="VariableElimination.html"><span class="name">VariableElimination</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="FactoredAlgorithm.html" class="extype" name="com.cra.figaro.algorithm.factored.FactoredAlgorithm">FactoredAlgorithm</a>[<span class="extype" name="com.cra.figaro.algorithm.factored.VariableElimination.T">T</span>] with <a href="../OneTime.html" class="extype" name="com.cra.figaro.algorithm.OneTime">OneTime</a></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Trait of algorithms that perform variable elimination.</p>
+    </li><li name="com.cra.figaro.algorithm.factored.VariableInfo" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="VariableInfoextendsProductwithSerializable"></a>
+      <a id="VariableInfo:VariableInfo"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="VariableInfo.html"><span class="name">VariableInfo</span></a><span class="params">(<span name="factors">factors: <span class="extype" name="scala.Predef.Set">Set</span>[<a href="AbstractFactor.html" class="extype" name="com.cra.figaro.algorithm.factored.AbstractFactor">AbstractFactor</a>]</span>, <span name="neighbors">neighbors: <span class="extype" name="scala.Predef.Set">Set</span>[<a href="Variable.html" class="extype" name="com.cra.figaro.algorithm.factored.Variable">Variable</a>[_]]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Information associated with a variable during variable elimination, including the factors to which it
+belongs and variables with which it shares a factor.</p>
+    </li></ol>
+            </div>
+
+        
+
+        <div id="values" class="values members">
+              <h3>Value Members</h3>
+              <ol><li name="com.cra.figaro.algorithm.factored.BooleanSemiring" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="BooleanSemiring"></a>
+      <a id="BooleanSemiring:BooleanSemiring"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="BooleanSemiring$.html"><span class="name">BooleanSemiring</span></a><span class="result"> extends <a href="Semiring.html" class="extype" name="com.cra.figaro.algorithm.factored.Semiring">Semiring</a>[<span class="extype" name="scala.Boolean">Boolean</span>]</span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.algorithm.factored.MPEVariableElimination" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="MPEVariableElimination"></a>
+      <a id="MPEVariableElimination:MPEVariableElimination"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="MPEVariableElimination$.html"><span class="name">MPEVariableElimination</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.algorithm.factored.MaxProductSemiring" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="MaxProductSemiring"></a>
+      <a id="MaxProductSemiring:MaxProductSemiring"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="MaxProductSemiring$.html"><span class="name">MaxProductSemiring</span></a><span class="result"> extends <a href="Semiring.html" class="extype" name="com.cra.figaro.algorithm.factored.Semiring">Semiring</a>[<span class="extype" name="scala.Double">Double</span>]</span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.algorithm.factored.ProbFactor" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ProbFactor"></a>
+      <a id="ProbFactor:ProbFactor"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="ProbFactor$.html"><span class="name">ProbFactor</span></a>
+      </span>
+      </h4>
+      <p class="comment cmt">Methods for creating probabilistic factors associated with elements.</p>
+    </li><li name="com.cra.figaro.algorithm.factored.SufficientStatisticsSemiring" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SufficientStatisticsSemiring"></a>
+      <a id="SufficientStatisticsSemiring:SufficientStatisticsSemiring"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="SufficientStatisticsSemiring$.html"><span class="name">SufficientStatisticsSemiring</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.algorithm.factored.SufficientStatisticsVariableElimination" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SufficientStatisticsVariableElimination"></a>
+      <a id="SufficientStatisticsVariableElimination:SufficientStatisticsVariableElimination"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="SufficientStatisticsVariableElimination$.html"><span class="name">SufficientStatisticsVariableElimination</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.algorithm.factored.SumProductSemiring" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SumProductSemiring"></a>
+      <a id="SumProductSemiring:SumProductSemiring"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="SumProductSemiring$.html"><span class="name">SumProductSemiring</span></a><span class="result"> extends <a href="Semiring.html" class="extype" name="com.cra.figaro.algorithm.factored.Semiring">Semiring</a>[<span class="extype" name="scala.Double">Double</span>]</span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.algorithm.factored.SumProductUtilitySemiring" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SumProductUtilitySemiring"></a>
+      <a id="SumProductUtilitySemiring:SumProductUtilitySemiring"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="SumProductUtilitySemiring$.html"><span class="name">SumProductUtilitySemiring</span></a><span class="result"> extends <a href="Semiring.html" class="extype" name="com.cra.figaro.algorithm.factored.Semiring">Semiring</a>[(<span class="extype" name="scala.Double">Double</span>, <span class="extype" name="scala.Double">Double</span>)]</span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.algorithm.factored.VEGraph" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="VEGraph"></a>
+      <a id="VEGraph:VEGraph"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="VEGraph$.html"><span class="name">VEGraph</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.algorithm.factored.Variable" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Variable"></a>
+      <a id="Variable:Variable"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Variable$.html"><span class="name">Variable</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cra.figaro.algorithm.factored.VariableElimination" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="VariableElimination"></a>
+      <a id="VariableElimination:VariableElimination"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="VariableElimination$.html"><span class="name">VariableElimination</span></a>
+      </span>
+      </h4>
+      
+    </li></ol>
+            </div>
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+
+
+    </body>
+      </html>
