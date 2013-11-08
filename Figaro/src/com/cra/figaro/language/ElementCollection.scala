@@ -211,7 +211,22 @@ trait ElementCollection {
     }
   }
 
-
+  /**
+   *   Returns true if the reference is resolvable on this collection. This will always use the most
+   *   recent element with the reference name.
+   */
+  def hasRef[T](reference: Reference[T]): Boolean = {
+    reference match {
+      case Name(name) => myElementMap.getOrElse(name, List()).nonEmpty
+      case Indirect(head, tail) =>
+        val headCheck = myElementMap.getOrElse(head, List())
+        if (headCheck.isEmpty) return false
+        val tailHasRef = Values(universe)(headCheck.head).flatMap { e =>
+          ElementCollection.makeElementCollectionSet(e).map(_.hasRef(tail))
+        }
+        tailHasRef.exists(_ == true)
+    }
+  }
 
   // The arguments of a reference include the arguments of all its possibilities as well as all references along the
   // way, because the value depends on these references. It also includes all the possibilities since the value of

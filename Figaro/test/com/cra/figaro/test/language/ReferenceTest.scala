@@ -49,7 +49,7 @@ class ReferenceTest extends WordSpec with PrivateMethodTester with ShouldMatcher
   }
 
   "An ElementCollection" when {
-    "getting the element associated with a name" should {
+        "getting the element associated with a name" should {
       "return the reference element associated with the name" in {
         createNew()
         val u = Uniform(0.0, 1.0)("u", universe)
@@ -78,6 +78,19 @@ class ReferenceTest extends WordSpec with PrivateMethodTester with ShouldMatcher
           evaluating { universe.getElementByReference("u.f") } should produce[NoSuchElementException]
         }
     }
+    
+    "determining if a reference is resolvable" should {
+      "return the resolvable nature of the reference" in {
+        createNew()
+        class Test extends ElementCollection {
+          val t = Constant(0)("t", this)
+        }
+        val u = Constant(new Test)("u", universe)
+        universe.hasRef("u.t") should be (true)
+        universe.hasRef("u.z") should be (false)
+      }
+    }
+
 
     "getting the elements associated with a multi-valued reference" should {
       "return the set consisting of all elements referred to" in {
