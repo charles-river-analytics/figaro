@@ -94,31 +94,38 @@ trait ElementCollection {
   /**
    *   Assert the given evidence on the given reference. The third argument is an optional contingency.
    *   This method makes sure to assert the evidence on all possible resolutions of the reference.
-   */  
+   */
+
   def assertEvidence[T](reference: Reference[T], evidence: Evidence[T], contingency: Element.Contingency = List()): Unit = {
-    try {
-      for { (element, subContingency) <- allPossibleResolutions(reference) } {
-        evidence.set(element, contingency ::: subContingency)
-      }
-    } catch {
-      case _: NoSuchElementException => ()
+
+    val resolutions = allResolutions(reference)
+    for { (element, subContingency) <- resolutions } {
+      if (element.isDefined) evidence.set(element.get, contingency ::: subContingency)
     }
+
+    // after asserting the evidence, we also have to assert the values of the elements that make this reference resolvable
+    val toAssert = findResolvableValues(resolutions)
+    toAssert.foreach(e =>
+      e._1.asInstanceOf[Element[e._1.Value]].addCondition((v: e._1.Value) => e._2.asInstanceOf[Set[e._1.Value]].contains(v)))
     propagateCollectedEvidence(reference, Some(evidence), contingency)
   }
 
-  /** 
+  /**
    *  Remove any evidence on the given reference. The second argument is an optional contingency.
    *  This method makes sure to remove evidence from all possible resolutions of the reference.
    *  Note: this method removes all conditions and constraints, no matter when they were added.
    */
-   
+
   def removeEvidence[T](reference: Reference[T], contingency: Element.Contingency = List()): Unit = {
-    try {
-      for { (element, subContingency) <- allPossibleResolutions(reference) } {
-        element.removeConditions(contingency ::: subContingency)
-        element.removeConstraints(contingency ::: subContingency)
+    val resolutions = allResolutions(reference)
+    for { (element, subContingency) <- resolutions } {
+      if (element.isDefined) {
+        element.get.removeConditions(contingency ::: subContingency)
+        element.get.removeConstraints(contingency ::: subContingency)
       }
     }
+    // have to remove the assertions that made this reference resolvable
+    findResolvableValues(resolutions).foreach(e => e._1.asInstanceOf[Element[e._1.Value]].removeConditions())
     propagateCollectedEvidence(reference, None, contingency)
   }
 
@@ -153,19 +160,58 @@ trait ElementCollection {
    * Along with each possible resolution, it returns the contingency (values of elements along the path) required to make that resolution be the one.
    */
   def allPossibleResolutions[T](reference: Reference[T]): Set[(Element[T], Element.Contingency)] = {
+    val all = allResolutions(reference)
+    all.filter(p => p._1.isDefined).map(e => (e._1.get, e._2))
+  }
+
+  /*
+   * Finds all of the valid values of elements needed to resolve a reference
+   */
+  private def findResolvableValues[T](resolutions: Set[(Option[Element[T]], Element.Contingency)]): Map[Element[_], Set[Any]] = {
+    val resolveMap: Map[Element[_], Set[Any]] = Map()
+    resolutions.foreach { r =>
+      val (possibility, contingency) = r
+      contingency.foreach { c =>
+        val current = resolveMap.getOrElseUpdate(c.elem, Set())
+        if (possibility.isDefined) resolveMap += (c.elem -> (current + c.value))
+      }
+    }
+    resolveMap
+  }
+
+  /*
+   * Returns all possible valid AND non-valid resolutions of a reference. If a reference is not valid, it
+   * places None in the element field of the return set at the lowest level reference that was resolvable
+   */
+  private def allResolutions[T](reference: Reference[T]): Set[(Option[Element[T]], Element.Contingency)] = {
     reference match {
       case Name(name) =>
-        val elems = myElementMap(name)
-        Set((elems.head.asInstanceOf[Element[T]], List())) // use most recent element with the name
+        val elems = myElementMap.getOrElse(name, List())
+        if (elems.nonEmpty)
+          Set((Some(elems.head.asInstanceOf[Element[T]]), List())) // use most recent element with the name
+        else
+          Set((None, List()))
       case Indirect(head, tail) =>
-        val headElem = myElementMap(head).head // use most recent element with the name
-        for {
-          headValue: Any <- Values(universe)(headElem)
-          headEC: ElementCollection <- ElementCollection.makeElementCollectionSet(headValue) //makeECs(headValue)
-          (possibility, contingency) <- headEC.allPossibleResolutions(tail)
-        } yield (possibility, Element.ElemVal(headElem.asInstanceOf[Element[headElem.Value]], headValue.asInstanceOf[headElem.Value]) :: contingency)
+        val headCheck = myElementMap.getOrElse(head, List()) // use most recent element with the name        
+        if (headCheck.nonEmpty) {
+          val headElem = myElementMap(head).head // use most recent element with the name
+          for {
+            headValue: Any <- Values(universe)(headElem)
+            headEC: ElementCollection <- ElementCollection.makeElementCollectionSet(headValue) //makeECs(headValue)
+            (possibility, contingency) <- headEC.allResolutions(tail)
+          } yield {
+            possibility match {
+              case Some(e) => (possibility, Element.ElemVal(headElem.asInstanceOf[Element[headElem.Value]], headValue.asInstanceOf[headElem.Value]) :: contingency)
+              case None => (None, List(Element.ElemVal(headElem.asInstanceOf[Element[headElem.Value]], headValue.asInstanceOf[headElem.Value])))
+            }
+          }
+        } else {
+          Set((None, List()))
+        }
     }
   }
+
+
 
   // The arguments of a reference include the arguments of all its possibilities as well as all references along the
   // way, because the value depends on these references. It also includes all the possibilities since the value of

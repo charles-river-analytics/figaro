@@ -350,6 +350,43 @@ class ReferenceTest extends WordSpec with PrivateMethodTester with ShouldMatcher
         f1.condition(true) should equal(true)
         f1.condition(false) should equal(false)
       }
+
+      "should assert that contigent elements only take on values that are resolvable in the reference" in {
+        createNew()
+        class EC extends ElementCollection
+        class EC1 extends ElementCollection {
+          val f = Flip(0.3)("f", this)
+        }
+        class EC2 extends ElementCollection {
+          val g = Flip(0.3)("g", this)
+        }
+        val ec1 = new EC1
+        val ec2 = new EC2
+        val ec = new EC
+        val x = Select(0.5 -> ec1, 0.5 -> ec2)("x", ec)
+        ec.assertEvidence("x.f", Observation(true))
+        x.condition(ec1) should equal(true)
+        x.condition(ec2) should equal(false)
+      }
+
+      "should remove contingent assertions when evidence is removed on a reference" in {
+        createNew()
+        class EC extends ElementCollection
+        class EC1 extends ElementCollection {
+          val f = Flip(0.3)("f", this)
+        }
+        class EC2 extends ElementCollection {
+          val g = Flip(0.3)("g", this)
+        }
+        val ec1 = new EC1
+        val ec2 = new EC2
+        val ec = new EC
+        val x = Select(0.5 -> ec1, 0.5 -> ec2)("x", ec)
+        ec.assertEvidence("x.f", Observation(true))
+        ec.removeEvidence("x.f")
+        x.condition(ec1) should equal(true)
+        x.condition(ec2) should equal(true)
+      }
     }
   }
 
@@ -641,6 +678,7 @@ class ReferenceTest extends WordSpec with PrivateMethodTester with ShouldMatcher
 
   class Pickup extends Truck {
     override val size: Element[Symbol] = Constant('medium)("size", this)
+    val color: Element[Symbol] = discrete.Uniform('blue, 'red)
   }
 
   class TwentyWheeler extends Truck {
