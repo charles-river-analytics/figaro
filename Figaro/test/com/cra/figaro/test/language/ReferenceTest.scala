@@ -49,7 +49,7 @@ class ReferenceTest extends WordSpec with PrivateMethodTester with ShouldMatcher
   }
 
   "An ElementCollection" when {
-    "getting the element associated with a name" should {
+        "getting the element associated with a name" should {
       "return the reference element associated with the name" in {
         createNew()
         val u = Uniform(0.0, 1.0)("u", universe)
@@ -78,6 +78,19 @@ class ReferenceTest extends WordSpec with PrivateMethodTester with ShouldMatcher
           evaluating { universe.getElementByReference("u.f") } should produce[NoSuchElementException]
         }
     }
+    
+    "determining if a reference is resolvable" should {
+      "return the resolvable nature of the reference" in {
+        createNew()
+        class Test extends ElementCollection {
+          val t = Constant(0)("t", this)
+        }
+        val u = Constant(new Test)("u", universe)
+        universe.hasRef("u.t") should be (true)
+        universe.hasRef("u.z") should be (false)
+      }
+    }
+
 
     "getting the elements associated with a multi-valued reference" should {
       "return the set consisting of all elements referred to" in {
@@ -349,6 +362,43 @@ class ReferenceTest extends WordSpec with PrivateMethodTester with ShouldMatcher
         val f1 = ec1.f
         f1.condition(true) should equal(true)
         f1.condition(false) should equal(false)
+      }
+
+      "should assert that contigent elements only take on values that are resolvable in the reference" in {
+        createNew()
+        class EC extends ElementCollection
+        class EC1 extends ElementCollection {
+          val f = Flip(0.3)("f", this)
+        }
+        class EC2 extends ElementCollection {
+          val g = Flip(0.3)("g", this)
+        }
+        val ec1 = new EC1
+        val ec2 = new EC2
+        val ec = new EC
+        val x = Select(0.5 -> ec1, 0.5 -> ec2)("x", ec)
+        ec.assertEvidence("x.f", Observation(true))
+        x.condition(ec1) should equal(true)
+        x.condition(ec2) should equal(false)
+      }
+
+      "should remove contingent assertions when evidence is removed on a reference" in {
+        createNew()
+        class EC extends ElementCollection
+        class EC1 extends ElementCollection {
+          val f = Flip(0.3)("f", this)
+        }
+        class EC2 extends ElementCollection {
+          val g = Flip(0.3)("g", this)
+        }
+        val ec1 = new EC1
+        val ec2 = new EC2
+        val ec = new EC
+        val x = Select(0.5 -> ec1, 0.5 -> ec2)("x", ec)
+        ec.assertEvidence("x.f", Observation(true))
+        ec.removeEvidence("x.f")
+        x.condition(ec1) should equal(true)
+        x.condition(ec2) should equal(true)
       }
     }
   }
@@ -641,6 +691,7 @@ class ReferenceTest extends WordSpec with PrivateMethodTester with ShouldMatcher
 
   class Pickup extends Truck {
     override val size: Element[Symbol] = Constant('medium)("size", this)
+    val color: Element[Symbol] = discrete.Uniform('blue, 'red)
   }
 
   class TwentyWheeler extends Truck {

@@ -255,6 +255,19 @@ class ImportanceTest extends WordSpec with ShouldMatchers with PrivateMethodTest
       val i = Importance(1000000, c)
       i.start()
     }
+
+    "resample elements inside class defined in a chain" in {
+      Universe.createNew()
+      class temp {
+        val t1 = Flip(0.9)
+      }
+      val a = Chain(Constant(0), (i: Int) => Constant(new temp))
+      val b = Apply(a, (t: temp) => t.t1.value)
+      val alg = Importance(1000, b)
+      alg.start
+      alg.probability(b, true) should be (0.9 +- .01)
+
+    }
   }
 
   def weightedSampleTest[T](target: Element[T], predicate: T => Boolean, prob: Double) {
