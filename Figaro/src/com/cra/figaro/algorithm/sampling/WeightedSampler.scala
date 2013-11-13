@@ -21,8 +21,8 @@ import scala.language.postfixOps
 /**
  * Samplers that use weighted samples.
  */
-abstract class WeightedSampler(universe: Universe, targets: Element[_]*)
-  extends ProbQueryAlgorithm(universe, targets: _*) with Sampler {
+abstract class WeightedSampler(override val universe: Universe, targets: Element[_]*) extends ProbQueryAlgorithm with Sampler {
+  lazy val queryTargets = targets.toList
   /**
    * A sample consists of a weight and a map from elements to their values.
    */
@@ -53,7 +53,7 @@ abstract class WeightedSampler(universe: Universe, targets: Element[_]*)
 
   protected def resetCounts() = {
     totalWeight = 0.0
-    allWeightsSeen = targets.toList map (newWeightSeen(_))
+    allWeightsSeen = queryTargets.toList map (newWeightSeen(_))
   }
 
   protected def updateWeightSeenWithValue[T](value: T, weight: Double, weightSeen: WeightSeen[T]): Unit =

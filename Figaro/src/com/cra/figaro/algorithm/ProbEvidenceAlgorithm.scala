@@ -25,9 +25,12 @@ import scala.language.existentials
  * In a typical use case, one might want to compute the probability of the named evidence, taking the conditions and constraints as a given part of the model.
  * To achieve this, you would create a ProbEvidenceAlgorithm with no evidence to compute the probability of the conditions and constraints. This probability becomes the
  * denominator in a subsequent algorithm that takes the named evidence whose probability you want to compute.
- * Several shortcut ways of achieving this are provided. 
+ * Several shortcut ways of achieving this are provided.
  */
-abstract class ProbEvidenceAlgorithm(val universe: Universe, val evidence: List[NamedEvidence[_]] = List[NamedEvidence[_]](), val denominator: Double = 1.0) extends Algorithm {
+trait ProbEvidenceAlgorithm extends Algorithm {
+  val universe: Universe
+  val evidence: List[NamedEvidence[_]] = List[NamedEvidence[_]]()
+  val denominator: Double = 1.0
 
   /* Particular implementations of probability of evidence algorithms must define the following method. */
   protected def computedResult: Double

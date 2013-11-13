@@ -58,7 +58,7 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
   /**
    * Cleans up the temporary elements created during sampling
    */
-  def cleanup() = universe.deactivate(targets)
+  def cleanup() = universe.deactivate(queryTargets)
 
     /* Overrides DecisionAlgorithm Trait */
   def computeUtility(): scala.collection.immutable.Map[(T, U), DecisionSample] = {
@@ -69,7 +69,7 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
 
   // override reset so we can reset the local utilities
   override protected def resetCounts() = {
-    allUtilitiesSeen = targets.toList map (newWeightSeen(_))
+    allUtilitiesSeen = queryTargets.toList map (newWeightSeen(_))
     super.resetCounts()
   }
 
@@ -300,7 +300,7 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
   final def sample(): (Boolean, Sample) = {
     mhStep()
     if (dissatisfied.isEmpty) {
-      val values = targets map (target => target -> target.value)
+      val values = queryTargets map (target => target -> target.value)
       (true, Map(values: _*))
     } else {
       (false, Map())
