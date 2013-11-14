@@ -279,7 +279,7 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
     else random.nextDouble < newState.proposalProb * newState.modelProb
   }
 
-  protected final def mhStep(): Unit = {
+  private final def mhStep(): Unit = {
     val newState = proposeAndUpdate()
     if (decideToAccept(newState)) accept(newState)
     else undo(newState)
