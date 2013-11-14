@@ -288,7 +288,7 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
   protected def updateWeightSeenWithValue[T](value: T, weight: Double, weightSeen: WeightSeen[T]): Unit =
     weightSeen._2 += value -> (weightSeen._2.getOrElse(value, 0.0) + weight)
 
-    protected def updateWeightSeenForTarget[T](sample: (Double, Map[Element[_], Any]), weightSeen: WeightSeen[T]): Unit = {
+  protected def updateWeightSeenForTarget[T](sample: (Double, Map[Element[_], Any]), weightSeen: WeightSeen[T]): Unit = {
     val (weight, values) = sample
     val value = values(weightSeen._1).asInstanceOf[T]
     updateWeightSeenWithValue(value, weight, weightSeen)
