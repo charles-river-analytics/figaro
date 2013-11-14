@@ -51,7 +51,7 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
   /**
    * Contains all of the sample data (decision values, utilities) for a given target decision
    */
-  var allUtilitiesSeen: List[WeightSeen[_]] = _
+  private var allUtilitiesSeen: List[WeightSeen[_]] = _
 
   private def utilitySum = (0.0 /: utilityNodes)((s: Double, n: Element[_]) => s + n.value.asInstanceOf[Double])
   

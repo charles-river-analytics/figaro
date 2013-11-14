@@ -41,7 +41,7 @@ abstract class DecisionImportance[T, U] private (override val universe: Universe
   
   import Importance.State
 
-  protected var allUtilitiesSeen: List[WeightSeen[_]] = _
+  private var allUtilitiesSeen: List[WeightSeen[_]] = _
 
   private def utilitySum = (0.0 /: utilityNodes)((s: Double, n: Element[_]) => s + n.value.asInstanceOf[Double])
   
