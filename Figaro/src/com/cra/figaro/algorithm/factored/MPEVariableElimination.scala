@@ -24,10 +24,10 @@ import scala.collection.mutable.{ Set, Map }
  * 
  * @param showTiming Produce timing information on steps of the algorithm
  */
-class MPEVariableElimination(universe: Universe)(
+class MPEVariableElimination(override val universe: Universe)(
   val showTiming: Boolean,
   val dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
-  val dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double) extends MPEAlgorithm(universe) with OneTimeMPE with ProbabilisticVariableElimination {
+  val dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double) extends OneTimeMPE with ProbabilisticVariableElimination {
 
   override val comparator = Some((x: Double, y: Double) => x < y)
   override val semiring = MaxProductSemiring

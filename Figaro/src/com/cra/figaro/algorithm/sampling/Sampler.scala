@@ -61,12 +61,12 @@ trait AnytimeSampler extends Algorithm with Anytime with Sampler {
 /**
  * Anytime sampling algorithms that compute conditional probability of query elements.
  */
-trait AnytimeProbQuerySampler extends ProbQueryAlgorithm with AnytimeSampler with AnytimeProbQuery
+trait AnytimeProbQuerySampler extends AnytimeProbQuery with AnytimeSampler
 
 /**
  * Anytime sampling algorithms that compute probability of evidence.
  */
-trait AnytimeProbEvidenceSampler extends ProbEvidenceAlgorithm with AnytimeSampler with AnytimeProbEvidence {
+trait AnytimeProbEvidenceSampler extends AnytimeSampler with AnytimeProbEvidence {
   def additionalEvidenceAlgorithm(evidence: List[NamedEvidence[_]]) =
     new ProbEvidenceSampler(universe, evidence, computedResult) with AnytimeProbEvidenceSampler
 }
@@ -74,7 +74,7 @@ trait AnytimeProbEvidenceSampler extends ProbEvidenceAlgorithm with AnytimeSampl
 /**
  * Anytime sampling algorithms that compute MPE.
  */
-trait AnytimeMPESampler extends MPEAlgorithm with AnytimeSampler with AnytimeMPE
+trait AnytimeMPESampler extends AnytimeSampler with AnytimeMPE
 
 /**
  * One-time sampling algorithms.
@@ -103,7 +103,7 @@ trait OneTimeProbQuerySampler extends ProbQueryAlgorithm with OneTimeSampler wit
 /**
  * One-time sampling algorithms that compute probability of evidence.
  */
-trait OneTimeProbEvidenceSampler extends ProbEvidenceAlgorithm with OneTimeSampler with OneTimeProbEvidence {
+trait OneTimeProbEvidenceSampler extends OneTimeSampler with OneTimeProbEvidence {
   def additionalEvidenceAlgorithm(evidence: List[NamedEvidence[_]]) = {
     val ns = numSamples
     new ProbEvidenceSampler(universe, evidence, computedResult) with OneTimeProbEvidenceSampler { val numSamples = ns }
@@ -113,4 +113,4 @@ trait OneTimeProbEvidenceSampler extends ProbEvidenceAlgorithm with OneTimeSampl
 /**
  * One-time sampling algorithms that compute probability of evidence.
  */
-trait OneTimeMPESampler extends MPEAlgorithm with OneTimeSampler with OneTimeMPE
+trait OneTimeMPESampler extends OneTimeSampler with OneTimeMPE
