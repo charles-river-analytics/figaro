@@ -6,9 +6,9 @@
 	<property environment="env" />
 
 	<!-- variables for paths and files -->
-	<property name="src.dir" location="${basedir}/src" />
+	<property name="src.dir" location="${basedir}/src/main/scala" />
 	<property name="lib.dir" location="${basedir}/lib" />
-	<property name="test-src.dir" location="${basedir}/test" />
+	<property name="test-src.dir" location="${basedir}/src/test/scala" />
 	<property name="build.dir" location="${basedir}/build" />
 	
 	<property name="build-classes.dir" location="${build.dir}/classes" />
