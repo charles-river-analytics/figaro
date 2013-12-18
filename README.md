@@ -1,4 +1,4 @@
-Figaro Programming Language & Core Libraries
+Figaro Programming Language & Core Libraries [![Build Status](https://travis-ci.org/p2t2/figaro.png?branch=master)](https://travis-ci.org/p2t2/figaro)
 ============================================
 Figaro is a probabilistic programming language that supports development of very rich probabilistic models and  provides reasoning algorithms that can be applied to models to draw useful conclusions from evidence. Both model representation and reasoning algorithm development can be challenging tasks.  
 
