@@ -428,6 +428,12 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    * The element that tests inequality of this element with another element.
    */
   def !==(that: Element[Value])(implicit universe: Universe) = new Neq("", this, that, universe)
+
+  def map[U](fn: Value => U)(implicit name: Name[U], collection: ElementCollection): Element[U] =
+    Apply(this, fn)(name, collection)
+
+  def flatMap[U](fn: Value => Element[U])(implicit name: Name[U], collection: ElementCollection): Element[U] =
+    Chain(this, fn)(name, collection)
 }
 
 object Element {
