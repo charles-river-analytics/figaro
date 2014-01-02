@@ -201,6 +201,8 @@ class SemiringTest extends WordSpec with ShouldMatchers with PrivateMethodTester
 
       "satisfy semiring properties for random data" in
         {
+          val iterations = 100000
+
           val p1 = DirichletParameter(1)
           val p2 = BetaParameter(1, 1)
           val p3 = DirichletParameter(1, 1, 1)
@@ -214,13 +216,15 @@ class SemiringTest extends WordSpec with ShouldMatchers with PrivateMethodTester
 
           val zeroSufficientStatisticsMap = mutable.Map.empty[Parameter[_], Seq[Double]]
 
-          for (j <- 1 to 100000) {
+          var j = 0
+          while (j < iterations) {
             zeroSufficientStatisticsMap.clear();
 
             //Decide vector lengths
             val numberOfParameters = random.nextInt(30) + 1
 
-            for (p <- 1 to numberOfParameters) {
+            var p = 0
+            while (p < numberOfParameters) {
               val r = random.nextInt(10)
               if (r == 0) {
                 zeroSufficientStatisticsMap += p1 -> Seq(0.0)
@@ -243,7 +247,7 @@ class SemiringTest extends WordSpec with ShouldMatchers with PrivateMethodTester
               } else {
                 zeroSufficientStatisticsMap += p10 -> Seq(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
               }
-
+              p += 1
             }
 
             def randomParameterMap(): mutable.Map[Parameter[_], Seq[Double]] =
@@ -299,6 +303,8 @@ class SemiringTest extends WordSpec with ShouldMatchers with PrivateMethodTester
 
             val semiring = new SufficientStatisticsSemiring(zeroSufficientStatisticsMap.toMap)
             semiringProperties[(Double, Map[Parameter[_], Seq[Double]])](semiring.asInstanceOf[com.cra.figaro.algorithm.factored.Semiring[(Double, Map[Parameter[_], Seq[Double]])]], a, b, c, probPlusOrMinus, (0.001, zeroSufficientStatisticsMap.toMap))
+            
+            j += 1
           }
         }
     }
