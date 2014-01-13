@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.language
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.{ PrivateMethodTester, WordSpec }
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.factored._
@@ -24,7 +24,7 @@ import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.library.atomic.discrete
 import com.cra.figaro.util._
 
-class ReferenceTest extends WordSpec with PrivateMethodTester with ShouldMatchers {
+class ReferenceTest extends WordSpec with PrivateMethodTester with Matchers {
   "A Reference" when {
 
     "created from a string with no periods" should {
@@ -555,7 +555,7 @@ class ReferenceTest extends WordSpec with PrivateMethodTester with ShouldMatcher
       val alg = VariableElimination(r)
       alg.start()
       val correctProb = 0.2 * 0.3 + 0.8 * 0.5
-      alg.probability(r, 2) should be(correctProb plusOrMinus 0.00000001)
+      alg.probability(r, 2) should be(correctProb +- 0.00000001)
     }
 
     "produce the correct set of values for an aggregate" in {
@@ -572,7 +572,7 @@ class ReferenceTest extends WordSpec with PrivateMethodTester with ShouldMatcher
       alg.start()
       // 6 can result in the following ways: Using C1: (1,2,3), (1,3,2), (2,1,3), (2,3,1), (3,1,2), (3,2,1), (2,2,2); Using C2: (3,3)
       val correctProb = 0.2 * (6 * 0.2 * 0.3 * 0.5 + 0.3 * 0.3 * 0.3) + 0.8 * 0.5 * 0.5
-      alg.probability(a, 6) should be(correctProb plusOrMinus 0.00000001)
+      alg.probability(a, 6) should be(correctProb +- 0.00000001)
     }
 
     "produce the correct set of values for a multi-step aggregate" in {
@@ -615,7 +615,7 @@ class ReferenceTest extends WordSpec with PrivateMethodTester with ShouldMatcher
       val prob3Ifw01 = 0.8 * (0.2 * 0.2 * 0.3 * 2 + 0.8 * 0.75) + 0.2 * 0.2 * 0.2 * 0.2 * 0.2
       val prob3Ifw11 = 0
       val prob3 = probw0 * prob3Ifw0 + probw1 * prob3Ifw1 + probw00 * prob3Ifw00 + probw01 * prob3Ifw01 + probw11 * prob3Ifw11
-      alg.probability(a, 3) should be(prob3 plusOrMinus 0.00000001)
+      alg.probability(a, 3) should be(prob3 +- 0.00000001)
     }
 
     "produce the correct result with a class hierarchy with no evidence" in {
@@ -624,7 +624,7 @@ class ReferenceTest extends WordSpec with PrivateMethodTester with ShouldMatcher
       val i1 = Apply(myVehicle, (v: Vehicle) => v.isInstanceOf[Pickup])
       val alg = VariableElimination(i1)
       alg.start()
-      alg.probability(i1, true) should be((0.4 * 0.3) plusOrMinus 0.01)
+      alg.probability(i1, true) should be((0.4 * 0.3) +- 0.01)
     }
 
     "produce the correct result with a class hierarchy with evidence" in {
@@ -634,7 +634,7 @@ class ReferenceTest extends WordSpec with PrivateMethodTester with ShouldMatcher
       val i1 = Apply(myVehicle, (v: Vehicle) => v.isInstanceOf[Pickup])
       val alg = VariableElimination(i1)
       alg.start()
-      alg.probability(i1, true) should be(((0.3 * 1.0) / (0.3 * 1.0 + 0.6 * 0.25)) plusOrMinus 0.01)
+      alg.probability(i1, true) should be(((0.3 * 1.0) / (0.3 * 1.0 + 0.6 * 0.25)) +- 0.01)
     }
   }
 
@@ -645,7 +645,7 @@ class ReferenceTest extends WordSpec with PrivateMethodTester with ShouldMatcher
       val i1 = Apply(myVehicle, (v: Vehicle) => v.isInstanceOf[Pickup])
       val alg = Importance(10000, i1)
       alg.start()
-      alg.probability(i1, true) should be((0.4 * 0.3) plusOrMinus 0.01)
+      alg.probability(i1, true) should be((0.4 * 0.3) +- 0.01)
     }
 
     "produce the correct result with a class hierarchy with evidence" in {
@@ -655,7 +655,7 @@ class ReferenceTest extends WordSpec with PrivateMethodTester with ShouldMatcher
       val i1 = Apply(myVehicle, (v: Vehicle) => v.isInstanceOf[Pickup])
       val alg = Importance(10000, i1)
       alg.start()
-      alg.probability(i1, true) should be(((0.3 * 1.0) / (0.3 * 1.0 + 0.6 * 0.25)) plusOrMinus 0.01)
+      alg.probability(i1, true) should be(((0.3 * 1.0) / (0.3 * 1.0 + 0.6 * 0.25)) +- 0.01)
     }
   }
 
@@ -666,7 +666,7 @@ class ReferenceTest extends WordSpec with PrivateMethodTester with ShouldMatcher
       val i1 = Apply(myVehicle, (v: Vehicle) => v.isInstanceOf[Pickup])
       val alg = MetropolisHastings(30000, ProposalScheme.default, i1)
       alg.start()
-      alg.probability(i1, true) should be((0.4 * 0.3) plusOrMinus 0.01)
+      alg.probability(i1, true) should be((0.4 * 0.3) +- 0.01)
     }
 
     "produce the correct result with a class hierarchy with evidence" in {
@@ -676,7 +676,7 @@ class ReferenceTest extends WordSpec with PrivateMethodTester with ShouldMatcher
       val i1 = Apply(myVehicle, (v: Vehicle) => v.isInstanceOf[Pickup])
       val alg = MetropolisHastings(30000, ProposalScheme.default, i1)
       alg.start()
-      alg.probability(i1, true) should be(((0.3 * 1.0) / (0.3 * 1.0 + 0.6 * 0.25)) plusOrMinus 0.01)
+      alg.probability(i1, true) should be(((0.3 * 1.0) / (0.3 * 1.0 + 0.6 * 0.25)) +- 0.01)
     }
   }
 
