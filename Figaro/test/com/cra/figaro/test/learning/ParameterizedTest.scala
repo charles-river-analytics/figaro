@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.learning
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.{ PrivateMethodTester, WordSpec }
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.factored._
@@ -23,7 +23,7 @@ import com.cra.figaro.language.Universe._
 import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.util._
 
-class ParameterizedTest extends WordSpec with PrivateMethodTester with ShouldMatchers {
+class ParameterizedTest extends WordSpec with PrivateMethodTester with Matchers {
   "A flip" when {
     "created from a beta parameter" should {
       "create a parameterized flip" in {
