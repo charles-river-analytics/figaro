@@ -14,7 +14,7 @@
 package com.cra.figaro.test.library.compound
 
 import org.scalatest.WordSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.algorithm.sampling._
@@ -23,7 +23,7 @@ import com.cra.figaro.library.compound._
 import com.cra.figaro.library.atomic.continuous.Uniform
 import com.cra.figaro.library.atomic.discrete.Geometric
 
-class CompoundTest extends WordSpec with ShouldMatchers {
+class CompoundTest extends WordSpec with Matchers {
   "A FastIf" should {
     "have value equal to the then clause if the test is true and the else clause if the test is false" in {
       Universe.createNew()
@@ -240,7 +240,7 @@ class CompoundTest extends WordSpec with ShouldMatchers {
       val y = CPD(x, false -> Flip(0.1), true -> Flip(0.7))
       val alg = VariableElimination(y)
       alg.start()
-      alg.probability(y, true) should be((0.2 * 0.7 + 0.8 * 0.1) plusOrMinus 0.00000000001)
+      alg.probability(y, true) should be((0.2 * 0.7 + 0.8 * 0.1) +- 0.00000000001)
     }
 
     "throw MatchError if no clause exists for a given parent value" in {
@@ -268,7 +268,7 @@ class CompoundTest extends WordSpec with ShouldMatchers {
       val alg = VariableElimination(y)
       alg.start()
       alg.probability(y, true) should be((0.2 * (0.2 * 0.4 + 0.3 * 0.5 + 0.5 * 0.6) +
-        0.8 * (0.2 * 0.1 + 0.3 * 0.2 + 0.5 * 0.3)) plusOrMinus 0.00000000001)
+        0.8 * (0.2 * 0.1 + 0.3 * 0.2 + 0.5 * 0.3)) +- 0.00000000001)
     }
 
     "throw MatchError if no clause exists for a given parent value" in {
@@ -302,7 +302,7 @@ class CompoundTest extends WordSpec with ShouldMatchers {
       val alg = VariableElimination(y)
       alg.start()
       alg.probability(y, true) should be((0.2 * (0.2 * 0.4 + 0.3 * 0.5 + 0.5 * 0.6) +
-        0.8 * (0.2 * 0.1 + 0.3 * 0.2 + 0.5 * 0.3)) plusOrMinus 0.00000000001)
+        0.8 * (0.2 * 0.1 + 0.3 * 0.2 + 0.5 * 0.3)) +- 0.00000000001)
     }
 
     "throw MatchError if no clause exists for a given parent value" in {
@@ -347,7 +347,7 @@ class CompoundTest extends WordSpec with ShouldMatchers {
         0.2 * 0.1 * (0.2 * 0.4 + 0.3 * 0.5 + 0.5 * 0.6) +
         0.8 * 0.9 * (0.2 * 0.15 + 0.3 * 0.25 + 0.5 * 0.35) +
         0.8 * 0.1 * (0.2 * 0.1 + 0.3 * 0.2 + 0.5 * 0.3))
-        plusOrMinus 0.00000000001)
+        +- 0.00000000001)
     }
 
     "throw MatchError if no clause exists for a given parent value" in {
@@ -400,7 +400,7 @@ class CompoundTest extends WordSpec with ShouldMatchers {
         0.2 * 0.1 * (0.2 * 0.4 + 0.3 * 0.5 + 0.5 * 0.6) +
         0.8 * 0.9 * (0.2 * 0.15 + 0.3 * 0.25 + 0.5 * 0.35) +
         0.8 * 0.1 * (0.2 * 0.1 + 0.3 * 0.2 + 0.5 * 0.3))
-        plusOrMinus 0.00000000001)
+        +- 0.00000000001)
     }
 
     "throw MatchError if no clause exists for a given parent value" in {
@@ -435,7 +435,7 @@ class CompoundTest extends WordSpec with ShouldMatchers {
       val y = RichCPD(x, OneOf(1, 2) -> Flip(0.1), NoneOf(4) -> Flip(0.7), * -> Flip(0.9))
       val alg = VariableElimination(y)
       alg.start()
-      alg.probability(y, true) should be(((0.1 + 0.2) * 0.1 + 0.3 * 0.7 + 0.4 * 0.9) plusOrMinus 0.00000000001)
+      alg.probability(y, true) should be(((0.1 + 0.2) * 0.1 + 0.3 * 0.7 + 0.4 * 0.9) +- 0.00000000001)
     }
   }
 
@@ -451,7 +451,7 @@ class CompoundTest extends WordSpec with ShouldMatchers {
       val alg = VariableElimination(y)
       alg.start()
       alg.probability(y, true) should be(((0.1 + 0.2) * 0.1 + 0.3 * 0.4 * 0.7 + (0.3 * 0.6 + 0.4) * 0.9)
-        plusOrMinus 0.00000000001)
+        +- 0.00000000001)
     }
   }
 
@@ -468,7 +468,7 @@ class CompoundTest extends WordSpec with ShouldMatchers {
       val alg = VariableElimination(y)
       alg.start()
       alg.probability(y, true) should be(((0.1 + 0.2) * 0.1 + 0.3 * 0.4 * 0.7 + (0.3 * 0.6 + 0.4) * 0.9)
-        plusOrMinus 0.00000000001)
+        +- 0.00000000001)
     }
   }
 
@@ -488,7 +488,7 @@ class CompoundTest extends WordSpec with ShouldMatchers {
       alg.start()
       alg.probability(y, true) should be(((0.1 + 0.2) * 0.1 + 0.3 * 0.4 * 0.7 +
         (0.3 * 0.6 + 0.4) * (0.8 * 0.9 + 0.2))
-        plusOrMinus 0.00000000001)
+        +- 0.00000000001)
     }
   }
 
@@ -509,7 +509,7 @@ class CompoundTest extends WordSpec with ShouldMatchers {
       alg.start()
       alg.probability(y, true) should be(((0.1 + 0.2) * 0.1 + 0.3 * 0.4 * 0.7 +
         (0.3 * 0.6 + 0.4) * (0.8 * 0.9 + 0.2))
-        plusOrMinus 0.00000000001)
+        +- 0.00000000001)
     }
   }
 
@@ -522,7 +522,7 @@ class CompoundTest extends WordSpec with ShouldMatchers {
       val alg = Importance(10000, x3)
       alg.start()
       val answer = 0.9 * 0.9 * 0.1
-      alg.probability(x3, 3) should be(answer plusOrMinus 0.01)
+      alg.probability(x3, 3) should be(answer +- 0.01)
     }
 
     "have each item be distributed according to the element generator" in {
@@ -534,8 +534,8 @@ class CompoundTest extends WordSpec with ShouldMatchers {
       val alg = Importance(20000, x3, x4)
       alg.start()
       val answer = 0.2
-      alg.probability(x3, true) should be(answer plusOrMinus 0.01)
-      alg.probability(x4, true) should be(answer plusOrMinus 0.01)
+      alg.probability(x3, true) should be(answer +- 0.01)
+      alg.probability(x4, true) should be(answer +- 0.01)
     }
 
     "have the items be generated independently" in {
@@ -548,7 +548,7 @@ class CompoundTest extends WordSpec with ShouldMatchers {
       val alg = Importance(20000, x5)
       alg.start()
       val answer = 0.2 * 0.2 + 0.8 * 0.8
-      alg.probability(x5, true) should be(answer plusOrMinus 0.01)
+      alg.probability(x5, true) should be(answer +- 0.01)
     }
 
     "have the correct set of possible values" in {
@@ -572,7 +572,7 @@ class CompoundTest extends WordSpec with ShouldMatchers {
       val p2 = 0.4 * (1 - 0.8 * 0.8)
       val p3 = 0.6 * (1 - 0.8 * 0.8 * 0.8)
       val answer = p3 / (p2 + p3)
-      alg.probability(x1, 3) should be(answer plusOrMinus 0.01)
+      alg.probability(x1, 3) should be(answer +- 0.01)
     }
 
     "return the correct probability under variable elimination" in {
@@ -589,7 +589,7 @@ class CompoundTest extends WordSpec with ShouldMatchers {
       val p2 = 0.4 * (1 - 0.8 * 0.8)
       val p3 = 0.6 * (1 - 0.8 * 0.8 * 0.8)
       val answer = p3 / (p2 + p3)
-      alg.probability(x1, 3) should be(answer plusOrMinus 0.01)
+      alg.probability(x1, 3) should be(answer +- 0.01)
     }
 
     "return the correct probability under Metropolis-Hastings" in {
@@ -603,7 +603,7 @@ class CompoundTest extends WordSpec with ShouldMatchers {
       val p2 = 0.4 * (1 - 0.8 * 0.8)
       val p3 = 0.6 * (1 - 0.8 * 0.8 * 0.8)
       val answer = p3 / (p2 + p3)
-      alg.probability(x1, 3) should be(answer plusOrMinus 0.01)
+      alg.probability(x1, 3) should be(answer +- 0.01)
     }
   }
 
@@ -614,9 +614,9 @@ class CompoundTest extends WordSpec with ShouldMatchers {
       val x2 = IntSelector(x1)
       val alg = Importance(20000, x2)
       alg.start()
-      alg.probability(x2, 0) should be(0.4 / 2 + 0.6 / 3 plusOrMinus 0.01)
-      alg.probability(x2, 1) should be(0.4 / 2 + 0.6 / 3 plusOrMinus 0.01)
-      alg.probability(x2, 2) should be(0.6 / 3 plusOrMinus 0.01)
+      alg.probability(x2, 0) should be(0.4 / 2 + 0.6 / 3 +- 0.01)
+      alg.probability(x2, 1) should be(0.4 / 2 + 0.6 / 3 +- 0.01)
+      alg.probability(x2, 2) should be(0.6 / 3 +- 0.01)
     }
 
     "avoid changing value when the bound changes" in {
