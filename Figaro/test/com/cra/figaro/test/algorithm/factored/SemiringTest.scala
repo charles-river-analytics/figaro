@@ -69,7 +69,6 @@ class SemiringTest extends WordSpec with ShouldMatchers with PrivateMethodTester
         }
     }
 
-
   "The max-product semiring" should
     {
       "correctly multiply two numbers" in
@@ -93,7 +92,7 @@ class SemiringTest extends WordSpec with ShouldMatchers with PrivateMethodTester
           //Tolerance could be hard coded inside function.
           def probPlusOrMinus(x: Double, y: Double, epsilon: Double): Boolean =
             {
-              if (x + epsilon > y && x - epsilon < y) true else false
+              if (math.abs(x - y) < epsilon) true else false
             }
 
           for (j <- 1 to 100000) {
@@ -124,7 +123,7 @@ class SemiringTest extends WordSpec with ShouldMatchers with PrivateMethodTester
           //Tolerance could be hard coded inside function.
           def probPlusOrMinus(x: Double, y: Double, epsilon: Double): Boolean =
             {
-              if (x + epsilon > y && x - epsilon < y) true else false
+              if (math.abs(x - y) < epsilon) true else false
             }
 
           for (j <- 1 to 100000) {
@@ -140,7 +139,7 @@ class SemiringTest extends WordSpec with ShouldMatchers with PrivateMethodTester
       "handle zero values in weighted multiplication without crashing" in
         {
           val numberOfParameters = 1
-          val param = DirichletParameter(1,1,1)
+          val param = DirichletParameter(1, 1, 1)
           val parameterMap = mutable.Map.empty[Parameter[_], Seq[Double]]
           parameterMap += param -> Seq(0.0, 0.0, 0.0)
 
@@ -167,10 +166,9 @@ class SemiringTest extends WordSpec with ShouldMatchers with PrivateMethodTester
 
       "correctly multiply two numbers" in
         {
-          val param = DirichletParameter(1,1,1)
+          val param = DirichletParameter(1, 1, 1)
           val parameterMap = mutable.Map.empty[Parameter[_], Seq[Double]]
           parameterMap += param -> Seq(0.0, 0.0, 0.0)
-
 
           val semiring = SufficientStatisticsSemiring(parameterMap.toMap)
 
@@ -185,10 +183,10 @@ class SemiringTest extends WordSpec with ShouldMatchers with PrivateMethodTester
 
       "correctly add two numbers" in
         {
-          val param = DirichletParameter(1,1,1)
+          val param = DirichletParameter(1, 1, 1)
           val parameterMap = mutable.Map.empty[Parameter[_], Seq[Double]]
           parameterMap += param -> Seq(0.0, 0.0, 0.0)
-      
+
           val semiring = SufficientStatisticsSemiring(parameterMap.toMap)
 
           val result = semiring.sum((0.50, mutable.Map(param -> Seq(0.3, 0.4, 0.5))), (0.50, mutable.Map(param -> Seq(0.8, 0.432, 0.0))))
@@ -203,101 +201,54 @@ class SemiringTest extends WordSpec with ShouldMatchers with PrivateMethodTester
 
       "satisfy semiring properties for random data" in
         {
-           val p1 = DirichletParameter(1)   
-           val p2 = BetaParameter(1,1)
-           val p3 = DirichletParameter(1,1,1)
-           val p4 = DirichletParameter(1,1,1,1)
-           val p5 = DirichletParameter(1,1,1,1,1)
-           val p6 = DirichletParameter(1,1,1,1,1,1)
-           val p7 = DirichletParameter(1,1,1,1,1,1,1)
-           val p8 = DirichletParameter(1,1,1,1,1,1,1,1)
-           val p9 = DirichletParameter(1,1,1,1,1,1,1,1,1)
-           val p10 = DirichletParameter(1,1,1,1,1,1,1,1,1,1)
+          val iterations = 100000
 
-          val possibleParameterVectors = immutable.Map(
-            p1 -> Seq(0.0),
-            p2 -> Seq(0.0, 0.0),
-            p3 -> Seq(0.0, 0.0, 0.0),
-            p4 -> Seq(0.0, 0.0, 0.0, 0.0),
-            p5 -> Seq(0.0, 0.0, 0.0, 0.0, 0.0),
-            p6 -> Seq(0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
-            p7 -> Seq(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
-            p8 -> Seq(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
-            p9 -> Seq(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
-            p10 -> Seq(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
-          for (j <- 1 to 100000) {
+          val p1 = DirichletParameter(1)
+          val p2 = BetaParameter(1, 1)
+          val p3 = DirichletParameter(1, 1, 1)
+          val p4 = DirichletParameter(1, 1, 1, 1)
+          val p5 = DirichletParameter(1, 1, 1, 1, 1)
+          val p6 = DirichletParameter(1, 1, 1, 1, 1, 1)
+          val p7 = DirichletParameter(1, 1, 1, 1, 1, 1, 1)
+          val p8 = DirichletParameter(1, 1, 1, 1, 1, 1, 1, 1)
+          val p9 = DirichletParameter(1, 1, 1, 1, 1, 1, 1, 1, 1)
+          val p10 = DirichletParameter(1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+
+          val zeroSufficientStatisticsMap = mutable.Map.empty[Parameter[_], Seq[Double]]
+
+          var j = 0
+          while (j < iterations) {
+            zeroSufficientStatisticsMap.clear();
 
             //Decide vector lengths
             val numberOfParameters = random.nextInt(30) + 1
-            val zeroSufficientStatisticsMap= mutable.Map.empty[Parameter[_], Seq[Double]]
 
-            for (p <- 1 to numberOfParameters) {
+            var p = 0
+            while (p < numberOfParameters) {
               val r = random.nextInt(10)
-              if (r == 0)
-              {
-                  val p = DirichletParameter(1)
-                  val s = Seq(0.0)
-            	  zeroSufficientStatisticsMap += p -> s
+              if (r == 0) {
+                zeroSufficientStatisticsMap += p1 -> Seq(0.0)
+              } else if (r == 1) {
+                zeroSufficientStatisticsMap += p2 -> Seq(0.0, 0.0)
+              } else if (r == 2) {
+                zeroSufficientStatisticsMap += p3 -> Seq(0.0, 0.0, 0.0)
+              } else if (r == 3) {
+                zeroSufficientStatisticsMap += p4 -> Seq(0.0, 0.0, 0.0, 0.0)
+              } else if (r == 4) {
+                zeroSufficientStatisticsMap += p5 -> Seq(0.0, 0.0, 0.0, 0.0, 0.0)
+              } else if (r == 5) {
+                zeroSufficientStatisticsMap += p6 -> Seq(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+              } else if (r == 6) {
+                zeroSufficientStatisticsMap += p7 -> Seq(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+              } else if (r == 7) {
+                zeroSufficientStatisticsMap += p8 -> Seq(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+              } else if (r == 8) {
+                zeroSufficientStatisticsMap += p9 -> Seq(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+              } else {
+                zeroSufficientStatisticsMap += p10 -> Seq(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
               }
-              else if(r == 1)
-              {
-                  val p = DirichletParameter(1,1)
-                  val s = Seq(0.0,0.0)
-            	  zeroSufficientStatisticsMap += p -> s
-              }
-              else if(r == 2)
-              {
-                  val p = DirichletParameter(1,1,1)
-                  val s = Seq(0.0,0.0,0.0)
-            	  zeroSufficientStatisticsMap += p -> s
-              }
-              else if(r == 3)
-              {
-                  val p = DirichletParameter(1,1,1,1)
-                  val s = Seq(0.0,0.0,0.0,0.0)
-            	  zeroSufficientStatisticsMap += p -> s
-              }
-              else if(r == 4)
-              {
-                  val p = DirichletParameter(1,1,1,1,1)
-                  val s = Seq(0.0,0.0,0.0,0.0,0.0)
-            	  zeroSufficientStatisticsMap += p -> s
-              }
-              else if(r == 5)
-              {
-                  val p = DirichletParameter(1,1,1,1,1,1)
-                  val s = Seq(0.0,0.0,0.0,0.0,0.0,0.0)
-            	  zeroSufficientStatisticsMap += p -> s
-              }
-              else if (r == 6)
-              {
-                  val p = DirichletParameter(1,1,1,1,1,1,1)
-                  val s = Seq(0.0,0.0,0.0,0.0,0.0,0.0,0.0)
-            	  zeroSufficientStatisticsMap += p -> s
-              }
-              else if (r == 7) 
-              {
-                  val p = DirichletParameter(1,1,1,1,1,1,1,1)
-                  val s = Seq(0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0)
-            	  zeroSufficientStatisticsMap += p -> s
-              }
-              else if( r == 8)
-              {
-                  val p = DirichletParameter(1,1,1,1,1,1,1,1,1)
-                  val s = Seq(0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0)
-            	  zeroSufficientStatisticsMap += p -> s
-              }
-              else
-              {
-                  val p = DirichletParameter(1,1,1,1,1,1,1,1,1,1)
-                  val s = Seq(0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0)
-            	  zeroSufficientStatisticsMap += p -> s
-              }
-        
-              
-              
+              p += 1
             }
-
 
             def randomParameterMap(): mutable.Map[Parameter[_], Seq[Double]] =
               {
@@ -330,7 +281,7 @@ class SemiringTest extends WordSpec with ShouldMatchers with PrivateMethodTester
                 var result3 = true
 
                 //Double
-                if (x._1 + epsilon._1 < y._1 || x._1 - epsilon._1 > y._1) {
+                if (math.abs(x._1 - y._1) > epsilon._1) {
                   result1 = false
                 }
 
@@ -340,7 +291,7 @@ class SemiringTest extends WordSpec with ShouldMatchers with PrivateMethodTester
                   val yVector = y._2(key)
 
                   for ((x1, y1) <- xVector zip yVector) {
-                    if (x1 + epsilon._1 < y1 || x1 - epsilon._1 > y1) {
+                    if (math.abs(x1 - y1) > epsilon._1) {
                       result2 = false
                     }
                   }
@@ -349,9 +300,11 @@ class SemiringTest extends WordSpec with ShouldMatchers with PrivateMethodTester
                 //I don't think there can be round-off errors with boolean.
                 result1 && result2
               }
-    
+
             val semiring = new SufficientStatisticsSemiring(zeroSufficientStatisticsMap.toMap)
             semiringProperties[(Double, Map[Parameter[_], Seq[Double]])](semiring.asInstanceOf[com.cra.figaro.algorithm.factored.Semiring[(Double, Map[Parameter[_], Seq[Double]])]], a, b, c, probPlusOrMinus, (0.001, zeroSufficientStatisticsMap.toMap))
+            
+            j += 1
           }
         }
     }
