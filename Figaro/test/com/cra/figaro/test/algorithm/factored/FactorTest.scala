@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.algorithm.factored
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.{ WordSpec, PrivateMethodTester }
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.factored._
@@ -22,7 +22,7 @@ import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.library.compound._
 
-class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
+class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
 
   "A variable for an element" should {
     "have range equal to the element's values" in {
@@ -167,18 +167,18 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
         g.set(List(1, 1), 0.9)
         val h = f.product(g, (x: Double, y: Double) => x * y)
         h.variables should equal(List(v1, v2, v3, v4))
-        h.get(List(0, 0, 0, 0)) should be(0.0 plusOrMinus 0.0001)
-        h.get(List(1, 0, 0, 0)) should be(0.06 plusOrMinus 0.0001)
-        h.get(List(2, 0, 0, 0)) should be(0.12 plusOrMinus 0.0001)
-        h.get(List(0, 0, 1, 0)) should be(0.24 plusOrMinus 0.0001)
-        h.get(List(1, 0, 1, 0)) should be(0.32 plusOrMinus 0.0001)
-        h.get(List(2, 0, 1, 0)) should be(0.4 plusOrMinus 0.0001)
-        h.get(List(0, 0, 0, 1)) should be(0.0 plusOrMinus 0.0001)
-        h.get(List(1, 0, 0, 1)) should be(0.07 plusOrMinus 0.0001)
-        h.get(List(2, 0, 0, 1)) should be(0.14 plusOrMinus 0.0001)
-        h.get(List(0, 0, 1, 1)) should be(0.27 plusOrMinus 0.0001)
-        h.get(List(1, 0, 1, 1)) should be(0.36 plusOrMinus 0.0001)
-        h.get(List(2, 0, 1, 1)) should be(0.45 plusOrMinus 0.0001)
+        h.get(List(0, 0, 0, 0)) should be(0.0 +- 0.0001)
+        h.get(List(1, 0, 0, 0)) should be(0.06 +- 0.0001)
+        h.get(List(2, 0, 0, 0)) should be(0.12 +- 0.0001)
+        h.get(List(0, 0, 1, 0)) should be(0.24 +- 0.0001)
+        h.get(List(1, 0, 1, 0)) should be(0.32 +- 0.0001)
+        h.get(List(2, 0, 1, 0)) should be(0.4 +- 0.0001)
+        h.get(List(0, 0, 0, 1)) should be(0.0 +- 0.0001)
+        h.get(List(1, 0, 0, 1)) should be(0.07 +- 0.0001)
+        h.get(List(2, 0, 0, 1)) should be(0.14 +- 0.0001)
+        h.get(List(0, 0, 1, 1)) should be(0.27 +- 0.0001)
+        h.get(List(1, 0, 1, 1)) should be(0.36 +- 0.0001)
+        h.get(List(2, 0, 1, 1)) should be(0.45 +- 0.0001)
       }
     }
 
@@ -200,9 +200,9 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
         f.set(List(2, 0, 1), 0.5)
         val g = f.sumOver(v3, (x: Double, y: Double) => x + y, 0.0)
         g.variables should equal(List(v1, v2))
-        g.get(List(0, 0)) should be(0.3 plusOrMinus 0.0001)
-        g.get(List(1, 0)) should be(0.5 plusOrMinus 0.0001)
-        g.get(List(2, 0)) should be(0.7 plusOrMinus 0.0001)
+        g.get(List(0, 0)) should be(0.3 +- 0.0001)
+        g.get(List(1, 0)) should be(0.5 +- 0.0001)
+        g.get(List(2, 0)) should be(0.7 +- 0.0001)
       }
 
       "return itself if the variable not in the factor" in {
@@ -291,8 +291,8 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
         g.variables should equal(List(v3))
         val p1 = 0.0 + 0.1 + 0.2
         val p2 = 0.3 + 0.4 + 0.5
-        g.get(List(0)) should be(p1 plusOrMinus 0.000001)
-        g.get(List(1)) should be(p2 plusOrMinus 0.000001)
+        g.get(List(0)) should be(p1 +- 0.000001)
+        g.get(List(1)) should be(p2 +- 0.000001)
       }
     }
   }
@@ -392,14 +392,14 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
             result(v35 + 1) = a(5)
             result.toList
           }
-          factor.get(makeIndices(List(v31, v102, v204, 0, 0, 0))) should be(0.2 / 1.5 plusOrMinus 0.01)
-          factor.get(makeIndices(List(v32, v102, v204, 0, 0, 0))) should be(0.4 / 1.5 plusOrMinus 0.01)
-          factor.get(makeIndices(List(v31, v108, v204, 0, 0, 0))) should be(0.8 / 2.1 plusOrMinus 0.01)
-          factor.get(makeIndices(List(v32, v108, v204, 0, 0, 0))) should be(0.4 / 2.1 plusOrMinus 0.01)
-          factor.get(makeIndices(List(v31, v102, v206, 0, 0, 0))) should be(0.2 / 1.7 plusOrMinus 0.01)
-          factor.get(makeIndices(List(v32, v102, v206, 0, 0, 0))) should be(0.6 / 1.7 plusOrMinus 0.01)
-          factor.get(makeIndices(List(v31, v108, v206, 0, 0, 0))) should be(0.8 / 2.3 plusOrMinus 0.01)
-          factor.get(makeIndices(List(v32, v108, v206, 0, 0, 0))) should be(0.6 / 2.3 plusOrMinus 0.01)
+          factor.get(makeIndices(List(v31, v102, v204, 0, 0, 0))) should be(0.2 / 1.5 +- 0.01)
+          factor.get(makeIndices(List(v32, v102, v204, 0, 0, 0))) should be(0.4 / 1.5 +- 0.01)
+          factor.get(makeIndices(List(v31, v108, v204, 0, 0, 0))) should be(0.8 / 2.1 +- 0.01)
+          factor.get(makeIndices(List(v32, v108, v204, 0, 0, 0))) should be(0.4 / 2.1 +- 0.01)
+          factor.get(makeIndices(List(v31, v102, v206, 0, 0, 0))) should be(0.2 / 1.7 +- 0.01)
+          factor.get(makeIndices(List(v32, v102, v206, 0, 0, 0))) should be(0.6 / 1.7 +- 0.01)
+          factor.get(makeIndices(List(v31, v108, v206, 0, 0, 0))) should be(0.8 / 2.3 +- 0.01)
+          factor.get(makeIndices(List(v32, v108, v206, 0, 0, 0))) should be(0.6 / 2.3 +- 0.01)
         }
     }
 
@@ -463,14 +463,14 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
           outcomeFactors.size should equal(2)
           val v1Factor = outcomeFactors(v3Index)
           val v2Factor = outcomeFactors(v4Index)
-          selectFactor.get(List(0, v102, v204)) should be(0.2 / 0.6 plusOrMinus 0.0001)
-          selectFactor.get(List(1, v102, v204)) should be(0.4 / 0.6 plusOrMinus 0.0001)
-          selectFactor.get(List(0, v102, v206)) should be(0.2 / 0.8 plusOrMinus 0.0001)
-          selectFactor.get(List(1, v102, v206)) should be(0.6 / 0.8 plusOrMinus 0.0001)
-          selectFactor.get(List(0, v108, v204)) should be(0.8 / 1.2 plusOrMinus 0.0001)
-          selectFactor.get(List(1, v108, v204)) should be(0.4 / 1.2 plusOrMinus 0.0001)
-          selectFactor.get(List(0, v108, v206)) should be(0.8 / 1.4 plusOrMinus 0.0001)
-          selectFactor.get(List(1, v108, v206)) should be(0.6 / 1.4 plusOrMinus 0.0001)
+          selectFactor.get(List(0, v102, v204)) should be(0.2 / 0.6 +- 0.0001)
+          selectFactor.get(List(1, v102, v204)) should be(0.4 / 0.6 +- 0.0001)
+          selectFactor.get(List(0, v102, v206)) should be(0.2 / 0.8 +- 0.0001)
+          selectFactor.get(List(1, v102, v206)) should be(0.6 / 0.8 +- 0.0001)
+          selectFactor.get(List(0, v108, v204)) should be(0.8 / 1.2 +- 0.0001)
+          selectFactor.get(List(1, v108, v204)) should be(0.4 / 1.2 +- 0.0001)
+          selectFactor.get(List(0, v108, v206)) should be(0.8 / 1.4 +- 0.0001)
+          selectFactor.get(List(1, v108, v206)) should be(0.6 / 1.4 +- 0.0001)
           v1Factor.get(List(0, v5t, v3t)) should equal(1.0)
           v1Factor.get(List(0, v5t, v3f)) should equal(0.0)
           v1Factor.get(List(0, v5f, v3t)) should equal(0.0)
@@ -868,19 +868,19 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
       val y3 = yVar.range indexOf 3
       // If x is true or y is 1, pe is 0.5; if both false, 0.25.
       if (xIndex == 0) {
-        factor.get(List(xFalse, y2)) should be(0.25 plusOrMinus 0.01)
-        factor.get(List(xFalse, y3)) should be(0.25 plusOrMinus 0.01)
-        factor.get(List(xFalse, y1)) should be(0.5 plusOrMinus 0.01)
-        factor.get(List(xTrue, y1)) should be(0.5 plusOrMinus 0.01)
-        factor.get(List(xTrue, y2)) should be(0.5 plusOrMinus 0.01)
-        factor.get(List(xTrue, y3)) should be(0.5 plusOrMinus 0.01)
+        factor.get(List(xFalse, y2)) should be(0.25 +- 0.01)
+        factor.get(List(xFalse, y3)) should be(0.25 +- 0.01)
+        factor.get(List(xFalse, y1)) should be(0.5 +- 0.01)
+        factor.get(List(xTrue, y1)) should be(0.5 +- 0.01)
+        factor.get(List(xTrue, y2)) should be(0.5 +- 0.01)
+        factor.get(List(xTrue, y3)) should be(0.5 +- 0.01)
       } else {
-        factor.get(List(y2, xFalse)) should be(0.25 plusOrMinus 0.01)
-        factor.get(List(y3, xFalse)) should be(0.25 plusOrMinus 0.01)
-        factor.get(List(y1, xTrue)) should be(0.5 plusOrMinus 0.01)
-        factor.get(List(y1, xFalse)) should be(0.5 plusOrMinus 0.01)
-        factor.get(List(y2, xFalse)) should be(0.5 plusOrMinus 0.01)
-        factor.get(List(y3, xFalse)) should be(0.5 plusOrMinus 0.01)
+        factor.get(List(y2, xFalse)) should be(0.25 +- 0.01)
+        factor.get(List(y3, xFalse)) should be(0.25 +- 0.01)
+        factor.get(List(y1, xTrue)) should be(0.5 +- 0.01)
+        factor.get(List(y1, xFalse)) should be(0.5 +- 0.01)
+        factor.get(List(y2, xFalse)) should be(0.5 +- 0.01)
+        factor.get(List(y3, xFalse)) should be(0.5 +- 0.01)
       }
     }
   }
