@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.example
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
@@ -24,7 +24,7 @@ import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.language._
 import com.cra.figaro.test._
 
-class FairDiceTest extends WordSpec with ShouldMatchers {
+class FairDiceTest extends WordSpec with Matchers {
   "A simple FairDiceTest" should {
     "produce the correct probability under expectation maximization" taggedAs (ExampleTest) in {
       test()
