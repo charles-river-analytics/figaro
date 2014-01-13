@@ -13,25 +13,24 @@
 
 package com.cra.figaro.test.algorithm.factored
 
-import org.scalatest.{ WordSpec, PrivateMethodTester }
-import org.scalatest.matchers.ShouldMatchers
-import com.cra.figaro._
-import com.cra.figaro.util._
-import language._
-import com.cra.figaro.algorithm.factored.SumProductSemiring
-import com.cra.figaro.algorithm.factored.MaxProductSemiring
-import com.cra.figaro.algorithm.factored.SumProductUtilitySemiring
-import com.cra.figaro.algorithm.factored.SufficientStatisticsSemiring
-import com.cra.figaro.algorithm.factored.Semiring
-import scala.collection._
+import scala.collection.Map
+import scala.collection.Seq
+import scala.collection.mutable
 
-import com.cra.figaro.library.atomic.continuous.Uniform
-import algorithm._
-import factored._
-import library.compound.If
-import sampling.ProbEvidenceSampler
-import com.cra.figaro.library.atomic.continuous._
-class SemiringTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
+import org.scalatest.Matchers
+import org.scalatest.PrivateMethodTester
+import org.scalatest.WordSpec
+
+import com.cra.figaro.algorithm.factored.MaxProductSemiring
+import com.cra.figaro.algorithm.factored.Semiring
+import com.cra.figaro.algorithm.factored.SufficientStatisticsSemiring
+import com.cra.figaro.algorithm.factored.SumProductSemiring
+import com.cra.figaro.algorithm.factored.SumProductUtilitySemiring
+import com.cra.figaro.language.Parameter
+import com.cra.figaro.library.atomic.continuous.BetaParameter
+import com.cra.figaro.library.atomic.continuous.DirichletParameter
+import com.cra.figaro.util.random
+class SemiringTest extends WordSpec with Matchers with PrivateMethodTester {
 
   "The joint semiring" should
     {
@@ -46,11 +45,11 @@ class SemiringTest extends WordSpec with ShouldMatchers with PrivateMethodTester
           val semiring = SumProductUtilitySemiring
           semiring.sum((0.5, 0.5), (0.5, 0.5)) should equal((1, 0.5))
           val s2 = semiring.sum((1, 1), (2, 2))
-          s2._1 should be(3.0 plusOrMinus 0.000000001)
-          s2._2 should be(5.0 / 3.0 plusOrMinus 0.0000000001)
+          s2._1 should be(3.0 +- 0.000000001)
+          s2._2 should be(5.0 / 3.0 +- 0.0000000001)
           val s3 = semiring.sum((0.5, 0.5), (1, 1))
-          s3._1 should be(1.5 plusOrMinus 0.000000001)
-          s3._2 should be(5.0 / 6.0 plusOrMinus 0.0000000001)
+          s3._1 should be(1.5 +- 0.000000001)
+          s3._2 should be(5.0 / 6.0 +- 0.0000000001)
         }
 
       "satisfy semiring properties for random data" in
@@ -147,21 +146,21 @@ class SemiringTest extends WordSpec with ShouldMatchers with PrivateMethodTester
 
           val allZeros = semiring.sum((0.50, mutable.Map(param -> Seq(0.0, 0.0, 0.0))), (0.50, mutable.Map(param -> Seq(0.0, 0.0, 0.0))))
 
-          allZeros._2(param)(0) should be(0.0 plusOrMinus 0.001)
-          allZeros._2(param)(1) should be(0.0 plusOrMinus 0.001)
-          allZeros._2(param)(2) should be(0.0 plusOrMinus 0.001)
+          allZeros._2(param)(0) should be(0.0 +- 0.001)
+          allZeros._2(param)(1) should be(0.0 +- 0.001)
+          allZeros._2(param)(2) should be(0.0 +- 0.001)
 
           val leftZeros = semiring.sum((0.50, mutable.Map(param -> Seq(0.0, 0.0, 0.0))), (0.50, mutable.Map(param -> Seq(0.2, 0.6, 0.4))))
 
-          leftZeros._2(param)(0) should be(0.1 plusOrMinus 0.001)
-          leftZeros._2(param)(1) should be(0.3 plusOrMinus 0.001)
-          leftZeros._2(param)(2) should be(0.2 plusOrMinus 0.001)
+          leftZeros._2(param)(0) should be(0.1 +- 0.001)
+          leftZeros._2(param)(1) should be(0.3 +- 0.001)
+          leftZeros._2(param)(2) should be(0.2 +- 0.001)
 
           val rightZeros = semiring.sum((0.50, mutable.Map(param -> Seq(0.3, 0.4, 0.5))), (0.50, mutable.Map(param -> Seq(0.0, 0.0, 0.0))))
 
-          rightZeros._2(param)(0) should be(0.15 plusOrMinus 0.001)
-          rightZeros._2(param)(1) should be(0.2 plusOrMinus 0.001)
-          rightZeros._2(param)(2) should be(0.25 plusOrMinus 0.001)
+          rightZeros._2(param)(0) should be(0.15 +- 0.001)
+          rightZeros._2(param)(1) should be(0.2 +- 0.001)
+          rightZeros._2(param)(2) should be(0.25 +- 0.001)
         }
 
       "correctly multiply two numbers" in
@@ -175,9 +174,9 @@ class SemiringTest extends WordSpec with ShouldMatchers with PrivateMethodTester
           val result = semiring.product((0.50, mutable.Map(param -> Seq(0.3, 0.4, 0.5))), (0.50, mutable.Map(param -> Seq(0.8, 0.432, 0.0))))
           result._1 should equal(0.25)
           //The simple product is used in the multiplication step.
-          result._2(param)(0) should be(1.1 plusOrMinus 0.001)
-          result._2(param)(1) should be(0.832 plusOrMinus .001)
-          result._2(param)(2) should be(0.5 plusOrMinus .001)
+          result._2(param)(0) should be(1.1 +- 0.001)
+          result._2(param)(1) should be(0.832 +- .001)
+          result._2(param)(2) should be(0.5 +- .001)
 
         }
 
@@ -190,13 +189,13 @@ class SemiringTest extends WordSpec with ShouldMatchers with PrivateMethodTester
           val semiring = SufficientStatisticsSemiring(parameterMap.toMap)
 
           val result = semiring.sum((0.50, mutable.Map(param -> Seq(0.3, 0.4, 0.5))), (0.50, mutable.Map(param -> Seq(0.8, 0.432, 0.0))))
-          result._1 should be(1.0 plusOrMinus 0.001)
+          result._1 should be(1.0 +- 0.001)
           //(.5*.3 + .5*.8)/1 = 0.15 + .4 = .55
-          result._2(param)(0) should be(0.55 plusOrMinus 0.001)
+          result._2(param)(0) should be(0.55 +- 0.001)
           //.5*.4 + .5*.432/1 = .2 + .216 = .416
-          result._2(param)(1) should be(.416 plusOrMinus 0.001)
+          result._2(param)(1) should be(.416 +- 0.001)
           //.5*.5 + .5*0/1 = .25
-          result._2(param)(2) should be(0.25 plusOrMinus 0.001)
+          result._2(param)(2) should be(0.25 +- 0.001)
         }
 
       "satisfy semiring properties for random data" in
