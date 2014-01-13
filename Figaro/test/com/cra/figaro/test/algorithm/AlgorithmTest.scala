@@ -13,14 +13,14 @@
 
 package com.cra.figaro.test.algorithm
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
 import scala.collection.mutable.Map
 
-class AlgorithmTest extends WordSpec with ShouldMatchers {
+class AlgorithmTest extends WordSpec with Matchers {
   "An algorithm" should {
     "not allow queries before starting" in {
       Universe.createNew()
