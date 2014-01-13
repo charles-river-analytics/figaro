@@ -13,14 +13,14 @@
 
 package com.cra.figaro.test.util
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.{ WordSpec, PrivateMethodTester }
 import math.log
 import scala.testing.Benchmark
 import com.cra.figaro.util._
 import com.cra.figaro.test._
 
-class SelectableSetTest extends WordSpec with PrivateMethodTester with ShouldMatchers {
+class SelectableSetTest extends WordSpec with PrivateMethodTester with Matchers {
   "A SelectableSet" should {   
     "contain an element after insertion" in {
       val s = new HashSelectableSet[Int]
@@ -54,7 +54,7 @@ class SelectableSetTest extends WordSpec with PrivateMethodTester with ShouldMat
       var successes = 0
       val numTrials = 10000
       for { i <- 1 to numTrials } { if (s.select() == 2) successes += 1 }
-      successes.toDouble / numTrials should be(0.25 plusOrMinus 0.1)
+      successes.toDouble / numTrials should be(0.25 +- 0.1)
     }
 
     "create a separate copy of itself when cloning" in {
