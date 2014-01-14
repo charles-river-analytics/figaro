@@ -640,5 +640,28 @@ class CompoundTest extends WordSpec with Matchers {
       x2.value = x2.generateValue(x2.randomness)
       x2.value should equal(0)
     }
+    
+    "produce the correct values when Values() called" in {
+      Universe.createNew()
+      val x1 = Select(0.75 -> 3, 0.25 -> 5)
+      val x2 = IntSelector(x1)
+      Values()(x2) should equal(Set(0, 1, 2, 3, 4))
+    }
+    
+    "produce the correct factors" in {
+      def prob(counter: Int, value: Int) = if (value < counter) 1.0/counter else 0.0
+      Universe.createNew()
+      val clauses = List((0.75, 3), (0.25, 5))
+      val x1 = Select(clauses:_*)
+      val x2 = IntSelector(x1)
+      val alg = VariableElimination(x2)
+      alg.start
+      val dist = alg.distribution(x2)
+      dist.foreach{v =>
+        v._1 should be(clauses.filter(v._2 < _._2).map(c => c._1/c._2).sum +- 0.0001)
+      }
+      
+    }
+    
   }
 }
