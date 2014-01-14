@@ -124,11 +124,11 @@ class MultiValuedTest extends WordSpec with Matchers {
       val p4 = pSpecialNew * 0.4 + pNewSpecial * 0.4 + pNewNew * 0.4 * 0.4
       val p5 = pSpecialNew * 0.6 + pNewSpecial * 0.6 + pNewNew * (0.4 * 0.6 + 0.6 * 0.4)
       val p6 = pSpecialNew * 0.0 + pNewSpecial * 0.0 + pNewNew * 0.6 * 0.6
-      alg.probability(c.sum, 2) should be(p2 - 0.01)
-      alg.probability(c.sum, 3) should be(p3 - 0.01)
-      alg.probability(c.sum, 4) should be(p4 - 0.01)
-      alg.probability(c.sum, 5) should be(p5 - 0.01)
-      alg.probability(c.sum, 6) should be(p6 - 0.01)
+      alg.probability(c.sum, 2) should be(p2 +- 0.01)
+      alg.probability(c.sum, 3) should be(p3 +- 0.01)
+      alg.probability(c.sum, 4) should be(p4 +- 0.01)
+      alg.probability(c.sum, 5) should be(p5 +- 0.01)
+      alg.probability(c.sum, 6) should be(p6 +- 0.01)
       alg.kill
     }
   }
