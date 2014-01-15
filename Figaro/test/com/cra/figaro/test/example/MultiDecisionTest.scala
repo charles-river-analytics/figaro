@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.example
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
@@ -24,7 +24,7 @@ import com.cra.figaro.library.compound._
 import com.cra.figaro.library.decision._
 import com.cra.figaro.test._
 
-class MultiDecisionTest extends WordSpec with ShouldMatchers {
+class MultiDecisionTest extends WordSpec with Matchers {
 
   def propmaker = (mv: Universe, e: Element[_]) => ProposalScheme.default(mv)
 

@@ -14,7 +14,7 @@
 package com.cra.figaro.test.algorithm.sampling
 
 import org.scalatest._
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
@@ -22,7 +22,7 @@ import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.library.compound._
 import com.cra.figaro.test._
 
-class ImportanceTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
+class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
 
   "Sampling a value of a single element" should {
     "for a Constant return the constant with probability 1" in {
@@ -233,11 +233,11 @@ class ImportanceTest extends WordSpec with ShouldMatchers with PrivateMethodTest
       val i = Importance(20000, f)
       s.observe(0.3)
       i.start()
-      i.probability(f, true) should be(0.3 plusOrMinus 0.01)
+      i.probability(f, true) should be(0.3 +- 0.01)
       i.kill()
       s.observe(0.6)
       i.start()
-      i.probability(f, true) should be(0.6 plusOrMinus 0.01)
+      i.probability(f, true) should be(0.6 +- 0.01)
       i.kill()
     }
 
@@ -275,7 +275,7 @@ class ImportanceTest extends WordSpec with ShouldMatchers with PrivateMethodTest
     val tolerance = 0.01
     val algorithm = Importance(numTrials, target)
     algorithm.start()
-    algorithm.probability(target, predicate) should be(prob plusOrMinus tolerance)
+    algorithm.probability(target, predicate) should be(prob +- tolerance)
     algorithm.kill()
   }
 
@@ -301,6 +301,6 @@ class ImportanceTest extends WordSpec with ShouldMatchers with PrivateMethodTest
       if (predicate(value)) successWeight += weight
       totalWeight += weight
     }
-    (successWeight / totalWeight) should be(prob plusOrMinus tolerance)
+    (successWeight / totalWeight) should be(prob +- tolerance)
   }
 }

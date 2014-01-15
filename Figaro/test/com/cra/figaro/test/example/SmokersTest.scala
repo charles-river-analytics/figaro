@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.example
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
@@ -22,7 +22,7 @@ import com.cra.figaro.language._
 import com.cra.figaro.library.compound._
 import com.cra.figaro.test._
 
-class SmokersTest extends WordSpec with ShouldMatchers {
+class SmokersTest extends WordSpec with Matchers {
   "The friends and smokers example" should {
     "produce the correct answer under importance sampling" taggedAs (ExampleTest) in {
       test((e: Element[Boolean]) => Importance(20000, e))
@@ -62,7 +62,7 @@ class SmokersTest extends WordSpec with ShouldMatchers {
 
     val alg = algorithmCreator(alice.smokes)
     alg.start()
-    alg.probability(alice.smokes, true) should be(answer plusOrMinus 0.01)
+    alg.probability(alice.smokes, true) should be(answer +- 0.01)
     alg.kill
   }
 

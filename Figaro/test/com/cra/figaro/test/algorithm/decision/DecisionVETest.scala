@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.algorithm.decision
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.{ WordSpec, PrivateMethodTester }
 import math.log
 import com.cra.figaro.algorithm._
@@ -29,7 +29,7 @@ import com.cra.figaro.util._
 import com.cra.figaro.test.algorithm.decision.DecisionTestCases._
 import scala.collection.mutable.Map
 
-class DecisionVETest extends WordSpec with ShouldMatchers {
+class DecisionVETest extends WordSpec with Matchers {
 
   "A VEGraph" when {
 

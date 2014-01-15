@@ -13,14 +13,14 @@
 
 package com.cra.figaro.test.util
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import testing.Benchmark
 import math.log
 import com.cra.figaro.util._
 import com.cra.figaro.test._
 
-class PriorityMapTest extends WordSpec with ShouldMatchers {
+class PriorityMapTest extends WordSpec with Matchers {
   "A HeapPriorityMap" should {
     "contain an item after insertion" in {
       val hpm = new HeapPriorityMap[String, Int]

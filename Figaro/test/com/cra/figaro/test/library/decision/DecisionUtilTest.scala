@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.library.decision
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.{ WordSpec, PrivateMethodTester }
 import math.log
 import com.cra.figaro.algorithm._
@@ -30,7 +30,7 @@ import com.cra.figaro.util._
 import com.cra.figaro.test._
 import scala.collection.mutable.Map
 
-class DecisionUtilTest extends WordSpec with ShouldMatchers {
+class DecisionUtilTest extends WordSpec with Matchers {
 
   "DecisionUtil" should {
 
