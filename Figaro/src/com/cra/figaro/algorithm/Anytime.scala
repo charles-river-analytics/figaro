@@ -93,7 +93,7 @@ trait Anytime extends Algorithm {
   /**
    * The actor running the algorithm.
    */
-  var runner: Runner = _
+  protected var runner: Runner = _
 
   /**
    * A handler of services provided by the algorithm.

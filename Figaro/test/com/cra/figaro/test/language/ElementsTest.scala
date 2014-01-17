@@ -13,13 +13,13 @@
 
 package com.cra.figaro.test.language
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.library.compound._
 
-class ElementsTest extends WordSpec with ShouldMatchers {
+class ElementsTest extends WordSpec with Matchers {
   "A Constant" should {
     "have value equal to the given constant" in {
       Universe.createNew()
@@ -573,7 +573,7 @@ class ElementsTest extends WordSpec with ShouldMatchers {
       targetElem.generate()
       if (predicate(targetElem.value)) successes += 1
     }
-    (successes.toDouble / numTrials) should be(prob plusOrMinus tolerance)
+    (successes.toDouble / numTrials) should be(prob +- tolerance)
 
   }
 }

@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.library.atomic.discrete
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.algorithm._
@@ -23,24 +23,24 @@ import com.cra.figaro.language._
 import com.cra.figaro.library.compound._
 import JSci.maths.statistics.{ BinomialDistribution, GeometricDistribution, PoissonDistribution }
 
-class DiscreteTest extends WordSpec with ShouldMatchers {
+class DiscreteTest extends WordSpec with Matchers {
   "A AtomicUniform" should {
     "have a value within the options with probability equal to 1 divided by the number of options" in {
       Universe.createNew()
       val elem = Uniform(1, 2, 3, 4)
       val alg = Importance(20000, elem)
       alg.start()
-      alg.probability(elem, (i: Int) => 1 <= i && i < 3) should be(0.5 plusOrMinus 0.01)
+      alg.probability(elem, (i: Int) => 1 <= i && i < 3) should be(0.5 +- 0.01)
     }
 
     "for an input within the options have density equal to 1 divided by the number of options" in {
       Universe.createNew()
-      Uniform(1, 2, 3, 4).density(2) should be(0.25 plusOrMinus 0.000000001)
+      Uniform(1, 2, 3, 4).density(2) should be(0.25 +- 0.000000001)
     }
 
     "for an input outside the options have density 0" in {
       Universe.createNew()
-      Uniform(1, 2, 3, 4).density(5) should be(0.0 plusOrMinus 0.000000001)
+      Uniform(1, 2, 3, 4).density(5) should be(0.0 +- 0.000000001)
     }
 
     "convert to the correct string" in {
@@ -62,7 +62,7 @@ class DiscreteTest extends WordSpec with ShouldMatchers {
       val ve = VariableElimination(e2)
       ve.start()
       val p = 0.5 * 0.6 + 0.5 * 0.2
-      ve.probability(e2, true) should be(p plusOrMinus 0.0000000001)
+      ve.probability(e2, true) should be(p +- 0.0000000001)
     }
   }
 
@@ -76,7 +76,7 @@ class DiscreteTest extends WordSpec with ShouldMatchers {
         val alg = Importance(20000, elem)
         alg.start()
         val targetProb = 0.5 * 0.5 + 0.5 * 0.3
-        alg.probability(elem, (i: Int) => i == 3) should be(targetProb plusOrMinus 0.01)
+        alg.probability(elem, (i: Int) => i == 3) should be(targetProb +- 0.01)
       }
 
     "convert to the correct string" in {
@@ -95,7 +95,7 @@ class DiscreteTest extends WordSpec with ShouldMatchers {
         val alg = Importance(20000, elem)
         alg.start()
         val targetProb = 0.9 * 0.9 * 0.1
-        alg.probability(elem, (i: Int) => i == 3) should be(targetProb plusOrMinus 0.01)
+        alg.probability(elem, (i: Int) => i == 3) should be(targetProb +- 0.01)
       }
 
     "produce the correct result under Metropolis-Hastings" in {
@@ -104,14 +104,14 @@ class DiscreteTest extends WordSpec with ShouldMatchers {
       val alg = MetropolisHastings(50000, ProposalScheme.default, elem)
       alg.start()
       val targetProb = 0.9 * 0.9 * 0.1
-      alg.probability(elem, (i: Int) => i == 3) should be(targetProb plusOrMinus 0.01)
+      alg.probability(elem, (i: Int) => i == 3) should be(targetProb +- 0.01)
     }
 
     "have the correct density" in {
       Universe.createNew()
       val elem = Geometric(0.9)
       val dist = new GeometricDistribution(0.1) // JSci parameterizes the geometric by probability of success
-      elem.density(3) should be(dist.probability(3.0) plusOrMinus 0.00000001)
+      elem.density(3) should be(dist.probability(3.0) +- 0.00000001)
     }
 
     "convert to the correct string" in {
@@ -127,7 +127,7 @@ class DiscreteTest extends WordSpec with ShouldMatchers {
       val alg = Importance(20000, elem)
       alg.start()
       val targetProb = 0.5 * 0.9 * 0.9 * 0.1 + 0.5 * 0.7 * 0.7 * 0.3
-      alg.probability(elem, (i: Int) => i == 3) should be(targetProb plusOrMinus 0.01)
+      alg.probability(elem, (i: Int) => i == 3) should be(targetProb +- 0.01)
     }
 
     "convert to the correct string" in {
@@ -145,7 +145,7 @@ class DiscreteTest extends WordSpec with ShouldMatchers {
       alg.start()
       val dist = new PoissonDistribution(0.9)
       val targetProb = dist.probability(3)
-      alg.probability(elem, (i: Int) => i == 3) should be(targetProb plusOrMinus 0.01)
+      alg.probability(elem, (i: Int) => i == 3) should be(targetProb +- 0.01)
     }
 
     "produce the correct result under Metropolis-Hastings" in {
@@ -155,14 +155,14 @@ class DiscreteTest extends WordSpec with ShouldMatchers {
       alg.start()
       val dist = new PoissonDistribution(0.9)
       val targetProb = dist.probability(3)
-      alg.probability(elem, (i: Int) => i == 3) should be(targetProb plusOrMinus 0.01)
+      alg.probability(elem, (i: Int) => i == 3) should be(targetProb +- 0.01)
     }
 
     "have the correct density" in {
       Universe.createNew()
       val elem = Poisson(0.9)
       val dist = new PoissonDistribution(0.9)
-      elem.density(3) should be(dist.probability(3.0) plusOrMinus 0.00000001)
+      elem.density(3) should be(dist.probability(3.0) +- 0.00000001)
     }
 
     "convert to the correct string" in {
@@ -180,7 +180,7 @@ class DiscreteTest extends WordSpec with ShouldMatchers {
       val dist1 = new PoissonDistribution(0.7)
       val dist2 = new PoissonDistribution(0.9)
       val targetProb = 0.5 * dist1.probability(3) + 0.5 * dist2.probability(3)
-      alg.probability(elem, (i: Int) => i == 3) should be(targetProb plusOrMinus 0.01)
+      alg.probability(elem, (i: Int) => i == 3) should be(targetProb +- 0.01)
     }
 
     "convert to the correct string" in {
@@ -198,7 +198,7 @@ class DiscreteTest extends WordSpec with ShouldMatchers {
       alg.start()
       val dist = new BinomialDistribution(5, 0.9)
       val targetProb = dist.probability(3)
-      alg.probability(elem, (i: Int) => i == 3) should be(targetProb plusOrMinus 0.01)
+      alg.probability(elem, (i: Int) => i == 3) should be(targetProb +- 0.01)
     }
 
     "produce the correct result under Metropolis-Hastings" in {
@@ -208,14 +208,14 @@ class DiscreteTest extends WordSpec with ShouldMatchers {
       alg.start()
       val dist = new BinomialDistribution(5, 0.9)
       val targetProb = dist.probability(3)
-      alg.probability(elem, (i: Int) => i == 3) should be(targetProb plusOrMinus 0.01)
+      alg.probability(elem, (i: Int) => i == 3) should be(targetProb +- 0.01)
     }
 
     "have the correct density" in {
       Universe.createNew()
       val elem = Binomial(5, 0.9)
       val dist = new BinomialDistribution(5, 0.9)
-      elem.density(3) should be(dist.probability(3) plusOrMinus 0.00000001)
+      elem.density(3) should be(dist.probability(3) +- 0.00000001)
     }
 
     "convert to the correct string" in {
@@ -237,7 +237,7 @@ class DiscreteTest extends WordSpec with ShouldMatchers {
       ve.start()
       val p0 = 0.1 * 0.1 * 0.1
       val p = p0 * 0.6 + (1 - p0) * 0.2
-      ve.probability(e2, true) should be(p plusOrMinus 0.0000000001)
+      ve.probability(e2, true) should be(p +- 0.0000000001)
     }
   }
 
@@ -250,7 +250,7 @@ class DiscreteTest extends WordSpec with ShouldMatchers {
       val dist1 = new BinomialDistribution(5, 0.7)
       val dist2 = new BinomialDistribution(5, 0.9)
       val targetProb = 0.5 * dist1.probability(3) + 0.5 * dist2.probability(3)
-      alg.probability(elem, (i: Int) => i == 3) should be(targetProb plusOrMinus 0.01)
+      alg.probability(elem, (i: Int) => i == 3) should be(targetProb +- 0.01)
     }
 
     "convert to the correct string" in {
@@ -267,7 +267,7 @@ class DiscreteTest extends WordSpec with ShouldMatchers {
       val elem = SwitchingFlip(0.8)
       val alg = Importance(40000, elem)
       alg.start()
-      alg.probability(elem, (b: Boolean) => b) should be(0.8 plusOrMinus 0.01)
+      alg.probability(elem, (b: Boolean) => b) should be(0.8 +- 0.01)
     }
 
     "always produce the opposite value for the next randomness" in {
@@ -281,9 +281,9 @@ class DiscreteTest extends WordSpec with ShouldMatchers {
       Universe.createNew()
       val elem = SwitchingFlip(0.8)
       val nr1 = elem.nextRandomness(0.7)
-      nr1._2 * nr1._3 should be(0.2 / 0.8 plusOrMinus 0.00000001)
+      nr1._2 * nr1._3 should be(0.2 / 0.8 +- 0.00000001)
       val nr2 = elem.nextRandomness(0.9)
-      nr2._2 * nr2._3 should be(0.8 / 0.2 plusOrMinus 0.00000001)
+      nr2._2 * nr2._3 should be(0.8 / 0.2 +- 0.00000001)
     }
 
     "produce the right probability under Metropolis-Hastings" in {
@@ -291,7 +291,7 @@ class DiscreteTest extends WordSpec with ShouldMatchers {
       val elem = SwitchingFlip(0.7)
       val alg = MetropolisHastings(20000, ProposalScheme.default, elem)
       alg.start()
-      alg.probability(elem, (b: Boolean) => b) should be(0.7 plusOrMinus 0.01)
+      alg.probability(elem, (b: Boolean) => b) should be(0.7 +- 0.01)
     }
 
     "produce the right probability when conditioned under Metropolis-Hastings" in {
@@ -303,7 +303,7 @@ class DiscreteTest extends WordSpec with ShouldMatchers {
       alg.start()
       val p1 = 0.2 * 0.7
       val p2 = 0.8 * 0.4
-      alg.probability(elem1, (b: Boolean) => b) should be(p1 / (p1 + p2) plusOrMinus 0.01)
+      alg.probability(elem1, (b: Boolean) => b) should be(p1 / (p1 + p2) +- 0.01)
     }
   }
 }

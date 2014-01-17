@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.algorithm.learning
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.{ PrivateMethodTester, WordSpec }
 import com.cra.figaro.algorithm.learning._
 import com.cra.figaro.algorithm._
@@ -25,7 +25,7 @@ import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.util
 import scala.collection._
 
-class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateMethodTester with ShouldMatchers {
+class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateMethodTester with Matchers {
 
   "Sufficient Statistics Variable Elimination" when
     {
@@ -179,8 +179,8 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               val map = algorithm.getSufficientStatisticsForAllParameters
               val sufficientStatisticsForBeta = map(p1)
               println(sufficientStatisticsForBeta)
-              sufficientStatisticsForBeta(0) should be(1.0 plusOrMinus 0.01)
-              sufficientStatisticsForBeta(1) should be(0.0 plusOrMinus 0.01)
+              sufficientStatisticsForBeta(0) should be(1.0 +- 0.01)
+              sufficientStatisticsForBeta(1) should be(0.0 +- 0.01)
 
             }
 
@@ -209,8 +209,8 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               algorithm.start
               val map = algorithm.getSufficientStatisticsForAllParameters
               val sufficientStatisticsForBeta = map(p1)
-              sufficientStatisticsForBeta(0) should be(1.0 plusOrMinus 0.01)
-              sufficientStatisticsForBeta(1) should be(0.0 plusOrMinus 0.01)
+              sufficientStatisticsForBeta(0) should be(1.0 +- 0.01)
+              sufficientStatisticsForBeta(1) should be(0.0 +- 0.01)
 
             }
 
@@ -243,9 +243,9 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               val sufficientStatisticsForBeta = map(p1)
               //EM will remember the prior probabilities
               //We haven't seen any '2's or '3's, so the sufficient statistics are zero. 
-              sufficientStatisticsForBeta(0) should be(1.0 plusOrMinus 0.01)
-              sufficientStatisticsForBeta(1) should be(0.0 plusOrMinus 0.01)
-              sufficientStatisticsForBeta(2) should be(0.0 plusOrMinus 0.01)
+              sufficientStatisticsForBeta(0) should be(1.0 +- 0.01)
+              sufficientStatisticsForBeta(1) should be(0.0 +- 0.01)
+              sufficientStatisticsForBeta(2) should be(0.0 +- 0.01)
             }
 
           "correctly deduce sufficient statistics for a Dirichlet parameter with three concentration parameters and two observations" in
@@ -279,9 +279,9 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               val sufficientStatisticsForBeta = map(p1)
               //EM will remember the prior probabilities
               //We haven't seen any 3s, so the result is zero. 
-              sufficientStatisticsForBeta(0) should be(1.0 plusOrMinus 0.01)
-              sufficientStatisticsForBeta(1) should be(1.0 plusOrMinus 0.01)
-              sufficientStatisticsForBeta(2) should be(0.0 plusOrMinus 0.01)
+              sufficientStatisticsForBeta(0) should be(1.0 +- 0.01)
+              sufficientStatisticsForBeta(1) should be(1.0 +- 0.01)
+              sufficientStatisticsForBeta(2) should be(0.0 +- 0.01)
             }
 
           "correctly deduce sufficient statistics for a Dirichlet parameter with three concentration parameters and three observations" in
@@ -317,9 +317,9 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               val sufficientStatisticsForBeta = map(p1)
 
               //We have seen an equal number of 1s, 2s and 3s.
-              sufficientStatisticsForBeta(0) should be(1.0 plusOrMinus 0.01)
-              sufficientStatisticsForBeta(1) should be(1.0 plusOrMinus 0.01)
-              sufficientStatisticsForBeta(2) should be(1.0 plusOrMinus 0.01)
+              sufficientStatisticsForBeta(0) should be(1.0 +- 0.01)
+              sufficientStatisticsForBeta(1) should be(1.0 +- 0.01)
+              sufficientStatisticsForBeta(2) should be(1.0 +- 0.01)
             }
 
           "correctly deduce sufficient statistics for a Dirichlet parameter with three concentration parameters and four observations" in
@@ -357,9 +357,9 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               val map = algorithm.getSufficientStatisticsForAllParameters
               val sufficientStatisticsForBeta = map(p1)
 
-              sufficientStatisticsForBeta(0) should be(2.0 plusOrMinus 0.01)
-              sufficientStatisticsForBeta(1) should be(1.0 plusOrMinus 0.01)
-              sufficientStatisticsForBeta(2) should be(1.0 plusOrMinus 0.01)
+              sufficientStatisticsForBeta(0) should be(2.0 +- 0.01)
+              sufficientStatisticsForBeta(1) should be(1.0 +- 0.01)
+              sufficientStatisticsForBeta(2) should be(1.0 +- 0.01)
             }
 
         }

@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.language
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.language._
 import com.cra.figaro.language.Universe._
@@ -22,7 +22,7 @@ import com.cra.figaro.library.compound._
 import scala.collection.mutable._
 import scala.collection.mutable.Map
 
-class UniverseTest extends WordSpec with ShouldMatchers {
+class UniverseTest extends WordSpec with Matchers {
   "A Universe" when {
     "having activated and deactivated some elements" should {
       "have all elements whose last activation was later than their last deactivation be active and no others" in {

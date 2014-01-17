@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.algorithm.filtering
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.{ WordSpec, PrivateMethodTester }
 import com.cra.figaro.algorithm.filtering._
 import com.cra.figaro.language._
@@ -22,7 +22,7 @@ import com.cra.figaro.library.compound._
 import com.cra.figaro.test._
 import scala.language.existentials
 
-class ParticleFilterTest extends WordSpec with PrivateMethodTester with ShouldMatchers {
+class ParticleFilterTest extends WordSpec with PrivateMethodTester with Matchers {
   "A snapshot" should {
     "contain the values of all named elements" in {
       val universe1 = Universe.createNew()
@@ -78,7 +78,7 @@ class ParticleFilterTest extends WordSpec with PrivateMethodTester with ShouldMa
         val weightedParticles: Seq[ParticleFilter.WeightedParticle] = List((0.4, state1), (0.6, state2))
 
         pf.updateBeliefState(weightedParticles)
-        (pf.beliefState count (_ == state1)).toDouble / numParticles should be(0.4 plusOrMinus 0.01)
+        (pf.beliefState count (_ == state1)).toDouble / numParticles should be(0.4 +- 0.01)
       }
     }
 
@@ -94,7 +94,7 @@ class ParticleFilterTest extends WordSpec with PrivateMethodTester with ShouldMa
         val pf1True = qf1True / (qf1True + qf1False)
         val pf = ParticleFilter(universe, (u: Universe) => new Universe(), numParticles)
         pf.start()
-        pf.currentProbability("f1", true) should be(pf1True plusOrMinus 0.01)
+        pf.currentProbability("f1", true) should be(pf1True +- 0.01)
       }
     }
 
@@ -112,7 +112,7 @@ class ParticleFilterTest extends WordSpec with PrivateMethodTester with ShouldMa
         pf.start()
         pf.advanceTime(List())
         val p = 0.2 * 0.8 + 0.8 * 0.3
-        pf.currentProbability("f", true) should be(p plusOrMinus 0.01)
+        pf.currentProbability("f", true) should be(p +- 0.01)
       }
     }
 
@@ -134,7 +134,7 @@ class ParticleFilterTest extends WordSpec with PrivateMethodTester with ShouldMa
           val qf1True = (0.2 * 0.8 + 0.8 * 0.3) * 0.6
           val qf1False = (0.2 * 0.2 + 0.8 * 0.7) * 0.1
           val pf1True = qf1True / (qf1True + qf1False)
-          pf.currentProbability("f1", true) should be(pf1True plusOrMinus 0.01)
+          pf.currentProbability("f1", true) should be(pf1True +- 0.01)
         }
 
       "correctly estimate static variables" in {
@@ -153,7 +153,7 @@ class ParticleFilterTest extends WordSpec with PrivateMethodTester with ShouldMa
         val qxTrue = 0.2 * 0.8
         val qxFalse = 0.8 * 0.1
         val pxTrue = qxTrue / (qxTrue + qxFalse)
-        pf.currentProbability("x", true) should be(pxTrue plusOrMinus 0.01)
+        pf.currentProbability("x", true) should be(pxTrue +- 0.01)
       }
     }
 
@@ -188,9 +188,9 @@ class ParticleFilterTest extends WordSpec with PrivateMethodTester with ShouldMa
         val pF10F_F11F_F21T_F12F_F22F = 0.8 * 0.7 * 0.1 * 0.7 * 0.9
         val pF12T = pF10T_F11T_F21T_F12T_F22F + pF10T_F11F_F21T_F12T_F22F + pF10F_F11T_F21T_F12T_F22F + pF10F_F11F_F21T_F12T_F22F
         val pF12F = pF10T_F11T_F21T_F12F_F22F + pF10T_F11F_F21T_F12F_F22F + pF10F_F11T_F21T_F12F_F22F + pF10F_F11F_F21T_F12F_F22F
-        result1 should be(answer1 plusOrMinus 0.01)
+        result1 should be(answer1 +- 0.01)
         val answer2 = pF12T / (pF12T + pF12F)
-        result2 should be(answer2 plusOrMinus 0.01)
+        result2 should be(answer2 +- 0.01)
       }
 
       "correctly estimate static variables" in {
@@ -226,7 +226,7 @@ class ParticleFilterTest extends WordSpec with PrivateMethodTester with ShouldMa
         val pXY2TT = pXY0TT * pY2TGivenXY0TT + pXY0TF * pY2TGivenXY0TF
         val pXY2FT = pXY0FT * pY2TGivenXY0FT + pXY0FF * pY2TGivenXY0FF
         val pxTrue = pXY2TT / (pXY2TT + pXY2FT)
-        pf.currentProbability("x", true) should be(pxTrue plusOrMinus 0.01)
+        pf.currentProbability("x", true) should be(pxTrue +- 0.01)
       }
     }
 
@@ -258,13 +258,13 @@ class ParticleFilterTest extends WordSpec with PrivateMethodTester with ShouldMa
         if (d(0)._2 == true) {
           d(0)._2 should equal(true)
           d(1)._2 should equal(false)
-          d(0)._1 should be(pf1TrueTime2 plusOrMinus 0.01)
-          d(1)._1 should be((1.0 - pf1TrueTime2) plusOrMinus 0.01)
+          d(0)._1 should be(pf1TrueTime2 +- 0.01)
+          d(1)._1 should be((1.0 - pf1TrueTime2) +- 0.01)
         } else {
           d(1)._2 should equal(true)
           d(0)._2 should equal(false)
-          d(1)._1 should be(pf1TrueTime2 plusOrMinus 0.01)
-          d(0)._1 should be((1.0 - pf1TrueTime2) plusOrMinus 0.01)
+          d(1)._1 should be(pf1TrueTime2 +- 0.01)
+          d(0)._1 should be((1.0 - pf1TrueTime2) +- 0.01)
         }
       }
     }
