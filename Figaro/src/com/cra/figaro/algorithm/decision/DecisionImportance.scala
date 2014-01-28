@@ -33,23 +33,22 @@ import scala.collection.mutable.{ Set, Map }
  * track of utilities and probabilities (to compute expected utility) and it implements DecisionAlgorithm trait
  */
 
-abstract class DecisionImportance[T, U] private (universe: Universe, utilityNodes: List[Element[_]], decisionTarget: Decision[T, U],
-  dummyTarget: Element[_])
-  extends WeightedSampler(universe, dummyTarget) with DecisionAlgorithm[T, U] {
+abstract class DecisionImportance[T, U] private (override val universe: Universe, utilityNodes: List[Element[_]], decisionTarget: Decision[T, U],
+  dummyTarget: Element[_]) extends WeightedSampler(universe, dummyTarget) with DecisionAlgorithm[T, U] {
   
   def this(universe: Universe, utilityNodes: List[Element[_]], decisionTarget: Decision[T, U]) = 
     this(universe, utilityNodes, decisionTarget, createDecisionDummy(decisionTarget))
   
   import Importance.State
 
-  protected var allUtilitiesSeen: List[WeightSeen[_]] = _
+  private var allUtilitiesSeen: List[WeightSeen[_]] = _
 
   private def utilitySum = (0.0 /: utilityNodes)((s: Double, n: Element[_]) => s + n.value.asInstanceOf[Double])
   
   /**
    * Cleans up the temporary elements created during sampling
    */
-  def cleanup() = universe.deactivate(targets)
+  def cleanup() = universe.deactivate(queryTargets)
 
   /* Overrides DecisionAlgorithm Trait */
   // have to normalize the utilities by the sum of the weights for each (parent, decision) combo
@@ -61,7 +60,7 @@ abstract class DecisionImportance[T, U] private (universe: Universe, utilityNode
 
   // override reset so we can reset the local utilities
   override protected def resetCounts() = {
-    allUtilitiesSeen = targets.toList map (newWeightSeen(_))
+    allUtilitiesSeen = queryTargets.toList map (newWeightSeen(_))
     super.resetCounts()
   }
 
@@ -89,7 +88,7 @@ abstract class DecisionImportance[T, U] private (universe: Universe, utilityNode
         // We must make a fresh copy of the active elements since sampling can add active elements to the Universe
         val activeElements = universe.permanentElements
         activeElements.foreach(e => if (e.active) sampleOne(state, e))
-        val bindings = targets map (elem => elem -> elem.value)
+        val bindings = queryTargets map (elem => elem -> elem.value)
         Some((state.weight, Map(bindings: _*)))
       } catch {
         case Importance.Reject => None

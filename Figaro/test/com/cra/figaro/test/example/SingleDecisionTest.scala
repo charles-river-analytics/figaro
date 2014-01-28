@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.example
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
@@ -24,7 +24,7 @@ import com.cra.figaro.library.compound._
 import com.cra.figaro.library.decision._
 import com.cra.figaro.test._
 
-class SingleDecisionTest extends WordSpec with ShouldMatchers {
+class SingleDecisionTest extends WordSpec with Matchers {
   "A single decision network" should {
     "produce the correct decisions under variable elimination" taggedAs (ExampleTest) in {
       test((e1: List[Element[Double]], e2: Decision[Int, Boolean]) => DecisionVariableElimination(e1, e2))

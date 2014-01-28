@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.library.decision
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.{ WordSpec, PrivateMethodTester }
 import math.log
 import com.cra.figaro.algorithm._
@@ -21,7 +21,7 @@ import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.discrete._
 import com.cra.figaro.library.decision._
 
-class DecisionTest extends WordSpec with ShouldMatchers {
+class DecisionTest extends WordSpec with Matchers {
 
   "A CachingDecision" should {
 

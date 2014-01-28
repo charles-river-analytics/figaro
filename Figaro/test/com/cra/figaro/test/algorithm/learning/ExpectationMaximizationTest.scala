@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.algorithm.learning
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.{ PrivateMethodTester, WordSpec }
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.factored._
@@ -28,7 +28,7 @@ import com.cra.figaro.util.random
 import scala.math.abs
 import java.io._
 
-class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with ShouldMatchers {
+class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with Matchers {
 
   "Expectation Maximization" when
     {
@@ -58,7 +58,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
 
               val result = b.getLearnedElement
               algorithm.kill
-              result.prob should be(0.66 plusOrMinus 0.01)
+              result.prob should be(0.66 +- 0.01)
 
             }
 
@@ -84,7 +84,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
 
               val result = b.getLearnedElement
               algorithm.kill
-              result.prob should be(0.50 plusOrMinus 0.01)
+              result.prob should be(0.50 +- 0.01)
 
             }
 
@@ -115,7 +115,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
 
               val result = b.getLearnedElement(List(true, false))
               algorithm.kill
-              result.probs(0) should be(0.66 plusOrMinus 0.01)
+              result.probs(0) should be(0.66 +- 0.01)
 
             }
 
@@ -142,7 +142,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
 
               val result = b.getLearnedElement(List(true, false))
               algorithm.kill
-              result.probs(0) should be(0.50 plusOrMinus 0.01)
+              result.probs(0) should be(0.50 +- 0.01)
 
             }
 
@@ -163,28 +163,28 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
 
               val result = d.getLearnedElement(outcomes)
               algorithm.kill
-              result.probs(0) should be(0.04 plusOrMinus 0.01)
-              result.probs(1) should be(0.04 plusOrMinus 0.01)
-              result.probs(2) should be(0.04 plusOrMinus 0.01)
-              result.probs(3) should be(0.04 plusOrMinus 0.01)
-              result.probs(4) should be(0.04 plusOrMinus 0.01)
-              result.probs(5) should be(0.04 plusOrMinus 0.01)
-              result.probs(6) should be(0.04 plusOrMinus 0.01)
-              result.probs(7) should be(0.04 plusOrMinus 0.01)
-              result.probs(8) should be(0.04 plusOrMinus 0.01)
-              result.probs(9) should be(0.04 plusOrMinus 0.01)
-              result.probs(10) should be(0.04 plusOrMinus 0.01)
-              result.probs(11) should be(0.04 plusOrMinus 0.01)
-              result.probs(12) should be(0.04 plusOrMinus 0.01)
-              result.probs(13) should be(0.04 plusOrMinus 0.01)
-              result.probs(14) should be(0.04 plusOrMinus 0.01)
-              result.probs(15) should be(0.04 plusOrMinus 0.01)
-              result.probs(16) should be(0.04 plusOrMinus 0.01)
-              result.probs(17) should be(0.04 plusOrMinus 0.01)
-              result.probs(18) should be(0.04 plusOrMinus 0.01)
-              result.probs(19) should be(0.04 plusOrMinus 0.01)
-              result.probs(20) should be(0.04 plusOrMinus 0.01)
-              result.probs(21) should be(0.04 plusOrMinus 0.01)
+              result.probs(0) should be(0.04 +- 0.01)
+              result.probs(1) should be(0.04 +- 0.01)
+              result.probs(2) should be(0.04 +- 0.01)
+              result.probs(3) should be(0.04 +- 0.01)
+              result.probs(4) should be(0.04 +- 0.01)
+              result.probs(5) should be(0.04 +- 0.01)
+              result.probs(6) should be(0.04 +- 0.01)
+              result.probs(7) should be(0.04 +- 0.01)
+              result.probs(8) should be(0.04 +- 0.01)
+              result.probs(9) should be(0.04 +- 0.01)
+              result.probs(10) should be(0.04 +- 0.01)
+              result.probs(11) should be(0.04 +- 0.01)
+              result.probs(12) should be(0.04 +- 0.01)
+              result.probs(13) should be(0.04 +- 0.01)
+              result.probs(14) should be(0.04 +- 0.01)
+              result.probs(15) should be(0.04 +- 0.01)
+              result.probs(16) should be(0.04 +- 0.01)
+              result.probs(17) should be(0.04 +- 0.01)
+              result.probs(18) should be(0.04 +- 0.01)
+              result.probs(19) should be(0.04 +- 0.01)
+              result.probs(20) should be(0.04 +- 0.01)
+              result.probs(21) should be(0.04 +- 0.01)
 
             }
 
@@ -204,28 +204,28 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
               algorithm.start
               val result = d.getLearnedElement(outcomes)
               algorithm.kill
-              result.probs(0) should be(0.0 plusOrMinus 0.01)
-              result.probs(1) should be(0.25 plusOrMinus 0.01)
-              result.probs(2) should be(0.25 plusOrMinus 0.01)
-              result.probs(3) should be(0.25 plusOrMinus 0.01)
-              result.probs(4) should be(0.25 plusOrMinus 0.01)
-              result.probs(5) should be(0.0 plusOrMinus 0.01)
-              result.probs(6) should be(0.0 plusOrMinus 0.01)
-              result.probs(7) should be(0.0 plusOrMinus 0.01)
-              result.probs(8) should be(0.0 plusOrMinus 0.01)
-              result.probs(9) should be(0.0 plusOrMinus 0.01)
-              result.probs(10) should be(0.0 plusOrMinus 0.01)
-              result.probs(11) should be(0.0 plusOrMinus 0.01)
-              result.probs(12) should be(0.0 plusOrMinus 0.01)
-              result.probs(13) should be(0.0 plusOrMinus 0.01)
-              result.probs(14) should be(0.0 plusOrMinus 0.01)
-              result.probs(15) should be(0.0 plusOrMinus 0.01)
-              result.probs(16) should be(0.0 plusOrMinus 0.01)
-              result.probs(17) should be(0.0 plusOrMinus 0.01)
-              result.probs(18) should be(0.0 plusOrMinus 0.01)
-              result.probs(19) should be(0.0 plusOrMinus 0.01)
-              result.probs(20) should be(0.0 plusOrMinus 0.01)
-              result.probs(21) should be(0.0 plusOrMinus 0.01)
+              result.probs(0) should be(0.0 +- 0.01)
+              result.probs(1) should be(0.25 +- 0.01)
+              result.probs(2) should be(0.25 +- 0.01)
+              result.probs(3) should be(0.25 +- 0.01)
+              result.probs(4) should be(0.25 +- 0.01)
+              result.probs(5) should be(0.0 +- 0.01)
+              result.probs(6) should be(0.0 +- 0.01)
+              result.probs(7) should be(0.0 +- 0.01)
+              result.probs(8) should be(0.0 +- 0.01)
+              result.probs(9) should be(0.0 +- 0.01)
+              result.probs(10) should be(0.0 +- 0.01)
+              result.probs(11) should be(0.0 +- 0.01)
+              result.probs(12) should be(0.0 +- 0.01)
+              result.probs(13) should be(0.0 +- 0.01)
+              result.probs(14) should be(0.0 +- 0.01)
+              result.probs(15) should be(0.0 +- 0.01)
+              result.probs(16) should be(0.0 +- 0.01)
+              result.probs(17) should be(0.0 +- 0.01)
+              result.probs(18) should be(0.0 +- 0.01)
+              result.probs(19) should be(0.0 +- 0.01)
+              result.probs(20) should be(0.0 +- 0.01)
+              result.probs(21) should be(0.0 +- 0.01)
 
             }
 
@@ -259,11 +259,11 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
               val result = b.getLearnedElement(outcomes)
               algorithm.kill
               //9/19
-              result.probs(0) should be(0.47 plusOrMinus errorTolerance)
+              result.probs(0) should be(0.47 +- errorTolerance)
               //7/19
-              result.probs(1) should be(0.36 plusOrMinus errorTolerance)
+              result.probs(1) should be(0.36 +- errorTolerance)
               //3/19
-              result.probs(2) should be(0.15 plusOrMinus errorTolerance)
+              result.probs(2) should be(0.15 +- errorTolerance)
 
             }
 
@@ -295,9 +295,9 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
 
               val result = b.getLearnedElement(outcomes)
               algorithm.kill
-              result.probs(0) should be(0.33 plusOrMinus 0.01)
-              result.probs(1) should be(0.33 plusOrMinus 0.01)
-              result.probs(2) should be(0.33 plusOrMinus 0.01)
+              result.probs(0) should be(0.33 +- 0.01)
+              result.probs(1) should be(0.33 +- 0.01)
+              result.probs(2) should be(0.33 +- 0.01)
 
             }
 
@@ -333,9 +333,9 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
 
                   val result = d.getLearnedElement(outcomes)
                   algorithm.kill
-                  result.probs(0) should be(0.33 plusOrMinus 0.01)
-                  result.probs(1) should be(0.33 plusOrMinus 0.01)
-                  result.probs(2) should be(0.33 plusOrMinus 0.01)
+                  result.probs(0) should be(0.33 +- 0.01)
+                  result.probs(1) should be(0.33 +- 0.01)
+                  result.probs(2) should be(0.33 +- 0.01)
 
                   val betaResult = b.getLearnedElement
                   betaResult.prob should be(0.5)
@@ -383,12 +383,12 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
 
                   val result = d.getLearnedElement(outcomes)
 
-                  result.probs(0) should be(0.33 plusOrMinus 0.01)
-                  result.probs(1) should be(0.33 plusOrMinus 0.01)
-                  result.probs(2) should be(0.33 plusOrMinus 0.01)
+                  result.probs(0) should be(0.33 +- 0.01)
+                  result.probs(1) should be(0.33 +- 0.01)
+                  result.probs(2) should be(0.33 +- 0.01)
 
                   val betaResult = b.getLearnedElement
-                  betaResult.prob should be(0.5 plusOrMinus 0.01)
+                  betaResult.prob should be(0.5 +- 0.01)
 
                 }
             }
@@ -619,8 +619,8 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
 
           println(learnedParamErr)
           println(learnedPredAcc)
-          learnedParamErr should be(0.00 plusOrMinus 0.12)
-          learnedPredAcc should be(truePredAcc plusOrMinus 0.12)
+          learnedParamErr should be(0.00 +- 0.12)
+          learnedPredAcc should be(truePredAcc +- 0.12)
 
         }
 

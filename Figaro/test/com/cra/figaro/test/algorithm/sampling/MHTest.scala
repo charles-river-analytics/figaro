@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.algorithm.sampling
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.{ WordSpec, PrivateMethodTester }
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
@@ -25,7 +25,7 @@ import com.cra.figaro.test._
 import scala.collection.mutable.Map
 import scala.language.existentials
 
-class MHTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
+class MHTest extends WordSpec with Matchers with PrivateMethodTester {
   "Anytime MetropolisHastings" should {
     "for a constant produce the constant with probability 1" in {
       Universe.createNew()
@@ -251,7 +251,7 @@ class MHTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
       try {
         mh.start()
         mh.stop()
-        mh.probability(f1, (b: Boolean) => b) should be(p1 / (p1 + p2) plusOrMinus tolerance)
+        mh.probability(f1, (b: Boolean) => b) should be(p1 / (p1 + p2) +- tolerance)
       } finally {
         mh.kill()
       }
@@ -270,7 +270,7 @@ class MHTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
         alg.stop()
         val p1 = 0.2 * 0.7
         val p2 = 0.8 * 0.4
-        alg.probability(elem1, (b: Boolean) => b) should be(p1 / (p1 + p2) plusOrMinus tolerance)
+        alg.probability(elem1, (b: Boolean) => b) should be(p1 / (p1 + p2) +- tolerance)
       } finally {
         alg.kill()
       }
@@ -289,7 +289,7 @@ class MHTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
         println(elem1.value)
         println(elem2.value)
         alg.stop()
-        alg.probability(elem2, (d: Double) => 1.4 < d && d < 1.6) should be(1.0 plusOrMinus tolerance)
+        alg.probability(elem2, (d: Double) => 1.4 < d && d < 1.6) should be(1.0 +- tolerance)
       } finally {
         alg.kill()
       }
@@ -322,11 +322,11 @@ class MHTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
       val i = MetropolisHastings(20000, ProposalScheme.default, f)
       s.observe(0.3)
       i.start()
-      i.probability(f, true) should be(0.3 plusOrMinus 0.01)
+      i.probability(f, true) should be(0.3 +- 0.01)
       i.kill()
       s.observe(0.6)
       i.start()
-      i.probability(f, true) should be(0.6 plusOrMinus 0.01)
+      i.probability(f, true) should be(0.6 +- 0.01)
       i.kill()
     }
   }
@@ -341,7 +341,7 @@ class MHTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
       s1.value = 1
       val (_, scores, _) = alg.test(10000, List(p1), List())
       // probability of s1 changing to 4 is 0.5 (prob. s1 proposed) * 0.6 (prob 4 is chosen if s1 proposed)
-      scores(p1) should be(0.3 plusOrMinus 0.01)
+      scores(p1) should be(0.3 +- 0.01)
     }
 
     "produce values satisfying a predicate the correct amount of the time with constraints" in {
@@ -354,7 +354,7 @@ class MHTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
       s1.value = 1
       val (_, scores, _) = alg.test(10000, List(p1), List())
       // probability of s1 changing to 4 is 0.5 (prob. s1 proposed) * 0.6 (prob 4 is chosen if s1 proposed) * 0.25
-      scores(p1) should be(0.075 plusOrMinus 0.01)
+      scores(p1) should be(0.075 +- 0.01)
     }
 
     "returns the percentage of time an element is proposed" in {
@@ -364,8 +364,8 @@ class MHTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
       s1.setConstraint((i: Int) => if (i == 1) 1; else 0.25)
       val alg = MetropolisHastings(ProposalScheme.default)
       val (_, _, counts) = alg.test(10000, List(), List(s1, s2))
-      counts(s1) should be(0.5 plusOrMinus 0.01)
-      counts(s2) should be(0.5 plusOrMinus 0.01)
+      counts(s1) should be(0.5 +- 0.01)
+      counts(s2) should be(0.5 +- 0.01)
     }
   }
 
@@ -377,7 +377,7 @@ class MHTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
       Universe.universe.clearTemporaries()
       val alg = MetropolisHastings(10000, ProposalScheme.default, a1)
       alg.start()
-      alg.probability(a1, 1) should be(0.7 plusOrMinus 0.01)
+      alg.probability(a1, 1) should be(0.7 +- 0.01)
     }
   }
 
@@ -458,7 +458,7 @@ class MHTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
       Thread.sleep(1000)
       mh.stop()
       println(mh.getSampleCount.toString + " samples")
-      mh.probability(target, predicate) should be(prob plusOrMinus tolerance)
+      mh.probability(target, predicate) should be(prob +- tolerance)
     } finally {
       mh.kill()
     }
@@ -470,7 +470,7 @@ class MHTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
     try {
       mh.start()
       mh.stop()
-      mh.probability(target, predicate) should be(prob plusOrMinus tolerance)
+      mh.probability(target, predicate) should be(prob +- tolerance)
     } finally {
       mh.kill()
     }

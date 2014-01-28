@@ -205,13 +205,15 @@ trait ProbabilisticVariableElimination extends VariableElimination[Double] {
  * Variable elimination algorithm that computes the conditional probability of query elements.
  * 
  */
-class ProbQueryVariableElimination(universe: Universe, targets: Element[_]*)(
+class ProbQueryVariableElimination(override val universe: Universe, targets: Element[_]*)(
   val showTiming: Boolean,
   val dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
   val dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double)
-  extends ProbQueryAlgorithm(universe, targets: _*)
-  with OneTimeProbQuery
+  extends OneTimeProbQuery
   with ProbabilisticVariableElimination {
+  
+  lazy val queryTargets = targets.toList
+  
   val targetElements = targets
   val semiring = SumProductSemiring
   private def marginalizeToTarget(factor: Factor[Double], target: Element[_]): Unit = {

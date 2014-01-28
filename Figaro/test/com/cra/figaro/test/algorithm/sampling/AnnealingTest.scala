@@ -14,7 +14,7 @@
 package com.cra.figaro.test.algorithm.sampling
 
 import org.scalatest._
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
@@ -23,7 +23,7 @@ import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.library.compound.^^
 import com.cra.figaro.test._
 
-class AnnealingTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
+class AnnealingTest extends WordSpec with Matchers with PrivateMethodTester {
 
   def build1(n: Int, prev: List[Element[Double]]): List[Element[Double]] = if (n == 0) return prev else build1(n - 1, prev :+ Normal(prev.last, 1.0))
 

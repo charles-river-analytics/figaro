@@ -13,14 +13,14 @@
 
 package com.cra.figaro.test.algorithm
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm._
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.library.compound._
 
-class ValuesTest extends WordSpec with ShouldMatchers {
+class ValuesTest extends WordSpec with Matchers {
   "Values.Values" when {
     "given a Constant element" should {
       "return a set containing only the constant value" in {

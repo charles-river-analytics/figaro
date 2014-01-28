@@ -13,12 +13,12 @@
 
 package com.cra.figaro.test.algorithm
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm._
 import com.cra.figaro.language._
 
-class ExpandTest extends WordSpec with ShouldMatchers {
+class ExpandTest extends WordSpec with Matchers {
   "After calling Expand.expand" should {
     "have all the result elements of a chain's function applied to its arguments be active" in {
       Universe.createNew()

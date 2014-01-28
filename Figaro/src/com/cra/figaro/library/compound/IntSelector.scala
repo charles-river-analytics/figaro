@@ -15,6 +15,8 @@ package com.cra.figaro.library.compound
 
 import com.cra.figaro.language._
 import com.cra.figaro.util._
+import com.cra.figaro.algorithm._
+import com.cra.figaro.algorithm.factored._
 
 /**
  * An IntSelector represents the selection of an integer from 0 (inclusive) to a variable upper bound (exclusive). The
@@ -25,7 +27,7 @@ import com.cra.figaro.util._
  * change as little as possible as we make a proposal.
  */
 class IntSelector(name: Name[Int], counter: Element[Int], collection: ElementCollection)
-  extends Element[Int](name, collection) with IfArgsCacheable[Int] {
+  extends Element[Int](name, collection) with IfArgsCacheable[Int] with ValuesMaker[Int] with ProbFactorMaker {
   // We achieve the two properties by making the randomness a random stream of doubles and selecting the index
   // within range that has the highest randomness. If the bound changes, the double associated with the index
   // does not change, so quite often the highest index will stay the same.
@@ -36,6 +38,22 @@ class IntSelector(name: Name[Int], counter: Element[Int], collection: ElementCol
   def generateRandomness(): Randomness = Stream.continually(random.nextDouble())
 
   def generateValue(rand: Randomness): Int = argmax(rand take counter.value)
+
+  def makeValues: Set[Int] = {
+    val maxCounter = Values()(counter).max
+    List.tabulate(maxCounter)(i => i).toSet
+  }
+
+  def makeFactors: List[Factor[Double]] = {
+    val thisVar = Variable(this)
+    val counterVar = Variable(counter)
+    val comb = new Factor[Double](List(thisVar, counterVar))
+    comb.fillByRule((l: List[Any]) => {
+      val values = l.asInstanceOf[List[Int]]
+      if (values(0) < values(1)) 1.0/values(1) else 0.0
+    })
+    List(comb)
+  }
 }
 
 object IntSelector {
