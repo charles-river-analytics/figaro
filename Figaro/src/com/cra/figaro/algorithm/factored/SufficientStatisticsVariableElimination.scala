@@ -29,7 +29,7 @@ import scala.collection.mutable.{ Map, Set }
 class SufficientStatisticsVariableElimination(
   parameterMap: immutable.Map[Parameter[_], Seq[Double]],
   val universe: Universe)
-  extends VariableElimination[(Double, Map[Parameter[_], Seq[Double]])] with Algorithm {
+  extends VariableElimination[(Double, Map[Parameter[_], Seq[Double]])] {
 
   /**
    * No timing information enabled for this algorithm.

@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.example
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm._
 import com.cra.figaro.language._
@@ -22,7 +22,7 @@ import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.library.compound.^^
 import com.cra.figaro.test._
 
-class AnnealingSmokersTest extends WordSpec with ShouldMatchers {
+class AnnealingSmokersTest extends WordSpec with Matchers {
 
   "A simple AnnealingSmokersTest" should {
     "produce the correct probability under Metropolis-Hastings Annealing" taggedAs (ExampleTest) in {

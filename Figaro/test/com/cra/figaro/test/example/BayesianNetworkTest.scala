@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.example
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.library.compound._
@@ -22,7 +22,7 @@ import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.test._
 
-class BayesianNetworkTest extends WordSpec with ShouldMatchers {
+class BayesianNetworkTest extends WordSpec with Matchers {
   "A simple Bayesian network" should {
     "produce the correct probability under variable elimination" taggedAs (ExampleTest) in {
       test((e1: Element[Boolean], e2: Element[Boolean]) => VariableElimination(e1, e2))
@@ -63,7 +63,7 @@ class BayesianNetworkTest extends WordSpec with ShouldMatchers {
     val alg = algorithmCreator(burglary, earthquake)
     alg.start()
     alg.stop()
-    alg.probability(burglary, true) should be(pBurglary plusOrMinus 0.01)
+    alg.probability(burglary, true) should be(pBurglary +- 0.01)
     alg.kill()
   }
 }

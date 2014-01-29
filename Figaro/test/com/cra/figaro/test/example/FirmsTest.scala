@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.example
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
@@ -24,7 +24,7 @@ import com.cra.figaro.library.compound._
 import com.cra.figaro.library.atomic._
 import com.cra.figaro.test._
 
-class FirmsTest extends WordSpec with ShouldMatchers {
+class FirmsTest extends WordSpec with Matchers {
   "The firms example" should {
     "produce the correct answer under importance sampling" taggedAs (ExampleTest) in {
       test((e: Element[Boolean]) => Importance(20000, e))
@@ -71,7 +71,7 @@ class FirmsTest extends WordSpec with ShouldMatchers {
     val alg = MetropolisHastings(200000, ProposalScheme.default, winningEfficiency)
     val bid1WhenEfficient: Element[Double] = universe.get("Firm1bidWhenEfficient")
     alg.start()
-    alg.probability(winningEfficiency, true) should be(answer plusOrMinus 0.01)
+    alg.probability(winningEfficiency, true) should be(answer +- 0.01)
     alg.kill
   }
 

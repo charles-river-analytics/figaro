@@ -125,14 +125,15 @@ trait ProbabilisticVariableEliminationDecision extends VariableElimination[(Doub
  * Decision VariableElimination algorithm that computes the expected utility of decision elements using the default
  * elimination order.
  */
-class ProbQueryVariableEliminationDecision[T, U](universe: Universe, utilityNodes: List[Element[_]], target: Element[_])(
+class ProbQueryVariableEliminationDecision[T, U](override val universe: Universe, utilityNodes: List[Element[_]], target: Element[_])(
     val showTiming: Boolean,
     val dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
     val dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double)
-  extends ProbQueryAlgorithm(universe, List(target): _*)
-  with OneTimeProbQuery
+  extends OneTimeProbQuery
   with ProbabilisticVariableEliminationDecision
   with DecisionAlgorithm[T, U] {
+  lazy val queryTargets = List(target)
+
   /**
    *  The variable elimination eliminates all variables except on all decision nodes and their parents. 
    *  Thus the target elements is both the decision element and the parent element
@@ -155,7 +156,7 @@ class ProbQueryVariableEliminationDecision[T, U](universe: Universe, utilityNode
   }
 
   private def marginalize(resultFactor: Factor[(Double, Double)]) =
-    targets foreach (marginalizeToTarget(resultFactor, _))
+    queryTargets foreach (marginalizeToTarget(resultFactor, _))
 
   private def makeResultFactor(factorsAfterElimination: Set[Factor[(Double, Double)]]): Factor[(Double, Double)] =
     factorsAfterElimination reduceLeft (_.product(_, semiring))

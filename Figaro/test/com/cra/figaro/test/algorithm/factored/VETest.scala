@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.algorithm.factored
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.{ WordSpec, PrivateMethodTester }
 import math.log
 import com.cra.figaro.algorithm._
@@ -26,7 +26,7 @@ import com.cra.figaro.util._
 import com.cra.figaro.test._
 import scala.collection.mutable.Map
 
-class VETest extends WordSpec with ShouldMatchers {
+class VETest extends WordSpec with Matchers {
   "A VEGraph" when {
     "initially" should {
       "associate each element with all its factors and neighbors" in {
@@ -377,7 +377,7 @@ class VETest extends WordSpec with ShouldMatchers {
       val tolerance = 0.0000001
       val algorithm = VariableElimination(f)(u1)
       algorithm.start()
-      algorithm.probability(f, (b: Boolean) => b) should be(0.6 plusOrMinus tolerance)
+      algorithm.probability(f, (b: Boolean) => b) should be(0.6 +- tolerance)
       algorithm.kill()
     }
 
@@ -428,7 +428,7 @@ class VETest extends WordSpec with ShouldMatchers {
       val unnormalizedPXTrue = 0.1 * peGivenXTrue
       val unnormalizedPXFalse = 0.9 * peGivenXFalse
       val pXTrue = unnormalizedPXTrue / (unnormalizedPXTrue + unnormalizedPXFalse)
-      ve.probability(x, true) should be(pXTrue plusOrMinus 0.01)
+      ve.probability(x, true) should be(pXTrue +- 0.01)
       ve.kill()
     }
 
@@ -440,7 +440,7 @@ class VETest extends WordSpec with ShouldMatchers {
       // Probability of y should be (0.1 * 0.2 + 0.9 * 0.2) / (0.1 * 0.2 + 0.9 * 0.2 + 0.9 * 0.8) (because the case where x is true and y is false has been ruled out)
       val ve = VariableElimination(y)
       ve.start()
-      ve.probability(y, true) should be(((0.1 * 0.2 + 0.9 * 0.2) / (0.1 * 0.2 + 0.9 * 0.2 + 0.9 * 0.8)) plusOrMinus 0.0000000001)
+      ve.probability(y, true) should be(((0.1 * 0.2 + 0.9 * 0.2) / (0.1 * 0.2 + 0.9 * 0.2 + 0.9 * 0.8)) +- 0.0000000001)
     }
   }
 
@@ -471,7 +471,7 @@ class VETest extends WordSpec with ShouldMatchers {
     val tolerance = 0.0000001
     val algorithm = VariableElimination(target)
     algorithm.start()
-    algorithm.probability(target, predicate) should be(prob plusOrMinus tolerance)
+    algorithm.probability(target, predicate) should be(prob +- tolerance)
     algorithm.kill()
   }
 }

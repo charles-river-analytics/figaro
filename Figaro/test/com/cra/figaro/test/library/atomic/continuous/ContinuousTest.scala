@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.library.atomic.continuous
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import scala.math.{ exp, pow }
 import com.cra.figaro.algorithm.sampling._
@@ -22,14 +22,14 @@ import com.cra.figaro.language._
 import JSci.maths.statistics._
 import JSci.maths.SpecialMath.gamma
 
-class ContinuousTest extends WordSpec with ShouldMatchers {
+class ContinuousTest extends WordSpec with Matchers {
   "A AtomicUniform" should {
     "have value within a range with probability equal to the fraction represented by the range" in {
       Universe.createNew()
       val elem = Uniform(0.0, 2.0)
       val alg = Importance(20000, elem)
       alg.start()
-      alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(0.25 plusOrMinus 0.01)
+      alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(0.25 +- 0.01)
     }
 
     "compute the correct probability under Metropolis-Hastings" in {
@@ -37,17 +37,17 @@ class ContinuousTest extends WordSpec with ShouldMatchers {
       val elem = Uniform(0.0, 2.0)
       val alg = MetropolisHastings(20000, ProposalScheme.default, elem)
       alg.start()
-      alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(0.25 plusOrMinus 0.01)
+      alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(0.25 +- 0.01)
     }
 
     "for an input within the interval have density equal to 1 divided by the size of the interval" in {
       Universe.createNew()
-      Uniform(0.0, 2.0).density(1.5) should be(0.5 plusOrMinus 0.000000001)
+      Uniform(0.0, 2.0).density(1.5) should be(0.5 +- 0.000000001)
     }
 
     "for an input outside the interval have density 0" in {
       Universe.createNew()
-      Uniform(0.0, 2.0).density(2.5) should be(0.0 plusOrMinus 0.000000001)
+      Uniform(0.0, 2.0).density(2.5) should be(0.0 +- 0.000000001)
     }
 
     "convert to the correct string" in {
@@ -66,7 +66,7 @@ class ContinuousTest extends WordSpec with ShouldMatchers {
       alg.start()
       // p(1.25 < x < 1.5 | lower = l) = 0.25 / (2-l)
       // Expectation of l = \int_{0}^{1} 1 / (2-l) dl = 0.25(-ln(2-1) + ln(2-0)) = 0.1733
-      alg.probability(uniformComplex, (d: Double) => 1.25 <= d && d < 1.5) should be(0.1733 plusOrMinus 0.01)
+      alg.probability(uniformComplex, (d: Double) => 1.25 <= d && d < 1.5) should be(0.1733 +- 0.01)
     }
 
     "convert to the correct string" in {
@@ -85,7 +85,7 @@ class ContinuousTest extends WordSpec with ShouldMatchers {
       alg.start()
       val dist = new NormalDistribution(1.0, 2.0)
       val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
-      alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb plusOrMinus 0.01)
+      alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
     }
 
     "compute the correct probability under Metropolis-Hastings" in {
@@ -95,14 +95,14 @@ class ContinuousTest extends WordSpec with ShouldMatchers {
       alg.start()
       val dist = new NormalDistribution(1.0, 2.0)
       val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
-      alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb plusOrMinus 0.01)
+      alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
     }
 
     "have the correct density" in {
       Universe.createNew()
       val elem = Normal(1.0, 2.0)
       val dist = new NormalDistribution(1.0, 2.0)
-      elem.density(1.5) should be(dist.probability(1.5) plusOrMinus 0.00000001)
+      elem.density(1.5) should be(dist.probability(1.5) +- 0.00000001)
     }
 
     "convert to the correct string" in {
@@ -122,7 +122,7 @@ class ContinuousTest extends WordSpec with ShouldMatchers {
         val dist2 = new NormalDistribution(1.0, 2.0)
         def getProb(dist: ProbabilityDistribution) = dist.cumulative(1.2) - dist.cumulative(0.7)
         val targetProb = 0.5 * getProb(dist1) + 0.5 * getProb(dist2)
-        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb plusOrMinus 0.01)
+        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
       }
 
     "convert to the correct string" in {
@@ -145,7 +145,7 @@ class ContinuousTest extends WordSpec with ShouldMatchers {
         val dist4 = new NormalDistribution(1.0, 3.0)
         def getProb(dist: ProbabilityDistribution) = dist.cumulative(1.2) - dist.cumulative(0.7)
         val targetProb = 0.25 * getProb(dist1) + 0.25 * getProb(dist2) + 0.25 * getProb(dist3) + 0.25 * getProb(dist4)
-        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb plusOrMinus 0.01)
+        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
       }
 
     "convert to the correct string" in {
@@ -164,7 +164,7 @@ class ContinuousTest extends WordSpec with ShouldMatchers {
       alg.start()
       val dist = new ExponentialDistribution(2.0)
       val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
-      alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb plusOrMinus 0.01)
+      alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
     }
 
     "compute the correct probability under Metropolis-Hastings" in {
@@ -174,14 +174,14 @@ class ContinuousTest extends WordSpec with ShouldMatchers {
       alg.start()
       val dist = new ExponentialDistribution(2.0)
       val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
-      alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb plusOrMinus 0.01)
+      alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
     }
 
     "have the correct density" in {
       Universe.createNew()
       val elem = Exponential(2.0)
       val dist = new ExponentialDistribution(2.0)
-      elem.density(1.5) should be(dist.probability(1.5) plusOrMinus 0.0000000001)
+      elem.density(1.5) should be(dist.probability(1.5) +- 0.0000000001)
     }
 
     "convert to the correct string" in {
@@ -202,7 +202,7 @@ class ContinuousTest extends WordSpec with ShouldMatchers {
         val dist2 = new ExponentialDistribution(2.0)
         def getProb(dist: ProbabilityDistribution) = dist.cumulative(1.2) - dist.cumulative(0.7)
         val targetProb = 0.5 * getProb(dist1) + 0.5 * getProb(dist2)
-        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb plusOrMinus 0.01)
+        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
       }
 
     "convert to the correct string" in {
@@ -222,7 +222,7 @@ class ContinuousTest extends WordSpec with ShouldMatchers {
         alg.start()
         val dist = new GammaDistribution(k)
         val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
-        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb plusOrMinus 0.01)
+        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
       }
 
       "compute the correct value under Metropolis-Hastings" in {
@@ -233,14 +233,14 @@ class ContinuousTest extends WordSpec with ShouldMatchers {
         alg.start()
         val dist = new GammaDistribution(k)
         val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
-        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb plusOrMinus 0.01)
+        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
       }
 
       "have the correct density" in {
         Universe.createNew()
         val elem = Gamma(2.5)
         val dist = new GammaDistribution(2.5)
-        elem.density(1.5) should be(dist.probability(1.5) plusOrMinus 0.0000000001)
+        elem.density(1.5) should be(dist.probability(1.5) +- 0.0000000001)
       }
 
       "convert to the correct string" in {
@@ -259,7 +259,7 @@ class ContinuousTest extends WordSpec with ShouldMatchers {
         // Using the fact that for Gamma(1,theta), the CDF is given by F(x) = 1 - exp(-x/theta)
         def cdf(x: Double) = 1 - exp(-x / theta)
         val targetProb = cdf(1.2) - cdf(0.7)
-        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb plusOrMinus 0.01)
+        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
       }
 
       "compute the correct probability under Metropolis-Hastings" in {
@@ -271,7 +271,7 @@ class ContinuousTest extends WordSpec with ShouldMatchers {
         // Using the fact that for Gamma(1,theta), the CDF is given by F(x) = 1 - exp(-x/theta)
         def cdf(x: Double) = 1 - exp(-x / theta)
         val targetProb = cdf(1.2) - cdf(0.7)
-        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb plusOrMinus 0.01)
+        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
       }
 
       "have the correct density" in {
@@ -280,7 +280,7 @@ class ContinuousTest extends WordSpec with ShouldMatchers {
         val elem = Gamma(1, theta)
         // Using the fact that for Gamme(1,theta), the PDF is given by p(x) = exp(-x/theta)/theta
         val prob = exp(-1.5 / theta) / theta
-        elem.density(1.5) should be(prob plusOrMinus 0.0000001)
+        elem.density(1.5) should be(prob +- 0.0000001)
       }
 
       "convert to the correct string" in {
@@ -298,7 +298,7 @@ class ContinuousTest extends WordSpec with ShouldMatchers {
         alg.start()
         val dist = new GammaDistribution(k)
         val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
-        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb plusOrMinus 0.01)
+        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
       }
 
       "compute the correct probability under Metropolis-Hastings" in {
@@ -309,7 +309,7 @@ class ContinuousTest extends WordSpec with ShouldMatchers {
         alg.start()
         val dist = new GammaDistribution(k)
         val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
-        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb plusOrMinus 0.01)
+        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
       }
     }
 
@@ -322,7 +322,7 @@ class ContinuousTest extends WordSpec with ShouldMatchers {
         alg.start()
         val dist = new GammaDistribution(k)
         val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
-        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb plusOrMinus 0.01)
+        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
       }
 
       "compute the correct probability under Metropolis-Hastings" in {
@@ -333,7 +333,7 @@ class ContinuousTest extends WordSpec with ShouldMatchers {
         alg.start()
         val dist = new GammaDistribution(k)
         val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
-        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb plusOrMinus 0.01)
+        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
       }
     }
   }
@@ -349,7 +349,7 @@ class ContinuousTest extends WordSpec with ShouldMatchers {
         val dist2 = new GammaDistribution(3.0)
         def getProb(dist: ProbabilityDistribution) = dist.cumulative(1.2) - dist.cumulative(0.7)
         val targetProb = 0.5 * getProb(dist1) + 0.5 * getProb(dist2)
-        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb plusOrMinus 0.01)
+        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
       }
 
     "convert to the correct string" in {
@@ -370,7 +370,7 @@ class ContinuousTest extends WordSpec with ShouldMatchers {
         val dist2 = new GammaDistribution(1.0)
         def getProb(dist: ProbabilityDistribution) = dist.cumulative(1.2) - dist.cumulative(0.7)
         val targetProb = 0.5 * getProb(dist1) + 0.5 * getProb(dist2)
-        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb plusOrMinus 0.01)
+        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
       }
 
     "convert to the correct string" in {
@@ -391,7 +391,7 @@ class ContinuousTest extends WordSpec with ShouldMatchers {
       alg.start()
       val dist = new BetaDistribution(a, b)
       val targetProb = dist.cumulative(0.3) - dist.cumulative(0.2)
-      alg.probability(elem, (d: Double) => 0.2 <= d && d < 0.3) should be(targetProb plusOrMinus 0.01)
+      alg.probability(elem, (d: Double) => 0.2 <= d && d < 0.3) should be(targetProb +- 0.01)
     }
 
     "compute the correct probability under Metropolis-Hastings" in {
@@ -403,7 +403,7 @@ class ContinuousTest extends WordSpec with ShouldMatchers {
       alg.start()
       val dist = new BetaDistribution(a, b)
       val targetProb = dist.cumulative(0.3) - dist.cumulative(0.2)
-      alg.probability(elem, (d: Double) => 0.2 <= d && d < 0.3) should be(targetProb plusOrMinus 0.01)
+      alg.probability(elem, (d: Double) => 0.2 <= d && d < 0.3) should be(targetProb +- 0.01)
     }
 
     "have the correct density" in {
@@ -412,7 +412,7 @@ class ContinuousTest extends WordSpec with ShouldMatchers {
       val b = 0.5
       val elem = Beta(a, b)
       val dist = new BetaDistribution(a, b)
-      elem.density(0.3) should be(dist.probability(0.3) plusOrMinus 0.0000000001)
+      elem.density(0.3) should be(dist.probability(0.3) +- 0.0000000001)
     }
 
     "convert to the correct string" in {
@@ -434,7 +434,7 @@ class ContinuousTest extends WordSpec with ShouldMatchers {
         val dist4 = new BetaDistribution(1.0, 3.0)
         def getProb(dist: ProbabilityDistribution) = dist.cumulative(0.3) - dist.cumulative(0.2)
         val targetProb = 0.25 * getProb(dist1) + 0.25 * getProb(dist2) + 0.25 * getProb(dist3) + 0.25 * getProb(dist4)
-        alg.probability(elem, (d: Double) => 0.2 <= d && d < 0.3) should be(targetProb plusOrMinus 0.01)
+        alg.probability(elem, (d: Double) => 0.2 <= d && d < 0.3) should be(targetProb +- 0.01)
       }
 
     "convert to the correct string" in {
@@ -460,7 +460,7 @@ class ContinuousTest extends WordSpec with ShouldMatchers {
         val r = ds(0) / (ds(0) + ds(1))
         0.2 <= r && r < 0.3
       }
-      alg.probability(elem, (ds: Array[Double]) => check(ds)) should be(targetProb plusOrMinus 0.01)
+      alg.probability(elem, (ds: Array[Double]) => check(ds)) should be(targetProb +- 0.01)
     }
 
     "produce the correct probability under Metropolis-Hastings" in {
@@ -476,7 +476,7 @@ class ContinuousTest extends WordSpec with ShouldMatchers {
         val r = ds(0) / (ds(0) + ds(1))
         0.2 <= r && r < 0.3
       }
-      alg.probability(elem, (ds: Array[Double]) => check(ds)) should be(targetProb plusOrMinus 0.01)
+      alg.probability(elem, (ds: Array[Double]) => check(ds)) should be(targetProb +- 0.01)
     }
 
     "have the correct density" in {
@@ -490,7 +490,7 @@ class ContinuousTest extends WordSpec with ShouldMatchers {
       val pow0 = pow(x0, a0 - 1)
       val pow1 = pow(x1, a1 - 1)
       val target = normalizer * pow(x0, a0 - 1) * pow(x1, a1 - 1)
-      elem.density(Array(x0, x1)) should be(target plusOrMinus 0.0000000001)
+      elem.density(Array(x0, x1)) should be(target +- 0.0000000001)
     }
 
     "convert to the correct string" in {
@@ -516,7 +516,7 @@ class ContinuousTest extends WordSpec with ShouldMatchers {
           val r = ds(0) / (ds(0) + ds(1))
           0.2 <= r && r < 0.3
         }
-        alg.probability(elem, (ds: Array[Double]) => check(ds)) should be(targetProb plusOrMinus 0.01)
+        alg.probability(elem, (ds: Array[Double]) => check(ds)) should be(targetProb +- 0.01)
       }
 
     "have the correct density" in {
@@ -525,7 +525,7 @@ class ContinuousTest extends WordSpec with ShouldMatchers {
       val b = 0.5
       val elem = Beta(a, b)
       val dist = new BetaDistribution(a, b)
-      elem.density(0.3) should be(dist.probability(0.3) plusOrMinus 0.0000000001)
+      elem.density(0.3) should be(dist.probability(0.3) +- 0.0000000001)
     }
 
     "convert to the correct string" in {

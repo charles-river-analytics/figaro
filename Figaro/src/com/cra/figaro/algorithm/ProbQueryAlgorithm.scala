@@ -18,10 +18,14 @@ import com.cra.figaro.language._
 /**
  * Algorithms that compute conditional probabilities of queries.
  * 
- * @param targets List of elements that can be queried after running the algorithm.
  */
-abstract class ProbQueryAlgorithm(val universe: Universe, val targets: Element[_]*)
+trait ProbQueryAlgorithm
   extends Algorithm {
+  val universe: Universe
+  /*
+   * @param targets List of elements that can be queried after running the algorithm.
+   */
+  val queryTargets: Seq[Element[_]]
   /*
    * Particular implementations of algorithm must provide the following two methods.
    */
@@ -61,7 +65,7 @@ abstract class ProbQueryAlgorithm(val universe: Universe, val targets: Element[_
 
   private def check[T](target: Element[T]): Unit = {
     if (!active) throw new AlgorithmInactiveException
-    if (!(targets contains target)) throw new NotATargetException(target)
+    if (!(queryTargets contains target)) throw new NotATargetException(target)
   }
 
   /**

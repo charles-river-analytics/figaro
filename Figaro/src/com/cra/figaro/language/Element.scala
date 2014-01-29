@@ -439,6 +439,12 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    * A string that is the element's name, if it has a non-empty one, otherwise the result of the element's toString
    */
   def toNameString = if (name.string != "") name.string; else toString
+
+  def map[U](fn: Value => U)(implicit name: Name[U], collection: ElementCollection): Element[U] =
+    Apply(this, fn)(name, collection)
+
+  def flatMap[U](fn: Value => Element[U])(implicit name: Name[U], collection: ElementCollection): Element[U] =
+    Chain(this, fn)(name, collection)
 }
 
 object Element {

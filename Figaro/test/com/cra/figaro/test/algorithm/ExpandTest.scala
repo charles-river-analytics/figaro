@@ -13,13 +13,13 @@
 
 package com.cra.figaro.test.algorithm
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm._
 import com.cra.figaro.language._
 
-class ExpandTest extends WordSpec with ShouldMatchers {
   /* OBSOLETE: Need to replace it with tests of getMap lazily growing
+class ExpandTest extends WordSpec with Matchers {
   "After calling Expand.expand" should {
     "have all the result elements of a chain's function applied to its arguments be active" in {
       Universe.createNew()
@@ -64,7 +64,6 @@ class ExpandTest extends WordSpec with ShouldMatchers {
         assert(hasBooleanConstantMap(c2, 2, 1))
       }
   }
-*/
   // Tests whether the element is a constant with the given value
   def isConstant[T](elem: Element[_], value: T): Boolean =
     elem match {
@@ -79,3 +78,4 @@ class ExpandTest extends WordSpec with ShouldMatchers {
   }
 
 }
+*/

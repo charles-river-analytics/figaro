@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.example
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
@@ -23,7 +23,7 @@ import com.cra.figaro.language._
 import com.cra.figaro.language.Universe._
 import com.cra.figaro.test._
 
-class SimpleMovieTest extends WordSpec with ShouldMatchers {
+class SimpleMovieTest extends WordSpec with Matchers {
   "A PRM with a global constraint without mutation" should {
     "produce the correct probability under variable elimination" taggedAs (ExampleTest) in {
       test((e: Element[Boolean]) => VariableElimination(e))
@@ -136,7 +136,7 @@ class SimpleMovieTest extends WordSpec with ShouldMatchers {
     val alg = algorithmCreator(appearance3.award)
     alg.start()
     alg.stop()
-    alg.probability(appearance3.award, true) should be(pAppearance3Award plusOrMinus 0.01)
+    alg.probability(appearance3.award, true) should be(pAppearance3Award +- 0.01)
     alg.kill()
   }
 

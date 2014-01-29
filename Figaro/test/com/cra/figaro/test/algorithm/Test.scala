@@ -19,7 +19,7 @@ private object Test {
   def main(args: Array[String]) = {
     (new ValuesTest).execute()
     (new AlgorithmTest).execute()
-    (new ExpandTest).execute()
+    //(new ExpandTest).execute()
     (new AbstractionTest).execute()
   }
 

@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.algorithm.decision
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.{ WordSpec, PrivateMethodTester }
 import math.log
 import com.cra.figaro.algorithm._
@@ -31,7 +31,7 @@ import com.cra.figaro.test.algorithm.decision.DecisionTestCases._
 import com.cra.figaro.test._
 import scala.collection.immutable.Map
 
-class MultiDecisionMetropolisHastingsTest extends WordSpec with ShouldMatchers {
+class MultiDecisionMetropolisHastingsTest extends WordSpec with Matchers {
 
   def propmaker = (mv: Universe, e: Element[_]) => ProposalScheme.default(mv)
 

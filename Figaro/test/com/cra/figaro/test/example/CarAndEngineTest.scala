@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.example
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
@@ -23,7 +23,7 @@ import com.cra.figaro.library.atomic.discrete._
 import com.cra.figaro.language._
 import com.cra.figaro.test._
 
-class CarAndEngineTest extends WordSpec with ShouldMatchers {
+class CarAndEngineTest extends WordSpec with Matchers {
   "A simple CarAndEngineTest" should {
     "produce the correct probability under variable elimination" taggedAs (ExampleTest) in {
       test((e1: Element[Double]) => VariableElimination(e1))
@@ -76,7 +76,7 @@ class CarAndEngineTest extends WordSpec with ShouldMatchers {
     val alg = algorithmCreator(car.speed)
     alg.start()
     alg.stop()
-    alg.expectation(car.speed, (d: Double) => d) should be(85.6 plusOrMinus 0.5)
+    alg.expectation(car.speed, (d: Double) => d) should be(85.6 +- 0.5)
     alg.kill()
   }
 }

@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.algorithm.decision
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.{ WordSpec, PrivateMethodTester }
 import math.log
 import com.cra.figaro.algorithm._
@@ -30,7 +30,7 @@ import com.cra.figaro.test._
 import com.cra.figaro.test.algorithm.decision.DecisionTestCases._
 import scala.collection.mutable.Map
 
-class DecisionMetropolisHastingsTest extends WordSpec with ShouldMatchers {
+class DecisionMetropolisHastingsTest extends WordSpec with Matchers {
 
   "A MetropolistHastings Sampler" when {
 
@@ -60,7 +60,7 @@ class DecisionMetropolisHastingsTest extends WordSpec with ShouldMatchers {
         D1.value should equal(false)
         D2.value should equal(false)
         D3.value should equal(true)
-        alg.getUtility(0, false).norm should be(0.0 plusOrMinus 0.1)
+        alg.getUtility(0, false).norm should be(0.0 +- 0.1)
       }
 
       "replace the old strategy" in {
@@ -68,8 +68,8 @@ class DecisionMetropolisHastingsTest extends WordSpec with ShouldMatchers {
           DecisionMetropolisHastings(50000, ProposalScheme.default, 5000, e1, e2))
         val v = Importance(5000, d)
         v.start()
-        v.probability(d, true) should be(.75 * .5 plusOrMinus .02)
-        v.probability(d, false) should be(1 - .75 * .5 plusOrMinus .02)
+        v.probability(d, true) should be(.75 * .5 +- .02)
+        v.probability(d, false) should be(1 - .75 * .5 +- .02)
       }
 
       "produce the correct strategy with discrete strategies and posted evidence" in {
@@ -81,7 +81,7 @@ class DecisionMetropolisHastingsTest extends WordSpec with ShouldMatchers {
         D1.value should equal(false)
         D2.value should equal(false)
         D3.value should equal(true)
-        alg.getUtility(0, false).norm should be(0.0 plusOrMinus 0.1)
+        alg.getUtility(0, false).norm should be(0.0 +- 0.1)
       }
 
     }
@@ -97,7 +97,7 @@ class DecisionMetropolisHastingsTest extends WordSpec with ShouldMatchers {
         D2.value should equal(false)
         D3.value should equal(true)
         val u = d.policy.toUtility()(0).value
-        u should be(0.0 plusOrMinus 0.2)
+        u should be(0.0 +- 0.2)
       }
 
       "increase the expected utility after optimization" in {
@@ -116,7 +116,7 @@ class DecisionMetropolisHastingsTest extends WordSpec with ShouldMatchers {
         D2.value should equal(false)
         D3.value should equal(true)
         val u = d.policy.toUtility()(0).value
-        u should be(0.0 plusOrMinus 0.2)
+        u should be(0.0 +- 0.2)
       }
     }
 
@@ -129,8 +129,8 @@ class DecisionMetropolisHastingsTest extends WordSpec with ShouldMatchers {
         val alg = DecisionMetropolisHastings(10000, ProposalScheme.default, List(a1), c1)
         alg.start()
         alg.setPolicy(c1)
-        alg.getUtility(0, true).norm should be(1.0 plusOrMinus 0.01)
-        alg.getUtility(0, false).norm should be(0.0 plusOrMinus 0.01)
+        alg.getUtility(0, true).norm should be(1.0 +- 0.01)
+        alg.getUtility(0, false).norm should be(0.0 +- 0.01)
       }
     }
 

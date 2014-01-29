@@ -51,14 +51,14 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
   /**
    * Contains all of the sample data (decision values, utilities) for a given target decision
    */
-  var allUtilitiesSeen: List[WeightSeen[_]] = _
+  private var allUtilitiesSeen: List[WeightSeen[_]] = _
 
   private def utilitySum = (0.0 /: utilityNodes)((s: Double, n: Element[_]) => s + n.value.asInstanceOf[Double])
   
   /**
    * Cleans up the temporary elements created during sampling
    */
-  def cleanup() = universe.deactivate(targets)
+  def cleanup() = universe.deactivate(queryTargets)
 
     /* Overrides DecisionAlgorithm Trait */
   def computeUtility(): scala.collection.immutable.Map[(T, U), DecisionSample] = {
@@ -69,7 +69,7 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
 
   // override reset so we can reset the local utilities
   override protected def resetCounts() = {
-    allUtilitiesSeen = targets.toList map (newWeightSeen(_))
+    allUtilitiesSeen = queryTargets.toList map (newWeightSeen(_))
     super.resetCounts()
   }
 
@@ -279,7 +279,7 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
     else random.nextDouble < newState.proposalProb * newState.modelProb
   }
 
-  protected final def mhStep(): Unit = {
+  private final def mhStep(): Unit = {
     val newState = proposeAndUpdate()
     if (decideToAccept(newState)) accept(newState)
     else undo(newState)
@@ -288,7 +288,7 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
   protected def updateWeightSeenWithValue[T](value: T, weight: Double, weightSeen: WeightSeen[T]): Unit =
     weightSeen._2 += value -> (weightSeen._2.getOrElse(value, 0.0) + weight)
 
-    protected def updateWeightSeenForTarget[T](sample: (Double, Map[Element[_], Any]), weightSeen: WeightSeen[T]): Unit = {
+  protected def updateWeightSeenForTarget[T](sample: (Double, Map[Element[_], Any]), weightSeen: WeightSeen[T]): Unit = {
     val (weight, values) = sample
     val value = values(weightSeen._1).asInstanceOf[T]
     updateWeightSeenWithValue(value, weight, weightSeen)
@@ -300,7 +300,7 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
   final def sample(): (Boolean, Sample) = {
     mhStep()
     if (dissatisfied.isEmpty) {
-      val values = targets map (target => target -> target.value)
+      val values = queryTargets map (target => target -> target.value)
       (true, Map(values: _*))
     } else {
       (false, Map())
