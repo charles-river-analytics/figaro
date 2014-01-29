@@ -18,6 +18,7 @@ import org.scalatest.{ PrivateMethodTester, WordSpec }
 import com.cra.figaro.algorithm.learning._
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.factored._
+import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
 import com.cra.figaro.language.Universe._
@@ -54,19 +55,25 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               val one = (1.0, emptyMap)
 
               val algorithm = SufficientStatisticsVariableElimination(paramMap)
-              val factors = algorithm.getFactors(Seq(Variable(f1), Variable(f2), Variable(f3), Variable(p1)))
+              val elements = List(f1,f2,p1,f3)
+              val values = Values(universe)
+              values(f1)
+              values(f2)
+              values(p1)
+              values(f3)
+              val factors = algorithm.getFactors(elements, elements)
 
               for (factor <- factors) {
-                println(factor.toReadableString)
+                //println(factor.toReadableString)
 
                 if (factor.variables.contains(Variable(f1)) == true) {
                   factor.allIndices.foreach(a => factor.get(a)._2 should equal(zero._2))
                 } else if (factor.variables.contains(Variable(f1)) == true) {
                   factor.allIndices.foreach(a => factor.get(a)._2 should equal(zero._2))
                 } else if (factor.variables.contains(Variable(f3)) == true) {
-                  val i = Variable(f3).range.indexOf(true)
-                  println(factor.get(List(i))._2(p1))
-                  println(factor.get(List(i + 1))._2(p1))
+                  val i = Variable(f3).range.indexOf(Regular(true))
+                  //println(factor.get(List(i))._2(p1))
+                  //println(factor.get(List(i + 1))._2(p1))
                 }
               }
 
@@ -93,7 +100,13 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               val one = (1.0, emptyMap)
 
               val algorithm = SufficientStatisticsVariableElimination(paramMap)
-              val factors = algorithm.getFactors(Seq(Variable(f1), Variable(f2), Variable(f3), Variable(p1)))
+              val elements = List(f1,f2,f3,p1)
+              val values = Values(universe)
+              values(f1)
+              values(f2)
+              values(p1)
+              values(f3)
+              val factors = algorithm.getFactors(elements, elements)
               
               for (factor <- factors) {
 
@@ -104,7 +117,7 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
                 } else if (factor.variables.contains(Variable(f3)) == true) {
 
                   factor.allIndices.foreach(a => factor.get(a)._2.contains(p1) should equal(true))
-                  val i = Variable(f3).range.indexOf(true)
+                  val i = Variable(f3).range.indexOf(Regular(true))
                   factor.get(List(i))._2(p1) should equal(Seq(1.0, 0.0))
                   factor.get(List(i + 1))._2(p1) should equal(Seq(0.0, 1.0))
                 }
@@ -133,7 +146,13 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               val one = (1.0, emptyMap)
 
               val algorithm = SufficientStatisticsVariableElimination(paramMap)
-              val factors = algorithm.getFactors(Seq(Variable(f1), Variable(f2), Variable(f3), Variable(p1)))
+              val elements = List(f1,f2,f3,p1)
+              val values = Values(universe)
+              values(f1)
+              values(f2)
+              values(p1)
+              values(f3)
+              val factors = algorithm.getFactors(elements, elements)
               for (factor <- factors) {
 
                 if (factor.variables.contains(Variable(f1)) == true) {
@@ -143,7 +162,7 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
                 } else if (factor.variables.contains(Variable(f3)) == true) {
 
                   factor.allIndices.foreach(a => factor.get(a)._2.contains(p1) should equal(true))
-                  val i = Variable(f3).range.indexOf(1)
+                  val i = Variable(f3).range.indexOf(Regular(1))
                   factor.get(List(i))._2(p1) should equal(Seq(1.0, 0.0, 0.0))
                   factor.get(List(i + 1))._2(p1) should equal(Seq(0.0, 1.0, 0.0))
                   factor.get(List(i + 2))._2(p1) should equal(Seq(0.0, 0.0, 1.0))
@@ -178,7 +197,7 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               algorithm.start
               val map = algorithm.getSufficientStatisticsForAllParameters
               val sufficientStatisticsForBeta = map(p1)
-              println(sufficientStatisticsForBeta)
+              //println(sufficientStatisticsForBeta)
               sufficientStatisticsForBeta(0) should be(1.0 plusOrMinus 0.01)
               sufficientStatisticsForBeta(1) should be(0.0 plusOrMinus 0.01)
 

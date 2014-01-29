@@ -13,7 +13,8 @@
 
 package com.cra.figaro.library.atomic.continuous
 
-import com.cra.figaro.algorithm._
+import com.cra.figaro.algorithm.ValuesMaker
+import com.cra.figaro.algorithm.lazyfactored.ValueSet
 import com.cra.figaro.language._
 import scala.Array.canBuildFrom
 import scala.collection.mutable
@@ -86,7 +87,7 @@ class AtomicDirichletParameter(name: Name[Array[Double]], val alphas: Array[Doub
 
   }
 
-  def makeValues = List(expectedValue)
+  def makeValues(depth: Int) = ValueSet.withoutStar(Set(expectedValue))
 
   override def toString = "Dirichlet Parameter(" + concentrationParameters.mkString(", ") + ")"
 

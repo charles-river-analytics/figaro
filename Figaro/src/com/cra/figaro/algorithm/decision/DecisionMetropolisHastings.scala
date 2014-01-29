@@ -421,7 +421,10 @@ object DecisionMetropolisHastings {
     utilityNodes.foreach { u =>
       u.value match {
         case d: Double => 1
-        case _ => throw new IllegalArgumentException("Only double utilities are allowed")
+        case _ => {
+          println(u.value)
+          throw new IllegalArgumentException("Only double utilities are allowed")
+        }
       }
     }
   }
@@ -436,6 +439,7 @@ object DecisionMetropolisHastings {
    * 
    */
   def apply[T, U](scheme: ProposalScheme, utilityNodes: List[Element[_]], target: Decision[T, U])(implicit universe: Universe) = {
+    utilityNodes.foreach(_.generate)
     UsageCheck(utilityNodes, target)
     new AnytimeDecisionMetropolisHastings[T, U](universe, scheme, 0, 1, utilityNodes, target)
   }
@@ -445,6 +449,7 @@ object DecisionMetropolisHastings {
    * scheme with the given decision.
    */
   def apply[T, U](numSamples: Int, scheme: ProposalScheme, utilityNodes: List[Element[_]], target: Decision[T, U])(implicit universe: Universe) = {
+    utilityNodes.foreach(_.generate)
     UsageCheck(utilityNodes, target)
     new OneTimeDecisionMetropolisHastings[T, U](universe, numSamples, scheme, 0, 1, utilityNodes, target)
   }
@@ -454,6 +459,7 @@ object DecisionMetropolisHastings {
    * of burn-in samples with the given decision.
    */
   def apply[T, U](scheme: ProposalScheme, burnIn: Int, utilityNodes: List[Element[_]], target: Decision[T, U])(implicit universe: Universe) = {
+    utilityNodes.foreach(_.generate)
     UsageCheck(utilityNodes, target)
     new AnytimeDecisionMetropolisHastings[T, U](universe, scheme, burnIn, 1, utilityNodes, target)
   }
@@ -463,6 +469,7 @@ object DecisionMetropolisHastings {
    * number of burn-in samples with the given decision.
    */
   def apply[T, U](numSamples: Int, scheme: ProposalScheme, burnIn: Int, utilityNodes: List[Element[_]], target: Decision[T, U])(implicit universe: Universe) = {
+    utilityNodes.foreach(_.generate)
     UsageCheck(utilityNodes, target)
     new OneTimeDecisionMetropolisHastings[T, U](universe, numSamples, scheme, burnIn, 1, utilityNodes, target)
   }
@@ -472,6 +479,7 @@ object DecisionMetropolisHastings {
    * samples, and interval between samples with the given decision.
    */
   def apply[T, U](scheme: ProposalScheme, burnIn: Int, interval: Int, utilityNodes: List[Element[_]], target: Decision[T, U])(implicit universe: Universe) = {
+    utilityNodes.foreach(_.generate)
     UsageCheck(utilityNodes, target)
     new AnytimeDecisionMetropolisHastings[T, U](universe, scheme, burnIn, interval, utilityNodes, target)
   }
@@ -482,6 +490,7 @@ object DecisionMetropolisHastings {
    */
   def apply[T, U](numSamples: Int, scheme: ProposalScheme,
     burnIn: Int, interval: Int, utilityNodes: List[Element[_]], target: Decision[T, U])(implicit universe: Universe) = {
+    utilityNodes.foreach(_.generate)
     UsageCheck(utilityNodes, target)
     new OneTimeDecisionMetropolisHastings[T, U](universe, numSamples, scheme, burnIn, interval: Int, utilityNodes, target)
   }

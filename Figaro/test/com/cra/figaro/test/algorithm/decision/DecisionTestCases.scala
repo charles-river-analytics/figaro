@@ -35,7 +35,8 @@ object DecisionTestCases {
     Universe.createNew()
     val p = Select(0.25 -> 0, 0.75 -> 2)
     val pp = Uniform(-2, 0)
-    val ppp = CachingChain(p, pp, (a: Int, b: Int) => Constant[Int](a + b))
+    //val ppp = CachingChain(p, pp, (a: Int, b: Int) => Constant[Int](a + b))
+    val ppp = Apply(p, pp, (a: Int, b: Int) => a + b)
     val d = Decision(ppp, List(true, false))
     def u_fcn(b: Boolean, i: Int): Double = {
       i match {

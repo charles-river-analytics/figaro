@@ -18,11 +18,20 @@ import com.cra.figaro.language._
 import com.cra.figaro.util._
 import annotation.tailrec
 import scala.language.existentials
+import com.cra.figaro.algorithm.lazyfactored._
 
 /**
  * Methods for creating probabilistic factors associated with elements.
  */
 object ProbFactor {
+   def makeStarFactor[T](elem: Element[T]): List[Factor[Double]] = {
+    val elemVar = Variable(elem)
+    require(elemVar.range.size == 1 && elemVar.range(0) == Star[T], "Trying to create a star factor from a value set that is not only star")
+    val factor = new Factor[Double](List(elemVar))
+    factor.set(List(0), 1.0)
+    List(factor)
+  }
+  
   private def makeFactors[T](const: Constant[T]): List[Factor[Double]] = {
     val factor = new Factor[Double](List(Variable(const)))
     factor.set(List(0), 1.0)
@@ -31,24 +40,40 @@ object ProbFactor {
 
   private def makeFactors(flip: AtomicFlip): List[Factor[Double]] = {
     val flipVar = Variable(flip)
-    val factor = new Factor[Double](List(flipVar))
-    val i = flipVar.range.indexOf(true)
-    factor.set(List(i), flip.prob)
-    factor.set(List(1 - i), 1.0 - flip.prob)
-    List(factor)
+    if (flipVar.range.exists(!_.isRegular)) {
+      assert(flipVar.range.size == 1) // Flip's range must either be {T,F} or {*}
+      makeStarFactor(flip)
+    } else {
+      val factor = new Factor[Double](List(flipVar))
+      val i = flipVar.range.indexOf(Regular(true))
+      factor.set(List(i), flip.prob)
+      factor.set(List(1 - i), 1.0 - flip.prob)
+      List(factor)
+    } 
   }
 
   private def makeFactors(flip: CompoundFlip): List[Factor[Double]] = {
     val flipVar = Variable(flip)
-    val probVar = Variable(flip.prob)
-    val factor = new Factor[Double](List(probVar, flipVar))
-    val parentVals = probVar.range
-    val i = flipVar.range.indexOf(true)
-    for { j <- 0 until parentVals.size } {
-      factor.set(List(j, i), parentVals(j))
-      factor.set(List(j, 1 - i), 1.0 - parentVals(j))
+    if (flipVar.range.exists(!_.isRegular)) {
+      assert(flipVar.range.size == 1) // Flip's range must either be {T,F} or {*}
+      makeStarFactor(flip)
+    } else {
+      val probVar = Variable(flip.prob)
+      val factor = new Factor[Double](List(probVar, flipVar))
+      val parentVals = probVar.range
+      val i = flipVar.range.indexOf(Regular(true))
+      for { j <- 0 until parentVals.size } {
+        if (parentVals(j).isRegular) {
+          val value = parentVals(j).value
+          factor.set(List(j, i), value)
+          factor.set(List(j, 1 - i), 1.0 - value)
+        } else {
+          factor.set(List(j, 0), 0.0)
+          factor.set(List(j, 1), 0.0)
+        }
+      }
+      List(factor)
     }
-    List(factor)
   }
 
   private def makeSimpleDistribution[T](target: Variable[T], probs: List[Double]): Factor[Double] = {
@@ -60,43 +85,70 @@ object ProbFactor {
   }
 
   private def makeComplexDistribution[T](target: Variable[T], probElems: List[Element[Double]]): Factor[Double] = {
-    val probVars = probElems map (Variable(_))
+    val probVars: List[Variable[Double]] = probElems map (Variable(_))
     val factor = new Factor[Double](List((target :: probVars): _*))
-    val probVals = probVars map (_.range)
+    val probVals: List[List[Extended[Double]]] = probVars map (_.range)
     for { indices <- factor.allIndices } {
-      val probIndices = indices.toList.tail.zipWithIndex
-      val unnormalized = probIndices map (pair => probVals(pair._2)(pair._1))
+      // unnormalized is a list, one for each probability element, of the value of that element under these indices
+      val unnormalized = 
+        for { (probIndex, position) <- indices.toList.tail.zipWithIndex } yield {
+          val xprob = probVals(position)(probIndex) // The probability of the particular value of the probability element in this position
+          if (xprob.isRegular) xprob.value; else 0.0
+      }
       val normalized = normalize(unnormalized).toArray
+      // The first variable specifies the position of the remaining variables, so indices(0) is the correct probability
       factor.set(indices, normalized(indices(0)))
     }
     factor
   }
 
-  private def selectVarAndProbs[U, T](select: Select[U, T]): (Variable[T], List[U]) = {
+  private def getProbs[U, T](select: Select[U, T]): List[U] = {
     val selectVar = Variable(select)
-    val probs = for { value <- selectVar.range } yield select.clauses.find(_._2 == value).get._1
-    (selectVar, probs)
+    def getProb(xvalue: Extended[T]): U = {
+      select.clauses.find(_._2 == xvalue.value).get._1 // * cannot be a value of a Select
+    }
+    val probs = 
+      for { xvalue <- selectVar.range } yield getProb(xvalue) 
+    probs
   }
 
-  private def parameterizedSelectVarAndProbs[T](select: ParameterizedSelect[T]): (Variable[T], List[Double]) = {
+  private def parameterizedGetProbs[T](select: ParameterizedSelect[T]): List[Double] = {
     val selectVar = Variable(select)
     val probs = select.parameter.expectedValue.toList
-    (selectVar, probs)
+    probs
   }
 
   private def makeFactors[T](select: AtomicSelect[T]): List[Factor[Double]] = {
-    val (selectVar, probs) = selectVarAndProbs(select)
-    List(makeSimpleDistribution(selectVar, probs))
+    val selectVar = Variable(select)
+    if (selectVar.range.exists(!_.isRegular)) {
+      assert(selectVar.range.size == 1) // Select's range must either be a list of regular values or {*}
+      makeStarFactor(select)
+    } else {
+      val probs = getProbs(select)
+      List(makeSimpleDistribution(selectVar, probs))
+    }
   }
 
   private def makeFactors[T](select: CompoundSelect[T]): List[Factor[Double]] = {
-    val (selectVar, probs) = selectVarAndProbs(select)
-    List(makeComplexDistribution(selectVar, probs))
+    val selectVar = Variable(select)
+    if (selectVar.range.exists(!_.isRegular)) {
+      assert(selectVar.range.size == 1) // Select's range must either be a list of regular values or {*}
+      makeStarFactor(select)
+    } else {
+      val probs = getProbs(select)
+      List(makeComplexDistribution(selectVar, probs))
+    }
   }
 
   private def makeFactors[T](select: ParameterizedSelect[T]): List[Factor[Double]] = {
-    val (selectVar, probs) = parameterizedSelectVarAndProbs(select)
-    List(makeSimpleDistribution(selectVar, probs))
+    val selectVar = Variable(select)
+    if (selectVar.range.exists(!_.isRegular)) {
+      assert(selectVar.range.size == 1) // Select's range must either be a list of regular values or {*}
+      makeStarFactor(select)
+    } else {
+      val probs = parameterizedGetProbs(select)
+      List(makeSimpleDistribution(selectVar, probs))
+    }
   }
 
   private def makeDontCares[U](factor: Factor[Double],
@@ -114,12 +166,20 @@ object ProbFactor {
 
   private def makeCares[U](factor: Factor[Double], intermedIndex: Int,
     overallVar: Variable[U], outcomeVar: Variable[U], choices: Set[U])(implicit mapper: PointMapper[U]): Unit = {
-    // We care to match up distVar with outcomeVar
+    // We care to match up overallVar with outcomeVar
     for {
       (overallVal, j) <- overallVar.range.zipWithIndex
       (outcomeVal, k) <- outcomeVar.range.zipWithIndex
     } {
-      val entry = if (overallVal == mapper.map(outcomeVal, choices)) 1.0; else 0.0
+      // Star stands for "something". If outcomeVal is Star and overallVal is Star, we know something will match something, so the entry is (1,1).
+      // If outcomeVal is Star and overallVal is a regular value, then maybe there will be a match, so the entry is (0,1).
+      // If outcomeVal is regular, all the probability mass associated with that outcome should be on regular values of overallVal, so the entry is (0,0).
+      val entry = 
+        if (overallVal.isRegular && outcomeVal.isRegular) {
+            if (overallVal.value == mapper.map(outcomeVal.value, choices)) 1.0
+            else 0.0 
+        } else if (!overallVal.isRegular && !outcomeVal.isRegular) 1.0
+        else 0.0
       factor.set(List(intermedIndex, j, k), entry)
     }
   }
@@ -138,20 +198,21 @@ object ProbFactor {
    * parent element, one of the result elements, and the overall chain element.
    */
   def makeConditionalSelector[T, U](overallElem: Element[U], selector: Variable[T],
-    outcomeIndex: Int, outcomeElem: Element[U])(implicit mapper: PointMapper[U]): Factor[Double] = {
+    outcomeIndex: Int, outcomeVar: Variable[U])(implicit mapper: PointMapper[U]): Factor[Double] = {
     val overallVar = Variable(overallElem)
-    val outcomeVar = Variable(outcomeElem)
+    //val outcomeVar = Variable(outcomeElem)
+    val overallValues = LazyValues(overallElem.universe).storedValues(overallElem)
     val factor = new Factor[Double](List(selector, overallVar, outcomeVar))
     for { i <- 0 until outcomeIndex } { makeDontCares(factor, i, overallVar, outcomeVar) }
-    makeCares(factor, outcomeIndex, overallVar, outcomeVar, Values(overallElem.universe)(overallElem))(mapper)
+    makeCares(factor, outcomeIndex, overallVar, outcomeVar, overallValues.regularValues)(mapper)
     for { i <- outcomeIndex + 1 until selector.size } { makeDontCares(factor, i, overallVar, outcomeVar) }
     factor
   }
 
   private def intermedAndClauseFactors[U, T](dist: Dist[U, T]): (Variable[Int], List[Factor[Double]]) = {
-    val intermed = new Variable((0 until dist.clauses.size).toList)
+    val intermed = new Variable(ValueSet.withoutStar((0 until dist.clauses.size).toSet))
     val clauseFactors = dist.outcomes.zipWithIndex map (pair =>
-      makeConditionalSelector(dist, intermed, pair._2, pair._1))
+      makeConditionalSelector(dist, intermed, pair._2, Variable(pair._1)))
     (intermed, clauseFactors)
   }
 
@@ -168,24 +229,42 @@ object ProbFactor {
   }
 
   private def makeFactors[T, U](chain: Chain[T, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {
-    val chainMap: Map[T, Element[U]] = Expand(chain.universe).getMap(chain)
+    val chainMap: scala.collection.mutable.Map[T, Element[U]] = LazyValues(chain.universe).getMap(chain)
     val parentVar = Variable(chain.parent)
-    parentVar.range.zipWithIndex map (pair =>
-      makeConditionalSelector(chain, parentVar, pair._2, chainMap(pair._1))(mapper))
+    parentVar.range.zipWithIndex flatMap (pair => {
+      val parentVal = pair._1
+      if (parentVal.isRegular) List(makeConditionalSelector(chain, parentVar, pair._2, Variable(chainMap(parentVal.value)))(mapper))
+      else {
+        // We create a dummy variable for the outcome variable whose value is always star.
+        // We create a dummy factor for that variable.
+        // Then we use makeConditionalSelector with the dummy variable
+        val dummy = new Variable(ValueSet.withStar[U](Set()))
+        val dummyFactor = new Factor[Double](List(dummy))
+        dummyFactor.set(List(0), 1.0)
+        List(makeConditionalSelector(chain, parentVar, pair._2, dummy), dummyFactor)
+      }
+    })
   }
 
   private def makeFactors[T, U](apply: Apply1[T, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {
     val arg1Var = Variable(apply.arg1)
     val resultVar = Variable(apply)
+    val applyValues = LazyValues(apply.universe).storedValues(apply)
     val factor = new Factor[Double](List(arg1Var, resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
     val resultIndices = resultVar.range.zipWithIndex
     for {
       (arg1Val, arg1Index) <- arg1Indices
-      result = mapper.map(apply.fn(arg1Val), Values(apply.universe)(apply))
       (resultVal, resultIndex) <- resultIndices
     } {
-      val entry = if (resultVal == result) 1.0; else 0.0
+      // See logic in makeCares
+      val entry =
+        if (arg1Val.isRegular && resultVal.isRegular) {
+        if (resultVal.value == mapper.map(apply.fn(arg1Val.value), applyValues.regularValues)) 1.0
+          else 0.0
+        } else if (!arg1Val.isRegular && !resultVal.isRegular) 1.0
+        else if (!arg1Val.isRegular && resultVal.isRegular) 0.0
+        else 0.0
       factor.set(List(arg1Index, resultIndex), entry)
     }
     List(factor)
@@ -195,6 +274,7 @@ object ProbFactor {
     val arg1Var = Variable(apply.arg1)
     val arg2Var = Variable(apply.arg2)
     val resultVar = Variable(apply)
+    val applyValues = LazyValues(apply.universe).storedValues(apply)
     val factor = new Factor[Double](List(arg1Var, arg2Var, resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
     val arg2Indices = arg2Var.range.zipWithIndex
@@ -202,10 +282,15 @@ object ProbFactor {
     for {
       (arg1Val, arg1Index) <- arg1Indices
       (arg2Val, arg2Index) <- arg2Indices
-      result = mapper.map(apply.fn(arg1Val, arg2Val), Values(apply.universe)(apply))
       (resultVal, resultIndex) <- resultIndices
     } {
-      val entry = if (resultVal == result) 1.0; else 0.0
+      val entry =
+        if (arg1Val.isRegular && arg2Val.isRegular && resultVal.isRegular) {
+          if (resultVal.value == mapper.map(apply.fn(arg1Val.value, arg2Val.value), applyValues.regularValues)) 1.0
+          else 0.0
+        } else if ((!arg1Val.isRegular || !arg2Val.isRegular) && !resultVal.isRegular) 1.0
+        else if ((!arg1Val.isRegular || arg2Val.isRegular) && resultVal.isRegular) 0.0
+        else 0.0
       factor.set(List(arg1Index, arg2Index, resultIndex), entry)
     }
     List(factor)
@@ -216,6 +301,7 @@ object ProbFactor {
     val arg2Var = Variable(apply.arg2)
     val arg3Var = Variable(apply.arg3)
     val resultVar = Variable(apply)
+    val applyValues = LazyValues(apply.universe).storedValues(apply)
     val factor = new Factor[Double](List(arg1Var, arg2Var, arg3Var, resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
     val arg2Indices = arg2Var.range.zipWithIndex
@@ -225,10 +311,15 @@ object ProbFactor {
       (arg1Val, arg1Index) <- arg1Indices
       (arg2Val, arg2Index) <- arg2Indices
       (arg3Val, arg3Index) <- arg3Indices
-      result = mapper.map(apply.fn(arg1Val, arg2Val, arg3Val), Values(apply.universe)(apply))
       (resultVal, resultIndex) <- resultIndices
     } {
-      val entry = if (resultVal == result) 1.0; else 0.0
+      val entry =
+        if (arg1Val.isRegular && arg2Val.isRegular && arg3Val.isRegular && resultVal.isRegular) {
+          if (resultVal.value == mapper.map(apply.fn(arg1Val.value, arg2Val.value, arg3Val.value), applyValues.regularValues)) 1.0
+          else 0.0
+        } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular) && !resultVal.isRegular) 1.0
+        else if ((!arg1Val.isRegular || arg2Val.isRegular || !arg3Val.isRegular) && resultVal.isRegular) 0.0
+        else 0.0
       factor.set(List(arg1Index, arg2Index, arg3Index, resultIndex), entry)
     }
     List(factor)
@@ -240,6 +331,7 @@ object ProbFactor {
     val arg3Var = Variable(apply.arg3)
     val arg4Var = Variable(apply.arg4)
     val resultVar = Variable(apply)
+    val applyValues = LazyValues(apply.universe).storedValues(apply)
     val factor = new Factor[Double](List(arg1Var, arg2Var, arg3Var, arg4Var, resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
     val arg2Indices = arg2Var.range.zipWithIndex
@@ -251,10 +343,15 @@ object ProbFactor {
       (arg2Val, arg2Index) <- arg2Indices
       (arg3Val, arg3Index) <- arg3Indices
       (arg4Val, arg4Index) <- arg4Indices
-      result = mapper.map(apply.fn(arg1Val, arg2Val, arg3Val, arg4Val), Values(apply.universe)(apply))
       (resultVal, resultIndex) <- resultIndices
     } {
-      val entry = if (resultVal == result) 1.0; else 0.0
+      val entry =
+        if (arg1Val.isRegular && arg2Val.isRegular && arg3Val.isRegular && arg4Val.isRegular && resultVal.isRegular) {
+          if (resultVal.value == mapper.map(apply.fn(arg1Val.value, arg2Val.value, arg3Val.value, arg4Val.value), applyValues.regularValues)) 1.0
+          else 0.0
+        } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular) && !resultVal.isRegular) 1.0
+        else if ((!arg1Val.isRegular || arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular) && resultVal.isRegular) 0.0
+        else 0.0
       factor.set(List(arg1Index, arg2Index, arg3Index, arg4Index, resultIndex), entry)
     }
     List(factor)
@@ -267,6 +364,7 @@ object ProbFactor {
     val arg4Var = Variable(apply.arg4)
     val arg5Var = Variable(apply.arg5)
     val resultVar = Variable(apply)
+    val applyValues = LazyValues(apply.universe).storedValues(apply)
     val factor = new Factor[Double](List(arg1Var, arg2Var, arg3Var, arg4Var, arg5Var, resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
     val arg2Indices = arg2Var.range.zipWithIndex
@@ -280,20 +378,30 @@ object ProbFactor {
       (arg3Val, arg3Index) <- arg3Indices
       (arg4Val, arg4Index) <- arg4Indices
       (arg5Val, arg5Index) <- arg5Indices
-      result = mapper.map(apply.fn(arg1Val, arg2Val, arg3Val, arg4Val, arg5Val), Values(apply.universe)(apply))
       (resultVal, resultIndex) <- resultIndices
     } {
-      val entry = if (resultVal == result) 1.0; else 0.0
+      val entry =
+        if (arg1Val.isRegular && arg2Val.isRegular && arg3Val.isRegular && arg4Val.isRegular && arg5Val.isRegular && resultVal.isRegular) {
+          if (resultVal.value == mapper.map(apply.fn(arg1Val.value, arg2Val.value, arg3Val.value, arg4Val.value, arg5Val.value), applyValues.regularValues)) 1.0
+          else 0.0
+        } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular || !arg5Val.isRegular) && !resultVal.isRegular) 1.0
+        else if ((!arg1Val.isRegular || arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular || !arg5Val.isRegular) && resultVal.isRegular) 0.0
+        else 0.0
       factor.set(List(arg1Index, arg2Index, arg3Index, arg4Index, arg5Index, resultIndex), entry)
     }
     List(factor)
   }
 
   private def makeFactors[T](inject: Inject[T]): List[Factor[Double]] = {
-    def rule(values: List[Any]) = {
+    def rule(values: List[Extended[_]]) = {
       val resultValue :: inputValues = values
-      if (resultValue.asInstanceOf[List[T]].toList == inputValues) 1.0
-      else 0.0
+      // See logic under makeCares
+      if (inputValues.exists(!_.isRegular)) {
+        if (!resultValue.isRegular) 1.0; else 0.0
+      }
+      else if (resultValue.isRegular) {
+        if (resultValue.value.asInstanceOf[List[T]] == inputValues.map(_.value.asInstanceOf[T])) 1.0; else 0.0
+      } else 0.0
     }
     val inputVariables = inject.args map (Variable(_))
     val resultVariable = Variable(inject)
@@ -305,14 +413,18 @@ object ProbFactor {
 
   // When we're using a parameter to compute expected sufficient statistics, we just use its expected value
   private def makeFactors(param: Parameter[_]): List[Factor[Double]] = {
-    makeFactors(Constant(param.expectedValue))
+    // The parameter should have one possible value, which is its expected value
+    assert(Variable(param).range.size == 1)
+    val factor = new Factor[Double](List(Variable(param)))
+    factor.set(List(0), 1.0)
+    List(factor)
   }
 
   private def makeFactors(flip: ParameterizedFlip): List[Factor[Double]] = {
     val flipVar = Variable(flip)
     val factor = new Factor[Double](List(flipVar))
     val prob = flip.parameter.expectedValue
-    val i = flipVar.range.indexOf(true)
+    val i = flipVar.range.indexOf(Regular(true))
     factor.set(List(i), prob)
     factor.set(List(1 - i), 1.0 - prob)
     List(factor)
@@ -344,7 +456,7 @@ object ProbFactor {
 
   private def makeAbstract[T](atomic: Atomic[T], abstraction: Abstraction[T]): List[Factor[Double]] = {
     val variable = Variable(atomic)
-    val values = variable.range
+    val values = variable.range.map(_.value)
     val densityMap = scala.collection.mutable.Map[T, Double]()
     for { v <- values } {
       val currentDensity = densityMap.getOrElse(v, 0.0)
@@ -369,7 +481,7 @@ object ProbFactor {
       case _ => throw new UnsupportedAlgorithmException(elem)
     }
 
-  private def makeNonConstraintFactors[T](elem: Element[T]): List[Factor[Double]] =
+  private def makeNonConstraintFactorsUncached[T](elem: Element[T]): List[Factor[Double]] =
     Abstraction.fromPragmas(elem.pragmas) match {
       case None => concreteFactors(elem)
       case Some(abstraction) => makeAbstract(elem, abstraction)
@@ -393,7 +505,7 @@ object ProbFactor {
     val elemVar = Variable(elem)
     val factor = new Factor[Double](List(elemVar))
     for { (elemVal, index) <- elemVar.range.zipWithIndex } {
-      val entry = constraint(elemVal)
+      val entry = if (elemVal.isRegular) constraint(elemVal.value); else 0.0
       factor.set(List(index), entry)
     }
     factor
@@ -411,7 +523,7 @@ object ProbFactor {
     val firstVar = Variable(firstElem)
     val firstValues = firstVar.range
     val numFirstValues = firstValues.size
-    val matchingIndex: Int = firstValues.indexOf(firstValue)
+    val matchingIndex: Int = firstValues.indexOf(Regular(firstValue))
     val resultFactor = new Factor[Double](firstVar :: restFactor.variables)
     for { restIndices <- restFactor.allIndices } {
       val restEntry = restFactor.get(restIndices)
@@ -425,20 +537,23 @@ object ProbFactor {
 
   private val factorCache = scala.collection.mutable.Map[Element[_], List[Factor[Double]]]()
 
+  def makeNonConstraintFactors(elem: Element[_]): List[Factor[Double]] = {
+    factorCache.get(elem) match {
+      case Some(l) => l
+      case None =>
+        val result = makeNonConstraintFactorsUncached(elem)
+        factorCache += elem -> result
+        elem.universe.register(factorCache)
+        result
+    }
+  }
+  
+  
   /**
    * Create the probabilistic factors associated with an element. This method is memoized.
    */
   def make(elem: Element[_]): List[Factor[Double]] = {
-    val nonConstraintFactors =
-      factorCache.get(elem) match {
-        case Some(l) => l
-        case None =>
-          val result = makeNonConstraintFactors(elem)
-          factorCache += elem -> result
-          elem.universe.register(factorCache)
-          result
-      }
-    makeConditionAndConstraintFactors(elem) ::: nonConstraintFactors
+    makeConditionAndConstraintFactors(elem) ::: makeNonConstraintFactors(elem)
   }
 
   /**
@@ -464,7 +579,7 @@ object ProbFactor {
     probEvidenceComputer: () => Double): Factor[Double] = {
     val uses = dependentUniverse.parentElements filter (_.universe == parentUniverse)
     def rule(values: List[Any]) = {
-      for { (elem, value) <- uses zip values } { elem.value = value.asInstanceOf[elem.Value] }
+      for { (elem, value) <- uses zip values } { elem.value = value.asInstanceOf[Regular[elem.Value]].value }
       val result = probEvidenceComputer()
       result
     }

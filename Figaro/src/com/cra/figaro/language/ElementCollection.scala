@@ -13,7 +13,8 @@
 
 package com.cra.figaro.language
 
-import com.cra.figaro.algorithm._
+import com.cra.figaro.algorithm.Values
+import com.cra.figaro.algorithm.lazyfactored.{ValueSet, LazyValues}
 import com.cra.figaro.util._
 import scala.collection.mutable.Map
 
@@ -26,9 +27,8 @@ trait ElementCollection {
    * Override this if you want a different universe.
    */
   val universe: Universe = Universe.universe
-
-  /*
-   * Elements with the same name may belong to the same collection. The most recently added on is used to resolve references. (That is why a List is used to hold the elements
+  
+  /* Elements with the same name may belong to the same collection. The most recently added on is used to resolve references. (That is why a List is used to hold the elements
    * with a given name, rather than a Set, so we always know which is the most recent.) When evidence is applied to a name, all the elements with that name have the evidence
    * applied to them.
    */
@@ -201,17 +201,6 @@ trait ElementCollection {
         (headElems.head, Some(tail)) // use most recent element with the name
     }
 
-  /**
-   * Returns all possible values of the given reference.
-   */
-  def referenceValues[T](reference: Reference[T]): Set[T] =
-    getFirst(reference) match {
-      case (elem, None) => Values(universe)(elem.asInstanceOf[Element[T]])
-      case (elem, Some(rest)) =>
-        val firstValues = Values(universe)(elem.asInstanceOf[Element[ElementCollection]])
-        firstValues.flatMap(_.referenceValues(rest))
-    }
-
   /*
    * Follow the single-valued reference in the current state to get the element referred to.
    * Need to clarify: This gets the element *currently* referred to by the reference. Provide example.
@@ -230,6 +219,7 @@ trait ElementCollection {
       case Indirect(head, tail) =>
         try {
           val headElems = myElementMap(head)
+          headElems.head.generate()
           headElems.head.asInstanceOf[Element[ElementCollection]].value.getElementByReference(tail) // use most recent element with the name
         } catch {
           case e: ClassCastException =>
@@ -254,6 +244,7 @@ trait ElementCollection {
       case Indirect(head, tail) =>
         try {
           val headElems = myElementMap(head)
+          headElems.head.generate()
           val nextECs = ElementCollection.makeElementCollectionSet(headElems.head.value) // use most recent element with the name
           (Set[Element[T]]() /: nextECs)(_ union _.getManyElementsByReference(tail))
         } catch {

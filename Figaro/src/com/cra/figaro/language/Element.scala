@@ -137,6 +137,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    */
   final def generate(): Unit = {
     if (!setFlag) { // Make sure we do not generate this element if we have already set its value
+      args.foreach(arg => if (arg.value == null) arg.generate()) // make sure arguments have a valid value
       randomness = generateRandomness()
       value = generateValue(randomness)
     }
@@ -414,7 +415,8 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   def deactivate(): Unit = universe.deactivate(this)
 
   // It is important to generate the initial value of this Element so it is not null
-  generate()
+  // Much better not to to avoid infinite recursiuon!
+  //generate()
 
   // Since collection.add uses the initial value of the element, it needs to be called after generate()
   collection.add(this)
@@ -425,9 +427,18 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   def ===(that: Element[Value])(implicit universe: Universe) = new Eq("", this, that, universe)
 
   /**
+   * The element that tests whether the value of this element is equal to a particular value.
+   */
+  def ===(that: Value)(implicit universe: Universe) = new Apply1("", this, (v: Value) => v == that, universe)
+  /**
    * The element that tests inequality of this element with another element.
    */
   def !==(that: Element[Value])(implicit universe: Universe) = new Neq("", this, that, universe)
+  
+  /**
+   * A string that is the element's name, if it has a non-empty one, otherwise the result of the element's toString
+   */
+  def toNameString = if (name.string != "") name.string; else toString
 }
 
 object Element {
@@ -480,6 +491,27 @@ object Element {
 
   /** The type of contingencies that can hold on elements. */
   type Contingency = List[ElemVal[_]]
+  
+  /**
+   * Returns the given elements and all elements on which they are contingent, closed recursively
+   */
+  def closeUnderContingencies(elements: Set[Element[_]]): Set[Element[_]] = {
+    def findContingent(elements: Set[Element[_]]): Set[Element[_]] = {
+      // Find all elements not in the input set that the input set is contingent on
+      for {
+        element <- elements
+        contingent <- element.myContigentElements
+        if !elements.contains(contingent)
+      } yield contingent
+    }
+    var result = elements
+    var adds = findContingent(result)
+    while (!adds.isEmpty) {
+      result ++= adds
+      adds = findContingent(result)
+    }
+    result
+  }
 }
 
 /**

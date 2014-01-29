@@ -19,6 +19,7 @@ import com.cra.figaro.algorithm._
 import com.cra.figaro.language._
 
 class ExpandTest extends WordSpec with ShouldMatchers {
+  /* OBSOLETE: Need to replace it with tests of getMap lazily growing
   "After calling Expand.expand" should {
     "have all the result elements of a chain's function applied to its arguments be active" in {
       Universe.createNew()
@@ -32,7 +33,7 @@ class ExpandTest extends WordSpec with ShouldMatchers {
       Universe.createNew()
       def f(b: Boolean) = Apply(Constant(b), (b: Boolean) => b)
       val c = CachingChain(Flip(0.2), f)
-      Expand()
+      Expand(Integer.MAX_VALUE)
       assert(Universe.universe.activeElements exists (isConstant(_, false)))
       assert(Universe.universe.activeElements exists (isConstant(_, true)))
     }
@@ -41,7 +42,7 @@ class ExpandTest extends WordSpec with ShouldMatchers {
       Universe.createNew()
       def f(d: Double) = CachingChain(Flip(d), (b: Boolean) => if (b) Constant(1); else Constant(2))
       val c = CachingChain(Constant(0.5), f)
-      Expand()
+      Expand(Integer.MAX_VALUE)
       assert(Universe.universe.activeElements exists (isConstant(_, 1)))
       assert(Universe.universe.activeElements exists (isConstant(_, 2)))
     }
@@ -49,7 +50,7 @@ class ExpandTest extends WordSpec with ShouldMatchers {
     "associate a top-level chain with a map from its argument values to their associated result elements" in {
       Universe.createNew()
       val c = CachingChain(Flip(0.2), (b: Boolean) => Constant(b))
-      Expand()
+      Expand(Integer.MAX_VALUE)
       assert(hasBooleanConstantMap(c, false, true))
     }
 
@@ -58,12 +59,12 @@ class ExpandTest extends WordSpec with ShouldMatchers {
         Universe.createNew()
         def f(d: Double) = CachingChain(Flip(d), (b: Boolean) => if (b) Constant(1); else Constant(2))
         val c = CachingChain(Constant(0.5), f)
-        Expand()
+        Expand(Integer.MAX_VALUE)
         val c2 = Expand().getMap(c)(0.5).asInstanceOf[Chain[Boolean, Int]]
         assert(hasBooleanConstantMap(c2, 2, 1))
       }
   }
-
+*/
   // Tests whether the element is a constant with the given value
   def isConstant[T](elem: Element[_], value: T): Boolean =
     elem match {

@@ -104,9 +104,10 @@ object CPD {
     arg5: Element[T5], clauses: ((T1, T2, T3, T4, T5), Element[U])*)(implicit name: Name[U], collection: ElementCollection) =
     new CPD5(name, arg1, arg2, arg3, arg4, arg5, clauses, collection)
 
-  private[compound] def getMatch[T, U](clauses: Seq[(T, Element[U])], t: T): Element[U] =
+  private[compound] def getMatch[T, U](clauses: Seq[(T, Element[U])], t: T): Element[U] = {
     clauses.find(_._1 == t) match {
       case Some(clause) => clause._2
       case None => throw new MatchError(t)
     }
+  }
 }

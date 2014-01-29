@@ -26,6 +26,8 @@ trait OneTimeProbQuery extends ProbQueryAlgorithm with OneTime {
   protected def doExpectation[T](target: Element[T], function: T => Double): Double =
     computeExpectation(target, function)
 
-  protected def doProbability[T](target: Element[T], predicate: T => Boolean): Double =
+  protected def doProbability[T](target: Element[T], predicate: T => Boolean): Double = {
     computeProbability(target, predicate)
+  }
+    
 }

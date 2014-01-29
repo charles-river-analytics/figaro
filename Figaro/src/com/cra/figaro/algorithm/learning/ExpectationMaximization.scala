@@ -16,6 +16,7 @@ package com.cra.figaro.algorithm.learning
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.algorithm.factored._
+import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.util._
@@ -56,6 +57,9 @@ class ExpectationMaximization(universe: Universe, targetParameters: Parameter[_]
 
   protected def doExpectationStep(): Map[Parameter[_], Seq[Double]] = {
 
+    LazyValues.clear(universe)
+    Variable.clearCache()
+    ProbFactor.removeFactors()
     val algorithm = SufficientStatisticsVariableElimination(paramMap)(universe)
     algorithm.start
     val result = algorithm.getSufficientStatisticsForAllParameters

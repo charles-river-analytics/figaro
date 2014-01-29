@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="Figaro/src"/>
+	<classpathentry kind="src" path="Figaro/test"/>
+	<classpathentry kind="src" path="FigaroExamples/src"/>
+	<classpathentry kind="lib" path="Figaro/lib/asm-3.3.1.jar"/>
+	<classpathentry kind="lib" path="Figaro/lib/asm-analysis-3.3.1.jar"/>
+	<classpathentry kind="lib" path="Figaro/lib/asm-tree-3.3.1.jar"/>
+	<classpathentry kind="lib" path="Figaro/lib/jsci-core.jar"/>
+	<classpathentry kind="lib" path="Figaro/lib/parboiled-core-1.0.2.jar"/>
+	<classpathentry kind="lib" path="Figaro/lib/parboiled-java-1.0.2.jar"/>
+	<classpathentry kind="lib" path="Figaro/lib/pegdown-1.1.0.jar"/>
+	<classpathentry kind="lib" path="Figaro/lib/scalatest_2.10-2.0.M6.jar"/>
+	<classpathentry kind="lib" path="FigaroExamples/lib/asm-3.3.1.jar"/>
+	<classpathentry kind="lib" path="FigaroExamples/lib/asm-analysis-3.3.1.jar"/>
+	<classpathentry kind="lib" path="FigaroExamples/lib/asm-tree-3.3.1.jar"/>
+	<classpathentry kind="lib" path="FigaroExamples/lib/figaro_2.0.0.0.jar"/>
+	<classpathentry kind="lib" path="FigaroExamples/lib/jsci-core.jar"/>
+	<classpathentry kind="lib" path="FigaroExamples/lib/parboiled-core-1.0.2.jar"/>
+	<classpathentry kind="lib" path="FigaroExamples/lib/parboiled-java-1.0.2.jar"/>
+	<classpathentry kind="lib" path="FigaroExamples/lib/pegdown-1.1.0.jar"/>
+	<classpathentry kind="con" path="org.scala-ide.sdt.launching.SCALA_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

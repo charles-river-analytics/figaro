@@ -19,6 +19,8 @@ import math.log
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.decision._
 import com.cra.figaro.algorithm.factored._
+import com.cra.figaro.algorithm.lazyfactored._
+import ProbFactor._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.test.PerformanceTest
 import com.cra.figaro.library.decision._

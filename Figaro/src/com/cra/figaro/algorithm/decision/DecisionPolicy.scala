@@ -22,6 +22,7 @@ import com.cra.figaro.library.decision._
 import com.cra.figaro.util._
 import scala.collection.immutable.Map
 import scala.collection.mutable.MultiMap
+import com.cra.figaro.algorithm.lazyfactored.Regular
 
 /**
  * Abstract base class for all Decision Policies. Must define two functions:

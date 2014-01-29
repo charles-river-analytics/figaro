@@ -15,6 +15,7 @@ package com.cra.figaro.library.decision
 
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.factored._
+import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.algorithm.decision._
 import com.cra.figaro.algorithm.decision.index._
 import com.cra.figaro.language._
@@ -103,9 +104,9 @@ abstract class Decision[T, U](name: Name[U], parent: Element[T], private var fcn
     // Have to nullify the last result even if parents the same since the function changed
     clearContext
     // Have to clear the last element in the cache since clearTempory always leaves an element in the cache
-    resizeCache(cache.last._1)    
+    if (cache.nonEmpty) resizeCache(cache.last._1)    
     // Have to remove the expansion of the universe since it is out of data
-    Expand.removeExpansion(universe)
+    LazyValues.clear(universe)
     // Must regenerate a new value since the cache should never be empty
     generateValue()
   }

@@ -13,10 +13,12 @@
 
 package com.cra.figaro.library.compound
 
-import com.cra.figaro.algorithm._
+import com.cra.figaro.algorithm.ValuesMaker
+import com.cra.figaro.algorithm.lazyfactored.{ValueSet, LazyValues, Regular}
 import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.language._
 import com.cra.figaro.util._
+import scala.collection.mutable.Map
 
 /**
  * An element representing making a list of a random number of random items.
@@ -59,36 +61,58 @@ class MakeList[T](
     case _ => throw new IllegalArgumentException("Invalid indices to MakeList")
   }
 
-  def makeValues: Set[List[T]] = {
+  val values = LazyValues(universe)
+  
+  /* We need to make sure that values are computed on the embedded Injects. Therefore, we create them in makeValues, store them, and use them in makeFactors.
+   */
+  val embeddedInject: Map[Int, Element[List[T]]] = Map()
+  
+  def makeValues(depth: Int): ValueSet[List[T]] = {
     // This code is subtle.
     // If we used itemMaker here, it would create bugs, as the items that appeared in the values would be different from the ones actually used by the Makelist.
     // On the other hand, if we used Values(items(0)) as a template for the values of all items, it would create other bugs, as different indices would have the same values,
     // even when the values include "new C", so they should all be different.
     // Therefore, we use Values()(items(i)) to get the possible value for each item in the stream.
-    def possibleItemLists(length: Int): List[List[T]] = {
-      def possibleItems(i: Int): List[T] = Values()(items(i)).toList
+    def possibleItemLists(length: Int): ValueSet[List[T]] = {
+      val inject = Inject(items.take(length):_*)
+      embeddedInject += length -> inject
+      /*
+      def possibleItems(i: Int) = {
+        values(items(i), depth - 1).regularValues.toList
+      }
       val possibleItemsByIndex: List[List[T]] = List.tabulate(length)(possibleItems(_))
       homogeneousCartesianProduct(possibleItemsByIndex: _*)
+      * 
+      */
+      values(inject, depth - 1)
     }
-    val possibleLengths = Values()(numItems)
-    possibleLengths.flatMap(possibleItemLists(_))
+    val possibleLengthValues = values(numItems, depth - 1) 
+    val possibleLengths = possibleLengthValues.regularValues
+    val itemListsForLengths = possibleLengths.map(possibleItemLists(_))
+    val resultValues = 
+      for {
+        itemLists <- itemListsForLengths
+        list <- itemLists.regularValues
+      } yield list
+    val incomplete = itemListsForLengths.exists(_.hasStar) || possibleLengthValues.hasStar
+    if (incomplete) ValueSet.withStar(resultValues); else ValueSet.withoutStar(resultValues)
   }
 
   def makeFactors: List[Factor[Double]] = {
     val parentVar = Variable(numItems)
     // We need to create factors for the items and the lists themselves, which are encapsulated in this MakeList
-    val maxItem = parentVar.range.reduce(_ max _)
+    val regularParents = parentVar.range.filter(_.isRegular).map(_.value)
+    val maxItem = regularParents.reduce(_ max _)
     val itemFactors = List.tabulate(maxItem)((i: Int) => ProbFactor.make(items(i)))
-    def makeResult(n: Int) = Inject(items.take(n): _*)
     val indexedResultElemsAndFactors =
-      for { i <- parentVar.range } yield {
-        val elem = makeResult(i)
+      for { i <- regularParents } yield {
+        val elem = embeddedInject(i)
         val factors = ProbFactor.make(elem)
-        (i, elem, factors)
+        (Regular(i), elem, factors)
       }
     val conditionalFactors =
       parentVar.range.zipWithIndex map (pair =>
-        ProbFactor.makeConditionalSelector(this, parentVar, pair._2, indexedResultElemsAndFactors.find(_._1 == pair._1).get._2))
+        ProbFactor.makeConditionalSelector(this, parentVar, pair._2, Variable(indexedResultElemsAndFactors.find(_._1 == pair._1).get._2)))
     conditionalFactors ::: itemFactors.flatten ::: indexedResultElemsAndFactors.flatMap(_._3)
   }
 

@@ -17,11 +17,15 @@ import com.cra.figaro.language._
 import com.cra.figaro.library.compound._
 import com.cra.figaro.util._
 import scala.collection.mutable.Map
+import com.cra.figaro.algorithm.lazyfactored._
 
 /**
  * Objects for computing the range of values of elements in a universe. If an element has an abstraction,
  * it computes the abstract values.
  */
+/*
+ * This code has been superseded by lazyfactors.Values
+ *
 class Values(universe: Universe = Universe.universe) {
   private def values[T](element: Element[T]): Set[T] =
     Abstraction.fromPragmas(element.pragmas) match {
@@ -34,7 +38,7 @@ class Values(universe: Universe = Universe.universe) {
       case c: Constant[_] => Set(c.constant)
       case f: Flip => Set(true, false)
       case d: Select[_, _] => Set(d.outcomes: _*)
-      case d: Dist[_, _] => Set(d.outcomes: _*) flatMap (values(_))
+      case d: Dist[_, _] => Set(d.outcomes: _*) flatMap (this(_))
       case i: FastIf[_] => Set(i.thn, i.els)
       case i: If[_] => this(i.thn) ++ this(i.els)
       case a: Apply1[_, _] => this(a.arg1) map (a.fn(_))
@@ -102,22 +106,24 @@ class Values(universe: Universe = Universe.universe) {
         set
     }
 }
+*/
+
+class Values private(results: com.cra.figaro.algorithm.lazyfactored.LazyValues) {
+  def apply[T](element: Element[T]): Set[T] = { 
+    val valueSet = results(element, Integer.MAX_VALUE) 
+    valueSet.regularValues
+  }
+}
+
 
 object Values {
-  private val expansions = scala.collection.mutable.Map[Universe, Values]()
+  type ValuesGetter[T] = Element[T] => Set[T]
 
   /**
    * Create an object for computing the range of values of elements in the universe. This object is only
    * created once for a universe.
    */
-  def apply(universe: Universe = Universe.universe): Values = {
-    expansions.get(universe) match {
-      case Some(e) => e
-      case None =>
-        val expansion = new Values(universe)
-        expansions += (universe -> expansion)
-        universe.registerUniverse(expansions)
-        expansion
-    }
+  def apply(universe: Universe = Universe.universe) = {
+    new Values(com.cra.figaro.algorithm.lazyfactored.LazyValues(universe))
   }
 }

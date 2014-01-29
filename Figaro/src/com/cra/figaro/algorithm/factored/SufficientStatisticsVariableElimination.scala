@@ -48,14 +48,16 @@ class SufficientStatisticsVariableElimination(
   /**
    *  Particular implementations of probability of evidence algorithms must define the following method. 
    */
-  def getFactors(targetVariables: Seq[Variable[_]]): List[Factor[(Double, mutable.Map[Parameter[_], Seq[Double]])]] = {
+  def getFactors(neededElements: List[Element[_]], targetElements: List[Element[_]], upper: Boolean = false): List[Factor[(Double, mutable.Map[Parameter[_], Seq[Double]])]] = {
 
-    val allElements = universe.activeElements.filter(p => p.isInstanceOf[Parameter[_]] == false)
+    val allElements = neededElements.filter(p => p.isInstanceOf[Parameter[_]] == false)
     val thisUniverseFactors = allElements flatMap (statFactor.make(_))
 
     if (debug) {
-      println("Element ids:")
-      for { element <- universe.activeElements } { println(Variable(element).id + ": " + element) }
+      println("Elements appearing in factors and their ranges:")
+      for { element <- universe.activeElements } { 
+        println(Variable(element).id + "(" + element.name.string + "@" + element.hashCode + ")" + ": " + element + ": " + Variable(element).range.mkString(",")) 
+      }
     }
 
     val dependentUniverseFactors =
@@ -73,7 +75,7 @@ class SufficientStatisticsVariableElimination(
 
   def finish(factorsAfterElimination: Set[Factor[(Double, Map[Parameter[_], Seq[Double]])]], eliminationOrder: List[Variable[_]]): Unit = {
 
-    val finalFactor = factorsAfterElimination.reduce(_.product(_, semiring.product))
+    val finalFactor = factorsAfterElimination.reduce(_.product(_, semiring))
     finalFactor.variables.size match {
       case 0 => result = finalFactor.get(List())
       case _ => throw new RuntimeException("Final factor has variables")
@@ -101,4 +103,3 @@ class SufficientStatisticsVariableElimination(
 object SufficientStatisticsVariableElimination {
   def apply(parameterMap : immutable.Map[Parameter[_], Seq[Double]])(implicit universe: Universe) = new SufficientStatisticsVariableElimination(parameterMap,universe)
 }
-

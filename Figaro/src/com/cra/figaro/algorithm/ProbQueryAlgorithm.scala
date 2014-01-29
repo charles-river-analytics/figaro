@@ -43,8 +43,10 @@ abstract class ProbQueryAlgorithm(val universe: Universe, val targets: Element[_
    * Return an estimate of the probability of the predicate under the marginal probability distribution
    * of the target.
    */
-  def computeProbability[T](target: Element[T], predicate: T => Boolean): Double =
+  def computeProbability[T](target: Element[T], predicate: T => Boolean): Double = {
     computeExpectation(target, (t: T) => if (predicate(t)) 1.0; else 0.0)
+  }
+    
 
   /*
    * The following methods are defined in either the onetime or anytime versions of this class, 
