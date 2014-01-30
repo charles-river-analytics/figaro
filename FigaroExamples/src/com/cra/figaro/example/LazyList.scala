@@ -2,7 +2,7 @@ package com.cra.figaro.example
 
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound.If
-import com.cra.figaro.algorithm.lazyfactored.LazyVE
+import com.cra.figaro.algorithm.lazyfactored.LazyVariableElimination
 
 object LazyList {
   val universe = Universe.createNew()
@@ -30,7 +30,7 @@ object LazyList {
     val cb = contains('b, el)
     val ca = contains('a, el)
     ca.observe(true)
-    val alg = new LazyVE(cb)
+    val alg = new LazyVariableElimination(cb)
     
     println("DEPTH " + 1)
     alg.start()

@@ -76,15 +76,7 @@ class MakeList[T](
     def possibleItemLists(length: Int): ValueSet[List[T]] = {
       val inject = Inject(items.take(length):_*)
       embeddedInject += length -> inject
-      /*
-      def possibleItems(i: Int) = {
-        values(items(i), depth - 1).regularValues.toList
-      }
-      val possibleItemsByIndex: List[List[T]] = List.tabulate(length)(possibleItems(_))
-      homogeneousCartesianProduct(possibleItemsByIndex: _*)
-      * 
-      */
-      values(inject, depth - 1)
+     values(inject, depth - 1)
     }
     val possibleLengthValues = values(numItems, depth - 1) 
     val possibleLengths = possibleLengthValues.regularValues

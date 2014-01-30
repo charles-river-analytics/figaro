@@ -664,7 +664,7 @@ class ReferenceTest extends WordSpec with PrivateMethodTester with Matchers {
       Universe.createNew()
       val myVehicle = Vehicle.generate("v1")
       val i1 = Apply(myVehicle, (v: Vehicle) => v.isInstanceOf[Pickup])
-      val alg = MetropolisHastings(100000, ProposalScheme.default, i1)
+      val alg = MetropolisHastings(1000000, ProposalScheme.default, i1)
       alg.start()
       alg.probability(i1, true) should be((0.4 * 0.3) +- 0.01)
     }
@@ -674,7 +674,7 @@ class ReferenceTest extends WordSpec with PrivateMethodTester with Matchers {
       val myVehicle = Vehicle.generate("v1")
       universe.assertEvidence(List(NamedEvidence("v1.size", Observation('medium))))
       val i1 = Apply(myVehicle, (v: Vehicle) => v.isInstanceOf[Pickup])
-      val alg = MetropolisHastings(100000, ProposalScheme.default, i1)
+      val alg = MetropolisHastings(1000000, ProposalScheme.default, i1)
       alg.start()
       alg.probability(i1, true) should be(((0.3 * 1.0) / (0.3 * 1.0 + 0.6 * 0.25)) +- 0.01)
     }

@@ -95,8 +95,8 @@ class SingleValuedReferenceElement[T](collection: ElementCollection, reference: 
         val firstVar = Variable(first)
         val selectedFactors =
           for {
-            (firstValue, firstIndex) <- firstVar.range.zipWithIndex
-            firstCollection = firstValue.value.asInstanceOf[ElementCollection]
+            (firstXvalue, firstIndex) <- firstVar.range.zipWithIndex
+            firstCollection = firstXvalue.value.asInstanceOf[ElementCollection]
             restElement = embeddedElements(firstCollection)
           } yield {
             ProbFactor.makeConditionalSelector(this, firstVar, firstIndex, Variable(restElement)) :: restElement.makeFactors
@@ -134,18 +134,6 @@ class Aggregate[T, U](collection: ElementCollection, reference: Reference[T], ag
     private val embeddedElements: Map[ElementCollection, MultiValuedReferenceElement[T]] = Map()
     private val embeddedInject: Map[List[ElementCollection], Element[List[MultiSet[T]]]] = Map()
     private val embeddedApply: Map[List[ElementCollection], Element[MultiSet[T]]] = Map()
-    
-    /*
-    override val hashCode = ref.hashCode()
-    override def equals(that: Any): Boolean = {
-      try {
-        val ms = that.asInstanceOf[MultiValuedReferenceElement[T]]
-        coll == ms.collection && ref == ms.reference
-      } catch {
-        case _: ClassCastException => false
-      }
-    }
-*/
     
     // collection.getElements is a set of elements, because if the same element is reachable by more than one path, it is only counted once. 
     // We convert it to a list so we get all the values of these elements, even if some of the elements have the same values. 
@@ -188,9 +176,9 @@ class Aggregate[T, U](collection: ElementCollection, reference: Reference[T], ag
         case Some(restRef) =>
           val results: Set[ValueSet[MultiSet[T]]] = {
             val firstValues: ValueSet[_] = LazyValues(universe)(first, depth)
-            for { firstValue <- firstValues.values } yield {
-              if (firstValue.isRegular) {
-	              firstValue.value match {
+            for { firstXvalue <- firstValues.xvalues } yield {
+              if (firstXvalue.isRegular) {
+	              firstXvalue.value match {
 	                case firstColl: ElementCollection => 
 	                  val embedded = new MultiValuedReferenceElement(firstColl, restRef)
 	                  embeddedElements += firstColl -> embedded
@@ -257,10 +245,10 @@ class Aggregate[T, U](collection: ElementCollection, reference: Reference[T], ag
           case Some(restRef) =>
             val firstVar = Variable(first)
             for {
-              (firstValue, firstIndex) <- firstVar.range.zipWithIndex
+              (firstXvalue, firstIndex) <- firstVar.range.zipWithIndex
             } yield {
-              if (firstValue.isRegular) {
-                firstValue.value match {
+              if (firstXvalue.isRegular) {
+                firstXvalue.value match {
                   case firstCollection: ElementCollection =>
                     val restElement = embeddedElements(firstCollection)
                     val result: List[Factor[Double]] =
@@ -307,10 +295,10 @@ class Aggregate[T, U](collection: ElementCollection, reference: Reference[T], ag
     val mvreVar = Variable(mvre)
     val factor = new Factor[Double](List(thisVar, mvreVar))
     for {
-      (thisValue, thisIndex) <- thisVar.range.zipWithIndex
-      (mvreValue, mvreIndex) <- mvreVar.range.zipWithIndex
+      (thisXvalue, thisIndex) <- thisVar.range.zipWithIndex
+      (mvreXvalue, mvreIndex) <- mvreVar.range.zipWithIndex
     } {
-      if (thisValue.isRegular && mvreValue.isRegular) factor.set(List(thisIndex, mvreIndex), if (aggregate(mvreValue.value) == thisValue.value) 1.0; else 0.0)
+      if (thisXvalue.isRegular && mvreXvalue.isRegular) factor.set(List(thisIndex, mvreIndex), if (aggregate(mvreXvalue.value) == thisXvalue.value) 1.0; else 0.0)
     }
     // The MultiValuedReferenceElement for this aggregate is generated when values is called. 
     // Therefore, it will be included in the expansion and have factors made for it automatically, so we do not create factors for it here.

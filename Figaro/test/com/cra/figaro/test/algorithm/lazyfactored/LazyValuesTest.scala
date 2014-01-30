@@ -150,8 +150,8 @@ class LazyValuesTest extends WordSpec with ShouldMatchers {
       val y = Dist(0.4 -> select1, 0.6 -> apply2) // range should be { 1, 2, 4, 5 }
       val values = LazyValues(universe)
       values.expandAll(Set(x,y), 1)
-      values.storedValues(x).values should equal (Set(Regular(2), Regular(3), Regular(4)))
-      values.storedValues(y).values should equal (Set(Regular(1), Regular(2), Regular(4), Regular(5)))
+      values.storedValues(x).xvalues should equal (Set(Regular(2), Regular(3), Regular(4)))
+      values.storedValues(y).xvalues should equal (Set(Regular(1), Regular(2), Regular(4), Regular(5)))
       
       
     }

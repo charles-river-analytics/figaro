@@ -233,6 +233,8 @@ object ProbFactor {
     val parentVar = Variable(chain.parent)
     parentVar.range.zipWithIndex flatMap (pair => {
       val parentVal = pair._1
+      // parentVal.value should have been placed in applyMap at the time the values of this apply were computed.
+      // By using chainMap, we can make sure that the result element is the same now as they were when values were computed.
       if (parentVal.isRegular) List(makeConditionalSelector(chain, parentVar, pair._2, Variable(chainMap(parentVal.value)))(mapper))
       else {
         // We create a dummy variable for the outcome variable whose value is always star.
@@ -247,6 +249,7 @@ object ProbFactor {
   }
 
   private def makeFactors[T, U](apply: Apply1[T, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {
+    val applyMap: scala.collection.mutable.Map[T, U] = LazyValues(apply.universe).getMap(apply)
     val arg1Var = Variable(apply.arg1)
     val resultVar = Variable(apply)
     val applyValues = LazyValues(apply.universe).storedValues(apply)
@@ -260,7 +263,9 @@ object ProbFactor {
       // See logic in makeCares
       val entry =
         if (arg1Val.isRegular && resultVal.isRegular) {
-        if (resultVal.value == mapper.map(apply.fn(arg1Val.value), applyValues.regularValues)) 1.0
+        // arg1Val.value should have been placed in applyMap at the time the values of this apply were computed.
+        // By using applyMap, we can make sure that any contained elements in the result of the apply are the same now as they were when values were computed.
+        if (resultVal.value == mapper.map(applyMap(arg1Val.value), applyValues.regularValues)) 1.0
           else 0.0
         } else if (!arg1Val.isRegular && !resultVal.isRegular) 1.0
         else if (!arg1Val.isRegular && resultVal.isRegular) 0.0
@@ -271,6 +276,7 @@ object ProbFactor {
   }
 
   private def makeFactors[T1, T2, U](apply: Apply2[T1, T2, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {
+    val applyMap: scala.collection.mutable.Map[(T1, T2), U] = LazyValues(apply.universe).getMap(apply)
     val arg1Var = Variable(apply.arg1)
     val arg2Var = Variable(apply.arg2)
     val resultVar = Variable(apply)
@@ -286,7 +292,9 @@ object ProbFactor {
     } {
       val entry =
         if (arg1Val.isRegular && arg2Val.isRegular && resultVal.isRegular) {
-          if (resultVal.value == mapper.map(apply.fn(arg1Val.value, arg2Val.value), applyValues.regularValues)) 1.0
+          // The argument values should have been placed in applyMap at the time the values of this apply were computed.
+          // By using applyMap, we can make sure that any contained elements in the result of the apply are the same now as they were when values were computed.
+          if (resultVal.value == mapper.map(applyMap((arg1Val.value, arg2Val.value)), applyValues.regularValues)) 1.0
           else 0.0
         } else if ((!arg1Val.isRegular || !arg2Val.isRegular) && !resultVal.isRegular) 1.0
         else if ((!arg1Val.isRegular || arg2Val.isRegular) && resultVal.isRegular) 0.0
@@ -297,6 +305,7 @@ object ProbFactor {
   }
 
   private def makeFactors[T1, T2, T3, U](apply: Apply3[T1, T2, T3, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {
+    val applyMap: scala.collection.mutable.Map[(T1, T2, T3), U] = LazyValues(apply.universe).getMap(apply)
     val arg1Var = Variable(apply.arg1)
     val arg2Var = Variable(apply.arg2)
     val arg3Var = Variable(apply.arg3)
@@ -315,7 +324,9 @@ object ProbFactor {
     } {
       val entry =
         if (arg1Val.isRegular && arg2Val.isRegular && arg3Val.isRegular && resultVal.isRegular) {
-          if (resultVal.value == mapper.map(apply.fn(arg1Val.value, arg2Val.value, arg3Val.value), applyValues.regularValues)) 1.0
+          // The argument values should have been placed in applyMap at the time the values of this apply were computed.
+          // By using applyMap, we can make sure that any contained elements in the result of the apply are the same now as they were when values were computed.
+          if (resultVal.value == mapper.map(applyMap((arg1Val.value, arg2Val.value, arg3Val.value)), applyValues.regularValues)) 1.0
           else 0.0
         } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular) && !resultVal.isRegular) 1.0
         else if ((!arg1Val.isRegular || arg2Val.isRegular || !arg3Val.isRegular) && resultVal.isRegular) 0.0
@@ -326,6 +337,7 @@ object ProbFactor {
   }
 
   private def makeFactors[T1, T2, T3, T4, U](apply: Apply4[T1, T2, T3, T4, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {
+    val applyMap: scala.collection.mutable.Map[(T1, T2, T3, T4), U] = LazyValues(apply.universe).getMap(apply)
     val arg1Var = Variable(apply.arg1)
     val arg2Var = Variable(apply.arg2)
     val arg3Var = Variable(apply.arg3)
@@ -347,7 +359,9 @@ object ProbFactor {
     } {
       val entry =
         if (arg1Val.isRegular && arg2Val.isRegular && arg3Val.isRegular && arg4Val.isRegular && resultVal.isRegular) {
-          if (resultVal.value == mapper.map(apply.fn(arg1Val.value, arg2Val.value, arg3Val.value, arg4Val.value), applyValues.regularValues)) 1.0
+          // The argument values should have been placed in applyMap at the time the values of this apply were computed.
+          // By using applyMap, we can make sure that any contained elements in the result of the apply are the same now as they were when values were computed.
+          if (resultVal.value == mapper.map(applyMap((arg1Val.value, arg2Val.value, arg3Val.value, arg4Val.value)), applyValues.regularValues)) 1.0
           else 0.0
         } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular) && !resultVal.isRegular) 1.0
         else if ((!arg1Val.isRegular || arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular) && resultVal.isRegular) 0.0
@@ -358,6 +372,7 @@ object ProbFactor {
   }
 
   private def makeFactors[T1, T2, T3, T4, T5, U](apply: Apply5[T1, T2, T3, T4, T5, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {
+    val applyMap: scala.collection.mutable.Map[(T1, T2, T3, T4, T5), U] = LazyValues(apply.universe).getMap(apply)
     val arg1Var = Variable(apply.arg1)
     val arg2Var = Variable(apply.arg2)
     val arg3Var = Variable(apply.arg3)
@@ -382,7 +397,9 @@ object ProbFactor {
     } {
       val entry =
         if (arg1Val.isRegular && arg2Val.isRegular && arg3Val.isRegular && arg4Val.isRegular && arg5Val.isRegular && resultVal.isRegular) {
-          if (resultVal.value == mapper.map(apply.fn(arg1Val.value, arg2Val.value, arg3Val.value, arg4Val.value, arg5Val.value), applyValues.regularValues)) 1.0
+          // The argument values should have been placed in applyMap at the time the values of this apply were computed.
+          // By using applyMap, we can make sure that any contained elements in the result of the apply are the same now as they were when values were computed.
+          if (resultVal.value == mapper.map(applyMap((arg1Val.value, arg2Val.value, arg3Val.value, arg4Val.value, arg5Val.value)), applyValues.regularValues)) 1.0
           else 0.0
         } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular || !arg5Val.isRegular) && !resultVal.isRegular) 1.0
         else if ((!arg1Val.isRegular || arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular || !arg5Val.isRegular) && resultVal.isRegular) 0.0
@@ -394,13 +411,13 @@ object ProbFactor {
 
   private def makeFactors[T](inject: Inject[T]): List[Factor[Double]] = {
     def rule(values: List[Extended[_]]) = {
-      val resultValue :: inputValues = values
+      val resultXvalue :: inputXvalues = values
       // See logic under makeCares
-      if (inputValues.exists(!_.isRegular)) {
-        if (!resultValue.isRegular) 1.0; else 0.0
+      if (inputXvalues.exists(!_.isRegular)) {
+        if (!resultXvalue.isRegular) 1.0; else 0.0
       }
-      else if (resultValue.isRegular) {
-        if (resultValue.value.asInstanceOf[List[T]] == inputValues.map(_.value.asInstanceOf[T])) 1.0; else 0.0
+      else if (resultXvalue.isRegular) {
+        if (resultXvalue.value.asInstanceOf[List[T]] == inputXvalues.map(_.value.asInstanceOf[T])) 1.0; else 0.0
       } else 0.0
     }
     val inputVariables = inject.args map (Variable(_))

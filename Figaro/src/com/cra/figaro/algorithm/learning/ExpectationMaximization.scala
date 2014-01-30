@@ -57,9 +57,6 @@ class ExpectationMaximization(universe: Universe, targetParameters: Parameter[_]
 
   protected def doExpectationStep(): Map[Parameter[_], Seq[Double]] = {
 
-    LazyValues.clear(universe)
-    Variable.clearCache()
-    ProbFactor.removeFactors()
     val algorithm = SufficientStatisticsVariableElimination(paramMap)(universe)
     algorithm.start
     val result = algorithm.getSufficientStatisticsForAllParameters

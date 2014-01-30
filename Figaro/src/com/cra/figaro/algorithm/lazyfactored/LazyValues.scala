@@ -55,66 +55,96 @@ class LazyValues(universe: Universe) {
         val componentSets = d.outcomes.map(storedValues(_))
         componentSets.reduce(_ ++ _)
       case i: FastIf[_] => withoutStar(Set(i.thn, i.els))
-      case a: Apply1[_, _] => 
+      case a: Apply1[_, _] =>
+        val applyMap = getMap(a)
         val vs1 = storedValues(a.arg1)
-        vs1.map(a.fn)
+        val resultsSet =
+          for {
+            arg1Val <- vs1.regularValues
+          } yield {
+            getOrElseInsert(applyMap, arg1Val, a.fn(arg1Val))
+          }
+        if (vs1.hasStar) withStar(resultsSet); else withoutStar(resultsSet)  
       case a: Apply2[_, _, _] =>
+        val applyMap = getMap(a)
         val vs1 = storedValues(a.arg1)
         val vs2 = storedValues(a.arg2)
-        val choices = cartesianProduct(vs1.values.toList, vs2.values.toList).asInstanceOf[List[List[Extended[_]]]]
+        val choices = cartesianProduct(vs1.xvalues.toList, vs2.xvalues.toList).asInstanceOf[List[List[Extended[_]]]]
         val resultsList = 
           for {
             List(arg1, arg2) <- choices
             if (arg1.isRegular && arg2.isRegular)
-          } yield a.fn(arg1.value.asInstanceOf[a.Arg1Type], arg2.value.asInstanceOf[a.Arg2Type])
-        val results = resultsList.toSet
+          } yield {
+            val arg1Val = arg1.value.asInstanceOf[a.Arg1Type]
+            val arg2Val = arg2.value.asInstanceOf[a.Arg2Type]
+            getOrElseInsert(applyMap, (arg1Val, arg2Val), a.fn(arg1Val, arg2Val))
+          }
         if (vs1.hasStar || vs2.hasStar) withStar(resultsList.toSet); else withoutStar(resultsList.toSet) 
      case a: Apply3[_, _, _, _] =>
+        val applyMap = getMap(a)
         val vs1 = storedValues(a.arg1)
         val vs2 = storedValues(a.arg2)
         val vs3 = storedValues(a.arg3)
-        val choices = cartesianProduct(vs1.values.toList, vs2.values.toList, vs3.values.toList).asInstanceOf[List[List[Extended[_]]]]
+        val choices = cartesianProduct(vs1.xvalues.toList, vs2.xvalues.toList, vs3.xvalues.toList).asInstanceOf[List[List[Extended[_]]]]
         val resultsList = 
           for {
             List(arg1, arg2, arg3) <- choices
             if (arg1.isRegular && arg2.isRegular && arg3.isRegular)
-          } yield a.fn(arg1.value.asInstanceOf[a.Arg1Type], arg2.value.asInstanceOf[a.Arg2Type], arg3.value.asInstanceOf[a.Arg3Type])
-        val results = resultsList.toSet
+          } yield {
+            val arg1Val = arg1.value.asInstanceOf[a.Arg1Type]
+            val arg2Val = arg2.value.asInstanceOf[a.Arg2Type]
+            val arg3Val = arg3.value.asInstanceOf[a.Arg3Type]
+            getOrElseInsert(applyMap, (arg1Val, arg2Val, arg3Val), a.fn(arg1Val, arg2Val, arg3Val))
+          }
         if (vs1.hasStar || vs2.hasStar || vs3.hasStar) withStar(resultsList.toSet); else withoutStar(resultsList.toSet) 
       case a: Apply4[_, _, _, _, _] =>
+        val applyMap = getMap(a)
         val vs1 = storedValues(a.arg1)
         val vs2 = storedValues(a.arg2)
         val vs3 = storedValues(a.arg3)
         val vs4 = storedValues(a.arg4)
-        val choices = cartesianProduct(vs1.values.toList, vs2.values.toList, vs3.values.toList, vs4.values.toList).asInstanceOf[List[List[Extended[_]]]]
+        val choices = cartesianProduct(vs1.xvalues.toList, vs2.xvalues.toList, vs3.xvalues.toList, vs4.xvalues.toList).asInstanceOf[List[List[Extended[_]]]]
         val resultsList = 
           for {
             List(arg1, arg2, arg3, arg4) <- choices
             if (arg1.isRegular && arg2.isRegular && arg3.isRegular && arg4.isRegular)
-          } yield a.fn(arg1.value.asInstanceOf[a.Arg1Type], arg2.value.asInstanceOf[a.Arg2Type], arg3.value.asInstanceOf[a.Arg3Type], arg4.value.asInstanceOf[a.Arg4Type])
-        val results = resultsList.toSet
+          } yield {
+            val arg1Val = arg1.value.asInstanceOf[a.Arg1Type]
+            val arg2Val = arg2.value.asInstanceOf[a.Arg2Type]
+            val arg3Val = arg3.value.asInstanceOf[a.Arg3Type]
+            val arg4Val = arg4.value.asInstanceOf[a.Arg4Type]
+            getOrElseInsert(applyMap, (arg1Val, arg2Val, arg3Val, arg4Val), a.fn(arg1Val, arg2Val, arg3Val, arg4Val))
+          }
         if (vs1.hasStar || vs2.hasStar || vs3.hasStar || vs4.hasStar) withStar(resultsList.toSet); else withoutStar(resultsList.toSet) 
       case a: Apply5[_,_, _, _, _, _] =>
+        val applyMap = getMap(a)
         val vs1 = storedValues(a.arg1)
         val vs2 = storedValues(a.arg2)
         val vs3 = storedValues(a.arg3)
         val vs4 = storedValues(a.arg4)
         val vs5 = storedValues(a.arg5)
-        val choices = cartesianProduct(vs1.values.toList, vs2.values.toList, vs3.values.toList, vs4.values.toList, vs5.values.toList).asInstanceOf[List[List[Extended[_]]]]
+        val choices = cartesianProduct(vs1.xvalues.toList, vs2.xvalues.toList, vs3.xvalues.toList, vs4.xvalues.toList, vs5.xvalues.toList).asInstanceOf[List[List[Extended[_]]]]
         val resultsList = 
           for {
             List(arg1, arg2, arg3, arg4, arg5) <- choices
             if (arg1.isRegular && arg2.isRegular && arg3.isRegular && arg4.isRegular && arg5.isRegular)
-          } yield a.fn(arg1.value.asInstanceOf[a.Arg1Type], arg2.value.asInstanceOf[a.Arg2Type], arg3.value.asInstanceOf[a.Arg3Type], arg4.value.asInstanceOf[a.Arg4Type], arg5.value.asInstanceOf[a.Arg5Type])
-        val results = resultsList.toSet
+          } yield {
+            val arg1Val = arg1.value.asInstanceOf[a.Arg1Type]
+            val arg2Val = arg2.value.asInstanceOf[a.Arg2Type]
+            val arg3Val = arg3.value.asInstanceOf[a.Arg3Type]
+            val arg4Val = arg4.value.asInstanceOf[a.Arg4Type]
+            val arg5Val = arg5.value.asInstanceOf[a.Arg5Type]
+            getOrElseInsert(applyMap, (arg1Val, arg2Val, arg3Val, arg4Val, arg5Val), a.fn(arg1Val, arg2Val, arg3Val, arg4Val, arg5Val))
+          }
         if (vs1.hasStar || vs2.hasStar || vs3.hasStar || vs4.hasStar || vs5.hasStar) withStar(resultsList.toSet); else withoutStar(resultsList.toSet) 
       case c: Chain[_, _] => 
+	      val chainMap = getMap(c)
 	      val parentVS = storedValues(c.parent)
 	      val resultVSs = 
 	        for { 
 	          parentValue <- parentVS.regularValues
-	          resultElem = c.get(parentValue)
 	        } yield {
+	          val resultElem = getOrElseInsert(chainMap, parentValue, c.get(parentValue))
 	          val result = this(resultElem, depth - 1).asInstanceOf[ValueSet[c.Value]]
 	          usedBy(resultElem) = usedBy.getOrElse(resultElem, Set()) + element
 	          result
@@ -153,8 +183,6 @@ class LazyValues(universe: Universe) {
     if (hasStar) withStar(results); else withoutStar(results)
   }
 
-  // We can't use Util.memo because the type of the Map contains existential variables.
-  // The problem is that we need to use asInstanceOf to convert the result to a Set of the correct type.
   /* 
    * The memoized values for an element contains the value set that was found so far for the element, together with
    * the depth of expansion that was performed.
@@ -231,6 +259,7 @@ class LazyValues(universe: Universe) {
   
   /**
    * Returns the previously computed values at maximum depth, if any.
+   * If the element has not been expanded, we return the empty value set.
    */
   def storedValues[T](element: Element[T]): ValueSet[T] = {
     memoValues.get(element) match {
@@ -239,40 +268,79 @@ class LazyValues(universe: Universe) {
     }
   }
 
-  // A ChainMap maps a chain to a map from parent values to resulting elements
-  private val chainMaps: Map[Element[_], Map[_, Element[_]]] = scala.collection.mutable.Map()
-
   /*
-   * Creates the map for a particular chain.
+   * For factored inference, we need to make sure that every time we use Chain to get a resulting element for a particular parent value,
+   * we get the same result element, so that variables in different factors line up.
+   * This is achieved by maintaining a cache in chainMaps. For a given element, chainMaps maintains a map from argument values (of type Any) to
+   * result elements.
+   * Note that this is different from the cache in a caching chain, and even applies to a non-caching chain. There are two reasons a cache is used
+   * even for non-caching chains. First, it is necessary for correctness of factored inference. Second, if we are computing the range of values
+   * of the chain, we are already computing all the values of the parent, so in most cases the number of parent values will not be so large as to
+   * cause memory problems.
+   * 
+   * New development: We have discovered a design pattern where the result of an Apply is a container of elements. For example, see the lazy list example
+   * where the result of Apply is a Cons containing a head element and a tail element. In these cases, we also need to make sure that these elements are
+   * the same. Therefore, we also have to maintain a map from Apply arguments to their resulting values. This cache is contained in applyMap.
    */
-  private def makeMap[T, U](chain: Chain[T, U]): Map[T, Element[U]] = {
-    val currentMap = Map[T, Element[U]]()
-    for { 
-      parentValue <- storedValues(chain.parent).regularValues
-      if (!currentMap.contains(parentValue))  
-    } currentMap += (parentValue -> chain.get(parentValue))
-    currentMap
-    //Map((values.storedValues(chain.parent).values.toSeq map (expandValue(chain, _))): _*)
-  }
+  private val chainMaps: Map[Element[_], Map[Any, Element[_]]] = Map()
 
   /**
    * Gets the mapping from parent values to result elements associated with a chain.
    */
-  def getMap[T, U](chain: Chain[T, U]): Map[T, Element[U]] = {
-    makeMap(chain)
+  def getMap[T,U](chain: Chain[T,U]): Map[T, Element[U]] = {
+    getOrElseInsert(chainMaps, chain, Map[Any, Element[_]]()).asInstanceOf[Map[T, Element[U]]]
   }
 
+  private val applyMaps: Map[Element[_], Map[Any, Any]] = Map()
+  
+  /**
+   * Gets the mapping from apply arguments to values.
+   */
+  def getMap[T1,U](apply: Apply1[T1,U]): Map[T1, U] = {
+    getOrElseInsert(applyMaps, apply, Map[Any, Any]()).asInstanceOf[Map[T1,U]]
+  }
 
+  /**
+   * Gets the mapping from apply arguments to values.
+   */
+  def getMap[T1,T2,U](apply: Apply2[T1,T2,U]): Map[(T1,T2), U] = {
+    getOrElseInsert(applyMaps, apply, Map[Any, Any]()).asInstanceOf[Map[(T1,T2),U]]
+  }
+
+  /**
+   * Gets the mapping from apply arguments to values.
+   */
+  def getMap[T1,T2,T3,U](apply: Apply3[T1,T2,T3,U]): Map[(T1,T2,T3), U] = {
+    getOrElseInsert(applyMaps, apply, Map[Any, Any]()).asInstanceOf[Map[(T1,T2,T3),U]]
+  }
+
+  /**
+   * Gets the mapping from apply arguments to values.
+   */
+  def getMap[T1,T2,T3,T4,U](apply: Apply4[T1,T2,T3,T4,U]): Map[(T1,T2,T3,T4), U] = {
+    getOrElseInsert(applyMaps, apply, Map[Any, Any]()).asInstanceOf[Map[(T1,T2,T3,T4),U]]
+  }
+
+  /**
+   * Gets the mapping from apply arguments to values.
+   */
+  def getMap[T1,T2,T3,T4,T5,U](apply: Apply5[T1,T2,T3,T4,T5,U]): Map[(T1,T2,T3,T4,T5), U] = {
+    getOrElseInsert(applyMaps, apply, Map[Any, Any]()).asInstanceOf[Map[(T1,T2,T3,T4,T5),U]]
+  }
 }
 
 object LazyValues {
-  private val expansions = scala.collection.mutable.Map[Universe, LazyValues]()
+  private val expansions = Map[Universe, LazyValues]()
 
   var debug = false
   
   def clear(universe: Universe) { 
     expansions.get(universe) match {
-      case Some(e) => e.memoValues.clear()
+      case Some(e) => {
+        e.memoValues.clear()
+        e.chainMaps.clear()
+        e.applyMaps.clear()
+      }
       case _ => ()
     } 
   }

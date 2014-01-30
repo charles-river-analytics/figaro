@@ -18,11 +18,6 @@ package com.cra.figaro.algorithm.lazyfactored
  */
 sealed abstract class Extended[T] {
   /**
-   * Is this value consistent with that value? Regular values are consistent if they are equal, while Star is consistent with everything.
-   */
-  //def consistent(that: Extended[T]): Boolean
-  
-  /**
    * Return true if the value is a regular value.
    */
   def isRegular: Boolean
@@ -37,50 +32,20 @@ sealed abstract class Extended[T] {
  * A regular value.
  */
 case class Regular[T](val value: T) extends Extended[T] {
-  /**
-   * A regular value is consistent with the same regular value or with Star.
-   */
-  /*
-   * 
-   def consistent(that: Extended[T]): Boolean = {
-    that match {
-      case Star() => true
-      case Regular(value1) => value1 == value
-    }
-  }
-*/
-  
   def isRegular = true
-  
 }
 
 /**
- * The special value Star, which stands for as yet unspecified values.
+ * The special value Star, which stands for the unknown result of an unexpanded computation.
  * When computing a lower bound to probabilities, we can assume that Star will eventually
  * evaluate to something other than what is needed to make the query have a particular value.
+ * Star is a case class so that when we have different variables over the same type that both
+ * have value Star, we can say that their values are equal.
  */
 case class Star[T]() extends Extended[T] {
-  /**
-   * Star is consistent with everything.
-   */
-  /*
-  def consistent(that: Extended[T]): Boolean = true
-  */
-  //val id = Star.genSym()
-  
   def isRegular = false
   
   def value: T = throw new IllegalArgumentException("Attempt to get value of Star")
   
   override def toString = "*"
 }
-/*
-object Star {
-  private var count = 0
-  
-  def genSym() {
-    count += 1
-    count
-  }
-}
-*/

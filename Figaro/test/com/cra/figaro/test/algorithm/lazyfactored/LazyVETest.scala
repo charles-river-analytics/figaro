@@ -4,7 +4,7 @@ import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound.If
-import com.cra.figaro.algorithm.lazyfactored.LazyVE
+import com.cra.figaro.algorithm.lazyfactored.LazyVariableElimination
 
 class LazyVETest extends WordSpec with Matchers {
   "Running lazy variable elimination" when {
@@ -12,7 +12,7 @@ class LazyVETest extends WordSpec with Matchers {
       "produce the correct depth 1 approximation" in {
     	Universe.createNew()
     	val outerIf = twoLevelChain
-        val alg = new LazyVE(outerIf)
+        val alg = new LazyVariableElimination(outerIf)
     	alg.start()
     	alg.probabilityBounds(outerIf, true)._1 should be (0.02 +- 0.000000001)
     	alg.probabilityBounds(outerIf, false)._1 should be (0.08 +- 0.000000001)
@@ -23,7 +23,7 @@ class LazyVETest extends WordSpec with Matchers {
       "produce the correct depth 2 perfect answer" in {
     	Universe.createNew()
     	val outerIf = twoLevelChain
-        val alg = new LazyVE(outerIf)
+        val alg = new LazyVariableElimination(outerIf)
     	alg.start()
     	alg.pump()
     	val pInner = 0.3 * 0.4 + 0.7 * 0.5
@@ -41,7 +41,7 @@ class LazyVETest extends WordSpec with Matchers {
     	val outerIf = twoLevelChain
     	val check = If(outerIf, Flip(0.6), Flip(0.3))
     	check.observe(true)
-        val alg = new LazyVE(outerIf)
+        val alg = new LazyVariableElimination(outerIf)
     	alg.start()
     	val trueWeight = 0.1 * 0.2 * 0.6
     	val falseWeight = 0.1 * 0.8 * 0.3
@@ -62,7 +62,7 @@ class LazyVETest extends WordSpec with Matchers {
     	val outerIf = twoLevelChain
     	val check = If(outerIf, Flip(0.6), Flip(0.3))
     	check.observe(true)
-        val alg = new LazyVE(outerIf)
+        val alg = new LazyVariableElimination(outerIf)
     	alg.start()
     	alg.pump()
     	val pInner = 0.3 * 0.4 + 0.7 * 0.5 
@@ -83,7 +83,7 @@ class LazyVETest extends WordSpec with Matchers {
     	Universe.createNew()
     	val outerIf = twoLevelChain
     	outerIf.addConstraint((b: Boolean) => if (b) 0.6; else 0.3)
-    	val alg = new LazyVE(outerIf)
+    	val alg = new LazyVariableElimination(outerIf)
     	alg.start()
     	val trueWeight = 0.1 * 0.2 * 0.6
     	val falseWeight = 0.1 * 0.8 * 0.3
@@ -103,7 +103,7 @@ class LazyVETest extends WordSpec with Matchers {
     	Universe.createNew()
     	val outerIf = twoLevelChain
     	outerIf.addConstraint((b: Boolean) => if (b) 0.6; else 0.3)
-        val alg = new LazyVE(outerIf)
+        val alg = new LazyVariableElimination(outerIf)
     	alg.start()
     	alg.pump()
     	val pInner = 0.3 * 0.4 + 0.7 * 0.5 
@@ -125,7 +125,7 @@ class LazyVETest extends WordSpec with Matchers {
         val el = generate()
         val cb = contains('b, el)
         val ca = contains('a, el)
-        val alg = new LazyVE(cb)
+        val alg = new LazyVariableElimination(cb)
         alg.start()
         var (pLow, pHigh) = alg.probabilityBounds(cb, true)
         for { i <- 2 to 20 } {
@@ -151,7 +151,7 @@ class LazyVETest extends WordSpec with Matchers {
         val cb = contains('b, el)
         val ca = contains('a, el)
         ca.observe(true)
-        val alg = new LazyVE(cb)
+        val alg = new LazyVariableElimination(cb)
         alg.start()
         var (pLow, pHigh) = alg.probabilityBounds(cb, true)
         for { i <- 2 to 20 } {

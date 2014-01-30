@@ -198,13 +198,14 @@ trait VariableElimination[T] extends FactoredAlgorithm[T] with OneTime {
  */
 trait ProbabilisticVariableElimination extends VariableElimination[Double] {
   def getFactors(allElements: List[Element[_]], targetElements: List[Element[_]], upper: Boolean = false): List[Factor[Double]] = {
-    val thisUniverseFactors = allElements flatMap (ProbFactor.make(_))
     if (debug) {
       println("Elements appearing in factors and their ranges:")
-      for { element <- universe.activeElements } { 
+      for { element <- allElements } { 
         println(Variable(element).id + "(" + element.name.string + "@" + element.hashCode + ")" + ": " + element + ": " + Variable(element).range.mkString(",")) 
       }
     }
+    ProbFactor.removeFactors()
+    val thisUniverseFactors = allElements flatMap (ProbFactor.make(_))
     val dependentUniverseFactors =
       for { (dependentUniverse, evidence) <- dependentUniverses } yield ProbFactor.makeDependentFactor(universe, dependentUniverse, dependentAlgorithm(dependentUniverse, evidence))
     dependentUniverseFactors ::: thisUniverseFactors
@@ -237,9 +238,12 @@ class ProbQueryVariableElimination(override val universe: Universe, targets: Ele
   private def marginalize(resultFactor: Factor[Double]) =
     targets foreach (marginalizeToTarget(resultFactor, _))
 
-  private def makeResultFactor(factorsAfterElimination: Set[Factor[Double]]): Factor[Double] =
-    factorsAfterElimination reduceLeft (_.product(_, semiring))
-
+  private def makeResultFactor(factorsAfterElimination: Set[Factor[Double]]): Factor[Double] = {
+    // It is possible that there are no factors (this will happen if there are  no queries or evidence).
+    // Therefore, we start with the unit factor and use foldLeft, instead of simply reducing the factorsAfterElimination.
+    factorsAfterElimination.foldLeft(Factor.unit(semiring))(_.product(_, semiring))
+  }
+  
   def finish(factorsAfterElimination: Set[Factor[Double]], eliminationOrder: List[Variable[_]]) =
     marginalize(makeResultFactor(factorsAfterElimination))
 

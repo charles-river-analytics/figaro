@@ -414,11 +414,12 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    */
   def deactivate(): Unit = universe.deactivate(this)
 
-  // It is important to generate the initial value of this Element so it is not null
-  // Much better not to to avoid infinite recursiuon!
+  /* Element self-generation on initialization was the cause of bugs. On infinite models, it can cause an infinite recursion, which could correctly be handled by
+   * lazy factored inference. We have eliminated the need for self-generation on initialization. Algorithms that require elements to be generated should begin
+   * by calling Universe.generateAll
+   */
   //generate()
 
-  // Since collection.add uses the initial value of the element, it needs to be called after generate()
   collection.add(this)
 
   /**

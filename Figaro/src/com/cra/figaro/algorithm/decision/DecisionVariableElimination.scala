@@ -43,22 +43,6 @@ trait ProbabilisticVariableEliminationDecision extends VariableElimination[(Doub
    */
   override val semiring = SumProductUtilitySemiring
   
-  /*
-  /* Have to expand utility elements that are chains so we get all elements that could be used as utility 
-   * Note this is not tail recursive. Stack overflow is not that much of a concern since large models
-   * are not efficient using variable elimination anyways
-   */
-  private def expandUtility(util: List[Element[_]]): Set[Element[_]] = {
-    def expand(e: Element[_], curr: Set[Element[_]]): Set[Element[_]] = {
-      e match {
-        case c: Chain[_, _] => (curr) ++ Expand(c.universe).getMap(c).flatMap(s => expand(s._2, Set()))
-        case _ => curr + e
-      }
-    }
-    (Set() ++ util).flatMap(e => expand(e, Set()))
-  }
-*/
-  
   /**
    * Makes a utility factor an element designated as a utility. This is factor of a tuple (Double, Double)
    * where the first value is 1.0 and the second is a possible utility of the element 
@@ -78,11 +62,13 @@ trait ProbabilisticVariableEliminationDecision extends VariableElimination[(Doub
    * where the first value is the probability and the second is the utility. 
    */ 
   def getFactors(neededElements: List[Element[_]], targetElements: List[Element[_]], upper: Boolean = false): List[Factor[(Double, Double)]] = {
-    //val allElements = universe.activeElements
-    // have to expand utility node chains since we need to find the elements who's value is actually used as utility
-    //val allUtilityNodes = expandUtility(getUtilityNodes).toList
+    if (debug) {
+      println("Elements (other than utilities) appearing in factors and their ranges:")
+      for { element <- neededElements } { 
+        println(Variable(element).id + "(" + element.name.string + "@" + element.hashCode + ")" + ": " + element + ": " + Variable(element).range.mkString(",")) 
+      }
+    }
 
-    // Generate normal factors separately for utility variables and everything else
     val thisUniverseFactorsExceptUtil = neededElements flatMap (ProbFactor.make(_))
     // Make special utility factors for utility elements
     val thisUniverseFactorsUtil = getUtilityNodes map (makeUtilFactor(_))
@@ -158,8 +144,11 @@ class ProbQueryVariableEliminationDecision[T, U](override val universe: Universe
   private def marginalize(resultFactor: Factor[(Double, Double)]) =
     queryTargets foreach (marginalizeToTarget(resultFactor, _))
 
-  private def makeResultFactor(factorsAfterElimination: Set[Factor[(Double, Double)]]): Factor[(Double, Double)] =
-    factorsAfterElimination reduceLeft (_.product(_, semiring))
+  private def makeResultFactor(factorsAfterElimination: Set[Factor[(Double, Double)]]): Factor[(Double, Double)] = {
+    // It is possible that there are no factors (this will happen if there are no decisions or utilities).
+    // Therefore, we start with the unit factor and use foldLeft, instead of simply reducing the factorsAfterElimination.
+    factorsAfterElimination.foldLeft(Factor.unit(semiring))(_.product(_, semiring))
+  }
 
   def finish(factorsAfterElimination: Set[Factor[(Double, Double)]], eliminationOrder: List[Variable[_]]) =
     finalFactors = makeResultFactor(factorsAfterElimination)

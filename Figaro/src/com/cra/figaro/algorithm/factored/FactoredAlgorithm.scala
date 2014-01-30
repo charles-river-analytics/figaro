@@ -54,23 +54,11 @@ trait FactoredAlgorithm[T] extends Algorithm {
     val importantElements = Element.closeUnderContingencies(Set(preImportantElements:_*))
     val values = LazyValues(universe)
     values.expandAll(importantElements.toSet, depth)
-    // We need to create factors for any elements that are used by the important elements.
-    // However, if an element has not been explored (its value set contains only Star), we do not create factors for it,
-    // because no value of this variable can contribute positive probability to the query.
-    // If we did create a factor, we might ultimately obtain that its value Star has zero probability, which would lead to
-    // incorrect zero probability for the entire query.
-    /*
-    val usedAndExploredElements =
-      for {
-        important <- importantElements
-        used <- universe.uses(important)
-        if !LazyValues(universe).storedValues(used).values.isEmpty
-      } yield used
-    val resultElements = (usedAndExploredElements ++ importantElements).toList
-    */
     val resultElements = values.expandedElements.toList
     val boundsNeeded = boundsInducingElements.exists(LazyValues(universe).storedValues(_).hasStar)
-    
+    // We make sure to clear the variable cache now, once all values have been computed.
+    // This ensures that any created variables will be consistent with the computed values.
+    Variable.clearCache()
     (resultElements, boundsNeeded)
   }
   

@@ -49,17 +49,17 @@ class SufficientStatisticsVariableElimination(
    *  Particular implementations of probability of evidence algorithms must define the following method. 
    */
   def getFactors(neededElements: List[Element[_]], targetElements: List[Element[_]], upper: Boolean = false): List[Factor[(Double, mutable.Map[Parameter[_], Seq[Double]])]] = {
-
     val allElements = neededElements.filter(p => p.isInstanceOf[Parameter[_]] == false)
-    val thisUniverseFactors = allElements flatMap (statFactor.make(_))
 
     if (debug) {
       println("Elements appearing in factors and their ranges:")
-      for { element <- universe.activeElements } { 
+      for { element <- allElements } { 
         println(Variable(element).id + "(" + element.name.string + "@" + element.hashCode + ")" + ": " + element + ": " + Variable(element).range.mkString(",")) 
       }
     }
 
+    ProbFactor.removeFactors()
+    val thisUniverseFactors = allElements flatMap (statFactor.make(_))
     val dependentUniverseFactors =
       for { (dependentUniverse, evidence) <- dependentUniverses } yield statFactor.makeDependentFactor(universe, dependentUniverse, dependentAlgorithm(dependentUniverse, evidence))
 
@@ -74,8 +74,9 @@ class SufficientStatisticsVariableElimination(
   private var result: (Double, Map[Parameter[_], Seq[Double]]) = _
 
   def finish(factorsAfterElimination: Set[Factor[(Double, Map[Parameter[_], Seq[Double]])]], eliminationOrder: List[Variable[_]]): Unit = {
-
-    val finalFactor = factorsAfterElimination.reduce(_.product(_, semiring))
+    // It is possible that there are no factors (this will happen if there is no evidence).
+    // Therefore, we start with the unit factor and use foldLeft, instead of simply reducing the factorsAfterElimination.
+    val finalFactor = factorsAfterElimination.foldLeft(Factor.unit(semiring))(_.product(_, semiring))
     finalFactor.variables.size match {
       case 0 => result = finalFactor.get(List())
       case _ => throw new RuntimeException("Final factor has variables")

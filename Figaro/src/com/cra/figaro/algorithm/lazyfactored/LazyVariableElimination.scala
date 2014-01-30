@@ -20,7 +20,7 @@ import scala.annotation.tailrec
 import com.cra.figaro.util._
 import scala.collection.mutable.{Map, Set}
 
-class LazyVE(targetElements: Element[_]*)(implicit val universe: Universe) extends FactoredAlgorithm[Double] 
+class LazyVariableElimination(targetElements: Element[_]*)(implicit val universe: Universe) extends FactoredAlgorithm[Double] 
 with LazyAlgorithm {
   var debug = false
   var showTiming = false
@@ -111,6 +111,27 @@ with LazyAlgorithm {
     result
   }
   
+  /*
+   * The job of normalizeAndAbsorbWithBounds is to take a factor consisting of unnormalized lower bounds for regular values and *,
+   * and another factor containing unnormalized upper bounds for regular values and *, and to compute normalized lower and upper
+   * bounds for each of the regular values. These bounds should satisfy that the true probability of the regular values lies
+   * between the bounds.
+   * 
+   * The process of normalizeAndAbsorbWithBounds is as follows:
+   * (1) Compute the sums of the unnormalized lower and upper bounds. These constitute lower and upper bounds on the normalizing factor,
+   * respectively.
+   * (2) Compute the normalized lower bounds, which are the unnormalized lower bounds divided by the upper bound on the normalizing factor.
+   * The normalized lower bound on a regular value represents definitely allocated probability to that value, that cannot possibly be
+   * allocated to any other regular value. This fact will be used in calculating one of the upper bounds.
+   * (3) Compute the first upper bound. This consists of all the probability mass that has not definitely been allocated to other
+   * values. Since the resulting factor might have more than one variable, we need to determine which rows probability mass can definitely
+   * not be allocated to a particular row. This is determined by the consistent subroutine below. The first upper bound on the normalized 
+   * probability of a given row is equal to 1 - the sum of normalized lower bounds of rows that are not consistent with this row.
+   * (4) For the second upper bound, we use the opposite approach. We add together all the unnormalized upper bounds of rows that are
+   * consistent with this row, and then divide by the lower bound on the normalizing factor.
+   * (5) Finally, we set the lower and upper bounds of the row in the result to be the computed normalized lower bound and the lesser
+   * of the two computed upper bounds.
+   */
   private def normalizeAndAbsorbWithBounds(lowerFactor: Factor[Double], upperFactor: Factor[Double]): Factor[(Double, Double)] = {
     assert(lowerFactor.variables == upperFactor.variables)
 
@@ -147,7 +168,6 @@ with LazyAlgorithm {
       val upper = upperFactor.get(indices)
       lowerTotal += lower
       upperTotal += upper
-//      if (hasStar(indices)) starTotal += upper // We use Star's upper bound since this will produce the upper bound
     }
 
     /*
@@ -165,10 +185,6 @@ with LazyAlgorithm {
      */
     var upperBounds: Array[Double] = Array.fill(allIndicesIndexed.size)(0)
     for { (indices, i) <- allIndicesIndexed } {
-      //val lower = lowerFactor.get(indices)
-      //val upper = upperFactor.get(indices)
-      // TODO: We should only absorb probability of star into consistent rows
-      //val fullUpper = if (hasStar(indices)) upper; else upper + starTotal // The star may be resolved to any particular value - this is absorbing
       var inconsistentLowerTotal = 0.0
       var consistentUpperTotal = 0.0
       for { (otherIndices, j) <- allIndicesIndexed } {
@@ -177,8 +193,6 @@ with LazyAlgorithm {
       }
       upperBounds(i) = (1.0 - inconsistentLowerTotal).min(consistentUpperTotal / lowerTotal)
     }
-    
-    // TODO: Also use the upper bound that is derived directly without considering everything else - use the lower upper bound
     
     /*
      * Finally, create the result factor with lower and upper bounds.
@@ -208,12 +222,16 @@ with LazyAlgorithm {
   }
 
   def finishNoBounds(factorsAfterElimination: Set[Factor[Double]]): Factor[(Double, Double)] = {
+    // It is possible that there are no factors (this will happen if there is no evidence).
+    // Therefore, we start with the unit factor and use foldLeft, instead of simply reducing the factorsAfterElimination.
     val multiplied = factorsAfterElimination.foldLeft(Factor.unit(semiring))(_.product(_, semiring))
     val normalized = normalizeAndAbsorbNoBounds(multiplied)
     normalized
   }
 
   def finishWithBounds(lowerFactors: Set[Factor[Double]], upperFactors: Set[Factor[Double]]): Factor[(Double, Double)] = {
+    // It is possible that there are no factors (this will happen if there is no evidence).
+    // Therefore, we start with the unit factor and use foldLeft, instead of simply reducing the factorsAfterElimination.
     val lowerMultiplied = lowerFactors.foldLeft(Factor.unit(semiring))(_.product(_, semiring))
     val upperMultiplied = upperFactors.foldLeft(Factor.unit(semiring))(_.product(_, semiring))
     val normalized = normalizeAndAbsorbWithBounds(lowerMultiplied, upperMultiplied)

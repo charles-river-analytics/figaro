@@ -306,7 +306,6 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
       layer <- layers(myActiveElements)
       elem <- layer
     } {
-      println("Generating " + elem)
       elem.generate()
     }
   }

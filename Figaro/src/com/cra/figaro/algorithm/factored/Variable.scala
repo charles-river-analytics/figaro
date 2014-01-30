@@ -26,7 +26,7 @@ import com.cra.figaro.algorithm.lazyfactored.{LazyValues, Extended, ValueSet}
 class Variable[T](valueSet: ValueSet[T]) {
   type Value = T
   
-  val range: List[Extended[T]] = valueSet.values.toList
+  val range: List[Extended[T]] = valueSet.xvalues.toList
 
   /**
    * The unique identifier of the variable.

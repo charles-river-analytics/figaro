@@ -26,21 +26,8 @@ abstract class Apply[U](name: Name[U], collection: ElementCollection)
 /**
  * Application of a function to one argument.
  */
-class Apply1[T1, U](name: Name[U], val arg1: Element[T1], f: T1 => U, collection: ElementCollection)
+class Apply1[T1, U](name: Name[U], val arg1: Element[T1], val fn: T1 => U, collection: ElementCollection)
   extends Apply[U](name, collection) {
-  val cache: Map[T1,U] = Map()
-  
-  /* fn caches f */
-  def fn(t: T1): U = {
-    cache.get(t) match {
-      case Some(u) => u
-      case None =>
-        val u = f(t)
-        cache += t -> u
-        u
-    }
-  }
-  
   def args: List[Element[_]] = List(arg1)
 
   type Arg1Type = T1
@@ -50,7 +37,7 @@ class Apply1[T1, U](name: Name[U], val arg1: Element[T1], f: T1 => U, collection
     fn(arg1.value)
   }
 
-  override def toString = "Apply(" + arg1 + ", " + f + ")"
+  override def toString = "Apply(" + arg1 + ", " + fn + ")"
 }
 
 /**
