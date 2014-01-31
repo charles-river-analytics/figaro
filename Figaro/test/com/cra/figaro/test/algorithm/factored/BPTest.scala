@@ -21,7 +21,8 @@ import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.algorithm.factored.beliefpropagation._
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound.If
-import com.cra.figaro.library.atomic.discrete.Uniform
+import com.cra.figaro.library.atomic.discrete.{Uniform => DUniform}
+import com.cra.figaro.library.atomic.continuous.{Uniform => CUniform}
 import com.cra.figaro.library.compound.IntSelector
 
 class BPTest extends WordSpec with Matchers {
@@ -75,20 +76,20 @@ class BPTest extends WordSpec with Matchers {
       val bp = BeliefPropagation(3)
       val fn = bp.factorGraph.adjacencyList.filter(p => { p._1 match { case fn: FactorNode => true; case _ => false; } })
       val vn = bp.factorGraph.adjacencyList.filter(p => { p._1 match { case vn: VariableNode => true; case _ => false; } })
-      
-      fn.foreach {s =>
-        s._2.foreach {d =>
+
+      fn.foreach { s =>
+        s._2.foreach { d =>
           val msg = bp.newMessage(s._1, d._1)
           msg.variables should equal(List(d._1.asInstanceOf[VariableNode].variable))
-        }        
+        }
       }
-      
-      vn.foreach {s =>
-        s._2.foreach {d =>
+
+      vn.foreach { s =>
+        s._2.foreach { d =>
           val msg = bp.newMessage(s._1, d._1)
           msg.variables should equal(List(s._1.asInstanceOf[VariableNode].variable))
-        }        
-      }      
+        }
+      }
     }
 
     /* Due to the way that factors are implemented for Chain, all 
@@ -97,7 +98,7 @@ class BPTest extends WordSpec with Matchers {
      */
     "with no loops in the factor graph give exact results" in {
       Universe.createNew()
-      val e1 = Uniform(2, 3, 4)
+      val e1 = DUniform(2, 3, 4)
       val e2 = IntSelector(e1)
 
       val bp = BeliefPropagation(3)
@@ -226,12 +227,17 @@ class BPTest extends WordSpec with Matchers {
 
     "with a dependent universe, correctly take into account probability of evidence in the dependent universe" in {
       Universe.createNew()
-      val x = Flip(0.1)
-      val y = Flip(0.2)
-      val dependentUniverse = new Universe(List(x, y))
-      val u1 = Uniform(0.0, 1.0)("", dependentUniverse)
-      val u2 = Uniform(0.0, 2.0)("", dependentUniverse)
-      val a = CachingChain(x, y, (x: Boolean, y: Boolean) => if (x || y) u1; else u2)("a", dependentUniverse)
+      //val x = Flip(0.1)
+      //val y = Flip(0.2)
+      val x = IntSelector(Constant(10))
+      val y = IntSelector(Constant(10))
+      val x1 = Apply(x, (i: Int) => i < 1)
+      val y1 = Apply(y, (i: Int) => i < 2)
+      val dependentUniverse = new Universe(List(x1, y1))
+      val u1 = CUniform(0.0, 1.0)("", dependentUniverse)
+      val u2 = CUniform(0.0, 2.0)("", dependentUniverse)
+
+      val a = CachingChain(x1, y1, (x: Boolean, y: Boolean) => if (x || y) u1; else u2)("a", dependentUniverse)
       val condition = (d: Double) => d < 0.5
       val ve = BeliefPropagation(List((dependentUniverse, List(NamedEvidence("a", Condition(condition))))), 200)
       ve.start()
@@ -240,7 +246,7 @@ class BPTest extends WordSpec with Matchers {
       val unnormalizedPXTrue = 0.1 * peGivenXTrue
       val unnormalizedPXFalse = 0.9 * peGivenXFalse
       val pXTrue = unnormalizedPXTrue / (unnormalizedPXTrue + unnormalizedPXFalse)
-      ve.probability(x, true) should be(pXTrue +- globalTol)
+      ve.probability(x1, true) should be(pXTrue +- globalTol)
       ve.kill()
     }
 
@@ -257,7 +263,6 @@ class BPTest extends WordSpec with Matchers {
 
   }
 
-  
   "MaxProductBeliefPropagation" should {
     "compute the most likely values of all the variables given the conditions and constraints" in {
       Universe.createNew()
@@ -273,15 +278,14 @@ class BPTest extends WordSpec with Matchers {
       // p(e1=F,e2=F,e3=F) = 0.25 * 0.1 * 0.6
       // MPE: e1=T,e2=F,e3=F,e4=T
       val alg = MPEBeliefPropagation(20)
-      alg.start()           
+      alg.start()
       alg.mostLikelyValue(e1) should equal(true)
       alg.mostLikelyValue(e2) should equal(false)
       alg.mostLikelyValue(e3) should equal(false)
       alg.mostLikelyValue(e4) should equal(true)
     }
-       
+
   }
- 
 
   def test[T](target: Element[T], predicate: T => Boolean, prob: Double, tol: Double) {
     val algorithm = BeliefPropagation(100)
