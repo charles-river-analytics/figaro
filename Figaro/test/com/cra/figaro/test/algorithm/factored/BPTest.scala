@@ -24,6 +24,7 @@ import com.cra.figaro.library.compound.If
 import com.cra.figaro.library.atomic.discrete.{Uniform => DUniform}
 import com.cra.figaro.library.atomic.continuous.{Uniform => CUniform}
 import com.cra.figaro.library.compound.IntSelector
+import com.cra.figaro.algorithm.lazyfactored.LazyValues
 
 class BPTest extends WordSpec with Matchers {
 
@@ -35,9 +36,10 @@ class BPTest extends WordSpec with Matchers {
       val u = Select(0.25 -> 0.3, 0.25 -> 0.5, 0.25 -> 0.7, 0.25 -> 0.9)
       val f = Flip(u)
       val a = If(f, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
-
+      val semiring = SumProductSemiring
+      LazyValues(Universe.universe).expandAll(Universe.universe.activeElements.toSet, Integer.MAX_VALUE)
       val factors = Universe.universe.activeElements flatMap (ProbFactor.make(_))
-      val graph = new BasicFactorGraph(factors, (x: Double, y: Double) => x * y)
+      val graph = new BasicFactorGraph(factors, semiring)
       val fn = graph.adjacencyList.filter(p => { p._1 match { case fn: FactorNode => true; case _ => false; } })
       val vn = graph.adjacencyList.filter(p => { p._1 match { case vn: VariableNode => true; case _ => false; } })
 
@@ -50,9 +52,9 @@ class BPTest extends WordSpec with Matchers {
       val u = Select(0.25 -> 0.3, 0.25 -> 0.5, 0.25 -> 0.7, 0.25 -> 0.9)
       val f = Flip(u)
       val a = If(f, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
-
+      val semiring = SumProductSemiring
       val factors = Universe.universe.activeElements flatMap (ProbFactor.make(_))
-      val graph = new BasicFactorGraph(factors, (x: Double, y: Double) => x * y)
+      val graph = new BasicFactorGraph(factors, semiring)
       val fn = graph.adjacencyList.filter(p => { p._1 match { case fn: FactorNode => true; case _ => false; } })
       val vn = graph.adjacencyList.filter(p => { p._1 match { case vn: VariableNode => true; case _ => false; } })
 

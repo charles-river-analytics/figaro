@@ -17,7 +17,7 @@ import scala.collection.Iterable
 import scala.collection.immutable.List
 import com.cra.figaro.algorithm.factored._
 
-class BasicFactorGraph(factors: List[Factor[Double]], product: (Double, Double) => Double)
+class BasicFactorGraph(factors: List[Factor[Double]], semiring: Semiring[Double])
   extends FactorGraph[Double] {
 
   def uniformFactor(v: List[Variable[_]]): Factor[Double] = {
@@ -27,7 +27,7 @@ class BasicFactorGraph(factors: List[Factor[Double]], product: (Double, Double) 
   }
 
   // Private helper functions
-  private def combineFactors() = factors.groupBy(_.variables.map(_.id)).values.map(_.reduceLeft(_.product(_, product))).toList
+  private def combineFactors() = factors.groupBy(_.variables.map(_.id)).values.map(_.reduceLeft(_.product(_, semiring))).toList
 
   private def adjacencyListFactors(): Map[Node, Map[Node, Factor[Double]]] = {
     factorsByNode.map { factors =>

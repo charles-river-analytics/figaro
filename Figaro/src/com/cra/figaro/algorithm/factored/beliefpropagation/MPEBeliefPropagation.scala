@@ -27,7 +27,7 @@ abstract class MPEBeliefPropagation(override val universe: Universe)(
 
   val queryTargets = universe.activeElements
 
-  val factorGraph = new BasicFactorGraph(getFactors(Seq()), semiring.product)
+  val factorGraph = new BasicFactorGraph(getFactors(List(), List()), semiring)
 
   def mostLikelyValue[T](target: Element[T]): T = {
     val beliefs = getBeliefsForElement(target)

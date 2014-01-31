@@ -14,7 +14,6 @@
 package com.cra.figaro.algorithm.factored.beliefpropagation
 
 import scala.Option.option2Iterable
-
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
@@ -27,6 +26,7 @@ import com.cra.figaro.algorithm.factored.Variable
 import com.cra.figaro.algorithm.sampling.ProbEvidenceSampler
 import com.cra.figaro.language.Element
 import com.cra.figaro.language.Universe
+import com.cra.figaro.algorithm.lazyfactored.LazyValues
 
 /**
  * Objects for performing belief propagation. T is the type of entries in the factors.
@@ -73,10 +73,10 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
     val messageList = neighborList map (factorGraph.getLastMessage(_, fn))
 
     if (messageList.isEmpty) {
-      initFactor.marginalizeTo(vn.variable, semiring.sum, semiring.zero)
+      initFactor.marginalizeTo(vn.variable, semiring)
     } else {
-      val total = messageList.reduceLeft(_.product(_, semiring.product))
-      initFactor.product(total, semiring.product).marginalizeTo(vn.variable, semiring.sum, semiring.zero)
+      val total = messageList.reduceLeft(_.product(_, semiring))
+      initFactor.product(total, semiring).marginalizeTo(vn.variable, semiring)
     }
   }
 
@@ -90,7 +90,7 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
     val messageList = neighborList map (factorGraph.getLastMessage(_, vn))
 
     if (messageList.isEmpty) factorGraph.uniformFactor(List(vn.variable))
-    else messageList.reduceLeft(_.product(_, semiring.product))
+    else messageList.reduceLeft(_.product(_, semiring))
   }
 
   /**
@@ -104,7 +104,7 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
         case fn: FactorNode => factorGraph.uniformFactor(fn.variables)
         case vn: VariableNode => factorGraph.uniformFactor(List(vn.variable))
       }
-    } else messageList.reduceLeft(_.product(_, semiring.product))
+    } else messageList.reduceLeft(_.product(_, semiring))
 
   }
 
@@ -158,8 +158,9 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
     normalize(newMessage)
   }
 
-  def getFactors(targetVariables: Seq[Variable[_]]): List[Factor[Double]] = {
+  def getFactors(neededElements: List[Element[_]], targetElements: List[Element[_]], upperBounds: Boolean = false): List[Factor[Double]] = {
     val allElements = universe.activeElements
+    LazyValues(universe).expandAll(allElements.toSet, Integer.MAX_VALUE)
     val thisUniverseFactors = allElements flatMap (ProbFactor.make(_))
     if (debug) {
       println("Element ids:")
@@ -182,7 +183,7 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
       List[(Double, T)]()
     } else {
       val factor = normalize(belief(targetNode.get))
-      targetVar.range.zipWithIndex.map(pair => (factor.get(List(pair._2)), pair._1))
+      targetVar.range.zipWithIndex.map(pair => (factor.get(List(pair._2)), pair._1.value))
     }
   }
 
@@ -214,7 +215,7 @@ abstract class ProbQueryBeliefPropagation(override val universe: Universe)(
 
   val semiring = SumProductSemiring
 
-  val factorGraph = new BasicFactorGraph(getFactors(Seq()), semiring.product)
+  val factorGraph = new BasicFactorGraph(getFactors(List(), List()), semiring)
 
   def computeDistribution[T](target: Element[T]): Stream[(Double, T)] = getBeliefsForElement(target).toStream
 
