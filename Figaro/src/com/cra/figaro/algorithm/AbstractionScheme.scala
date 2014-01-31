@@ -83,8 +83,7 @@ object AbstractionScheme {
     }
 
     /**
-     * Map a concrete Double to the closest abstract point. This method assumes the abstract points are
-     * sorted. This is guaranteed if RegularDiscretization.select was used to create the abstract points.
+     * Map a concrete Double to the closest abstract point. 
      */
     def map(concretePoint: Double, abstractPoint: Set[Double]): Double = {
       @tailrec
@@ -97,7 +96,7 @@ object AbstractionScheme {
           case List() => prevPoint
         }
 
-      abstractPoint.toList match {
+      abstractPoint.toList.sorted match {
         case first :: rest =>
           if (concretePoint <= first) first
           else helper(concretePoint, rest, first)

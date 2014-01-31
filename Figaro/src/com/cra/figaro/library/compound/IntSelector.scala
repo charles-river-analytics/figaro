@@ -17,6 +17,7 @@ import com.cra.figaro.language._
 import com.cra.figaro.util._
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.factored._
+import com.cra.figaro.algorithm.lazyfactored._
 
 /**
  * An IntSelector represents the selection of an integer from 0 (inclusive) to a variable upper bound (exclusive). The
@@ -39,9 +40,13 @@ class IntSelector(name: Name[Int], counter: Element[Int], collection: ElementCol
 
   def generateValue(rand: Randomness): Int = argmax(rand take counter.value)
 
-  def makeValues: Set[Int] = {
-    val maxCounter = Values()(counter).max
-    List.tabulate(maxCounter)(i => i).toSet
+  def makeValues(depth: Int): ValueSet[Int] = {
+    val counterValues = LazyValues(universe)(counter, depth - 1)
+    if (counterValues.regularValues.nonEmpty) {
+      val maxCounter = counterValues.regularValues.max
+      val all = List.tabulate(maxCounter)(i => i).toSet
+      if (counterValues.hasStar) ValueSet.withStar(all); else ValueSet.withoutStar(all)
+    } else { ValueSet.withStar(Set()) }
   }
 
   def makeFactors: List[Factor[Double]] = {
@@ -49,8 +54,11 @@ class IntSelector(name: Name[Int], counter: Element[Int], collection: ElementCol
     val counterVar = Variable(counter)
     val comb = new Factor[Double](List(thisVar, counterVar))
     comb.fillByRule((l: List[Any]) => {
-      val values = l.asInstanceOf[List[Int]]
-      if (values(0) < values(1)) 1.0/values(1) else 0.0
+      val xvalue0 :: xvalue1 :: _ = l.asInstanceOf[List[Extended[Int]]]
+      if (xvalue0.isRegular && xvalue1.isRegular) {
+        if (xvalue0.value < xvalue1.value) 1.0/xvalue1.value; else 0.0  
+      } else 1.0
+      
     })
     List(comb)
   }

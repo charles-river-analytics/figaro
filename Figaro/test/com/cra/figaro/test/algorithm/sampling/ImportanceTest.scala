@@ -224,8 +224,8 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       weightedSampleTest(d, (b: Boolean) => b, 0.73)
     }
   }
-
-  "Running importance sampling" should {
+ 
+  "Running importance sampling" should { 
     "produce the correct answer each time when run twice with different conditions" in {
       Universe.createNew()
       val s = Select(0.5 -> 0.3, 0.5 -> 0.6)
@@ -263,7 +263,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       }
       val a = Chain(Constant(0), (i: Int) => Constant(new temp))
       val b = Apply(a, (t: temp) => t.t1.value)
-      val alg = Importance(1000, b)
+      val alg = Importance(10000, b)
       alg.start
       alg.probability(b, true) should be (0.9 +- .01)
 

@@ -16,14 +16,17 @@ package com.cra.figaro.algorithm.factored
 import com.cra.figaro.algorithm._
 import com.cra.figaro.language._
 import scala.collection.mutable.Map
+import com.cra.figaro.algorithm.lazyfactored.{LazyValues, Extended, ValueSet}
 
 /**
  * Variables that appear in factors.
  * 
  * @param range The range of values of the variable
  */
-class Variable[T](val range: List[T]) {
+class Variable[T](valueSet: ValueSet[T]) {
   type Value = T
+  
+  val range: List[Extended[T]] = valueSet.xvalues.toList
 
   /**
    * The unique identifier of the variable.
@@ -39,11 +42,12 @@ class Variable[T](val range: List[T]) {
 }
 
 /**
- * Variables generated from elements.
+ * Variables generated from elements. 
  * 
  * @param range The range of values of the variable 
  */
-class ElementVariable[T](val element: Element[T]) extends Variable(Values(element.universe)(element).toList) {
+class ElementVariable[T](val element: Element[T]) extends Variable(LazyValues(element.universe).storedValues(element)) {
+
   override def toString = element.toString
 }
 
@@ -108,5 +112,5 @@ object Variable {
         result
     }
 
+  def clearCache() { memoMake.clear() }
 }
-

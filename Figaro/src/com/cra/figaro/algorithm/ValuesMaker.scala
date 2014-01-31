@@ -14,6 +14,7 @@
 package com.cra.figaro.algorithm
 
 import com.cra.figaro.language._
+import com.cra.figaro.algorithm.lazyfactored.ValueSet
 
 /**
  * Trait of elements for which range of values can be computed. Elements that implement this trait must
@@ -22,6 +23,7 @@ import com.cra.figaro.language._
 trait ValuesMaker[T] extends Element[T] {
   /**
    * Returns the range of values of this element.
+   * @param depth The depth of the range computation
    */
-  def makeValues: Traversable[T]
+  def makeValues(depth: Int): ValueSet[T]
 }

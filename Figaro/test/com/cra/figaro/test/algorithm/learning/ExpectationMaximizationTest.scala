@@ -158,7 +158,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
               val d = DirichletParameter(alphas: _*)
               val outcomes = List(2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23)
               val outcome = Select(d, outcomes: _*)
-              val algorithm = ExpectationMaximization(1000, d)
+              val algorithm = ExpectationMaximization(1/* 1000 TODO */, d)
               algorithm.start
 
               val result = d.getLearnedElement(outcomes)
@@ -478,12 +478,13 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
         }
       }
 
-      class TrueModel extends Model(TrueParameters, normalFlipConstructor)
+      object TrueModel extends Model(TrueParameters, normalFlipConstructor)
 
       case class Datum(x: Boolean, y: Boolean, z: Boolean, w: Boolean)
 
       def generateDatum(): Datum = {
-        val model = new TrueModel
+        val model = TrueModel
+        model.universe.generateAll()
         Datum(model.x.value, model.y.value, model.z.value, model.w.value)
       }
 
@@ -506,28 +507,28 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
             model.y.observe(datum.y)
             model.z.observe(datum.z)
             model.w.observe(datum.w)
-            val alg = MetropolisHastings(20000, ProposalScheme.default(model.universe), model.x)(model.universe)
+            val alg = VariableElimination(model.x)(model.universe)
             alg.start()
             alg.probability(model.x, datum.x)
           case 1 =>
             model.x.observe(datum.x)
             model.z.observe(datum.z)
             model.w.observe(datum.w)
-            val alg = MetropolisHastings(20000, ProposalScheme.default(model.universe), model.y)(model.universe)
+            val alg = VariableElimination(model.y)(model.universe)
             alg.start()
             alg.probability(model.y, datum.y)
           case 2 =>
             model.x.observe(datum.x)
             model.y.observe(datum.y)
             model.w.observe(datum.w)
-            val alg = MetropolisHastings(20000, ProposalScheme.default(model.universe), model.z)(model.universe)
+            val alg = VariableElimination(model.z)(model.universe)
             alg.start()
             alg.probability(model.z, datum.z)
           case 3 =>
             model.x.observe(datum.x)
             model.y.observe(datum.y)
             model.z.observe(datum.z)
-            val alg = MetropolisHastings(20000, ProposalScheme.default(model.universe), model.w)(model.universe)
+            val alg = VariableElimination(model.w)(model.universe)
             alg.start()
             alg.probability(model.w, datum.w)
         }
@@ -574,15 +575,15 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
         		
           }
         val learnedParameters = new Parameters(resultUniverse) {
-          val b1 = extractParameter(parameters.b1, "b1")
-          val b2 = extractParameter(parameters.b2, "b2")
-          val b3 = extractParameter(parameters.b3, "b3")
-          val b4 = extractParameter(parameters.b4, "b4")
-          val b5 = extractParameter(parameters.b5, "b5")
-          val b6 = extractParameter(parameters.b6, "b6")
-          val b7 = extractParameter(parameters.b7, "b7")
-          val b8 = extractParameter(parameters.b8, "b8")
-          val b9 = extractParameter(parameters.b9, "b9")
+          val b1 = extractParameter(parameters.b1, "b1"); b1.generate()
+          val b2 = extractParameter(parameters.b2, "b2"); b2.generate()
+          val b3 = extractParameter(parameters.b3, "b3"); b3.generate()
+          val b4 = extractParameter(parameters.b4, "b4"); b4.generate()
+          val b5 = extractParameter(parameters.b5, "b5"); b5.generate()
+          val b6 = extractParameter(parameters.b6, "b6"); b6.generate()
+          val b7 = extractParameter(parameters.b7, "b7"); b7.generate()
+          val b8 = extractParameter(parameters.b8, "b8"); b8.generate()
+          val b9 = extractParameter(parameters.b9, "b9"); b9.generate()
         }
 
         algorithm.kill()
@@ -595,7 +596,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
       "derive parameters within a reasonable accuracy for random data" in
         {
 
-          val numEMIterations = 25
+          val numEMIterations = 5
           val testSet = List.fill(testSetSize)(generateDatum())
           val trainingSet = List.fill(trainingSetSize)(generateDatum())
 
@@ -608,12 +609,14 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
 
           def parameterGetter(algorithm: Algorithm, parameter: Element[Double]): Double = {
             parameter match {
-              case p: Parameter[Double] => p.expectedValue
+              case p: Parameter[Double] => {
+                p.expectedValue
+              }
               case _ => throw new IllegalArgumentException("Not a learnable parameter")
             }
           }
 
-          val (trueParamErr, truePredAcc) = assessModel(new TrueModel, testSet)
+          val (trueParamErr, truePredAcc) = assessModel(TrueModel, testSet)
           val (learnedModel, learningTime) = train(trainingSet, new LearnableParameters(new Universe), learner, parameterGetter, learningFlipConstructor)
           val (learnedParamErr, learnedPredAcc) = assessModel(learnedModel, testSet)
 

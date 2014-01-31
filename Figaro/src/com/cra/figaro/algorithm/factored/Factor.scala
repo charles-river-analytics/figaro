@@ -16,6 +16,8 @@ package com.cra.figaro.algorithm.factored
 import com.cra.figaro.util._
 import scala.annotation.tailrec
 import scala.collection.mutable.Map
+import com.cra.figaro.language.Element
+import com.cra.figaro.algorithm.lazyfactored.Extended
 
 /**
  * General class of factors. A factor is associated with a set of variables and specifies a value for every
@@ -26,8 +28,9 @@ class Factor[T](val variables: List[Variable[_]]) {
   private val numVars = variables.size
 
   private val size = (1 /: variables)(_ * _.size)
-  private val contents: Map[List[Int], T] = Map()
+  private[figaro] val contents: Map[List[Int], T] = Map()
   override def toString = "Factor(" + variables.map(_.id).mkString(",") + " " + contents.mkString(",") + ")"
+  def isEmpty = size == 0
   /**
    * Set the value associated with a row. The row is identified by an list of indices
    * into the ranges of the variables over which the factor is defined.
@@ -71,7 +74,8 @@ class Factor[T](val variables: List[Variable[_]]) {
         case Some(next) => helper(next, current :: accum)
         case None => (current :: accum).reverse
       }
-    helper(firstIndices, List())
+    if (isEmpty) List()
+    else helper(firstIndices, List())
   }
 
   /**
@@ -91,12 +95,12 @@ class Factor[T](val variables: List[Variable[_]]) {
   /**
    * Fill the contents of this factor by applying a rule to every combination of values.
    */
-  def fillByRule(rule: List[Any] => T): Unit = {
-    val ranges: List[List[(Any, Int)]] = variables map (_.range.zipWithIndex)
-    val cases: List[List[Any]] = cartesianProduct(ranges: _*)
+  def fillByRule(rule: List[Extended[_]] => T): Unit = {
+    val ranges: List[List[(Extended[_], Int)]] = variables map (_.range.zipWithIndex)
+    val cases: List[List[(Extended[_], Int)]] = homogeneousCartesianProduct(ranges: _*)
     for { cas <- cases } {
-      val (values, indices) = cas.asInstanceOf[List[(Any, Int)]].unzip
-      contents += indices -> rule(values)
+      val (values, indices) = cas.unzip
+        contents += indices -> rule(values)
     }
   }
 
@@ -116,13 +120,13 @@ class Factor[T](val variables: List[Variable[_]]) {
    */
   def product(
     that: Factor[T],
-    multiplicationFunction: (T, T) => T): Factor[T] = {
+    semiring: Semiring[T]): Factor[T] = {
     val (allVars, indexMap1, indexMap2) = unionVars(that)
     val result = new Factor[T](allVars)
     for { indices <- result.allIndices } {
       val indexIntoThis = indexMap1 map (indices(_))
       val indexIntoThat = indexMap2 map (indices(_))
-      val value = multiplicationFunction(get(indexIntoThis), that.get(indexIntoThat))
+      val value = semiring.product(get(indexIntoThis), that.get(indexIntoThat))
       result.set(indices, value)
     }
     result
@@ -132,12 +136,11 @@ class Factor[T](val variables: List[Variable[_]]) {
     resultIndices: List[Int],
     summedVariable: Variable[_],
     summedVariableIndices: List[Int],
-    additionFunction: (T, T) => T,
-    zero: T): T = {
-    var value = zero
+    semiring: Semiring[T]): T = {
+    var value = semiring.zero
     for { i <- 0 until summedVariable.size } {
       val sourceIndices = insertAtIndices(resultIndices, summedVariableIndices, i)
-      value = additionFunction(value, get(sourceIndices))
+      value = semiring.sum(value, get(sourceIndices))
     }
     value
   }
@@ -150,15 +153,14 @@ class Factor[T](val variables: List[Variable[_]]) {
    */
   def sumOver(
     variable: Variable[_],
-    additionFunction: (T, T) => T,
-    zero: T): Factor[T] = {
+    semiring: Semiring[T]): Factor[T] = {
     if (variables contains variable) {
       // The summed over variable does not necessarily appear exactly once in the factor.
       val indicesOfSummedVariable = indices(variables, variable)
       val resultVars = variables.toList.filterNot(_ == variable)
       val result = new Factor[T](resultVars)
       for { indices <- result.allIndices } {
-        result.set(indices, computeSum(indices, variable, indicesOfSummedVariable, additionFunction, zero))
+        result.set(indices, computeSum(indices, variable, indicesOfSummedVariable, semiring))
       }
       result
     } else this
@@ -172,7 +174,11 @@ class Factor[T](val variables: List[Variable[_]]) {
     def getEntry(i: Int) =
       get(insertAtIndices(resultIndices, summedVariableIndices, i))
     val valuesWithEntries =
-      for { i <- 0 until summedVariable.size } yield (summedVariable.range(i), getEntry(i))
+      for { 
+        i <- 0 until summedVariable.size
+        xvalue = summedVariable.range(i)
+        if xvalue.isRegular
+      } yield (summedVariable.range(i).value, getEntry(i))
     def process(best: (U, T), next: (U, T)) =
       if (comparator(best._2, next._2)) next; else best
     valuesWithEntries.reduceLeft(process(_, _))._1
@@ -204,11 +210,10 @@ class Factor[T](val variables: List[Variable[_]]) {
    */
   def marginalizeTo(
     target: Variable[_],
-    additionFunction: (T, T) => T,
-    zero: T): Factor[T] = {
+    semiring: Semiring[T]): Factor[T] = {
     val marginalized =
       (this /: variables)((factor: Factor[T], variable: Variable[_]) =>
-        if (variable == target) factor; else factor.sumOver(variable, additionFunction, zero))
+        if (variable == target) factor; else factor.sumOver(variable, semiring))
     // It's possible that the target variable appears more than once in this factor. If so, we need to reduce it to
     // one column by eliminating any rows in which the target variable values do not agree.
     val reduced = new Factor[T](List(target))
@@ -227,10 +232,10 @@ class Factor[T](val variables: List[Variable[_]]) {
     val valueWidths =
       for { variable <- variables } yield {
         val valueLengths = variable.range.map(_.toString.length)
-        val maxValueLength = valueLengths.reduce(_ max _)
+        val maxValueLength = valueLengths.foldLeft(4)(_ max _)
         (maxValueLength max variable.id.toString.length) + 2 // add 2 for spaces
       }
-    val resultWidth = contents.values.map(_.toString.length).reduce(_ max _) + 2
+    val resultWidth = contents.values.map(_.toString.length).foldLeft(4)(_ max _) + 2
     def addBorderRow() {
       for { width <- valueWidths } { result.append("|" + "-" * width) }
       result.append("|" + "-" * resultWidth + "|\n") //   
@@ -262,4 +267,15 @@ class Factor[T](val variables: List[Variable[_]]) {
     addBorderRow()
     result.toString
   }
+}
+
+object Factor {
+  /**
+   * The mutliplicative identity factor.
+   */
+  def unit[T](semiring: Semiring[T]): Factor[T] = {
+    val result = new Factor[T](List())
+    result.set(List(), semiring.one)
+    result
+  } 
 }

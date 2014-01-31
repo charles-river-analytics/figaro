@@ -13,7 +13,8 @@
 
 package com.cra.figaro.library.atomic.continuous
 
-import com.cra.figaro.algorithm._
+import com.cra.figaro.algorithm.ValuesMaker
+import com.cra.figaro.algorithm.lazyfactored.ValueSet
 import com.cra.figaro.language._
 
 /**
@@ -67,7 +68,7 @@ class AtomicBetaParameter(name: Name[Double], a: Double, b: Double, collection: 
     (alpha) / (alpha + beta)
   }
 
-  def makeValues = List(expectedValue)
+  def makeValues(depth: Int) = ValueSet.withoutStar(Set(expectedValue))
 
   def maximize(sufficientStatistics: Seq[Double]) {
 
