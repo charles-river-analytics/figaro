@@ -60,12 +60,13 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
    *
    * This is made private[figaro] to allow easy testing
    */
-  private[figaro] def sampleOne[T](state: State, element: Element[T]): T =
+  private[figaro] def sampleOne[T](state: State, element: Element[T]): T = {
     if (element.universe != universe || (state.assigned contains element)) element.value
     else {
       state.assigned += element
       sampleFresh(state, element)
     }
+  }
 
   /*
    * Sample a fresh value of an element, assuming it has not yet been assigned a value in the state. This sampling

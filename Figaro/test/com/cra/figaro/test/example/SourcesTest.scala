@@ -27,7 +27,7 @@ import com.cra.figaro.test._
 class SourcesTest extends WordSpec with Matchers {
   "The sources example" should {
     "produce the correct answer under variable elimination with dependent universe reasoning" taggedAs (ExampleTest) in {
-      def peAlg(universe: Universe, evidence: List[NamedEvidence[_]]) = () => ProbEvidenceSampler.computeProbEvidence(400000, evidence)(universe)
+      def peAlg(universe: Universe, evidence: List[NamedEvidence[_]]) = () => ProbEvidenceSampler.computeProbEvidence(1000000, evidence)(universe)
       test((dependentUniverses: List[(Universe, List[NamedEvidence[_]])], element: Element[Source]) =>
         VariableElimination(dependentUniverses, peAlg _, element))
 

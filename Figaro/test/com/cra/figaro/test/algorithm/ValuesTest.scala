@@ -222,13 +222,6 @@ class ValuesTest extends WordSpec with Matchers {
       }
     }
 
-    "given a non-enumerable element such as Uniform" should {
-      "throw UnsupportedAlgorithmException" in {
-        Universe.createNew()
-        evaluating { Values()(Uniform(0.0, 1.0)) } should produce[UnsupportedAlgorithmException]
-      }
-    }
-
     "called on the same element twice" should {
       "reuse its work from the first call for the second call" in {
         Universe.createNew()

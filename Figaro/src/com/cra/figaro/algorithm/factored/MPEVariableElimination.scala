@@ -18,6 +18,7 @@ import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
 import com.cra.figaro.util
 import scala.collection.mutable.{ Set, Map }
+import com.cra.figaro.algorithm.lazyfactored._
 
 /**
  * Variable elimination algorithm to compute the most probable explanation.
@@ -44,7 +45,7 @@ class MPEVariableElimination(override val universe: Universe)(
 
   private def backtrackOne[T](factor: Factor[_], variable: Variable[T]): Unit = {
     val indices =
-      for { variable <- factor.variables } yield util.indices(variable.range, getMaximizer(variable)).head
+      for { variable <- factor.variables } yield util.indices(variable.range, Regular(getMaximizer(variable))).head
     maximizers += variable -> factor.get(indices)
   }
 

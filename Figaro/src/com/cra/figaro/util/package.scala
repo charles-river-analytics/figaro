@@ -220,6 +220,20 @@ package object util {
           result
       }
   }
+  
+  /**
+   * Gets the value associated with a key in a map, inserting a default value if it is not found.
+   * The default is only evaluated if the key is not found in the map.
+   */
+  def getOrElseInsert[T,U](map: Map[T,U], key: T, default: => U): U = {
+    map.get(key) match {
+      case Some(value) => value
+      case None =>
+        val result = default // avoid evaluating call by name default multiple times
+        map += key -> result
+        result
+    }
+  } 
 
   /**
    * Finds the index of the maximal element in the sequence.

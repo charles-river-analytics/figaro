@@ -165,7 +165,7 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
   private[language] def activate(element: Element[_]): Unit = {
     if (element.active)
       throw new IllegalArgumentException("Activating active element")
-    if (element.args exists (!_.active))
+    if (element.args exists (!_.active)) // TODO
       throw new IllegalArgumentException("Attempting to activate element with inactive argument")
     myActiveElements.add(element)
     if (!element.isInstanceOf[Deterministic[_]]) myStochasticElements.add(element)
@@ -310,7 +310,9 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
     for {
       layer <- layers(myActiveElements)
       elem <- layer
-    } elem.generate()
+    } {
+      elem.generate()
+    }
   }
 
   override def finalize = {

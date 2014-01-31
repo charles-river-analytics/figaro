@@ -67,6 +67,12 @@ class VETest extends WordSpec with Matchers {
         val e4 = Flip(0.7)
         val e5 = Constant('a)
         val e6 = Select(0.1 -> 1.5, 0.9 -> 2.5)
+        Values()(e1)
+        Values()(e2)
+        Values()(e3)
+        Values()(e4)
+        Values()(e5)
+        Values()(e6)
         val v1 = Variable(e1)
         val v2 = Variable(e2)
         val v3 = Variable(e3)
@@ -91,6 +97,13 @@ class VETest extends WordSpec with Matchers {
         val e5 = Constant('a)
         val e6 = Select(0.1 -> 1.5, 0.9 -> 2.5)
         val e7 = Flip(0.9)
+        Values()(e1)
+        Values()(e2)
+        Values()(e3)
+        Values()(e4)
+        Values()(e5)
+        Values()(e6)
+        Values()(e7)
         val v1 = Variable(e1)
         val v2 = Variable(e2)
         val v3 = Variable(e3)
@@ -174,6 +187,14 @@ class VETest extends WordSpec with Matchers {
         val e6 = Select(0.1 -> 1.5, 0.9 -> 2.5)
         val e7 = Flip(0.9)
         val e8 = Flip(0.3)
+        Values()(e1)
+        Values()(e2)
+        Values()(e3)
+        Values()(e4)
+        Values()(e5)
+        Values()(e6)
+        Values()(e7)
+        Values()(e8)
         val v1 = Variable(e1)
         val v2 = Variable(e2)
         val v3 = Variable(e3)
@@ -340,11 +361,18 @@ class VETest extends WordSpec with Matchers {
       test(d, (b: Boolean) => b, 0.73)
     }
 
-    "on a different universe from the current universe, produce the correct result" in {
+    "with elements that are not used by the query or evidence, produce the correct result" in {
       val u1 = Universe.createNew()
       val u = Select(0.25 -> 0.3, 0.25 -> 0.5, 0.25 -> 0.7, 0.25 -> 0.9)
       val f = Flip(u)
       val a = If(f, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
+      test(f, (b: Boolean) => b, 0.6)
+    }
+    
+    "on a different universe from the current universe, produce the correct result" in {
+      val u1 = Universe.createNew()
+      val u = Select(0.25 -> 0.3, 0.25 -> 0.5, 0.25 -> 0.7, 0.25 -> 0.9)
+      val f = Flip(u)
       Universe.createNew()
       val tolerance = 0.0000001
       val algorithm = VariableElimination(f)(u1)
@@ -438,7 +466,7 @@ class VETest extends WordSpec with Matchers {
       alg.mostLikelyValue(e4) should equal(true)
     }
   }
-
+  
   def test[T](target: Element[T], predicate: T => Boolean, prob: Double) {
     val tolerance = 0.0000001
     val algorithm = VariableElimination(target)
