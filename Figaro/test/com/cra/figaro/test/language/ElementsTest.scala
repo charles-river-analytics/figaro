@@ -500,6 +500,28 @@ class ElementsTest extends WordSpec with Matchers {
   }
 
   "An element" when {
+    "used as a monad with map" should {
+      "have value equal to its function applied to its argument" in {
+        Universe.createNew()
+        val u = Uniform(0.0, 2.0)
+        val a = u.map(_ + 1.0)
+        u.value = 1.3
+        a.generate()
+        a.value should equal(2.3)
+      }
+    }
+
+    "used as a monad with flatMap" should {
+      "have value equal to the value of its function applied to its argument's value" in {
+        Universe.createNew()
+        val u = Uniform(0.0, 2.0)
+        val a = u.flatMap(x => Constant(x + 2.0))
+        u.value = 1.3
+        a.generate()
+        a.value should equal(3.3)
+      }
+    }
+
     "a condition is added" should {
       "have both the original conditions and the added condition" in {
         val universe = Universe.createNew()
