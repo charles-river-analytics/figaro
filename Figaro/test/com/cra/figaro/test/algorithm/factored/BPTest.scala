@@ -257,7 +257,7 @@ class BPTest extends WordSpec with Matchers {
 
   }
 
-  /*
+  
   "MaxProductBeliefPropagation" should {
     "compute the most likely values of all the variables given the conditions and constraints" in {
       Universe.createNew()
@@ -272,17 +272,16 @@ class BPTest extends WordSpec with Matchers {
       // p(e1=F,e2=T,e3=T) = 0.25 * 0.9 * 0.4
       // p(e1=F,e2=F,e3=F) = 0.25 * 0.1 * 0.6
       // MPE: e1=T,e2=F,e3=F,e4=T
-      val alg = MaxProductBeliefPropagation()
-      alg.start()
-      alg.run()
+      val alg = MPEBeliefPropagation(20)
+      alg.start()           
       alg.mostLikelyValue(e1) should equal(true)
       alg.mostLikelyValue(e2) should equal(false)
       alg.mostLikelyValue(e3) should equal(false)
       alg.mostLikelyValue(e4) should equal(true)
     }
+       
   }
-  * 
-  */
+ 
 
   def test[T](target: Element[T], predicate: T => Boolean, prob: Double, tol: Double) {
     val algorithm = BeliefPropagation(100)

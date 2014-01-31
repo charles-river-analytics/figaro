@@ -1,41 +1,104 @@
 package com.cra.figaro.algorithm.factored.beliefpropagation
 
-import com.cra.figaro.algorithm.MPEAlgorithm
-import com.cra.figaro.algorithm.OneTimeMPE
-import com.cra.figaro.language.Element
-import com.cra.figaro.language.Universe
+import com.cra.figaro.algorithm._
+import com.cra.figaro.language._
+import com.cra.figaro.algorithm._
+import com.cra.figaro.algorithm.sampling._
+import com.cra.figaro.algorithm.factored._
+import com.cra.figaro.util
+import scala.collection.mutable.{ Set, Map }
 
-/*
 /**
- * Most probable explanation version of belief propagation.
+ * Variable elimination algorithm to compute the most probable explanation.
+ *
+ * @param showTiming Produce timing information on steps of the algorithm
  */
-class MPEBeliefPropagation(override val universe: Universe)
-  extends MPEAlgorithm(universe)
-  with OneTimeMPE
-  with BeliefPropagation {
+abstract class MPEBeliefPropagation(override val universe: Universe)(
+  val showTiming: Boolean,
+  val dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
+  val dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double) 
+  extends MPEAlgorithm with ProbabilisticBeliefPropagation {
 
+  override val semiring = MaxProductSemiring
   /**
-   * Usual multiplication.
+   * Empty for MPE Algorithms
    */
-  def product(x: Double, y: Double) = x * y
+  val targetElements = List[Element[_]]()
 
-  /**
-   * Addition is max.
-   */
-  def sum(x: Double, y: Double) = x max y
+  val queryTargets = universe.activeElements
 
-  def mostLikelyValue[T](target: Element[T]) = {
-    // TODO
-    computeDistribution(target).toList.max(Ordering.by((_: (Double, T))._1))._2
+  val factorGraph = new BasicFactorGraph(getFactors(Seq()), semiring.product)
+
+  def mostLikelyValue[T](target: Element[T]): T = {
+    val beliefs = getBeliefsForElement(target)
+    beliefs.maxBy(_._1)._2
   }
+  
 }
 
-object MaxProductBeliefPropagation {
+object MPEBeliefPropagation {
   /**
-   * Creates a most probable explanation computer using belief propagation in the
-   * current default universe.
+   * Create a most probable explanation computer using variable elimination
+   * with the given target query variables in the current default
+   * universe.
    */
-  def apply(implicit universe: Universe = Universe.universe) =
-    new MPEBeliefPropagation(universe)
+  def apply(myIterations: Int)(implicit universe: Universe) =
+    new MPEBeliefPropagation(universe)(
+      false,
+      List(),
+      (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u))
+      with OneTimeProbabilisticBeliefPropagation with OneTimeMPE { val iterations = myIterations }
+
+    def apply()(implicit universe: Universe) =
+    new MPEBeliefPropagation(universe)(
+      false,
+      List(),
+      (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u))
+      with AnytimeProbabilisticBeliefPropagation with AnytimeMPE
+    
+  /**
+   * Create a most probable explanation computer using variable elimination
+   * with the given target query variables and using the given
+   * dependent universes in the current default universe.
+   */
+  def apply(dependentUniverses: List[(Universe, List[NamedEvidence[_]])], myIterations: Int)(implicit universe: Universe) =
+    new MPEBeliefPropagation(universe)(
+      false,
+      dependentUniverses,
+      (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u))
+      with OneTimeProbabilisticBeliefPropagation with OneTimeMPE { val iterations = myIterations }
+
+    
+  def apply(dependentUniverses: List[(Universe, List[NamedEvidence[_]])])(implicit universe: Universe) =
+    new MPEBeliefPropagation(universe)(
+      false,
+      dependentUniverses,
+      (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u))
+      with AnytimeProbabilisticBeliefPropagation with AnytimeMPE
+      
+  /**
+   * Create a most probable explanation computer using variable elimination
+   * with the given target query variables and using the given
+   * dependent universes in the current default universe. Use the given dependent algorithm function to
+   * determine the algorithm to use to compute probability of evidence in each dependent universe.
+   */
+  def apply(
+    dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
+    dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double, myIterations: Int)(implicit universe: Universe) =
+    new MPEBeliefPropagation(universe)(
+      false,
+      dependentUniverses,
+      dependentAlgorithm)
+      with OneTimeProbabilisticBeliefPropagation with OneTimeMPE { val iterations = myIterations }
+
+  def apply(
+    dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
+    dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double)(implicit universe: Universe) =
+    new MPEBeliefPropagation(universe)(
+      false,
+      dependentUniverses,
+      dependentAlgorithm)
+      with AnytimeProbabilisticBeliefPropagation with AnytimeMPE
+
 }
-*/
+
