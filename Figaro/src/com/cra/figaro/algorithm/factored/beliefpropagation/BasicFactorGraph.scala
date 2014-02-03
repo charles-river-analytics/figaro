@@ -17,6 +17,9 @@ import scala.collection.Iterable
 import scala.collection.immutable.List
 import com.cra.figaro.algorithm.factored._
 
+/**
+ * The basic implementation of FactorGraph for Probabilistic factors in BP
+ */
 class BasicFactorGraph(factors: List[Factor[Double]], semiring: Semiring[Double])
   extends FactorGraph[Double] {
 
@@ -26,9 +29,12 @@ class BasicFactorGraph(factors: List[Factor[Double]], semiring: Semiring[Double]
     f
   }
 
-  // Private helper functions
+  // Combine all factors of the same variables into a single factor
   private def combineFactors() = factors.groupBy(_.variables.map(_.id)).values.map(_.reduceLeft(_.product(_, semiring))).toList
 
+  /*
+   * Create Nodes for factors
+   */
   private def adjacencyListFactors(): Map[Node, Map[Node, Factor[Double]]] = {
     factorsByNode.map { factors =>
       (factors._1 -> {
@@ -37,6 +43,9 @@ class BasicFactorGraph(factors: List[Factor[Double]], semiring: Semiring[Double]
     }
   }
 
+  /*
+   * Create Nodes for Variables
+   */
   private def adjacencyListVariables(): Map[Node, Map[Node, Factor[Double]]] = {
     val adjacencyListVariables = factorsByNode.map(f => f._2.variables.map(v => VariableNode(v) -> f._1)).flatten
 
