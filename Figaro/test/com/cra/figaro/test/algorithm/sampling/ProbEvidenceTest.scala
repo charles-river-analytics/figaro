@@ -13,14 +13,14 @@
 
 package com.cra.figaro.test.algorithm.sampling
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.test._
 
-class ProbEvidenceTest extends WordSpec with ShouldMatchers {
+class ProbEvidenceTest extends WordSpec with Matchers {
 
   "Computing probability of evidence" when {
     "given a vanilla model with one condition" should {
@@ -135,7 +135,7 @@ class ProbEvidenceTest extends WordSpec with ShouldMatchers {
       val alg = ProbEvidenceSampler(200L, List(NamedEvidence("f", Observation(true))))
       alg.start()
       Thread.sleep(200L)
-      alg.probEvidence should be(0.3 plusOrMinus 0.01)
+      alg.probEvidence should be(0.3 +- 0.01)
       alg.kill()
     }
 
@@ -176,6 +176,6 @@ class ProbEvidenceTest extends WordSpec with ShouldMatchers {
   }
 
   def sampleTest(prob: Double, evidence: List[NamedEvidence[_]]) {
-    ProbEvidenceSampler.computeProbEvidence(60000, evidence) should be(prob plusOrMinus 0.01)
+    ProbEvidenceSampler.computeProbEvidence(60000, evidence) should be(prob +- 0.01)
   }
 }

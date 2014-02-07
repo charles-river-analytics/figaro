@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.algorithm.factored
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.{ WordSpec, PrivateMethodTester }
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.factored._
@@ -21,27 +21,25 @@ import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.library.compound._
+import com.cra.figaro.algorithm.lazyfactored.{Regular}
 
-class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
+
+class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
 
   "A variable for an element" should {
     "have range equal to the element's values" in {
       Universe.createNew()
       val e1 = Select(0.2 -> 1, 0.3 -> 2, 0.5 -> 3)
+      val xs = Values()(e1)
       val v1 = Variable(e1)
-      for { x <- v1.range } { Values()(e1) should contain(x) }
-      for { x <- Values()(e1) } { v1.range should contain(x) }
-    }
-
-    "throw UnsupportedAlgorithmException if the range cannot be computed" in {
-      Universe.createNew()
-      val e1 = Uniform(0.0, 1.0)
-      evaluating { Variable(e1) } should produce[UnsupportedAlgorithmException]
+      for { x <- v1.range } { xs should contain(x.value) }
+      //for { x <- xs } { v1.range should contain(x) }
     }
 
     "always be equal to another variable for the same element" in {
       Universe.createNew()
       val e1 = Flip(0.2)
+      Values()(e1)
       val v1 = Variable(e1)
       val v2 = Variable(e1)
       v1 should equal(v2)
@@ -49,20 +47,27 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
 
     "be different to a variable for a different element with the same definition" in {
       Universe.createNew()
-      val v1 = Variable(Flip(0.2))
-      val v2 = Variable(Flip(0.2))
+      val e1 = Flip(0.2)
+      val e2 = Flip(0.2)
+      Values()(e1)
+      Values()(e2)
+      val v1 = Variable(e1)
+      val v2 = Variable(e2)
       v1 should not equal (v2)
     }
   }
 
   "A factor" when {
-    // Only need to test private methods and variables if public tests do not work
     "get the same value for a given set of variable indices as was last set" in {
       Universe.createNew()
       val e1 = Flip(0.1)
       val e2 = Constant(8)
       val e3 = Select(0.2 -> "a", 0.3 -> "b", 0.5 -> "c")
       val e4 = Flip(0.7)
+      Values()(e1)
+      Values()(e2)
+      Values()(e3)
+      Values()(e4)
       val v1 = Variable(e1)
       val v2 = Variable(e2)
       val v3 = Variable(e3)
@@ -80,6 +85,10 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
       val e2 = Constant(8)
       val e3 = Select(0.2 -> "a", 0.3 -> "b", 0.5 -> "c")
       val e4 = Flip(0.7)
+      Values()(e1)
+      Values()(e2)
+      Values()(e3)
+      Values()(e4)
       val v1 = Variable(e1)
       val v2 = Variable(e2)
       val v3 = Variable(e3)
@@ -94,6 +103,10 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
       val e2 = Constant(8)
       val e3 = Select(0.2 -> "a", 0.3 -> "b", 0.5 -> "c")
       val e4 = Flip(0.7)
+      Values()(e1)
+      Values()(e2)
+      Values()(e3)
+      Values()(e4)
       val v1 = Variable(e1)
       val v2 = Variable(e2)
       val v3 = Variable(e3)
@@ -110,6 +123,10 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
       val e2 = Constant(8)
       val e3 = Select(0.2 -> "a", 0.3 -> "b", 0.5 -> "c")
       val e4 = Flip(0.7)
+      Values()(e1)
+      Values()(e2)
+      Values()(e3)
+      Values()(e4)
       val v1 = Variable(e1)
       val v2 = Variable(e2)
       val v3 = Variable(e3)
@@ -127,6 +144,12 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
       val e4 = Flip(0.7)
       val e5 = Constant('a)
       val e6 = Select(0.1 -> 1.5, 0.9 -> 2.5)
+      Values()(e1)
+      Values()(e2)
+      Values()(e3)
+      Values()(e4)
+      Values()(e5)
+      Values()(e6)
       val v1 = Variable(e1)
       val v2 = Variable(e2)
       val v3 = Variable(e3)
@@ -149,6 +172,10 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
         val e2 = Constant(8)
         val e3 = Flip(0.1)
         val e4 = Flip(0.6)
+        Values()(e1)
+        Values()(e2)
+        Values()(e3)
+        Values()(e4)
         val v1 = Variable(e1)
         val v2 = Variable(e2)
         val v3 = Variable(e3)
@@ -165,20 +192,20 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
         g.set(List(1, 0), 0.7)
         g.set(List(0, 1), 0.8)
         g.set(List(1, 1), 0.9)
-        val h = f.product(g, (x: Double, y: Double) => x * y)
+        val h = f.product(g, SumProductSemiring)
         h.variables should equal(List(v1, v2, v3, v4))
-        h.get(List(0, 0, 0, 0)) should be(0.0 plusOrMinus 0.0001)
-        h.get(List(1, 0, 0, 0)) should be(0.06 plusOrMinus 0.0001)
-        h.get(List(2, 0, 0, 0)) should be(0.12 plusOrMinus 0.0001)
-        h.get(List(0, 0, 1, 0)) should be(0.24 plusOrMinus 0.0001)
-        h.get(List(1, 0, 1, 0)) should be(0.32 plusOrMinus 0.0001)
-        h.get(List(2, 0, 1, 0)) should be(0.4 plusOrMinus 0.0001)
-        h.get(List(0, 0, 0, 1)) should be(0.0 plusOrMinus 0.0001)
-        h.get(List(1, 0, 0, 1)) should be(0.07 plusOrMinus 0.0001)
-        h.get(List(2, 0, 0, 1)) should be(0.14 plusOrMinus 0.0001)
-        h.get(List(0, 0, 1, 1)) should be(0.27 plusOrMinus 0.0001)
-        h.get(List(1, 0, 1, 1)) should be(0.36 plusOrMinus 0.0001)
-        h.get(List(2, 0, 1, 1)) should be(0.45 plusOrMinus 0.0001)
+        h.get(List(0, 0, 0, 0)) should be(0.0 +- 0.0001)
+        h.get(List(1, 0, 0, 0)) should be(0.06 +- 0.0001)
+        h.get(List(2, 0, 0, 0)) should be(0.12 +- 0.0001)
+        h.get(List(0, 0, 1, 0)) should be(0.24 +- 0.0001)
+        h.get(List(1, 0, 1, 0)) should be(0.32 +- 0.0001)
+        h.get(List(2, 0, 1, 0)) should be(0.4 +- 0.0001)
+        h.get(List(0, 0, 0, 1)) should be(0.0 +- 0.0001)
+        h.get(List(1, 0, 0, 1)) should be(0.07 +- 0.0001)
+        h.get(List(2, 0, 0, 1)) should be(0.14 +- 0.0001)
+        h.get(List(0, 0, 1, 1)) should be(0.27 +- 0.0001)
+        h.get(List(1, 0, 1, 1)) should be(0.36 +- 0.0001)
+        h.get(List(2, 0, 1, 1)) should be(0.45 +- 0.0001)
       }
     }
 
@@ -188,6 +215,9 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
         val e1 = Select(0.2 -> "a", 0.3 -> "b", 0.5 -> "c")
         val e2 = Constant(8)
         val e3 = Flip(0.1)
+        Values()(e1)
+        Values()(e2)
+        Values()(e3)
         val v1 = Variable(e1)
         val v2 = Variable(e2)
         val v3 = Variable(e3)
@@ -198,11 +228,11 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
         f.set(List(0, 0, 1), 0.3)
         f.set(List(1, 0, 1), 0.4)
         f.set(List(2, 0, 1), 0.5)
-        val g = f.sumOver(v3, (x: Double, y: Double) => x + y, 0.0)
+        val g = f.sumOver(v3, SumProductSemiring)
         g.variables should equal(List(v1, v2))
-        g.get(List(0, 0)) should be(0.3 plusOrMinus 0.0001)
-        g.get(List(1, 0)) should be(0.5 plusOrMinus 0.0001)
-        g.get(List(2, 0)) should be(0.7 plusOrMinus 0.0001)
+        g.get(List(0, 0)) should be(0.3 +- 0.0001)
+        g.get(List(1, 0)) should be(0.5 +- 0.0001)
+        g.get(List(2, 0)) should be(0.7 +- 0.0001)
       }
 
       "return itself if the variable not in the factor" in {
@@ -210,6 +240,9 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
         val e1 = Select(0.2 -> "a", 0.3 -> "b", 0.5 -> "c")
         val e2 = Constant(8)
         val e3 = Flip(0.1)
+        Values()(e1)
+        Values()(e2)
+        Values()(e3)
         val v1 = Variable(e1)
         val v2 = Variable(e2)
         val v3 = Variable(e3)
@@ -217,7 +250,7 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
         f.set(List(0, 0), 0.0)
         f.set(List(1, 0), 0.2)
         f.set(List(2, 0), 0.4)
-        val g = f.sumOver(v3, (x: Double, y: Double) => x + y, 0.0)
+        val g = f.sumOver(v3, SumProductSemiring)
         g.variables should equal(f.variables)
         for { indices <- f.allIndices } {
           g.get(indices) should equal(f.get(indices))
@@ -229,6 +262,8 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
           Universe.createNew()
           val e1 = Flip(0.9)
           val e2 = Select(0.2 -> 1, 0.8 -> 2)
+          Values()(e1)
+          Values()(e2)
           val v1 = Variable(e1)
           val v2 = Variable(e2)
           val f = new Factor[Double](List(v1, v2, v1))
@@ -240,7 +275,7 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
           f.set(List(1, 0, 1), 0.6)
           f.set(List(0, 1, 1), 0.7)
           f.set(List(1, 1, 1), 0.8)
-          val g = f.sumOver(v1, (x: Double, y: Double) => x + y, 0.0)
+          val g = f.sumOver(v1, SumProductSemiring)
           g.variables should equal(List(v2))
           g.get(List(0)) should equal(0.1 + 0.6)
           g.get(List(1)) should equal(0.3 + 0.8)
@@ -253,6 +288,9 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
         val e1 = Select(0.2 -> "a", 0.3 -> "b", 0.5 -> "c")
         val e2 = Constant(8)
         val e3 = Flip(0.1)
+        Values()(e1)
+        Values()(e2)
+        Values()(e3)
         val v1 = Variable(e1)
         val v2 = Variable(e2)
         val v3 = Variable(e3)
@@ -277,6 +315,9 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
         val e1 = Select(0.2 -> "a", 0.3 -> "b", 0.5 -> "c")
         val e2 = Constant(8)
         val e3 = Flip(0.1)
+        Values()(e1)
+        Values()(e2)
+        Values()(e3)
         val v1 = Variable(e1)
         val v2 = Variable(e2)
         val v3 = Variable(e3)
@@ -287,29 +328,23 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
         f.set(List(0, 0, 1), 0.3)
         f.set(List(1, 0, 1), 0.4)
         f.set(List(2, 0, 1), 0.5)
-        val g = f.marginalizeTo(v3, (x: Double, y: Double) => x + y, 0.0)
+        val g = f.marginalizeTo(v3, SumProductSemiring)
         g.variables should equal(List(v3))
         val p1 = 0.0 + 0.1 + 0.2
         val p2 = 0.3 + 0.4 + 0.5
-        g.get(List(0)) should be(p1 plusOrMinus 0.000001)
-        g.get(List(1)) should be(p2 plusOrMinus 0.000001)
+        g.get(List(0)) should be(p1 +- 0.000001)
+        g.get(List(1)) should be(p2 +- 0.000001)
       }
     }
   }
 
   "Making factors from an element" when {
-    "given a continuous element (such as Uniform)" should {
-      "raise UnsupportedAlgorithmException" in {
-        Universe.createNew()
-        val v1 = Uniform(0.2, 1.0)
-        evaluating { ProbFactor.make(v1) } should produce[UnsupportedAlgorithmException]
-      }
-    }
 
-    "given a constant" should {
+         "given a constant" should {
       "produce a single factor with one entry whose value is 1.0" in {
         Universe.createNew()
         val v1 = Constant(7)
+        Values()(v1)
         val List(factor) = ProbFactor.make(v1)
         factor.get(List(0)) should equal(1.0)
       }
@@ -320,6 +355,7 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
         "and the second entry is the probability of false" in {
           Universe.createNew()
           val v1 = Flip(0.3)
+          Values()(v1)
           val List(factor) = ProbFactor.make(v1)
           factor.get(List(0)) should equal(0.3)
           factor.get(List(1)) should equal(0.7)
@@ -332,9 +368,13 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
           Universe.createNew()
           val v1 = Select(0.2 -> 0.1, 0.8 -> 0.3)
           val v2 = Flip(v1)
+          Values()(v2)
           val List(factor) = ProbFactor.make(v2)
-          val i1 = Values(Universe.universe)(v1).toList.indexOf(0.1)
-          val i2 = Values(Universe.universe)(v1).toList.indexOf(0.3)
+          val vals = Variable(v1).range
+          println("vals = " + vals)
+          println("v2.range = " + Variable(v2).range)
+          val i1 = vals.indexOf(Regular(0.1))
+          val i2 = vals.toList.indexOf(Regular(0.3))
           factor.get(List(i1, 0)) should equal(0.1)
           factor.get(List(i1, 1)) should equal(0.9)
           factor.get(List(i2, 0)) should equal(0.3)
@@ -346,13 +386,14 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
       "produce a single factor in which each possible value is associated with the correct probability" in {
         Universe.createNew()
         val v1 = Select(0.2 -> 1, 0.3 -> 0, 0.1 -> 2, 0.05 -> 5, 0.35 -> 4)
+        Values()(v1)
         val List(factor) = ProbFactor.make(v1)
-        val vals = Values(Universe.universe)(v1).toList
-        val i1 = vals.indexOf(1)
-        val i0 = vals.indexOf(0)
-        val i2 = vals.indexOf(2)
-        val i5 = vals.indexOf(5)
-        val i4 = vals.indexOf(4)
+        val vals = Variable(v1).range
+        val i1 = vals.indexOf(Regular(1))
+        val i0 = vals.indexOf(Regular(0))
+        val i2 = vals.indexOf(Regular(2))
+        val i5 = vals.indexOf(Regular(5))
+        val i4 = vals.indexOf(Regular(4))
         factor.get(List(i1)) should equal(0.2)
         factor.get(List(i0)) should equal(0.3)
         factor.get(List(i2)) should equal(0.1)
@@ -369,19 +410,20 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
           val c2 = Constant(0.3)
           val c3 = Constant(0.5)
           val v3 = Select(v1 -> 1, v2 -> 2, c1 -> 4, c2 -> 5, c3 -> 3)
+          Values()(v3)
           val List(factor) = ProbFactor.make(v3)
-          val v1Vals = Values()(v1).toList
-          val v2Vals = Values()(v2).toList
-          val v3Vals = Values()(v3).toList
-          val v102 = v1Vals.indexOf(0.2)
-          val v108 = v1Vals.indexOf(0.8)
-          val v204 = v2Vals.indexOf(0.4)
-          val v206 = v2Vals.indexOf(0.6)
-          val v31 = v3Vals.indexOf(1)
-          val v32 = v3Vals.indexOf(2)
-          val v34 = v3Vals.indexOf(4)
-          val v35 = v3Vals.indexOf(5)
-          val v33 = v3Vals.indexOf(3)
+          val v1Vals = Variable(v1).range
+          val v2Vals = Variable(v2).range
+          val v3Vals = Variable(v3).range
+          val v102 = v1Vals.indexOf(Regular(0.2))
+          val v108 = v1Vals.indexOf(Regular(0.8))
+          val v204 = v2Vals.indexOf(Regular(0.4))
+          val v206 = v2Vals.indexOf(Regular(0.6))
+          val v31 = v3Vals.indexOf(Regular(1))
+          val v32 = v3Vals.indexOf(Regular(2))
+          val v34 = v3Vals.indexOf(Regular(4))
+          val v35 = v3Vals.indexOf(Regular(5))
+          val v33 = v3Vals.indexOf(Regular(3))
           def makeIndices(a: List[Int]): List[Int] = {
             val result: Array[Int] = Array.ofDim(a.size)
             result(0) = a(0)
@@ -392,14 +434,14 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
             result(v35 + 1) = a(5)
             result.toList
           }
-          factor.get(makeIndices(List(v31, v102, v204, 0, 0, 0))) should be(0.2 / 1.5 plusOrMinus 0.01)
-          factor.get(makeIndices(List(v32, v102, v204, 0, 0, 0))) should be(0.4 / 1.5 plusOrMinus 0.01)
-          factor.get(makeIndices(List(v31, v108, v204, 0, 0, 0))) should be(0.8 / 2.1 plusOrMinus 0.01)
-          factor.get(makeIndices(List(v32, v108, v204, 0, 0, 0))) should be(0.4 / 2.1 plusOrMinus 0.01)
-          factor.get(makeIndices(List(v31, v102, v206, 0, 0, 0))) should be(0.2 / 1.7 plusOrMinus 0.01)
-          factor.get(makeIndices(List(v32, v102, v206, 0, 0, 0))) should be(0.6 / 1.7 plusOrMinus 0.01)
-          factor.get(makeIndices(List(v31, v108, v206, 0, 0, 0))) should be(0.8 / 2.3 plusOrMinus 0.01)
-          factor.get(makeIndices(List(v32, v108, v206, 0, 0, 0))) should be(0.6 / 2.3 plusOrMinus 0.01)
+          factor.get(makeIndices(List(v31, v102, v204, 0, 0, 0))) should be(0.2 / 1.5 +- 0.01)
+          factor.get(makeIndices(List(v32, v102, v204, 0, 0, 0))) should be(0.4 / 1.5 +- 0.01)
+          factor.get(makeIndices(List(v31, v108, v204, 0, 0, 0))) should be(0.8 / 2.1 +- 0.01)
+          factor.get(makeIndices(List(v32, v108, v204, 0, 0, 0))) should be(0.4 / 2.1 +- 0.01)
+          factor.get(makeIndices(List(v31, v102, v206, 0, 0, 0))) should be(0.2 / 1.7 +- 0.01)
+          factor.get(makeIndices(List(v32, v102, v206, 0, 0, 0))) should be(0.6 / 1.7 +- 0.01)
+          factor.get(makeIndices(List(v31, v108, v206, 0, 0, 0))) should be(0.8 / 2.3 +- 0.01)
+          factor.get(makeIndices(List(v32, v108, v206, 0, 0, 0))) should be(0.6 / 2.3 +- 0.01)
         }
     }
 
@@ -410,12 +452,13 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
           val v1 = Flip(0.2)
           val v2 = Constant(false)
           val v3 = Dist(0.3 -> v1, 0.7 -> v2)
-          val v1Vals = Values()(v1).toList
-          val v3Vals = Values()(v3).toList
-          val v1TrueIndex = v1Vals.indexOf(true)
-          val v1FalseIndex = v1Vals.indexOf(false)
-          val v3TrueIndex = v3Vals.indexOf(true)
-          val v3FalseIndex = v3Vals.indexOf(false)
+          Values()(v3)
+          val v1Vals = Variable(v1).range
+          val v3Vals = Variable(v3).range
+          val v1TrueIndex = v1Vals.indexOf(Regular(true))
+          val v1FalseIndex = v1Vals.indexOf(Regular(false))
+          val v3TrueIndex = v3Vals.indexOf(Regular(true))
+          val v3FalseIndex = v3Vals.indexOf(Regular(false))
           val v1Index = v3.outcomes.indexOf(v1)
           val v2Index = v3.outcomes.indexOf(v2)
           val selectFactor :: outcomeFactors = ProbFactor.make(v3)
@@ -444,33 +487,34 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
           val v3 = Flip(0.2)
           val v4 = Constant(false)
           val v5 = Dist(v1 -> v3, v2 -> v4)
-          val v1Vals = Values()(v1).toList
-          val v2Vals = Values()(v2).toList
-          val v3Vals = Values()(v3).toList
-          val v4Vals = Values()(v4).toList
-          val v5Vals = Values()(v5).toList
+          Values()(v5)
+          val v1Vals = Variable(v1).range
+          val v2Vals = Variable(v2).range
+          val v3Vals = Variable(v3).range
+          val v4Vals = Variable(v4).range
+          val v5Vals = Variable(v5).range
           val v3Index = v5.outcomes.indexOf(v3)
           val v4Index = v5.outcomes.indexOf(v4)
-          val v102 = v1Vals.indexOf(0.2)
-          val v108 = v1Vals.indexOf(0.8)
-          val v204 = v2Vals.indexOf(0.4)
-          val v206 = v2Vals.indexOf(0.6)
-          val v3f = v3Vals.indexOf(false)
-          val v3t = v3Vals.indexOf(true)
-          val v5f = v5Vals.indexOf(false)
-          val v5t = v5Vals.indexOf(true)
+          val v102 = v1Vals.indexOf(Regular(0.2))
+          val v108 = v1Vals.indexOf(Regular(0.8))
+          val v204 = v2Vals.indexOf(Regular(0.4))
+          val v206 = v2Vals.indexOf(Regular(0.6))
+          val v3f = v3Vals.indexOf(Regular(false))
+          val v3t = v3Vals.indexOf(Regular(true))
+          val v5f = v5Vals.indexOf(Regular(false))
+          val v5t = v5Vals.indexOf(Regular(true))
           val selectFactor :: outcomeFactors = ProbFactor.make(v5)
           outcomeFactors.size should equal(2)
           val v1Factor = outcomeFactors(v3Index)
           val v2Factor = outcomeFactors(v4Index)
-          selectFactor.get(List(0, v102, v204)) should be(0.2 / 0.6 plusOrMinus 0.0001)
-          selectFactor.get(List(1, v102, v204)) should be(0.4 / 0.6 plusOrMinus 0.0001)
-          selectFactor.get(List(0, v102, v206)) should be(0.2 / 0.8 plusOrMinus 0.0001)
-          selectFactor.get(List(1, v102, v206)) should be(0.6 / 0.8 plusOrMinus 0.0001)
-          selectFactor.get(List(0, v108, v204)) should be(0.8 / 1.2 plusOrMinus 0.0001)
-          selectFactor.get(List(1, v108, v204)) should be(0.4 / 1.2 plusOrMinus 0.0001)
-          selectFactor.get(List(0, v108, v206)) should be(0.8 / 1.4 plusOrMinus 0.0001)
-          selectFactor.get(List(1, v108, v206)) should be(0.6 / 1.4 plusOrMinus 0.0001)
+          selectFactor.get(List(0, v102, v204)) should be(0.2 / 0.6 +- 0.0001)
+          selectFactor.get(List(1, v102, v204)) should be(0.4 / 0.6 +- 0.0001)
+          selectFactor.get(List(0, v102, v206)) should be(0.2 / 0.8 +- 0.0001)
+          selectFactor.get(List(1, v102, v206)) should be(0.6 / 0.8 +- 0.0001)
+          selectFactor.get(List(0, v108, v204)) should be(0.8 / 1.2 +- 0.0001)
+          selectFactor.get(List(1, v108, v204)) should be(0.4 / 1.2 +- 0.0001)
+          selectFactor.get(List(0, v108, v206)) should be(0.8 / 1.4 +- 0.0001)
+          selectFactor.get(List(1, v108, v206)) should be(0.6 / 1.4 +- 0.0001)
           v1Factor.get(List(0, v5t, v3t)) should equal(1.0)
           v1Factor.get(List(0, v5t, v3f)) should equal(0.0)
           v1Factor.get(List(0, v5f, v3t)) should equal(0.0)
@@ -489,17 +533,17 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
         val v2 = Select(0.1 -> 1, 0.9 -> 2)
         val v3 = Constant(3)
         val v4 = Chain(v1, (b: Boolean) => if (b) v2; else v3)
-        val v1Vals = Values()(v1).toList
-        val v2Vals = Values()(v2).toList
-        val v4Vals = Values()(v4).toList
-        val v1t = v1Vals indexOf true
-        val v1f = v1Vals indexOf false
-        val v21 = v2Vals indexOf 1
-        val v22 = v2Vals indexOf 2
-        val v41 = v4Vals indexOf 1
-        val v42 = v4Vals indexOf 2
-        val v43 = v4Vals indexOf 3
-        Expand()
+        Values()(v4)
+        val v1Vals = Variable(v1).range
+        val v2Vals = Variable(v2).range
+        val v4Vals = Variable(v4).range
+        val v1t = v1Vals indexOf Regular(true)
+        val v1f = v1Vals indexOf Regular(false)
+        val v21 = v2Vals indexOf Regular(1)
+        val v22 = v2Vals indexOf Regular(2)
+        val v41 = v4Vals indexOf Regular(1)
+        val v42 = v4Vals indexOf Regular(2)
+        val v43 = v4Vals indexOf Regular(3)
         val List(v2Factor, v3Factor) = ProbFactor.make(v4)
         v2Factor.get(List(v1t, v41, v21)) should equal(1.0)
         v2Factor.get(List(v1t, v41, v22)) should equal(0.0)
@@ -520,13 +564,14 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
         Universe.createNew()
         val v1 = Select(0.3 -> 1, 0.2 -> 2, 0.5 -> 3)
         val v2 = Apply(v1, (i: Int) => i % 2)
-        val v1Vals = Values()(v1).toList
-        val v2Vals = Values()(v2).toList
-        val v11 = v1Vals indexOf 1
-        val v12 = v1Vals indexOf 2
-        val v13 = v1Vals indexOf 3
-        val v20 = v2Vals indexOf 0
-        val v21 = v2Vals indexOf 1
+        Values()(v2)
+        val v1Vals = Variable(v1).range
+        val v2Vals = Variable(v2).range
+        val v11 = v1Vals indexOf Regular(1)
+        val v12 = v1Vals indexOf Regular(2)
+        val v13 = v1Vals indexOf Regular(3)
+        val v20 = v2Vals indexOf Regular(0)
+        val v21 = v2Vals indexOf Regular(1)
         val List(factor) = ProbFactor.make(v2)
         factor.get(List(v11, v20)) should equal(0.0)
         factor.get(List(v11, v21)) should equal(1.0)
@@ -543,17 +588,18 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
         val v1 = Select(0.3 -> 1, 0.2 -> 2, 0.5 -> 3)
         val v2 = Select(0.5 -> 2, 0.5 -> 3)
         val v3 = Apply(v1, v2, (i: Int, j: Int) => i % j)
-        val v1Vals = Values()(v1).toList
-        val v2Vals = Values()(v2).toList
-        val v3Vals = Values()(v3).toList
-        val v11 = v1Vals indexOf 1
-        val v12 = v1Vals indexOf 2
-        val v13 = v1Vals indexOf 3
-        val v22 = v2Vals indexOf 2
-        val v23 = v2Vals indexOf 3
-        val v30 = v3Vals indexOf 0
-        val v31 = v3Vals indexOf 1
-        val v32 = v3Vals indexOf 2
+        Values()(v3)
+        val v1Vals = Variable(v1).range
+        val v2Vals = Variable(v2).range
+        val v3Vals = Variable(v3).range
+        val v11 = v1Vals indexOf Regular(1)
+        val v12 = v1Vals indexOf Regular(2)
+        val v13 = v1Vals indexOf Regular(3)
+        val v22 = v2Vals indexOf Regular(2)
+        val v23 = v2Vals indexOf Regular(3)
+        val v30 = v3Vals indexOf Regular(0)
+        val v31 = v3Vals indexOf Regular(1)
+        val v32 = v3Vals indexOf Regular(2)
         val List(factor) = ProbFactor.make(v3)
         factor.get(List(v11, v22, v30)) should equal(0.0)
         factor.get(List(v11, v22, v31)) should equal(1.0)
@@ -583,19 +629,20 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
         val v2 = Select(0.5 -> 1, 0.5 -> 2)
         val v3 = Constant(1)
         val v4: Apply3[Int, Int, Int, Int] = Apply(v1, v2, v3, (i: Int, j: Int, k: Int) => i % (j + k))
-        val v1Vals = Values()(v1).toList
-        val v2Vals = Values()(v2).toList
-        val v3Vals = Values()(v3).toList
-        val v4Vals = Values()(v4).toList
-        val v11 = v1Vals indexOf 1
-        val v12 = v1Vals indexOf 2
-        val v13 = v1Vals indexOf 3
-        val v21 = v2Vals indexOf 1
-        val v22 = v2Vals indexOf 2
-        val v31 = v3Vals indexOf 1
-        val v40 = v4Vals indexOf 0
-        val v41 = v4Vals indexOf 1
-        val v42 = v4Vals indexOf 2
+        Values()(v4)
+        val v1Vals = Variable(v1).range
+        val v2Vals = Variable(v2).range
+        val v3Vals = Variable(v3).range
+        val v4Vals = Variable(v4).range
+        val v11 = v1Vals indexOf Regular(1)
+        val v12 = v1Vals indexOf Regular(2)
+        val v13 = v1Vals indexOf Regular(3)
+        val v21 = v2Vals indexOf Regular(1)
+        val v22 = v2Vals indexOf Regular(2)
+        val v31 = v3Vals indexOf Regular(1)
+        val v40 = v4Vals indexOf Regular(0)
+        val v41 = v4Vals indexOf Regular(1)
+        val v42 = v4Vals indexOf Regular(2)
         val List(factor) = ProbFactor.make(v4)
         factor.get(List(v11, v21, v31, v40)) should equal(0.0)
         factor.get(List(v11, v21, v31, v41)) should equal(1.0)
@@ -627,22 +674,23 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
         val v4 = Flip(0.7)
         val v5: Apply4[Int, Int, Int, Boolean, Int] =
           Apply(v1, v2, v3, v4, (i: Int, j: Int, k: Int, b: Boolean) => if (b) 0; else i % (j + k))
-        val v1Vals = Values()(v1).toList
-        val v2Vals = Values()(v2).toList
-        val v3Vals = Values()(v3).toList
-        val v4Vals = Values()(v4).toList
-        val v5Vals = Values()(v5).toList
-        val v11 = v1Vals indexOf 1
-        val v12 = v1Vals indexOf 2
-        val v13 = v1Vals indexOf 3
-        val v21 = v2Vals indexOf 1
-        val v22 = v2Vals indexOf 2
-        val v31 = v3Vals indexOf 1
-        val v4true = v4Vals indexOf true
-        val v4false = v4Vals indexOf false
-        val v50 = v5Vals indexOf 0
-        val v51 = v5Vals indexOf 1
-        val v52 = v5Vals indexOf 2
+        Values()(v5)
+        val v1Vals = Variable(v1).range
+        val v2Vals = Variable(v2).range
+        val v3Vals = Variable(v3).range
+        val v4Vals = Variable(v4).range
+        val v5Vals = Variable(v5).range
+        val v11 = v1Vals indexOf Regular(1)
+        val v12 = v1Vals indexOf Regular(2)
+        val v13 = v1Vals indexOf Regular(3)
+        val v21 = v2Vals indexOf Regular(1)
+        val v22 = v2Vals indexOf Regular(2)
+        val v31 = v3Vals indexOf Regular(1)
+        val v4true = v4Vals indexOf Regular(true)
+        val v4false = v4Vals indexOf Regular(false)
+        val v50 = v5Vals indexOf Regular(0)
+        val v51 = v5Vals indexOf Regular(1)
+        val v52 = v5Vals indexOf Regular(2)
         val List(factor) = ProbFactor.make(v5)
         factor.get(List(v11, v21, v31, v4false, v50)) should equal(0.0)
         factor.get(List(v11, v21, v31, v4false, v51)) should equal(1.0)
@@ -695,24 +743,25 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
         val v6: Apply5[Int, Int, Int, Boolean, Boolean, Int] =
           Apply(v1, v2, v3, v4, v5,
             (i: Int, j: Int, k: Int, b: Boolean, c: Boolean) => if (b || c) 0; else i % (j + k))
-        val v1Vals = Values()(v1).toList
-        val v2Vals = Values()(v2).toList
-        val v3Vals = Values()(v3).toList
-        val v4Vals = Values()(v4).toList
-        val v5Vals = Values()(v5).toList
-        val v6Vals = Values()(v6).toList
-        val v11 = v1Vals indexOf 1
-        val v12 = v1Vals indexOf 2
-        val v13 = v1Vals indexOf 3
-        val v21 = v2Vals indexOf 1
-        val v22 = v2Vals indexOf 2
-        val v31 = v3Vals indexOf 1
-        val v4true = v4Vals indexOf true
-        val v4false = v4Vals indexOf false
-        val v5false = v5Vals indexOf false
-        val v60 = v6Vals indexOf 0
-        val v61 = v6Vals indexOf 1
-        val v62 = v6Vals indexOf 2
+        Values()(v6)
+        val v1Vals = Variable(v1).range
+        val v2Vals = Variable(v2).range
+        val v3Vals = Variable(v3).range
+        val v4Vals = Variable(v4).range
+        val v5Vals = Variable(v5).range
+        val v6Vals = Variable(v6).range
+        val v11 = v1Vals indexOf Regular(1)
+        val v12 = v1Vals indexOf Regular(2)
+        val v13 = v1Vals indexOf Regular(3)
+        val v21 = v2Vals indexOf Regular(1)
+        val v22 = v2Vals indexOf Regular(2)
+        val v31 = v3Vals indexOf Regular(1)
+        val v4true = v4Vals indexOf Regular(true)
+        val v4false = v4Vals indexOf Regular(false)
+        val v5false = v5Vals indexOf Regular(false)
+        val v60 = v6Vals indexOf Regular(0)
+        val v61 = v6Vals indexOf Regular(1)
+        val v62 = v6Vals indexOf Regular(2)
         val List(factor) = ProbFactor.make(v6)
 
         factor.get(List(v11, v21, v31, v4false, v5false, v60)) should equal(0.0)
@@ -761,22 +810,23 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
         val v1 = Select(0.3 -> 1, 0.2 -> 2, 0.5 -> 3)
         val v2 = Select(0.5 -> 4, 0.5 -> 5)
         val v3 = Inject(v1, v2)
+        Values()(v3)
         val List(factor) = ProbFactor.make(v3)
 
-        val v1Vals = Values()(v1).toList
-        val v2Vals = Values()(v2).toList
-        val v3Vals = Values()(v3).toList
-        val v11 = v1Vals indexOf 1
-        val v12 = v1Vals indexOf 2
-        val v13 = v1Vals indexOf 3
-        val v24 = v2Vals indexOf 4
-        val v25 = v2Vals indexOf 5
-        val v314 = v3Vals indexOf List(1, 4)
-        val v315 = v3Vals indexOf List(1, 5)
-        val v324 = v3Vals indexOf List(2, 4)
-        val v325 = v3Vals indexOf List(2, 5)
-        val v334 = v3Vals indexOf List(3, 4)
-        val v335 = v3Vals indexOf List(3, 5)
+        val v1Vals = Variable(v1).range
+        val v2Vals = Variable(v2).range
+        val v3Vals = Variable(v3).range
+        val v11 = v1Vals indexOf Regular(1)
+        val v12 = v1Vals indexOf Regular(2)
+        val v13 = v1Vals indexOf Regular(3)
+        val v24 = v2Vals indexOf Regular(4)
+        val v25 = v2Vals indexOf Regular(5)
+        val v314 = v3Vals indexOf Regular(List(1, 4))
+        val v315 = v3Vals indexOf Regular(List(1, 5))
+        val v324 = v3Vals indexOf Regular(List(2, 4))
+        val v325 = v3Vals indexOf Regular(List(2, 5))
+        val v334 = v3Vals indexOf Regular(List(3, 4))
+        val v335 = v3Vals indexOf Regular(List(3, 5))
 
         factor.get(List(v314, v11, v24)) should equal(1.0)
         factor.get(List(v315, v11, v25)) should equal(1.0)
@@ -828,11 +878,12 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
         val v1 = Select(0.2 -> 1, 0.3 -> 2, 0.5 -> 3)
         v1.setCondition((i: Int) => i != 2)
         v1.setConstraint(((i: Int) => i.toDouble))
+        Values()(v1)
         val List(condFactor, constrFactor, _) = ProbFactor.make(v1)
-        val v1Vals = Values()(v1).toList
-        val v11 = v1Vals indexOf 1
-        val v12 = v1Vals indexOf 2
-        val v13 = v1Vals indexOf 3
+        val v1Vals = Variable(v1).range
+        val v11 = v1Vals indexOf Regular(1)
+        val v12 = v1Vals indexOf Regular(2)
+        val v13 = v1Vals indexOf Regular(3)
         condFactor.get(List(v11)) should equal(1.0)
         condFactor.get(List(v12)) should equal(0.0)
         condFactor.get(List(v13)) should equal(1.0)
@@ -848,10 +899,13 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
       Universe.createNew()
       val x = Flip(0.1)
       val y = Select(0.2 -> 1, 0.3 -> 2, 0.5 -> 3)
+      Values()(x)
+      Values()(y)
       val dependentUniverse = new Universe(List(x, y))
       val u1 = Uniform(0.0, 1.0)("", dependentUniverse)
       val u2 = Uniform(0.0, 2.0)("", dependentUniverse)
       val a = CachingChain(x, y, (x: Boolean, y: Int) => if (x || y < 2) u1; else u2)("a", dependentUniverse)
+      Values(dependentUniverse)(a)
       val evidence = List(NamedEvidence("a", Condition((d: Double) => d < 0.5)))
       val factor =
         ProbFactor.makeDependentFactor(Universe.universe, dependentUniverse, () => ProbEvidenceSampler.computeProbEvidence(20000, evidence)(dependentUniverse))
@@ -861,26 +915,26 @@ class FactorTest extends WordSpec with ShouldMatchers with PrivateMethodTester {
       variables.toSet should equal(Set(xVar, yVar))
       val xIndex = variables indexOf xVar
       val yIndex = variables indexOf yVar
-      val xFalse = xVar.range indexOf false
-      val xTrue = xVar.range indexOf true
-      val y1 = yVar.range indexOf 1
-      val y2 = yVar.range indexOf 2
-      val y3 = yVar.range indexOf 3
+      val xFalse = xVar.range indexOf Regular(false)
+      val xTrue = xVar.range indexOf Regular(true)
+      val y1 = yVar.range indexOf Regular(1)
+      val y2 = yVar.range indexOf Regular(2)
+      val y3 = yVar.range indexOf Regular(3)
       // If x is true or y is 1, pe is 0.5; if both false, 0.25.
       if (xIndex == 0) {
-        factor.get(List(xFalse, y2)) should be(0.25 plusOrMinus 0.01)
-        factor.get(List(xFalse, y3)) should be(0.25 plusOrMinus 0.01)
-        factor.get(List(xFalse, y1)) should be(0.5 plusOrMinus 0.01)
-        factor.get(List(xTrue, y1)) should be(0.5 plusOrMinus 0.01)
-        factor.get(List(xTrue, y2)) should be(0.5 plusOrMinus 0.01)
-        factor.get(List(xTrue, y3)) should be(0.5 plusOrMinus 0.01)
+        factor.get(List(xFalse, y2)) should be(0.25 +- 0.01)
+        factor.get(List(xFalse, y3)) should be(0.25 +- 0.01)
+        factor.get(List(xFalse, y1)) should be(0.5 +- 0.01)
+        factor.get(List(xTrue, y1)) should be(0.5 +- 0.01)
+        factor.get(List(xTrue, y2)) should be(0.5 +- 0.01)
+        factor.get(List(xTrue, y3)) should be(0.5 +- 0.01)
       } else {
-        factor.get(List(y2, xFalse)) should be(0.25 plusOrMinus 0.01)
-        factor.get(List(y3, xFalse)) should be(0.25 plusOrMinus 0.01)
-        factor.get(List(y1, xTrue)) should be(0.5 plusOrMinus 0.01)
-        factor.get(List(y1, xFalse)) should be(0.5 plusOrMinus 0.01)
-        factor.get(List(y2, xFalse)) should be(0.5 plusOrMinus 0.01)
-        factor.get(List(y3, xFalse)) should be(0.5 plusOrMinus 0.01)
+        factor.get(List(y2, xFalse)) should be(0.25 +- 0.01)
+        factor.get(List(y3, xFalse)) should be(0.25 +- 0.01)
+        factor.get(List(y1, xTrue)) should be(0.5 +- 0.01)
+        factor.get(List(y1, xFalse)) should be(0.5 +- 0.01)
+        factor.get(List(y2, xFalse)) should be(0.5 +- 0.01)
+        factor.get(List(y3, xFalse)) should be(0.5 +- 0.01)
       }
     }
   }

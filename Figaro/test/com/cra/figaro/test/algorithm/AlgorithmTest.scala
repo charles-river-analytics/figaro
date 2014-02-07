@@ -13,14 +13,14 @@
 
 package com.cra.figaro.test.algorithm
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
 import scala.collection.mutable.Map
 
-class AlgorithmTest extends WordSpec with ShouldMatchers {
+class AlgorithmTest extends WordSpec with Matchers {
   "An algorithm" should {
     "not allow queries before starting" in {
       Universe.createNew()
@@ -171,7 +171,10 @@ class AlgorithmTest extends WordSpec with ShouldMatchers {
     }
   }
 
-  class SimpleAlgorithm(val f: AtomicFlip) extends ProbQueryAlgorithm(Universe.universe, f) {
+  class SimpleAlgorithm(val f: AtomicFlip) extends ProbQueryAlgorithm {
+    lazy val universe = Universe.universe
+    lazy val queryTargets = List(f)
+    
     val p = f.prob
 
     def doStart() = ()
@@ -196,8 +199,10 @@ class AlgorithmTest extends WordSpec with ShouldMatchers {
       doExpectation(target, (t: T) => if (predicate(t)) 1.0; else 0.0)
   }
 
-  class SimpleAnytime(targets: Element[_]*) extends ProbQueryAlgorithm(Universe.universe, targets: _*)
-    with AnytimeProbQuery {
+  class SimpleAnytime(targets: Element[_]*) extends AnytimeProbQuery {
+    lazy val universe = Universe.universe
+    lazy val queryTargets = targets.toList
+    
     var count = -1000000000
 
     override def initialize() = count = 0

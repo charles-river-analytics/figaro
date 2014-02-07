@@ -19,17 +19,54 @@ import com.cra.figaro.library.decision._
 import com.cra.figaro.util._
 import annotation.tailrec
 import scala.collection._
+import com.cra.figaro.algorithm.lazyfactored._
+import scala.collection.mutable.Set
 
 /**
  * Trait for algorithms that use factors.
  */
 trait FactoredAlgorithm[T] extends Algorithm {
+    
+  /**
+   * Get the elements that are needed by the query target variables and the evidence variables. Also compute the values
+   * of those variables to the given depth. 
+   * Only get factors for elements that are actually used by the target variables. This is more efficient.
+   * Also, it avoids problems when values of unused elements have not been computed.
+   * 
+   * In addition to getting all the needed elements, it determines if any of the conditioned, constrained, or dependent universe parent elements has * in its range.
+   * If any of these elements has * in its range, the lower and upper bounds of factors will be different, so we need to compute both.
+   * If they don't, we don't need to compute bounds. 
+   */
+  def getNeededElements(starterElements: List[Element[_]], depth: Int): (List[Element[_]], Boolean) = {
+    // Make sure we compute values from scratch in case the elements have changed
+    LazyValues.clear(universe)
 
+    // Since there may be evidence on the dependent universes, we have to include their parents as important elements
+    val dependentUniverseParents = 
+      for { 
+        (dependentUniverse, _) <- dependentUniverses.toList
+        parentElement <- dependentUniverse.parentElements
+        if parentElement.universe == universe
+      } yield parentElement
+    val boundsInducingElements = universe.conditionedElements ::: universe.constrainedElements ::: dependentUniverseParents
+    val preImportantElements = starterElements ::: boundsInducingElements 
+    // Any element on which an important element is contingent is also important
+    val importantElements = Element.closeUnderContingencies(Set(preImportantElements:_*))
+    val values = LazyValues(universe)
+    values.expandAll(importantElements.toSet, depth)
+    val resultElements = values.expandedElements.toList
+    val boundsNeeded = boundsInducingElements.exists(LazyValues(universe).storedValues(_).hasStar)
+    // We make sure to clear the variable cache now, once all values have been computed.
+    // This ensures that any created variables will be consistent with the computed values.
+    Variable.clearCache()
+    (resultElements, boundsNeeded)
+  }
+  
   /**
    * All implementations of factored algorithms must specify a way to get the factors from the given universe and
    * dependent universes.
    */
-  def getFactors(targetVariables: Seq[Variable[_]]): List[Factor[T]]
+  def getFactors(neededElements: List[Element[_]], targetElements: List[Element[_]], upperBounds: Boolean = false): List[Factor[T]]
   
   /**
    * The universe on which this variable elimination algorithm should be applied.

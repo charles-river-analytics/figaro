@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.algorithm.factored
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.{ WordSpec, PrivateMethodTester }
 import math.log
 import com.cra.figaro.algorithm._
@@ -26,7 +26,7 @@ import com.cra.figaro.util._
 import com.cra.figaro.test._
 import scala.collection.mutable.Map
 
-class VETest extends WordSpec with ShouldMatchers {
+class VETest extends WordSpec with Matchers {
   "A VEGraph" when {
     "initially" should {
       "associate each element with all its factors and neighbors" in {
@@ -67,6 +67,12 @@ class VETest extends WordSpec with ShouldMatchers {
         val e4 = Flip(0.7)
         val e5 = Constant('a)
         val e6 = Select(0.1 -> 1.5, 0.9 -> 2.5)
+        Values()(e1)
+        Values()(e2)
+        Values()(e3)
+        Values()(e4)
+        Values()(e5)
+        Values()(e6)
         val v1 = Variable(e1)
         val v2 = Variable(e2)
         val v3 = Variable(e3)
@@ -91,6 +97,13 @@ class VETest extends WordSpec with ShouldMatchers {
         val e5 = Constant('a)
         val e6 = Select(0.1 -> 1.5, 0.9 -> 2.5)
         val e7 = Flip(0.9)
+        Values()(e1)
+        Values()(e2)
+        Values()(e3)
+        Values()(e4)
+        Values()(e5)
+        Values()(e6)
+        Values()(e7)
         val v1 = Variable(e1)
         val v2 = Variable(e2)
         val v3 = Variable(e3)
@@ -174,6 +187,14 @@ class VETest extends WordSpec with ShouldMatchers {
         val e6 = Select(0.1 -> 1.5, 0.9 -> 2.5)
         val e7 = Flip(0.9)
         val e8 = Flip(0.3)
+        Values()(e1)
+        Values()(e2)
+        Values()(e3)
+        Values()(e4)
+        Values()(e5)
+        Values()(e6)
+        Values()(e7)
+        Values()(e8)
         val v1 = Variable(e1)
         val v2 = Variable(e2)
         val v3 = Variable(e3)
@@ -340,16 +361,23 @@ class VETest extends WordSpec with ShouldMatchers {
       test(d, (b: Boolean) => b, 0.73)
     }
 
-    "on a different universe from the current universe, produce the correct result" in {
+    "with elements that are not used by the query or evidence, produce the correct result" in {
       val u1 = Universe.createNew()
       val u = Select(0.25 -> 0.3, 0.25 -> 0.5, 0.25 -> 0.7, 0.25 -> 0.9)
       val f = Flip(u)
       val a = If(f, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
+      test(f, (b: Boolean) => b, 0.6)
+    }
+    
+    "on a different universe from the current universe, produce the correct result" in {
+      val u1 = Universe.createNew()
+      val u = Select(0.25 -> 0.3, 0.25 -> 0.5, 0.25 -> 0.7, 0.25 -> 0.9)
+      val f = Flip(u)
       Universe.createNew()
       val tolerance = 0.0000001
       val algorithm = VariableElimination(f)(u1)
       algorithm.start()
-      algorithm.probability(f, (b: Boolean) => b) should be(0.6 plusOrMinus tolerance)
+      algorithm.probability(f, (b: Boolean) => b) should be(0.6 +- tolerance)
       algorithm.kill()
     }
 
@@ -400,7 +428,7 @@ class VETest extends WordSpec with ShouldMatchers {
       val unnormalizedPXTrue = 0.1 * peGivenXTrue
       val unnormalizedPXFalse = 0.9 * peGivenXFalse
       val pXTrue = unnormalizedPXTrue / (unnormalizedPXTrue + unnormalizedPXFalse)
-      ve.probability(x, true) should be(pXTrue plusOrMinus 0.01)
+      ve.probability(x, true) should be(pXTrue +- 0.01)
       ve.kill()
     }
 
@@ -412,7 +440,7 @@ class VETest extends WordSpec with ShouldMatchers {
       // Probability of y should be (0.1 * 0.2 + 0.9 * 0.2) / (0.1 * 0.2 + 0.9 * 0.2 + 0.9 * 0.8) (because the case where x is true and y is false has been ruled out)
       val ve = VariableElimination(y)
       ve.start()
-      ve.probability(y, true) should be(((0.1 * 0.2 + 0.9 * 0.2) / (0.1 * 0.2 + 0.9 * 0.2 + 0.9 * 0.8)) plusOrMinus 0.0000000001)
+      ve.probability(y, true) should be(((0.1 * 0.2 + 0.9 * 0.2) / (0.1 * 0.2 + 0.9 * 0.2 + 0.9 * 0.8)) +- 0.0000000001)
     }
   }
 
@@ -438,12 +466,12 @@ class VETest extends WordSpec with ShouldMatchers {
       alg.mostLikelyValue(e4) should equal(true)
     }
   }
-
+  
   def test[T](target: Element[T], predicate: T => Boolean, prob: Double) {
     val tolerance = 0.0000001
     val algorithm = VariableElimination(target)
     algorithm.start()
-    algorithm.probability(target, predicate) should be(prob plusOrMinus tolerance)
+    algorithm.probability(target, predicate) should be(prob +- tolerance)
     algorithm.kill()
   }
 }

@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.example
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
@@ -24,7 +24,7 @@ import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.language._
 import com.cra.figaro.test._
 
-class FairCoinTest extends WordSpec with ShouldMatchers {
+class FairCoinTest extends WordSpec with Matchers {
   "A simple FairCoinTest" should {
     "produce the correct probability under expectation maximization" taggedAs (ExampleTest) in {
      test()
@@ -73,7 +73,7 @@ class FairCoinTest extends WordSpec with ShouldMatchers {
     println("The probability of a coin with this fairness showing 'heads' is: ")
     println(coin.prob)
     //62/(62+38)
-    coin.prob should be (0.72 plusOrMinus (0.01))
+    coin.prob should be (0.72 +- (0.01))
     val t1 = fairness.getLearnedElement
     val t2 = fairness.getLearnedElement
     
@@ -83,7 +83,7 @@ class FairCoinTest extends WordSpec with ShouldMatchers {
     alg.start()
     println("The probability of two coins that exhibit this fairness showing the same side is: " + alg.probability(equal, true))
     //.62*.62 + .38*.38
-    alg.probability(equal, true) should be (0.60 plusOrMinus(0.01))
+    alg.probability(equal, true) should be (0.60 +-(0.01))
     
     alg.kill()
 

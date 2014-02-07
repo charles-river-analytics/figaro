@@ -18,16 +18,17 @@ import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
 import com.cra.figaro.util
 import scala.collection.mutable.{ Set, Map }
+import com.cra.figaro.algorithm.lazyfactored._
 
 /**
  * Variable elimination algorithm to compute the most probable explanation.
  * 
  * @param showTiming Produce timing information on steps of the algorithm
  */
-class MPEVariableElimination(universe: Universe)(
+class MPEVariableElimination(override val universe: Universe)(
   val showTiming: Boolean,
   val dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
-  val dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double) extends MPEAlgorithm(universe) with OneTimeMPE with ProbabilisticVariableElimination {
+  val dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double) extends OneTimeMPE with ProbabilisticVariableElimination {
 
   override val comparator = Some((x: Double, y: Double) => x < y)
   override val semiring = MaxProductSemiring
@@ -44,7 +45,7 @@ class MPEVariableElimination(universe: Universe)(
 
   private def backtrackOne[T](factor: Factor[_], variable: Variable[T]): Unit = {
     val indices =
-      for { variable <- factor.variables } yield util.indices(variable.range, getMaximizer(variable)).head
+      for { variable <- factor.variables } yield util.indices(variable.range, Regular(getMaximizer(variable))).head
     maximizers += variable -> factor.get(indices)
   }
 

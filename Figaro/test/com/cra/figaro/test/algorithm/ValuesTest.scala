@@ -13,14 +13,14 @@
 
 package com.cra.figaro.test.algorithm
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm._
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.library.compound._
 
-class ValuesTest extends WordSpec with ShouldMatchers {
+class ValuesTest extends WordSpec with Matchers {
   "Values.Values" when {
     "given a Constant element" should {
       "return a set containing only the constant value" in {
@@ -219,13 +219,6 @@ class ValuesTest extends WordSpec with ShouldMatchers {
         assert(s exists ((q: Seq[Int]) => q.toList == List(2, 4)))
         assert(s exists ((q: Seq[Int]) => q.toList == List(2, 5)))
         s.size should equal(6)
-      }
-    }
-
-    "given a non-enumerable element such as Uniform" should {
-      "throw UnsupportedAlgorithmException" in {
-        Universe.createNew()
-        evaluating { Values()(Uniform(0.0, 1.0)) } should produce[UnsupportedAlgorithmException]
       }
     }
 

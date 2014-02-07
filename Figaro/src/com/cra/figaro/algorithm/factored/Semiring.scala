@@ -101,6 +101,27 @@ object SumProductSemiring extends Semiring[Double] {
   val one = 1.0
 }
 
+/**
+ * Semiring for computing sums and products with lower and upper bounds.
+ */
+object BoundsSumProductSemiring extends Semiring[(Double, Double)] {
+  def product(x: (Double, Double), y: (Double, Double)) = {
+    val (lx, ux) = x
+    val (ly, uy) = y
+    (lx * ly, ux * uy)
+  }
+  
+  def sum(x: (Double, Double), y: (Double, Double)) = {
+    val (lx, ux) = x
+    val (ly, uy) = y
+    (lx + ly, ux + uy)
+  }
+  
+  val zero = (0.0, 0.0)
+  
+  val one = (1.0, 1.0)
+}
+
 object MaxProductSemiring extends Semiring[Double] {
   /**
    * Standard multiplication

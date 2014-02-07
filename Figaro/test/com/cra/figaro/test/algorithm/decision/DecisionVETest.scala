@@ -13,12 +13,14 @@
 
 package com.cra.figaro.test.algorithm.decision
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.{ WordSpec, PrivateMethodTester }
 import math.log
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.decision._
 import com.cra.figaro.algorithm.factored._
+import com.cra.figaro.algorithm.lazyfactored._
+import ProbFactor._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.test.PerformanceTest
 import com.cra.figaro.library.decision._
@@ -29,7 +31,7 @@ import com.cra.figaro.util._
 import com.cra.figaro.test.algorithm.decision.DecisionTestCases._
 import scala.collection.mutable.Map
 
-class DecisionVETest extends WordSpec with ShouldMatchers {
+class DecisionVETest extends WordSpec with Matchers {
 
   "A VEGraph" when {
 
@@ -67,7 +69,7 @@ class DecisionVETest extends WordSpec with ShouldMatchers {
 
       "replace the old strategy" in {
         val (d, alg) = DecisionDiscrete((e1: List[Element[Double]], e2: Decision[Int, Boolean]) => DecisionVariableElimination(e1, e2))
-        val v = VariableElimination(d)
+        val v = VariableElimination.debugged(d)
         v.start()
         v.probability(d, true) should equal(.75 * .5)
         v.probability(d, false) should equal(1 - .75 * .5)

@@ -13,7 +13,8 @@
 
 package com.cra.figaro.library.atomic.discrete
 
-import com.cra.figaro.algorithm._
+import com.cra.figaro.algorithm.ValuesMaker
+import com.cra.figaro.algorithm.lazyfactored.ValueSet
 import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
@@ -59,7 +60,7 @@ class AtomicBinomial(name: Name[Int], n: Int, p: Double, collection: ElementColl
   /**
    * Return the range of values of the element.
    */
-  def makeValues = (for { i <- 0 to n } yield i).toSet
+  def makeValues(depth: Int) = ValueSet.withoutStar((for { i <- 0 to n } yield i).toSet)
 
   /**
    * Convert an element into a list of factors.
@@ -67,8 +68,8 @@ class AtomicBinomial(name: Name[Int], n: Int, p: Double, collection: ElementColl
   def makeFactors = {
     val binVar = Variable(this)
     val factor = new Factor[Double](List(binVar))
-    for { (value, index) <- binVar.range.zipWithIndex } {
-      factor.set(List(index), density(value))
+    for { (xvalue, index) <- binVar.range.zipWithIndex } {
+      factor.set(List(index), density(xvalue.value))
     }
     List(factor)
   }
