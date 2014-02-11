@@ -66,7 +66,7 @@
 		<delete dir="${test-reports.dir}" includeemptydirs="true" quiet="true" />
 	</target>
 
-	<target name="init">
+	<target name="init" depends="clean">
 
 		<!-- check for required tools -->
 		<fail message="Missing SCALA_HOME variable in OS environment">
