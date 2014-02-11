@@ -13,7 +13,7 @@
 
 package com.cra.figaro.algorithm.lazyfactored
 
-import com.cra.figaro.algorithm.{LazyAlgorithm, ProbQueryAlgorithm, Expand}
+import com.cra.figaro.algorithm.{LazyAlgorithm, ProbQueryAlgorithm}
 import com.cra.figaro.language.{Element, Universe}
 import com.cra.figaro.algorithm.factored._
 import scala.annotation.tailrec
