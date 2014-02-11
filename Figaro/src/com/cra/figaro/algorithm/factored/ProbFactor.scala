@@ -498,11 +498,25 @@ object ProbFactor {
       case _ => throw new UnsupportedAlgorithmException(elem)
     }
 
-  private def makeNonConstraintFactorsUncached[T](elem: Element[T]): List[Factor[Double]] =
-    Abstraction.fromPragmas(elem.pragmas) match {
-      case None => concreteFactors(elem)
-      case Some(abstraction) => makeAbstract(elem, abstraction)
+  private def makeNonConstraintFactorsUncached[T](elem: Element[T]): List[Factor[Double]] = {
+    /*
+     * Don't make non-constraint factors for an element that is expanded to depth -1.
+     * The element must take on the value *, so the factor is the unit.
+     * Attempting to create a factor can result in problems where the element's arguments are not star, 
+     * leading to the factor being zero everywhere.
+     * For example, consider an Apply. If the Apply is expanded to depth -1, but its argument has already
+     * been expanded and produced a set of values without *, the Apply factor would have probability zero
+     * for cases where the Apply result is *. But since the Apply has only been expanded to depth -1,
+     * its only possible result is *, so the factor is zero everywhere.
+     */
+    if (LazyValues(elem.universe).expandedDepth(elem).get != -1) {
+      Abstraction.fromPragmas(elem.pragmas) match {
+        case None => concreteFactors(elem)
+        case Some(abstraction) => makeAbstract(elem, abstraction)
+      }
     }
+    else List()
+  }
 
   private def makeConditionAndConstraintFactors[T](elem: Element[T]): List[Factor[Double]] =
     elem.allConditions.map(makeConditionFactor(elem, _)) ::: elem.allConstraints.map(makeConstraintFactor(elem, _))

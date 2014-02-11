@@ -36,13 +36,16 @@ class LazyVETest extends WordSpec with Matchers {
     }
 
     "given a simple two-level chain with a condition" should {
-      "produce the correct depth 1 approximation" in {
+      "produce the correct depth 2 approximation" in {
     	Universe.createNew()
+    	// This is designed so that depth 2 catches the check and its Flip arguments, but not the inner Flips of the two level chain.
     	val outerIf = twoLevelChain
-    	val check = If(outerIf, Flip(0.6), Flip(0.3))
+    	val apply = Apply(outerIf, (b: Boolean) => b)
+    	val check = If(apply, Flip(0.6), Flip(0.3))
     	check.observe(true)
-        val alg = new LazyVariableElimination(outerIf)
+        val alg = new LazyVariableElimination(apply)
     	alg.start()
+    	alg.pump()
     	val trueWeight = 0.1 * 0.2 * 0.6
     	val falseWeight = 0.1 * 0.8 * 0.3
     	val starWeightLower = 0
@@ -51,19 +54,21 @@ class LazyVETest extends WordSpec with Matchers {
     	val upperZ = trueWeight + falseWeight + starWeightUpper
     	val trueLower = trueWeight / upperZ
     	val falseLower = falseWeight / upperZ
-    	alg.probabilityBounds(outerIf, true)._1 should be (trueLower +- 0.000000001)
-    	alg.probabilityBounds(outerIf, false)._1 should be (falseLower +- 0.000000001)
-    	alg.probabilityBounds(outerIf, true)._2 should be ((1 - falseLower) +- 0.000000001)
-    	alg.probabilityBounds(outerIf, false)._2 should be ((1 - trueLower) +- 0.000000001)
+    	alg.probabilityBounds(apply, true)._1 should be (trueLower +- 0.000000001)
+    	alg.probabilityBounds(apply, false)._1 should be (falseLower +- 0.000000001)
+    	alg.probabilityBounds(apply, true)._2 should be ((1 - falseLower) +- 0.000000001)
+    	alg.probabilityBounds(apply, false)._2 should be ((1 - trueLower) +- 0.000000001)
       }
       
-      "produce the correct depth 2 perfect answer" in {
+      "produce the correct depth 3 perfect answer" in {
     	Universe.createNew()
     	val outerIf = twoLevelChain
-    	val check = If(outerIf, Flip(0.6), Flip(0.3))
+    	val apply = Apply(outerIf, (b: Boolean) => b)
+    	val check = If(apply, Flip(0.6), Flip(0.3))
     	check.observe(true)
-        val alg = new LazyVariableElimination(outerIf)
+        val alg = new LazyVariableElimination(apply)
     	alg.start()
+    	alg.pump()
     	alg.pump()
     	val pInner = 0.3 * 0.4 + 0.7 * 0.5 
     	val pOuterT = 0.1 * 0.2 + 0.9 * pInner
@@ -71,10 +76,10 @@ class LazyVETest extends WordSpec with Matchers {
     	val qOuterT = pOuterT * 0.6
     	val qOuterF = pOuterF * 0.3
     	val pOuter = qOuterT / (qOuterF + qOuterT)
-    	alg.probabilityBounds(outerIf, true)._1 should be (pOuter +- 0.000000001)
-    	alg.probabilityBounds(outerIf, false)._1 should be ((1 - pOuter) +- 0.000000001)
-    	alg.probabilityBounds(outerIf, true)._2 should be (pOuter +- 0.000000001)
-    	alg.probabilityBounds(outerIf, false)._2 should be ((1 - pOuter) +- 0.000000001)
+    	alg.probabilityBounds(apply, true)._1 should be (pOuter +- 0.000000001)
+    	alg.probabilityBounds(apply, false)._1 should be ((1 - pOuter) +- 0.000000001)
+    	alg.probabilityBounds(apply, true)._2 should be (pOuter +- 0.000000001)
+    	alg.probabilityBounds(apply, false)._2 should be ((1 - pOuter) +- 0.000000001)
       } 
     }
 

@@ -72,7 +72,7 @@ with LazyAlgorithm {
       for { variable <- allVars } {
         variable match {
           case elemVar: /*Extended*/ElementVariable[_] =>
-            println(variable.id + "(" + elemVar.element.name.string + ")" + ": " + elemVar.element) 
+            println(variable.id + "(" + elemVar.element.name.string + ")" + "@" + elemVar.element.hashCode + ": " + elemVar.element) 
           case _ =>
             println(variable.id + ": not an element variable")
         }

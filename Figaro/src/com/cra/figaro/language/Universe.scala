@@ -140,6 +140,11 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
     elemGraphBuilder(List[(Element[_], Set[Element[_]])]() :+ (elem, Set[Element[_]]()), myUsedBy, myRecursiveUsedBy)
     myRecursiveUsedBy.getOrElse(elem, Set())
   }
+  
+  /**
+   * Returns the set of elements that are directly used by the given element, without recursing.
+   */
+  def directlyUsedBy(elem: Element[_]): Set[Element[_]] = myUsedBy.getOrElse(elem, Set())
 
   private[figaro] def registerUses[T, U](user: Element[T], used: Element[U]): Unit = {
     if (!(myUses contains user)) myUses += user -> Set()

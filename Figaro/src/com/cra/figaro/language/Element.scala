@@ -190,15 +190,32 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   private[figaro] type Contingency = Element.Contingency
   private[figaro] type ElemVal[T] = Element.ElemVal[T]
 
+  // TODO: REMOVE
+  /*
   private val contigentElements: Set[Element[_]] = Set()
   /** Elements on which this element is contingent. */
   def myContigentElements = contigentElements.toList
-
+  
   private def addContigentElement(e: Element[_]) = if (!contigentElements.contains(e)) {
     universe.registerUses(this, e)
     contigentElements.add(e)
   }
-
+*/
+  
+  def contingentElements: Set[Element[_]] = {
+    val conditionElements = 
+      for {
+        (condition, contingency) <- myConditions
+        Element.ElemVal(element, value) <- contingency 
+      } yield element
+    val constraintElements = 
+      for {
+        (constraint, contingency) <- myConstraints
+        Element.ElemVal(element, value) <- contingency 
+      } yield element
+    Set((conditionElements ::: constraintElements):_*)
+  }
+  
   private var myConditions: List[(Condition, Contingency)] = List()
 
   /** All the conditions defined on this element.*/
@@ -234,7 +251,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   /** Add the given condition to the existing conditions of the element. By default, the contingency is empty. */
   def addCondition(condition: Condition, contingency: Contingency = List()): Unit = {
     universe.makeConditioned(this)
-    contingency.foreach(ev => addContigentElement(ev.elem))
+    //contingency.foreach(ev => addContigentElement(ev.elem)) TODO REMOVE
     myConditions ::= (condition, contingency)
   }
 
@@ -299,7 +316,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    */
   def addConstraint(constraint: Constraint, contingency: Contingency = List()): Unit = {
     universe.makeConstrained(this)
-    contingency.foreach(ev => addContigentElement(ev.elem))
+    // contingency.foreach(ev => addContigentElement(ev.elem)) TODO remove
     myConstraints ::= (constraint, contingency)
   }
 
@@ -500,14 +517,15 @@ object Element {
   type Contingency = List[ElemVal[_]]
   
   /**
-   * Returns the given elements and all elements on which they are contingent, closed recursively
+   * Returns the given elements and all elements on which they are contingent, closed recursively.
+   * Only elements with condition
    */
-  def closeUnderContingencies(elements: Set[Element[_]]): Set[Element[_]] = {
-    def findContingent(elements: Set[Element[_]]): Set[Element[_]] = {
+  def closeUnderContingencies(elements: scala.collection.Set[Element[_]]): scala.collection.Set[Element[_]] = {
+    def findContingent(elements: scala.collection.Set[Element[_]]): scala.collection.Set[Element[_]] = {
       // Find all elements not in the input set that the input set is contingent on
       for {
-        element <- elements
-        contingent <- element.myContigentElements
+        element <- elements   
+        contingent <- element.contingentElements
         if !elements.contains(contingent)
       } yield contingent
     }

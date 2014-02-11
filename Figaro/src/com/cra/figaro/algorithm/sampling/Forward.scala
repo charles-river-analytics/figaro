@@ -70,7 +70,7 @@ object Forward {
           case _ =>
             // avoiding recursion
             var state1 = state
-            var argsRemaining = (element.args ::: element.myContigentElements)
+            var argsRemaining = (element.args ::: element.contingentElements.toList)
             while (!argsRemaining.isEmpty) {
               state1 = sampleInState(argsRemaining.head, state1, universe)
               argsRemaining = argsRemaining.tail

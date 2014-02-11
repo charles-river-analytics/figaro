@@ -108,7 +108,7 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
         c.value = sampleOne(state, c.get(parentValue))
         c.value
       case _ =>
-        (element.args ::: element.myContigentElements) foreach (sampleOne(state, _))
+        (element.args ::: element.contingentElements.toList) foreach (sampleOne(state, _))
         element.randomness = element.generateRandomness()
         element.value = element.generateValue(element.randomness)
         element.value
