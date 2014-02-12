@@ -92,7 +92,7 @@ trait FactoredAlgorithm[T] extends Algorithm {
           depth = values.expandedDepth(currentlyExpanded).getOrElse(0)
           (otherElement, otherDepth) <- chaseDown(currentlyExpanded, depth, values.expandedElements.toSet)
           if boundsInducingElements.contains(otherElement)
-          neededElement <- otherElement.contingentElements + otherElement
+          neededElement <- otherElement.elementsIAmContingentOn + otherElement
         } yield {
           (neededElement, otherDepth)
         }

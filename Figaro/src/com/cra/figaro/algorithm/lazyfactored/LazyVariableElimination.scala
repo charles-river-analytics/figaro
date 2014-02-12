@@ -91,24 +91,26 @@ with LazyAlgorithm {
     factorsAfterElimination
   }
   
+  /* 
+   * Determine if the second row can be absorbed into the first. This is true iff, for each position, either the second value is *
+   * or they are equal.
+   */
+  private  def pairConsistent(range: Array[Extended[_]], index1: Int, index2: Int): Boolean = {
+    val x1 = range(index1)
+    val x2 = range(index2)
+    x1 == x2 || !x2.isRegular
+  }
+
+  private def consistent(ranges: List[Array[Extended[_]]], indices1: List[Int], indices2: List[Int]): Boolean = {
+    (ranges.zip(indices1).zip(indices2)).forall{ case ((range, indices1), indices2) => pairConsistent(range, indices1, indices2) }
+  }
+
+  /*
+   * We use the mathematician's solution. Finalizing with no bounds is the same as finalizing with equal lower and upper bounds,
+   * so we just delegate to normalizeAndAbsorbWithBounds.
+   */
   private def normalizeAndAbsorbNoBounds(factor: Factor[Double]): Factor[(Double, Double)] = {
-    def hasStar(indices: List[Int]) = factor.variables.zip(indices).exists((pair: (Variable[_], Int)) => !pair._1.range(pair._2).isRegular)
-    val result = new Factor[(Double, Double)](factor.variables)
-    var total = 0.0
-    var starTotal = 0.0
-    val allIndices = factor.allIndices
-    allIndices.foreach((indices: List[Int]) => {
-      val entry = factor.get(indices)
-      total += entry
-      if (hasStar(indices)) starTotal += entry 
-    })
-    allIndices.foreach((indices: List[Int]) => {
-      val entry = factor.get(indices)
-      // TODO: We should only absorb probability of star into consistent rows
-      val fullUpper = if (hasStar(indices)) entry; else entry + starTotal // The star may be resolved to any particular value - this is absorbing
-      result.set(indices, (entry / total, (fullUpper / total).min(1.0)))
-    })
-    result
+    normalizeAndAbsorbWithBounds(factor, factor)
   }
   
   /*
@@ -135,25 +137,7 @@ with LazyAlgorithm {
   private def normalizeAndAbsorbWithBounds(lowerFactor: Factor[Double], upperFactor: Factor[Double]): Factor[(Double, Double)] = {
     assert(lowerFactor.variables == upperFactor.variables)
 
-    val ranges = lowerFactor.variables.map(_.range.toArray)
-
-    /*
-     * Determine if the given row contains a *.
-     */
-    def hasStar(indices: List[Int]) = ranges.zip(indices).exists{ case (range, index) => range(index).isRegular }
-
-    /* 
-     * Determine if the second row can be absorbed into the first. This is true iff, for each position, either the second value is *
-     * or they are equal.
-     */
-    def pairConsistent[T](range: Array[Extended[T]], index1: Int, index2: Int): Boolean = {
-      val x1 = range(index1)
-      val x2 = range(index2)
-      x1 == x2 || !x2.isRegular
-    }
-    def consistent(indices1: List[Int], indices2: List[Int]): Boolean = {
-      (ranges.zip(indices1).zip(indices2)).forall{ case ((range, indices1), indices2) => pairConsistent(range, indices1, indices2) }
-    }
+    val ranges: List[Array[Extended[_]]] = lowerFactor.variables.map(_.range.toArray[Extended[_]])
 
     /*
      * First, we compute the sum of unnormalized lower and upper bounds.
@@ -177,7 +161,7 @@ with LazyAlgorithm {
     for { (indices, i) <- allIndicesIndexed } { lowerBounds(i) = lowerFactor.get(indices) / upperTotal }
   
     /*
-     * There are two possible upper bounda of a row.
+     * There are two possible upper bounds of a row.
      * The first is 1 - the definite lower bounds of incompatible rows.
      * The second is the sum of all compatible rows' unnormalized upper bounds
      * divided by the lower bound on the normalizing factor.
@@ -188,7 +172,7 @@ with LazyAlgorithm {
       var inconsistentLowerTotal = 0.0
       var consistentUpperTotal = 0.0
       for { (otherIndices, j) <- allIndicesIndexed } {
-        if (!consistent(indices, otherIndices)) inconsistentLowerTotal += lowerBounds(j)
+        if (!consistent(ranges, indices, otherIndices)) inconsistentLowerTotal += lowerBounds(j)
         else consistentUpperTotal += upperFactor.get(otherIndices)
       }
       upperBounds(i) = (1.0 - inconsistentLowerTotal).min(consistentUpperTotal / lowerTotal)
@@ -217,7 +201,7 @@ with LazyAlgorithm {
   def probabilityBounds[T](target: Element[_], value: T): (Double, Double) = {
     require(targetElements contains target)
     val index = Variable(target).range.indexOf(Regular(value))
-    if (index == -1) (0, 1) // TODO: Not found means this value hasn't been produced yet. We could do better and compute an upper bound
+    if (index == -1) (0, 1) 
     else targetFactors(target).get(List(index))
   }
 

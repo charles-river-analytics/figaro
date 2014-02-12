@@ -158,7 +158,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
               val d = DirichletParameter(alphas: _*)
               val outcomes = List(2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23)
               val outcome = Select(d, outcomes: _*)
-              val algorithm = ExpectationMaximization(1/* 1000 TODO */, d)
+              val algorithm = ExpectationMaximization(5, d)
               algorithm.start
 
               val result = d.getLearnedElement(outcomes)

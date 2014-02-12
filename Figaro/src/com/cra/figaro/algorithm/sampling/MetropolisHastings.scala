@@ -214,7 +214,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
    */
   private def proposeAndUpdate(): State = {
     val state1 = runScheme()
-    val updatesNeeded = state1.oldValues.keySet flatMap (universe.usedBy(_))
+    val updatesNeeded = state1.oldValues.keySet flatMap (elem => universe.usedBy(elem))
     updateMany(state1, updatesNeeded)
   }
 
