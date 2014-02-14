@@ -183,7 +183,7 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
     val allElements = universe.activeElements
     
     // Due to Lazy values change, have to force expansion of all elements
-    LazyValues(universe).expandAll(allElements.toSet, Integer.MAX_VALUE)
+    LazyValues(universe).expandAll(allElements.toSet.map((elem: Element[_]) => (elem, Integer.MAX_VALUE)))
     
     val thisUniverseFactors = allElements flatMap (ProbFactor.make(_))
     if (debug) {
