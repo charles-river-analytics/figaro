@@ -191,13 +191,7 @@ class LazyValues(universe: Universe) {
 
   universe.register(memoValues)
 
-  /**
-   * Returns the elements whose values have been computed.
-   */
-  def expandedElements: scala.collection.Set[Element[_]] = memoValues.keySet
-  
-  private var requiredElements: Set[Element[_]] = Set()
-  private var requiredDepth = 0
+  private var requiredDepths: Map[Element[_], Int] = Map()
   
   /*
    * If we increase the depth at which an element was expanded, we need to make sure to recompute the values of elements that depend on them.
@@ -213,10 +207,10 @@ class LazyValues(universe: Universe) {
    * or if a previous call has resulted in a result with no Star, the previous result is reused.
    */
   def apply[T](element: Element[T], depth: Int): ValueSet[T] = {
-    val myDepth = if (requiredElements.contains(element)) depth.max(requiredDepth); else depth
-      if (LazyValues.debug) {
-    	println("Computing values for " + element.toNameString + "@" + element.hashCode + ", depth = " + myDepth)
-      }
+    val myDepth = requiredDepths.getOrElse(element, -1).max(depth)
+    if (LazyValues.debug) {
+      println("Computing values for " + element.toNameString + "@" + element.hashCode + ", depth = " + myDepth)
+    }
     memoValues.get(element) match {
       case Some((result, memoDepth)) if !result.hasStar || memoDepth >= myDepth =>
         if (LazyValues.debug) {
@@ -251,11 +245,19 @@ class LazyValues(universe: Universe) {
    * This code ensures that if there are multiple elements that need to be expanded to a certain depth, then if one uses another, the full value set
    * of the second is used in computing the value set of the first. 
    */
-  def expandAll(elements: Set[Element[_]], depth: Int) = {
-    requiredElements = elements
-    requiredDepth = depth
-    elements.foreach(this(_, depth))
+  def expandAll(elementDepths: scala.collection.Set[(Element[_], Int)]) = {
+    for { (element, depth) <- elementDepths } { 
+      requiredDepths += element -> requiredDepths.getOrElse(element, -1).max(depth) 
+    }
+    for { (element, depth) <- elementDepths } {
+      this(element, depth)
+    }
   }
+  
+  /**
+   * Returns the elements whose values have been computed.
+   */
+  def expandedElements: scala.collection.Set[Element[_]] = memoValues.keySet
   
   /**
    * Returns the previously computed values at maximum depth, if any.
@@ -266,6 +268,13 @@ class LazyValues(universe: Universe) {
       case Some((result, _)) => result.asInstanceOf[ValueSet[T]]
       case None => new ValueSet[T](Set())
     }
+  }
+  
+  /**
+   * Returns the depth to which an element has been expanded, if any.
+   */
+  def expandedDepth[T](element: Element[T]): Option[Int] = {
+    memoValues.get(element).map(_._2)
   }
 
   /*

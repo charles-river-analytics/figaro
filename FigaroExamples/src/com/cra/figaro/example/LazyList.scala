@@ -3,6 +3,7 @@ package com.cra.figaro.example
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound.If
 import com.cra.figaro.algorithm.lazyfactored.LazyVariableElimination
+import com.cra.figaro.algorithm.lazyfactored.LazyValues
 
 object LazyList {
   val universe = Universe.createNew()
@@ -36,6 +37,7 @@ object LazyList {
     alg.start()
     println(alg.currentResult.toReadableString)
     //alg.debug = true
+    //LazyValues.debug = true
     for { i <- 2 to 20 } {
       println("DEPTH " + i)
       alg.pump()

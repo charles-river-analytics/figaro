@@ -141,6 +141,11 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
     elemGraphBuilder(List[(Element[_], Set[Element[_]])]() :+ (elem, Set[Element[_]]()), myUsedBy, myRecursiveUsedBy)
     myRecursiveUsedBy.getOrElse(elem, Set())
   }
+  
+  /**
+   * Returns the set of elements that are directly used by the given element, without recursing.
+   */
+  def directlyUsedBy(elem: Element[_]): Set[Element[_]] = myUsedBy.getOrElse(elem, Set())
 
   private[figaro] def registerUses[T, U](user: Element[T], used: Element[U]): Unit = {
     if (!(myUses contains user)) myUses += user -> Set()
@@ -165,7 +170,7 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
   private[language] def activate(element: Element[_]): Unit = {
     if (element.active)
       throw new IllegalArgumentException("Activating active element")
-    if (element.args exists (!_.active)) // TODO
+    if (element.args exists (!_.active)) 
       throw new IllegalArgumentException("Attempting to activate element with inactive argument")
     myActiveElements.add(element)
     if (!element.isInstanceOf[Deterministic[_]]) myStochasticElements.add(element)

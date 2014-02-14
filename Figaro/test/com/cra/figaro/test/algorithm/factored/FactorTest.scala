@@ -22,6 +22,7 @@ import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.library.compound._
 import com.cra.figaro.algorithm.lazyfactored.{Regular}
+import com.cra.figaro.algorithm.lazyfactored.LazyValues
 
 
 class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
@@ -890,6 +891,17 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         constrFactor.get(List(v11)) should equal(1.0)
         constrFactor.get(List(v12)) should equal(2.0)
         constrFactor.get(List(v13)) should equal(3.0)
+      }
+    }
+    
+    "given an element whose expanded values are only *" should {
+      "produce no factors" in {
+        Universe.createNew()
+        val f = Flip(0.5)
+        val lv = LazyValues()
+        lv.expandAll(Set((f, -1)))
+        val factors = ProbFactor.make(f)
+        factors should be (empty)
       }
     }
   }

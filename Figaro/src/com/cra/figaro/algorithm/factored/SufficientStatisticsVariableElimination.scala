@@ -70,6 +70,8 @@ class SufficientStatisticsVariableElimination(
    * Empty for this algorithm.
    */
   val targetElements = List[Element[_]]()
+  
+  override def starterElements = universe.conditionedElements ++ universe.constrainedElements
 
   private var result: (Double, Map[Parameter[_], Seq[Double]]) = _
 

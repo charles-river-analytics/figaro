@@ -32,6 +32,12 @@ class MPEVariableElimination(override val universe: Universe)(
 
   override val comparator = Some((x: Double, y: Double) => x < y)
   override val semiring = MaxProductSemiring
+  
+  /*
+   * We are trying to find a configuration of all the elements, so we must make them all starter elements for expansion.
+   */
+  override val starterElements = universe.activeElements
+  
   /**
    * Empty for MPE Algorithms
    */
