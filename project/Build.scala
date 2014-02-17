@@ -6,7 +6,7 @@ object FigaroBuild extends Build {
   val _scalaVersion = "2.10.1"
 
   lazy val figaro = Project("figaro", file("Figaro"))
-    .settings(version := "2.0.0.0")
+    .settings(version := "2.1.0.0")
     .settings(scalaVersion := _scalaVersion)
     .settings(scalaSource in Compile <<= baseDirectory { _ / "src" })
     .settings(scalaSource in Test <<= baseDirectory { _ / "test" })
