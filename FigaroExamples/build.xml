@@ -2,7 +2,7 @@
 
 <project name="FigaroExamples" default="build" basedir=".">
 	<description>Project Build Script</description>
-	<property name="version" value="2.0.0.0" />
+	<property name="version" value="2.1.0.0" />
 	<property environment="env" />
 
 	<!-- variables for paths and files -->
@@ -32,7 +32,7 @@
 	
 	<path id="project.classpath">
 		<path refid="scala-library" />
-		<pathelement location="${lib.dir}/figaro_2.0.0.0.jar" />
+		<pathelement location="${lib.dir}/figaro_2.1.0.0.jar" />
 		<pathelement location="${build-classes.dir}" />
 	</path>
 
