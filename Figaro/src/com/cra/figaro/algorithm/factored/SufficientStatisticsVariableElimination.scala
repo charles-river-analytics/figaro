@@ -29,7 +29,7 @@ import scala.collection.mutable.{ Map, Set }
 class SufficientStatisticsVariableElimination(
   parameterMap: immutable.Map[Parameter[_], Seq[Double]],
   val universe: Universe)
-  extends VariableElimination[(Double, Map[Parameter[_], Seq[Double]])] with Algorithm {
+  extends VariableElimination[(Double, Map[Parameter[_], Seq[Double]])] {
 
   /**
    * No timing information enabled for this algorithm.
@@ -48,16 +48,18 @@ class SufficientStatisticsVariableElimination(
   /**
    *  Particular implementations of probability of evidence algorithms must define the following method. 
    */
-  def getFactors(targetVariables: Seq[Variable[_]]): List[Factor[(Double, mutable.Map[Parameter[_], Seq[Double]])]] = {
-
-    val allElements = universe.activeElements.filter(p => p.isInstanceOf[Parameter[_]] == false)
-    val thisUniverseFactors = allElements flatMap (statFactor.make(_))
+  def getFactors(neededElements: List[Element[_]], targetElements: List[Element[_]], upper: Boolean = false): List[Factor[(Double, mutable.Map[Parameter[_], Seq[Double]])]] = {
+    val allElements = neededElements.filter(p => p.isInstanceOf[Parameter[_]] == false)
 
     if (debug) {
-      println("Element ids:")
-      for { element <- universe.activeElements } { println(Variable(element).id + ": " + element) }
+      println("Elements appearing in factors and their ranges:")
+      for { element <- allElements } { 
+        println(Variable(element).id + "(" + element.name.string + "@" + element.hashCode + ")" + ": " + element + ": " + Variable(element).range.mkString(",")) 
+      }
     }
 
+    ProbFactor.removeFactors()
+    val thisUniverseFactors = allElements flatMap (statFactor.make(_))
     val dependentUniverseFactors =
       for { (dependentUniverse, evidence) <- dependentUniverses } yield statFactor.makeDependentFactor(universe, dependentUniverse, dependentAlgorithm(dependentUniverse, evidence))
 
@@ -68,12 +70,15 @@ class SufficientStatisticsVariableElimination(
    * Empty for this algorithm.
    */
   val targetElements = List[Element[_]]()
+  
+  override def starterElements = universe.conditionedElements ++ universe.constrainedElements
 
   private var result: (Double, Map[Parameter[_], Seq[Double]]) = _
 
   def finish(factorsAfterElimination: Set[Factor[(Double, Map[Parameter[_], Seq[Double]])]], eliminationOrder: List[Variable[_]]): Unit = {
-
-    val finalFactor = factorsAfterElimination.reduce(_.product(_, semiring.product))
+    // It is possible that there are no factors (this will happen if there is no evidence).
+    // Therefore, we start with the unit factor and use foldLeft, instead of simply reducing the factorsAfterElimination.
+    val finalFactor = factorsAfterElimination.foldLeft(Factor.unit(semiring))(_.product(_, semiring))
     finalFactor.variables.size match {
       case 0 => result = finalFactor.get(List())
       case _ => throw new RuntimeException("Final factor has variables")
@@ -101,4 +106,3 @@ class SufficientStatisticsVariableElimination(
 object SufficientStatisticsVariableElimination {
   def apply(parameterMap : immutable.Map[Parameter[_], Seq[Double]])(implicit universe: Universe) = new SufficientStatisticsVariableElimination(parameterMap,universe)
 }
-

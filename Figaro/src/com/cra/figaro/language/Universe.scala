@@ -20,6 +20,7 @@ import scala.annotation.tailrec
 import scala.collection.mutable.{ Set, Map }
 import scala.language.{ implicitConversions, existentials }
 import java.lang.IllegalArgumentException
+import scala.collection.generic.Shrinkable
 
 /**
  * A universe is a collection of elements that can be used by a reasoning algorithm.
@@ -45,7 +46,7 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
   /** Elements in the universe that are not defined in the context of another element. */
   def permanentElements: List[Element[_]] = myActiveElements.toList filterNot (_.isTemporary)
 
-  private val myConditionedElements: Set[Element[_]] = Set()
+  private val myConditionedElements: Set[Element[_]] = Set()  
 
   /** Elements in the universe that have had a condition applied to them. */
   def conditionedElements: List[Element[_]] = myConditionedElements.toList
@@ -140,6 +141,11 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
     elemGraphBuilder(List[(Element[_], Set[Element[_]])]() :+ (elem, Set[Element[_]]()), myUsedBy, myRecursiveUsedBy)
     myRecursiveUsedBy.getOrElse(elem, Set())
   }
+  
+  /**
+   * Returns the set of elements that are directly used by the given element, without recursing.
+   */
+  def directlyUsedBy(elem: Element[_]): Set[Element[_]] = myUsedBy.getOrElse(elem, Set())
 
   private[figaro] def registerUses[T, U](user: Element[T], used: Element[U]): Unit = {
     if (!(myUses contains user)) myUses += user -> Set()
@@ -164,7 +170,7 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
   private[language] def activate(element: Element[_]): Unit = {
     if (element.active)
       throw new IllegalArgumentException("Activating active element")
-    if (element.args exists (!_.active))
+    if (element.args exists (!_.active)) 
       throw new IllegalArgumentException("Attempting to activate element with inactive argument")
     myActiveElements.add(element)
     if (!element.isInstanceOf[Deterministic[_]]) myStochasticElements.add(element)
@@ -248,7 +254,7 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
   private[figaro] def clearContext[T](element: Element[T]): Unit =
     deactivate(contextContents(element))
 
-  private var registeredMaps: Set[Map[Element[_], _]] = Set()
+  private var registeredMaps: Set[Shrinkable[Element[_]]] = Set()
 
   private var registeredUniverseMaps: Set[Map[Universe, _]] = Set()
 
@@ -258,8 +264,12 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
    * Register a map so that elements are removed from it when they are deactivated.
    * This avoids memory management problems.
    */
-  def register(map: Map[Element[_], _]): Unit = registeredMaps += map
+  def register(collection: Shrinkable[Element[_]]): Unit = registeredMaps += collection
 
+  // Immediately register the constrained and conditioned elements
+  register(myConditionedElements)
+  register(myConstrainedElements)
+  
   /**
    * Register the maps that this universe is used as a key.
    * Needed to make sure Universe is garbage collected when cleared and dereferenced
@@ -305,7 +315,9 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
     for {
       layer <- layers(myActiveElements)
       elem <- layer
-    } elem.generate()
+    } {
+      elem.generate()
+    }
   }
 
   override def finalize = {

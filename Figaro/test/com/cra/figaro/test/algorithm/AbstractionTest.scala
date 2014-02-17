@@ -13,15 +13,16 @@
 
 package com.cra.figaro.test.algorithm
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.factored._
+import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.library.compound._
 
-class AbstractionTest extends WordSpec with ShouldMatchers {
+class AbstractionTest extends WordSpec with Matchers {
   "A regular discretization" should {
     "select to an ordered range with the specified number of elements in which the bins " +
       "are of equal size" in {
@@ -29,9 +30,9 @@ class AbstractionTest extends WordSpec with ShouldMatchers {
         val inputs = List(0.2, 0.6, 0.3, 0.4, 0.8)
         val points = AbstractionScheme.regularDiscretization.select(inputs, 3).toList
         points.length should equal(3)
-        points(0) should be(0.3 plusOrMinus 0.00000001)
-        points(1) should be(0.5 plusOrMinus 0.00000001)
-        points(2) should be(0.7 plusOrMinus 0.00000001)
+        points(0) should be(0.3 +- 0.00000001)
+        points(1) should be(0.5 +- 0.00000001)
+        points(2) should be(0.7 +- 0.00000001)
       }
   }
 
@@ -73,17 +74,18 @@ class AbstractionTest extends WordSpec with ShouldMatchers {
 
   "Computing the values of an abstract element" when {
     "given an atomic element using a regular discretization scheme" should {
-      "produce an ordered sequence of the correct size of uniformly distributed values" in {
+      "produce an sequence of the correct size of uniformly distributed values" in {
         Universe.createNew()
         val u = Uniform(0.0, 1.0)
         u.addPragma(Abstraction(100)(AbstractionScheme.RegularDiscretization))
-        val v = Values()(u).toList
+        val v = Values()(u).toList.sorted
         v.length should equal(100)
+
         v.sorted should equal(v)
-        v(0) should be(0.005 plusOrMinus 0.005)
-        v(99) should be(0.995 plusOrMinus 0.005)
+        v(0) should be(0.005 +- 0.005)
+        v(99) should be(0.995 +- 0.005)
         val diff = v(1) - v(0)
-        for { i <- 2 to 99 } { v(i) - v(i - 1) should be(diff plusOrMinus 0.0000001) }
+        for { i <- 2 to 99 } { v(i) - v(i - 1) should be(diff +- 0.0000001) }
       }
     }
 
@@ -97,9 +99,10 @@ class AbstractionTest extends WordSpec with ShouldMatchers {
         }
         val c = Chain(Select(0.5 -> 0.0, 0.5 -> 3.0), f)
         c.addPragma(Abstraction(20)(AbstractionScheme.RegularDiscretization))
-        val v = Values()(c)
-        v.head should be(0.1 plusOrMinus 0.02)
-        v.last should be(3.9 plusOrMinus 0.02)
+
+        val v = Values()(c).toList.sorted
+        v.head should be(0.1 +- 0.02)
+        v.last should be(3.9 +- 0.02)
       }
     }
 
@@ -110,9 +113,10 @@ class AbstractionTest extends WordSpec with ShouldMatchers {
         u.addPragma(Abstraction(200)(AbstractionScheme.RegularDiscretization))
         val a = Apply(u, u, ((d1: Double, d2: Double) => d1 * d2))
         a.addPragma(Abstraction(20)(AbstractionScheme.RegularDiscretization))
-        val v = Values()(a)
-        v.head should be(0.1 plusOrMinus 0.05)
-        v.last should be(3.9 plusOrMinus 0.05)
+
+        val v = Values()(a).toList.sorted
+        v.head should be(0.1 +- 0.05)
+        v.last should be(3.9 +- 0.05)
       }
     }
   }
@@ -125,6 +129,7 @@ class AbstractionTest extends WordSpec with ShouldMatchers {
         val numBins = 20
         val uniform = Uniform(0.0, max)
         uniform.addPragma(Abstraction(numBins)(AbstractionScheme.RegularDiscretization))
+        Values()(uniform)
         val factors = ProbFactor.make(uniform)
         factors.size should equal(1)
         val factor = factors(0)
@@ -133,7 +138,7 @@ class AbstractionTest extends WordSpec with ShouldMatchers {
         val allIndices = factor.allIndices
         allIndices.size should equal(numBins)
         for { indices <- allIndices } {
-          factor.get(indices) should be(1.0 / max plusOrMinus 0.000001) // constant density of Uniform(0, max)
+          factor.get(indices) should be(1.0 / max +- 0.000001) // constant density of Uniform(0, max)
         }
       }
     }
@@ -148,6 +153,7 @@ class AbstractionTest extends WordSpec with ShouldMatchers {
         uniform.addPragma(Abstraction(numBinsUniform)(AbstractionScheme.RegularDiscretization))
         val apply = Apply(uniform, (d: Double) => d * d)
         apply.addPragma(Abstraction(numBinsApply)(AbstractionScheme.RegularDiscretization))
+        Values()(apply)
         val factors = ProbFactor.make(apply)
         factors.size should equal(1)
         val factor = factors(0)
@@ -155,8 +161,8 @@ class AbstractionTest extends WordSpec with ShouldMatchers {
         val applyVariable = Variable(apply)
         factor.variables should equal(List(uniformVariable, applyVariable))
         factor.allIndices.size should equal(numBinsUniform * numBinsApply)
-        val uniformValues: List[Double] = Values()(uniform).toList
-        val applyValues: List[Double] = Values()(apply).toList
+        val uniformValues: List[Double] = uniformVariable.range.map(_.value)
+        val applyValues: List[Double] = applyVariable.range.map(_.value)
         def check(uniformValue: Double, applyValue: Double): Boolean = {
           val resultValue = uniformValue * uniformValue
           def minDiff: Double =
@@ -185,6 +191,7 @@ class AbstractionTest extends WordSpec with ShouldMatchers {
         uniform2.addPragma(Abstraction(numBinsUniform)(AbstractionScheme.RegularDiscretization))
         val apply = Apply(uniform1, uniform2, (d1: Double, d2: Double) => d1 * d2)
         apply.addPragma(Abstraction(numBinsApply)(AbstractionScheme.RegularDiscretization))
+        Values()(apply)
         val factors = ProbFactor.make(apply)
         factors.size should equal(1)
         val factor = factors(0)
@@ -193,9 +200,9 @@ class AbstractionTest extends WordSpec with ShouldMatchers {
         val applyVariable = Variable(apply)
         factor.variables should equal(List(uniform1Variable, uniform2Variable, applyVariable))
         factor.allIndices.size should equal(numBinsUniform * numBinsUniform * numBinsApply)
-        val uniform1Values: List[Double] = Values()(uniform1).toList
-        val uniform2Values: List[Double] = Values()(uniform2).toList
-        val applyValues: List[Double] = Values()(apply).toList
+        val uniform1Values: List[Double] = uniform1Variable.range.map(_.value)
+        val uniform2Values: List[Double] = uniform2Variable.range.map(_.value)
+        val applyValues: List[Double] = applyVariable.range.map(_.value)
         def check(uniform1Value: Double, uniform2Value: Double, applyValue: Double): Boolean = {
           val resultValue = uniform1Value * uniform2Value
           def minDiff: Double =
@@ -228,6 +235,7 @@ class AbstractionTest extends WordSpec with ShouldMatchers {
         uniform3.addPragma(Abstraction(numBinsUniform)(AbstractionScheme.RegularDiscretization))
         val apply = Apply(uniform1, uniform2, uniform3, (d1: Double, d2: Double, d3: Double) => d1 * d2 * d3)
         apply.addPragma(Abstraction(numBinsApply)(AbstractionScheme.RegularDiscretization))
+        Values()(apply)
         val factors = ProbFactor.make(apply)
         factors.size should equal(1)
         val factor = factors(0)
@@ -237,10 +245,10 @@ class AbstractionTest extends WordSpec with ShouldMatchers {
         val applyVariable = Variable(apply)
         factor.variables should equal(List(uniform1Variable, uniform2Variable, uniform3Variable, applyVariable))
         factor.allIndices.size should equal(numBinsUniform * numBinsUniform * numBinsUniform * numBinsApply)
-        val uniform1Values: List[Double] = Values()(uniform1).toList
-        val uniform2Values: List[Double] = Values()(uniform2).toList
-        val uniform3Values: List[Double] = Values()(uniform3).toList
-        val applyValues: List[Double] = Values()(apply).toList
+        val uniform1Values: List[Double] = uniform1Variable.range.map(_.value)
+        val uniform2Values: List[Double] = uniform2Variable.range.map(_.value)
+        val uniform3Values: List[Double] = uniform3Variable.range.map(_.value)
+        val applyValues: List[Double] = applyVariable.range.map(_.value)
         def check(uniform1Value: Double, uniform2Value: Double, uniform3Value: Double, applyValue: Double): Boolean = {
           val resultValue = uniform1Value * uniform2Value * uniform3Value
           def minDiff: Double =
@@ -272,8 +280,7 @@ class AbstractionTest extends WordSpec with ShouldMatchers {
         uniform2.addPragma(Abstraction(numBinsUniform)(AbstractionScheme.RegularDiscretization))
         val chain = Chain(flip, (b: Boolean) => if (b) uniform1; else uniform2)
         chain.addPragma(Abstraction(numBinsChain)(AbstractionScheme.RegularDiscretization))
-        //Expand().expand()
-        Expand()
+        Values()(chain)
         val factors = ProbFactor.make(chain)
         factors.size should equal(2) // 2 for the conditional selectors
         val List(factor1, factor2) = factors
@@ -284,10 +291,10 @@ class AbstractionTest extends WordSpec with ShouldMatchers {
         factor1.variables should equal(List(flipVariable, chainVariable, uniform1Variable))
         factor1.allIndices.size should equal(2 * numBinsChain * numBinsUniform)
         factor2.allIndices.size should equal(2 * numBinsChain * numBinsUniform)
-        val flipValues: List[Boolean] = Values()(flip).toList
-        val uniform1Values: List[Double] = Values()(uniform1).toList
-        val uniform2Values: List[Double] = Values()(uniform2).toList
-        val chainValues: List[Double] = Values()(chain).toList
+        val flipValues: List[Boolean] = flipVariable.range.map(_.value)
+        val uniform1Values: List[Double] = uniform1Variable.range.map(_.value)
+        val uniform2Values: List[Double] = uniform2Variable.range.map(_.value)
+        val chainValues: List[Double] = chainVariable.range.map(_.value)
         def closest(chainValue: Double, uniformValue: Double): Boolean = {
           def minDiff: Double =
             (Double.MaxValue /: chainValues)((d1: Double, d2: Double) => d1 min math.abs(uniformValue - d2))
@@ -339,7 +346,7 @@ class AbstractionTest extends WordSpec with ShouldMatchers {
        * Uniform2 will result in (2,3) with expected weight 2.5.
        * Therefore flip should be around 0.4 for true.
        */
-      ve.probability(flip, (b: Boolean) => b) should be(0.4 plusOrMinus 0.02)
+      ve.probability(flip, (b: Boolean) => b) should be(0.4 +- 0.02)
     }
   }
 }

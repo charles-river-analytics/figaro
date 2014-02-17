@@ -18,6 +18,7 @@ import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.library.decision._
 import com.cra.figaro.library.decision.DecisionUtil._
+import com.cra.figaro.algorithm.lazyfactored._
 import scala.collection.mutable.Map
 import scala.language.existentials
 

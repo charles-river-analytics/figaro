@@ -32,7 +32,7 @@ trait VariableElimination[T] extends FactoredAlgorithm[T] with OneTime {
    * By default, implementations that inherit this trait have no debug information.
    * Override this if you want a debugging option.
    */
-  val debug: Boolean = false
+  var debug: Boolean = false
 
   /**
    * The universe on which this variable elimination algorithm should be applied.
@@ -42,8 +42,14 @@ trait VariableElimination[T] extends FactoredAlgorithm[T] with OneTime {
   /**
    * Target elements that should not be eliminated but should be available for querying.
    */
-  val targetElements: Seq[Element[_]]
+  val targetElements: List[Element[_]]
 
+  /**
+   * Elements towards which queries are directed. By default, these are the target elements.
+   * This is overridden by DecisionVariableElimination, where it also includes utility variables.
+   */
+  def starterElements: List[Element[_]] = targetElements
+  
   /**
    * Flag indicating whether the run time of each step should be displayed.
    */
@@ -52,12 +58,11 @@ trait VariableElimination[T] extends FactoredAlgorithm[T] with OneTime {
   private def optionallyShowTiming[T](op: => T, name: String) =
     if (showTiming) timed(op, name); else op
 
+    /*
   private def expand(): Unit =
     optionallyShowTiming(Expand(universe), "Expansion")
-
-  private def getTargetVariables(): Seq[Variable[_]] =
-    targetElements map (Variable(_))
-
+*/
+    
    // The first element of FactorMap is the complete set of factors.
   // The second element maps variables to the factors mentioning that variable.
   private type FactorMap[T] = Map[Variable[_], Set[Factor[T]]]
@@ -98,8 +103,8 @@ trait VariableElimination[T] extends FactoredAlgorithm[T] with OneTime {
       for { factor <- varFactors } { println(factor.toReadableString) }
     }
     if (varFactors nonEmpty) {
-      val productFactor = varFactors reduceLeft (_.product(_, semiring.product))
-      val resultFactor = productFactor.sumOver(variable, semiring.sum, semiring.zero)
+      val productFactor = varFactors reduceLeft (_.product(_, semiring))
+      val resultFactor = productFactor.sumOver(variable, semiring)
       varFactors foreach (removeFactor(_, map))
       addFactor(resultFactor, map)
       comparator match {
@@ -155,9 +160,14 @@ trait VariableElimination[T] extends FactoredAlgorithm[T] with OneTime {
   }
 
   private[figaro] def ve(): Unit = {
-    expand()
-    val targetVariables = getTargetVariables()
-    val allFactors = optionallyShowTiming(getFactors(targetVariables), "Getting factors")
+    //expand()
+    val (neededElements, _) = getNeededElements(starterElements, Int.MaxValue)
+    val allFactors = optionallyShowTiming(getFactors(neededElements, targetElements), "Getting factors")
+    val targetVariables = targetElements.map(Variable(_))
+    doElimination(allFactors, targetVariables)
+  }
+  
+  protected def doElimination(allFactors: List[Factor[T]], targetVariables: Seq[Variable[_]]) {
     recordingFactors = List()
     if (debug) {
       println("*****************\nStarting factors\n")
@@ -187,13 +197,15 @@ trait VariableElimination[T] extends FactoredAlgorithm[T] with OneTime {
  * Variable elimination over probabilistic factors.
  */
 trait ProbabilisticVariableElimination extends VariableElimination[Double] {
-  def getFactors(targetVariables: Seq[Variable[_]]): List[Factor[Double]] = {
-    val allElements = universe.activeElements
-    val thisUniverseFactors = allElements flatMap (ProbFactor.make(_))
+  def getFactors(allElements: List[Element[_]], targetElements: List[Element[_]], upper: Boolean = false): List[Factor[Double]] = {
     if (debug) {
-      println("Element ids:")
-      for { element <- universe.activeElements } { println(Variable(element).id + "(" + element.name.string + ")" + ": " + element) }
+      println("Elements appearing in factors and their ranges:")
+      for { element <- allElements } { 
+        println(Variable(element).id + "(" + element.name.string + "@" + element.hashCode + ")" + ": " + element + ": " + Variable(element).range.mkString(",")) 
+      }
     }
+    ProbFactor.removeFactors()
+    val thisUniverseFactors = allElements flatMap (ProbFactor.make(_))
     val dependentUniverseFactors =
       for { (dependentUniverse, evidence) <- dependentUniverses } yield ProbFactor.makeDependentFactor(universe, dependentUniverse, dependentAlgorithm(dependentUniverse, evidence))
     dependentUniverseFactors ::: thisUniverseFactors
@@ -205,17 +217,18 @@ trait ProbabilisticVariableElimination extends VariableElimination[Double] {
  * Variable elimination algorithm that computes the conditional probability of query elements.
  * 
  */
-class ProbQueryVariableElimination(universe: Universe, targets: Element[_]*)(
+class ProbQueryVariableElimination(override val universe: Universe, targets: Element[_]*)(
   val showTiming: Boolean,
   val dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
   val dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double)
-  extends ProbQueryAlgorithm(universe, targets: _*)
-  with OneTimeProbQuery
+  extends OneTimeProbQuery
   with ProbabilisticVariableElimination {
-  val targetElements = targets
+  val targetElements = targets.toList
+  lazy val queryTargets = targets.toList
+  
   val semiring = SumProductSemiring
   private def marginalizeToTarget(factor: Factor[Double], target: Element[_]): Unit = {
-    val unnormalizedTargetFactor = factor.marginalizeTo(Variable(target), semiring.sum, semiring.zero)
+    val unnormalizedTargetFactor = factor.marginalizeTo(Variable(target), semiring)
     val z = unnormalizedTargetFactor.foldLeft(semiring.zero, _ + _)
     val targetFactor = new Factor[Double](unnormalizedTargetFactor.variables)
     unnormalizedTargetFactor.mapTo((d: Double) => d / z, targetFactor)
@@ -225,16 +238,19 @@ class ProbQueryVariableElimination(universe: Universe, targets: Element[_]*)(
   private def marginalize(resultFactor: Factor[Double]) =
     targets foreach (marginalizeToTarget(resultFactor, _))
 
-  private def makeResultFactor(factorsAfterElimination: Set[Factor[Double]]): Factor[Double] =
-    factorsAfterElimination reduceLeft (_.product(_, semiring.product))
-
+  private def makeResultFactor(factorsAfterElimination: Set[Factor[Double]]): Factor[Double] = {
+    // It is possible that there are no factors (this will happen if there are  no queries or evidence).
+    // Therefore, we start with the unit factor and use foldLeft, instead of simply reducing the factorsAfterElimination.
+    factorsAfterElimination.foldLeft(Factor.unit(semiring))(_.product(_, semiring))
+  }
+  
   def finish(factorsAfterElimination: Set[Factor[Double]], eliminationOrder: List[Variable[_]]) =
     marginalize(makeResultFactor(factorsAfterElimination))
 
   def computeDistribution[T](target: Element[T]): Stream[(Double, T)] = {
     val factor = targetFactors(target)
     val targetVar = Variable(target)
-    val dist = targetVar.range.zipWithIndex map (pair => (factor.get(List(pair._2)), pair._1))
+    val dist = targetVar.range.filter(_.isRegular).map(_.value).zipWithIndex map (pair => (factor.get(List(pair._2)), pair._1))
     // normalization is unnecessary here because it is done in marginalizeTo
     dist.toStream
   }
@@ -264,7 +280,7 @@ object VariableElimination {
     new ProbQueryVariableElimination(universe, targets: _*)(
       true,
       List(),
-      (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u)) { override val debug = true }
+      (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u)) { debug = true }
  /**
    * Create a variable elimination computer with the given target query variables in the current default
    * universe, with timing information enabled.

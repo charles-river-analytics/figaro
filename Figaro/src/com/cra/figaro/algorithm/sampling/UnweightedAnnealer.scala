@@ -23,8 +23,8 @@ import math.log
 /**
  * Samplers that use samples without weights.
  */
-abstract class UnweightedAnnealer(universe: Universe, targets: Element[_]*)
-  extends MPEAlgorithm(universe) with Sampler {
+abstract class UnweightedAnnealer(override val universe: Universe, targets: Element[_]*)
+  extends MPEAlgorithm with Sampler {
 
   /**
    * Anneal the model with the provided iteration count.

@@ -22,8 +22,8 @@ import scala.language.existentials
  * The evidence is specified as NamedEvidence.
  * Only the probability of this evidence is computed. Conditions and constraints that are already on elements are considered part of the definition of the model.
  */
-abstract class ProbEvidenceSampler(universe: Universe, evidence: List[NamedEvidence[_]] = List[NamedEvidence[_]](), partition: Double = 1.0)
-  extends ProbEvidenceAlgorithm(universe, evidence) with Sampler {
+abstract class ProbEvidenceSampler(override val universe: Universe, override val evidence: List[NamedEvidence[_]] = List[NamedEvidence[_]](), partition: Double = 1.0)
+  extends ProbEvidenceAlgorithm with Sampler {
   private var successWeight: Double = _
   private var totalWeight: Double = _
 

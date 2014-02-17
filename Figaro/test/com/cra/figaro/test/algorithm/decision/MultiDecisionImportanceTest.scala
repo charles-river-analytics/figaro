@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.algorithm.decision
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.{ WordSpec, PrivateMethodTester }
 import math.log
 import com.cra.figaro.algorithm._
@@ -31,7 +31,7 @@ import com.cra.figaro.test._
 import com.cra.figaro.test.algorithm.decision.DecisionTestCases._
 import scala.collection.immutable.Map
 
-class MultiDecisionImportanceTest extends WordSpec with ShouldMatchers {
+class MultiDecisionImportanceTest extends WordSpec with Matchers {
 
   "A MultiImportance Sampler" when {
 

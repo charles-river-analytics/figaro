@@ -137,6 +137,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    */
   final def generate(): Unit = {
     if (!setFlag) { // Make sure we do not generate this element if we have already set its value
+      args.foreach(arg => if (arg.value == null) arg.generate()) // make sure arguments have a valid value
       randomness = generateRandomness()
       value = generateValue(randomness)
     }
@@ -189,15 +190,30 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   private[figaro] type Contingency = Element.Contingency
   private[figaro] type ElemVal[T] = Element.ElemVal[T]
 
-  private val contigentElements: Set[Element[_]] = Set()
-  /** Elements on which this element is contingent. */
-  def myContigentElements = contigentElements.toList
-
-  private def addContigentElement(e: Element[_]) = if (!contigentElements.contains(e)) {
-    universe.registerUses(this, e)
-    contigentElements.add(e)
+  def elementsIAmContingentOn: Set[Element[_]] = {
+    val conditionElements = 
+      for {
+        (condition, contingency) <- myConditions
+        Element.ElemVal(element, value) <- contingency 
+      } yield element
+    val constraintElements = 
+      for {
+        (constraint, contingency) <- myConstraints
+        Element.ElemVal(element, value) <- contingency 
+      } yield element
+    Set((conditionElements ::: constraintElements):_*)
   }
 
+  /*
+   * Since a contingency is a type of use between elements, we need to add them to the uses and usedBy lists.
+   * In the current implementation, they never get removed. It would be difficult to ensure that is always done correctly.
+   * Not removing these elements from the relevant lists cannot affect correctness of algorithms, but it may impact their efficiency.
+   * One can argue that removal of evidence is not a common use case and does not need to be optimized.
+   */
+  private def ensureContingency[T](elem: Element[T]) {
+    universe.registerUses(this, elem)
+  }
+  
   private var myConditions: List[(Condition, Contingency)] = List()
 
   /** All the conditions defined on this element.*/
@@ -233,7 +249,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   /** Add the given condition to the existing conditions of the element. By default, the contingency is empty. */
   def addCondition(condition: Condition, contingency: Contingency = List()): Unit = {
     universe.makeConditioned(this)
-    contingency.foreach(ev => addContigentElement(ev.elem))
+    contingency.foreach(ev => ensureContingency(ev.elem))
     myConditions ::= (condition, contingency)
   }
 
@@ -298,7 +314,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    */
   def addConstraint(constraint: Constraint, contingency: Contingency = List()): Unit = {
     universe.makeConstrained(this)
-    contingency.foreach(ev => addContigentElement(ev.elem))
+    contingency.foreach(ev => ensureContingency(ev.elem))
     myConstraints ::= (constraint, contingency)
   }
 
@@ -413,10 +429,12 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    */
   def deactivate(): Unit = universe.deactivate(this)
 
-  // It is important to generate the initial value of this Element so it is not null
-  generate()
+  /* Element self-generation on initialization was the cause of bugs. On infinite models, it can cause an infinite recursion, which could correctly be handled by
+   * lazy factored inference. We have eliminated the need for self-generation on initialization. Algorithms that require elements to be generated should begin
+   * by calling Universe.generateAll
+   */
+  //generate()
 
-  // Since collection.add uses the initial value of the element, it needs to be called after generate()
   collection.add(this)
 
   /**
@@ -425,9 +443,24 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   def ===(that: Element[Value])(implicit universe: Universe) = new Eq("", this, that, universe)
 
   /**
+   * The element that tests whether the value of this element is equal to a particular value.
+   */
+  def ===(that: Value)(implicit universe: Universe) = new Apply1("", this, (v: Value) => v == that, universe)
+  /**
    * The element that tests inequality of this element with another element.
    */
   def !==(that: Element[Value])(implicit universe: Universe) = new Neq("", this, that, universe)
+  
+  /**
+   * A string that is the element's name, if it has a non-empty one, otherwise the result of the element's toString
+   */
+  def toNameString = if (name.string != "") name.string; else toString
+
+  def map[U](fn: Value => U)(implicit name: Name[U], collection: ElementCollection): Element[U] =
+    Apply(this, fn)(name, collection)
+
+  def flatMap[U](fn: Value => Element[U])(implicit name: Name[U], collection: ElementCollection): Element[U] =
+    Chain(this, fn)(name, collection)
 }
 
 object Element {
@@ -480,6 +513,28 @@ object Element {
 
   /** The type of contingencies that can hold on elements. */
   type Contingency = List[ElemVal[_]]
+  
+  /**
+   * Returns the given elements and all elements on which they are contingent, closed recursively.
+   * Only elements with condition
+   */
+  def closeUnderContingencies(elements: scala.collection.Set[Element[_]]): scala.collection.Set[Element[_]] = {
+    def findContingent(elements: scala.collection.Set[Element[_]]): scala.collection.Set[Element[_]] = {
+      // Find all elements not in the input set that the input set is contingent on
+      for {
+        element <- elements   
+        contingent <- element.elementsIAmContingentOn
+        if !elements.contains(contingent)
+      } yield contingent
+    }
+    var result = elements
+    var adds = findContingent(result)
+    while (!adds.isEmpty) {
+      result ++= adds
+      adds = findContingent(result)
+    }
+    result
+  }
 }
 
 /**

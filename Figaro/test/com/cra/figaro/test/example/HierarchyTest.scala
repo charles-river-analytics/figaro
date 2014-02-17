@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.example
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
@@ -23,7 +23,7 @@ import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.discrete._
 import com.cra.figaro.test._
 
-class HierarchyTest extends WordSpec with ShouldMatchers {
+class HierarchyTest extends WordSpec with Matchers {
 
   var universe = Universe.createNew
 
@@ -106,7 +106,7 @@ class HierarchyTest extends WordSpec with ShouldMatchers {
     val alg = algorithmCreator(isPickup, name)
     alg.start()
     alg.stop()
-    alg.probability(isPickup, true) should be(.666 plusOrMinus 0.02)
+    alg.probability(isPickup, true) should be(.666 +- 0.02)
     alg.kill
   }
 }

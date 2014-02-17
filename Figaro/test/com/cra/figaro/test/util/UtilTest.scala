@@ -13,12 +13,12 @@
 
 package com.cra.figaro.test.util
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.util._
 import com.cra.figaro.test._
 
-class UtilTest extends WordSpec with ShouldMatchers {
+class UtilTest extends WordSpec with Matchers {
   "Util.round" when {
     "given a number that is less than the lowest point" should {
       "return the lowest point" in {
@@ -43,12 +43,12 @@ class UtilTest extends WordSpec with ShouldMatchers {
     "given a list with positive total value" should {
       "produce a result that sums to 1" in {
         val n = normalize(List(0.2, 0.3))
-        (0.0 /: n)(_ + _) should be(1.0 plusOrMinus 0.00000001)
+        (0.0 /: n)(_ + _) should be(1.0 +- 0.00000001)
       }
 
       "maintain the proportions between the values" in {
         val n = normalize(List(0.2, 0.3))
-        n(1) / n(0) should be(1.5 plusOrMinus 0.00000001)
+        n(1) / n(0) should be(1.5 +- 0.00000001)
       }
     }
 
@@ -82,7 +82,7 @@ class UtilTest extends WordSpec with ShouldMatchers {
         var numTrials = 100000
         var successes = 0
         for { i <- 1 to numTrials } { if (sampleMultinomial(m) == 'bar) successes += 1 }
-        successes.toDouble / numTrials should be(0.3 plusOrMinus 0.01)
+        successes.toDouble / numTrials should be(0.3 +- 0.01)
       }
     }
 

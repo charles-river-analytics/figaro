@@ -21,10 +21,10 @@ import scala.language.existentials
 
 /**
  * Metropolis-Hastings samplers.
- * 
+ *
  * @param burnIn The number of iterations to run before samples are collected
  * @param interval The number of iterations to perform between collecting samples
- * 
+ *
  */
 // proposalScheme might evaluate to a different step each time it is called; making it by name gets the right effect.
 abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalScheme, burnIn: Int, interval: Int,
@@ -41,7 +41,10 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
 
   private var accepts = 0
   private var rejects = 0
-  
+
+  private val currentConstraintValues: Map[Element[_], Double] = Map()
+  universe.register(currentConstraintValues)
+
   /**
    * Get the acceptance ratio for the sampler
    */
@@ -68,8 +71,9 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
       // if an old value is already stored, don't overwrite it
       val newOldValues =
         if (state.oldValues contains elem) state.oldValues; else state.oldValues + (elem -> elem.value)
-      val newProb =
-        state.modelProb * elem.score(elem.value, newValue)
+      //val newProb =
+      //  state.modelProb * elem.score(elem.value, newValue)
+      val newProb = state.modelProb
       val newDissatisfied =
         if (elem.condition(newValue)) state.dissatisfied - elem; else state.dissatisfied + elem
       elem.value = newValue
@@ -210,7 +214,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
    */
   private def proposeAndUpdate(): State = {
     val state1 = runScheme()
-    val updatesNeeded = state1.oldValues.keySet flatMap (universe.usedBy(_))
+    val updatesNeeded = state1.oldValues.keySet flatMap (elem => universe.usedBy(elem))
     updateMany(state1, updatesNeeded)
   }
 
@@ -218,8 +222,21 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
 
   private def getDissatisfied = dissatisfied // for testing
 
+  /*
+   * Computes the scores of the constrained elements from caches scores. If the element
+   * is not found in the cache, then it's value is 1.0.
+   */
+  private def computeScores(): Double = {
+    val constrainedElements = universe.constrainedElements
+    val scores = constrainedElements.map { e =>
+      e.constraintValue / currentConstraintValues.getOrElseUpdate(e, 1.0)
+    }
+    scores.product
+  }
+
   private def accept(state: State): Unit = {
     if (debug) println("Accepting!\n")
+    currentConstraintValues.keys.foreach(e => currentConstraintValues += e -> e.constraintValue)
     dissatisfied = (dissatisfied filter (!_.conditionSatisfied)) ++ state.dissatisfied
   }
 
@@ -256,8 +273,14 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
     }
   }
 
+  private def initConstrainedValues() = {
+    universe.constrainedElements.foreach(e => currentConstraintValues += (e -> e.constraintValue))
+  }
+
   protected final def mhStep(): State = {
-    val newState = proposeAndUpdate()
+    val newStateUnconstrained = proposeAndUpdate()
+    val newState = State(newStateUnconstrained.oldValues, newStateUnconstrained.oldRandomness,
+      newStateUnconstrained.proposalProb, newStateUnconstrained.modelProb * computeScores, newStateUnconstrained.dissatisfied)
     if (decideToAccept(newState)) {
       accepts += 1
       accept(newState)
@@ -290,6 +313,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
   protected def doInitialize(): Unit = {
     // Need to prime the universe to make sure all elements have a generated value    
     universe.generateAll()
+    initConstrainedValues()
     for { i <- 1 to burnIn } mhStep()
   }
   /**
@@ -313,7 +337,9 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
       }
 
     for { i <- 1 to numSamples } {
-      val state1 = proposeAndUpdate()
+      val newStateUnconstrained = proposeAndUpdate()
+      val state1 = State(newStateUnconstrained.oldValues, newStateUnconstrained.oldRandomness,
+      newStateUnconstrained.proposalProb, newStateUnconstrained.modelProb * computeScores, newStateUnconstrained.dissatisfied)
       if (decideToAccept(state1)) {
         accepts += 1
         // collect results for the new state and restore the original state
@@ -340,7 +366,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
  * Anytime Metropolis-Hastings sampler.
  * @param burnIn The number of iterations to run before samples are collected
  * @param interval The number of iterations to perform between collecting samples
- * 
+ *
  */
 class AnytimeMetropolisHastings(universe: Universe,
   scheme: ProposalScheme, burnIn: Int, interval: Int,
@@ -366,10 +392,10 @@ class AnytimeMetropolisHastings(universe: Universe,
 
 /**
  * One-time Metropolis-Hastings sampler.
- * 
+ *
  * @param burnIn The number of iterations to run before samples are collected
  * @param interval The number of iterations to perform between collecting samples
- * 
+ *
  */
 class OneTimeMetropolisHastings(universe: Universe, myNumSamples: Int, scheme: ProposalScheme,
   burnIn: Int, interval: Int, targets: Element[_]*)

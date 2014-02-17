@@ -13,16 +13,17 @@
 
 package com.cra.figaro.test.example
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.factored._
+import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound._
 import com.cra.figaro.util._
 
-class MultiValuedTest extends WordSpec with ShouldMatchers {
+class MultiValuedTest extends WordSpec with Matchers {
   "A model with multi-valued reference uncertainty" should {
     "produce the correct distribution over values under importance sampling" in {
       Universe.createNew()
@@ -52,11 +53,11 @@ class MultiValuedTest extends WordSpec with ShouldMatchers {
       val p4 = pSpecialNew * 0.4 + pNewSpecial * 0.4 + pNewNew * 0.4 * 0.4
       val p5 = pSpecialNew * 0.6 + pNewSpecial * 0.6 + pNewNew * (0.4 * 0.6 + 0.6 * 0.4)
       val p6 = pSpecialNew * 0.0 + pNewSpecial * 0.0 + pNewNew * 0.6 * 0.6
-      alg.probability(c.sum, 2) should be(p2 plusOrMinus 0.01)
-      alg.probability(c.sum, 3) should be(p3 plusOrMinus 0.01)
-      alg.probability(c.sum, 4) should be(p4 plusOrMinus 0.01)
-      alg.probability(c.sum, 5) should be(p5 plusOrMinus 0.01)
-      alg.probability(c.sum, 6) should be(p6 plusOrMinus 0.01)
+      alg.probability(c.sum, 2) should be(p2 +- 0.01)
+      alg.probability(c.sum, 3) should be(p3 +- 0.01)
+      alg.probability(c.sum, 4) should be(p4 +- 0.01)
+      alg.probability(c.sum, 5) should be(p5 +- 0.01)
+      alg.probability(c.sum, 6) should be(p6 +- 0.01)
       alg.kill
     }
 
@@ -88,11 +89,11 @@ class MultiValuedTest extends WordSpec with ShouldMatchers {
       val p4 = pSpecialNew * 0.4 + pNewSpecial * 0.4 + pNewNew * 0.4 * 0.4
       val p5 = pSpecialNew * 0.6 + pNewSpecial * 0.6 + pNewNew * (0.4 * 0.6 + 0.6 * 0.4)
       val p6 = pSpecialNew * 0.0 + pNewSpecial * 0.0 + pNewNew * 0.6 * 0.6
-      alg.probability(c.sum, 2) should be(p2 plusOrMinus 0.0000001)
-      alg.probability(c.sum, 3) should be(p3 plusOrMinus 0.0000001)
-      alg.probability(c.sum, 4) should be(p4 plusOrMinus 0.0000001)
-      alg.probability(c.sum, 5) should be(p5 plusOrMinus 0.0000001)
-      alg.probability(c.sum, 6) should be(p6 plusOrMinus 0.0000001)
+      alg.probability(c.sum, 2) should be(p2 +- 0.0000001)
+      alg.probability(c.sum, 3) should be(p3 +- 0.0000001)
+      alg.probability(c.sum, 4) should be(p4 +- 0.0000001)
+      alg.probability(c.sum, 5) should be(p5 +- 0.0000001)
+      alg.probability(c.sum, 6) should be(p6 +- 0.0000001)
       alg.kill
     }
 
@@ -124,11 +125,11 @@ class MultiValuedTest extends WordSpec with ShouldMatchers {
       val p4 = pSpecialNew * 0.4 + pNewSpecial * 0.4 + pNewNew * 0.4 * 0.4
       val p5 = pSpecialNew * 0.6 + pNewSpecial * 0.6 + pNewNew * (0.4 * 0.6 + 0.6 * 0.4)
       val p6 = pSpecialNew * 0.0 + pNewSpecial * 0.0 + pNewNew * 0.6 * 0.6
-      alg.probability(c.sum, 2) should be(p2 plusOrMinus 0.01)
-      alg.probability(c.sum, 3) should be(p3 plusOrMinus 0.01)
-      alg.probability(c.sum, 4) should be(p4 plusOrMinus 0.01)
-      alg.probability(c.sum, 5) should be(p5 plusOrMinus 0.01)
-      alg.probability(c.sum, 6) should be(p6 plusOrMinus 0.01)
+      alg.probability(c.sum, 2) should be(p2 +- 0.01)
+      alg.probability(c.sum, 3) should be(p3 +- 0.01)
+      alg.probability(c.sum, 4) should be(p4 +- 0.01)
+      alg.probability(c.sum, 5) should be(p5 +- 0.01)
+      alg.probability(c.sum, 6) should be(p6 +- 0.01)
       alg.kill
     }
   }

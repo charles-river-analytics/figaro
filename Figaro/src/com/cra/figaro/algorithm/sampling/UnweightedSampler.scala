@@ -22,8 +22,8 @@ import scala.language.postfixOps
 /**
  * Samplers that use samples without weights.
  */
-abstract class UnweightedSampler(universe: Universe, targets: Element[_]*)
-  extends ProbQueryAlgorithm(universe, targets: _*) with Sampler {
+abstract class UnweightedSampler(override val universe: Universe, targets: Element[_]*) extends ProbQueryAlgorithm with Sampler {
+  lazy val queryTargets = targets.toList
   /**
    * A sample is a map from elements to their values.
    */

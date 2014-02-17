@@ -13,12 +13,12 @@
 
 package com.cra.figaro.test.util
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.{ WordSpec, PrivateMethodTester }
 import com.cra.figaro.util._
 import java.util.{ Map, TreeMap }
 
-class ResamplerTest extends WordSpec with PrivateMethodTester with ShouldMatchers {
+class ResamplerTest extends WordSpec with PrivateMethodTester with Matchers {
   "A MapResampler's map" should {
     "contain as values all the samples and none other" in {
       val r = new MapResampler(List(0.5 -> 1, 0.25 -> 2, 0.5 -> 3))
@@ -41,9 +41,9 @@ class ResamplerTest extends WordSpec with PrivateMethodTester with ShouldMatcher
         else if (v == 2) key2 = k
         else if (v == 3) key3 = k
       }
-      key1 should be(0.0 plusOrMinus 0.0000000001)
-      key2 should be(0.4 plusOrMinus 0.0000000001)
-      key3 should be(0.6 plusOrMinus 0.0000000001)
+      key1 should be(0.0 +- 0.0000000001)
+      key2 should be(0.4 +- 0.0000000001)
+      key3 should be(0.6 +- 0.0000000001)
     }
   }
 
@@ -55,9 +55,9 @@ class ResamplerTest extends WordSpec with PrivateMethodTester with ShouldMatcher
       for { i <- 1 to numSamples } {
         totals(r.resample() - 1) += 1
       }
-      totals(0).toDouble / numSamples should be(0.4 plusOrMinus 0.01)
-      totals(1).toDouble / numSamples should be(0.2 plusOrMinus 0.01)
-      totals(2).toDouble / numSamples should be(0.4 plusOrMinus 0.01)
+      totals(0).toDouble / numSamples should be(0.4 +- 0.01)
+      totals(1).toDouble / numSamples should be(0.2 +- 0.01)
+      totals(2).toDouble / numSamples should be(0.4 +- 0.01)
     }
   }
 

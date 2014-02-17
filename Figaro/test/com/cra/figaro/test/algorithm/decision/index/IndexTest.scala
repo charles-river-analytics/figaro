@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.algorithm.decision.index
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.{ WordSpec, PrivateMethodTester }
 import math.log
 import com.cra.figaro.algorithm._
@@ -31,7 +31,7 @@ import com.cra.figaro.util._
 import com.cra.figaro.test._
 import scala.collection.immutable.Map
 
-class IndexTest extends WordSpec with ShouldMatchers {
+class IndexTest extends WordSpec with Matchers {
 
   "An Index" when {
 

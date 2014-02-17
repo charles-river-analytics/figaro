@@ -34,8 +34,10 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
     val resultOpt: Option[Sample] =
       try {
         val state = State()
-        // We must make a fresh copy of the active elements since sampling can add active elements to the Universe
-        val activeElements = universe.permanentElements
+        // We must make a fresh copy of the active elements since sampling can add active elements to the Universe      
+        //val activeElements = universe.permanentElements
+        // use active elements instead of permanent elements since permenentElements may not resample elements inside a chain
+        val activeElements = universe.activeElements
         activeElements.foreach(e => if (e.active) sampleOne(state, e))
         val bindings = targets map (elem => elem -> elem.value)
         Some((state.weight, Map(bindings: _*)))
@@ -58,12 +60,13 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
    *
    * This is made private[figaro] to allow easy testing
    */
-  private[figaro] def sampleOne[T](state: State, element: Element[T]): T =
+  private[figaro] def sampleOne[T](state: State, element: Element[T]): T = {
     if (element.universe != universe || (state.assigned contains element)) element.value
     else {
       state.assigned += element
       sampleFresh(state, element)
     }
+  }
 
   /*
    * Sample a fresh value of an element, assuming it has not yet been assigned a value in the state. This sampling
@@ -105,7 +108,7 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
         c.value = sampleOne(state, c.get(parentValue))
         c.value
       case _ =>
-        (element.args ::: element.myContigentElements) foreach (sampleOne(state, _))
+        (element.args ::: element.elementsIAmContingentOn.toList) foreach (sampleOne(state, _))
         element.randomness = element.generateRandomness()
         element.value = element.generateValue(element.randomness)
         element.value

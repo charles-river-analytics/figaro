@@ -18,8 +18,8 @@ import com.cra.figaro.language._
 /**
  * Algorithms that compute the most likely values of elements.
  */
-abstract class MPEAlgorithm(val universe: Universe)
-  extends Algorithm {
+trait MPEAlgorithm extends Algorithm {
+  val universe: Universe
   /*
    * Particular implementations of algorithm must provide the following method.
    */
