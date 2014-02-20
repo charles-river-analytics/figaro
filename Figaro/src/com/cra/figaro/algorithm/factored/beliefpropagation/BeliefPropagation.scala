@@ -27,10 +27,11 @@ import com.cra.figaro.algorithm.sampling.ProbEvidenceSampler
 import com.cra.figaro.language.Element
 import com.cra.figaro.language.Universe
 import com.cra.figaro.algorithm.lazyfactored.LazyValues
+import com.cra.figaro.algorithm.lazyfactored.BoundedProbFactor
 
 /**
  * Trait for performing belief propagation.
- * 
+ *
  * @tparam T The type of entries in the factors.
  */
 trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
@@ -46,9 +47,20 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
    */
   val universe: Universe
 
+  /**
+   * Target elements that should not be eliminated but should be available for querying.
+   */
+  val targetElements: List[Element[_]]
+
+  /**
+   * Elements towards which queries are directed. By default, these are the target elements.
+   * This is overridden by DecisionVariableElimination, where it also includes utility variables.
+   */
+  def starterElements: List[Element[_]] = targetElements
+  
   /* The factor graph for this BP object */
   protected[figaro] val factorGraph: FactorGraph[T]
-
+  
   /*
    * Returns a new message from a source node to a target node.
    */
@@ -157,13 +169,13 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
  */
 trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
 
-  /** 
+  /**
    *  Normalize a factor
    */
   def normalize(factor: Factor[Double]): Factor[Double] = {
     val z = factor.foldLeft(semiring.zero, _ + _)
     val normedFactor = new Factor[Double](factor.variables)
-    factor.mapTo((d: Double) => d / z, normedFactor)
+    factor.mapTo((d: Double) => if (z != semiring.zero) d / z else semiring.zero, normedFactor)
     normedFactor
   }
 
@@ -177,28 +189,37 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
 
   /**
    * Returns the factors needed for BP. Since BP operates on a complete factor graph, factors are created
-   * for all elements in the universe. 
+   * for all elements in the universe.
    */
   def getFactors(neededElements: List[Element[_]], targetElements: List[Element[_]], upperBounds: Boolean = false): List[Factor[Double]] = {
-    val allElements = universe.activeElements
-    
-    // Due to Lazy values change, have to force expansion of all elements
-    LazyValues(universe).expandAll(allElements.toSet.map((elem: Element[_]) => (elem, Integer.MAX_VALUE)))
-    
-    val thisUniverseFactors = allElements flatMap (ProbFactor.make(_))
-    if (debug) {
-      println("Element ids:")
-      for { element <- universe.activeElements } { println(Variable(element).id + "(" + element.name.string + ")" + ": " + element) }
-    }
+
+    ProbFactor.removeFactors()
+    //val thisUniverseFactors = neededElements flatMap (ProbFactor.make(_))
+    val thisUniverseFactors = (neededElements flatMap (BoundedProbFactor.make(_, upperBounds))).filterNot(_.isEmpty)
     val dependentUniverseFactors =
       for { (dependentUniverse, evidence) <- dependentUniverses } yield ProbFactor.makeDependentFactor(universe, dependentUniverse, dependentAlgorithm(dependentUniverse, evidence))
-    dependentUniverseFactors ::: thisUniverseFactors
+    val factors = dependentUniverseFactors ::: thisUniverseFactors
+    factors
   }
 
   /**
-   * Get the belief for an element 
+   * Get the belief for an element
    */
-  def getBeliefsForElement[T](target: Element[T]): List[(Double, T)] = {
+  protected[figaro] def getBeliefsForElement[T](target: Element[T]): List[(Double, T)] = {
+    val finalFactor = getFinalFactorForElement(target)
+    if (finalFactor.isEmpty) {
+      List[(Double, T)]()
+    } else {
+      val factor = normalize(finalFactor)
+      val factorVariable = Variable(target)
+      factorVariable.range.zipWithIndex.map(pair => (factor.get(List(pair._2)), pair._1.value))
+    }
+  }
+  
+  /**
+   * Get the final factor for an element
+   */
+  def getFinalFactorForElement[T](target: Element[T]): Factor[Double] = {
     val targetVar = Variable(target)
     val targetNode = factorGraph.getNodes.find { node =>
       node match {
@@ -207,10 +228,9 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
       }
     }
     if (targetNode.isEmpty) {
-      List[(Double, T)]()
+      new Factor[Double](List())
     } else {
-      val factor = normalize(belief(targetNode.get))
-      targetVar.range.zipWithIndex.map(pair => (factor.get(List(pair._2)), pair._1.value))
+      belief(targetNode.get)
     }
   }
 
@@ -221,12 +241,36 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
  */
 trait OneTimeProbabilisticBeliefPropagation extends ProbabilisticBeliefPropagation with OneTime {
   val iterations: Int
-
   def run() = {
-    if (debug) {
-      println("Element ids:")
-      for { element <- universe.activeElements } { println(Variable(element).id + "(" + element.name.string + ")" + ": " + element) }
+     if (debug) {
+      val varNodes = factorGraph.getNodes.filter(_.isInstanceOf[VariableNode])
+      val allVars = (Set[Variable[_]]() /: factorGraph.getNodes)((s: Set[Variable[_]], n: Node) => {
+        val a = (n match {
+          case vn: VariableNode => Set(vn.variable)
+          case fn: FactorNode => fn.variables
+        })
+        s ++ a
+      })
+      println("*****************\nElement ids:")
+      for { variable <- allVars } {
+        variable match {
+          case elemVar: /*Extended*/ ElementVariable[_] =>
+            println(variable.id + "(" + elemVar.element.name.string + ")" + "@" + elemVar.element.hashCode + ": " + elemVar.element)
+          case _ =>
+            println(variable.id + ": not an element variable")
+        }
+      }
+      println("*****************\nOriginal Factors:")
+      factorGraph.getNodes.foreach { n =>
+        n match {
+          case fn: FactorNode => println(factorGraph.getFactorForNode(fn).toReadableString)
+          case _ => 
+        }  
+      }
+      println("*****************")
     }
+
+    
     for { i <- 1 to iterations } { runStep() }
   }
 }
@@ -237,19 +281,31 @@ trait OneTimeProbabilisticBeliefPropagation extends ProbabilisticBeliefPropagati
 trait AnytimeProbabilisticBeliefPropagation extends ProbabilisticBeliefPropagation with Anytime
 
 /**
- * Class to implement a probability query BP algorithm 
+ * Class to implement a probability query BP algorithm
  */
-abstract class ProbQueryBeliefPropagation(override val universe: Universe)(
+abstract class ProbQueryBeliefPropagation(override val universe: Universe, targets: Element[_]*)(
   val dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
-  val dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double)
+  val dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double,
+  depth: Int = Int.MaxValue, upperBounds: Boolean = false)
   extends ProbQueryAlgorithm
   with ProbabilisticBeliefPropagation {
 
-  val queryTargets = universe.activeElements
+  val targetElements = targets.toList
+
+  val queryTargets = targetElements
 
   val semiring = SumProductSemiring
 
-  val factorGraph = new BasicFactorGraph(getFactors(List(), List()), semiring)
+  val (neededElements, needsBounds) = getNeededElements(starterElements, depth)
+
+  // Depth < MaxValue implies we are using bounds  
+  val factors = if (depth < Int.MaxValue && needsBounds) {
+    getFactors(neededElements, targetElements, upperBounds)
+  } else {
+    getFactors(neededElements, targetElements)
+  }
+
+  val factorGraph = new BasicFactorGraph(factors, semiring)
 
   def computeDistribution[T](target: Element[T]): Stream[(Double, T)] = getBeliefsForElement(target).toStream
 
@@ -258,77 +314,79 @@ abstract class ProbQueryBeliefPropagation(override val universe: Universe)(
   }
 }
 
-
 object BeliefPropagation {
   /**
    * Creates a One Time belief propagation computer in the current default universe.
    */
-  def apply(myIterations: Int)(implicit universe: Universe) =
-    new ProbQueryBeliefPropagation(universe)(
+  def apply(myIterations: Int, targets: Element[_]*)(implicit universe: Universe) =
+    new ProbQueryBeliefPropagation(universe, targets: _*)(
       List(),
-      (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u)) 
-      with OneTimeProbabilisticBeliefPropagation with OneTimeProbQuery { val iterations = myIterations }
+      (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u)) with OneTimeProbabilisticBeliefPropagation with OneTimeProbQuery { val iterations = myIterations }
 
   /**
    * Creates a Anytime belief propagation computer in the current default universe.
    */
-  def apply()(implicit universe: Universe) =
-    new ProbQueryBeliefPropagation(universe)(
+  def apply(targets: Element[_]*)(implicit universe: Universe) =
+    new ProbQueryBeliefPropagation(universe, targets: _*)(
       List(),
-      (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u)) 
-      with AnytimeProbabilisticBeliefPropagation with AnytimeProbQuery
+      (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u)) with AnytimeProbabilisticBeliefPropagation with AnytimeProbQuery
 
   /**
    * Create a One Time belief propagation computer current default universe, with debug information enabled.
    */
-  def debugged(myIterations: Int)(implicit universe: Universe) =
-    new ProbQueryBeliefPropagation(universe)(
+  def debugged(myIterations: Int, targets: Element[_]*)(implicit universe: Universe) =
+    new ProbQueryBeliefPropagation(universe, targets: _*)(
       List(),
-      (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u)) 
-      with OneTimeProbabilisticBeliefPropagation with OneTimeProbQuery { val iterations = myIterations; override val debug = true }
+      (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u)) with OneTimeProbabilisticBeliefPropagation with OneTimeProbQuery { val iterations = myIterations; override val debug = true }
 
   /**
    * Create a Anytime belief propagation computer using the given dependent universes in the current default universe.
    */
-  def apply(dependentUniverses: List[(Universe, List[NamedEvidence[_]])], myIterations: Int)(implicit universe: Universe) =
-    new ProbQueryBeliefPropagation(universe)(
+  def apply(dependentUniverses: List[(Universe, List[NamedEvidence[_]])], myIterations: Int, targets: Element[_]*)(implicit universe: Universe) =
+    new ProbQueryBeliefPropagation(universe, targets: _*)(
       dependentUniverses,
-      (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u))
-      with OneTimeProbabilisticBeliefPropagation with OneTimeProbQuery { val iterations = myIterations }
+      (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u)) with OneTimeProbabilisticBeliefPropagation with OneTimeProbQuery { val iterations = myIterations }
 
   /**
    * Create a One Time belief propagation computer using the given dependent universes in the current default universe.
    */
-  def apply(dependentUniverses: List[(Universe, List[NamedEvidence[_]])])(implicit universe: Universe) =
-    new ProbQueryBeliefPropagation(universe)(
+  def apply(dependentUniverses: List[(Universe, List[NamedEvidence[_]])], targets: Element[_]*)(implicit universe: Universe) =
+    new ProbQueryBeliefPropagation(universe, targets: _*)(
       dependentUniverses,
-      (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u))
-      with AnytimeProbabilisticBeliefPropagation with AnytimeProbQuery
+      (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u)) with AnytimeProbabilisticBeliefPropagation with AnytimeProbQuery
 
   /**
-   * Create a One Time belief propagation computer using the given dependent universes in the current 
-   * default universe. Use the given dependent algorithm function to determine the algorithm to use 
+   * Create a One Time belief propagation computer using the given dependent universes in the current
+   * default universe. Use the given dependent algorithm function to determine the algorithm to use
    * to compute probability of evidence in each dependent universe.
    */
   def apply(
     dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
     dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double,
-    myIterations: Int)(implicit universe: Universe) =
-    new ProbQueryBeliefPropagation(universe)(
+    myIterations: Int, targets: Element[_]*)(implicit universe: Universe) =
+    new ProbQueryBeliefPropagation(universe, targets: _*)(
       dependentUniverses,
       dependentAlgorithm) with OneTimeProbabilisticBeliefPropagation with OneTimeProbQuery { val iterations = myIterations }
 
   /**
-   * Create a Anytime belief propagation computer using the given dependent universes in the current 
-   * default universe. Use the given dependent algorithm function to determine the algorithm to use 
+   * Create a Anytime belief propagation computer using the given dependent universes in the current
+   * default universe. Use the given dependent algorithm function to determine the algorithm to use
    * to compute probability of evidence in each dependent universe.
    */
- def apply(
+  def apply(
     dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
-    dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double)(implicit universe: Universe) =
-    new ProbQueryBeliefPropagation(universe)(
+    dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double, targets: Element[_]*)(implicit universe: Universe) =
+    new ProbQueryBeliefPropagation(universe, targets: _*)(
       dependentUniverses,
       dependentAlgorithm) with AnytimeProbabilisticBeliefPropagation with AnytimeProbQuery
+
+  /**
+   * Lazy version of BP that operates only on bounds
+   */
+  def lazyBP(myIterations: Int, depth: Int, upperBounds: Boolean, targets: Element[_]*)(implicit universe: Universe) =
+    new ProbQueryBeliefPropagation(universe, targets: _*)(
+      List(), (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u),
+      depth, upperBounds) with OneTimeProbabilisticBeliefPropagation with OneTimeProbQuery { val iterations = myIterations; override val debug = false }
 
 }
 
