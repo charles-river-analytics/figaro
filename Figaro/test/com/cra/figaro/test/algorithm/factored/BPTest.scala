@@ -104,7 +104,7 @@ class BPTest extends WordSpec with Matchers {
       val e1 = DUniform(2, 3, 4)
       val e2 = IntSelector(e1)
 
-      val bp = BeliefPropagation(3)
+      val bp = BeliefPropagation(3, e2)
       bp.start()
 
       val e2_0 = 0.33333333 * (0.5 + 0.3333333 + 0.25)
@@ -183,7 +183,7 @@ class BPTest extends WordSpec with Matchers {
       val a = If(f, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
       Universe.createNew()
       val tolerance = 0.0000001
-      val algorithm = BeliefPropagation(10)(u1)
+      val algorithm = BeliefPropagation(10, f)(u1)
       algorithm.start()
       algorithm.probability(f, (b: Boolean) => b) should be(0.6 +- globalTol)
       algorithm.kill()
@@ -242,7 +242,7 @@ class BPTest extends WordSpec with Matchers {
 
       val a = CachingChain(x1, y1, (x: Boolean, y: Boolean) => if (x || y) u1; else u2)("a", dependentUniverse)
       val condition = (d: Double) => d < 0.5
-      val ve = BeliefPropagation(List((dependentUniverse, List(NamedEvidence("a", Condition(condition))))), 200)
+      val ve = BeliefPropagation(List((dependentUniverse, List(NamedEvidence("a", Condition(condition))))), 200, x1)
       ve.start()
       val peGivenXTrue = 0.5
       val peGivenXFalse = 0.2 * 0.5 + 0.8 * 0.25
@@ -259,7 +259,7 @@ class BPTest extends WordSpec with Matchers {
       val y = Flip(0.2)
       y.setCondition((b: Boolean) => b, List(Element.ElemVal(x, true)))
       // Probability of y should be (0.1 * 0.2 + 0.9 * 0.2) / (0.1 * 0.2 + 0.9 * 0.2 + 0.9 * 0.8) (because the case where x is true and y is false has been ruled out)
-      val ve = BeliefPropagation(50)
+      val ve = BeliefPropagation(50, y)
       ve.start()
       ve.probability(y, true) should be(((0.1 * 0.2 + 0.9 * 0.2) / (0.1 * 0.2 + 0.9 * 0.2 + 0.9 * 0.8)) +- globalTol)
     }
@@ -291,7 +291,7 @@ class BPTest extends WordSpec with Matchers {
   }
 
   def test[T](target: Element[T], predicate: T => Boolean, prob: Double, tol: Double) {
-    val algorithm = BeliefPropagation(100)
+    val algorithm = BeliefPropagation(100, target)
     algorithm.start()
     algorithm.probability(target, predicate) should be(prob +- tol)
   }
