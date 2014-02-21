@@ -5,11 +5,18 @@ object FigaroBuild extends Build {
 
   val _scalaVersion = "2.10.1"
 
+  lazy val root = Project("root", file("."))
+    .dependsOn(figaro, examples)
+    .aggregate(figaro, examples)
+
   lazy val figaro = Project("figaro", file("Figaro"))
+    .settings (scalacOptions ++= Seq(
+	"-feature",
+	"-language:existentials",
+	"-deprecation"
+    ))
     .settings(version := "2.2.0.0")
     .settings(scalaVersion := _scalaVersion)
-    .settings(scalaSource in Compile <<= baseDirectory { _ / "src" })
-    .settings(scalaSource in Test <<= baseDirectory { _ / "test" })
     .settings(libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-actors" % _scalaVersion,
       "org.scala-lang" % "scala-reflect" % _scalaVersion,
@@ -20,7 +27,7 @@ object FigaroBuild extends Build {
     .settings(parallelExecution in Test := false)
   
   lazy val examples = Project("figaro-examples", file("FigaroExamples"))
+    .settings(version := "2.2.0.0")
     .dependsOn(figaro)
-    .settings(scalaSource in Compile <<= baseDirectory { _ / "src" })
 
 }
