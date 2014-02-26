@@ -3,6 +3,7 @@
 
 # sbt specific
 .cache/
+.settings/
 .history/
 .lib/
 target/
@@ -14,5 +15,6 @@ project/plugins/project/
 # Scala-IDE specific
 .scala_dependencies
 .worksheet
+.cache
 .classpath
 .project
