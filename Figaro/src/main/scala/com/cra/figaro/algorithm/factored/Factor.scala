@@ -25,11 +25,14 @@ import com.cra.figaro.algorithm.lazyfactored.Extended
  */
 class Factor[T](val variables: List[Variable[_]]) {
 
-  private val numVars = variables.size
+  val numVars = variables.size
 
-  private val size = (1 /: variables)(_ * _.size)
+  val size = (1 /: variables)(_ * _.size)
   private[figaro] val contents: Map[List[Int], T] = Map()
   override def toString = "Factor(" + variables.map(_.id).mkString(",") + " " + contents.mkString(",") + ")"
+  
+  def hasStar = (false /: variables)(_ || _.valueSet.hasStar)
+  
   def isEmpty = size == 0
   /**
    * Set the value associated with a row. The row is identified by an list of indices

@@ -231,7 +231,7 @@ object ProbFactor {
   private def makeFactors[T, U](chain: Chain[T, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {
     val chainMap: scala.collection.mutable.Map[T, Element[U]] = LazyValues(chain.universe).getMap(chain)
     val parentVar = Variable(chain.parent)
-    parentVar.range.zipWithIndex flatMap (pair => {
+    val tempFactors = parentVar.range.zipWithIndex flatMap (pair => {
       val parentVal = pair._1
       // parentVal.value should have been placed in applyMap at the time the values of this apply were computed.
       // By using chainMap, we can make sure that the result element is the same now as they were when values were computed.
@@ -246,8 +246,101 @@ object ProbFactor {
         List(makeConditionalSelector(chain, parentVar, pair._2, dummy), dummyFactor)
       }
     })
+    combineFactors(tempFactors)
   }
 
+  private def combineFactors(oldFactors: List[Factor[Double]]): List[Factor[Double]] = {
+    val maxElementCount = 6
+    val maxSize = 5000
+   	val semiring = SumProductSemiring
+
+    var newFactors = List[Factor[Double]]()
+    var tempFactors = List[Factor[Double]]()
+    
+    for (factor <- oldFactors)
+    {
+      if (factor.hasStar)
+      {
+        newFactors = newFactors ::: List(factor)
+      }
+      else
+      {
+        tempFactors = tempFactors ::: List(factor)
+      }
+    }
+    
+    var totalSize = 1
+    var nextFactor = Factor.unit[Double](semiring)
+
+    for (factor <- tempFactors)
+    {
+    	totalSize *= factor.size
+        var variableSet = (nextFactor.variables.asInstanceOf[List[Variable[_]]] ++ factor.variables.asInstanceOf[List[Variable[_]]]).toSet
+        var elementCount = variableSet count (v => !isTemporary(v))
+   	
+    	if (elementCount < maxElementCount && totalSize < maxSize)
+    	{  
+    		nextFactor = nextFactor.product(factor, semiring)
+    	}
+    	else
+    	{
+    	     newFactors = newFactors ::: reduceFactor(nextFactor, semiring, maxElementCount)
+    	     totalSize = factor.size
+    	     nextFactor = factor
+    	}
+    }
+    
+    if (nextFactor.numVars > 0)
+    {
+       newFactors = newFactors ::: reduceFactor(nextFactor, semiring, maxElementCount)
+    }
+    newFactors
+  }
+ 
+   private def reduceFactor(factor: Factor[Double], semiring: Semiring[Double], maxElementCount: Int):List[Factor[Double]] = {
+	   var variableSet = (Set[Variable[_]]() /: List(factor))(_ ++ _.variables.asInstanceOf[List[Variable[_]]])
+       var elementCount = variableSet count (v => !isTemporary(v))
+       var resultFactor = Factor.unit[Double](semiring).product(factor, semiring)
+       
+       var tempCount = 0;
+       
+       for {variable <- variableSet}
+       {   	
+    		if (isTemporary(variable) && elementCount <= maxElementCount)
+    		{
+    			var nextFactors = concreteFactors(variable.asInstanceOf[ElementVariable[_]].element)
+    			variableSet = (variableSet /: nextFactors)(_ ++ _.variables.asInstanceOf[List[ElementVariable[_]]]) 
+     	        elementCount = variableSet count (v => !isTemporary(v))
+    	  
+    			for (factor <- nextFactors)
+    			{
+    			  resultFactor = resultFactor.product(factor, semiring)
+    			}
+    			tempCount += 1
+    		}
+    	}
+    
+    	if (tempCount > 0 && elementCount <= maxElementCount)
+    	{   	  
+    		for {variable <- variableSet}
+    		{
+    			if (isTemporary(variable))
+    			{
+    				resultFactor = resultFactor.sumOver(variable, semiring)
+    			}
+    		}
+    		
+    	}
+    	List(resultFactor)
+  }
+  
+  private def isTemporary[_T](variable: Variable[_]): Boolean = {
+    variable match {
+      case e: ElementVariable[_] => e.element.isTemporary
+      case _ => false
+    }
+  }
+  
   private def makeFactors[T, U](apply: Apply1[T, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {
     val applyMap: scala.collection.mutable.Map[T, U] = LazyValues(apply.universe).getMap(apply)
     val arg1Var = Variable(apply.arg1)

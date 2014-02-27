@@ -545,21 +545,87 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val v41 = v4Vals indexOf Regular(1)
         val v42 = v4Vals indexOf Regular(2)
         val v43 = v4Vals indexOf Regular(3)
-        val List(v2Factor, v3Factor) = ProbFactor.make(v4)
-        v2Factor.get(List(v1t, v41, v21)) should equal(1.0)
-        v2Factor.get(List(v1t, v41, v22)) should equal(0.0)
-        v2Factor.get(List(v1t, v42, v21)) should equal(0.0)
-        v2Factor.get(List(v1t, v42, v22)) should equal(1.0)
-        v2Factor.get(List(v1t, v43, v21)) should equal(0.0)
-        v2Factor.get(List(v1t, v43, v22)) should equal(0.0)
-        for { i <- 0 to 1; j <- 0 to 1 } v2Factor.get(List(v1f, i, j)) should equal(1.0)
-        v3Factor.get(List(v1f, v41, 0)) should equal(0.0)
-        v3Factor.get(List(v1f, v42, 0)) should equal(0.0)
-        v3Factor.get(List(v1f, v43, 0)) should equal(1.0)
-        for { i <- 0 to 1; j <- 0 to 0 } v3Factor.get(List(v1t, i, j)) should equal(1.0)
+
+        val List(v4Factor) = ProbFactor.make(v4)
+        v4Factor.get(List(v1t, v41, v21, 0)) should equal(1.0)
+        v4Factor.get(List(v1t, v41, v22, 0)) should equal(0.0)
+        v4Factor.get(List(v1t, v42, v21, 0)) should equal(0.0)
+        v4Factor.get(List(v1t, v42, v22, 0)) should equal(1.0)
+        v4Factor.get(List(v1t, v43, v21, 0)) should equal(0.0)
+        v4Factor.get(List(v1t, v43, v22, 0)) should equal(0.0)
+        v4Factor.get(List(v1f, v41, v21, 0)) should equal(0.0)
+        v4Factor.get(List(v1f, v41, v22, 0)) should equal(0.0)
+        v4Factor.get(List(v1f, v42, v21, 0)) should equal(0.0)
+        v4Factor.get(List(v1f, v42, v22, 0)) should equal(0.0)
+        v4Factor.get(List(v1f, v43, v21, 0)) should equal(1.0)
+        v4Factor.get(List(v1f, v43, v22, 0)) should equal(1.0)
+
+      }
+      
+      "produce a conditional selector for each non-temporary parent value" in {
+        Universe.createNew()
+        val v1 = Flip(0.2)
+        val v4 = Chain(v1, (b: Boolean) => if (b) Select(0.1 -> 1, 0.9 -> 2); else Constant(3))
+        Values()(v4)
+        val v1Vals = Variable(v1).range
+        val v4Vals = Variable(v4).range
+        
+        val v1t = v1Vals indexOf Regular(true)
+        val v1f = v1Vals indexOf Regular(false)
+        val v41 = v4Vals indexOf Regular(1)
+        val v42 = v4Vals indexOf Regular(2)
+        val v43 = v4Vals indexOf Regular(3)
+
+        val List(v4Factor) = ProbFactor.make(v4)
+        v4Factor.get(List(v1t, v41)) should equal(0.1)
+        v4Factor.get(List(v1t, v42)) should equal(0.9)
+        v4Factor.get(List(v1t, v43)) should equal(0.0)
+        v4Factor.get(List(v1f, v41)) should equal(0.0)
+        v4Factor.get(List(v1f, v42)) should equal(0.0)
+        v4Factor.get(List(v1f, v43)) should equal(1.0)
       }
     }
-
+    
+    "given a CPD with one argument" should {
+      "produce a single factor with a case for each parent value" in {
+    	  Universe.createNew()
+    	  val v1 = Flip(0.2)
+    	  
+    	  val v2 = CPD(v1, false -> Flip(0.1), true -> Flip(0.7))
+    	  Values()(v2)
+    	  
+    	  val v1Vals = Variable(v1).range
+    	  val v2Vals = Variable(v2).range
+    	    	  
+    	  val v1t = v1Vals indexOf Regular(true)
+    	  val v1f = v1Vals indexOf Regular(false)
+    	  val v2t = v2Vals indexOf Regular(true)
+    	  val v2f = v2Vals indexOf Regular(false)
+    	  val v3t = 0
+    	  val v3f = 1
+    	  val v4t = 0
+    	  val v4f = 1
+    	  
+    	  val List(v2Factor) = ProbFactor.make(v2)
+    	  v2Factor.get(List(v1t, v2t, v3t, v4t)) should equal(1.0)
+    	  v2Factor.get(List(v1t, v2t, v3t, v4f)) should equal(1.0)
+    	  v2Factor.get(List(v1t, v2t, v3f, v4t)) should equal(0.0)
+    	  v2Factor.get(List(v1t, v2t, v3f, v4f)) should equal(0.0)
+    	  v2Factor.get(List(v1t, v2f, v3t, v4t)) should equal(0.0)
+    	  v2Factor.get(List(v1t, v2f, v3t, v4f)) should equal(0.0)
+    	  v2Factor.get(List(v1t, v2f, v3f, v4t)) should equal(1.0)
+    	  v2Factor.get(List(v1t, v2f, v3f, v4f)) should equal(1.0)
+    	  v2Factor.get(List(v1f, v2t, v3t, v4t)) should equal(1.0)
+    	  v2Factor.get(List(v1f, v2t, v3t, v4f)) should equal(0.0)
+    	  v2Factor.get(List(v1f, v2t, v3f, v4t)) should equal(1.0)
+    	  v2Factor.get(List(v1f, v2t, v3f, v4f)) should equal(0.0)
+    	  v2Factor.get(List(v1f, v2f, v3t, v4t)) should equal(0.0)
+    	  v2Factor.get(List(v1f, v2f, v3t, v4f)) should equal(1.0)
+    	  v2Factor.get(List(v1f, v2f, v3f, v4t)) should equal(0.0)
+    	  v2Factor.get(List(v1f, v2f, v3f, v4f)) should equal(1.0)
+      }
+    }
+    
     "given an apply of one argument" should {
       "produce a factor that matches the argument to the result via the function" in {
         Universe.createNew()
