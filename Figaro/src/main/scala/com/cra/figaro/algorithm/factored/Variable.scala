@@ -23,7 +23,7 @@ import com.cra.figaro.algorithm.lazyfactored.{LazyValues, Extended, ValueSet}
  * 
  * @param range The range of values of the variable
  */
-class Variable[T](valueSet: ValueSet[T]) {
+class Variable[T](val valueSet: ValueSet[T]) {
   type Value = T
   
   val range: List[Extended[T]] = valueSet.xvalues.toList
