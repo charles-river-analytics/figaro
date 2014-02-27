@@ -16,7 +16,6 @@ package com.cra.figaro.test.algorithm.factored
 import scala.collection.mutable.Map
 import org.scalatest.WordSpec
 import org.scalatest.Matchers
-//import org.scalatest.matchers.ShouldMatchers
 import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.algorithm.factored.beliefpropagation._
 import com.cra.figaro.language._
@@ -43,7 +42,7 @@ class BPTest extends WordSpec with Matchers {
       val fn = graph.adjacencyList.filter(p => { p._1 match { case fn: FactorNode => true; case _ => false; } })
       val vn = graph.adjacencyList.filter(p => { p._1 match { case vn: VariableNode => true; case _ => false; } })
 
-      fn.size should equal(6)
+      fn.size should equal(5)
       vn.size should equal(5)
     }
 
@@ -215,16 +214,20 @@ class BPTest extends WordSpec with Matchers {
         val s1 = Select(0.1 -> 1, 0.9 -> 2)
         val s2 = Select(0.7 -> 1, 0.2 -> 2, 0.1 -> 3)
         val c = Chain(f, (b: Boolean) => if (b) s1; else s2)
+
         s1.observe(1)
-        val c_actual = .71
+        val c_actual = .79
+
         /*
          * The "c_actual" value has been determine using Dimple to back up the results of Figaro. This exact
          * same factor graph was run on dimple and returns .70907 for i == 1
          * The same is done with 'f' (set as an increased tolerance below),
          *  although this test is not doing much since the while point it to show
          * that f does not change, at least it does not change significantly
+         * 
+         * The factor model is no longer loopy so the exact result .79 applies (Glenn)
          */
-        test(c, (i: Int) => i == 1, 0.71, globalTol)
+        test(c, (i: Int) => i == 1, c_actual, globalTol)
         test(f, (b: Boolean) => b, 0.3, 0.06)
       }
 
