@@ -26,7 +26,7 @@ object Forward {
   def apply(implicit universe: Universe) = {
     // avoiding recursion
     var state = Set[Element[_]]()
-    var elementsRemaining = universe.permanentElements
+    var elementsRemaining = universe.activeElements
     while (!elementsRemaining.isEmpty) {
       if (elementsRemaining.head.active) state = sampleInState(elementsRemaining.head, state, universe)
       elementsRemaining = elementsRemaining.tail

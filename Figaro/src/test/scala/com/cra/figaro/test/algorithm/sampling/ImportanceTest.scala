@@ -268,6 +268,21 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       alg.probability(b, true) should be (0.9 +- .01)
 
     }
+
+    "resample elements inside class defined in a chain for foward sampling" in {
+      Universe.createNew()
+      class temp {
+        val t1 = Flip(0.9)
+      }
+      val a = Chain(Constant(0), (i: Int) => Constant(new temp))
+      val b = Apply(a, (t: temp) => t.t1.value)
+      val prob = List.fill(1000){Forward(Universe.universe); b.value}
+      prob.count(_ == true).toDouble/1000.0 should be (0.9 +- .01)
+      //alg.probability(b, true) should be (0.9 +- .01)
+
+    }
+
+    
   }
 
   def weightedSampleTest[T](target: Element[T], predicate: T => Boolean, prob: Double) {
