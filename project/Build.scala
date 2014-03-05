@@ -3,9 +3,16 @@ import Keys._
 
 object FigaroBuild extends Build {
 
-  val _scalaVersion = "2.10.1"
+  override val settings = super.settings ++ Seq(
+    organization := "figaro",
+    version := "2.2.0.0",
+    scalaVersion := "2.10.1",
+    crossPaths := false,
+    publishMavenStyle := true)
 
   lazy val root = Project("root", file("."))
+    .settings(publishLocal := {})
+    .settings(publish := {})
     .dependsOn(figaro, examples)
     .aggregate(figaro, examples)
 
@@ -15,11 +22,9 @@ object FigaroBuild extends Build {
 	"-language:existentials",
 	"-deprecation"
     ))
-    .settings(version := "2.2.0.0")
-    .settings(scalaVersion := _scalaVersion)
     .settings(libraryDependencies ++= Seq(
-      "org.scala-lang" % "scala-actors" % _scalaVersion,
-      "org.scala-lang" % "scala-reflect" % _scalaVersion,
+      "org.scala-lang" % "scala-actors" % scalaVersion.value,
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "asm" % "asm" % "3.3.1",
       "net.sf.jsci" % "jsci" % "1.2",
       "org.scalatest" %% "scalatest" % "2.0" % "test"
@@ -27,7 +32,6 @@ object FigaroBuild extends Build {
     .settings(parallelExecution in Test := false)
   
   lazy val examples = Project("figaro-examples", file("FigaroExamples"))
-    .settings(version := "2.2.0.0")
     .dependsOn(figaro)
 
 }
