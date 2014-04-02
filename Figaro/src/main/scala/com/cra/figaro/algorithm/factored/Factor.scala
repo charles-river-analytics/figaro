@@ -223,6 +223,11 @@ class Factor[T](val variables: List[Variable[_]]) {
     deDuplicate(marginalized)
   }
 
+  def deDuplicate():Factor[T] =
+  {
+    deDuplicate(this)
+  }
+  
   private def deDuplicate(factor: Factor[T]): Factor[T] =
   {
      val repeats = findRepeats(factor.variables)
