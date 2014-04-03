@@ -266,6 +266,17 @@ class BPTest extends WordSpec with Matchers {
       ve.start()
       ve.probability(y, true) should be(((0.1 * 0.2 + 0.9 * 0.2) / (0.1 * 0.2 + 0.9 * 0.2 + 0.9 * 0.8)) +- globalTol)
     }
+    
+    "should not underflow" in {
+      Universe.createNew()
+      val x = Flip(0.99)
+      for (i <- 0 until 10) {
+        x.addConstraint((b: Boolean) => if (b) 1e-100; else 1e-120)
+      }
+      val bp = BeliefPropagation(5, x)
+      bp.start()
+      bp.probability(x, true) should be (1.0)
+    }
 
   }
 

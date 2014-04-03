@@ -141,11 +141,12 @@ class Factor[T](val variables: List[Variable[_]]) {
     summedVariableIndices: List[Int],
     semiring: Semiring[T]): T = {
     var value = semiring.zero
-    for { i <- 0 until summedVariable.size } {
-      val sourceIndices = insertAtIndices(resultIndices, summedVariableIndices, i)
-      value = semiring.sum(value, get(sourceIndices))
-    }
-    value
+    val values = 
+      for { i <- 0 until summedVariable.size } yield {
+        val sourceIndices = insertAtIndices(resultIndices, summedVariableIndices, i)
+        get(sourceIndices)
+      }
+    semiring.sumMany(values)
   }
 
   /**
