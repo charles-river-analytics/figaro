@@ -89,10 +89,10 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
     val messageList = neighborList map (factorGraph.getLastMessage(_, fn))
 
     if (messageList.isEmpty) {
-      initFactor.marginalizeTo(vn.variable, semiring)
+      initFactor.marginalizeTo(semiring, vn.variable)
     } else {
       val total = messageList.reduceLeft(_.product(_, semiring))
-      initFactor.product(total, semiring).marginalizeTo(vn.variable, semiring)
+      initFactor.product(total, semiring).marginalizeTo(semiring, vn.variable)
     }
   }
 

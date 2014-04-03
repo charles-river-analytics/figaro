@@ -329,7 +329,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         f.set(List(0, 0, 1), 0.3)
         f.set(List(1, 0, 1), 0.4)
         f.set(List(2, 0, 1), 0.5)
-        val g = f.marginalizeTo(v3, SumProductSemiring)
+        val g = f.marginalizeTo(SumProductSemiring, v3)
         g.variables should equal(List(v3))
         val p1 = 0.0 + 0.1 + 0.2
         val p2 = 0.3 + 0.4 + 0.5
@@ -338,7 +338,76 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
       }
     }
   }
+  
+  "after marginalizing to two variables" should {
+      "return the marginal distribution over the variables" in {
+        Universe.createNew()
+        val e1 = Select(0.2 -> "a", 0.3 -> "b", 0.5 -> "c")
+        val e2 = Flip(0.5)
+        val e3 = Flip(0.1)
+        Values()(e1)
+        Values()(e2)
+        Values()(e3)
+        val v1 = Variable(e1)
+        val v2 = Variable(e2)
+        val v3 = Variable(e3)
+        val f = new Factor[Double](List(v1, v2, v3))
+        f.set(List(0, 0, 0), 0.0)
+        f.set(List(1, 0, 0), 0.05)
+        f.set(List(2, 0, 0), 0.1)
+        f.set(List(0, 0, 1), 0.15)
+        f.set(List(1, 0, 1), 0.2)
+        f.set(List(2, 0, 1), 0.25)
+        f.set(List(0, 1, 0), 0.0)
+        f.set(List(1, 1, 0), 0.05)
+        f.set(List(2, 1, 0), 0.1)
+        f.set(List(0, 1, 1), 0.15)
+        f.set(List(1, 1, 1), 0.2)
+        f.set(List(2, 1, 1), 0.25)
+        val g = f.marginalizeTo(SumProductSemiring, v1, v3)
+        g.variables should equal(List(v1, v3))
+        g.get(List(0, 0)) should be(0.0 +- 0.000001)
+        g.get(List(1, 0)) should be(0.1 +- 0.000001)
+        g.get(List(2, 0)) should be(0.2 +- 0.000001)
+        g.get(List(0, 1)) should be(0.3 +- 0.000001)
+        g.get(List(1, 1)) should be(0.4 +- 0.000001)
+        g.get(List(2, 1)) should be(0.5 +- 0.000001)
+      }
+    }
+  
+  	"after deduplicating a factor" should {
+      "have no repeated variables" in {
+        Universe.createNew()
+        val e1 = Select(0.2 -> "a", 0.3 -> "b", 0.5 -> "c")
+        val e2 = Flip(0.3)
+        Values()(e1)
+        Values()(e2)
+        val v1 = Variable(e1)
+        val v2 = Variable(e2)
+        val f = new Factor[Double](List(v1, v2, v2))
+        f.set(List(0, 0, 0), 0.06)
+        f.set(List(0, 0, 1), 0.25)
+        f.set(List(0, 1, 0), 0.44)
+        f.set(List(0, 1, 1), 0.25)
+        f.set(List(1, 0, 0), 0.15)
+        f.set(List(1, 0, 1), 0.2)
+        f.set(List(1, 1, 0), 0.15)
+        f.set(List(1, 1, 1), 0.5)
+        f.set(List(2, 0, 0), 0.1)
+        f.set(List(2, 0, 1), 0.25)
+        f.set(List(2, 1, 0), 0.4)
+        f.set(List(2, 1, 1), 0.25)
 
+        val g = f.deDuplicate()
+        g.variables should equal(List(v1, v2))
+        g.get(List(0, 0)) should be (0.06 +- 0.000001)
+        g.get(List(0, 1)) should be (0.25 +- 0.000001)
+        g.get(List(1, 0)) should be (0.15 +- 0.000001)
+        g.get(List(1, 1)) should be (0.5 +- 0.000001)
+        g.get(List(2, 0)) should be (0.1 +- 0.000001)
+        g.get(List(2, 1)) should be (0.25 +- 0.000001)
+      }
+    }
   "Making factors from an element" when {
 
          "given a constant" should {
