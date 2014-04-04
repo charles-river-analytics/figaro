@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="scala.scalatest">
+<stringAttribute key="SCALATEST_LAUNCH_INCLUDE_NESTED" value="false"/>
+<setAttribute key="SCALATEST_LAUNCH_TESTS_NAME">
+<setEntry value="Running BeliefPropagation should &quot;with a model using chain and a condition on one of the outcome elements, correctly condition the result &quot;.+"/>
+<setEntry value="Running BeliefPropagation should &quot;with an element that uses another element multiple times, &quot;.+"/>
+<setEntry value="Running BeliefPropagation should Send the correct type of message"/>
+<setEntry value="Running BeliefPropagation should on a different universe from the current universe, produce the correct result"/>
+<setEntry value="Running BeliefPropagation should should not underflow"/>
+<setEntry value="Running BeliefPropagation should with a condition on a dependent element produce the result with the correct probability"/>
+<setEntry value="Running BeliefPropagation should with a constraint on a dependent element produce the result with the correct probability"/>
+<setEntry value="Running BeliefPropagation should with a constraint on an element that is used multiple times, only factor in the constraint once"/>
+<setEntry value="Running BeliefPropagation should with a contingent condition, correctly take into account the contingency"/>
+<setEntry value="Running BeliefPropagation should with a dependent universe, correctly take into account probability of evidence in the dependent universe"/>
+<setEntry value="Running BeliefPropagation should with a model using chain and a condition on the result, correctly condition the parent"/>
+<setEntry value="Running BeliefPropagation should with a model using chain and no conditions or constraints, produce the correct answer"/>
+<setEntry value="Running BeliefPropagation should with no conditions or constraints produce the correct result"/>
+<setEntry value="Running BeliefPropagation should with no loops in the factor graph give exact results"/>
+</setAttribute>
+<stringAttribute key="SCALATEST_LAUNCH_TYPE" value="SUITE"/>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.cra.figaro.test.algorithm.factored.BPTest"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="Figaro"/>
+</launchConfiguration>

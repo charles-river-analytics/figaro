@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="scala.scalatest">
+<stringAttribute key="SCALATEST_LAUNCH_INCLUDE_NESTED" value="false"/>
+<stringAttribute key="SCALATEST_LAUNCH_TYPE" value="FILE"/>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="/Figaro/src/test/scala/com/cra/figaro/test/algorithm/factored/VETest.scala"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="Figaro"/>
+</launchConfiguration>
