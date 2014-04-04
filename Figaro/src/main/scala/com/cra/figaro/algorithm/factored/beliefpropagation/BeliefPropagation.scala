@@ -173,9 +173,11 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
    *  Normalize a factor
    */
   def normalize(factor: Factor[Double]): Factor[Double] = {
-    val z = factor.foldLeft(semiring.zero, _ + _)
+    //val z = factor.foldLeft(semiring.zero, _ + _)
+    val z = semiring.sumMany(factor.contents.values)
     val normedFactor = new Factor[Double](factor.variables)
-    factor.mapTo((d: Double) => if (z != semiring.zero) d / z else semiring.zero, normedFactor)
+    // Since we're in log space, d - z = log(exp(d)/exp(z))
+    factor.mapTo((d: Double) => if (z != semiring.zero) d - z else semiring.zero, normedFactor)
     normedFactor
   }
 
@@ -199,9 +201,15 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
     val dependentUniverseFactors =
       for { (dependentUniverse, evidence) <- dependentUniverses } yield ProbFactor.makeDependentFactor(universe, dependentUniverse, dependentAlgorithm(dependentUniverse, evidence))
     val factors = dependentUniverseFactors ::: thisUniverseFactors
-    factors
+    // To prevent underflow, we do all computation in log space
+    factors.map(makeLogarithmic(_))
   }
 
+  private def makeLogarithmic(factor: Factor[Double]): Factor[Double] = {
+    val result = new Factor[Double](factor.variables)
+    factor.mapTo((d: Double) => Math.log(d), result)
+    result
+  }
   /**
    * Get the belief for an element
    */
@@ -212,7 +220,8 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
     } else {
       val factor = normalize(finalFactor)
       val factorVariable = Variable(target)
-      factorVariable.range.zipWithIndex.map(pair => (factor.get(List(pair._2)), pair._1.value))
+      // Since all computations have been in log space, we get out of log space here to provide the final beliefs
+      factorVariable.range.zipWithIndex.map(pair => (Math.exp(factor.get(List(pair._2))), pair._1.value))
     }
   }
   
@@ -294,7 +303,7 @@ abstract class ProbQueryBeliefPropagation(override val universe: Universe, targe
 
   val queryTargets = targetElements
 
-  val semiring = SumProductSemiring
+  val semiring = LogSumProductSemiring
 
   val (neededElements, needsBounds) = getNeededElements(starterElements, depth)
 

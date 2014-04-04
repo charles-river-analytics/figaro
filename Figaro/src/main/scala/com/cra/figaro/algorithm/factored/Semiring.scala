@@ -31,6 +31,14 @@ trait Semiring[T] {
   def sum(x: T, y: T): T
 
   /**
+   * Sum of many entries. Typically, this would be implemented by the ordinary sum,
+   * but there may be more efficient implementations.
+   */
+  def sumMany(xs: Traversable[T]): T = {
+    xs.foldLeft(zero)(sum(_,_))
+  }
+  
+  /**
    * A value such that a + 0 = a
    */
   val zero: T
@@ -99,6 +107,42 @@ object SumProductSemiring extends Semiring[Double] {
    * 1
    */
   val one = 1.0
+}
+
+/**
+ * Semiring for computing sums and products with log probabilities.
+ */
+object LogSumProductSemiring extends Semiring[Double] {
+  val zero = Double.NegativeInfinity
+  
+  val one = 0.0
+  
+  def product(x: Double, y: Double) = x + y
+  
+  override def sumMany(xs: Traversable[Double]): Double = {
+    val max = xs.foldLeft(Double.NegativeInfinity)(_ max _)
+    if (max == Double.NegativeInfinity) Double.NegativeInfinity 
+    else {
+      var total = 0.0
+      for (x <- xs) { total += Math.exp(x - max) }
+      Math.log(total) + max
+    }
+  }
+  
+  def sum(x: Double, y: Double) = sumMany(List(x,y))
+}
+
+/**
+ * Semiring for computing maxs and products with log probabilities.
+ */
+object LogMaxProductSemiring extends Semiring[Double] {
+  val zero = Double.NegativeInfinity
+  
+  val one = 0.0
+  
+  def product(x: Double, y: Double) = x + y
+  
+  def sum(x: Double, y: Double) = x max y
 }
 
 /**
