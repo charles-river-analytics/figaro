@@ -213,20 +213,91 @@ class Factor[T](val variables: List[Variable[_]]) {
    * This involves summing out all other variables.
    */
   def marginalizeTo(
-    target: Variable[_],
-    semiring: Semiring[T]): Factor[T] = {
+      semiring: Semiring[T],
+      targets: Variable[_]*
+    ): Factor[T] = {
     val marginalized =
       (this /: variables)((factor: Factor[T], variable: Variable[_]) =>
-        if (variable == target) factor; else factor.sumOver(variable, semiring))
+        if (targets contains variable) factor; else factor.sumOver(variable, semiring))
     // It's possible that the target variable appears more than once in this factor. If so, we need to reduce it to
     // one column by eliminating any rows in which the target variable values do not agree.
-    val reduced = new Factor[T](List(target))
-    for { i <- 0 until target.size } {
-      reduced.set(List(i), marginalized.get(List.fill(marginalized.variables.size)(i)))
-    }
-    reduced
+    deDuplicate(marginalized)
   }
 
+  def deDuplicate():Factor[T] =
+  {
+    deDuplicate(this)
+  }
+  
+  private def deDuplicate(factor: Factor[T]): Factor[T] =
+  {
+     val repeats = findRepeats(factor.variables)
+     val hasRepeats = (false /: repeats.values)(_ || _.size > 1)
+     if (hasRepeats)
+     {
+       val reduced = new Factor[T](repeats.keySet.toList)
+       val newVariableLocations = repeats.values.map(_(0))
+       
+       val repeatedVariables = repeats.values.filter(_.size > 1)
+       for (row <- factor.allIndices)
+       {
+         if (checkRow(row, repeatedVariables))
+         {
+           var newRow = List[Int]()
+           for (pos <- newVariableLocations)
+           {
+             newRow = newRow :+ row(pos)
+           }
+           reduced.set(newRow, factor.get(row))
+         }
+       }
+       reduced
+     }
+     else
+     {
+       factor
+     }
+  }
+  
+  
+  private def checkRow(row: List[Int], repeatedVariables: Iterable[List[Int]]):Boolean = {
+    var ok = true
+    
+    for (repeats <- repeatedVariables)
+    {
+      val checkVal = row(repeats(0))
+      for (pos <- repeats)
+      {
+        if (checkVal != row(pos))
+        {
+          ok = false
+        }
+      }
+    }
+    ok
+  }
+  
+  private def findRepeats(varList: List[Variable[_]]): Map[Variable[_], List[Int]] = 
+  {
+    var repeats = Map[Variable[_], List[Int]]()
+    
+    for (variable <- varList)
+    {
+      if (!repeats.keySet.contains(variable))
+      {
+    	  var indices = List[Int]()
+    	  var start = varList.indexOf(variable)
+    	  while (start > -1)
+    	  {
+    		indices = indices :+ start
+    		start = varList.indexOf(variable, start + 1)
+    	  }
+    	  repeats = repeats + (variable -> indices)
+      }
+    }
+    repeats
+  }
+  
   /**
    * Produce a readable string representation of the factor
    */
@@ -271,6 +342,7 @@ class Factor[T](val variables: List[Variable[_]]) {
     addBorderRow()
     result.toString
   }
+
 }
 
 object Factor {
