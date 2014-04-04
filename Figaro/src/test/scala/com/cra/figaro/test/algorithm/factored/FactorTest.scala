@@ -615,7 +615,9 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val v42 = v4Vals indexOf Regular(2)
         val v43 = v4Vals indexOf Regular(3)
 
-        val List(v4Factor) = ProbFactor.make(v4)
+        val factor = ProbFactor.make(v4)
+        val List(v4Factor) = ProbFactor.combineFactors(factor, SumProductSemiring, true)
+        
         v4Factor.get(List(v1t, v41, v21, 0)) should equal(1.0)
         v4Factor.get(List(v1t, v41, v22, 0)) should equal(0.0)
         v4Factor.get(List(v1t, v42, v21, 0)) should equal(0.0)
@@ -645,7 +647,9 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val v42 = v4Vals indexOf Regular(2)
         val v43 = v4Vals indexOf Regular(3)
 
-        val List(v4Factor) = ProbFactor.make(v4)
+        val factor = ProbFactor.make(v4)
+        val List(v4Factor) = ProbFactor.combineFactors(factor, SumProductSemiring, true)
+
         v4Factor.get(List(v1t, v41)) should equal(0.1)
         v4Factor.get(List(v1t, v42)) should equal(0.9)
         v4Factor.get(List(v1t, v43)) should equal(0.0)
@@ -675,7 +679,9 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
     	  val v4t = 0
     	  val v4f = 1
     	  
-    	  val List(v2Factor) = ProbFactor.make(v2)
+    	  val factor = ProbFactor.make(v2)
+          val List(v2Factor) = ProbFactor.combineFactors(factor, SumProductSemiring, true)
+          
     	  v2Factor.get(List(v1t, v2t, v3t, v4t)) should equal(1.0)
     	  v2Factor.get(List(v1t, v2t, v3t, v4f)) should equal(1.0)
     	  v2Factor.get(List(v1t, v2t, v3f, v4t)) should equal(0.0)
