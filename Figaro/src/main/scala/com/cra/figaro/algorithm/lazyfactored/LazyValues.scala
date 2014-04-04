@@ -357,6 +357,8 @@ object LazyValues {
         e.memoValues.clear()
         e.chainMaps.clear()
         e.applyMaps.clear()
+        e.usedBy.clear()
+        e.requiredDepths.clear
       }
       case _ => ()
     }

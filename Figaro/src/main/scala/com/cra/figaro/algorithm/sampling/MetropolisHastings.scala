@@ -254,6 +254,17 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
     if (debug) println("Rejecting!\n")
     state.oldValues foreach (setValue(_))
     state.oldRandomness foreach (setRandomness(_))
+    
+    /* Have to call generateValue on chains after a rejection to restore the old resulting
+     * element. We can't do this above because we have to ensure the value of parent is restored before we
+     * do this.
+     */ 
+    for((elem, value) <- state.oldValues) {
+      elem match {
+        case c: Chain[_,_] => c.generateValue
+        case _ => 
+      }
+    }
   }
 
   /*

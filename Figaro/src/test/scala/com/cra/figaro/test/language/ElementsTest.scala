@@ -18,6 +18,7 @@ import org.scalatest.WordSpec
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.library.compound._
+import com.cra.figaro.library.atomic.discrete.Uniform
 
 class ElementsTest extends WordSpec with Matchers {
   "A Constant" should {
@@ -105,20 +106,20 @@ class ElementsTest extends WordSpec with Matchers {
       "call the CPD when the cache is full" in {
         Universe.createNew()
         var sum = 0
-        def fn(b: Boolean) = {
+        def fn(b: Int) = {
           sum += 1
           Constant(b)
         }
-        val f1 = Flip(0.5)
-        f1.set(false)
+        val f1 = Uniform(0, 1, 2)
         val c = NonCachingChain(f1, fn _)
         sum = 0
-        c.get(true)
-        c.get(false)
-        c.get(true)
+        c.get(0)
+        c.get(1)
+        c.get(2)
+        c.get(0)
         // either 3 or 4 depending on whether the value on initialization is true or false
         // see implementation of NonCachingChain and use of oldParentValue
-        sum should be > (2)
+        sum should be > (3)
       }
     }
 
@@ -136,11 +137,12 @@ class ElementsTest extends WordSpec with Matchers {
 
       "remove deactivated elements from context when resizing the cache" in {
         Universe.createNew()
-        val c = NonCachingChain(Flip(0.5), (b: Boolean) => if (b) Constant(0) else Constant(1))
-        c.get(true)
-        c.get(false)
-        c.directContextContents.size should equal(1)
-        c.elemInContext.size should equal(1)
+        val c = NonCachingChain(Uniform(0, 1, 2), (b: Int) => Constant(b))
+        c.get(0)
+        c.get(1)
+        c.get(2)
+        c.directContextContents.size should equal(2)
+        c.elemInContext.size should equal(2)
       }
 
       "remove deactivated elements from context when removing temporaries" in {
@@ -210,15 +212,16 @@ class ElementsTest extends WordSpec with Matchers {
       "evaluate the CPD each time get is called" in {
         Universe.createNew()
         var sum = 0
-        def fn(b1: Boolean, b2: Boolean) = {
+        def fn(b: (Boolean, Boolean)) = {
           sum += 1
-          Constant(b1 && b2)
+          Constant(b._1 && b._2)
         }
         val f1 = Flip(0.5)
         val f2 = Flip(0.5)
         f1.set(true)
         f2.set(false)
-        val c = NonCachingChain(f1, f2, fn _)
+        val c = new Chain("", ^^(f1, f2), fn, 1, Universe.universe)
+        //val c = NonCachingChain(f1, f2, fn _)
         sum = 0
         c.get(true, true)
         c.get(false, false)
