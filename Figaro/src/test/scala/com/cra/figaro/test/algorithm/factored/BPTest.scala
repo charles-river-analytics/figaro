@@ -42,7 +42,7 @@ class BPTest extends WordSpec with Matchers {
       val fn = graph.adjacencyList.filter(p => { p._1 match { case fn: FactorNode => true; case _ => false; } })
       val vn = graph.adjacencyList.filter(p => { p._1 match { case vn: VariableNode => true; case _ => false; } })
 
-      fn.size should equal(5)
+      fn.size should equal(6)
       vn.size should equal(5)
     }
 
