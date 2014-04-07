@@ -102,6 +102,7 @@ class Chain[T, U](name: Name[U], val parent: Element[T], fcn: T => Element[U], c
    * Get the distribution over the result corresponding to the given parent value. Takes care of all bookkeeping including caching.
    */
   def get(parentValue: T): Element[U] = {
+    val lruParent = lastParentValue
     lastParentValue = parentValue
     val cacheValue = cache.get(parentValue)
 
@@ -110,7 +111,8 @@ class Chain[T, U](name: Name[U], val parent: Element[T], fcn: T => Element[U], c
       else {
         myMappedContextContents += (parentValue -> Set())
         if (cache.size >= cacheSize && cacheValue.isEmpty) {
-          resizeCache(cache.last._1)
+          val dropValue = if (cache.last._1 != lruParent) cache.last._1 else cache.head._1
+          resizeCache(dropValue)
         }
         val result = getResult(parentValue)
         cache += (parentValue -> result)
@@ -121,7 +123,8 @@ class Chain[T, U](name: Name[U], val parent: Element[T], fcn: T => Element[U], c
     resultElement = newResult
     newResult
   }
-
+  
+  
   // All elements created in cpd will be created in this Chain's context with a subContext of parentValue
   private def getResult(parentValue: T): Element[U] = {
     universe.pushContext(this)
@@ -147,13 +150,13 @@ class Chain[T, U](name: Name[U], val parent: Element[T], fcn: T => Element[U], c
  * A NonCachingChain is an implementation of Chain with a single element cache
  */
 class NonCachingChain[T, U](name: Name[U], parent: Element[T], cpd: T => Element[U], collection: ElementCollection)
-  extends Chain(name, parent, cpd, 1, collection)
+  extends Chain(name, parent, cpd, 2, collection)
 
 /**
  * A CachingChain is an implementation of Chain with a 1000 element cache
  */
 class CachingChain[T, U](name: Name[U], parent: Element[T], cpd: T => Element[U], collection: ElementCollection)
-  extends Chain(name, parent, cpd, 1000, collection)
+  extends Chain(name, parent, cpd, Int.MaxValue, collection)
 
 object NonCachingChain {
   /** Create a NonCaching chain of 1 argument. */
