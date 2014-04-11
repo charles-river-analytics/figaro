@@ -14,8 +14,8 @@
 package com.cra.figaro.algorithm.factored
 
 /**
- * Operations in factored algorithms are defined by a semiring algebraic structure. 
- * Each semiring defines a product and sum operation, and a value for zero and one which satisfy a set of properties. 
+ * Operations in factored algorithms are defined by a semiring algebraic structure.
+ * Each semiring defines a product and sum operation, and a value for zero and one which satisfy a set of properties.
  * Different semirings are appropriate for certain algorithms and data types
  */
 trait Semiring[T] {
@@ -35,9 +35,9 @@ trait Semiring[T] {
    * but there may be more efficient implementations.
    */
   def sumMany(xs: Traversable[T]): T = {
-    xs.foldLeft(zero)(sum(_,_))
+    xs.foldLeft(zero)(sum(_, _))
   }
-  
+
   /**
    * A value such that a + 0 = a
    */
@@ -49,11 +49,23 @@ trait Semiring[T] {
 
 }
 
-object SumProductUtilitySemiring extends Semiring[(Double, Double)] {
+trait DivideableSemiRing[T] extends Semiring[T] {
+  /**
+   * Division of two entries, as defined by the particular inference problem.
+   */
+  def divide(x: T, y: T): T
+}
+
+object SumProductUtilitySemiring extends DivideableSemiRing[(Double, Double)] {
   /**
    * Decision joint factor combination.
    */
   def product(x: (Double, Double), y: (Double, Double)) = (x._1 * y._1, x._2 + y._2)
+
+  /**
+   * Decision joint factor division.
+   */
+  def divide(x: (Double, Double), y: (Double, Double)) = if (y._1 == zero._1) (zero._1, x._2 - y._2) else (x._1 / y._1, x._2 - y._2)
 
   /**
    * Decision joint factor marginalization
@@ -65,7 +77,7 @@ object SumProductUtilitySemiring extends Semiring[(Double, Double)] {
    */
   val zero = (0.0, 0.0)
   /**
-   * 1 probability and 0 utility 
+   * 1 probability and 0 utility
    */
   val one = (1.0, 0.0)
 
@@ -74,7 +86,7 @@ object SumProductUtilitySemiring extends Semiring[(Double, Double)] {
 object BooleanSemiring extends Semiring[Boolean] {
   /**
    * x AND y
-   */  
+   */
   def product(x: Boolean, y: Boolean): Boolean = x && y
   /**
    * x OR y
@@ -90,11 +102,17 @@ object BooleanSemiring extends Semiring[Boolean] {
   val one = true
 }
 
-object SumProductSemiring extends Semiring[Double] {
+object SumProductSemiring extends DivideableSemiRing[Double] {
   /**
    * Standard multiplication
    */
   def product(x: Double, y: Double) = x * y
+
+  /**
+   * Standard division
+   */
+  def divide(x: Double, y: Double) = if (y == zero) zero else x / y
+
   /**
    * Standard addition
    */
@@ -112,66 +130,83 @@ object SumProductSemiring extends Semiring[Double] {
 /**
  * Semiring for computing sums and products with log probabilities.
  */
-object LogSumProductSemiring extends Semiring[Double] {
+object LogSumProductSemiring extends DivideableSemiRing[Double] {
   val zero = Double.NegativeInfinity
-  
+
   val one = 0.0
-  
+
   def product(x: Double, y: Double) = x + y
-  
+
+  def divide(x: Double, y: Double) = if (y == zero) zero else x - y
+
   override def sumMany(xs: Traversable[Double]): Double = {
     val max = xs.foldLeft(Double.NegativeInfinity)(_ max _)
-    if (max == Double.NegativeInfinity) Double.NegativeInfinity 
+    if (max == Double.NegativeInfinity) Double.NegativeInfinity
     else {
       var total = 0.0
       for (x <- xs) { total += Math.exp(x - max) }
       Math.log(total) + max
     }
   }
-  
-  def sum(x: Double, y: Double) = sumMany(List(x,y))
+
+  def sum(x: Double, y: Double) = sumMany(List(x, y))
 }
 
 /**
  * Semiring for computing maxs and products with log probabilities.
  */
-object LogMaxProductSemiring extends Semiring[Double] {
+object LogMaxProductSemiring extends DivideableSemiRing[Double] {
   val zero = Double.NegativeInfinity
-  
+
   val one = 0.0
-  
+
   def product(x: Double, y: Double) = x + y
-  
+
+  def divide(x: Double, y: Double) = if (y == zero) zero else x - y
+
   def sum(x: Double, y: Double) = x max y
 }
 
 /**
  * Semiring for computing sums and products with lower and upper bounds.
  */
-object BoundsSumProductSemiring extends Semiring[(Double, Double)] {
+object BoundsSumProductSemiring extends DivideableSemiRing[(Double, Double)] {
   def product(x: (Double, Double), y: (Double, Double)) = {
     val (lx, ux) = x
     val (ly, uy) = y
     (lx * ly, ux * uy)
   }
-  
+
+  def divide(x: (Double, Double), y: (Double, Double)) = {
+    val (lx, ux) = x
+    val (ly, uy) = y
+    (if (ly == zero._1) zero._1 else lx / ly, if (uy == zero._2) zero._2 else ux / uy)
+  }
+
   def sum(x: (Double, Double), y: (Double, Double)) = {
     val (lx, ux) = x
     val (ly, uy) = y
     (lx + ly, ux + uy)
   }
-  
+
   val zero = (0.0, 0.0)
-  
+
   val one = (1.0, 1.0)
 }
 
-object MaxProductSemiring extends Semiring[Double] {
+object MaxProductSemiring extends DivideableSemiRing[Double] {
   /**
    * Standard multiplication
    */
   def product(x: Double, y: Double) = x * y
+
   /**
+   * Standard division
+   */
+  def divide(x: Double, y: Double) = if (y == zero) zero else x / y
+
+  /**
+   *
    * The maximum of x and y.
    */
   def sum(x: Double, y: Double) = x max y

@@ -207,8 +207,7 @@ class BPTest extends WordSpec with Matchers {
       test(f, (b: Boolean) => b, 0.3 * 0.1 / (0.3 * 0.1 + 0.7 * 0.7), globalTol)
     }
 
-    "with a model using chain and a condition on one of the outcome elements, correctly condition the result " +
-      "but not change the belief about the parent" in {
+    "with a model using chain and a condition on one of the outcome elements, correctly condition the result but not change the belief about the parent" in {
         Universe.createNew()
         val f = Flip(0.3)
         val s1 = Select(0.1 -> 1, 0.9 -> 2)
@@ -216,7 +215,8 @@ class BPTest extends WordSpec with Matchers {
         val c = Chain(f, (b: Boolean) => if (b) s1; else s2)
 
         s1.observe(1)
-        val c_actual = .79
+        //val c_actual = .79
+        val c_actual = .70907
 
         /*
          * The "c_actual" value has been determine using Dimple to back up the results of Figaro. This exact
@@ -226,6 +226,8 @@ class BPTest extends WordSpec with Matchers {
          * that f does not change, at least it does not change significantly
          * 
          * The factor model is no longer loopy so the exact result .79 applies (Glenn)
+         * 
+         * UPDATE: We're going back to loopy since factor combining in ProbFactor is not default in BP.
          */
         test(c, (i: Int) => i == 1, c_actual, globalTol)
         test(f, (b: Boolean) => b, 0.3, 0.06)
