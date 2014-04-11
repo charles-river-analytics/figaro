@@ -282,14 +282,15 @@ class AbstractionTest extends WordSpec with Matchers {
         chain.addPragma(Abstraction(numBinsChain)(AbstractionScheme.RegularDiscretization))
         Values()(chain)
         val factors = ProbFactor.make(chain)
-        factors.size should equal(1) // 1 factor containing both conditional selectors
-        val List(factor1) = factors
+        factors.size should equal(2) // 2 for the conditional selectors
+        val List(factor1, factor2) = factors
         val flipVariable = Variable(flip)
         val uniform1Variable = Variable(uniform1)
         val uniform2Variable = Variable(uniform2)
         val chainVariable = Variable(chain)
-        factor1.variables should equal(List(flipVariable, chainVariable, uniform1Variable, uniform2Variable))
-        factor1.allIndices.size should equal(2 * 3 * numBinsChain * numBinsUniform)
+        factor1.variables should equal(List(flipVariable, chainVariable, uniform1Variable))
+        factor1.allIndices.size should equal(2 * numBinsChain * numBinsUniform)
+        factor2.allIndices.size should equal(2 * numBinsChain * numBinsUniform)
         val flipValues: List[Boolean] = flipVariable.range.map(_.value)
         val uniform1Values: List[Double] = uniform1Variable.range.map(_.value)
         val uniform2Values: List[Double] = uniform2Variable.range.map(_.value)
@@ -307,11 +308,17 @@ class AbstractionTest extends WordSpec with Matchers {
           i <- 0 to 1
           j <- 0 until numBinsChain
           k <- 0 until numBinsUniform
-          m <- 0 until numBinsUniform
         } {
-          if (check1(flipValues(i), chainValues(j), uniform1Values(k)) && check2(flipValues(i), chainValues(j), uniform2Values(m))) 
-          { factor1.get(List(i, j, k, m)) should equal(1.0) }
-          else { factor1.get(List(i, j, k, m)) should equal(0.0) }
+          if (check1(flipValues(i), chainValues(j), uniform1Values(k))) { factor1.get(List(i, j, k)) should equal(1.0) }
+          else { factor1.get(List(i, j, k)) should equal(0.0) }
+        }
+        for {
+          i <- 0 to 1
+          j <- 0 until numBinsChain
+          k <- 0 until numBinsUniform
+        } {
+          if (check2(flipValues(i), chainValues(j), uniform2Values(k))) { factor2.get(List(i, j, k)) should equal(1.0) }
+          else { factor2.get(List(i, j, k)) should equal(0.0) }
         }
       }
     }
