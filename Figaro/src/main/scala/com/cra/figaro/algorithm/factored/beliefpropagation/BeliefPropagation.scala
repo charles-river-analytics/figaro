@@ -28,6 +28,7 @@ import com.cra.figaro.language.Element
 import com.cra.figaro.language.Universe
 import com.cra.figaro.algorithm.lazyfactored.LazyValues
 import com.cra.figaro.algorithm.lazyfactored.BoundedProbFactor
+import scala.collection.mutable.Map
 
 /**
  * Trait for performing belief propagation.
@@ -51,6 +52,11 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
    * Target elements that should not be eliminated but should be available for querying.
    */
   val targetElements: List[Element[_]]
+  
+  /**
+   * Since BP uses division to compute messages, the semiring has to have a division function defined
+   */
+  override val semiring: DivideableSemiRing[T]
 
   /**
    * Elements towards which queries are directed. By default, these are the target elements.
@@ -60,6 +66,11 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
   
   /* The factor graph for this BP object */
   protected[figaro] val factorGraph: FactorGraph[T]
+  
+  /* The beliefs associated with each node in the factor graph. The belief is the product 
+   * of all messages to the node times any factor at the node
+   */
+  private[figaro] val beliefMap: Map[Node, Factor[T]] = Map()
   
   /*
    * Returns a new message from a source node to a target node.
@@ -84,16 +95,10 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
    * marginalized over all variables except the variable:
    */
   private def getNewMessageFactorToVar(fn: FactorNode, vn: VariableNode) = {
-    val initFactor = factorGraph.getFactorForNode(fn)
-    val neighborList = factorGraph.getNeighbors(fn, vn)
-    val messageList = neighborList map (factorGraph.getLastMessage(_, fn))
+    val vnFactor = factorGraph.getLastMessage(vn, fn)
 
-    if (messageList.isEmpty) {
-      initFactor.marginalizeTo(vn.variable, semiring)
-    } else {
-      val total = messageList.reduceLeft(_.product(_, semiring))
-      initFactor.product(total, semiring).marginalizeTo(vn.variable, semiring)
-    }
+    val total = beliefMap(fn).combination(vnFactor, semiring.divide)
+    total.marginalizeTo(semiring, vn.variable)    
   }
 
   /*
@@ -102,11 +107,10 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
    * recipient sends the message "1"):
    */
   private def getNewMessageVarToFactor(vn: VariableNode, fn: FactorNode) = {
-    val neighborList = factorGraph.getNeighbors(vn, fn)
-    val messageList = neighborList map (factorGraph.getLastMessage(_, vn))
-
-    if (messageList.isEmpty) factorGraph.uniformFactor(List(vn.variable))
-    else messageList.reduceLeft(_.product(_, semiring))
+    val fnFactor = factorGraph.getLastMessage(fn, vn)
+   
+    val total = beliefMap(vn).combination(fnFactor, semiring.divide)
+    total
   }
 
   /**
@@ -115,13 +119,19 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
   def belief(source: Node) = {
     val messageList = factorGraph.getNeighbors(source) map (factorGraph.getLastMessage(_, source))
 
-    if (messageList.isEmpty) {
+    val f = if (messageList.isEmpty) {
       source match {
         case fn: FactorNode => factorGraph.uniformFactor(fn.variables)
         case vn: VariableNode => factorGraph.uniformFactor(List(vn.variable))
       }
-    } else messageList.reduceLeft(_.product(_, semiring))
-
+    } else {
+      val messageBelief = messageList.reduceLeft(_.product(_, semiring))
+      source match {
+        case fn: FactorNode => messageBelief.product(factorGraph.getFactorForNode(fn), semiring)
+        case vn: VariableNode => messageBelief
+      }
+    }
+    f
   }
 
   /*
@@ -135,6 +145,8 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
         factorGraph.update(node1, node2, newMessage(node1, node2))
       }
     }
+    // Update the beliefs of each node
+    factorGraph.getNodes.foreach(n => beliefMap.update(n, belief(n)))
   }
 
   /*
@@ -147,6 +159,8 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
       }
     }
     updates.foreach { u => factorGraph.update(u._1, u._2, u._3) }
+    // Update the beliefs of each node
+    factorGraph.getNodes.foreach(n => beliefMap.update(n, belief(n)))
   }
 
   /**
@@ -161,6 +175,10 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
     }
     synchronousUpdate()
   }
+  
+  override def initialize() = {
+    factorGraph.getNodes.foreach(n => beliefMap.update(n, belief(n)))
+  }
 
 }
 
@@ -173,9 +191,11 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
    *  Normalize a factor
    */
   def normalize(factor: Factor[Double]): Factor[Double] = {
-    val z = factor.foldLeft(semiring.zero, _ + _)
+    //val z = factor.foldLeft(semiring.zero, _ + _)
+    val z = semiring.sumMany(factor.contents.values)
     val normedFactor = new Factor[Double](factor.variables)
-    factor.mapTo((d: Double) => if (z != semiring.zero) d / z else semiring.zero, normedFactor)
+    // Since we're in log space, d - z = log(exp(d)/exp(z))
+    factor.mapTo((d: Double) => if (z != semiring.zero) d - z else semiring.zero, normedFactor)
     normedFactor
   }
 
@@ -194,14 +214,19 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
   def getFactors(neededElements: List[Element[_]], targetElements: List[Element[_]], upperBounds: Boolean = false): List[Factor[Double]] = {
 
     ProbFactor.removeFactors()
-    //val thisUniverseFactors = neededElements flatMap (ProbFactor.make(_))
     val thisUniverseFactors = (neededElements flatMap (BoundedProbFactor.make(_, upperBounds))).filterNot(_.isEmpty)
     val dependentUniverseFactors =
       for { (dependentUniverse, evidence) <- dependentUniverses } yield ProbFactor.makeDependentFactor(universe, dependentUniverse, dependentAlgorithm(dependentUniverse, evidence))
     val factors = dependentUniverseFactors ::: thisUniverseFactors
-    factors
+    // To prevent underflow, we do all computation in log space
+    factors.map(makeLogarithmic(_))
   }
 
+  private def makeLogarithmic(factor: Factor[Double]): Factor[Double] = {
+    val result = new Factor[Double](factor.variables)
+    factor.mapTo((d: Double) => Math.log(d), result)
+    result
+  }
   /**
    * Get the belief for an element
    */
@@ -212,7 +237,8 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
     } else {
       val factor = normalize(finalFactor)
       val factorVariable = Variable(target)
-      factorVariable.range.zipWithIndex.map(pair => (factor.get(List(pair._2)), pair._1.value))
+      // Since all computations have been in log space, we get out of log space here to provide the final beliefs
+      factorVariable.range.zipWithIndex.map(pair => (Math.exp(factor.get(List(pair._2))), pair._1.value))
     }
   }
   
@@ -226,12 +252,8 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
         case vn: VariableNode => vn.variable == targetVar
         case _ => false
       }
-    }
-    if (targetNode.isEmpty) {
-      new Factor[Double](List())
-    } else {
-      belief(targetNode.get)
-    }
+    }    
+    beliefMap(targetNode.get)   
   }
 
 }
@@ -294,7 +316,7 @@ abstract class ProbQueryBeliefPropagation(override val universe: Universe, targe
 
   val queryTargets = targetElements
 
-  val semiring = SumProductSemiring
+  val semiring = LogSumProductSemiring
 
   val (neededElements, needsBounds) = getNeededElements(starterElements, depth)
 

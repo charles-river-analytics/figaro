@@ -19,6 +19,8 @@ import com.cra.figaro.util._
 import annotation.tailrec
 import scala.language.existentials
 import com.cra.figaro.algorithm.lazyfactored._
+import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.SetBuilder
 
 /**
  * Methods for creating probabilistic factors associated with elements.
@@ -231,7 +233,7 @@ object ProbFactor {
   private def makeFactors[T, U](chain: Chain[T, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {
     val chainMap: scala.collection.mutable.Map[T, Element[U]] = LazyValues(chain.universe).getMap(chain)
     val parentVar = Variable(chain.parent)
-    val tempFactors = parentVar.range.zipWithIndex flatMap (pair => {
+    var tempFactors = parentVar.range.zipWithIndex flatMap (pair => {
       val parentVal = pair._1
       // parentVal.value should have been placed in applyMap at the time the values of this apply were computed.
       // By using chainMap, we can make sure that the result element is the same now as they were when values were computed.
@@ -246,59 +248,86 @@ object ProbFactor {
         List(makeConditionalSelector(chain, parentVar, pair._2, dummy), dummyFactor)
       }
     })
-    combineFactors(tempFactors)
+    tempFactors
   }
 
-  private def combineFactors(oldFactors: List[Factor[Double]]): List[Factor[Double]] = {
-    val maxElementCount = 6
-    val maxSize = 5000
-   	val semiring = SumProductSemiring
+  val maxElementCount = 6
+  val maxSize = 500
+  val newFactors = ListBuffer[Factor[Double]]()
+  val tempFactors = ListBuffer[Factor[Double]]()
 
-    var newFactors = List[Factor[Double]]()
-    var tempFactors = List[Factor[Double]]()
-    
-    for (factor <- oldFactors)
+  def combineFactors(oldFactors: List[Factor[Double]], semiring: Semiring[Double], removeTemporaries: Boolean): List[Factor[Double]] = {
+	newFactors.clear
+	tempFactors.clear
+
+	for (factor <- oldFactors)
     {
       if (factor.hasStar)
       {
-        newFactors = newFactors ::: List(factor)
+        newFactors += factor
       }
       else
       {
-        tempFactors = tempFactors ::: List(factor)
+        tempFactors += factor
       }
     }
-    
-    var totalSize = 1
-    var nextFactor = Factor.unit[Double](semiring)
 
-    for (factor <- tempFactors)
+    var nextFactor = tempFactors.head
+
+    for (factor <- tempFactors.tail)
     {
-    	totalSize *= factor.size
-        var variableSet = (nextFactor.variables.asInstanceOf[List[Variable[_]]] ++ factor.variables.asInstanceOf[List[Variable[_]]]).toSet
-        var elementCount = variableSet count (v => !isTemporary(v))
-   	
-    	if (elementCount < maxElementCount && totalSize < maxSize)
-    	{  
-    		nextFactor = nextFactor.product(factor, semiring)
-    	}
-    	else
-    	{
-    	     newFactors = newFactors ::: reduceFactor(nextFactor, semiring, maxElementCount)
-    	     totalSize = factor.size
-    	     nextFactor = factor
-    	}
+        val commonVariables = factor.variables.toSet & nextFactor.variables.toSet
+    	
+        if (commonVariables.size > 0) 
+        {
+          val newVariables = factor.variables.toSet -- nextFactor.variables.toSet
+          val potentialSize = calculateSize(nextFactor.size, newVariables)
+          if ((nextFactor.numVars + newVariables.size) < maxElementCount 
+              && potentialSize < maxSize)
+          {  
+            nextFactor = nextFactor.product(factor, semiring)
+          }
+          else
+          {
+            if (removeTemporaries)
+            {
+              newFactors ++= reduceFactor(nextFactor, semiring, maxElementCount)
+            }
+            else
+            {
+              newFactors += nextFactor
+            }
+            nextFactor = factor
+          }
+        }
+        else
+        {
+          newFactors += nextFactor
+          nextFactor = factor
+        } 
     }
     
     if (nextFactor.numVars > 0)
     {
-       newFactors = newFactors ::: reduceFactor(nextFactor, semiring, maxElementCount)
+      if (removeTemporaries)
+      {
+    	  newFactors ++= reduceFactor(nextFactor, semiring, maxElementCount)
+      }
+      else
+      {
+          newFactors += nextFactor
+      }
     }
-    newFactors
+    newFactors.toList
   }
  
-   private def reduceFactor(factor: Factor[Double], semiring: Semiring[Double], maxElementCount: Int):List[Factor[Double]] = {
-	   var variableSet = (Set[Variable[_]]() /: List(factor))(_ ++ _.variables.asInstanceOf[List[Variable[_]]])
+   val variableSet = scala.collection.mutable.Set[ElementVariable[_]]()
+   val nextFactors = ListBuffer[Factor[Double]]()
+
+  private def reduceFactor(factor: Factor[Double], semiring: Semiring[Double], maxElementCount: Int):List[Factor[Double]] = {
+	   variableSet.clear
+	   
+	   (variableSet /: List(factor))(_ ++= _.variables.asInstanceOf[List[ElementVariable[_]]])
        var elementCount = variableSet count (v => !isTemporary(v))
        var resultFactor = Factor.unit[Double](semiring).product(factor, semiring)
        
@@ -308,13 +337,14 @@ object ProbFactor {
        {   	
     		if (isTemporary(variable) && elementCount <= maxElementCount)
     		{
-    			var nextFactors = concreteFactors(variable.asInstanceOf[ElementVariable[_]].element)
-    			variableSet = (variableSet /: nextFactors)(_ ++ _.variables.asInstanceOf[List[ElementVariable[_]]]) 
+    			nextFactors.clear
+    			nextFactors ++= concreteFactors(variable.asInstanceOf[ElementVariable[_]].element)
+    			(variableSet /: nextFactors)(_ ++= _.variables.asInstanceOf[List[ElementVariable[_]]]) 
      	        elementCount = variableSet count (v => !isTemporary(v))
     	  
-    			for (factor <- nextFactors)
+    			for (nextFactor <- nextFactors)
     			{
-    			  resultFactor = resultFactor.product(factor, semiring)
+    			  resultFactor = resultFactor.product(nextFactor, semiring)
     			}
     			tempCount += 1
     		}
@@ -332,6 +362,10 @@ object ProbFactor {
     		
     	}
     	List(resultFactor)
+  }
+    
+  private def calculateSize(currentSize: Int, variables: Set[Variable[_]]) = {
+     (currentSize /: variables)(_ * _.size) 
   }
   
   private def isTemporary[_T](variable: Variable[_]): Boolean = {

@@ -84,22 +84,21 @@ trait FactoredAlgorithm[T] extends Algorithm {
      * */
     var newlyNeededElements: scala.collection.Set[(Element[_], Int)] = 
       Element.closeUnderContingencies(starterElements.toSet).map((elem: Element[_]) => (elem, depth))
-    do {
-      values.expandAll(newlyNeededElements)
-      newlyNeededElements =
-        for {
-          currentlyExpanded <- values.expandedElements
-          depth = values.expandedDepth(currentlyExpanded).getOrElse(0)
-          (otherElement, otherDepth) <- chaseDown(currentlyExpanded, depth, values.expandedElements.toSet)
-          if boundsInducingElements.contains(otherElement)
-          neededElement <- otherElement.elementsIAmContingentOn + otherElement
-        } yield {
-          (neededElement, otherDepth)
-        }
-    } while (newlyNeededElements.nonEmpty)
       
+    def expandElements(curr: scala.collection.Set[(Element[_], Int)]): Unit = {
+      if (curr.isEmpty) return
+      values.expandAll(curr)
+      val currentlyExpanded = values.expandedElements.toSet
+      val currentDepths = currentlyExpanded.map(d => (d, values.expandedDepth(d).getOrElse(0)))
+      val others = currentDepths.flatMap(e => chaseDown(e._1, e._2, currentlyExpanded))
+      val filteredElements = others.filter(o => boundsInducingElements.contains(o._1))
+      val neededElements = filteredElements.flatMap(f => (f._1.elementsIAmContingentOn + f._1).map((_, f._2)))
+      expandElements(neededElements.toSet)
+    }
+    
+    expandElements(newlyNeededElements)
+       
     val resultElements = values.expandedElements.toList
-
     
     // Only conditions and constraints produce distinct lower and upper bounds for *. So, if there are not such elements with * as one
     // of their values, we don't need to compute bounds and can save computation.
