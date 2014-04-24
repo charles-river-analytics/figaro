@@ -40,6 +40,8 @@ abstract class ParticleFilter(static: Universe = new Universe(), initial: Univer
 
   /** The belief about the state of the system at the current point in time. */
   val beliefState: ParticleFilter.BeliefState = Array.fill(numParticles)(null)
+  
+  var probEvidence :  Double = 0.0
 
   protected var previousUniverse: Universe = _
   protected var currentUniverse = initial
@@ -99,7 +101,7 @@ abstract class ParticleFilter(static: Universe = new Universe(), initial: Univer
     val state = new State(snapshot, previousState.static)
     (weight, state)
   }
-
+  
   private[figaro] def updateBeliefState(weightedParticles: Seq[ParticleFilter.WeightedParticle]) {
     // If all the particles have weight 1, there is no need to resample
     // If all the particles have weight 0, none of them satisfy the conditions, so the best we can do is produce a uniform distribution over them.
@@ -115,7 +117,14 @@ abstract class ParticleFilter(static: Universe = new Universe(), initial: Univer
       }
     }
   }
-
+  
+   private[figaro] def computeProbEvidence(weightedParticles: Seq[ParticleFilter.WeightedParticle]) {
+     // compute probability of evidence here by taking the average weight of the weighted particles and store it so you can later return it as a query result
+     val weightedParticleArray = weightedParticles.toArray
+     val sum = weightedParticleArray.map(_._1).sum
+     probEvidence = sum / numParticles
+    }
+    
   protected def addWeightedParticle(evidence: Seq[NamedEvidence[_]], index: Int): ParticleFilter.WeightedParticle = {
     val previousState = beliefState(index)
     previousState.dynamic.restore(previousUniverse)
@@ -163,9 +172,13 @@ class OneTimeParticleFilter(static: Universe = new Universe(), initial: Universe
   extends ParticleFilter(static, initial, transition, numParticles) with OneTimeFiltering {
   private def doTimeStep(weightedParticleCreator: Int => ParticleFilter.WeightedParticle) {
     val weightedParticles = for { i <- 0 until numParticles } yield weightedParticleCreator(i)
+    
+    // compute probability of evidence here by taking the average weight of the weighted particles and store it so you can later return it as a query result
+    computeProbEvidence(weightedParticles)
+
     updateBeliefState(weightedParticles)
   }
-
+  
   /**
    * Begin the particle filter, determining the initial distribution.
    */
@@ -180,7 +193,7 @@ class OneTimeParticleFilter(static: Universe = new Universe(), initial: Universe
 
     advanceUniverse()
     doTimeStep((i: Int) => addWeightedParticle(evidence, i))
-
+    println()
   }
 }
 
@@ -215,4 +228,17 @@ object ParticleFilter {
 
   /** Weighted particles, consisting of a weight and a state. */
   type WeightedParticle = (Double, State)
+  
+  
+  /** Computes the probability of evidence for particle filtering. */
+    def computeProbEvidence(initial: Universe, transition: Universe => Universe, numParticles: Int,  evidence: List[NamedEvidence[_]]) : Double = {
+     val alg = ParticleFilter(initial, transition, numParticles)
+     alg.start()
+     alg.advanceTime(evidence)
+     val probEvidence = alg.probEvidence
+     alg.stop()
+     alg.kill()
+     probEvidence
+    }
+  
 }
