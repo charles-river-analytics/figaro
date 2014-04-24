@@ -33,6 +33,7 @@ trait OneTimeFiltering extends Filtering with OneTime {
    */
   def currentExpectation[T](reference: Reference[T], function: T => Double): Double =
     computeCurrentExpectation(reference, function)
+    
 
   /**
    * Returns the probability that the element referred to by the reference
