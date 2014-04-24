@@ -193,7 +193,6 @@ class OneTimeParticleFilter(static: Universe = new Universe(), initial: Universe
 
     advanceUniverse()
     doTimeStep((i: Int) => addWeightedParticle(evidence, i))
-    println()
   }
 }
 
