@@ -40,6 +40,8 @@ abstract class ParticleFilter(static: Universe = new Universe(), initial: Univer
 
   /** The belief about the state of the system at the current point in time. */
   val beliefState: ParticleFilter.BeliefState = Array.fill(numParticles)(null)
+  
+  var probEvidence :  Double = 0.0
 
   protected var previousUniverse: Universe = _
   protected var currentUniverse = initial
@@ -115,6 +117,13 @@ abstract class ParticleFilter(static: Universe = new Universe(), initial: Univer
       }
     }
   }
+  
+  private[figaro] def computeProbEvidence(weightedParticles: Seq[ParticleFilter.WeightedParticle]) {
+     // compute probability of evidence here by taking the average weight of the weighted particles and store it so you can later return it as a query result
+     val weightedParticleArray = weightedParticles.toArray
+     val sum = weightedParticleArray.map(_._1).sum
+     probEvidence = sum / numParticles
+  }
 
   protected def addWeightedParticle(evidence: Seq[NamedEvidence[_]], index: Int): ParticleFilter.WeightedParticle = {
     val previousState = beliefState(index)
@@ -163,6 +172,10 @@ class OneTimeParticleFilter(static: Universe = new Universe(), initial: Universe
   extends ParticleFilter(static, initial, transition, numParticles) with OneTimeFiltering {
   private def doTimeStep(weightedParticleCreator: Int => ParticleFilter.WeightedParticle) {
     val weightedParticles = for { i <- 0 until numParticles } yield weightedParticleCreator(i)
+    
+    // compute probability of evidence here by taking the average weight of the weighted particles and store it so you can later return it as a query result
+    computeProbEvidence(weightedParticles)
+    
     updateBeliefState(weightedParticles)
   }
 
@@ -215,4 +228,15 @@ object ParticleFilter {
 
   /** Weighted particles, consisting of a weight and a state. */
   type WeightedParticle = (Double, State)
+  
+    /** Computes the probability of evidence for particle filtering. */
+    def computeProbEvidence(initial: Universe, transition: Universe => Universe, numParticles: Int,  evidence: List[NamedEvidence[_]]) : Double = {
+     val alg = ParticleFilter(initial, transition, numParticles)
+     alg.start()
+     alg.advanceTime(evidence)
+     val probEvidence = alg.probEvidence
+     alg.stop()
+     alg.kill()
+     probEvidence
+    }
 }
