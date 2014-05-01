@@ -55,7 +55,18 @@ class AtomicBinomial(name: Name[Int], n: Int, p: Double, collection: ElementColl
   /**
    * Probability of a value.
    */
-  def density(k: Int) = binomial(n, k) * pow(p, k) * pow(q, n - k)
+  def density(k: Int) = {
+    if (n > 10) {
+      val logNFact = JSci.maths.ExtraMath.logFactorial(n)
+      val logKFact = JSci.maths.ExtraMath.logFactorial(k)
+      val logNMinusKFact = JSci.maths.ExtraMath.logFactorial(n-k)
+      val logBinomialCoefficient = logNFact - (logKFact + logNMinusKFact)
+      val result = logBinomialCoefficient + (k*Math.log(p) + ((n-k)*Math.log(q)))
+      Math.exp(result)
+    } else {
+      binomial(n, k) * pow(p, k) * pow(q, n - k)
+    }
+  }
 
   /**
    * Return the range of values of the element.
