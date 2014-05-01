@@ -39,6 +39,21 @@ class ProbEvidenceTest extends WordSpec with Matchers {
         sampleTest(0.4, initial, trans, 60000, evidence)
       } 
     }
+    
+    "given a vanilla model with one condition and 2 time steps" should {
+      "return the probability the condition is satisfied" in {
+        val initial = Universe.createNew()
+        val f = Flip(0.7)("f", initial)
+        
+        def trans(previousUniverse : Universe) : Universe = {
+          val newU = Universe.createNew()
+          val f = Flip(0.4)("f", newU)
+          newU
+        }
+        val evidence = List(NamedEvidence("f", Observation(true)))
+        sampleTest2(0.4*0.4, initial, trans, 60000, evidence)
+      } 
+    }
 
     "given a vanilla model with two independent conditions" should {
       "return the probability both conditions are satisfied" in {
@@ -74,16 +89,36 @@ class ProbEvidenceTest extends WordSpec with Matchers {
         }
         
         val evidence = List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true)))
-        sampleTest(0.2 * 0.6 * 0.6 + 0.8 * 0.9 * 0.9, initial, trans, 60000, evidence) //
+        sampleTest(0.2 * 0.6 * 0.6 + 0.8 * 0.9 * 0.9, initial, trans, 60000, evidence) 
         //.72
+      } 
+    }
+    
+       "given a vanilla mode with two dependent conditions and 2 time steps" should {
+      "return the probability both conditions are jointly satisfied" in {
+        val initial = Universe.createNew()
+        val d = Select(0.5 -> 0.6, 0.5 -> 0.9)
+        val f1 = Flip(d)("f1", initial)
+        val f2 = Flip(d)("f2",  initial)
+        
+         def trans(previousUniverse : Universe) : Universe = {
+          val newU = Universe.createNew()
+          val d = Select(0.2 -> 0.6, 0.8 -> 0.9)
+          val f1 = Flip(d)("f1", newU)
+          val f2 = Flip(d)("f2", newU)
+          newU
+        }
+        
+        val evidence = List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true)))
+        sampleTest2((0.2 * 0.6 * 0.6 + 0.8 * 0.9 * 0.9) * (0.2 * 0.6 * 0.6 + 0.8 * 0.9 * 0.9), initial, trans, 60000, evidence) 
+        //.72 * .72
       } 
     }
 
     "given a vanilla model with two dependent conditions and a constraint" should {
-      "return the probability both conditions are satisfied, taking into account the constraint" in {
+      "return the probability both conditions are satisfied, taking into account the constraint" in { 
         val initial = Universe.createNew()
         val d = Select(0.9 -> 0.6, 0.1 -> 0.9)("d", initial)
-        d.setConstraint((d: Double) => if (d > 0.7) 0.8; else 0.2)
         val f1 = Flip(d)("f1", initial)
         val f2 = Flip(d)("f2", initial)
         
@@ -97,8 +132,30 @@ class ProbEvidenceTest extends WordSpec with Matchers {
         }
         
         val evidence = List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true)))
-        sampleTest(0.2 * 0.6 * 0.6 * 0.5 + 0.8 * 0.9 * 0.9 * 0.5, initial, trans, 60000, evidence)
+        sampleTest(0.2 * 0.6 * 0.6*0.5 + 0.8 * 0.9 * 0.9*0.5, initial, trans, 60000, evidence)
         //0.36
+      }
+    }
+    
+       "given a vanilla model with two dependent conditions and a constraint and 2 time steps" should { 
+      "return the probability both conditions are satisfied, taking into account the constraint" in { 
+        val initial = Universe.createNew()
+        val d = Select(0.9 -> 0.6, 0.1 -> 0.9)("d", initial)
+        val f1 = Flip(d)("f1", initial)
+        val f2 = Flip(d)("f2", initial)
+        
+         def trans(previousUniverse : Universe) : Universe = {
+          val newU = Universe.createNew()
+          val d = Select(0.5 -> 0.6, 0.5 -> 0.9)("d", newU)
+          d.setConstraint((d: Double) => if (d > 0.7) 0.8; else 0.2)
+          val f1 = Flip(d)("f1", newU)
+          val f2 = Flip(d)("f2", newU)
+          newU
+        }
+        
+        val evidence = List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true)))
+        sampleTest2((0.2 * 0.6 * 0.6*0.5 + 0.8 * 0.9 * 0.9*0.5) * (0.2 * 0.6 * 0.6*0.5 + 0.8 * 0.9 * 0.9*0.5), initial, trans, 60000, evidence)
+        //0.36*0.36
       }
     }
 
@@ -132,6 +189,23 @@ class ProbEvidenceTest extends WordSpec with Matchers {
         val evidence = List(NamedEvidence("d", Observation(true)))
         sampleTest(0.3 * 0.6 + 0.7 * 0.9, initial, trans, 60000, evidence)
         //.81
+      } 
+    }
+    
+       "given a simple dist with a condition on the result and 2 time steps" should {
+      "return the expectation over the clauses of the probability the result satisfies the condition" in {
+        val initial = Universe.createNew()
+        val d = Dist(0.3 -> Flip(0.5), 0.7 -> Flip(0.5))("d", initial )
+           
+        def trans(previousUniverse : Universe) : Universe = {
+          val newU = Universe.createNew()
+          val d = Dist(0.3 -> Flip(0.6), 0.7 -> Flip(0.9))("d", newU)
+          newU
+        }
+        
+        val evidence = List(NamedEvidence("d", Observation(true)))
+        sampleTest2((0.3 * 0.6 + 0.7 * 0.9) * (0.3 * 0.6 + 0.7 * 0.9), initial, trans, 60000, evidence)
+        //.81 * .81
       } 
     }
 
@@ -169,6 +243,23 @@ class ProbEvidenceTest extends WordSpec with Matchers {
         
         val evidence = List(NamedEvidence("u", Condition(condition)))
         sampleTest(0.4, initial, trans, 60000, evidence)
+      }
+    }
+    
+        "given a continuous uniform with a condition and 3 time steps" should {
+      "return the uniform probability of the condition" in {
+        val initial = Universe.createNew()
+        val u = Uniform(1.0, 0.01)("u", initial)
+        val condition = (d: Double) => d < 0.4
+        
+         def trans(previousUniverse : Universe) : Universe = {
+          val newU = Universe.createNew()
+          val u = Uniform(0.0, 1.0)("u", newU)
+          newU
+        }
+        
+        val evidence = List(NamedEvidence("u", Condition(condition)))
+        sampleTest3(0.4 * 0.4 * 0.4, initial, trans, 60000, evidence)
       }
     }
 
@@ -234,7 +325,9 @@ class ProbEvidenceTest extends WordSpec with Matchers {
         sampleTest(0.25, initial, trans, 60000, evidence)
       } 
     }
+   
   }
+   
 
   "Anytime computing probability of evidence" should {
     "produce an answer after the algorithm has started" in {
@@ -251,7 +344,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
       alg.start()
       alg.advanceTime(List(NamedEvidence("f", Observation(true))))
       Thread.sleep(200L)
-      alg.probEvidence should be(0.3 +- 0.01)
+      alg.probEvidence should be (0.3 +- 0.01)
       alg.kill()
     }
 
@@ -274,7 +367,36 @@ class ProbEvidenceTest extends WordSpec with Matchers {
   }
     
   def sampleTest(prob: Double, initial: Universe, transition: Universe => Universe, numParticles: Int,  evidence: List[NamedEvidence[_]]) {
-    ParticleFilter.computeProbEvidence(initial, transition, numParticles, evidence) should be (prob +- 0.01)
+     val alg = ParticleFilter(initial, transition, numParticles)
+     alg.start()
+     alg.advanceTime(evidence)
+     val probEvidence = alg.probEvidence	
+     alg.stop()
+     alg.kill()
+     probEvidence should be (prob +- 0.01)
+  }
+  
+    def sampleTest2(prob: Double, initial: Universe, transition: Universe => Universe, numParticles: Int,  evidence: List[NamedEvidence[_]]) {
+     val alg = ParticleFilter(initial, transition, numParticles)
+     alg.start()
+     alg.advanceTime(evidence)
+     alg.advanceTime(evidence)
+     val probEvidence = alg.probEvidence	
+     alg.stop()
+     alg.kill()
+     probEvidence should be (prob +- 0.01)
+  }
+    
+     def sampleTest3(prob: Double, initial: Universe, transition: Universe => Universe, numParticles: Int,  evidence: List[NamedEvidence[_]]) {
+     val alg = ParticleFilter(initial, transition, numParticles)
+     alg.start()
+     alg.advanceTime(evidence)
+     alg.advanceTime(evidence)
+     alg.advanceTime(evidence)
+     val probEvidence = alg.probEvidence	
+     alg.stop()
+     alg.kill()
+     probEvidence should be (prob +- 0.01)
   }
 	
 

@@ -41,8 +41,7 @@ abstract class ParticleFilter(static: Universe = new Universe(), initial: Univer
   /** The belief about the state of the system at the current point in time. */
   val beliefState: ParticleFilter.BeliefState = Array.fill(numParticles)(null)
   
-  var probEvidence :  Double = 0.0
-
+  protected var logProbEvidence :  Double = 0.0
   protected var previousUniverse: Universe = _
   protected var currentUniverse = initial
 
@@ -122,7 +121,7 @@ abstract class ParticleFilter(static: Universe = new Universe(), initial: Univer
      // compute probability of evidence here by taking the average weight of the weighted particles and store it so you can later return it as a query result
      val weightedParticleArray = weightedParticles.toArray
      val sum = weightedParticleArray.map(_._1).sum
-     probEvidence = sum / numParticles
+     logProbEvidence = logProbEvidence + scala.math.log(sum / numParticles) 
   }
 
   protected def addWeightedParticle(evidence: Seq[NamedEvidence[_]], index: Int): ParticleFilter.WeightedParticle = {
@@ -158,6 +157,12 @@ abstract class ParticleFilter(static: Universe = new Universe(), initial: Univer
     System.gc()
 
   }
+  
+  def probEvidence() : Double = { 
+    val probEvidence = scala.math.pow(scala.math.E, logProbEvidence)
+    probEvidence
+  }
+  
 }
 
 /**
@@ -229,14 +234,4 @@ object ParticleFilter {
   /** Weighted particles, consisting of a weight and a state. */
   type WeightedParticle = (Double, State)
   
-    /** Computes the probability of evidence for particle filtering. */
-    def computeProbEvidence(initial: Universe, transition: Universe => Universe, numParticles: Int,  evidence: List[NamedEvidence[_]]) : Double = {
-     val alg = ParticleFilter(initial, transition, numParticles)
-     alg.start()
-     alg.advanceTime(evidence)
-     val probEvidence = alg.probEvidence
-     alg.stop()
-     alg.kill()
-     probEvidence
-    }
 }
