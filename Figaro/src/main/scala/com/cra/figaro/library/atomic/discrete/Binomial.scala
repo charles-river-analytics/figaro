@@ -55,7 +55,22 @@ class AtomicBinomial(name: Name[Int], n: Int, p: Double, collection: ElementColl
   /**
    * Probability of a value.
    */
-  def density(k: Int) = binomial(n, k) * pow(p, k) * pow(q, n - k)
+  def density(k: Int): Double = {
+
+    //Use approximation
+    if (n > 10) {
+	  //val y = k*Math.log(p)
+      //val x = (n-k)*Math.log(q)
+      //val z = JSci.maths.SpecialMath.logGamma(n.toDouble) 
+      //- JSci.maths.SpecialMath.logGamma((k.toDouble)) 
+      //- JSci.maths.SpecialMath.logGamma((n - k).toDouble)
+      //Math.exp(x + y + z)
+      binomial(n.toDouble, k.toDouble) * pow(p, k) * pow(q, n - k)
+    } else {
+      //Use exact
+      binomial(n, k) * pow(p, k) * pow(q, n - k)
+    }
+  }
 
   /**
    * Return the range of values of the element.
