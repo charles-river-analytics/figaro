@@ -158,8 +158,12 @@ abstract class ParticleFilter(static: Universe = new Universe(), initial: Univer
 
   }
   
+   def getlogProbEvidence() : Double = { 
+    logProbEvidence
+  }
+  
   def probEvidence() : Double = { 
-    val probEvidence = scala.math.pow(scala.math.E, logProbEvidence)
+    val probEvidence = scala.math.exp(logProbEvidence)
     probEvidence
   }
   
