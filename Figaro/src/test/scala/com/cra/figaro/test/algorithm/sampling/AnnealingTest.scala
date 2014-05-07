@@ -55,6 +55,7 @@ class AnnealingTest extends WordSpec with Matchers with PrivateMethodTester {
       annealer.stop()
       for { i <- 1 to 4 } {
         val a = Universe.universe.getElementByReference[(Boolean, Boolean)]("a" + i)
+        println(i)
         annealer.mostLikelyValue(a) should equal(true, true)
       }
       annealer.kill

@@ -51,7 +51,7 @@ import scala.language.implicitConversions
  *                    0                                                              otherwise
  *
  * An element has a name and belongs to an element collection that is used to find the element the name.
- * 
+ *
  * Elements can be cacheable or non-cacheable, which determines what type of Chain will be created for them.
  * If you create a new Element class that you want to be cached, you should declare it to implement the Cachable or IfArgsCachable traits.
  *
@@ -74,7 +74,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    * The type of soft constraints on the element. A constraint is a function from a value to a Double.
    */
   type Constraint = T => Double
-
+  
   /**
    * The type of randomness content of the element.
    */
@@ -99,16 +99,16 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   def generateRandomness(): Randomness
 
   /**
-   * Generate the next randomness given the current randomness. 
+   * Generate the next randomness given the current randomness.
    * Returns three values: The next randomness, the Metropolis-Hastings proposal probability
    * ratio, which is
    *
    * P(new -> old) / P(old -> new)
    *
-   * and the model probability ratio, which is 
-   * 
+   * and the model probability ratio, which is
+   *
    * P(new) / P(old)
-   * 
+   *
    * The default implementation is to use generateRandomness and returns ones for the
    * proposal and model probability ratios.
    *
@@ -164,7 +164,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   } else myDirectContextContents
 
   private[language] def addContextContents(e: Element[_]): Unit = myDirectContextContents += e
-  
+
   private[language] def removeContextContents(e: Element[_]): Unit = myDirectContextContents -= e
 
   /**
@@ -177,8 +177,6 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    */
   def clearContext() = universe.deactivate(directContextContents)
 
-  
-
   /*
    * Under the new design, conditions and constraints can be contingent on other elements taking on particular values. This correctly handles reference uncertainty where we
    * know that the element with a given name, whatever it is, satisfies a given condition, but we don't know what that element is. We apply the condition to every possible
@@ -187,21 +185,21 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    * Since an element may be referred to in multiple ways, each of which can have its own contingency, we allow the conditions to contain multiple (Contingency, Condition)
    * pairs.
    */
-  private[figaro] type Contingency = Element.Contingency
-  private[figaro] type ElemVal[T] = Element.ElemVal[T]
+  private[figaro]type Contingency = Element.Contingency
+  private[figaro]type ElemVal[T] = Element.ElemVal[T]
 
   def elementsIAmContingentOn: Set[Element[_]] = {
-    val conditionElements = 
+    val conditionElements =
       for {
         (condition, contingency) <- myConditions
-        Element.ElemVal(element, value) <- contingency 
+        Element.ElemVal(element, value) <- contingency
       } yield element
-    val constraintElements = 
+    val constraintElements =
       for {
         (constraint, contingency) <- myConstraints
-        Element.ElemVal(element, value) <- contingency 
+        Element.ElemVal(element, value) <- contingency
       } yield element
-    Set((conditionElements ::: constraintElements):_*)
+    Set((conditionElements ::: constraintElements): _*)
   }
 
   /*
@@ -213,7 +211,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   private def ensureContingency[T](elem: Element[T]) {
     universe.registerUses(this, elem)
   }
-  
+
   private var myConditions: List[(Condition, Contingency)] = List()
 
   /** All the conditions defined on this element.*/
@@ -280,7 +278,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    * Testing whether a condition is satisfied can use any type of value. The condition can only be satisfied if the value has the right type and the condition returns true.
    */
   private def checkedConstraint(constraint: Constraint, value: Any): Double =
-    try { constraint(value.asInstanceOf[Value]) } catch { case _: ClassCastException => 0 }
+    try { constraint(value.asInstanceOf[Value]) } catch { case _: ClassCastException => Double.NegativeInfinity }
 
   /*
    * Determines the result of a contingent constraint for a given value of this element. If any of the contingent elements does not have its appropriate value, the result is 1,
@@ -288,15 +286,16 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    */
   private def contingentConstraintResult(constraint: Constraint, contingency: Contingency, value: Any): Double = {
     val contingencySatisfied = contingency.forall((e: ElemVal[_]) => e.elem.value == e.value)
-    if (contingencySatisfied) checkedConstraint(constraint, value); else 1.0
+    if (contingencySatisfied) checkedConstraint(constraint, value); else 0.0
   }
 
   /**
    * Gets the result of all the element's contingent constraints for the given value.
    */
   def constraint(value: Any) = {
-    val results = for { (constr, conting) <- myConstraints } yield contingentConstraintResult(constr, conting, value)
-    (results :\ 1.0)(_ * _)
+    val results = for { (constr, conting) <- myConstraints }
+      yield contingentConstraintResult(constr, conting, value)
+    (results :\ 0.0)(_ + _)
   }
 
   /**
@@ -307,7 +306,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   /**
    * Compute the constraints on the new value divided by the constraints on the old value.
    */
-  def score(oldValue: Value, newValue: Value): Double = constraint(newValue) / constraint(oldValue)
+  def score(oldValue: Value, newValue: Value): Double = constraint(newValue) - constraint(oldValue)
 
   /**
    * Add a contingent constraint to the element. By default, the contingency is empty.
@@ -315,8 +314,18 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   def addConstraint(constraint: Constraint, contingency: Contingency = List()): Unit = {
     universe.makeConstrained(this)
     contingency.foreach(ev => ensureContingency(ev.elem))
-    myConstraints ::= (constraint, contingency)
+    myConstraints ::= (ProbConstraintType(constraint), contingency)
   }
+  
+    /**
+   * Add a log contingent constraint to the element. By default, the contingency is empty.
+   */
+  def addLogConstraint(constraint: Constraint, contingency: Contingency = List()): Unit = {
+    universe.makeConstrained(this)
+    contingency.foreach(ev => ensureContingency(ev.elem))
+    myConstraints ::= (LogConstraintType(constraint), contingency)
+  }
+  
 
   /**
    * Remove all constraints associated with the given contingency. By default, the contingency is empty.
@@ -333,6 +342,14 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
     removeConstraints(contingency)
     addConstraint(newConstraint, contingency)
   }
+  
+    /**
+   * Set the log constraint associated with the contingency. Removes previous constraints associated with the contingency.  By default, the contingency is empty.
+   */
+  def setLogConstraint(newConstraint: Constraint, contingency: Contingency = List()): Unit = {
+    removeConstraints(contingency)
+    addLogConstraint(newConstraint, contingency)
+  }
 
   /**
    * Condition the element by observing a particular value. Propagates the effect to dependent elements and ensures that no other value for the element can be generated.
@@ -342,7 +359,6 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
     setCondition((v: Value) => v == observation)
   }
 
-  
   /**
    * Removes conditions on the element and allows different values of the element to be generated
    */
@@ -351,7 +367,6 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
     removeConditions()
   }
 
-  
   private var setFlag: Boolean = false
 
   /**
@@ -378,8 +393,8 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   }
 
   /**
-   * Set the randomness of this element. 
-   * 
+   * Set the randomness of this element.
+   *
    * Will generate its value using the new randomness and propagate the effects to elements that
    * depend on it without changing their randomness.
    */
@@ -450,7 +465,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    * The element that tests inequality of this element with another element.
    */
   def !==(that: Element[Value])(implicit universe: Universe) = new Neq("", this, that, universe)
-  
+
   /**
    * A string that is the element's name, if it has a non-empty one, otherwise the result of the element's toString
    */
@@ -513,7 +528,7 @@ object Element {
 
   /** The type of contingencies that can hold on elements. */
   type Contingency = List[ElemVal[_]]
-  
+
   /**
    * Returns the given elements and all elements on which they are contingent, closed recursively.
    * Only elements with condition
@@ -522,7 +537,7 @@ object Element {
     def findContingent(elements: scala.collection.Set[Element[_]]): scala.collection.Set[Element[_]] = {
       // Find all elements not in the input set that the input set is contingent on
       for {
-        element <- elements   
+        element <- elements
         contingent <- element.elementsIAmContingentOn
         if !elements.contains(contingent)
       } yield contingent

@@ -90,7 +90,7 @@ abstract class ParticleFilter(static: Universe = new Universe(), initial: Univer
         var w = 1.0
         var constrainedElementsRemaining = currentUniverse.constrainedElements
         while (!constrainedElementsRemaining.isEmpty) {
-          w *= constrainedElementsRemaining.head.constraintValue
+          w *= math.exp(constrainedElementsRemaining.head.constraintValue)
           constrainedElementsRemaining = constrainedElementsRemaining.tail
         }
         w

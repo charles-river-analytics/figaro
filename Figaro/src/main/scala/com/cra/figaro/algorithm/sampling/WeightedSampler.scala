@@ -17,6 +17,7 @@ import com.cra.figaro.algorithm._
 import com.cra.figaro.language._
 import scala.collection.mutable.Map
 import scala.language.postfixOps
+import com.cra.figaro.util.logSum
 
 /**
  * Samplers that use weighted samples.
@@ -52,12 +53,12 @@ abstract class WeightedSampler(override val universe: Universe, targets: Element
   protected var allWeightsSeen: List[WeightSeen[_]] = _
 
   protected def resetCounts() = {
-    totalWeight = 0.0
+    totalWeight = Double.NegativeInfinity
     allWeightsSeen = queryTargets.toList map (newWeightSeen(_))
   }
 
   protected def updateWeightSeenWithValue[T](value: T, weight: Double, weightSeen: WeightSeen[T]): Unit =
-    weightSeen._2 += value -> (weightSeen._2.getOrElse(value, 0.0) + weight)
+    weightSeen._2 += value -> logSum(weightSeen._2.getOrElse(value, Double.NegativeInfinity), weight)
 
   protected def updateWeightSeenForTarget[T](sample: Sample, weightSeen: WeightSeen[T]): Unit = {
     val (weight, values) = sample
@@ -67,7 +68,7 @@ abstract class WeightedSampler(override val universe: Universe, targets: Element
 
   protected def doSample(): Unit = {
     val s = sample()
-    totalWeight += s._1
+    totalWeight = logSum(s._1, totalWeight)
     allWeightsSeen foreach (updateWeightSeenForTarget(s, _))
   }
 
@@ -75,7 +76,7 @@ abstract class WeightedSampler(override val universe: Universe, targets: Element
 
   private def projection[T](target: Element[T]): List[(T, Double)] = {
     val weightSeen = allWeightsSeen.find(_._1 == target).get._2.asInstanceOf[Map[T, Double]]
-    weightSeen.mapValues(_ / getTotalWeight).toList
+    weightSeen.mapValues(s => math.exp(s - getTotalWeight)).toList
   }
 
   /**

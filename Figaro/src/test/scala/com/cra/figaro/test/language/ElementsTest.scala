@@ -19,6 +19,7 @@ import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.library.compound._
 import com.cra.figaro.library.atomic.discrete.Uniform
+import scala.math.log
 
 class ElementsTest extends WordSpec with Matchers {
   "A Constant" should {
@@ -545,9 +546,9 @@ class ElementsTest extends WordSpec with Matchers {
         s.addConstraint((i: Int) => i.toDouble)
         s.addConstraint((i: Int) => i.toDouble)
         assert(universe.constrainedElements.contains(s))
-        s.constraint(2) should equal(4.0)
-        s.constraint(3) should equal(9.0)
-        s.constraint(4) should equal(16.0)
+        s.constraint(2) should equal(log(4.0))
+        s.constraint(3) should equal(log(9.0))
+        s.constraint(4) should equal(log(16.0))
       }
     }
 
@@ -581,11 +582,11 @@ class ElementsTest extends WordSpec with Matchers {
         x.value = true
         y.value = false
         z.addConstraint((b: Boolean) => if (b) 2.0; else 3.0, contingency1)
-        z.constraint(true) should equal(1.0)
-        z.constraint(false) should equal(1.0)
+        z.constraint(true) should equal(math.log(1.0))
+        z.constraint(false) should equal(math.log(1.0))
         z.addConstraint((b: Boolean) => if (b) 2.0; else 3.0, contingency2)
-        z.constraint(true) should equal(2.0)
-        z.constraint(false) should equal(3.0)
+        z.constraint(true) should equal(math.log(2.0))
+        z.constraint(false) should equal(math.log(3.0))
       }
     }
   }

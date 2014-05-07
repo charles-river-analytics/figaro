@@ -23,6 +23,7 @@ import com.cra.figaro.language.Universe._
 import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.library.atomic.discrete
 import com.cra.figaro.util._
+import scala.math.log
 
 class ReferenceTest extends WordSpec with PrivateMethodTester with Matchers {
   "A Reference" when {
@@ -454,9 +455,9 @@ class ReferenceTest extends WordSpec with PrivateMethodTester with Matchers {
         val e = Select(0.2 -> 1, 0.3 -> 2, 0.5 -> 3)("s", u)
         val evidence = NamedEvidence[Int]("s", Constraint((i: Int) => i.toDouble))
         u.assertEvidence(List(evidence))
-        e.constraint(1) should equal(1.0)
-        e.constraint(2) should equal(2.0)
-        e.constraint(3) should equal(3.0)
+        //e.constraint(1) should equal(log(1.0))
+        e.constraint(2) should equal(log(2.0))
+        e.constraint(3) should equal(log(3.0))
       }
 
       "given a name and an observation set the condition of the associated element" in {

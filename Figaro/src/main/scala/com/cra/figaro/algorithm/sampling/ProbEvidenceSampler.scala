@@ -16,7 +16,7 @@ package com.cra.figaro.algorithm.sampling
 import com.cra.figaro.algorithm._
 import com.cra.figaro.language._
 import scala.language.existentials
-import com.cra.figaro.algorithm.factored.LogSumProductSemiring
+import com.cra.figaro.util.logSum
 
 /**
 * Algorithm that computes probability of evidence using forward sampling.
@@ -29,12 +29,10 @@ abstract class ProbEvidenceSampler(override val universe: Universe, override val
   private var totalWeight: Double = _
   
   //Logarithmic versions.
-  private var logWeight: Double = _
   
   protected def resetCounts() = {
     successWeight = Double.NegativeInfinity
     totalWeight = 0.0
-	logWeight = Double.NegativeInfinity
 	
   }
 
@@ -45,13 +43,12 @@ abstract class ProbEvidenceSampler(override val universe: Universe, override val
     Forward(universe)
 
 	//Some values in log constraints may be negative infinity.
-	val logConstraints = universe.constrainedElements.map((e: Element[_]) => {math.log(e.constraintValue)})	
-	val logWeight = logConstraints.sum
+    val weight = universe.constrainedElements.map(_.constraintValue).sum
 	
     val satisfied = universe.conditionedElements forall (_.conditionSatisfied)
 	
     totalWeight += 1
-    if (satisfied) successWeight = LogSumProductSemiring.sum(successWeight, logWeight)
+    if (satisfied) successWeight = logSum(successWeight, weight)
     universe.clearTemporaries() // avoid memory leaks
   }
 
