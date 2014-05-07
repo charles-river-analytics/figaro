@@ -18,6 +18,7 @@ import com.cra.figaro.language._
 import com.cra.figaro.util._
 import scala.collection.mutable.Map
 import scala.language.existentials
+import scala.math.log
 
 /**
  * Metropolis-Hastings based Annealer
@@ -49,11 +50,11 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
    */
   var debug = false
 
-  private def newState: State = State(Map(), Map(), 1.0, 1.0, Set())
+  private def newState: State = State(Map(), Map(), 0.0, 0.0, Set())
 
   private var lastTemperature = 1.0
   private var lastIter = 0
-  private var transProb = 1.0
+  private var transProb = 0.0
   
   /**
    * The last computed transition probability. 
@@ -77,7 +78,7 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
       val newOldValues =
         if (state.oldValues contains elem) state.oldValues; else state.oldValues + (elem -> elem.value)
       val newProb =
-        state.modelProb * elem.score(elem.value, newValue)
+        state.modelProb + elem.score(elem.value, newValue)
       val newDissatisfied =
         if (elem.condition(newValue)) state.dissatisfied - elem; else state.dissatisfied + elem
       elem.value = newValue
@@ -104,9 +105,9 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
         val newOldRandomness =
           if (state.oldRandomness contains elem) state.oldRandomness
           else state.oldRandomness + (elem -> elem.randomness)
-        val newProb = state.proposalProb * proposalProb
+        val newProb = state.proposalProb + log(proposalProb)
         elem.randomness = randomness
-        State(state.oldValues, newOldRandomness, newProb, state.modelProb * modelProb, state.dissatisfied)
+        State(state.oldValues, newOldRandomness, newProb, state.modelProb + log(modelProb), state.dissatisfied)
       }
     val result = attemptChange(state1, elem)
     if (debug) println("old randomness = " + oldRandomness +
@@ -261,9 +262,9 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
     else if (!nothingNewDissatisfied && !somethingOldSatisfied) false
     else {
       lastTemperature = annealer.temperature(lastTemperature, iter)
-      transProb = newState.proposalProb * math.pow(newState.modelProb, lastTemperature)
+      transProb = newState.proposalProb + lastTemperature * newState.modelProb
       if (debug) println("Transition Probability of " + transProb)
-      random.nextDouble < transProb
+      log(random.nextDouble) < transProb
     }
   }
 

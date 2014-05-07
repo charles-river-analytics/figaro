@@ -77,7 +77,7 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
   private def sampleFresh[T](state: State, element: Element[T]): T = {
     val value = sampleValue(state, element)
     if (!element.condition(value)) throw Importance.Reject
-    state.weight *= element.constraint(value)
+    state.weight += element.constraint(value)
     value
   }
 
@@ -123,7 +123,7 @@ object Importance {
   /**
    * Convenience class to store the set of sampled elements, along with the current sampling weight.
    */
-  case class State(assigned: Set[Element[_]] = Set(), var weight: Double = 1.0)
+  case class State(assigned: Set[Element[_]] = Set(), var weight: Double = 0.0)
 
   object Reject extends RuntimeException
 

@@ -13,7 +13,6 @@
 
 package com.cra.figaro.algorithm.decision
 
-
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
@@ -35,16 +34,16 @@ import scala.collection.mutable.{ Set, Map }
 
 abstract class DecisionImportance[T, U] private (override val universe: Universe, utilityNodes: List[Element[_]], decisionTarget: Decision[T, U],
   dummyTarget: Element[_]) extends WeightedSampler(universe, dummyTarget) with DecisionAlgorithm[T, U] {
-  
-  def this(universe: Universe, utilityNodes: List[Element[_]], decisionTarget: Decision[T, U]) = 
+
+  def this(universe: Universe, utilityNodes: List[Element[_]], decisionTarget: Decision[T, U]) =
     this(universe, utilityNodes, decisionTarget, createDecisionDummy(decisionTarget))
-  
+
   import Importance.State
 
   private var allUtilitiesSeen: List[WeightSeen[_]] = _
 
   private def utilitySum = (0.0 /: utilityNodes)((s: Double, n: Element[_]) => s + n.value.asInstanceOf[Double])
-  
+
   /**
    * Cleans up the temporary elements created during sampling
    */
@@ -55,7 +54,7 @@ abstract class DecisionImportance[T, U] private (override val universe: Universe
   def computeUtility(): scala.collection.immutable.Map[(T, U), DecisionSample] = {
     val weightSeen = allWeightsSeen.find(_._1 == dummyTarget).get._2.asInstanceOf[Map[(T, U), Double]]
     val utilitySeen = allUtilitiesSeen.find(_._1 == dummyTarget).get._2.asInstanceOf[Map[(T, U), Double]]
-    (utilitySeen.map(v => (v._1, DecisionSample(v._2, weightSeen(v._1))))).toMap
+    (utilitySeen.map(v => (v._1, DecisionSample(v._2, math.exp(weightSeen(v._1)))))).toMap
   }
 
   // override reset so we can reset the local utilities
@@ -64,29 +63,38 @@ abstract class DecisionImportance[T, U] private (override val universe: Universe
     super.resetCounts()
   }
 
+  protected def updateWeightSeenWithValueNoLog[T](value: T, weight: Double, weightSeen: WeightSeen[T]): Unit =
+    weightSeen._2 += value -> (weightSeen._2.getOrElse(value, 0.0) + weight)
+
+  protected def updateWeightSeenForTargetNoLog[T](sample: Sample, weightSeen: WeightSeen[T]): Unit = {
+    val (weight, values) = sample
+    val value = values(weightSeen._1).asInstanceOf[T]
+    updateWeightSeenWithValueNoLog(value, weight, weightSeen)
+  }
+
   // override doSample so can update the local utilities
   override protected def doSample(): Unit = {
     val s = sample()
-    totalWeight += s._1
+    totalWeight = logSum(s._1, totalWeight)
     allWeightsSeen foreach (updateWeightSeenForTarget(s, _))
-    allUtilitiesSeen foreach (updateWeightSeenForTarget((s._1 * utilitySum, s._2), _))
+    allUtilitiesSeen foreach (updateWeightSeenForTargetNoLog((math.exp(s._1) * utilitySum, s._2), _))
   }
 
   /**
    * Produce one weighted sample of the given element. weightedSample takes into account conditions and constraints
    * on all elements in the Universe, including those that depend on this element.
-   * 
-   * For decisions, our weight is actually the weight of the sampled state times the sum of the utility nodes. This will be 
+   *
+   * For decisions, our weight is actually the weight of the sampled state times the sum of the utility nodes. This will be
    * used as the "weight" in the weighted sampler, ie, we are accumulating the expected utility of each state. Note that the weights
    * will not be normalized, but that is ok since strategies are an optimization and everything will be divided by a constant
-   * 
+   *
    */
   @tailrec final def sample(): Sample = {
     val resultOpt: Option[Sample] =
       try {
         val state = State()
         // We must make a fresh copy of the active elements since sampling can add active elements to the Universe
-        val activeElements = universe.permanentElements
+        val activeElements = universe.activeElements
         activeElements.foreach(e => if (e.active) sampleOne(state, e))
         val bindings = queryTargets map (elem => elem -> elem.value)
         Some((state.weight, Map(bindings: _*)))
@@ -124,7 +132,7 @@ abstract class DecisionImportance[T, U] private (override val universe: Universe
   private def sampleFresh[T](state: State, element: Element[T]): T = {
     val value = sampleValue(state, element)
     if (!element.condition(value)) throw Importance.Reject
-    state.weight *= element.constraint(value)
+    state.weight += element.constraint(value)
     value
   }
 
@@ -175,7 +183,7 @@ object DecisionImportance {
    * An element cannot be assigned more than once during importance sampling. If an element has been assigned, 
    * its assigned value will be held in its value field. A state consists of the set of variables that have 
    * been assigned, together with the accumulated weight so far. */
-  case class State(assigned: Set[Element[_]] = Set(), var weight: Double = 1.0)
+  case class State(assigned: Set[Element[_]] = Set(), var weight: Double = 0.0)
 
   object Reject extends RuntimeException
 
@@ -191,7 +199,6 @@ object DecisionImportance {
     }
   }
 
-  
   /*
    *  For decisions, we will create a dummy Element that is a tuple of the decision node and its parents. This will be used 
    *  to track expected utilities during the sampling

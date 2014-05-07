@@ -28,7 +28,7 @@ object BoundedProbFactor {
     elem.allConditions.map(makeConditionFactor(elem, _, upper)) ::: elem.allConstraints.map(makeConstraintFactor(elem, _, upper))
 
   private def makeConditionFactor[T](elem: Element[T], cc: (T => Boolean, Element.Contingency), upper: Boolean): Factor[Double] =
-    makeConstraintFactor(elem, ((t: T) => if (cc._1(t)) 1.0; else 0.0, cc._2), upper)
+    makeConstraintFactor(elem, (ProbConstraintType((t: T) => if (cc._1(t)) 1.0; else 0.0), cc._2), upper)
 
   private def makeConstraintFactor[T](elem: Element[T], cc: (T => Double, Element.Contingency), upper: Boolean): Factor[Double] = {
     val (constraint, contingency) = cc
@@ -43,7 +43,7 @@ object BoundedProbFactor {
     val factor = new Factor[Double](List(elemVar))
     for { (elemVal, index) <- elemVar.range.zipWithIndex } {
       val entry = if (elemVal.isRegular) {
-        val c = constraint(elemVal.value)
+        val c = math.exp(constraint(elemVal.value))
         c
       } else {
         // The (0,1) Double assume the constraint is always bounded between 0 and 1. This is always correct for conditions.

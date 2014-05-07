@@ -159,7 +159,10 @@ class AlgorithmTest extends WordSpec with Matchers {
       val s = new SimpleWeighted(myFlip)
       s.start()
       val d: List[(Double, Boolean)] = s.distribution(myFlip).toList.sorted
-      d should equal(List((1.0 / 3, true), (2.0 / 3, false)))
+      d(0)._1 should be(1.0 / 3 +- 0.001)
+      d(0)._2 should equal(true)
+      d(1)._1 should be(2.0 / 3 +- 0.001)
+      d(1)._2 should equal(false)
     }
 
     "compute the query of a predicate as the normalized weighted sum of elements that satisfy the query" in {
@@ -167,7 +170,7 @@ class AlgorithmTest extends WordSpec with Matchers {
       val myFlip = Flip(0.8)
       val s = new SimpleWeighted(myFlip)
       s.start()
-      s.probability(myFlip, (b: Boolean) => b) should equal(1.0 / 3)
+      s.probability(myFlip, (b: Boolean) => b) should be(1.0 / 3 +- 0.001)
     }
   }
 
@@ -222,7 +225,7 @@ class AlgorithmTest extends WordSpec with Matchers {
 
     def sample() = {
       count += 1
-      (count.toDouble, Map(myFlip -> (count % 2 == 0)))
+      (math.log(count.toDouble), Map(myFlip -> (count % 2 == 0)))
     }
   }
 }

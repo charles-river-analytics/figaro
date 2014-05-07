@@ -18,6 +18,7 @@ import com.cra.figaro.language._
 import com.cra.figaro.util._
 import scala.collection.mutable.Map
 import scala.language.existentials
+import scala.math.log
 
 /**
  * Metropolis-Hastings samplers.
@@ -55,7 +56,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
    */
   var debug = false
 
-  private def newState: State = State(Map(), Map(), 1.0, 1.0, Set())
+  private def newState: State = State(Map(), Map(), 0.0, 0.0, Set())
 
   private val fastTargets = targets.toSet
 
@@ -100,9 +101,9 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
         val newOldRandomness =
           if (state.oldRandomness contains elem) state.oldRandomness
           else state.oldRandomness + (elem -> elem.randomness)
-        val newProb = state.proposalProb * proposalProb
+        val newProb = state.proposalProb + log(proposalProb)
         elem.randomness = randomness
-        State(state.oldValues, newOldRandomness, newProb, state.modelProb * modelProb, state.dissatisfied)
+        State(state.oldValues, newOldRandomness, newProb, state.modelProb + log(modelProb), state.dissatisfied)
       }
     val result = attemptChange(state1, elem)
     if (debug) println("old randomness = " + oldRandomness +
@@ -229,9 +230,9 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
   private def computeScores(): Double = {
     val constrainedElements = universe.constrainedElements
     val scores = constrainedElements.map { e =>
-      e.constraintValue / currentConstraintValues.getOrElseUpdate(e, 1.0)
+      e.constraintValue - currentConstraintValues.getOrElseUpdate(e, 0.0)
     }
-    scores.product
+    scores.sum
   }
 
   private def accept(state: State): Unit = {
@@ -280,7 +281,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
     if (nothingNewDissatisfied && somethingOldSatisfied) true
     else if (!nothingNewDissatisfied && !somethingOldSatisfied) false
     else {
-      random.nextDouble < (newState.proposalProb * newState.modelProb)
+      log(random.nextDouble) < (newState.proposalProb + newState.modelProb)
     }
   }
 
@@ -291,7 +292,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
   protected final def mhStep(): State = {
     val newStateUnconstrained = proposeAndUpdate()
     val newState = State(newStateUnconstrained.oldValues, newStateUnconstrained.oldRandomness,
-      newStateUnconstrained.proposalProb, newStateUnconstrained.modelProb * computeScores, newStateUnconstrained.dissatisfied)
+      newStateUnconstrained.proposalProb, newStateUnconstrained.modelProb + computeScores, newStateUnconstrained.dissatisfied)
     if (decideToAccept(newState)) {
       accepts += 1
       accept(newState)
@@ -350,7 +351,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
     for { i <- 1 to numSamples } {
       val newStateUnconstrained = proposeAndUpdate()
       val state1 = State(newStateUnconstrained.oldValues, newStateUnconstrained.oldRandomness,
-      newStateUnconstrained.proposalProb, newStateUnconstrained.modelProb * computeScores, newStateUnconstrained.dissatisfied)
+      newStateUnconstrained.proposalProb, newStateUnconstrained.modelProb + computeScores, newStateUnconstrained.dissatisfied)
       if (decideToAccept(state1)) {
         accepts += 1
         // collect results for the new state and restore the original state

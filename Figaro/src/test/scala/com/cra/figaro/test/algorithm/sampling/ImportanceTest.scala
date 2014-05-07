@@ -21,6 +21,7 @@ import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.library.compound._
 import com.cra.figaro.test._
+import com.cra.figaro.util.logSum
 
 class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
 
@@ -309,13 +310,13 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       }
     }
 
-    var totalWeight = 0.0
-    var successWeight = 0.0
+    var totalWeight = Double.NegativeInfinity
+    var successWeight = Double.NegativeInfinity
     for { i <- 1 to numTrials } {
       val (weight, value) = attempt()
-      if (predicate(value)) successWeight += weight
-      totalWeight += weight
-    }
-    (successWeight / totalWeight) should be(prob +- tolerance)
+      if (predicate(value)) successWeight = logSum(weight, successWeight)
+      totalWeight = logSum(weight, totalWeight)
+    }    
+    math.exp(successWeight - totalWeight) should be(prob +- tolerance)
   }
 }
