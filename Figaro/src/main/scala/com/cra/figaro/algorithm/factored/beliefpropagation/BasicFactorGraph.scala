@@ -25,7 +25,7 @@ class BasicFactorGraph(factors: List[Factor[Double]], semiring: Semiring[Double]
 
   def uniformFactor(v: List[Variable[_]]): Factor[Double] = {
     val f = new Factor[Double](v)
-    f.fillByRule((l: List[Any]) => 1.0)
+    f.fillByRule((l: List[Any]) => semiring.one)
     f
   }
 
@@ -60,7 +60,7 @@ class BasicFactorGraph(factors: List[Factor[Double]], semiring: Semiring[Double]
   def toMutableMap(m: Map[Node, Factor[Double]]): scala.collection.mutable.Map[Node, Factor[Double]] = 
     scala.collection.mutable.Map[Node, Factor[Double]]() ++ m
   
-  private[figaro] val factorsByNode = combineFactors.map(factor => (new FactorNode(factor.variables) -> factor)).toMap
+  private[figaro] val factorsByNode = combineFactors.map(factor => (new FactorNode(factor.variables) -> (factor))).toMap
 
   private[figaro] val adjacencyList = (adjacencyListFactors() ++ adjacencyListVariables()).map(m => m._1 -> toMutableMap(m._2))
 

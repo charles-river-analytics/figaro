@@ -13,18 +13,18 @@
 
 package com.cra.figaro.test.algorithm.lazyfactored
 
-import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic._
 import com.cra.figaro.library.compound._
 import com.cra.figaro.library.atomic._
+import org.scalatest.Matchers
 
 /*
  * The tests for unbounded depth values computation are in com.cra.figaro.test.algorithm.ValuesTest.
  */
-class LazyValuesTest extends WordSpec with ShouldMatchers {
+class LazyValuesTest extends WordSpec with Matchers {
   "Calling values()" should {
     "given a non-enumerable element such as a continuous Uniform" should {
       "return the value set consisting only of *" in {

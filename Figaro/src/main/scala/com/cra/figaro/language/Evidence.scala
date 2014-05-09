@@ -43,9 +43,20 @@ case class Condition[T](predicate: T => Boolean) extends Evidence[T] {
  * @param function The constraint to be applied to the element.
  */
 case class Constraint[T](function: T => Double) extends Evidence[T] {
-  /** Assert this evidence on the given element. The second argument is an optional contingency. */
+  /** Assert this evidence on the given element. The second argument is an optional contingency. */  
   def set(element: Element[T], contingency: Element.Contingency = List()): Unit =
     element.setConstraint(function, contingency)
+}
+
+/**
+ * Evidence representing a log constraint on an element.
+ * 
+ * @param function The constraint (in log form) to be applied to the element.
+ */
+case class LogConstraint[T](function: T => Double) extends Evidence[T] {
+  /** Assert this evidence on the given element. The second argument is an optional contingency. */
+  def set(element: Element[T], contingency: Element.Contingency = List()): Unit =
+    element.setLogConstraint(function, contingency)
 }
 
 /**

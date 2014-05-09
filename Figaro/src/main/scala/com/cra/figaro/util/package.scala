@@ -249,5 +249,23 @@ package object util {
     if (seq.isEmpty) throw new IllegalArgumentException("Empty list")
     else helper(seq.tail.toList, 1, 0, seq.head)
   }
+  
+  
+  /**
+   * Sums two probabilities in log space
+   */
+  def logSum(p1: Double, p2: Double): Double = {
+   logSumMany(List(p1, p2))
+  }
+  
+  def logSumMany(xs: Traversable[Double]): Double = {
+    val max = xs.foldLeft(Double.NegativeInfinity)(_ max _)
+    if (max == Double.NegativeInfinity) Double.NegativeInfinity
+    else {
+      var total = 0.0
+      for (x <- xs) { total += Math.exp(x - max) }
+      Math.log(total) + max
+    }
+  }
 }
 

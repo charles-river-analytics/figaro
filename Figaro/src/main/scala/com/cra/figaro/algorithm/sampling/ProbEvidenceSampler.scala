@@ -16,36 +16,57 @@ package com.cra.figaro.algorithm.sampling
 import com.cra.figaro.algorithm._
 import com.cra.figaro.language._
 import scala.language.existentials
+import com.cra.figaro.util.logSum
 
 /**
- * Algorithm that computes probability of evidence using forward sampling.
- * The evidence is specified as NamedEvidence.
- * Only the probability of this evidence is computed. Conditions and constraints that are already on elements are considered part of the definition of the model.
- */
+* Algorithm that computes probability of evidence using forward sampling.
+* The evidence is specified as NamedEvidence.
+* Only the probability of this evidence is computed. Conditions and constraints that are already on elements are considered part of the definition of the model.
+*/
 abstract class ProbEvidenceSampler(override val universe: Universe, override val evidence: List[NamedEvidence[_]] = List[NamedEvidence[_]](), partition: Double = 1.0)
   extends ProbEvidenceAlgorithm with Sampler {
   private var successWeight: Double = _
   private var totalWeight: Double = _
-
+  
+  //Logarithmic versions.
+  
   protected def resetCounts() = {
-    successWeight = 0.0
+    successWeight = Double.NegativeInfinity
     totalWeight = 0.0
+	
   }
 
+  /*
+  * To protect against underflow, the probabilities are computed in log-space.
+  */
   protected def doSample(): Unit = {
     Forward(universe)
-    val weight = (universe.constrainedElements :\ 1.0)(_.constraintValue * _)
+
+	//Some values in log constraints may be negative infinity.
+    val weight = universe.constrainedElements.map(_.constraintValue).sum
+	
     val satisfied = universe.conditionedElements forall (_.conditionSatisfied)
+	
     totalWeight += 1
-    if (satisfied) successWeight += weight
+    if (satisfied) successWeight = logSum(successWeight, weight)
     universe.clearTemporaries() // avoid memory leaks
   }
 
   protected def update(): Unit = {}
-
-  protected def computedResult = {
-    (successWeight / totalWeight) / partition
+  
+  protected def logComputedResult = {
+	successWeight - Math.log(partition) - Math.log(totalWeight)
   }
+  
+   protected def computedResult = {
+	Math.exp(logComputedResult)
+  }
+  
+   override def logProbEvidence: Double = {
+    if (!active) throw new AlgorithmInactiveException
+    logComputedResult
+  }
+  
 }
 
 object ProbEvidenceSampler {
@@ -74,7 +95,7 @@ object ProbEvidenceSampler {
     baseline.stop()
     baseline.probAdditionalEvidence(evidence)
   }
-
+  
   /**
    * Use one-time sampling to compute the probability of the given named evidence.
    * Takes the conditions and constraints in the model as part of the model definition.

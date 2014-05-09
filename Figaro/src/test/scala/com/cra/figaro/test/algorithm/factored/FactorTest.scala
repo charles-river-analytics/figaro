@@ -399,13 +399,30 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         f.set(List(2, 1, 1), 0.25)
 
         val g = f.deDuplicate()
-        g.variables should equal(List(v1, v2))
-        g.get(List(0, 0)) should be (0.06 +- 0.000001)
-        g.get(List(0, 1)) should be (0.25 +- 0.000001)
-        g.get(List(1, 0)) should be (0.15 +- 0.000001)
-        g.get(List(1, 1)) should be (0.5 +- 0.000001)
-        g.get(List(2, 0)) should be (0.1 +- 0.000001)
-        g.get(List(2, 1)) should be (0.25 +- 0.000001)
+                
+        g.variables.size should be (2)
+        g.variables.contains(v1) should be (true)
+        g.variables.contains(v2) should be (true)
+        
+        if (g.variables.indexOf(v1) == 0)
+        {
+        	g.get(List(0, 0)) should be (0.06 +- 0.000001)
+        	g.get(List(0, 1)) should be (0.25 +- 0.000001)
+        	g.get(List(1, 0)) should be (0.15 +- 0.000001)
+        	g.get(List(1, 1)) should be (0.5 +- 0.000001)
+        	g.get(List(2, 0)) should be (0.1 +- 0.000001)
+        	g.get(List(2, 1)) should be (0.25 +- 0.000001)
+        }
+        else
+        {
+            g.get(List(0, 0)) should be (0.06 +- 0.000001)
+        	g.get(List(1, 0)) should be (0.25 +- 0.000001)
+        	g.get(List(0, 1)) should be (0.15 +- 0.000001)
+        	g.get(List(1, 1)) should be (0.5 +- 0.000001)
+        	g.get(List(0, 2)) should be (0.1 +- 0.000001)
+        	g.get(List(1, 2)) should be (0.25 +- 0.000001)
+        }
+
       }
     }
   "Making factors from an element" when {

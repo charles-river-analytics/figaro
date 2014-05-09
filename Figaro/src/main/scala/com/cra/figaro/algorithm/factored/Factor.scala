@@ -30,9 +30,9 @@ class Factor[T](val variables: List[Variable[_]]) {
   val size = (1 /: variables)(_ * _.size)
   private[figaro] val contents: Map[List[Int], T] = Map()
   override def toString = "Factor(" + variables.map(_.id).mkString(",") + " " + contents.mkString(",") + ")"
-  
+
   def hasStar = (false /: variables)(_ || _.valueSet.hasStar)
-  
+
   def isEmpty = size == 0
   /**
    * Set the value associated with a row. The row is identified by an list of indices
@@ -103,7 +103,7 @@ class Factor[T](val variables: List[Variable[_]]) {
     val cases: List[List[(Extended[_], Int)]] = homogeneousCartesianProduct(ranges: _*)
     for { cas <- cases } {
       val (values, indices) = cas.unzip
-        contents += indices -> rule(values)
+      contents += indices -> rule(values)
     }
   }
 
@@ -124,12 +124,22 @@ class Factor[T](val variables: List[Variable[_]]) {
   def product(
     that: Factor[T],
     semiring: Semiring[T]): Factor[T] = {
+   combination(that, semiring.product)
+  }
+
+  /**
+   * Generic combination function for factors. By default, this is product, but other operations 
+   * (such as divide that is a valid operation for some semirings) can use this
+   */
+  def combination(
+    that: Factor[T],
+    op: (T, T) => T): Factor[T] = {
     val (allVars, indexMap1, indexMap2) = unionVars(that)
     val result = new Factor[T](allVars)
     for { indices <- result.allIndices } {
       val indexIntoThis = indexMap1 map (indices(_))
       val indexIntoThat = indexMap2 map (indices(_))
-      val value = semiring.product(get(indexIntoThis), that.get(indexIntoThat))
+      val value = op(get(indexIntoThis), that.get(indexIntoThat))
       result.set(indices, value)
     }
     result
@@ -141,7 +151,7 @@ class Factor[T](val variables: List[Variable[_]]) {
     summedVariableIndices: List[Int],
     semiring: Semiring[T]): T = {
     var value = semiring.zero
-    val values = 
+    val values =
       for { i <- 0 until summedVariable.size } yield {
         val sourceIndices = insertAtIndices(resultIndices, summedVariableIndices, i)
         get(sourceIndices)
@@ -178,7 +188,7 @@ class Factor[T](val variables: List[Variable[_]]) {
     def getEntry(i: Int) =
       get(insertAtIndices(resultIndices, summedVariableIndices, i))
     val valuesWithEntries =
-      for { 
+      for {
         i <- 0 until summedVariable.size
         xvalue = summedVariable.range(i)
         if xvalue.isRegular
@@ -192,10 +202,10 @@ class Factor[T](val variables: List[Variable[_]]) {
    * Returns a factor that maps values of the other variables to the value of the given variable that
    * maximizes the entry associated with that value, according to some maximization function.
    * comparator defines the maximization. It returns true iff its second argument is greater than its first.
-   * 
+   *
    * @tparam U The type of element whose value is being recorded. The resulting factor maps values of
-   * other variables in this factor to this type. 
-   * @tparam T The type of entries of this factor. 
+   * other variables in this factor to this type.
+   * @tparam T The type of entries of this factor.
    */
   def recordArgMax[U](variable: Variable[U], comparator: (T, T) => Boolean): Factor[U] = {
     if (!(variables contains variable)) throw new IllegalArgumentException("Recording value of a variable not present")
@@ -213,9 +223,8 @@ class Factor[T](val variables: List[Variable[_]]) {
    * This involves summing out all other variables.
    */
   def marginalizeTo(
-      semiring: Semiring[T],
-      targets: Variable[_]*
-    ): Factor[T] = {
+    semiring: Semiring[T],
+    targets: Variable[_]*): Factor[T] = {
     val marginalized =
       (this /: variables)((factor: Factor[T], variable: Variable[_]) =>
         if (targets contains variable) factor; else factor.sumOver(variable, semiring))
@@ -224,80 +233,67 @@ class Factor[T](val variables: List[Variable[_]]) {
     deDuplicate(marginalized)
   }
 
-  def deDuplicate():Factor[T] =
-  {
-    deDuplicate(this)
-  }
-  
-  private def deDuplicate(factor: Factor[T]): Factor[T] =
-  {
-     val repeats = findRepeats(factor.variables)
-     val hasRepeats = (false /: repeats.values)(_ || _.size > 1)
-     if (hasRepeats)
-     {
-       val reduced = new Factor[T](repeats.keySet.toList)
-       val newVariableLocations = repeats.values.map(_(0))
-       
-       val repeatedVariables = repeats.values.filter(_.size > 1)
-       for (row <- factor.allIndices)
-       {
-         if (checkRow(row, repeatedVariables))
-         {
-           var newRow = List[Int]()
-           for (pos <- newVariableLocations)
-           {
-             newRow = newRow :+ row(pos)
-           }
-           reduced.set(newRow, factor.get(row))
-         }
-       }
-       reduced
-     }
-     else
-     {
-       factor
-     }
-  }
-  
-  
-  private def checkRow(row: List[Int], repeatedVariables: Iterable[List[Int]]):Boolean = {
-    var ok = true
-    
-    for (repeats <- repeatedVariables)
+  def deDuplicate(): Factor[T] =
     {
+      deDuplicate(this)
+    }
+
+  private def deDuplicate(factor: Factor[T]): Factor[T] =
+    {
+      val repeats = findRepeats(factor.variables)
+      val hasRepeats = (false /: repeats.values)(_ || _.size > 1)
+      if (hasRepeats) {
+        val reduced = new Factor[T](repeats.keySet.toList)
+        val newVariableLocations = repeats.values.map(_(0))
+
+        val repeatedVariables = repeats.values.filter(_.size > 1)
+        for (row <- factor.allIndices) {
+          if (checkRow(row, repeatedVariables)) {
+            var newRow = List[Int]()
+            for (pos <- newVariableLocations) {
+              newRow = newRow :+ row(pos)
+            }
+            reduced.set(newRow, factor.get(row))
+          }
+        }
+        reduced
+      } else {
+        factor
+      }
+    }
+
+  private def checkRow(row: List[Int], repeatedVariables: Iterable[List[Int]]): Boolean = {
+    var ok = true
+
+    for (repeats <- repeatedVariables) {
       val checkVal = row(repeats(0))
-      for (pos <- repeats)
-      {
-        if (checkVal != row(pos))
-        {
+      for (pos <- repeats) {
+        if (checkVal != row(pos)) {
           ok = false
         }
       }
     }
     ok
   }
-  
-  private def findRepeats(varList: List[Variable[_]]): Map[Variable[_], List[Int]] = 
-  {
-    var repeats = Map[Variable[_], List[Int]]()
-    
-    for (variable <- varList)
+
+  private def findRepeats(varList: List[Variable[_]]): Map[Variable[_], List[Int]] =
     {
-      if (!repeats.keySet.contains(variable))
-      {
-    	  var indices = List[Int]()
-    	  var start = varList.indexOf(variable)
-    	  while (start > -1)
-    	  {
-    		indices = indices :+ start
-    		start = varList.indexOf(variable, start + 1)
-    	  }
-    	  repeats = repeats + (variable -> indices)
+      var repeats = Map[Variable[_], List[Int]]()
+
+      for (variable <- varList) {
+        if (!repeats.keySet.contains(variable)) {
+          var indices = List[Int]()
+          var start = varList.indexOf(variable)
+          while (start > -1) {
+            indices = indices :+ start
+            start = varList.indexOf(variable, start + 1)
+          }
+          repeats = repeats + (variable -> indices)
+        }
       }
+      repeats
     }
-    repeats
-  }
-  
+
   /**
    * Produce a readable string representation of the factor
    */
@@ -353,5 +349,5 @@ object Factor {
     val result = new Factor[T](List())
     result.set(List(), semiring.one)
     result
-  } 
+  }
 }

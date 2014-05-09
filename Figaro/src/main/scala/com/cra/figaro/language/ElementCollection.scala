@@ -267,7 +267,7 @@ trait ElementCollection {
    * Need to clarify: This gets the element *currently* referred to by the reference. Provide example.
    * 
    */
-  private[figaro] def getElementByReference[T](reference: Reference[T]): Element[T] =
+  def getElementByReference[T](reference: Reference[T]): Element[T] =
     reference match {
       case Name(name) =>
         try {
