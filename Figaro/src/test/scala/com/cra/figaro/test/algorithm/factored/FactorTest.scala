@@ -1043,12 +1043,12 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val v11 = v1Vals indexOf Regular(1)
         val v12 = v1Vals indexOf Regular(2)
         val v13 = v1Vals indexOf Regular(3)
-        condFactor.get(List(v11)) should equal(1.0)
-        condFactor.get(List(v12)) should equal(0.0)
-        condFactor.get(List(v13)) should equal(1.0)
-        constrFactor.get(List(v11)) should equal(1.0)
-        constrFactor.get(List(v12)) should equal(2.0)
-        constrFactor.get(List(v13)) should equal(3.0)
+        condFactor.get(List(v11)) should be (1.0 +- 0.000000001)
+        condFactor.get(List(v12)) should be (0.0 +- 0.000000001)
+        condFactor.get(List(v13)) should be (1.0 +- 0.000000001)
+        constrFactor.get(List(v11)) should be (1.0 +- 0.000000001)
+        constrFactor.get(List(v12)) should be (2.0 +- 0.000000001)
+        constrFactor.get(List(v13)) should be (3.0 +- 0.000000001)
       }
     }
     

@@ -22,6 +22,8 @@ import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.library.compound._
 import com.cra.figaro.test._
 import com.cra.figaro.util.logSum
+import JSci.maths.statistics._
+
 
 class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
 
@@ -223,6 +225,59 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       // Probability that e2 is true = 0.6 * 0.3 + 0.4 * 0.7 = 0.46
       // Probability that d is true = 0.5 * 1 + 0.5 * 0.46 = 0.73
       weightedSampleTest(d, (b: Boolean) => b, 0.73)
+    }
+    
+    "with an observation, terminate quickly and produce the correct result" in {
+      // Tests the likelihood weighting implementation
+      Universe.createNew()
+      val b = Beta(1.0, 1.0)
+      val f1 = Flip(b)
+      val f2 = Flip(b)
+      val f3 = Flip(b)
+      val f4 = Flip(b)
+      val f5 = Flip(b)
+      val f6 = Flip(b)
+      val f7 = Flip(b)
+      val f8 = Flip(b)
+      val f9 = Flip(b)
+      val f10 = Flip(b)
+      val f11 = Flip(b)
+      val f12 = Flip(b)
+      val f13 = Flip(b)
+      val f14 = Flip(b)
+      val f15 = Flip(b)
+      val f16 = Flip(b)
+      val f17 = Flip(b)
+      val f18 = Flip(b)
+      val f19 = Flip(b)
+      val f20 = Flip(b)
+      f1.observe(true)
+      f2.observe(true)
+      f3.observe(true)
+      f4.observe(true)
+      f5.observe(true)
+      f6.observe(true)
+      f7.observe(true)
+      f8.observe(true)
+      f9.observe(true)
+      f10.observe(true)
+      f11.observe(true)
+      f12.observe(true)
+      f13.observe(true)
+      f14.observe(true)
+      f15.observe(true)
+      f16.observe(true)
+      f17.observe(false)
+      f18.observe(false)
+      f19.observe(false)
+      f20.observe(false)
+      val alg = Importance(b)
+      alg.start()
+      Thread.sleep(10000)
+      alg.stop()
+      // Result is beta(17,5)
+      // Expectation is (alpha) / (alpha + beta) = 17/22
+      alg.expectation(b, (d: Double) => d) should be ((17.0/22.0) +- 0.02)
     }
   }
  
