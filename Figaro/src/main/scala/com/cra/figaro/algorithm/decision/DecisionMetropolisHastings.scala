@@ -22,6 +22,7 @@ import com.cra.figaro.library.decision.DecisionUtil._
 import com.cra.figaro.util._
 import scala.collection.mutable.Map
 import scala.language.existentials
+import scala.math.log
 
 /**
  * Metropolis-Hastings Decision sampler. Almost the exact same as normal MH except that it keeps
@@ -78,7 +79,7 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
    */
   var debug = false
 
-  private def newState: State = State(Map(), Map(), 1.0, 1.0, Set())
+  private def newState: State = State(Map(), Map(), 0.0, 0.0, Set())
 
   /*
    * We continually update the values of elements while making a proposal. In order to be able to undo it, we need to
@@ -93,7 +94,7 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
       val newOldValues =
         if (state.oldValues contains elem) state.oldValues; else state.oldValues + (elem -> elem.value)
       val newProb =
-        state.modelProb * elem.score(elem.value, newValue)
+        state.modelProb + elem.score(elem.value, newValue)
       val newDissatisfied =
         if (elem.condition(newValue)) state.dissatisfied - elem; else state.dissatisfied + elem
       elem.value = newValue
@@ -120,9 +121,9 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
         val newOldRandomness =
           if (state.oldRandomness contains elem) state.oldRandomness
           else state.oldRandomness + (elem -> elem.randomness)
-        val newProb = state.proposalProb * proposalProb
+        val newProb = state.proposalProb + log(proposalProb)
         elem.randomness = randomness
-        State(state.oldValues, newOldRandomness, newProb, state.modelProb * modelProb, state.dissatisfied)
+        State(state.oldValues, newOldRandomness, newProb, state.modelProb + log(modelProb), state.dissatisfied)
       }
     val result = attemptChange(state1, elem)
     if (debug) println("old randomness = " + oldRandomness +
@@ -276,7 +277,7 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
     val somethingOldSatisfied = dissatisfied exists (_.conditionSatisfied)
     if (nothingNewDissatisfied && somethingOldSatisfied) true
     else if (!nothingNewDissatisfied && !somethingOldSatisfied) false
-    else random.nextDouble < newState.proposalProb * newState.modelProb
+    else log(random.nextDouble) < (newState.proposalProb + newState.modelProb)
   }
 
   private final def mhStep(): Unit = {

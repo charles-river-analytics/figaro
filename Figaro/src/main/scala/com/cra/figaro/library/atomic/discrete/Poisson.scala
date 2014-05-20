@@ -51,8 +51,16 @@ class AtomicPoisson(name: Name[Int], lambda: Double, collection: ElementCollecti
   /**
    * Probability of a value.
    */
-  def density(k: Int) = pow(lambda, k) / factorial(k) * expMinusLambda
+  def density(k: Int) = {
+    if (lambda > 10 || k > 10) { //Use approximation
+      val logLambdaToK = k*Math.log(lambda)
+      val logKFact = JSci.maths.ExtraMath.logFactorial(k)
+      exp((logLambdaToK - logKFact) - lambda)
+    } else { //Use exact
+      pow(lambda, k) / factorial(k) * expMinusLambda
+    }
 
+  }
   override def toString = "Poisson(" + lambda + ")"
 }
 

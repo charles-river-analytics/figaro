@@ -75,9 +75,21 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
    * of the constraint multiplied in.
    */
   private def sampleFresh[T](state: State, element: Element[T]): T = {
-    val value = sampleValue(state, element)
-    if (!element.condition(value)) throw Importance.Reject
-    state.weight *= element.constraint(value)
+    val value: T = 
+      if (element.observation.isEmpty || !element.isInstanceOf[Atomic[_]]) {
+        val result = sampleValue(state, element)
+        if (!element.condition(result)) throw Importance.Reject
+        result
+      } else {
+        // Optimize the common case of an observation on an atomic element.
+        // This partially implements likelihood weighting by clamping the element to its
+        // desired value and multiplying the weight by the density of the value.
+        // This can dramatically reduce the number of rejections.
+        val obs = element.observation.get
+        state.weight += math.log(element.asInstanceOf[Atomic[T]].density(obs))
+        obs
+      }
+    state.weight += element.constraint(value)
     value
   }
 
@@ -123,7 +135,7 @@ object Importance {
   /**
    * Convenience class to store the set of sampled elements, along with the current sampling weight.
    */
-  case class State(assigned: Set[Element[_]] = Set(), var weight: Double = 1.0)
+  case class State(assigned: Set[Element[_]] = Set(), var weight: Double = 0.0)
 
   object Reject extends RuntimeException
 

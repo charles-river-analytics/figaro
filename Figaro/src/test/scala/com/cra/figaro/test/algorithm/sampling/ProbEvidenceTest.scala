@@ -19,16 +19,26 @@ import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.test._
+import com.cra.figaro.util._
+import com.cra.figaro.library.compound._
 
 class ProbEvidenceTest extends WordSpec with Matchers {
 
   "Computing probability of evidence" when {
+
     "given a vanilla model with one condition" should {
       "return the probability the condition is satisfied" in {
         val universe = Universe.createNew()
         val f = Flip(0.7)("f", universe)
         sampleTest(0.7, List(NamedEvidence("f", Observation(true))))
       }
+
+      "return the log probability the condition is satisfied" in {
+        val universe = Universe.createNew()
+        val f = Flip(0.7)("f", universe)
+        logProbabilitySampleTest(Math.log(0.7), List(NamedEvidence("f", Observation(true))))
+      }
+
     }
 
     "given a vanilla model with two independent conditions" should {
@@ -37,6 +47,13 @@ class ProbEvidenceTest extends WordSpec with Matchers {
         val f1 = Flip(0.7)("f1", universe)
         val f2 = Flip(0.4)("f2", universe)
         sampleTest(0.7 * 0.4, List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true))))
+      }
+
+      "return the log probability both conditions are satisfied" in {
+        val universe = Universe.createNew()
+        val f1 = Flip(0.7)("f1", universe)
+        val f2 = Flip(0.4)("f2", universe)
+        logProbabilitySampleTest(Math.log(0.7 * 0.4), List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true))))
       }
     }
 
@@ -48,6 +65,15 @@ class ProbEvidenceTest extends WordSpec with Matchers {
         val f2 = Flip(d)("f2", universe)
         sampleTest(0.2 * 0.6 * 0.6 + 0.8 * 0.9 * 0.9, List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true))))
       }
+
+      "return the log probability both conditions are jointly satisfied" in {
+        val universe = Universe.createNew()
+        val d = Select(0.2 -> 0.6, 0.8 -> 0.9)
+        val f1 = Flip(d)("f1", universe)
+        val f2 = Flip(d)("f2", universe)
+        logProbabilitySampleTest(Math.log((0.2 * 0.6 * 0.6 + 0.8 * 0.9 * 0.9)), List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true))))
+      }
+
     }
 
     "given a vanilla model with two dependent conditions and a constraint" should {
@@ -59,6 +85,16 @@ class ProbEvidenceTest extends WordSpec with Matchers {
         val f2 = Flip(d)("f2", universe)
         sampleTest(0.2 * 0.6 * 0.6 + 0.8 * 0.9 * 0.9, List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true))))
       }
+
+      "return the log probability both conditions are satisfied, taking into account the constraint" in {
+        val universe = Universe.createNew()
+        val d = Select(0.5 -> 0.6, 0.5 -> 0.9)("d", universe)
+        d.setConstraint((d: Double) => if (d > 0.7) 0.8; else 0.2)
+        val f1 = Flip(d)("f1", universe)
+        val f2 = Flip(d)("f2", universe)
+        logProbabilitySampleTest(Math.log((0.2 * 0.6 * 0.6 + 0.8 * 0.9 * 0.9)), List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true))))
+      }
+
     }
 
     "given a constant whose condition is not satisfied" should {
@@ -67,6 +103,13 @@ class ProbEvidenceTest extends WordSpec with Matchers {
         val c = Constant(8)("c", universe)
         sampleTest(0, List(NamedEvidence("c", Observation(7))))
       }
+
+      "return negative infinity for log probability" in {
+        val universe = Universe.createNew()
+        val c = Constant(8)("c", universe)
+        logProbabilitySampleTest(Double.NegativeInfinity, List(NamedEvidence("c", Observation(7))))
+      }
+
     }
 
     "given a simple dist with a condition on the result" should {
@@ -74,6 +117,12 @@ class ProbEvidenceTest extends WordSpec with Matchers {
         val universe = Universe.createNew()
         val d = Dist(0.3 -> Flip(0.6), 0.7 -> Flip(0.9))("d", universe)
         sampleTest(0.3 * 0.6 + 0.7 * 0.9, List(NamedEvidence("d", Observation(true))))
+      }
+
+      "return the expectation over the clauses of the log probability the result satisfies the condition" in {
+        val universe = Universe.createNew()
+        val d = Dist(0.3 -> Flip(0.6), 0.7 -> Flip(0.9))("d", universe)
+        logProbabilitySampleTest(Math.log((0.3 * 0.6) + (0.7 * 0.9)), List(NamedEvidence("d", Observation(true))))
       }
     }
 
@@ -85,6 +134,14 @@ class ProbEvidenceTest extends WordSpec with Matchers {
         val d = Dist(p1 -> Flip(0.6), p2 -> Flip(0.9))("d", universe)
         sampleTest(0.2 * (0.5 * 0.6 + 0.5 * 0.9) + 0.8 * (0.6 * 0.6 + 0.4 * 0.9), List(NamedEvidence("d", Observation(true))))
       }
+
+      "return the expectation over the clauses of the log probability the result satisfies the condition" in {
+        val universe = Universe.createNew()
+        val p1 = Select(0.2 -> 0.4, 0.8 -> 0.6)
+        val p2 = Constant(0.4)
+        val d = Dist(p1 -> Flip(0.6), p2 -> Flip(0.9))("d", universe)
+        logProbabilitySampleTest(Math.log((0.2 * (0.5 * 0.6 + 0.5 * 0.9)) + (0.8 * (0.6 * 0.6 + 0.4 * 0.9))), List(NamedEvidence("d", Observation(true))))
+      }
     }
 
     "given a continuous uniform with a condition" should {
@@ -93,6 +150,13 @@ class ProbEvidenceTest extends WordSpec with Matchers {
         val u = Uniform(0.0, 1.0)("u", universe)
         val condition = (d: Double) => d < 0.4
         sampleTest(0.4, List(NamedEvidence("u", Condition(condition))))
+      }
+
+      "return the log of uniform probability of the condition" in {
+        val universe = Universe.createNew()
+        val u = Uniform(0.0, 1.0)("u", universe)
+        val condition = (d: Double) => d < 0.4
+        logProbabilitySampleTest(Math.log(0.4), List(NamedEvidence("u", Condition(condition))))
       }
     }
 
@@ -103,15 +167,32 @@ class ProbEvidenceTest extends WordSpec with Matchers {
         val c = CachingChain(p1, (d: Double) => if (d < 0.4) Flip(0.3); else Flip(0.8))("c", universe)
         sampleTest(0.4 * 0.3 + 0.6 * 0.8, List(NamedEvidence("c", Observation(true))))
       }
+
+      "return the expectation over the parent of the log probability the result satisfies the condition" in {
+        val universe = Universe.createNew()
+        val p1 = Select(0.4 -> 0.3, 0.6 -> 0.9)
+        val c = CachingChain(p1, (d: Double) => if (d < 0.4) Flip(0.3); else Flip(0.8))("c", universe)
+        logProbabilitySampleTest(Math.log(0.4 * 0.3 + 0.6 * 0.8), List(NamedEvidence("c", Observation(true))))
+      }
     }
 
     "given a non-caching chain with a condition on the result" should {
+
       "return the expectation over the parent of the probability the result satisfies the condition" in {
         val universe = Universe.createNew()
         val p1 = Uniform(0.0, 1.0)
         val c = NonCachingChain(p1, (d: Double) => if (d < 0.4) Flip(0.3); else Flip(0.8))("c", universe)
         sampleTest(0.4 * 0.3 + 0.6 * 0.8, List(NamedEvidence("c", Observation(true))))
       }
+      "return the expectation over the parent of the log probability the result satisfies the condition" in {
+        val universe = Universe.createNew()
+        val p1 = Uniform(0.0, 1.0)
+        val c = NonCachingChain(p1, (d: Double) => if (d < 0.4) Flip(0.3); else Flip(0.8))("c", universe)
+        //Ensure this line is correct.
+        logProbabilitySampleTest(Math.log(0.4 * 0.3 + 0.6 * 0.8), List(NamedEvidence("c", Observation(true))))
+
+      }
+
     }
 
     "given a chain of two arguments whose result is a different element with a condition on the result" should {
@@ -125,7 +206,19 @@ class ProbEvidenceTest extends WordSpec with Matchers {
         def condition(d: Double) = d < 0.5
         sampleTest(0.25, List(NamedEvidence("a", Condition(condition))))
       }
+
+      "return the correct log probability of evidence in the result" in {
+        val universe = Universe.createNew()
+        val x = Constant(false)
+        val y = Constant(false)
+        val u1 = Uniform(0.0, 1.0)
+        val u2 = Uniform(0.0, 2.0)
+        val a = CachingChain(x, y, (x: Boolean, y: Boolean) => if (x || y) u1; else u2)("a", universe)
+        def condition(d: Double) = d < 0.5
+        logProbabilitySampleTest(Math.log(0.25), List(NamedEvidence("a", Condition(condition))))
+      }
     }
+
   }
 
   "Anytime computing probability of evidence" should {
@@ -160,8 +253,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
       alg.kill()
       f.condition(false) should equal(true)
       f.condition(true) should equal(true)
-      u.allConditions should equal(uConditions)
-      u.allConstraints should equal(uConstraints)
+
     }
   }
 
@@ -172,10 +264,19 @@ class ProbEvidenceTest extends WordSpec with Matchers {
       val alg = ProbEvidenceSampler(1000000, List())
       alg.start()
     }
-
   }
 
   def sampleTest(prob: Double, evidence: List[NamedEvidence[_]]) {
     ProbEvidenceSampler.computeProbEvidence(60000, evidence) should be(prob +- 0.01)
+  }
+
+  def logProbabilitySampleTest(logProb: Double, evidence: List[NamedEvidence[_]]) {
+    val alg = ProbEvidenceSampler(60000, evidence)
+    alg.start
+    val result = alg.logProbEvidence
+    alg.stop
+    alg.kill
+    result should be(logProb +- 0.01)
+
   }
 }

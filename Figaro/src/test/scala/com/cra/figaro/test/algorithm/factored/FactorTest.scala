@@ -399,13 +399,30 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         f.set(List(2, 1, 1), 0.25)
 
         val g = f.deDuplicate()
-        g.variables should equal(List(v1, v2))
-        g.get(List(0, 0)) should be (0.06 +- 0.000001)
-        g.get(List(0, 1)) should be (0.25 +- 0.000001)
-        g.get(List(1, 0)) should be (0.15 +- 0.000001)
-        g.get(List(1, 1)) should be (0.5 +- 0.000001)
-        g.get(List(2, 0)) should be (0.1 +- 0.000001)
-        g.get(List(2, 1)) should be (0.25 +- 0.000001)
+                
+        g.variables.size should be (2)
+        g.variables.contains(v1) should be (true)
+        g.variables.contains(v2) should be (true)
+        
+        if (g.variables.indexOf(v1) == 0)
+        {
+        	g.get(List(0, 0)) should be (0.06 +- 0.000001)
+        	g.get(List(0, 1)) should be (0.25 +- 0.000001)
+        	g.get(List(1, 0)) should be (0.15 +- 0.000001)
+        	g.get(List(1, 1)) should be (0.5 +- 0.000001)
+        	g.get(List(2, 0)) should be (0.1 +- 0.000001)
+        	g.get(List(2, 1)) should be (0.25 +- 0.000001)
+        }
+        else
+        {
+            g.get(List(0, 0)) should be (0.06 +- 0.000001)
+        	g.get(List(1, 0)) should be (0.25 +- 0.000001)
+        	g.get(List(0, 1)) should be (0.15 +- 0.000001)
+        	g.get(List(1, 1)) should be (0.5 +- 0.000001)
+        	g.get(List(0, 2)) should be (0.1 +- 0.000001)
+        	g.get(List(1, 2)) should be (0.25 +- 0.000001)
+        }
+
       }
     }
   "Making factors from an element" when {
@@ -1026,12 +1043,12 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val v11 = v1Vals indexOf Regular(1)
         val v12 = v1Vals indexOf Regular(2)
         val v13 = v1Vals indexOf Regular(3)
-        condFactor.get(List(v11)) should equal(1.0)
-        condFactor.get(List(v12)) should equal(0.0)
-        condFactor.get(List(v13)) should equal(1.0)
-        constrFactor.get(List(v11)) should equal(1.0)
-        constrFactor.get(List(v12)) should equal(2.0)
-        constrFactor.get(List(v13)) should equal(3.0)
+        condFactor.get(List(v11)) should be (1.0 +- 0.000000001)
+        condFactor.get(List(v12)) should be (0.0 +- 0.000000001)
+        condFactor.get(List(v13)) should be (1.0 +- 0.000000001)
+        constrFactor.get(List(v11)) should be (1.0 +- 0.000000001)
+        constrFactor.get(List(v12)) should be (2.0 +- 0.000000001)
+        constrFactor.get(List(v13)) should be (3.0 +- 0.000000001)
       }
     }
     

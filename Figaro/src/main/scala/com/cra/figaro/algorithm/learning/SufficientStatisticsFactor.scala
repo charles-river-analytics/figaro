@@ -498,7 +498,7 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
     elem.allConditions.map(makeConditionFactor(elem, _)) ::: elem.allConstraints.map(makeConstraintFactor(elem, _))
 
   private def makeConditionFactor[T](elem: Element[T], cc: (T => Boolean, Element.Contingency)): Factor[(Double, Map[Parameter[_], Seq[Double]])] =
-    makeConstraintFactor(elem, ((t: T) => if (cc._1(t)) 1.0; else 0.0, cc._2))
+    makeConstraintFactor(elem, (ProbConstraintType((t: T) => if (cc._1(t)) 1.0; else 0.0), cc._2))
 
   private def makeConstraintFactor[T](elem: Element[T], cc: (T => Double, Element.Contingency)): Factor[(Double, Map[Parameter[_], Seq[Double]])] = {
     val (constraint, contingency) = cc
@@ -513,7 +513,7 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
     val factor = new Factor[(Double, Map[Parameter[_], Seq[Double]])](List(elemVar))
     for { (elemVal, index) <- elemVar.range.zipWithIndex } {
       val rowMapping = mutable.Map(parameterMap.toSeq: _*)
-      val entry = (constraint(elemVal.value), rowMapping)
+      val entry = (math.exp(constraint(elemVal.value)), rowMapping)
       factor.set(List(index), entry)
     }
     factor

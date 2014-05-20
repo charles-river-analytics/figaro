@@ -649,7 +649,7 @@ object ProbFactor {
     elem.allConditions.map(makeConditionFactor(elem, _)) ::: elem.allConstraints.map(makeConstraintFactor(elem, _))
 
   private def makeConditionFactor[T](elem: Element[T], cc: (T => Boolean, Element.Contingency)): Factor[Double] =
-    makeConstraintFactor(elem, ((t: T) => if (cc._1(t)) 1.0; else 0.0, cc._2))
+    makeConstraintFactor(elem, (ProbConstraintType((t: T) => if (cc._1(t)) 1.0; else 0.0), cc._2))
 
   private def makeConstraintFactor[T](elem: Element[T], cc: (T => Double, Element.Contingency)): Factor[Double] = {
     val (constraint, contingency) = cc
@@ -659,11 +659,11 @@ object ProbFactor {
     }
   }
 
-  private def makeUncontingentConstraintFactor[T](elem: Element[T], constraint: T => Double): Factor[Double] = {
+  private def makeUncontingentConstraintFactor[T](elem: Element[T], constraint: T => Double): Factor[Double] = {    
     val elemVar = Variable(elem)
     val factor = new Factor[Double](List(elemVar))
     for { (elemVal, index) <- elemVar.range.zipWithIndex } {
-      val entry = if (elemVal.isRegular) constraint(elemVal.value); else 0.0
+      val entry = if (elemVal.isRegular) math.exp(constraint(elemVal.value)); else 0.0
       factor.set(List(index), entry)
     }
     factor

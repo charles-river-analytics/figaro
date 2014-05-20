@@ -48,7 +48,7 @@ abstract class UnweightedAnnealer(override val universe: Universe, targets: Elem
     bestEnergy = Double.MinValue
   }
 
-  protected def computeEnergy = universe.constrainedElements.foldLeft(0.0)((c: Double, e: Element[_]) => c + log(e.constraintValue))
+  protected def computeEnergy = universe.constrainedElements.foldLeft(0.0)((c: Double, e: Element[_]) => c + (e.constraintValue))
 
   private def saveState = {
     universe.activeElements foreach (e => bestState += (e -> e.value))
@@ -60,7 +60,7 @@ abstract class UnweightedAnnealer(override val universe: Universe, targets: Elem
     if (sampleCount == 0) {
       currentEnergy = computeEnergy
     } else {
-      currentEnergy += log(energyUpdate)
+      currentEnergy += (energyUpdate)
     }
     if (validState) {
       sampleCount += 1

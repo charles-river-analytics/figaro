@@ -14,13 +14,13 @@
 package com.cra.figaro.test.algorithm.lazyfactored
 
 import org.scalatest.WordSpec
-import org.scalatest.matchers.ShouldMatchers
 import com.cra.figaro.algorithm.lazyfactored._
 import ValueSet._
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound.If
+import org.scalatest.Matchers
 
-class ExtendedTest extends WordSpec with ShouldMatchers {
+class ExtendedTest extends WordSpec with Matchers {
   "Value sets" should {
     "have correct result when adding an extended value" in {
       val vs1 = withoutStar(Set(1,2,3))

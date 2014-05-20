@@ -57,6 +57,14 @@ trait ProbEvidenceAlgorithm extends Algorithm {
     computedResult
   }
 
+   /**
+   * The computed log probability of evidence
+   */
+  def logProbEvidence: Double = {
+    if (!active) throw new AlgorithmInactiveException
+    Math.log(probEvidence)
+  }
+  
   private var savedConditions: List[List[(Element[_]#Condition, Element[_]#Contingency)]] = List()
   private var savedConstraints: List[List[(Element[_]#Constraint, Element[_]#Contingency)]] = List()
 
