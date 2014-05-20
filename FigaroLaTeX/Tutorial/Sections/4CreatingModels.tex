@@ -1,0 +1,525 @@
+% Chapter X
+
+\chapter{Creating models} % Chapter title
+
+\label{Creating models} % For referencing the chapter elsewhere, use 
+
+The previous section described the basic building blocks of Figaro models. Out of these building blocks, a wide variety of models can be created. This section describes how to build a range of models.
+
+\section{Basic models}
+
+One of the first things you can do with an element is to assign it to a Scala value:
+
+\begin{flushleft}
+\texttt{val burglary = Flip(0.01)}
+\end{flushleft}
+
+\marginpar{\texttt{val} in Figaro represents an immutable value. When a thing is assigned to a val, data inside the thing can change but the reference stored in the val is constant}
+
+A \texttt{val} represents a field (in this case burglary) that takes on an immutable value (in this case the element \texttt{Flip(0.01)}). A field is not a variable; its value cannot be changed (Note that the scala assignment of the field \texttt{burglary} cannot change, but the value of the Figaro element that is assigned to it, \texttt{Flip(0.01)}, \emph{can} change). You can use the value of a field by referring to its name:
+
+\begin{flushleft}
+\texttt{val alarm = If(burglary, Flip(0.9), Flip(0.1))}
+\end{flushleft}
+
+Recall that an element defines a process that probabilistically produces a value. If an element is referred to multiple times, it must produce the same value everywhere it appears. Consider:
+
+\begin{flushleft}
+\texttt{val x = Flip(0.5)
+\newline val y = x === x}
+\end{flushleft}
+
+Although we don't know the value, \texttt{x} must produce the same value on both sides of the equality test. Therefore, \texttt{y} produces the value \texttt{true} with probability 1. In contrast, in
+
+\begin{flushleft}
+\texttt{val y = Flip(0.5) === Flip(0.5)}
+\end{flushleft}
+
+the left and right hand sides are distinct elements (each call produces a new \texttt{Flip}), so they need not produce the same value. Therefore, \texttt{y} will produce \texttt{true} with probability 0.5.
+
+With the tools we have defined so far, we can easily create a Bayesian network. In the following code, \texttt{CPD} is a library element (based on \texttt{Chain}) that makes it easy to define conditional probability distributions:
+
+\begin{flushleft}
+\marginpar{This example is found in Burglary.scala}
+\texttt{import com.cra.figaro.language.\_
+\newline import com.cra.figaro.library.compound.CPD
+\newline
+\newline val burglary = Flip(0.01)
+\newline
+\newline val earthquake = Flip(0.0001)
+\marginpar{Scala statements can be written on multiple lines}
+\newline
+\newline val alarm = CPD(burglary, earthquake,
+\newline \tab (false, false) -> Flip(0.001),
+\newline \tab (false, true) -> Flip(0.1), 
+\newline \tab (true, false) -> Flip(0.9), 
+\newline \tab (true, true) -> Flip(0.99))
+\newline 
+\newline val johnCalls = CPD(alarm,
+\newline \tab false -> Flip(0.01),
+\newline \tab true -> Flip(0.7))}
+\end{flushleft}
+
+With \texttt{CPD}, every single combination of values of the parents needs to be listed. \texttt{RichCPD} provides a more flexible format that allows for specification of structures such as context specific independence. Each clause in a \texttt{RichCPD} consists of a tuple of cases, one for each parent. A case can be \texttt{OneOf} a set of values, \texttt{NoneOf} a set of values (meaning that it matches all values except for the ones listed), or *, meaning that it accepts all values. For example:
+
+\begin{flushleft}
+\texttt{import com.cra.figaro.language.\_}
+\newline \texttt{import com.cra.figaro.library.compound.RichCPD}
+\newline \texttt{val x1 = Select(0.1 -> 1, 0.2 -> 2, 0.3 -> 3, 0.4 -> 4)}
+\newline \texttt{val x2 = Flip(0.6) 
+\newline val x3 = Constant (5) 
+\newline val x4 = Flip(0.8)
+\newline val y = RichCPD(x1, x2, x3, x4,
+\newline \tab (OneOf(1, 2), *, OneOf(5), *) -> Flip(0.1), 
+\newline \tab (NoneOf(4), OneOf(false), *, *) -> Flip(0.7), 
+\newline \tab (*, *, NoneOf(6, 7), OneOf(true)) -> Flip(0.9), 
+\newline \tab (*, *, *, OneOf(false)) -> Constant (true))}
+\end{flushleft}
+
+A particular combination of values of the parents is matched against each row in turn, and the first match is chosen. For example, the combination (1, false, 5, true) matches the first three rows, so the first result (\texttt{Flip(0.1)}) is chosen. All possible values of the parent still need to be accounted for in the argument list using a combination of \texttt{OneOf}, \texttt{NoneOf} and *.
+
+\section{Conditions and constraints}
+
+So far, we have described models that generate the values of elements. It is also possible to influence the values of elements by imposing conditions or constraints on them.
+
+A \emph{condition} represents something the value of the element must satisfy. Only values that satisfy the condition are possible. Every element has a condition, which is a function from a value of the element to a Boolean. If the element is of type \texttt{Element[T]}, the condition is of type \texttt{T => Boolean}. Conditions can have multiple purposes. One is to assert evidence, by specifying something that is known about an element. Alternatively, a condition can specify a structural property of a model, for example, that only one of two teams playing a game can be the winner.
+
+The default condition of an element returns true for all values. The condition can be changed using \texttt{setCondition}:
+
+\begin{flushleft}
+\texttt{val x1 = Select(0.1 -> 1, 0.2 -> 2, 0.3 -> 3, 0.4 -> 4)
+x1.setCondition((i: Int) => i == 1 || i == 4)}
+\end{flushleft}
+
+which says that \texttt{x1} must have value 1 or 4. We can add a condition on top of existing conditions using the \texttt{addCondition} method. For example, the following code says that not only must \texttt{x1} equal 1 or 4, it must also be odd:
+
+\begin{flushleft}
+\texttt{x1.addCondition((i: Int) => i \% 2 == 1)}
+\end{flushleft}
+
+The \texttt{observe} method provides an easy way to specify a condition that only allows a single value. For example, to specify that \texttt{x1} must have the value 2, we can use
+
+\begin{flushleft}
+\texttt{x1.observe(2)}
+\end{flushleft}
+
+Note that using \texttt{observe} will remove all previous conditions on an element.
+
+A \emph{constraint} provides a way to specify a potential or weighting over an element. It is a function from a value of the element to a Double, so if the element has type \texttt{Element[T]}, the constraint is of type \texttt{T => Double}.
+
+Constraints serve multiple purposes in Figaro. One is to specify soft evidence on an element. For example, if in the above Bayesian network we think we heard John call but we're not sure, we might introduce the constraint
+
+\begin{flushleft}
+\texttt{johnCalls.setConstraint((b: Boolean) => 
+\newline \tab if (b) 1.0; else 0.1)}
+\end{flushleft}
+
+This line will have the effect of making John calling 10 times more likely than not, all else being equal. Another purpose of constraints is to define some probabilistic relationships conveniently that are more difficult to express without them. Consider the following example, in which we are modeling the process of firms bidding for a contract and one of them being selected as the winner.
+
+\begin{flushleft}
+\marginpar{This example is found in Firms.scala}
+\texttt{import com.cra.figaro.language.\_}
+\newline \texttt{import com.cra.figaro.library.atomic.\_}
+\newline \texttt{import com.cra.figaro.library.compound.If}
+\newline
+\newline \texttt{class Firm \{
+\newline \tab val efficient = Flip(0.3)
+\newline \tab val bid = If(efficient, continuous.Uniform(5, 15),
+\newline continuous.Uniform(10, 20))
+\newline \} 
+\newline
+\newline \texttt{val firms = Array.fill(20)(new Firm)
+\newline val winner = discrete.Uniform(firms:\_*)
+\newline val winningBid = Chain(winner, (f: Firm) => f.bid)
+\newline winningBid.setConstraint((d: Double) => 20 $-$ d)}
+}
+\end{flushleft}
+
+This example shows some new Scala features. First, we have a class definition (the \texttt{Firm} class). A class creates a type that can be instantiated to create instances. The \texttt{Firm} class has two fields, \texttt{efficient} and \texttt{bid}. Note that bid makes use of \texttt{continuous.Uniform}. This is the continuous uniform element defined in the \texttt{library.atomic.continuous} package, but we did not import the members of this package, only the members of the \texttt{library.atomic} package. The reason we did things this way is that later in the example, we use the discrete uniform, and we want to be explicit about which uniform element we mean at each point.
+
+Once we have defined the \texttt{Firm} class, we create an array named \texttt{firms} consisting of 20 instances of \texttt{Firm.Array.fill(20)(new Firm)} creates an array filled with the result of 20 different invocations of \texttt{new Firm}, each of which creates a separate instance of  \texttt{Firm} (and separate Figaro elements in each class). We then define the winner to be one of the firms, chosen uniformly. Note the notation \texttt{firms:\_*.} The element \texttt{discrete.Uniform} takes as arguments an explicit sequence of values of variable length, for example, \texttt{discrete.Uniform(1, 2, 5)} or \texttt{discrete.Uniform("x")}. Since \texttt{firms} is a single field representing an array, we must convert it into a sequence of arguments, which is accomplished using the \texttt{:\_*} notation. The field \texttt{winner} represents an \texttt{Element[Firm]}; it is intended to mean the winning bidder, although so far we have done nothing to relate the winner to its bid.
+ 
+The next line is interesting. It allows us to identify the bid of the winning bidder as an element with a name, even though we don't know who the winner is. We can do this because even though we don't know who the winner is, we can refer to the \texttt{winner} field, and because the value of \texttt{winner}, whatever it is, is a \texttt{Firm} that has a \texttt{bid} field, which is an element that can be referred to. It is important to realize that this \texttt{Chain} does not create a new element but rather refers to the element \texttt{f.bid} that was created previously.
+
+Finally, we introduce the constraint, which says that a winning bid of d has weight \texttt{20 $-$ d}. This means that a winning bid of 5 is 15 times more likely than a winning bid of 19. The effect is to make the winning bid more likely to be low. Note that in this model, the winning bid is not necessarily the lowest bid. For various reasons, the lowest bidder might not win the contract, perhaps because they offer a poor quality service or they don't have the right connections. Using a constraint, the model is specified very simply using a discrete uniform selection and a simple constraint.
+
+Constraints are also useful for expressing undirected models such as relational Markov networks or Markov logic networks. To illustrate, we will use a version of the friends and smokers example. This example involves a number of people and their smoking habits. People have some propensity to smoke, and people are likely to have the same smoking habit as their friends.
+
+\begin{flushleft}
+\marginpar{This example is found in Smokers.scala}
+\texttt{import com.cra.figaro.language.Flip
+\newline import com.cra.figaro.library.compound.\textasciicircum \textasciicircum
+\newline 
+\newline class Person \{
+\newline \tab val smokes = Flip(0.6) 
+\newline \} 
+\newline 
+\newline val alice, bob, clara = new Person
+\newline val friends = List((alice, bob), (bob, clara))
+\newline clara.smokes.observe(true) 
+\newline
+\marginpar{Single line function definitions in Scala do not need bracketing}
+\newline def smokingInfluence(pair: (Boolean, Boolean)) = 
+\newline \tab if (pair.\_1 == pair.\_2) 3.0; else 1.0
+\newline
+\newline for \{ (p1, p2) <- friends \} \{
+\newline \tab \textasciicircum \textasciicircum(p1.smokes, p2.smokes).setConstraint(smokingInfluence)
+\newline \} }  
+\end{flushleft}
+
+First, we create a \texttt{Person} class with a \texttt{smokes} field. We create three different people and a network of friends, represented by a list of pairs of people. We also observe that one of the people smokes.
+
+Now we create the constraint function \texttt{smokingInfluence}. This function takes a pair of Booleans, and returns 3.0 if they are the same, 1.0 if different. The intended meaning of this function is to compare the smoking habit of two friends, and say that having the same smoking habit is three times as likely as a different smoking habit, all else being equal.
+
+Finally, we apply the constraint to all the pairs of friends. The code uses a Scala feature called a "for comprehension". The notation for \texttt{\{ (p1, p2) <- friends \}} { "do something" } iterates through all pairs of people in the \texttt{friends} list and executes "do something" for each pair. In this case, "do something" is "add the constraint on their smoking habits to the pair of friends". The notation \texttt{\textasciicircum \textasciicircum(p1.smokes, p2.smokes)} takes each pair of friends and creates the pair element consisting of their smoking habits. We then assign the \texttt{smokingInfluence} constraint to this pair.
+
+\section{Classes, instances, and relationships}
+
+The object-oriented nature of Scala makes Figaro ideal for representing probabilistic models involving objects and relationships such as probabilistic relational models (PRMs). 
+In the following example, we will see how to define general classes of object, and create instances of a class by using a subclass of the class specially designed for the instance.
+
+In this example, we are given two possible sources and a sample that came from one of the sources, and want to determine which source the sample came from based on the strength of the match with each
+source.
+
+\begin{flushleft}
+\marginpar{Abstract classes in Scala are similar as in Java; they cannot be instantiated}
+\texttt{class Source(val name: String)
+\newline
+\newline abstract class Sample \{
+\newline \tab val fromSource : Element[Source] 
+\newline \}
+\newline
+\newline class Pair(val source: Source, val sample: Sample) \{
+\newline \tab val isTheRightSource = Apply(sample.fromSource, (s: Source) => s == source)
+\newline \tab val distance = If(isTheRightSource, 
+\newline \tab Normal(0.0, 1.0), 
+\newline \tab Uniform(0.0, 10.0))
+\newline \}
+\newline
+\marginpar{Defining class contents at instantiation time will override undefined values}
+\newline val source1 = new Source("Source 1") 
+\newline val source2 = new Source("Source 2") 
+\newline val sample1 = new Sample \{ 
+\newline val fromSource = Select(0.5 -> source1, 0.5 -> source2)
+\newline \}
+\newline val pair1 = new Pair(source1, sample1)
+\newline val pair2 = new Pair(source2, sample1)
+\newline 
+\newline pair1.distance.setCondition((d:Double) => (d > 0.15 \&\& d < 0.25))
+\newline pair2.distance.setCondition((d:Double) => (d > 1.45 \&\& d < 1.55)) }
+\end{flushleft}
+
+We begin by creating classes representing sources and samples, where each sample comes from a source. Note that \texttt{Sample} is an abstract class, because in this class we do not say anything about what source the sample came from (the from \texttt{Source} field has not been assigned an \texttt{Element[Source]} yet). We then create the \texttt{Pair} class representing a pair of a source and a sample. \texttt{Pair} has two fields: \texttt{isTheRightSource}, which produces true if the sample is from the source in the pair, and \texttt{distance}, which measures the closeness of the match between the sample and the source (lower distance means better match). The distance will tend to be smaller if the sample is from the right source but will not always be so.
+
+Now it's time to create some instances. Note that the \texttt{Source} class takes an argument which is the name of the source. When we create instances \texttt{source1} and \texttt{source2} of this class, we supply the name argument. Next, we create an instance of \texttt{Sample}. Since \texttt{Sample} is abstract, we need to supply a definition of \texttt{fromSource}. We can do that right in line here, specifying that \texttt{sample1} could come either from \texttt{source1} or \texttt{source2}, each with probability 0.5. Finally, we create pairs pairing both of the sources to \texttt{sample1} and create conditions about the distances. The conditions are ranges rather than exact observations because exact observations on continuous elements can be problematic for many types of inference algorithms.
+
+Using similar techniques, we can create a PRM. The following example shows the classical actors and movies PRM. There are three classes: actors, movies, and appearances relating actors to movies. Whether an actor receives an award for an appearance depends on the fame of the actor and the quality of the movie. The Figaro code for this example is as follows:
+
+\begin{flushleft}
+\marginpar{This example can be found in SimpleMovie.scala}
+\texttt{import com.cra.figaro.library.compound.CPD
+\newline import com.cra.figaro.language.\_
+\newline
+\newline class Actor \{
+\newline \tab val famous = Flip(0.1)
+\newline \}
+\newline
+\newline class Movie \{
+\newline \tab val quality = Select(0.3 -> 'low, 0.5 -> 'medium, 0.2 -> 'high)
+\newline \}
+\newline
+\marginpar{The ' in front of a string creates a Scala symbol, which are treated like \texttt{String} constants}
+\newline class Appearance(actor: Actor, movie: Movie) \{
+\newline \tab val award = CPD(movie.quality, actor.famous, 
+\newline \tab  \tab ('low, false) -> Flip(0.001), 
+\newline \tab \tab ('low, true) -> Flip(0.01), 
+\newline \tab \tab ('medium, false) -> Flip(0.01), 
+\newline \tab \tab ('medium, true) -> Flip(0.05), 
+\newline \tab \tab ('high, false) -> Flip(0.05), 
+\newline \tab \tab ('high, true) -> Flip(0.2))
+\newline \}
+\newline
+\newline val actor1 = new Actor 
+\newline val actor2 = new Actor 
+\newline val actor3 = new Actor 
+\newline val movie1 = new Movie 
+\newline val movie2 = new Movie
+val appearance1 = new Appearance(actor1, movie1) 
+\newline val appearance2 = new Appearance(actor2, movie2) 
+\newline val appearance3 = new Appearance(actor3, movie2) 
+\newline actor3.famous.observe(true) 
+\newline movie2.quality.observe('high)
+\newline 
+\marginpar{The \texttt{\_.award} notation is Scala shorthand to retrieve the award value of each element of the map}
+\newline // Ensure that exactly one appearance gets an award. 
+\newline def uniqueAwardCondition(awards: Seq[Boolean]) =
+\newline \tab awards.count((b: Boolean) => b) == 1
+\newline val allAwards: Element[Seq[Boolean]] = 
+\newline \tab Inject(appearances.map(\_.award):\_*)
+\newline allAwards.setCondition(uniqueAwardCondition)}
+\end{flushleft}
+
+The code is self-explanatory except for the last few lines, which enforce the condition that an award is given to exactly one appearance. The function \texttt{uniqueAwardCondition} takes a sequence of award Booleans and returns true if exactly one Boolean in the list is true. The count method counts the number of elements in the sequence that satisfy the predicate contained in its argument. In this case the predicate is \texttt{(b: Boolean) => b} which is true precisely when the element of the sequence is true. So \texttt{awards.count((b: Boolean) => b)} counts the number of elements in the sequence that are true.
+
+We then define the \texttt{allAwards} element to be the element over sequences of Booleans consisting of the award field of all the appearances.  Here we have a new notation: \texttt{appearances.map(\_.award)}. We have already seen the \texttt{map} method, which applies a function to every element of a sequence and returns a new sequence consisting of the results. In this case, the argument to map is the function \texttt{\_.award}. This is shorthand for a function of one argument in which the argument appears once in the body and in which the type of the argument is known. Here, the type of the argument is clearly an appearance. We could have used \texttt{appearance => appearance.award}. The notation \texttt{\_.award} is short for this. Finally, we impose the \texttt{uniqueAwardCondition} on \texttt{allAwards}, ensuring that exactly one appearance is awarded.
+
+\section{Mutable fields}
+
+Up to this point, all our Figaro programs have been purely functional. All elements have been defined by a \texttt{val}, and they have been immutable. In principle, all programs can be written in a purely functional style. However, this can make it quite inconvenient to represent situations in which different entities refer to each other. Scala supports both functional and non-functional styles of programming, allowing us to gain the benefits of both.
+
+For example, let's expand the actors and movies example so that actors have a skill, and the quality of a movie depends on the skill of the actors in it. In turn, the fame of an actor depends on the quality of the movies in which he or she has appeared. We have created a mutual dependence of actors on movies which is hard to represent in a purely functional style. We can capture it in Figaro using the following code:
+
+\begin{flushleft}
+\texttt{import com.cra.figaro.library.compound.CPD
+\newline import com.cra.figaro.language.\_
+\newline 
+\newline class Actor \{
+\newline \tab var movies: List[Movie] = List()
+\newline 
+\newline \tab lazy val skillful = Flip(0.1)
+\newline 
+\newline \tab lazy val famous =
+\newline \tab Flip(Apply(Inject(movies.map(\_.quality):\_*), probFamous \_))
+\newline 
+\newline \tab private def probFamous(qualities: Seq[Symbol]) =
+\newline \tab if (qualities.count(\_ == 'high) >= 2) 0.8; else 0.1
+\newline \}
+\newline 
+\newline class Movie \{
+\newline \tab var actors: List[Actor] = List()
+\newline 
+\newline \tab lazy val actorsAllGood = Apply(Inject(actors.map(\_.skillful):\_*), (s: Seq[Boolean]) => !(s.contains(false)))
+\newline \tab lazy val quality = 
+\newline \tab If(actorsAllGood,
+\newline \tab \tab Select(0.2: 'low, 0.3: 'medium, 0.5: 'high), 
+\newline \tab \tab Select(0.5: 'low, 0.3: 'medium, 0.2: 'high))
+\newline \}
+\newline 
+\newline class Appearance(actor: Actor, movie: Movie) \{
+\newline \tab actor.movies ::= movie
+\marginpar{\texttt{::=} is Scala shorthand for list concatenation}
+\newline \tab movie.actors ::= actor
+\newline 
+\newline lazy val award = CPD(movie.quality, actor.famous, 
+\newline \tab \tab ('low, false) -> Flip(0.001), 
+\newline \tab \tab ('low, true) -> Flip(0.01), 
+\newline \tab \tab ('medium, false) -> Flip(0.01), 
+\newline \tab \tab ('medium, true) -> Flip(0.05), 
+\newline \tab \tab ('high, false) -> Flip(0.05), 
+\newline \tab \tab ('high, true) -> Flip(0.2))
+\newline \}
+\newline 
+\newline val actor1 = new Actor 
+\newline val actor2 = new Actor 
+\newline val actor3 = new Actor 
+\newline val movie1 = new Movie 
+\newline val movie2 = new Movie
+\newline val appearance1 = new Appearance(actor1, movie1)
+\newline val appearance2 = new Appearance(actor2, movie2) 
+\newline val appearance3 = new Appearance(actor3, movie2) 
+\newline actor3.famous.observe(true) 
+\newline movie2.quality.observe('high)
+\newline 
+\newline // Ensure that exactly one appearance gets an award. 
+\newline def uniqueAwardCondition(awards: Seq[Boolean]) =
+\newline \tab awards.count((b: Boolean) => b) == 1 
+\newline val allAwards: Element[Seq[Boolean]] =
+\newline \tab Inject(appearances.map(\_.award):\_*)
+\newline allAwards.setCondition(uniqueAwardCondition)
+}
+\end{flushleft}
+
+First, note that the \texttt{Actor} class has a \texttt{movies} field, whose purpose is to indicate the list of movies the actor has appeared in. Likewise, the \texttt{Movie} class has an \texttt{actors} field to represent the actors who appear in it. If these fields were immutable, we would need to create all the movies an actor appears in before we create the actor, and we would need to create all the actors appearing in a movie before the movie, which is impossible. Therefore, we use mutable variables, which are indicated in Scala by the \texttt{var} keyword.
+
+The initial value of both \texttt{movies} and \texttt{actors} is an empty list. We add elements to them later. In fact, whenever we create an appearance, we make sure to add the movie to the actor's list of movies and vice versa. This is achieved by the first two lines of the \texttt{Appearance} class. The notation \texttt{actor.movies ::= movie} is short for \texttt{actor.movies = movie :: actor.movies}, which prepends movie to the current \texttt{actor.movies} list, and replaces the current list with the new list. The \texttt{::=} notation is a variant of the familiar \texttt{+=} notation common in many languages.
+
+The \texttt{Actor} class has \texttt{skillful} and \texttt{famous} fields. Rather than an ordinary \texttt{val}, each of these fields is defined to be \texttt{lazy val}, which means that their contents are not determined until they are required by some other computation. This is necessary for us because their contents can depend on the list of movies the actor appears in. For example, whether the actor is famous depends on whether at least two movies have high quality, as defined by \texttt{probFamous}. (Comment on the notation: the underscore after \texttt{probFamous} is required here to tell Scala that what is desired is the \texttt{probFamous} function itself, not its application to arguments.)   If \texttt{famous} was an ordinary \texttt{val}, its value (an \texttt{Element[Boolean]}) would be computed at the point it is defined, so it would use an empty list of movies. Because we want to use the correct list of movies in defining it, we postpone evaluating it until the movies list has been filled. For \texttt{actor3}, this will happen when we make the observation \texttt{actor3.famous.observe(true)}, which we make sure to delay until after all the appearances have been created. For other actors, the \texttt{famous} field will be evaluated even later, during inference.
+
+Do not hesitate to use mutation if it will help you organize your program in a logical way. In one application, we have found it convenient to use a hash table that maps concepts to their associated elements. This allowed us to create the element associated with a concept as the concept was introduced. If we later had to refer to the same concept again, we could easily access its element.
+
+\section{Universes}
+
+A central concept in Figaro is a \emph{universe}. A universe is simply a collection of elements. Reasoning algorithms operate on a universe (or, as we shall see for dependent universe reasoning, on multiple connected universes). Most of the time while using Figaro, you will not need to create a new universe and can rely on the default universe, which is just called \texttt{universe}. It can be accessed using
+
+\begin{flushleft}
+\texttt{import com.cra.figaro.language.\_
+\newline import com.cra.figaro.language.Universe.\_}
+\end{flushleft}
+
+If you do need a different universe, you can call \texttt{Universe.create\-New()}. This creates a new universe and sets the default universe to it. If you are going to need the old default universe, you will need a way to refer to it. You could use
+
+\begin{flushleft}
+\texttt{val u1 = Universe.universe
+\newline val u2 = Universe.createNew()}
+\end{flushleft}
+
+\texttt{u1} will now refer to the old default universe while \texttt{u2} refers to the new one. Every element belongs to exactly one universe. Ordinarily, when an element is created, it is assigned to the current default universe. As we will see below when we talk about element collections, it is possible to assign a particular element to a different universe from the current default.
+
+Elements can be activated or deactivated. Elements that are inactive are not operated on by reasoning algorithms. Elements are active when created. To deactivate an element \texttt{e} use \texttt{e.deactivate()}; to reactivate it, use \texttt{e.activate()}. When a compound element is created that uses a parent element, the parent must already be active.
+
+You can get a list of all active elements in universe \texttt{u} using \texttt{u.active\-Elements}. There are many more methods of a universe that are useful for writing reasoning algorithms. See the documentation in Universe.scala for more details.
+
+\section{Names, element collections, and references}
+
+Suppose we want to create a PRM in which we are uncertain about the value of an attribute whose value is itself an instance of another class (which is called reference uncertainty). For example, suppose we have the following classes and instances:
+
+\begin{flushleft}
+\marginpar{This example can be found in CarAndEngine.scala}
+\texttt{import com.cra.figaro.language.\_
+\newline 
+\newline abstract class Engine \{ val power : Element[Symbol] \}
+\newline class I4 extends Engine \{
+\newline \tab val power = Select(0.8 -> 'low, 0.2 -> 'high) 
+\newline \}
+\newline class V8 extends Engine \{
+\newline \tab val power = Select(0.8 -> 'low, 0.2 -> 'high)
+\newline \}
+\newline 
+\newline object MyEngine extends Engine \{
+\newline \tab val power = Constant('high)
+\newline \}
+\newline class Car \{
+\newline \tab val engine: Element[Engine] =
+\newline \tab Select(0.2 -> new I4, 0.3 -> new V8, 0.5 -> MyEngine)
+\newline \tab val speed = CPD(?,
+\newline \tab 'low -> Constant (65)
+\newline \tab 'high -> Select(0.5 -> 80, 0.5 -> 90)
+\newline \}
+}
+\end{flushleft}
+
+We want the speed of the car to depend on the power of its engine, but we have uncertainty over what the engine actually is. What should we put in place of the question mark? The obvious choice is \texttt{engine.power}, but this does not work because engine is an \texttt{Element\-[Engine]}, not an instance of \texttt{Engine}.
+
+To get around this problem, Figaro provides \emph{names} and \emph{element collections}. Every element has a name and belongs to an element collection. By default, the name is the empty string and the element collection is the default universe at the time the element is created, which works because universes are element collections. So, most of the time, as in the tutorial to this point, you don't have to worry about the name and element collection of an element. To assign a name and element collection to an element explicitly, you provide an extra pair of arguments when creating it.
+
+We can give the engine a name and make it belong to the car as an element collection as follows:
+
+\begin{flushleft}
+\texttt{class Car extends ElementCollection \{
+\newline \tab val engine: Element[Engine] =
+\newline \tab Select(0.2 -> new I4, 0.3 -> new V6, 0.5 -> MyEngine)( "engine", this)
+\newline \}
+}
+\end{flushleft}
+
+In the first line we make the \texttt{Car} class inherit from \texttt{ElementCollect\-ion}, so that every instance of \texttt{Car} is an element collection. In the fourth line, we assign engine the name "engine" and add it to the instance of Car being created, which is referred to by \texttt{this} within the \texttt{Car} class. We similarly make the abstract \texttt{Engine} class inherit  element collections and assign \texttt{power} the name "power" within \texttt{I4, V8, and MyEngine} within each subclass of  \texttt{Engine}.
+
+An element collection, like a universe, is simply a set of elements. The difference is that a universe is also a set of elements on which a reasoning algorithm operates. An element collection provides the ability to refer to an element by name. For example, if \texttt{car} is an instance of \texttt{Car}, we can use \texttt{car.get[Engine]("engine")} to get at the element named "engine". The \texttt{get} method takes a type parameter, which is the value type of the element being referred to. The notation \texttt{[Engine]} specifies this type parameter, and serves to make sure that the expression \texttt{car.get[Engine]("engine")} has type \texttt{Element[Engine]}.
+
+The key ability of element collections that allows them to solve our puzzle is their ability to get at elements embedded in the value of an element.  It uses \emph{references} to do this. A reference is a series of names separated by dots. For example, "engine.power" is a reference. When we call \texttt{car.get[Symbol]("engine.power")}, it refers to the element named "power" within the \emph{value} of the element named "engine" within the car. The value of this expression is a \texttt{ReferenceElement} that captures the uncertainty about which power element is actually being referred to. In a particular state of the world, i.e., an assignment of values to all elements, it is possible to determine the value of engine and therefore which \texttt{power} element is being referred to. So a \texttt{ReferenceElement} is a deterministic element that defines a way to get its value in any possible world.
+
+So, finally, the answer to our puzzle is that in place of the question mark, we put \texttt{get[Symbol]("engine.power")}. This applies the get method to the instance of \texttt{Car} being created. Here is the full example:
+
+\begin{flushleft}
+\texttt{import com.cra.figaro.language.\_
+\newline
+\newline abstract class Engine extends ElementCollection \{
+\newline \tab val power : Element[Symbol]
+\newline \}
+\newline class I4 extends Engine \{
+\newline \tab val power = Select(0.8 -> 'low, 0.2 -> 'high)("power", this)
+\newline \}
+\newline class V8 extends Engine \{
+\newline \tab val power = Select(0.8 -> 'low, 0.2 -> 'high)("power", this)
+\newline \}
+\newline object MyEngine extends Engine \{
+\newline \tab val power = Constant('high)("power", this)
+\newline \}
+\newline class Car extends ElementCollection \{
+\newline \tab val engine: Element[Engine] =
+\newline \tab Select(0.2 -> new I4, 0.3 -> new V8, 0.5 -> MyEngine)(
+"engine", this
+\newline )
+\newline \tab val speed = CPD(
+\newline \tab get[Symbol]("engine.power"),
+\newline \tab 'low -> Constant(65)
+\newline \tab 'high -> Select(0.5 -> 80, 0.5 -> 90)
+\newline )
+\newline \}
+}
+\end{flushleft}
+
+\section{Multi-valued references and aggregates}
+
+The previous subsection described how to refer to elements using references that identify a single element. A feature of PRMs is the ability to define multi-valued relationships, where an entity is related to multiple entities via an attribute. In Figaro, we use multi-valued references and aggregates to capture these kinds of situations. For example:
+
+\begin{flushleft}
+\texttt{import com.cra.figaro.language.\_
+\newline 
+\newline class Component extends ElementCollection \{
+\newline \tab val f = Select(0.2 -> 2, 0.3 -> 3, 0.5 -> 5)("f", this)
+\newline \}
+\newline 
+\newline val specialComponent1 = new Component 
+\newline val specialComponent2 = new Component
+\newline 
+\newline def makeComponent() =
+\newline \tab Select(0.1 -> specialComponent1,
+\newline \tab 0.2 -> specialComponent2,
+\newline \tab 0.7 -> new Component)
+\newline 
+\newline class Container extends ElementCollection \{
+\newline \tab val components =
+\newline \tab Select(0.5 -> List(makeComponent()),
+\newline \tab 0.5 -> List(makeComponent(), makeComponent())) 
+\newline \tab ("components", this)
+\newline 
+\marginpar{The body of the sum function is shorthand notation for Scala's fold function. Fold iterates through a sequence and applies a function to the previous
+result and each new entry in turn. The (\_ + \_ ) notation will add the previous value to each value in \texttt{xs}.}
+\newline def sum(xs: List[Int]) = (0 /: xs) (\_ + \_)
+\newline 
+\newline \tab val totalComponents =
+\newline \tab getAggregate(sum)("components.f")
+\newline \}
+}
+\end{flushleft}
+
+First, we create a \texttt{Component} class with an element named "f". We then define two specific instances of \texttt{Component}. Next, we define a \texttt{makeComponent} function that either produces one of the specific instances or a new instance of \texttt{Component} that is distinct from all other instances. We then define a \texttt{Container} class that contains components. Now, the contained components are a list that has either one or two elements, each produced by \texttt{makeComponent}. We then create a \texttt{totalComponents} element that aggregates the values of all elements referred to by "components.f"; that is, the values of the elements named "f" in all the values of the element named "components".
+
+Multi-valued references have "set semantics". If the same element appears more than once as the target of the reference, it only contributes one value to the aggregate. So, if the components list has two components, both of which are \texttt{specialComponent1}, whose value is 2, the value of the aggregate will be 2, not 4. On the other hand, if two different target elements both have the same value, both values contribute to the aggregate. For example, if the components are \texttt{specialComponent1} and \texttt{specialComponent2}, and both have value 2, the value of the aggregate is 4.
+
+A comment on the code: The definition of the \texttt{sum} function might look mysterious. This function takes a list of integers and returns their sum. This is a standard Scala idiom that unfortunately is a bit obscure if you're not familiar with it. It is used to "fold" a function through a list. We begin with 0 and then repeatedly add the current result to the next element of the list until the list is exhausted. The notation \texttt{(\_ + \_)} is shorthand for the function that takes two arguments and adds them. The notation \texttt{(0 /: xs}) means that this function should be folded through \texttt{xs}, starting from 0.
+
+\section{Open Universe Models}
+
+We close this section by showing how Figaro can be used to represent "open universe" situations. An open universe situation is one in which we don't know what objects are there, how many there are, which objects are the same as which other objects, and so on. In our example situation, there are an unknown number of sources that is geometrically distributed. Each source is uniformly distributed between 0 and 1. There is some number of observed samples, each drawn from a single unknown source. This is the classic data association problem in which we want to determine which sample comes from which source, and in particular which two samples actually come from the same source. The Figaro code for the example is as follows:
+
+\begin{flushleft}
+\marginpar{This example can be found in OpenUniverse.scala}
+\texttt{import com.cra.figaro.language.\_
+\newline import com.cra.figaro.library.atomic.continuous.Uniform 
+\newline import com.cra.figaro.library.atomic.continuous.Normal 
+\newline import com.cra.figaro.library.atomic.discrete.Geometric 
+\newline import com.cra.figaro.library.compound.\{MakeList, IntSelector\}
+\newline 
+\newline def source(): Element[Double] = Uniform(0.0, 1.0)
+\newline 
+\newline val numSources = Geometric(0.9)
+\newline 
+\newline val sources = MakeList(numSources, source \_)
+\newline 
+\newline class Sample \{
+\newline \tab val sourceNum = IntSelector(numSources)
+\newline \tab val source =
+\newline \tab Apply(sources, sourceNum, (s: Seq[Double], i: Int) => s(i))
+\newline \tab val position =
+\newline \tab Chain(source, (x: Double) => Normal(x, 1.0))
+\newline \}
+\newline 
+\newline val sample1 = new Sample 
+\newline val sample2 = new Sample
+\newline 
+\newline val equal = sample1.source === sample2.source 
+\newline 
+\newline sample1.position.addCondition((y: Double) => y >= 0.7 \&\& y < 0.8)
+\newline sample2.position.addCondition((y: Double) => y >= 0.7 \&\& y < 0.8) 
+}
+\end{flushleft}
+
+Most of this should be self-explanatory at this point. There are a couple of interesting new element classes being used. \texttt{MakeList} takes an element over integers and a function that generates elements over a certain type (in this case doubles). It returns an element over lists of the appropriate type (in this case lists of doubles) whose length is distributed according to the first argument and in which each element is generated according to the second argument. In our example, \texttt{sources} is a list of sources whose length is geometrically distributed and in which each source is generated according to the source model. A notable aspect of the \texttt{MakeList} class, which is important for reasoning algorithms, is that the elements generating the values in the list are stored as an infinite lazy stream. Depending on the value of the first argument, the value of the \texttt{MakeList} is a finite prefix of the values of elements in the stream. As a result of this design, we don't create a completely fresh list each time the length of the list changes. \texttt{MakeList} could also have been used in the previous section's example to define the \texttt{components} element of the \texttt{Container} class.
+
+The second new element class is \texttt{IntSelector} which takes an element over integers and returns an element that produces uniformly a number between 0 and the value of its argument (exclusive). This element can be used to generate a random index into a list produced by \texttt{MakeList}. \texttt{IntSelector} also has an interesting implementation that has benefits for reasoning algorithms (especially Metropolis- Hastings). The \texttt{Randomness} is an infinite stream of uniformly distributed doubles between 0 and 1. Given a particular value of the integer argument, the selected index is the one with the highest randomness value in the finite portion of the stream defined by the argument.
+
+
+
+

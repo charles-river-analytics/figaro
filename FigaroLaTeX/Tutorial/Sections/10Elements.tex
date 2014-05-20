@@ -1,0 +1,370 @@
+% Chapter X
+
+\chapter{Creating a new element class} % Chapter title
+
+\label{Creating a new element class} % For referencing the chapter elsewhere, use 
+
+For many applications, Figaro's built-in element classes will suffice. However, if you do need a new element class, it is usually not hard to create one. The easiest way to create a new class is to inherit from an existing class. We describe how to do this for atomic and compound classes. Then we describe how to create an atomic or compound class without inheritance. After that, we describe how to make a class usable by range computation and variable elimination. Next, an explanation is given on how to create parameters and parameterized elements suitable for use with expectation maximization or other learning algorithms. Finally, we show how to create a class with special behavior under Metropolis-Hastings.
+
+More examples of element classes can be found under \texttt{com.cra.fig\-aro.library}. If you do create a new element class and think it might be generally useful, we would appreciate if you would consider sharing it, either as a library or possibly as part of a future Figaro release.
+
+\section{Creating an atomic class with inheritance}
+
+The easiest way to create a new class is to inherit from an existing class. For example, a discrete uniform distribution is just a special case of a discrete selection where every element has the same probability. We can create this element class simply with
+
+\begin{flushleft}
+\texttt{class AtomicUniform[T](name: Name[T], options: Seq[T], collection: \newline ElementCollection) extends
+\marginpar{The \texttt{with} keyword in Scala will add a trait to a class. Traits can be parameterized but they cannot have constructors}
+\newline \tab AtomicSelect[T](name, options.toList map (1.0 -> \_), collection)
+\newline \tab with Atomic[T] with Cacheable[T] \{
+\newline \tab override def toString = "Uniform(" + options.mkString(", ") + ")"
+\}
+}
+\end{flushleft}
+
+The atomic uniform class is one for which the options are explicitly specified values of type \texttt{T}, as opposed to the compound uniform in which the options are elements over values of type \texttt{T}. The atomic uniform class takes three arguments: a name (which every class takes), an element collection (likewise), and a sequence specifying the options the uniform distribution can produce. The class inherits the \texttt{AtomicSelect} class, which represents selection over a discrete set of options
+
+with their associated probabilities. There is also one other trait that is extended in the \texttt{AtomicUniform},
+\texttt{Cacheable[T]}. This trait is used to determine what type of chain should be created at the chain instantiation time. If the parent of a \texttt{Chain} extends \texttt{Cacheable}, a \texttt{CachingChain} is instantiated when a chain element is created. This trait is not required (elements by default are assumed to be not cacheable), but can result in increased performance if the support of the new element is small.
+
+To carry out the inheritance, we need to transform the sequence of options into a list of (probability,value) pairs, which are the argument to \texttt{AtomicSelect}. This is accomplished by the expression \texttt{options.toList map (1.0 -> \_)}. This turns the sequence of options into a list and applies to all elements of the list the function that maps an option to the pair \texttt{(1.0, option)}.
+
+Let us understand the notation \texttt{(1.0 -> \_)}. This is Scala shorthand for the function which maps an option to the pair \texttt{(1.0, option)}. There are two things in this shorthand worth noting. First, \texttt{1.0 -> \_} is another way of describing the pair \texttt{(1.0, \_)}.   It is a more descriptive way of saying "with probability 1.0, you get \_," rather than just "the pair of 1.0 and \_."   Second, \_ denotes the argument to the function, when you know
+you are defining a function. Here, you know you are defining a function because it
+ 
+\marginpar{Scala contains many transformations on sequences besides \texttt{toList}}
+appears in the context of applying a function to all elements of a list. This underscore notation can only be used when the argument appears exactly once in the body of the function. Thus \texttt{(1.0 -> \_)} is Scala's shorthand for the function \texttt{(t: T) => (1.0, t)}. It really doesn't matter if this shorthand is meaningful to you; feel free to use the longer version wherever you want. Note that the probabilities in the \texttt{AtomicSelect} are not normalized; \texttt{AtomicSelect} automatically takes care of the normalization.
+
+The only thing the body of  \texttt{AtomicUniform} does is to override the \texttt{toString} method that every Scala class has. The method produces something meaningful when the element is converted into a string. \texttt{options.mkString(", ")} creates a string consisting of each of the options separated by a comma and a space.
+
+A problem with the above class definition is that to create an instance, you have to say
+
+\begin{flushleft}
+\texttt{new AtomicUniform(name, options, collection)}
+\end{flushleft}
+
+i.e., you have to use the keyword new, you have to call it \texttt{AtomicUni\-form} (as opposed to \texttt{CompoundUniform}, described below), and you have to supply the name and collection explicitly. To provide a more convenient way to create instances, we provide the following code:
+
+\begin{flushleft}
+\texttt{object \texttt{Uniform} \{
+\marginpar{The * in the argument list defines a variable length argument list}
+\newline \tab def apply[T](options: T*)(implicit name: Name[T], collection:
+\newline \tab ElementCollection) =
+\newline \tab new AtomicUniform(name, options, collection)
+\}
+}
+\end{flushleft}
+
+Using this definition, you can simply say \texttt{Uniform(options)}to create an atomic uniform element.
+
+This snippet uses a number of features of Scala. It is not important that you understand all these features in detail, as the snippet shows a pattern that can be copied directly to your class.
+
+First, an \emph{object} is a Scala class that only has a single instance. There can be an object with the same name as a class; in that case they are called \emph{companions}. The object holds what are commonly known as static methods, i.e., methods that don't depend on the state of a specific instance, as well as methods that create elements of the class. The latter are known as \emph{factory methods}. In our example, the factory method creates a new instance of \texttt{AtomicUniform}.
+
+Second, a method named \texttt{apply} is special. It can be invoked simply by providing the name of the object and listing its arguments in parentheses. So instead of saying \texttt{Uniform.apply(options)}, you can say \texttt{Uniform(options)}. Methods named \texttt{apply} are often used for defining factory constructors.
+
+Third, Scala allows \emph{curried functions}. These are functions that can be applied to one set of arguments to yield a function that can be applied to more arguments. Scala indicates this by providing multiple argument lists to a function. So, in our example, the first argument list consists of the sequence of options,while the second consists of the name and element collection.
+
+Finally, the second argument list to \texttt{apply} is \emph{implicit}. This means that you can leave out the argument list and Scala will implicitly fill it in with special values defined elsewhere. In this case, "" is the implicit value of type \texttt{Name} and the current universe is the implicit value of type \texttt{ElementCollection}. This is why you don't have to supply these arguments when you create an element unless you explicitly want to specify a different name or element collection.
+
+\section{Creating an compound class with inheritance}
+
+Most compound classes inherit from either \texttt{Chain} or \texttt{Apply}. We will show an example of both.
+
+\subsection{Inheriting from Chain}
+
+First, let us continue with discrete uniform elements, but now let us define one whose argument is itself a sequence of elements. We define it as follows:
+
+\begin{flushleft}
+\texttt{class CompoundUniform[T](name: Name[T], options: Seq[Element[T]], 
+\newline collection: ElementCollection) extends CachingChain[List[T],T] (
+name,
+\newline \tab new Inject("", options, collection),
+\newline \tab (options: Seq[T]) => new AtomicUniform("", options, collection),
+collection) \{
+\newline \tab override def toString = "Uniform(" + options.mkString(", ") + ")"
+\newline \}
+}
+\end{flushleft}
+
+First, note that it inherits from \texttt{CachingChain}. When you inherit from \texttt{Chain}, you have two options. You can specify either a caching or non-caching version of the chain (which has preset cache capacities), or you can directly instantiate \texttt{Chain} with a specified cache capacity. Note that chains themselves do not extend the \texttt{Cacheable} trait, since the support of a can be infinite. Also, when you inherit from a class, you have to explicitly pass along the name and collection arguments.
+
+The operation of the chain can be thought of as follows: first, produce specific values for each of the options. Then, given such a specific set of values, create an atomic uniform element over those values. Finally, generate a specific value from the atomic uniform element, i.e., a uniformly chosen value from
+those values.
+
+The meat of the definition is the second and third arguments. The second argument defines the parent of the chain, which is the element that generates the sequence of option values. We have to convert the sequence of elements that are the arguments to \texttt{CompoundUniform} to an element over sequences; this is achieved using \texttt{Inject}. The third argument defines the function of the chain. Given a particular set of values of the options, it creates an atomic uniform with those values.
+
+That's all there is to it. The \texttt{Uniform} object also defines an \texttt{apply} method that allows you to create compound uniform elements conveniently.
+
+\subsection{Inheriting from Apply}
+
+Inheriting from \texttt{Apply} will typically be used when you want to create an element class that captures a common function. When you inherit from \texttt{Apply}, you have to explicitly inherit from the \texttt{Apply} class that has the right number of arguments. For example, if your function has two arguments, you inherit from \texttt{Apply2}. For example, the element class that represents the comparison of the values of two elements for equality is defined by
+
+\begin{flushleft}
+\texttt{class Eq[T](name: Name[Boolean], arg1: Element[T], arg2: Element[T], \newline collection: ElementCollection) extends Apply2(name, arg1, arg2, (t1: T, t2: T) => t1 == t2, collection) \{
+\newline \tab override def toString = arg1.toString + " === " + arg2.toString
+\newline \}
+}
+\end{flushleft}
+
+In addition to the name and element collection, we need to pass to \texttt{Apply2} the two arguments and the function to be applied.
+
+\section{Creating an atomic class without inheritance}
+
+Since most atomic classes are non-deterministic and creating a non-deterministic class requires more work than a deterministic class, we will use a non-deterministic example, specifically, continuous uniform elements. A non-deterministic atomic element class needs to define the following things:
+
+\begin{itemize}
+\item The \texttt{Randomness} type
+\item A \texttt{generateRandomness} method that produces a randomness according to an appropriate generation process
+\item A \texttt{generateValue} method that deterministically generates the value of the element given its randomness
+\item A \texttt{density} method that returns the density of any possible value
+\end{itemize}
+
+The class that defines continuous uniform distributions between given lower and upper bounds is defined as follows:
+
+\begin{flushleft}
+\texttt{import com.cra.figaro.language.\_
+\newline import com.cra.figaro.util.random
+\newline 
+\newline class AtomicUniform(name: Name[Double], val lower: Double, val upper: Double, collection: ElementCollection)
+\newline extends Element[Double](name, collection) with
+Atomic[Double] \{
+\newline \tab type Randomness = Double val diff = upper $-$ lower
+\newline 
+\newline \tab def generateRandomness() = random.nextDouble() * diff + lower def \newline 
+\newline \tab generateValue(rand: Randomness) = rand
+\newline 
+\newline \tab val constantDensity = 1.0 / diff
+\newline 
+\newline \tab def density(d: Double) = if (d >= lower \&\& d < upper)
+\newline \tab constantDensity; else 0.0
+\newline 
+\newline \tab override def toString = "Uniform(" + lower + ", " + upper + ")"
+\newline \}
+}
+\end{flushleft}
+
+This should be self-explanatory given everything we've seen so far. In this class, we defined \texttt{generateRandomness} to actually produce the value, and \texttt{generateValue} to simply pass it along, but a different design would have been possible. For instance, an atomic normal distribution would compute its randomness value using the standard normal distribution, and the value of the element would be the randomness shifted by the mean and scaled by the variance. For other atomic non-deterministic classes, the logic of the methods would be richer, but the general structure would be the same. Note that the \texttt{generateRandomness} function uses the Figaro random number generator called \texttt{random} to generate random values. One can use any random number generator to generate the randomness of an element. However, using the Figaro supplied random number generator allows one to globally set the seed of the generator in the Figaro package, thus enabling reproducible random processes.
+
+\section{Creating an compound class without inheritance}
+
+Creating a compound class without inheritance is unusual, as \texttt{Chain} and \texttt{Apply} are ubiquitous. The most common use will probably be to create variants of \texttt{Chain} and \texttt{Apply} that take more arguments than the built-in classes. To do that, you should take the code for \texttt{Chain} or \texttt{Apply} as a model and base your new class on that. Otherwise, for a deterministic compound class, you need to define the following elements:
+
+\begin{itemize}
+\item The \texttt{args} method that returns a list of the elements on which this element depends. Make sure this is a \texttt{def}, not a \texttt{val}. (Otherwise, you might run into a nasty Scala issue with abstract fields in a superclass being initialized in a concrete subclass. When an instance of the subclass is constructed, the superclass instance is constructed first, and a superclass of all element classes is the \texttt{Element} class, which uses \texttt{args} in its constructor. If \texttt{args} were a \texttt{val}, it would be uninitialized at that time and throw a null pointer exception.)
+\item The  \texttt{generateValue} method that takes no arguments and produces the value of the element as a function of the values of the arguments of the element and its randomness.
+
+For example, \texttt{Apply1} is defined by
+
+\end{itemize}
+
+\begin{flushleft}
+\texttt{class Apply1[T1,U](name: Name[U], val arg1: Element[T1], val fn: T1
+=> U, collection: ElementCollection)
+\newline extends Deterministic[U](name, collection) \{
+\newline \tab def args: List[Element[\_]] = List(arg1)
+\newline 
+\newline \tab type Arg1Type = T1
+\newline 
+\newline \tab def generateValue() = fn(arg1.value)
+\newline 
+\newline \tab override def toString = "Apply(" + arg1 + ", " + fn + ")"
+\newline \}
+}
+\end{flushleft}
+
+For non-deterministic classes, you need to define the additional elements \texttt{Randomness}, \texttt{generateRandomness}, and \texttt{density}, as before.
+
+\section{Making a class usable by variable elimination}
+
+Certain algorithms rely on element classes being able to support specific functionality. For example, computing ranges requires that it be possible to enumerate the values of every element in the universe. One way to make a new element class support value enumeration would be to modify the code that enumerates values in \texttt{Values.scala}, This approach would not be modular; it is undesirable for a user to have to modify library code.
+
+Figaro provides a different solution. There is a trait called \texttt{ValuesMa\-ker} that characterizes element classes for which values can be enumerated. If you want your element class to support range computation, make it extend \texttt{ValuesMaker} and have it implement the \texttt{makeValues} method, which produces an enumeration of the possible values of the element. For example, we might want to enumerate the possible values of an atomic binomial element. If n is the number of trials of the binomial, we can define the function
+
+\begin{flushleft}
+\texttt{def makeValues: Set[Int] = (for \{ i <- 0 to n \} yield i).toSet}
+\end{flushleft}
+
+The \texttt{makeValues} method returns a set of values. For a binomial, this is simply all the integers from
+0 to the number of trials. This set is computed through a for comprehension whose result is turned into a set. We also make \texttt{AtomicBinomial} extend \texttt{ValuesMaker}.
+
+Similarly, variable elimination requires both that it be possible to enumerate the values of an element and that it be possible to turn into a set of factors. To specify that it has the latter capability, you make it
+extend \texttt{ProbFactorMaker} and implement the \texttt{makeFactors} method. Factors are parameterized by the type of values they contain; in this case, since we are creating a factor representing probabilities, we make a \texttt{Factor[Double]}.
+
+For example, the \texttt{AtomicBinomial} class extends \texttt{ProbFactorMaker} and includes the following code:
+
+\begin{flushleft}
+\texttt{def makeFactors: List[Factor[Double]] = \{
+\newline \tab val binVar = Variable(this)
+\newline \tab val factor = new Factor[Double](Array(binVar))
+\newline \tab for \{ (value, index) <- binVar.range.zipWithIndex \} \{
+\newline \tab factor.set(Array(index), density(value))
+\newline \} 
+\newline \tab List(factor)
+\newline \}
+}
+\end{flushleft}
+
+The \texttt{makeFactors} method returns a list of factors. A factor is a table defined over a set of \emph{variables}. To create a variable out of an element, use \texttt{Variable}. For example, the \texttt{Variable(this)} line above creates a variable out of this atomic binomial element. Creating variables is memoized, so you can be sure that every time you call \texttt{Variable} on an element you get the same variable. This is important if an element participates in multiple factors. To create a factor, you pass it an array of its variables.
+
+Each row in a factor associates a value with a set of indices into the variable's ranges. To specify the factor, you need to set these values. This is accomplished with the \texttt{set} method of \texttt{Factor}. In the above example, we have
+
+\begin{flushleft}
+\texttt{for \{ (value, index) <- binVar.range.zipWithIndex \} \{
+\newline \tab factor.set(Array(index), density(value))
+\newline \}
+}
+\end{flushleft}
+
+The first line uses a for comprehension to get at pairs of values of the binomial variable together with their index into the range. The standard Scala library method \texttt{zipWithIndex} takes a list and associates each element of the list with its index in the list. For example, \texttt{List("a", "b").zipWithIndex} is \texttt{List(("a", 0), ("b", 1))}. The first argument to \texttt{factor.set} is an array of indices into the ranges of the variables, in the same order as the array used to create the factor. The second argument is the value to associate with those indices.
+
+At the end, \texttt{makeFactors} returns a list consisting of this single factor. This is the basic principle behind creating factors. You can find a variety of more complex examples, including some with multiple variables, in  \texttt{ProbFactor.scala} For atomic elements, the process should usually be similarly simple to that for binomials.
+
+\section{Making parameters and parameterized elements}
+
+Support for learning models from data is accomplished through parameters and parameterized elements. Defining new elements of these types requires the use of a couple of traits $-$ \texttt{Parameter} and \texttt{Parameter\-ized} $-$ and a method to produce factors. Much of the required code is centered on the idea of sufficient statistics, as they are currently the means by which parameters are learned.
+
+A parameter must extend the \texttt{Parameter} trait. This trait contains several important methods which allow use with the learning algorithms. First, the method \texttt{zeroSufficientStatistics} must provide an appropriate result for this parameter type. For example, a Beta parameter has two hyperparameters, alpha and beta. Hence, \texttt{zeroSuffic\-ientStatistics} returns a sequence of length two.
+
+\begin{flushleft}
+\texttt{override def zeroSufficientStatistics (): Seq[Double] = \{ 
+\newline \tab Seq(0.0, 0.0)
+\newline \}
+}
+\end{flushleft}
+
+An additional method,  \texttt{sufficientStatistics}, provides sufficient statistics with a value of 1.0 in the position specified by an index or value. This method can be useful when creating factors for parameterized elements. The \texttt{parameter} trait also defines a method for calculating the expected value of the parameter. Expected value is used during the parameter learning process, and also as an argument during the creation of learned elements.
+
+We can create a parameterized version of an existing element by extending that type of element and including the \texttt{Parameter} trait. In the case of \texttt{Beta}, we have
+
+\begin{flushleft}
+\texttt{class AtomicBetaParameter(name: Name[Double], a: Double, b: Double, collection: ElementCollection) extends AtomicBeta(name, a, b, collection) with
+Parameter[Double] with ValuesMaker[Double] \{ ... \}
+}
+\end{flushleft}
+
+Next, we must decide which values are actually learned within the parameter. In the case of Beta, the alpha and beta hyperparameters are already inputs to the \texttt{AtomicBeta} element. We will use these to represent prior knowledge or belief about the parameter. This is a good practice when extending existing elements into parameters. To facilitate parameter learning, we can create Scala variables which are modified by learning algorithms. Again, in the case of Beta, we can define
+
+\begin{flushleft}
+\texttt{var alpha = a 
+\newline var beta = b
+}
+\end{flushleft}
+
+The expected value for a beta distribution is well known and easily defined:
+
+\begin{flushleft}
+\texttt{def expectedValue: Double = \{
+\newline \tab (alpha) / (alpha + beta)
+\newline \}
+}
+\end{flushleft}
+
+It is also necessary to define how the parameter value is maximized according to expected sufficient statistics. This method is used inside expectation maximization. In this case, we can simply set the value of alpha and beta to their corresponding values.
+
+\begin{flushleft}
+\texttt{def maximize(sufficientStatistics: Seq[Double]) \{
+\newline \tab require(sufficientStatistics.size == 2)
+\newline \tab alpha = sufficientStatistics(0) + a
+\newline \tab beta = sufficientStatistics(1) + b
+\newline \}
+}
+\end{flushleft}
+
+Of critical importance is the \texttt{getLearnedElement} method. This method provides an atomic element which is the result of parameter learning. In most cases, the learned element can simply use the expected value of the parameter as its argument.  Note that when creating the learned element, we must be sure to supply arguments for the element name and collection.
+
+\begin{flushleft}
+\texttt{def getLearnedElement: AtomicFlip = \{
+\newline \tab new AtomicFlip("", expectedValue, collection)
+\newline \}
+}
+\end{flushleft}
+
+Having created a parameter, we may now create an element which uses it. Compound elements which use \texttt{Parameter} as their arguments are defined by the \texttt{Parameterized} trait. This trait is quite simple and contains only a reference to the element's parameter. Continuing the example, we can create a version of \texttt{Flip} which uses \texttt{BetaParameter} in the following way:
+
+\begin{flushleft}
+\texttt{class ParameterizedFlip(name: Name[Boolean], override val parameter: AtomicBetaParameter, collection: ElementCollection)
+\newline extends Element[Boolean](name, collection) with Flip 
+\newline with Parameterized[Boolean]
+}
+\end{flushleft}
+
+This class inherits most of its behavior from \texttt{Flip}. Much like a compound flip, the probability of producing true is derived from the \texttt{BetaParameter}:
+
+\begin{flushleft}
+\texttt{def probValue = parameter.value}
+\end{flushleft}
+
+If an existing element is being extended, it is advisable to define a factory method in the companion object which accepts a \texttt{Parameter} element as input, and creates an instance of the parameterized element. To illustrate, consider the apply method for \texttt{ParameterizedFlip}:
+
+\begin{flushleft}
+\texttt{def apply(prob: AtomicBetaParameter)(implicit name: Name[Boolean], collection: ElementCollection) =
+\newline \tab new ParameterizedFlip(name, prob, collection)
+}
+\end{flushleft}
+
+By defining this method, we are able create a parameterized flip simply by supplying a beta parameter as an argument to \texttt{Flip}.
+
+To use a parameterized element with expectation maximization, the last step is to provide a method for making factors in \texttt{SufficientStat\-isticsFactor.scala}. This class creates factors intended to be used with learning algorithms. Each factor entry consists of a probability and a map from parameters to sufficient statistics. The map from parameters to sufficient statistics is created by the learning algorithm which uses the factors. This class is discussed in further detail in the Factors and Factored Algorithms section.
+
+\begin{flushleft}
+\texttt{private def makeFactors(flip: ParameterizedFlip): List[Factor[(Double, Map[Parameter[\_], Seq[Double]])]] = \{
+\newline 
+\newline val flipVar = Variable(flip)
+\newline val factor = new Factor[(Double, Map[Parameter[\_], Seq[Double]])](List(flipVar))
+\newline val prob = flip.parameter.expectedValue 
+\newline val i = flipVar.range.indexOf(true)
+\newline 
+\newline val falseMapping = mutable.Map(parameterMap.toSeq: \_*)
+\newline val trueMapping = mutable.Map(parameterMap.toSeq: \_*)
+\newline 
+\newline trueMapping.remove(flip.parameter) falseMapping.remove(flip.parameter) \newline trueMapping.put(flip.parameter, Seq(1.0, 0.0)) \newline falseMapping.put(flip.parameter, Seq(0.0, 1.0)) factor.set(List(i), (prob, trueMapping)) 
+\newline factor.set(List(1 $-$ i), (1.0 $-$ prob, falseMapping))
+\newline List(factor)
+\newline \}
+}
+\end{flushleft}
+
+First, note that for the value of \texttt{prob}, we use the expected value of the parameter. For a regular compound \texttt{Flip}, this would be the weight specified by the value of another element. However, since the hyperparameters of the parameter can change as a learning algorithm is executed, it is important to use expected value.
+
+When creating factors for parameterized elements, care should be taken to ensure that the correct sufficient statistics correspond with the possible outcomes of the element. In the code block above, an entry created for both possible outcomes of the \texttt{Flip}. Each entry contains sufficient statistics with 1.0 in the position corresponding to the outcomes of true and false, respectively. Note that we also could have used the \texttt{sufficientStatistics} method in the Parameter trait to retrieve sequences corresponding to these outcomes.
+
+The map structure is necessary because there may be multiple parameters being learned at a time, and sufficient statistics should only be counted for the parameter used by the element this factor is being created for. This map, called \texttt{parameterMap}, is created automatically by the learning algorithm based on its target parameters and provided as an input to instances of \texttt{SufficientStatisticsFactor}.
+
+Consider the following line of code:
+
+\begin{flushleft}
+\texttt{val falseMapping = mutable.Map(parameterMap.toSeq: \_*)}
+\end{flushleft}
+
+This line created an empty Scala map of parameters to sequences of double values, and adds the contents of the parameter map. The result is that a mapping is created in which sufficient statistics for all parameters are zero. Then, in the subsequent lines, the entry in the map associated with this parameter is replaced with a value corresponding to a specific outcome of the parameterized element.
+
+By creating factors with sufficient statistics, we can use implementations of algorithms like variable elimination to assist in learning parameter values. For instance, each iteration of expectation maximization uses variable elimination to produce an estimate of the sufficient statistics.
+
+As a final note, if one is interested in creating learning algorithms that do not rely on sufficient statistics, the same traits for parameters and parameterized elements should be still used. Simply create an algorithm which learns the values of the hyperparameters and sets their values, then retrieves the resulting model by using \texttt{getLearnedElement}.
+
+
+\section{Creating a class with special Metropolis-Hastings behavior}
+
+By default, proposing an element in Metropolis-Hastings uses the class's standard \texttt{generateRandomness} to propose the new randomness. Earlier, we described how it is sometimes useful to create a special proposal distribution and gave \texttt{SwitchingFlip} as an example. \texttt{SwitchingFlip} is just like an ordinary \texttt{Flip} except that each time it is proposed, it switches to the opposite value.
+
+Creating a different proposal distribution for an element is achieved through the \texttt{nextRandomness} method. In Metropolis-Hastings, the acceptable probability of a sample is defined as
+\[\frac{\text{P(r\textsuperscript{1} -> r\textsuperscript{0})P(r\textsuperscript{1})}}{\text{P(r\textsuperscript{0} -> r\textsuperscript{1})P(\textsuperscript{0})}}\]
+
+where r\textsuperscript{0} is the original randomness, r\textsuperscript{1} is the proposed randomness, P(r\textsuperscript{1}) is the probability of \texttt{generateRandomness} returning r\textsuperscript{1}, and P(r\textsuperscript{0} -> r\textsuperscript{1}) indicates the probability of \texttt{nextRandomness} returning r\textsuperscript{1} when its argument is r\textsuperscript{0}. The \texttt{nextRandomness} method returns three values; the new randomness, the transition probability ratio (P(r\textsuperscript{1} -> r\textsuperscript{0})/P(r\textsuperscript{0} -> r\textsuperscript{1})) and the model probability ratio (P(r\textsuperscript{1})/P(r\textsuperscript{0})). These ratios are separate values because some algorithms, such as simulated annealing, need to access these ratios before they are multiplied together.
+
+By default, the \texttt{nextRandomness} method simply uses the element's \texttt{generateRandomness} method and returns 1.0 for the both probability ratios. This is correct in most cases, and is used for most of the built-in elements. However, it can be overridden if desired. For example, the definition of \texttt{SwitchingFlip} includes
+
+\begin{flushleft}
+\texttt{override def nextRandomness(rand: Randomness) =
+\newline \tab if (rand < probValue)
+\newline \tab (uniform(probValue, 1.0), 1.0, (1.0 $-$ probValue) / probValue)
+\newline \tab else (uniform(0.0, probValue), 1.0, probValue / (1.0 $-$ probValue))
+\newline 
+\newline private def uniform(lower: Double, upper: Double) =
+\newline \tab random.nextDouble * (upper $-$ lower) + lower
+}
+\end{flushleft}
+
+Everything else is inherited from \texttt{Flip}. The randomness of \texttt{Flip} is a double uniformly distributed between 0 and 1. The \texttt{generateValue} method of \texttt{Flip} tests whether this random number is less than the probability of a true outcome, which is contained in the \texttt{probValue} field. So, \texttt{SwitchingFlip's nextRandomness} method first checks if the randomness is less than this value, which would imply that the current value is true. If it is, the new randomness is uniformly chosen between \texttt{probValue} and
+1, which would make the next value false. On the other hand, if the randomness is greater than \texttt{probValue}, the new randomness is chosen uniformly between 0 and \texttt{probValue}, which would make the next value true. The probability of going from false to true or from true to false are both 1, so the transition probability ratio is 1. However, the density of false is 1 $-$ \texttt{probValue}, while the density of true is \texttt{probValue}, so in the first case (new value is false), the model probability ratio is \texttt{(1.0 $-$ probValue) / probValue}, and vice versa.
