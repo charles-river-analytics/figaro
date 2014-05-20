@@ -218,6 +218,18 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   def allConditions = myConditions
 
   /*
+   * observation represents a specific observed value of this element, if the element
+   * has an observation. It is essentially redundant, given that the observation will be
+   * captured in a condition. However, for some algorithms, such as importance sampling,
+   * it is useful to know that a condition is actually an observation of a specific value.
+   * This is a common case, and to optimize it, we store the observation.
+   * 
+   * If an element has any other condition besides this observation, we cannot use the
+   * observation. However, it can have a constraint.
+   */
+  private[figaro] var observation: Option[T] = None
+  
+  /*
    * Testing whether a condition is satisfied can use any type of value. The condition can only be satisfied if the value has the right type and the condition returns true.
    */
   private def checkedCondition(condition: Condition, value: Any): Boolean =
@@ -248,6 +260,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   def addCondition(condition: Condition, contingency: Contingency = List()): Unit = {
     universe.makeConditioned(this)
     contingency.foreach(ev => ensureContingency(ev.elem))
+    observation = None
     myConditions ::= (condition, contingency)
   }
 
@@ -256,6 +269,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    */
   def removeConditions(contingency: Contingency = List()): Unit = {
     myConditions = myConditions.filterNot(_._2 == contingency)
+    observation = None
     if (myConditions.isEmpty) universe.makeUnconditioned(this)
   }
 
@@ -355,8 +369,11 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    * Condition the element by observing a particular value. Propagates the effect to dependent elements and ensures that no other value for the element can be generated.
    */
   def observe(observation: Value): Unit = {
+    removeConditions()
     set(observation)
-    setCondition((v: Value) => v == observation)
+    universe.makeConditioned(this)
+    this.observation = Some(observation)
+    myConditions ::= ((v: Value) => v == observation, List())
   }
 
   /**
