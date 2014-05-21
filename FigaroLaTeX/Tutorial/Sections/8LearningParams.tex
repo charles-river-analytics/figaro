@@ -1,0 +1,223 @@
+% Chapter X
+
+\chapter{Learning model parameters from data} % Chapter title
+
+\label{Learning model parameters from data} % For referencing the chapter elsewhere, use 
+
+Figaro provides support for learning model parameters from data. In this section, a special type of compound element will be presented which allows a distribution to be learned from observed evidence. Details are given about the algorithm Figaro provides for learning parameters. Lastly, an example using parameters and learning algorithms to determine the fairness of a set of die rolls is presented.
+
+\section{Parameters and parameterized elements}
+
+This section discusses elements which are learnable parameters. For clarity, a distinction should be made on the meaning of the word \emph{parameter} in this context. This is different from a method parameter or Scala type parameter. In this section, we use \emph{parameter} to refer to a Figaro element which can be learned from data. There are currently two such types of parameters in Figaro - \texttt{BetaParameter} and \texttt{DirichletParameter}.
+
+A customary illustration of parameter learning is to consider the outcomes of a coin flip and determine whether or not the coin is fair. In the case of a \texttt{Flip} element (which is a Bernoulli distribution), the conjugate prior distribution is a Beta distribution. If the coin is not fair, we would expect a prior distribution to have a higher value of alpha or beta (the shape variables of a Beta). First, we will create the conjugate prior distribution of a \texttt{Flip}
+
+\begin{flushleft}
+\texttt{val fairness = BetaParameter(1,1)}
+\end{flushleft}
+
+The element \texttt{fairness} is the parameter we will use to model the bias of our coin. The behavior of a \texttt{BetaParameter} is similar to a normal \texttt{Beta} element, with a few extra methods and properties. Most importantly, we later use it to create a model learned from parameterized elements. Creation of a parameterized element is accomplished in exactly the same way as creating a compound element.
+
+\begin{flushleft}
+\texttt{val f = Flip(fairness)}
+\end{flushleft}
+
+This element models a flip of a coin having the fairness specified by the beta parameter, using a value of \texttt{true} to represent heads and \texttt{false} to represent tails. We have actually created an instance of \texttt{ParameterizedFlip}, which is a special type of compound element. A  \texttt{ParameterizedFlip} is created simply by providing a \texttt{BetaParameter} as the argument to \texttt{Flip}.
+
+By using a \texttt{ParameterizedFlip}, the evidence we observe on f can be used to learn the value of \texttt{fairness}. Thus, the next step is to provide the data observed from flips of the coin. Values can be observed just as with other elements, by using \texttt{f.observe(true)} or \texttt{f.observe(false)}. We could also use conditions or constraints.
+
+\marginpar{This example is found in FairCoin.Scala}
+As a more detailed example, suppose we have seen 24 heads and 62 tails. One way to represent this data is in a Scala sequence. Note that for readability, the sequence is truncated here.
+
+\begin{flushleft}
+\texttt{val data = Seq('H', 'H', 'H', 'T', 'H', 'H', 'T', 'H', ...}
+\end{flushleft}
+
+The following block of Scala code will iterate through each of the items in the sequence, create a Flip element using the parameter, and observe true or false based on the side of the coin:
+
+\begin{flushleft}
+\texttt{data.foreach \{ d =>
+\newline val f = Flip(fairness)
+\newline \tab if (d == 'H') \{
+\newline \tab f.observe(true)
+\newline \} else if (d == 'T') \{ 
+\newline \tab f.observe(false)
+\newline \}
+\newline \}
+}
+\end{flushleft}
+
+We have created a parameter, parameterized elements and considered a set of data. Note that each time a parameterize flip is created, it is using the same \texttt{BetaParameter}. It is now desirable to employ a learning mechanism to determine the fairness of the coin, and to create a new element corresponding to the learned value. This is possible by using a learning algorithm.
+
+\section{Expectation maximization}
+
+A learning algorithm can be used to determine the values of parameterized elements. At the end of the process, a parameter targeted by the learning algorithm can provide a new element according to the observed data. Presently, Figaro provides one learning algorithm, expectation maximization, based on variable elimination to compute sufficient statistics. Recall that expectation maximization is an iterative algorithm consisting of an expectation step and a maximization step. During the expectation step, an estimate is produced for the sufficient statistics of the parameter. The estimates are then used in the maximization step to find the most likely value of the parameter. This continues for a set number of iterations and converges toward the true parameter value.
+
+From a practical standpoint, learning a parameter with expectation maximization is very simple. We need only provide the target parameter and, optionally, the number of iterations to the algorithm. The default number of iterations is 10. This can be done in the following way:
+
+\begin{flushleft}
+\texttt{val learningAlgorithm = ExpectationMaximization(fairness)
+\newline learningAlgorithm.start
+\newline 
+\newline val coin = fairness.getLearnedElement
+\newline println("The probability of a coin with this fairness showing
+'heads' is: ")
+\newline println(coin.prob)
+}
+\end{flushleft}
+
+After the algorithm has finished running, we can retrieve an element learned from the parameter by using \texttt{fairness.getLearnedEle\-ment}. The element \texttt{coin} is a \texttt{Flip}, where the probability of producing true is determined from the data we observed above. It is important to make a distinction between parameterized elements and learned elements. Parameterized elements are compound elements and serve as our means of supplying data about a parameter. A learned element is an atomic element with arguments learned from the data we have observed.
+
+After running the program, we see:
+
+\begin{flushleft}
+\texttt{The probability of a coin with this fairness showing 'heads' is:
+0.7159090909090909}
+\end{flushleft}
+
+We may want to make further explorations about the learned model. For instance, if we wanted to know the probability that two flips of this coin show the same side, we could use
+
+\begin{flushleft}
+\texttt{val t1 = fairness.getLearnedElement 
+\newline val t2 = fairness.getLearnedElement 
+\newline val equal = t1 === t2}
+\end{flushleft}
+
+We can then use variable elimination to determine the probability that the coins show the same side:
+
+\begin{flushleft}
+\texttt{val alg = VariableElimination(equal)
+\newline alg.start()
+\newline println("The probability of two coins which exhibit this fairness showing the same side is: " + alg.probability(equal, \textbf{true}))
+\newline alg.kill()
+}
+\end{flushleft}
+
+This results in the following output:
+
+\begin{flushleft}
+\texttt{The probability of two coins which exhibit this fairness showing the same side is: 0.5932334710743803}
+\end{flushleft}
+
+\section{A second example}
+
+In the previous sections, parameter learning was discussed using a Beta parameter. This section will explain the use of Dirichlet parameters. The Dirichlet distribution is a multidimensional generalization of the Beta with a variable number of concentration parameters or alpha values. These values correspond to the weight of each possible outcome in the posterior distribution. In a Dirichlet parameter with two dimensions, the alpha values might again correspond to the outcome of heads and tails, or true and false. Using a higher number of dimensions, we can model a number of different categories or outcomes.
+
+Suppose we are given a set of data in which each record represents a roll of two die out of three possible die. The sum of the die is available, as well as which die were selected for the roll. However, the individual outcome of each die is not available. Our task is to learn the fairness of each die.
+
+The first step is to define the possible outcomes from a dice roll. This is easily accomplished by using a Scala list:
+
+\begin{flushleft}
+\marginpar{This example is found in FairDice.Scala}
+\texttt{val outcomes = List(1, 2, 3, 4, 5, 6)}
+\end{flushleft}
+
+Next, we create a parameter representing the fairness of each die:
+
+\begin{flushleft}
+\texttt{val fairness1 = DirichletParameter(1.0,1.0,1.0,1.0,1.0,1.0) 
+\newline val fairness2 = DirichletParameter(1.0,1.0,1.0,1.0,1.0,1.0) 
+\newline val fairness3 = DirichletParameter(1.0,1.0,1.0,1.0,1.0,1.0) 
+\newline val parameters = Seq(fairness1, fairness2, fairness3)
+}
+\end{flushleft}
+
+Each die is initially assumed to be fair. For convenience, we can place all three parameters in a Scala sequence named \texttt{parameters}.  An item this sequence at index i can be accessed with \texttt{parameters(i)}. This sequence will help us to concisely observe the data from which the parameters are learned. We can represent the data in another sequence:
+
+\begin{flushleft}
+\texttt{val data = Seq((2, 3, 8), (1, 3, 7), (1, 2, 3), (1, 2, 3), ...}
+\end{flushleft}
+
+\texttt{data} is a sequence of 50 Scala tuples. The first two values in each tuple indicate which two die were chosen to roll. The third value is the sum of the two die.
+
+To model the outcome of the sum, we can use an \texttt{Apply} element with a function which sums the outcome of its arguments.
+
+\begin{flushleft}
+\texttt{def trial(p1: AtomicDirichletParameter, p2: AtomicDirichletParameter, result: Int) = \{
+\newline \tab val sum = (i1: Int, i2: Int) => i1 + i2 
+\newline \tab val die1 = Select(p1, outcomes: \_*)
+\newline \tab val die2 = Select(p2, outcomes: \_*)
+\newline \tab val t = Apply(die1, die2, sum)
+\newline \tab t.observe(result)
+\newline \}
+}
+\end{flushleft}
+
+The code section above defines a Scala function which accepts two Dirichlet parameters and an integer value. \texttt{val sum = (i1: Int, i2: Int) => i1 + i2} defines a Scala function which accepts two integer values and returns their sum.  Next, two Select elements are created and parameterized by the input parameters. Note that the arguments to \texttt{Select} are different from what has been presented previously. Instead of directly enumerating each probability and outcome, we specify a Dirichlet parameter and the list of possible outcomes. The last two lines of \texttt{trial} apply the sum function to the die and observe the result. By calling the \texttt{trial} function for each tuple in the sequence, we can create a model learned from the data.
+
+\begin{flushleft}
+\texttt{data.foreach \{ d =>
+\newline if (d.\_1 == 1 \&\& d.\_2 == 2) \{
+\newline \tab trial(parameters(0), parameters(1), d.\_3)
+\newline \tab \} else if (d.\_1 == 1 \&\& d.\_2 == 3) \{
+\newline \tab trial(parameters(0), parameters(2), d.\_3)
+\newline \} else \{
+\newline \tab trial(parameters(1), parameters(2), d.\_3)
+\newline \}
+\newline \}
+}
+\end{flushleft}
+
+Just as in the fair coin example, we create an expectation maximization algorithm and use the list of parameters as input. Additionally, this time we have chosen to raise the number of iterations to 100.
+
+\begin{flushleft}
+\texttt{val numberOfIterations = 100
+\newline val algorithm = ExpectationMaximization(numberOfIterations, parameters: \_*)
+\newline algorithm.start
+\newline 
+\newline val die1 = fairness1.getLearnedElement(outcomes) 
+\newline val die2 = fairness2.getLearnedElement(outcomes) 
+\newline val die3 = fairness3.getLearnedElement(outcomes)
+}
+\end{flushleft}
+
+The code block above will retrieve learned elements from the parameters. Note that for a Dirichlet parameter, a list of outcomes must be supplied as an argument to \texttt{getLearnedElement}. This is because the number of concentration parameters is may vary, and the type of the outcomes is not fixed. Running this code results in the following output, in which we see the model has estimated the probabilities of each value for each die. If one examines the full data declaration in the example code, it is quite easy to see that there are only three observed values of the sum of the die (3, 7 and 8), so the
+learning algorithm has correctly inferred that the most likely values of the die are 1, 2 and 6, respectively.
+
+\begin{flushleft}
+\texttt{The probabilities of seeing each side of d\_1 are:
+\newline \tab 0.8188128994726971 -> 1
+\newline \tab 0.02758618154457299 -> 2
+\newline \tab 0.027187536514221913 -> 3
+\newline \tab 0.02718754004129875 -> 4
+\newline \tab 0.0720455051458327 -> 5
+\newline \tab 0.027180337281376442 -> 6
+}
+\end{flushleft}
+
+
+\begin{flushleft}
+\texttt{The probabilities of seeing each side of d\_2 are:
+\newline \tab 0.024601050364553095 -> 1
+\newline \tab 0.8475328824964514 -> 2
+\newline \tab 0.024642652617350196 -> 3
+\newline \tab 0.024642566789335425 -> 4
+\newline \tab 0.024649300514031563 -> 5
+\newline \tab 0.05393154721827825 -> 6
+}
+\end{flushleft}
+
+
+\begin{flushleft}
+\texttt{The probabilities of seeing each side of d\_3 are:
+\newline \tab 0.026691136667745217 -> 1
+\newline \tab 0.028357892704022745 -> 2
+\newline \tab 0.027128077618261647 -> 3
+\newline \tab 0.027127956278181584 -> 4
+\newline \tab 0.0271337269201185 -> 5
+\newline \tab 0.8635612098116704 -> 6
+}
+\end{flushleft}
+
+
+
+
+
+
+
+
+
+
+
+
+

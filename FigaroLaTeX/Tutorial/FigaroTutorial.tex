@@ -1,0 +1,90 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Classicthesis Typographic Thesis
+% LaTeX Template
+% Version 1.3 (15/2/14)
+%
+% This template has been downloaded from:
+% http://www.LaTeXTemplates.com
+%
+% Original author:
+% André Miede (http://www.miede.de)
+%
+% License:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+%
+% General Tips:
+% 1) Make sure to edit the classicthesis-config.file
+% 2) New enumeration (A., B., C., etc in small caps): \begin{aenumerate} \end{aenumerate}
+% 3) For margin notes: \marginpar or \graffito{}
+% 4) Do not use bold fonts in this style, it is designed around them
+% 5) Use tables as in the examples
+% 6) See classicthesis-preamble.sty for useful commands
+% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass[
+				oneside,openright,titlepage,numbers=noenddot,headinclude,
+				%1headlines,
+                footinclude=true,cleardoublepage=empty,
+                BCOR=5mm,paper=a4,fontsize=11pt, 
+                % Binding correction, paper type and font size
+                ngerman,american, % Languages
+                ]{scrreprt} 
+                
+% Includes the file which contains all the document configurations and packages
+\input{tutorial-config}
+
+\begin{document}
+
+\frenchspacing % Reduces space after periods to make text more compact
+
+\raggedbottom % Makes all pages the height of the text on that page
+
+\selectlanguage{american} % Select your default language - e.g. american or ngerman
+
+\pagenumbering{roman} % Roman page numbering prior to the start of the tutorial content
+
+\pagestyle{plain} % Suppress headers for the pre-content pages
+
+%----------------------------------------------------------------------------------------
+%	PRE-CONTENT TUTORIALs PAGES
+%----------------------------------------------------------------------------------------
+
+\include{FrontMatter/Titlepage} % Main title page
+
+\pagestyle{scrheadings} % Show chapter titles as headings
+
+%\cleardoublepage
+
+\include{FrontMatter/Contents} % Contents
+
+%\cleardoublepage
+
+\pagenumbering{arabic} % Arabic page numbering for tutorial content
+
+%----------------------------------------------------------------------------------------
+%	TUTORIAL CONTENT - SECTIONS
+%----------------------------------------------------------------------------------------
+
+\cleardoublepage % Empty page before the start of the next part
+
+\include{Sections/1Introduction}
+\include{Sections/2HelloWorld}
+\include{Sections/3FigaroRepresentation}
+\include{Sections/4CreatingModels}
+\include{Sections/5Reasoning} 
+\include{Sections/6DynamicModels} 
+\include{Sections/7Decisions} 
+\include{Sections/8LearningParams} 
+\include{Sections/9HierReasoning} 
+\include{Sections/10Elements} 
+\include{Sections/11CreateNew} 
+\include{Sections/12Conclusion}
+
+%----------------------------------------------------------------------------------------
+
+\end{document}
