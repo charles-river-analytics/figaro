@@ -1,0 +1,64 @@
+% Chapter X
+
+\chapter{Dynamic models and filtering} % Chapter title
+
+\label{Dynamic models and filterings} % For referencing the chapter elsewhere, use 
+
+Figaro provides constructs to create dynamic probabilistic programs that describe a domain that changes over time. All the power of the language can be used in creating dynamic programs. A dynamic probabilistic program consists of two parts: (1) an initial model, which is a universe, describing the distribution over the initial state, and (2) a transition model, which is a function from a universe representing the distribution at one time point to a universe representing the distribution at the next time point.
+
+The following code shows the typical method for creating initial and transition models:
+
+\begin{flushleft}
+\texttt{val initial = Universe.createNew()
+\newline val f = Flip(0.2)("f", initial)
+\newline 
+\newline def trans(previousUniverse: Universe): Universe = \{
+\newline \tab val newU = Universe.createNew()
+\newline \tab val b = previousUniverse.get[Boolean]("f")
+\newline \tab val f = If(b, Flip(0.8), Flip(0.3))("f", newU)
+\newline \tab newU
+\newline \}
+}
+\end{flushleft}
+
+The first line creates a new universe for the initial model and assigns it to a variable so that we can use it later. We then define an element to appear in the initial model and give it the name "f". When a name is given explicitly to an element, you also need to specify the universe, which in this case is the initial universe.
+
+We then define the transition model. It takes the previous universe as argument and returns a universe. The first thing it does is create a new universe, which is returned at the end of defining the transition model. It then creates an element named "f" that depends on the previous value of "f". The previous value of  "f" is the value of the element named "f" in the previous universe. Note that we can give this new element the same name as the previous element since they are part of different universes. We get at this element using \texttt{previousUniverse.get[Boolean]("f")}. Essentially, when elements in different universes at different time points have the same name, they represent the state of the same variable at different points in time. Using this procedure, we can create any manner of dependency between the previous state and the current state by referring to elements in the previous universe by reference.
+
+\subsection{Particle filtering}
+
+Currently, the only algorithm provided by Figaro for reasoning about dynamic models is a vanilla particle filter. To create the particle filter, use
+
+\begin{flushleft}
+\texttt{val pf = ParticleFilter(initial, trans, numParticles)}
+\end{flushleft}
+
+where \texttt{intial} is the initial universe, trans is the transition model (a function from \texttt{Universe => Universe}), and \texttt{numParticles} is the number of particles the algorithm should produce at each time step.
+
+One tricky aspect about using a particle filter is that the universes are produced by a function, so it is hard to get a handle on them to observe evidence. This problem is solved by the use of named evidence, so we can refer to the correct element without having a handle on the specific universe.
+
+To tell the particle filter to create the initial set of particles from the initial model, we call the start method. The filter then waits until it is told it is time to move to the next time step. To tell the particle
+filter to move forward in time and tell it the evidence at the new time point, we call the \texttt{advanceTime} method, which takes a list of \texttt{NamedEvidence} as argument. For example,
+ 
+\begin{flushleft}
+\texttt{pf.start()
+\newline pf.advanceTime(List(NamedEvidence("f2", Observation(\textbf{true}))))
+\newline pf.advanceTime(List(NamedEvidence("f2", Observation(\textbf{false}))))}
+\end{flushleft}
+
+This creates the initial particles and advances two time steps with different evidence at each time. 
+
+The query methods provided for a filtering algorithm are \texttt{currentDi\-stribution},
+\texttt{currentExpectation}, and \texttt{currentProbability}. These are similar to the corresponding methods for algorithms that compute conditional probabilities for static models, except that they return the distribution, expectation, or probability at the current point in time. For example,
+
+\begin{flushleft}
+\texttt{pf.start()
+\newline pf.advanceTime(List(NamedEvidence("f2", Observation(\textbf{true}))))
+\newline pf.advanceTime(List(NamedEvidence("f2", Observation(\textbf{false}))))
+\newline pf.currentProbability("f1", true)}
+\end{flushleft}
+
+returns the probability that the element named "f1" is true after two time steps, given that "f2" was true in the first time step and false in the second.
+
+There are a couple of implementation notes about particle filtering that a user should be aware of. First, since particle filtering estimates probabilities of elements using many particles, it can get expensive (memory wise) to store the state estimates for every element in the model. Therefore, the states of only \emph{named} elements are tracked through time. This means that queries to filter for an element probability or expectation must be on named elements. In addition, because filtering tracks estimates through time, we want to free up memory from old universes that are no longer used. To accomplish this, when \texttt{advanceTime} is called, all named elements from the previous universe are copied as constants to a new, temporary universe. The temporary universe is then used in the transition function, allowing the real previous universe to be freed while still letting the new universe use the correct values from the old universe.
+

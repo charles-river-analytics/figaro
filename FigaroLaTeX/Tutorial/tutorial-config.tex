@@ -1,0 +1,238 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Tutorial Configuration File
+%
+% The main lines to change in this file are in the DOCUMENT VARIABLES
+% section, the rest of the file is for advanced configuration.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+%	DOCUMENT VARIABLES
+%	Fill in the lines below to enter your information into the thesis template
+%	Each of the commands can be cited anywhere in the thesis
+%----------------------------------------------------------------------------------------
+
+\PassOptionsToPackage{
+					eulerchapternumbers,listings,pdfspacing, 			
+					subfig,beramono,eulermath,parts,dottedtoc}
+					{classicthesis}
+% Available options: drafting parts nochapters linedheaders eulerchapternumbers beramono eulermath pdfspacing minionprospacing tocaligned dottedtoc manychapters listings floatperchapter subfig
+
+\newcommand{\myTitle}{\xspace}
+\newcommand{\tab}{\hspace*{5mm}}
+
+%----------------------------------------------------------------------------------------
+%	USEFUL COMMANDS
+%----------------------------------------------------------------------------------------
+
+\newcommand{\ie}{i.\,e.}
+\newcommand{\Ie}{I.\,e.}
+\newcommand{\eg}{e.\,g.}
+\newcommand{\Eg}{E.\,g.} 
+
+\newcounter{dummy} % Necessary for correct hyperlinks (to index, bib, etc.)
+\providecommand{\mLyX}{L\kern-.1667em\lower.25em\hbox{Y}\kern-.125emX\@}
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES
+%----------------------------------------------------------------------------------------
+\usepackage[square, numbers, comma, sort&compress]{natbib}
+
+%------------------------------------------------
+\PassOptionsToPackage{latin9}{inputenc} % latin9 (ISO-8859-9) = latin1+"Euro sign"
+ %------------------------------------------------
+
+%\PassOptionsToPackage{ngerman,american}{babel}  % Change this to your language(s)
+% Spanish languages need extra options in order to work with this template
+%\PassOptionsToPackage{spanish,es-lcroman}{babel}
+\usepackage{babel}
+
+%------------------------------------------------			
+
+\PassOptionsToPackage{square,numbers}{natbib}
+ \usepackage{natbib}
+ 
+ %------------------------------------------------
+
+\PassOptionsToPackage{fleqn}{amsmath} % Math environments and more by the AMS 
+ \usepackage{amsmath}
+ 
+ %------------------------------------------------
+
+\PassOptionsToPackage{T1}{fontenc} % T2A for cyrillics
+\usepackage{fontenc}
+
+%------------------------------------------------
+
+\usepackage{xspace} % To get the spacing after macros right
+
+%------------------------------------------------
+
+\usepackage{mparhack} % To get marginpar right
+
+%------------------------------------------------
+
+\usepackage{fixltx2e} % Fixes some LaTeX stuff 
+
+%------------------------------------------------
+
+\PassOptionsToPackage{smaller}{acronym} % Include printonlyused in the first bracket to only show acronyms used in the text
+\usepackage{acronym} % nice macros for handling all acronyms in the thesis
+
+%------------------------------------------------
+
+%\renewcommand*{\acsfont}[1]{\textssc{#1}} % For MinionPro
+\renewcommand{\bflabel}[1]{{#1}\hfill} % Fix the list of acronyms
+
+%------------------------------------------------
+
+\PassOptionsToPackage{pdftex}{graphicx}
+\usepackage{graphicx} 
+\usepackage{wrapfig}
+
+%----------------------------------------------------------------------------------------
+%	FLOATS: TABLES, FIGURES AND CAPTIONS SETUP
+%----------------------------------------------------------------------------------------
+
+\usepackage{tabularx} % Better tables
+\setlength{\extrarowheight}{3pt} % Increase table row height
+\newcommand{\tableheadline}[1]{\multicolumn{1}{c}{\spacedlowsmallcaps{#1}}}
+\newcommand{\myfloatalign}{\centering} % To be used with each float for alignment
+\usepackage{caption}
+\captionsetup{format=hang,font=small}
+\usepackage{subfig}  
+
+%----------------------------------------------------------------------------------------
+%	CODE LISTINGS SETUP
+%----------------------------------------------------------------------------------------
+
+\usepackage{listings} 
+%\lstset{emph={trueIndex,root},emphstyle=\color{BlueViolet}}%\underbar} % for special keywords
+\lstset{language=[LaTeX]Tex, % Specify the language for listings here
+keywordstyle=\color{RoyalBlue}, % Add \bfseries for bold
+basicstyle=\small\ttfamily, % Makes listings a smaller font size and a different font
+%identifierstyle=\color{NavyBlue}, % Color of text inside brackets
+commentstyle=\color{Green}\ttfamily, % Color of comments
+stringstyle=\rmfamily, % Font type to use for strings
+numbers=left, % Change left to none to remove line numbers
+numberstyle=\scriptsize, % Font size of the line numbers
+stepnumber=5, % Increment of line numbers
+numbersep=8pt, % Distance of line numbers from code listing
+showstringspaces=false, % Sets whether spaces in strings should appear underlined
+breaklines=true, % Force the code to stay in the confines of the listing box
+%frameround=ftff, % Uncomment for rounded frame
+frame=single, % Frame border - none/leftline/topline/bottomline/lines/single/shadowbox/L
+belowcaptionskip=.75\baselineskip % Space after the "Listing #: Desciption" text and the listing box
+}
+
+%----------------------------------------------------------------------------------------
+%	HYPERREFERENCES
+%----------------------------------------------------------------------------------------
+
+\PassOptionsToPackage{pdftex,hyperfootnotes=false,pdfpagelabels}{hyperref}
+\usepackage{hyperref}  % backref linktocpage pagebackref
+\pdfcompresslevel=9
+\pdfadjustspacing=1
+
+\hypersetup{
+% Uncomment the line below to remove all links (to references, figures, tables, etc)
+%draft, 
+colorlinks=true, linktocpage=true, pdfstartpage=3, pdfstartview=FitV,
+% Uncomment the line below if you want to have black links (e.g. for printing black and white)
+%colorlinks=false, linktocpage=false, pdfborder={0 0 0}, pdfstartpage=3, pdfstartview=FitV, 
+breaklinks=true, pdfpagemode=UseNone, pageanchor=true, pdfpagemode=UseOutlines,
+plainpages=false, bookmarksnumbered, bookmarksopen=true, bookmarksopenlevel=1,
+hypertexnames=true, pdfhighlight=/O, urlcolor=blue, linkcolor=RoyalBlue, citecolor=webgreen,
+%------------------------------------------------
+% PDF file meta-information
+pdftitle={\myTitle},,
+pdfkeywords={},
+pdfcreator={pdfLaTeX},
+pdfproducer={LaTeX with hyperref and classicthesis}
+%------------------------------------------------
+}   
+
+%----------------------------------------------------------------------------------------
+%	BACKREFERENCES
+%----------------------------------------------------------------------------------------
+
+\usepackage{ifthen} % Allows the user of the \ifthenelse command
+\newboolean{enable-backrefs} % Variable to enable backrefs in the bibliography
+\setboolean{enable-backrefs}{false} % Variable value: true or false
+
+\newcommand{\backrefnotcitedstring}{\relax} % (Not cited.)
+\newcommand{\backrefcitedsinglestring}[1]{(Cited on page~#1.)}
+\newcommand{\backrefcitedmultistring}[1]{(Cited on pages~#1.)}
+\ifthenelse{\boolean{enable-backrefs}} % If backrefs were enabled
+{
+\PassOptionsToPackage{hyperpageref}{backref}
+\usepackage{backref} % to be loaded after hyperref package 
+\renewcommand{\backreftwosep}{ and~} % separate 2 pages
+\renewcommand{\backreflastsep}{, and~} % separate last of longer list
+\renewcommand*{\backref}[1]{}  % disable standard
+\renewcommand*{\backrefalt}[4]{% detailed backref
+\ifcase #1 
+\backrefnotcitedstring
+\or
+\backrefcitedsinglestring{#2}
+\else
+\backrefcitedmultistring{#2}
+\fi}
+}{\relax} 
+
+%----------------------------------------------------------------------------------------
+%	AUTOREFERENCES SETUP
+%	Redefines how references in text are prefaced for different 
+%	languages (e.g. "Section 1.2" or "section 1.2")
+%----------------------------------------------------------------------------------------
+
+\makeatletter
+\@ifpackageloaded{babel}
+{
+\addto\extrasamerican{
+\renewcommand*{\figureautorefname}{Figure}
+\renewcommand*{\tableautorefname}{Table}
+\renewcommand*{\partautorefname}{Part}
+\renewcommand*{\chapterautorefname}{Chapter}
+\renewcommand*{\sectionautorefname}{Section}
+\renewcommand*{\subsectionautorefname}{Section}
+\renewcommand*{\subsubsectionautorefname}{Section}
+}
+\addto\extrasngerman{
+\renewcommand*{\paragraphautorefname}{Absatz}
+\renewcommand*{\subparagraphautorefname}{Unterabsatz}
+\renewcommand*{\footnoteautorefname}{Fu\"snote}
+\renewcommand*{\FancyVerbLineautorefname}{Zeile}
+\renewcommand*{\theoremautorefname}{Theorem}
+\renewcommand*{\appendixautorefname}{Anhang}
+\renewcommand*{\equationautorefname}{Gleichung}
+\renewcommand*{\itemautorefname}{Punkt}
+}
+\providecommand{\subfigureautorefname}{\figureautorefname} % Fix to getting autorefs for subfigures right
+}{\relax}
+\makeatother
+
+%----------------------------------------------------------------------------------------
+
+\usepackage{classicthesis} 
+
+%----------------------------------------------------------------------------------------
+%	CHANGING TEXT AREA 
+%----------------------------------------------------------------------------------------
+
+%\linespread{1.05} % a bit more for Palatino
+%\areaset[current]{312pt}{761pt} % 686 (factor 2.2) + 33 head + 42 head \the\footskip
+%\setlength{\marginparwidth}{7em}%
+%\setlength{\marginparsep}{2em}%
+
+%----------------------------------------------------------------------------------------
+%	USING DIFFERENT FONTS
+%----------------------------------------------------------------------------------------
+
+%\usepackage[oldstylenums]{kpfonts} % oldstyle notextcomp
+%\usepackage[osf]{libertine}
+%\usepackage{hfoldsty} % Computer Modern with osf
+%\usepackage[light,condensed,math]{iwona}
+%\renewcommand{\sfdefault}{iwona}
+%\usepackage{lmodern} % <-- no osf support :-(
+%\usepackage[urw-garamond]{mathdesign} <-- no osf support :-(

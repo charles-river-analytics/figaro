@@ -1,0 +1,172 @@
+% Chapter X
+
+\chapter{Decisions} % Chapter title
+
+\label{Decisions} % For referencing the chapter elsewhere, use 
+
+Figaro also contains the ability to solve and query structured decision problems. These types of models, also known as influence diagrams, are generalizations of Bayesian networks that contain additional decision and utility variables. Figaro generalizes ordinary decision models by allowing the information on which a decision is based to be an arbitrary data structure. Also, the full power of the programming language is available to build decision models. However, Figaro does require that the possible values of the decision variables themselves be discretely enumerated.
+
+In this section, we first give a very brief introduction into decision models and decision-making. We then provide a small example of decision-making in Figaro. We also delve deeper into the decision- making implementation in Figaro. Finally, we discuss the different ways that decision-making can be performed on single and multiple decision models.
+
+\section{Decision models}
+
+Decision models are generalizations of Bayesian networks that contain two additional variable types. The first is a decision variable, which represents a set of actions that a decision-maker can perform. The parents of a decision variable represent the information available to the decision-maker at the time of the decision. Decision models also contain utility variables, which represent some gain or loss in the model that directly or indirectly depends upon some previous decisions or random variables.
+
+The purpose of a decision model is usually to compute an optimal policy for each decision in the model, where a policy defines what action a decision-maker should take for every possible value of the decision's parent variable(s). An optimal policy is when every action specified by the policy for each value of the parents is optimal with respect to some measure. To measure the optimality of an action, Figaro uses the maximum expected utility of the action. That is, for each value of a decision's parents, Figaro determines the action that will result in the highest expected utility of the model.
+
+\section{Basic example}
+
+Using Figaro's decision-making capabilities is generally quite simple. For example, consider the code for a simple decision model shown below:
+
+\begin{flushleft}
+\marginpar{This example can be found in SingleDecision.scala}
+\texttt{import com.cra.figaro.language.\_
+\newline import com.cra.figaro.algorithm.decision.\_
+\newline import com.cra.figaro.library.compound.\_
+\newline import com.cra.figaro.library.decision.\_ 
+\newline 
+\newline val market = Select(0.5 -> 0, 0.3 -> 1, 0.2 -> 2)
+\newline val survey = CPD(market, 
+\newline \tab 0 -> Select(0.6 -> 0, 0.3 -> 1, 0.1 -> 2),
+\newline \tab 1 -> Select(0.3 -> 0, 0.4 -> 1, 0.3 -> 2),
+\newline \tab 2 -> Select(0.1 -> 0, 0.4 -> 1, 0.5 -> 2))
+\newline 
+\newline val found = Decision(survey, List(true, false))
+\newline 
+\newline def valueFcn(f: Boolean, m: Int): Double = \{
+\newline \tab if (f) \{
+\newline \tab m match \{
+\newline \tab case 0 => -7.0 
+\newline \tab case 1 => 5.0 
+\newline \tab case 2 => 20.0
+\newline \}
+\newline \} else \{
+\newline\tab  0.0
+\newline \}
+\newline \}
+\newline 
+\newline val value = Apply(found, market, valueFcn)
+\newline 
+\newline val alg = DecisionVariableElimination(List(value), found)
+\newline alg.start()
+\newline alg.setPolicy(found)
+}
+\end{flushleft}
+
+The first four lines import the packages needed for decision models. The elements \texttt{market} and \texttt{survey} are random variables in a normal Figaro model. We create a decision variable called \texttt{found} that uses the element \texttt{survey} as a parent, with the possible actions of the decision as \texttt{true} or \texttt{false}. The element named \texttt{value} is a utility variable that computes a \texttt{Double} conditioned upon the action of the decision (\texttt{found}) and the current value of the \texttt{market} element. It uses the function \texttt{valueFcn} to compute current utility. Finally, we use Figaro's decision variable elimination to compute an optimal policy for the \texttt{found} decision, and set the policy in the \texttt{found} element when the algorithm completes so that it can be used for querying.
+
+\section{Decisions in Figaro}
+
+As can be seen in the previous section, decision-making can be implemented in Figaro with little effort. Decisions are created using the \texttt{Decision[T,U]} element. The \texttt{Decision[T,U]} element actually inherits from \texttt{Chain}; that is, a decision is simply an element that uses an \texttt{Element[T]} as a parent, and generates an \texttt{Element[U]} as the action. A new decision is instantiated simply as:
+
+\begin{flushleft}
+\texttt{Decision(Flip(0.7), List(0, 1, 2))}
+\end{flushleft}
+
+where the first argument is the parent of the decision, and the second argument is a list of the possible actions of the decision. The possible actions must always be finite and discrete. However, the parent of a decision may be an element over any Scala type. So, we could imagine making a decision based on a social network or a DNA sequence. One thing to note is that decision elements only support single parent decisions. However, multiple parent decisions can be easily created by grouping several parent elements into an element tuple. There are various other ways to instantiate a decision that can be found in the code for the \texttt{Decision} class.
+
+Also, the no-forgetting assumption in decision models is not explicitly enforced in Figaro, hence Limited Memory Influence Diagrams (LIMIDs) can be represented in Figaro, though there is not an explicit LIMID reasoning algorithm implemented.
+
+In decision models, there are also variables that represent the utility of the model. In Figaro, there is no need to explicitly create a utility element; this can be easily done using the \texttt{Apply} element, as shown in the example above. Utility elements must be of type \texttt{Element[Double]}.
+
+A decision is similar to a chain, but unlike the chain, a decision element can change its functionality after an optimal policy has been computed for the decision. Most of the time, setting the policy of a decision can be done simply through the algorithm that computes the optimal policy. However, a user may manually set the policy of a decision element by calling the \texttt{setPolicy} function of the decision, defined as:
+
+\begin{flushleft}
+\texttt{def setPolicy(new\_fcn: (T => Element[U])): Unit}
+\end{flushleft}
+
+That is, setting the policy of a decision is just providing a new function from the value of a parent to an \texttt{Element[U]}. Users can also get the policy for a specific value of the parent by calling \texttt{getPolicy(p: T): Element[U]}. Various other ways to set the policy can also be found in the Decision code.
+
+\section{Single decision models and policy generation}
+
+Single decision models can be created in Figaro by simply inserting a \texttt{Decision} element into the model. Once the model has been created, the goal is usually to compute the optimal policy for the decision that maximizes the expected utility of the model. This is done as two explicit steps in Figaro;computing the expected utility of each parent and decision pair, then determining the decision that has the maximum expected utility for each parent value. The policy is then set as a function that returns the maximum expected utility decision as a \texttt{Constant}  for any parent value. This policy computation is performed using one of Figaro's built-in inference algorithms. Two alternative methods are provided. One is generally used when the support of the parent is finite, the other when it is infinite. However, there are some cases where the support is finite but very large and the infinite support method is preferable. Alternatively, for some distributions with infinite support, like Poisson or Geometric, only a small number of values are likely, and the finite support method can be used.
+
+\subsection{Finite parent support}
+
+In this case, computing the optimal policy can be performed using the variable elimination, importance sampling, or Metropolis-Hastings algorithms. In addition to the normal parameters that each algorithm takes (as explained in previous sections), the decision version of these algorithms also takes a \texttt{List[Element[Double]]} that indicates the utility nodes in the model. The target of the algorithm is always the decision you wish to compute an optimal policy for. To find the optimal policy for discrete decisions, you simply instantiate one of the algorithms, for example:
+
+\begin{flushleft}
+\texttt{val alg = DecisionVariableElimination(List(value), found)
+\newline val alg = DecisionImportanceSampling(10000,	List(value), found)
+\newline val alg = DecisionMetropolisHastings(10000, ProposalScheme.default,
+1000, List(value), found)
+}
+\end{flushleft}
+
+Where \texttt{List(value)} is the list of utilities in the model, and \texttt{found} is the decision. To compute the optimal policy, you simple start the algorithm, i.e., \texttt{alg.start()}. One the algorithm has completed running, you can call \texttt{alg.setPolicy(found)}, which will set the optimal policy in the \texttt{Decision} element that was computed from the algorithm.
+
+\subsection{Infinite parent support}
+
+When the parent(s) of a decision have infinite support, it is more difficult to compute an exact optimal policy. This is because it is not possible to compute the maximum expected utility action for each value of the parent since the range of the parent is infinite. In such a case, we use Figaro's sampling algorithms to compute an \emph{approximate} optimal policy that attempts to provide a maximal expected utility decision for any possible value of the parent. Since we use sampling algorithms to compute the approximation, only importance sampling and Metropolis-Hastings can be used with continuous decisions.
+
+Instantiating a decision with infinite parent support is similar to finite parent support, except that one must explicitly instantiate a \texttt{NonCachingDecision}, which is based on \texttt{NonCachingChain}:
+
+\begin{flushleft}
+\texttt{NonCachingDecision(Normal(0.0, 1.0), List(0, 1, 2))}
+\end{flushleft}
+
+The creation of the algorithm and setting of the policy is the same as discrete decisions. Internally in Figaro, however, there are major differences between the implementation of policies for discrete and continuous decisions.
+
+When a sampling algorithm is run on a continuous decision, the algorithm records the utility of the model for each parent and action value that is randomly sampled. When \texttt{setPolicy} is called on the algorithm, all of the generated samples are stored in the decision element. That is, no optimal policy is generated when \texttt{setPolicy} is called; the optimal action to take for a parent value is only computed when the model is queried for a decision with a particular parent value.
+
+When the decision is queried, i.e., \texttt{getPolicy(p: T)} or \texttt{generate()} is invoked on the decision element, the optimal action for parent value p is computed using a nearest-neighbor method. The N closest samples to the parent value are retrieved from the stored samples, the expected utility is computed for each possible action, and the maximum is chosen as the optimal action for this parent value.
+
+Since nearest-neighbor is used to find nearby parent values, a distance metric must also be defined for the parent type \texttt{T}. To use an \texttt{Element[T]} as the parent to a decision, the type \texttt{T} must implement the \texttt{Distance[T]} trait, defined as:
+
+\begin{flushleft}
+\texttt{trait Distance[T] \{
+\newline \tab def distance(that : T) : Double
+\newline \} }
+\end{flushleft}
+
+This trait just defines a function that computes a Double distance between two values of the type. For built-in types (Double, Int and Boolean), we use Scala's implicit conversion mechanism to automatically handle conversion to a class that implements the \texttt{Distance[T]} interface so that no changes are needed by the user. For examples, the Double implementation is:
+
+\begin{flushleft}
+\texttt{case class DoubleDistance(value : Double) extends Distance[Double] \{
+\newline \tab def distance(that : Double) = math.abs(value-that)
+\newline \}
+\newline implicit def double2Dist(x : Double) = DoubleDistance(x)
+}
+\end{flushleft}
+
+See the \texttt{Distance} class for more details on default conversions of basic types and parents that are element tuples. For user defined classes, all the user needs to do is implement a distance function in the \texttt{Distance} trait, and the type can be used as a parent to a decision element. For instance, we can use an element over the range of graphs as a parent to a decision by declaring the \texttt{dGraph} class as such:
+
+\begin{flushleft}
+\texttt{class dGraph() extends Distance[dGraph] \{
+\newline \tab ...
+\newline \tab def distance(that: dGraph): Double = \{
+\newline \tab \tab ...
+\newline \}
+\newline \} }
+\end{flushleft}
+
+Since the number of samples generated from the algorithm may be large, and the optimal policy method retrieves the nearest neighbors for \emph{every} parent value that is queried from the decision, computing the optimal action can be quite slow. To ameliorate this slowdown, Figaro stores the samples in an index. The default implementation is a VP-index, used for metric distances. Different indices can be created an integrated as well. See the \texttt{Index} and \texttt{DecisionPolicy} classes for more information.
+
+\section{Multiple decision models and policy generation}
+
+Figaro also supports for multiple decision models using a backward induction algorithm. 
+In this algorithm, the optimal policies are computed in reverse order on a set of partially ordered decision variables. To create policies for multiple decision models, a user uses the multi-decision versions of the algorithms:
+
+\begin{flushleft}
+\marginpar{A multiple decision example can be found in MultiDecision.scala} 
+\texttt{val alg = MultiDecisionVariableElimination(List(utility1, utility2), decision1, decision2)
+\newline val alg = MultiDecisionImportanceSampling(10000,	List(utility1, utility2), decision1, decision2)
+\newline val alg = MultiDecisionMetropolisHastings(10000, maker: ProposalMakerType, 1000, List(utility1, utility2), decision1, decision2)
+}
+\end{flushleft}
+
+Note that the interface for the \texttt{MultiDecisionMetropolisHastings} is different than the \texttt{DecisionMetropolisHastings} algorithm. \texttt{MultiDec\-isionMetropolisHastings} needs a \texttt{ProposalMakerType}, since inside the algorithm, \texttt{Decision\-MetropolisHastings} is run for each decision. The \texttt{ProposalMakerType} is defined as:
+
+\begin{flushleft}
+\texttt{type ProposalMakerType = (Universe, Element[\_]) => ProposalScheme}
+\end{flushleft}
+
+Only the one-time versions of the decision algorithms can be used for multi-decision models. To compute the optimal policy for every decision in the model, the user simply does, for example,:
+
+\begin{flushleft}
+\texttt{val propmaker = (mv: Universe, e: Element[\_]) => ProposalScheme.default(mv)
+val alg = MultiDecisionMetropolisHastings(200000, propmaker, 20000, List(value, cost), test, found)
+\newline alg.start()}
+\end{flushleft}
+
+The ProposalMaker for this small example just uses the default proposal for each instantiation of \texttt{DecisionMetropolisHastings} for a decision. However, we could also change the proposal scheme for each decision. There is also no need to call \texttt{alg.setPolicy}, since the multi-decision algorithm will set the optimal policy for each decision as it is needed for backward induction. Figaro will automatically compute the partial order of the decisions that are in the parameter list.

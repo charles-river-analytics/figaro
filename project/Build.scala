@@ -1,5 +1,8 @@
 import sbt._
 import Keys._
+import sbtassembly.Plugin._
+import AssemblyKeys._
+import sbt.Package.ManifestAttributes
 
 object FigaroBuild extends Build {
 
@@ -30,7 +33,11 @@ object FigaroBuild extends Build {
 	  <connection>scm:git:git@github.com:p2t2/figaro.git</connection>
 	  <developerConnection>scm:git:git@github.com:p2t2/figaro.git</developerConnection>
 	  <url>git@github.com:p2t2/figaro.git</url>
-	</scm>)
+	</scm>,
+    packageOptions := Seq(ManifestAttributes(
+      ("Bundle-RequiredExecutionEnvironment", "JavaSE-1.6")
+    ))
+  )
 
   lazy val root = Project("root", file("."))
     .settings(publishLocal := {})
@@ -52,7 +59,11 @@ object FigaroBuild extends Build {
       "org.scalatest" %% "scalatest" % "2.0" % "test"
     ))
     .settings(parallelExecution in Test := false)
-  
+    .settings(assemblySettings: _*)
+    .settings(test in assembly := {})
+    .settings(jarName in assembly := "figaro-" + version.value + "-full.jar")
+    .settings(assemblyOption in assembly ~= { _.copy(includeScala = false) })
+      
   lazy val examples = Project("figaro-examples", file("FigaroExamples"))
     .dependsOn(figaro)
 }
