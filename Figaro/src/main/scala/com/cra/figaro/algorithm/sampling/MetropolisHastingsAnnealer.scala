@@ -45,8 +45,8 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
   private var accepts = 0
   private var rejects = 0
 
-  private val currentConstraintValues: Map[Element[_], Double] = Map()
-  universe.register(currentConstraintValues)
+  private val nextConstraintValues: Map[Element[_], Double] = Map()
+  universe.register(nextConstraintValues)
 
   /**
    * Set this flag to true to obtain debugging information
@@ -236,15 +236,16 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
    */
   private def computeScores(): Double = {
     val constrainedElements = universe.constrainedElements
+    constrainedElements foreach (e => nextConstraintValues.update(e, e.constraintValue))
     val scores = constrainedElements.map { e =>
-      e.constraintValue - currentConstraintValues.getOrElseUpdate(e, 0.0)
+      nextConstraintValues(e) - currentConstraintValues.getOrElseUpdate(e, 0.0)
     }
     scores.sum
   }
 
   private def accept(state: State): Unit = {
     if (debug) println("Accepting!\n")
-    currentConstraintValues.keys.foreach(e => currentConstraintValues += e -> e.constraintValue)
+    currentConstraintValues.keys.foreach(e => currentConstraintValues += e -> nextConstraintValues(e))
     dissatisfied = (dissatisfied filter (!_.conditionSatisfied)) ++ state.dissatisfied
   }
 
@@ -324,6 +325,7 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
 
   protected def doInitialize(): Unit = {
     universe.generateAll()
+    initConstrainedValues()
     for { i <- 1 to burnIn } mhStep(Schedule.schedule, 1)
   }
   /**
