@@ -10,8 +10,9 @@ object FigaroBuild extends Build {
     organization := "com.cra.figaro",
     description := "Figaro: a language for probablistic programming",
     version := "2.2.0.0",
-    //scalaVersion := "2.10.1",
-    scalaVersion := "2.11.1",
+    scalaVersion := "2.10.1",
+    //scalaVersion := "2.11.1",
+    crossScalaVersions := Seq("2.10.1", "2.11.1"),
     crossPaths := false,
     publishMavenStyle := true,
     pomExtra :=
