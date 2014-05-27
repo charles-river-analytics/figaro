@@ -10,7 +10,8 @@ object FigaroBuild extends Build {
     organization := "com.cra.figaro",
     description := "Figaro: a language for probablistic programming",
     version := "2.2.0.0",
-    scalaVersion := "2.10.1",
+    //scalaVersion := "2.10.1",
+    scalaVersion := "2.11.1",
     crossPaths := false,
     publishMavenStyle := true,
     pomExtra :=
@@ -56,7 +57,7 @@ object FigaroBuild extends Build {
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "asm" % "asm" % "3.3.1",
       "net.sf.jsci" % "jsci" % "1.2",
-      "org.scalatest" %% "scalatest" % "2.0" % "test"
+      "org.scalatest" %% "scalatest" % "2.1.6" % "test"
     ))
     .settings(parallelExecution in Test := false)
     .settings(assemblySettings: _*)

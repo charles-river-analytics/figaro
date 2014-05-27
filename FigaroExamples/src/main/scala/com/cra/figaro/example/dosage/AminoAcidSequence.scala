@@ -41,11 +41,11 @@ class AminoAcidSequence(seq: String, distfcn: (Char, Char) => Int)
           else if (i == 0)
             j * distfcn('-', that.seq(j - 1))
           else if (j == 0)
-            i * distfcn(seq(i - 1), '-')
+            i * distfcn(seq.charAt(i - 1), '-')
           else {
-            val compare = fillEntry(i - 1, j - 1) + distfcn(seq(i - 1), that.seq(j - 1))
-            val delete = fillEntry(i - 1, j) + distfcn('-', that.seq(j - 1))
-            val insert = fillEntry(i, j - 1) + distfcn(seq(i - 1), '-')
+            val compare = fillEntry(i - 1, j - 1) + distfcn(seq.charAt(i - 1), that.seq(j - 1))
+            val delete = fillEntry(i - 1, j) + distfcn('-', that.seq.charAt(j - 1))
+            val insert = fillEntry(i, j - 1) + distfcn(seq.charAt(i - 1), '-')
             math.min(math.min(compare, delete), insert)
           }
           F += (i, j) -> n
