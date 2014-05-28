@@ -61,7 +61,7 @@ object FigaroBuild extends Build {
     .settings(parallelExecution in Test := false)
     .settings(assemblySettings: _*)
     .settings(test in assembly := {})
-    .settings(jarName in assembly := "figaro-" + version.value + "-full.jar")
+    .settings(jarName in assembly := "figaro-" + version.value + "-fat.jar")
     .settings(assemblyOption in assembly ~= { _.copy(includeScala = false) })
       
   lazy val examples = Project("figaro-examples", file("FigaroExamples"))
