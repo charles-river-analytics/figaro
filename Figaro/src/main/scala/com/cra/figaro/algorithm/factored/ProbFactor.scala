@@ -424,7 +424,7 @@ object ProbFactor {
           if (resultVal.value == mapper.map(applyMap((arg1Val.value, arg2Val.value)), applyValues.regularValues)) 1.0
           else 0.0
         } else if ((!arg1Val.isRegular || !arg2Val.isRegular) && !resultVal.isRegular) 1.0
-        else if ((!arg1Val.isRegular || arg2Val.isRegular) && resultVal.isRegular) 0.0
+        else if ((!arg1Val.isRegular || !arg2Val.isRegular) && resultVal.isRegular) 0.0
         else 0.0
       factor.set(List(arg1Index, arg2Index, resultIndex), entry)
     }
@@ -456,7 +456,7 @@ object ProbFactor {
           if (resultVal.value == mapper.map(applyMap((arg1Val.value, arg2Val.value, arg3Val.value)), applyValues.regularValues)) 1.0
           else 0.0
         } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular) && !resultVal.isRegular) 1.0
-        else if ((!arg1Val.isRegular || arg2Val.isRegular || !arg3Val.isRegular) && resultVal.isRegular) 0.0
+        else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular) && resultVal.isRegular) 0.0
         else 0.0
       factor.set(List(arg1Index, arg2Index, arg3Index, resultIndex), entry)
     }
@@ -491,7 +491,7 @@ object ProbFactor {
           if (resultVal.value == mapper.map(applyMap((arg1Val.value, arg2Val.value, arg3Val.value, arg4Val.value)), applyValues.regularValues)) 1.0
           else 0.0
         } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular) && !resultVal.isRegular) 1.0
-        else if ((!arg1Val.isRegular || arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular) && resultVal.isRegular) 0.0
+        else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular) && resultVal.isRegular) 0.0
         else 0.0
       factor.set(List(arg1Index, arg2Index, arg3Index, arg4Index, resultIndex), entry)
     }
@@ -529,7 +529,7 @@ object ProbFactor {
           if (resultVal.value == mapper.map(applyMap((arg1Val.value, arg2Val.value, arg3Val.value, arg4Val.value, arg5Val.value)), applyValues.regularValues)) 1.0
           else 0.0
         } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular || !arg5Val.isRegular) && !resultVal.isRegular) 1.0
-        else if ((!arg1Val.isRegular || arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular || !arg5Val.isRegular) && resultVal.isRegular) 0.0
+        else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular || !arg5Val.isRegular) && resultVal.isRegular) 0.0
         else 0.0
       factor.set(List(arg1Index, arg2Index, arg3Index, arg4Index, arg5Index, resultIndex), entry)
     }
