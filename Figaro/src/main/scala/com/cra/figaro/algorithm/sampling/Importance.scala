@@ -38,7 +38,9 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
         //val activeElements = universe.permanentElements
         // use active elements instead of permanent elements since permenentElements may not resample elements inside a chain
         val activeElements = universe.activeElements
-        activeElements.foreach(e => if (e.active) sampleOne(state, e))
+        // Hack alert: Using reverse gets us to sample Dists before their choices, which is important for likelihood weighting
+        // The algorithm is basically correct with and without reverse. This is an optimization.
+        activeElements.reverse.foreach(e => if (e.active) sampleOne(state, e, None))
         val bindings = targets map (elem => elem -> elem.value)
         Some((state.weight, Map(bindings: _*)))
       } catch {
@@ -60,11 +62,11 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
    *
    * This is made private[figaro] to allow easy testing
    */
-  private[figaro] def sampleOne[T](state: State, element: Element[T]): T = {
+  private[figaro] def sampleOne[T](state: State, element: Element[T], observation: Option[T]): T = {
     if (element.universe != universe || (state.assigned contains element)) element.value
     else {
       state.assigned += element
-      sampleFresh(state, element)
+      sampleFresh(state, element, observation)
     }
   }
 
@@ -74,10 +76,17 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
    * process is rejected. This function returns the state including the new assignment to the element with the weight
    * of the constraint multiplied in.
    */
-  private def sampleFresh[T](state: State, element: Element[T]): T = {
+  private def sampleFresh[T](state: State, element: Element[T], observation: Option[T]): T = {
+    val fullObservation = (observation, element.observation) match {
+      case (None, None) => None
+      case (Some(obs), None) => Some(obs)
+      case (None, Some(obs)) => Some(obs)
+      case (Some(obs1), Some(obs2)) if obs1 == obs2 => Some(obs1)
+      case _ => throw Importance.Reject // incompatible observations
+    }
     val value: T = 
-      if (element.observation.isEmpty || !element.isInstanceOf[Atomic[_]]) {
-        val result = sampleValue(state, element)
+      if (fullObservation.isEmpty || !element.isInstanceOf[Atomic[_]]) {
+        val result = sampleValue(state, element, fullObservation)
         if (!element.condition(result)) throw Importance.Reject
         result
       } else {
@@ -85,7 +94,7 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
         // This partially implements likelihood weighting by clamping the element to its
         // desired value and multiplying the weight by the density of the value.
         // This can dramatically reduce the number of rejections.
-        val obs = element.observation.get
+        val obs = fullObservation.get
         state.weight += math.log(element.asInstanceOf[Atomic[T]].density(obs))
         obs
       }
@@ -102,29 +111,62 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
    * element. Dist is an exception, because not all the outcomes need to be generated, but we only know which one
    * after we have sampled the randomness of the Dist. For this reason, we write special code to handle Dists.
    * For Chain, we also write special code to avoid calling get twice.
+   * 
+   * We propagate observations on Chains and Dists to their possible outcome elements. This ensures that instead of
+   * sampling these elements and then checking whether the observation is satisfied, we set their values to the
+   * required ones. This implements likelihood weighting and leads to faster convergence of the algorithm.
    */
-  private def sampleValue[T](state: State, element: Element[T]): T =
+  private def sampleValue[T](state: State, element: Element[T], observation: Option[T]): T = {
     element match {
       case d: Dist[_, _] =>
         d match {
-          case dc: CompoundDist[_] => dc.probs foreach (sampleOne(state, _))
+          case dc: CompoundDist[_] => dc.probs foreach (sampleOne(state, _, None))
           case _ => ()
         }
         val rand = d.generateRandomness()
         val index = d.selectIndex(rand)
-        sampleOne(state, d.outcomeArray(index))
+        sampleOne(state, d.outcomeArray(index), observation)
         d.value = d.finishGeneration(index)
         d.value
       case c: Chain[_, _] =>
-        val parentValue = sampleOne(state, c.parent)
-        c.value = sampleOne(state, c.get(parentValue))
+        val parentValue = sampleOne(state, c.parent, None)
+        c.value = sampleOne(state, c.get(parentValue), observation)
         c.value
+      case f: CompoundFlip =>
+        val probValue = sampleOne(state, f.prob, None)
+        observation match {
+          case Some(true) =>
+            state.weight += math.log(probValue)
+            true
+          case Some(false) =>
+            state.weight += math.log(1 - probValue)
+            false
+          case _ => 
+            val result = random.nextDouble() < probValue
+            f.value = result
+            result
+        }
+      case f: ParameterizedFlip =>
+        val probValue = sampleOne(state, f.parameter, None)
+        observation match {
+          case Some(true) =>
+            state.weight += math.log(probValue)
+            true
+          case Some(false) =>
+            state.weight += math.log(1 - probValue)
+            false
+          case _ => 
+            val result = random.nextDouble() < probValue
+            f.value = result
+            result
+        }
       case _ =>
-        (element.args ::: element.elementsIAmContingentOn.toList) foreach (sampleOne(state, _))
+        (element.args ::: element.elementsIAmContingentOn.toList) foreach (sampleOne(state, _, None))
         element.randomness = element.generateRandomness()
         element.value = element.generateValue(element.randomness)
         element.value
     }
+  }
 }
 
 object Importance {

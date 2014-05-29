@@ -17,7 +17,10 @@ import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
+import com.cra.figaro.algorithm.factored.VariableElimination
 import com.cra.figaro.language._
+import com.cra.figaro.library.atomic.continuous._
+import com.cra.figaro.library.compound._
 import scala.collection.mutable.Map
 
 class AlgorithmTest extends WordSpec with Matchers {
@@ -171,6 +174,43 @@ class AlgorithmTest extends WordSpec with Matchers {
       val s = new SimpleWeighted(myFlip)
       s.start()
       s.probability(myFlip, (b: Boolean) => b) should be(1.0 / 3 +- 0.001)
+    }
+  }
+  
+  "A probability of query algorithm" should {
+    "return the correct mean of an element" in {
+      Universe.createNew()
+      val u = Normal(0.5, 1)
+      val n = Normal(u, 1)
+      val imp = Importance(100000, n)
+      imp.start()
+      imp.mean(n) should be (0.5 +- 0.01)
+    }
+
+    "return the correct variance of an element" in {
+      Universe.createNew()
+      val u = Normal(0.5, 1)
+      val n = Normal(u, 1)
+      val imp = Importance(100000, n)
+      imp.start()
+      imp.variance(n) should be (2.0 +- 0.05)
+      imp.kill()
+    }
+    
+    "return the correct element representing the posterior probability distribution of an element" in {
+      val u1 = Universe.createNew()
+      val x = Flip(0.6)
+      val y = If(x, Flip(0.6), Flip(0.3))
+      y.observe(true)
+      val alg1 = VariableElimination(x)
+      alg1.start()
+      val u2 = Universe.createNew()
+      val z = alg1.posteriorElement(x, u2)
+      alg1.kill()
+      val alg2 = VariableElimination(z)
+      alg2.start()
+      alg2.probability(z, true) should be (0.75 +- 0.00000001)
+      alg2.kill()
     }
   }
 
