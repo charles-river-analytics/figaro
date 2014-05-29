@@ -16,7 +16,7 @@ package com.cra.figaro.test.util
 import org.scalatest.Matchers
 import org.scalatest.{ WordSpec, PrivateMethodTester }
 import math.log
-import scala.testing.Benchmark
+//import scala.testing.Benchmark
 import com.cra.figaro.util._
 import com.cra.figaro.test._
 

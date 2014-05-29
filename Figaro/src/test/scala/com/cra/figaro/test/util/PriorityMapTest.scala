@@ -15,7 +15,7 @@ package com.cra.figaro.test.util
 
 import org.scalatest.Matchers
 import org.scalatest.WordSpec
-import testing.Benchmark
+//import testing.Benchmark
 import math.log
 import com.cra.figaro.util._
 import com.cra.figaro.test._
