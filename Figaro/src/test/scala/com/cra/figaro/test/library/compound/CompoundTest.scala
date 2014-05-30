@@ -246,11 +246,11 @@ class CompoundTest extends WordSpec with Matchers {
     "throw MatchError if no clause exists for a given parent value" in {
       Universe.createNew()
       val x = Flip(0.2)
-      evaluating {
+      an [MatchError] should be thrownBy {
         val y = CPD(x, true -> Flip(0.7))
         val alg = VariableElimination(y)
         alg.start()
-      } should produce[MatchError]
+      } 
     }
   }
 
@@ -275,7 +275,7 @@ class CompoundTest extends WordSpec with Matchers {
       Universe.createNew()
       val x1 = Flip(0.2)
       val x2 = Select(0.2 -> 1, 0.3 -> 2, 0.5 -> 3)
-      evaluating {
+      an [MatchError] should be thrownBy {
         val y = CPD(x1, x2, (false, 1) -> Flip(0.1),
           (false, 3) -> Flip(0.3),
           (true, 1) -> Flip(0.4),
@@ -283,7 +283,7 @@ class CompoundTest extends WordSpec with Matchers {
           (true, 3) -> Flip(0.6))
         val alg = VariableElimination(y)
         alg.start()
-      } should produce[MatchError]
+      } 
     }
   }
 
@@ -310,7 +310,7 @@ class CompoundTest extends WordSpec with Matchers {
       val x1 = Flip(0.2)
       val x2 = Select(0.2 -> 1, 0.3 -> 2, 0.5 -> 3)
       val x3 = Constant(7)
-      evaluating {
+      an [MatchError] should be thrownBy {
         val y = CPD(x1, x2, x3, (false, 1, 7) -> Flip(0.1),
           (false, 3, 7) -> Flip(0.3),
           (true, 1, 7) -> Flip(0.4),
@@ -318,7 +318,7 @@ class CompoundTest extends WordSpec with Matchers {
           (true, 3, 7) -> Flip(0.6))
         val alg = VariableElimination(y)
         alg.start()
-      } should produce[MatchError]
+      } 
     }
   }
 
@@ -356,7 +356,7 @@ class CompoundTest extends WordSpec with Matchers {
       val x2 = Select(0.2 -> 1, 0.3 -> 2, 0.5 -> 3)
       val x3 = Constant(7)
       val x4 = Flip(0.9)
-      evaluating {
+      an [MatchError] should be thrownBy {
         val y = CPD(x1, x2, x3, x4, (false, 1, 7, false) -> Flip(0.1),
           (false, 3, 7, false) -> Flip(0.3),
           (true, 1, 7, false) -> Flip(0.4),
@@ -370,7 +370,7 @@ class CompoundTest extends WordSpec with Matchers {
           (true, 3, 7, true) -> Flip(0.65))
         val alg = VariableElimination(y)
         alg.start()
-      } should produce[MatchError]
+      } 
     }
   }
 
@@ -410,7 +410,7 @@ class CompoundTest extends WordSpec with Matchers {
       val x3 = Constant(7)
       val x4 = Flip(0.9)
       val x5 = Constant('a)
-      evaluating {
+      an [MatchError] should be thrownBy {
         val y = CPD(x1, x2, x3, x4, x5, (false, 1, 7, false, 'a) -> Flip(0.1),
           (false, 3, 7, false, 'a) -> Flip(0.3),
           (true, 1, 7, false, 'a) -> Flip(0.4),
@@ -424,7 +424,7 @@ class CompoundTest extends WordSpec with Matchers {
           (true, 3, 7, true, 'a) -> Flip(0.65))
         val alg = VariableElimination(y)
         alg.start()
-      } should produce[MatchError]
+      } 
     }
   }
 

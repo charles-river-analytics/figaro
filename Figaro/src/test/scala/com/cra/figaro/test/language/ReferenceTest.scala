@@ -44,7 +44,7 @@ class ReferenceTest extends WordSpec with PrivateMethodTester with Matchers {
 
     "created from a string with only periods" should {
       "throw IllegalArgumentException" in {
-        evaluating { val r: Reference[Int] = "..." } should produce[IllegalArgumentException]
+        an [IllegalArgumentException] should be thrownBy { val r: Reference[Int] = "..." } 
       }
     }
   }
@@ -69,14 +69,14 @@ class ReferenceTest extends WordSpec with PrivateMethodTester with Matchers {
 
       "throw NoSuchElementException when given a reference in which a name does not exist" in {
         createNew()
-        evaluating { universe.getElementByReference("g.u") } should produce[NoSuchElementException]
+        an [NoSuchElementException] should be thrownBy { universe.getElementByReference("g.u") } 
       }
 
       "throw NoSuchElementException when given a reference in which an intermediate name does not refer " +
         "to an element collection" in {
           createNew()
           val u = Uniform(0.0, 1.0)
-          evaluating { universe.getElementByReference("u.f") } should produce[NoSuchElementException]
+          an [NoSuchElementException] should be thrownBy  { universe.getElementByReference("u.f") }
         }
     }
     
