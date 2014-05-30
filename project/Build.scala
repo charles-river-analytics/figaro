@@ -10,8 +10,10 @@ object FigaroBuild extends Build {
     organization := "com.cra.figaro",
     description := "Figaro: a language for probablistic programming",
     version := "2.2.0.0",
-    scalaVersion := "2.10.1",
-    crossPaths := false,
+    scalaVersion := "2.10.4",
+    //scalaVersion := "2.11.1",
+    crossScalaVersions := Seq("2.10.4", "2.11.1"),
+    crossPaths := true,
     publishMavenStyle := true,
     pomExtra :=
 	<url>http://www.github.com/p2t2/figaro</url>
@@ -56,12 +58,12 @@ object FigaroBuild extends Build {
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "asm" % "asm" % "3.3.1",
       "net.sf.jsci" % "jsci" % "1.2",
-      "org.scalatest" %% "scalatest" % "2.0" % "test"
+      "org.scalatest" %% "scalatest" % "2.1.7" % "test"
     ))
     .settings(parallelExecution in Test := false)
     .settings(assemblySettings: _*)
     .settings(test in assembly := {})
-    .settings(jarName in assembly := "figaro-" + version.value + "-fat.jar")
+    .settings(jarName in assembly := "figaro_" + scalaVersion.value + "-" + version.value + "-fat.jar")
     .settings(assemblyOption in assembly ~= { _.copy(includeScala = false) })
       
   lazy val examples = Project("figaro-examples", file("FigaroExamples"))
