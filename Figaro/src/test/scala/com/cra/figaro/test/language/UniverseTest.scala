@@ -250,7 +250,7 @@ class UniverseTest extends WordSpec with Matchers {
       "throw IllegalArgumentException" in {
         createNew()
         val e = Constant(8)
-        evaluating { e.activate() } should produce[IllegalArgumentException]
+        an [IllegalArgumentException] should be thrownBy { e.activate() } 
       }
     }
 
@@ -259,7 +259,7 @@ class UniverseTest extends WordSpec with Matchers {
         createNew()
         val e = Constant(8)
         e.deactivate()
-        evaluating { e.deactivate() } should produce[IllegalArgumentException]
+        an [IllegalArgumentException] should be thrownBy { e.deactivate() } 
       }
     }
 
@@ -268,7 +268,7 @@ class UniverseTest extends WordSpec with Matchers {
         createNew()
         val e1 = Constant(8)
         e1.deactivate()
-        evaluating { universe.context(e1) } should produce[NoSuchElementException]
+        an [NoSuchElementException] should be thrownBy { universe.context(e1) } 
       }
     }
 
@@ -277,7 +277,7 @@ class UniverseTest extends WordSpec with Matchers {
         createNew()
         val e1 = Constant(8)
         e1.deactivate()
-        evaluating { universe.contextContents(e1) } should produce[NoSuchElementException]
+        an [NoSuchElementException] should be thrownBy  { universe.contextContents(e1) } 
       }
     }
   }

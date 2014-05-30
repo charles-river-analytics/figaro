@@ -448,7 +448,7 @@ class VETest extends WordSpec with Matchers {
       val f = Flip(0.5)
       val x = NonCachingChain(f, (b: Boolean) => if (b) Constant(0) else Constant(1))
       val ve = VariableElimination(x)
-      evaluating { ve.getNeededElements(List(x), Int.MaxValue) } should produce[UnsupportedAlgorithmException]
+      an [UnsupportedAlgorithmException] should be thrownBy { ve.getNeededElements(List(x), Int.MaxValue) } 
     }
   }
 

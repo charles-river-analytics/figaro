@@ -54,7 +54,7 @@ class UtilTest extends WordSpec with Matchers {
 
     "given a list with zero total value" should {
       "throw a ZeroTotalUnnormalizedProbabilityException" in {
-        evaluating { normalize(List(0.0, 0.0)) } should produce[ZeroTotalUnnormalizedProbabilityException]
+        an [ZeroTotalUnnormalizedProbabilityException] should be thrownBy { normalize(List(0.0, 0.0)) } 
       }
     }
   }
@@ -70,7 +70,7 @@ class UtilTest extends WordSpec with Matchers {
     "given an index that is greater than the sum of the probabilities" should {
       "throw InvalidMultinomialIndexException" in {
         val m = List(0.2 -> 'foo, 0.3 -> 'bar, 0.5 -> 'baz)
-        evaluating { selectMultinomial(1.2, m) } should produce[InvalidMultinomialIndexException]
+        an [InvalidMultinomialIndexException] should be thrownBy { selectMultinomial(1.2, m) } 
       }
     }
   }
@@ -152,7 +152,7 @@ class UtilTest extends WordSpec with Matchers {
 
     "given a traversable, a value, and a set of indices such that some indices are too large" should {
       "throw IllegalArgumentException" in {
-        evaluating { insertAtIndices(List(1, 2), List(0, 2, 5), 3) } should produce[IllegalArgumentException]
+        an [IllegalArgumentException] should be thrownBy { insertAtIndices(List(1, 2), List(0, 2, 5), 3) } 
       }
     }
   }
