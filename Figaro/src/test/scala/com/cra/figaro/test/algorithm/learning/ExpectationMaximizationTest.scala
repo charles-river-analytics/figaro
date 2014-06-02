@@ -39,7 +39,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
           "detect bias after a large enough number of trials" in
             {
               val universe = Universe.createNew
-              val b = BetaParameter(1, 1)
+              val b = BetaParameter(2, 2)
 
               for (i <- 1 to 7) {
 
@@ -58,7 +58,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
 
               val result = b.getLearnedElement
               algorithm.kill
-              result.prob should be(0.66 +- 0.01)
+              result.prob should be(0.6666 +- 0.01)
 
             }
 
@@ -96,7 +96,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
           "detect bias after a large enough number of trials" in
             {
               val universe = Universe.createNew
-              val b = DirichletParameter(1, 1)
+              val b = DirichletParameter(2, 2)
 
               for (i <- 1 to 7) {
 
@@ -115,7 +115,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
 
               val result = b.getLearnedElement(List(true, false))
               algorithm.kill
-              result.probs(0) should be(0.66 +- 0.01)
+              result.probs(0) should be(0.6666 +- 0.01)
 
             }
 
@@ -191,7 +191,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
           "calculate sufficient statistics in the correct order for long lists of concentration parameters, taking into account a condition" in
             {
               val universe = Universe.createNew
-              val alphas = Seq[Double](0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476)
+              val alphas = Seq[Double](1.0476, 1.0476, 1.0476, 1.0476, 1.0476, 1.0476, 1.0476, 1.0476, 1.0476, 1.0476, 1.0476, 1.0476, 1.0476, 1.0476, 1.0476, 1.0476, 1.0476, 1.0476, 1.0476, 1.0476, 1.0476, 1.0476)
               val d = DirichletParameter(alphas: _*)
               val outcomes = List(2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23)
 
@@ -232,7 +232,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
           "detect bias after a large enough number of trials" in
             {
               val universe = Universe.createNew
-              val b = DirichletParameter(1, 1, 1)
+              val b = DirichletParameter(2, 2, 2)
               val outcomes = List(1, 2, 3)
               val errorTolerance = 0.01
               for (i <- 1 to 8) {
@@ -308,7 +308,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
                 {
                   val universe = Universe.createNew
                   val d = DirichletParameter(2.0, 4.0, 2.0)
-                  val b = BetaParameter(1.0, 1.0)
+                  val b = BetaParameter(2.0, 2.0)
                   val outcomes = List(1, 2, 3)
 
                   for (i <- 1 to 4) {
@@ -473,7 +473,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
 
       def learningFlipConstructor(parameter: Element[Double], name: String, universe: Universe) = {
         parameter match {
-          case p: AtomicBetaParameter => new ParameterizedFlip(name, p, universe)
+          case p: AtomicBeta => new ParameterizedFlip(name, p, universe)
           case _ => throw new IllegalArgumentException("Not a beta parameter")
         }
       }
@@ -565,7 +565,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
           {
         		parameter match
         		{
-        		  case b: AtomicBetaParameter =>
+        		  case b: AtomicBeta =>
         		    {
 
         		      Constant(valueGetter(algorithm, parameter))(name, resultUniverse)

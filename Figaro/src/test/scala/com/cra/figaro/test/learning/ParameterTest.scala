@@ -65,20 +65,20 @@ class ParameterTest extends WordSpec with Matchers {
       val b = BetaParameter(3, 2)
       b.maximize(Seq(1.0, 1.0))
 
-      b.alpha should equal(4)
-      b.beta should equal(3)
+      b.learnedAlpha should equal(4)
+      b.learnedBeta should equal(3)
 
       b.maximize(Seq(3.0, 2.0))
-      b.alpha should equal(6)
-      b.beta should equal(4)
+      b.learnedAlpha should equal(6)
+      b.learnedBeta should equal(4)
 
       b.maximize(Seq(0.0, 0.0))
-      b.alpha should equal(3)
-      b.beta should equal(2)
+      b.learnedAlpha should equal(3)
+      b.learnedBeta should equal(2)
 
       b.maximize(Seq(0.5, 1.3))
-      b.alpha should equal(3.5)
-      b.beta should equal(3.3)
+      b.learnedAlpha should equal(3.5)
+      b.learnedBeta should equal(3.3)
     }
 
     "provide the correct format of its sufficient statistics vector" in {

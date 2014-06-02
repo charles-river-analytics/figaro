@@ -41,6 +41,10 @@ abstract trait Parameter[T] extends Element[T] {
    * The expected value of the parameter.
    */
   def expectedValue: T
-
+  
+  /**
+   * The most likely value of the parameter (maximum a posteriori) given the evidence
+   */
+  def MAPValue: T
 }
 
