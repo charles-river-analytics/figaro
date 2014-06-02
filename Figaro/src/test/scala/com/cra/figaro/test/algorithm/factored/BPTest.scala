@@ -24,6 +24,7 @@ import com.cra.figaro.library.atomic.discrete.{Uniform => DUniform}
 import com.cra.figaro.library.atomic.continuous.{Uniform => CUniform}
 import com.cra.figaro.library.compound.IntSelector
 import com.cra.figaro.algorithm.lazyfactored.LazyValues
+import com.cra.figaro.algorithm.UnsupportedAlgorithmException
 
 class BPTest extends WordSpec with Matchers {
 
@@ -279,7 +280,14 @@ class BPTest extends WordSpec with Matchers {
       bp.start()
       bp.probability(x, true) should be (1.0)
     }
-
+        
+    "should not support non-caching chains" in {
+      Universe.createNew()
+      val f = Flip(0.5)
+      val x = NonCachingChain(f, (b: Boolean) => if (b) Constant(0) else Constant(1))
+      val ve = BeliefPropagation(50)
+      an [UnsupportedAlgorithmException] should be thrownBy { ve.getNeededElements(List(x), Int.MaxValue) } 
+    }
   }
 
   "MaxProductBeliefPropagation" should {

@@ -21,6 +21,7 @@ import annotation.tailrec
 import scala.collection._
 import com.cra.figaro.algorithm.lazyfactored._
 import scala.collection.immutable.Set
+import com.cra.figaro.algorithm.UnsupportedAlgorithmException
 
 /**
  * Trait for algorithms that use factors.
@@ -100,6 +101,11 @@ trait FactoredAlgorithm[T] extends Algorithm {
        
     val resultElements = values.expandedElements.toList
     
+    resultElements.foreach(p => p match {
+      case n: NonCachingChain[_,_] => throw new UnsupportedAlgorithmException(n)
+      case _ => 
+    })
+        
     // Only conditions and constraints produce distinct lower and upper bounds for *. So, if there are not such elements with * as one
     // of their values, we don't need to compute bounds and can save computation.
     val boundsNeeded = boundsInducingElements.exists(LazyValues(universe).storedValues(_).hasStar)

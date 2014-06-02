@@ -49,7 +49,7 @@ class Snapshot {
     } {
       val element = newUniverse.getElementByReference(name)
       if (!element.active) element.activate
-      element.set(value)
+      element.set(value.asInstanceOf[element.Value])
     }
   }
 }

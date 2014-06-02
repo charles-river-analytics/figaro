@@ -41,7 +41,7 @@ class DecisionVETest extends WordSpec with Matchers {
         val r1 = Flip(0.5)
         val d1 = CachingDecision[Boolean, Boolean](r1, List(true, false))
         val u1 = If(d1, Constant(true), Constant(false))
-        evaluating { DecisionVariableElimination(List(u1), d1) } should produce[IllegalArgumentException]
+        an [IllegalArgumentException] should be thrownBy { DecisionVariableElimination(List(u1), d1) } 
       }
     }
 

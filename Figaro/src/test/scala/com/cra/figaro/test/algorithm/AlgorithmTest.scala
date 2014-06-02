@@ -29,10 +29,10 @@ class AlgorithmTest extends WordSpec with Matchers {
       Universe.createNew()
       val c = Flip(0.3)
       val a = new SimpleAlgorithm(c)
-      evaluating { a.distribution(c) } should produce[AlgorithmInactiveException]
-      evaluating { a.expectation(c, (b: Boolean) => 1.0) } should produce[AlgorithmInactiveException]
-      evaluating { a.probability(c, (b: Boolean) => true) } should produce[AlgorithmInactiveException]
-      evaluating { a.probability(c, true) } should produce[AlgorithmInactiveException]
+      an [AlgorithmInactiveException] should be thrownBy { a.distribution(c) } 
+      an [AlgorithmInactiveException] should be thrownBy { a.expectation(c, (b: Boolean) => 1.0) }
+      an [AlgorithmInactiveException] should be thrownBy  { a.probability(c, (b: Boolean) => true) }
+      an [AlgorithmInactiveException] should be thrownBy  { a.probability(c, true) }
     }
 
     "allow queries after starting, stopping, and resuming" in {
@@ -62,10 +62,10 @@ class AlgorithmTest extends WordSpec with Matchers {
       val a = new SimpleAlgorithm(c)
       a.start()
       a.kill()
-      evaluating { a.distribution(c) } should produce[AlgorithmInactiveException]
-      evaluating { a.expectation(c, (b: Boolean) => 1.0) } should produce[AlgorithmInactiveException]
-      evaluating { a.probability(c, (b: Boolean) => true) } should produce[AlgorithmInactiveException]
-      evaluating { a.probability(c, true) } should produce[AlgorithmInactiveException]
+      an [AlgorithmInactiveException] should be thrownBy  { a.distribution(c) }
+      an [AlgorithmInactiveException] should be thrownBy  { a.expectation(c, (b: Boolean) => 1.0) }
+      an [AlgorithmInactiveException] should be thrownBy  { a.probability(c, (b: Boolean) => true) }
+      an [AlgorithmInactiveException] should be thrownBy  { a.probability(c, true) } 
     }
 
     "not allow start after starting" in {
@@ -73,16 +73,16 @@ class AlgorithmTest extends WordSpec with Matchers {
       val c = Flip(0.3)
       val a = new SimpleAlgorithm(c)
       a.start()
-      evaluating { a.start() } should produce[AlgorithmActiveException]
+      an [AlgorithmActiveException] should be thrownBy  { a.start() }
     }
 
     "not allow stop, resume, or kill before starting" in {
       Universe.createNew()
       val c = Flip(0.3)
       val a = new SimpleAlgorithm(c)
-      evaluating { a.stop() } should produce[AlgorithmInactiveException]
-      evaluating { a.resume() } should produce[AlgorithmInactiveException]
-      evaluating { a.kill() } should produce[AlgorithmInactiveException]
+      an [AlgorithmInactiveException] should be thrownBy  { a.stop() }
+      an [AlgorithmInactiveException] should be thrownBy  { a.resume() }
+      an [AlgorithmInactiveException] should be thrownBy  { a.kill() }
     }
 
     "allow start after starting and killing" in {
