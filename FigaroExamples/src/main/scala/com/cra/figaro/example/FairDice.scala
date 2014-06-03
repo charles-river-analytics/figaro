@@ -48,7 +48,7 @@ object DiceExample {
     (1, 3, 7), (1, 3, 7), (1, 2, 3))
 
 
-  def trial(p1: AtomicDirichletParameter, p2: AtomicDirichletParameter, result: Int) =
+  def trial(p1: AtomicDirichlet, p2: AtomicDirichlet, result: Int) =
     {
       val sum = (i1: Int, i2: Int) => i1 + i2
       val die1 = Select(p1, outcomes: _*)
