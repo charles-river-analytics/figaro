@@ -56,7 +56,7 @@ class CompoundFlip(name: Name[Boolean], val prob: Element[Double], collection: E
 /**
  * A coin toss where the weight is specified by a learnable parameter.
  */
-class ParameterizedFlip(name: Name[Boolean], override val parameter: AtomicBetaParameter, collection: ElementCollection)
+class ParameterizedFlip(name: Name[Boolean], override val parameter: AtomicBeta, collection: ElementCollection)
   extends Element[Boolean](name, collection) with Flip with Parameterized[Boolean] {
   def args: List[Element[_]] = List(parameter)
 
@@ -81,7 +81,7 @@ object Flip extends Creatable {
   /**
   * A coin toss where the weight is specified by a learnable parameter.
   */
-  def apply(prob: AtomicBetaParameter)(implicit name: Name[Boolean], collection: ElementCollection) =
+  def apply(prob: AtomicBeta)(implicit name: Name[Boolean], collection: ElementCollection) =
     new ParameterizedFlip(name, prob, collection)
 
   /** Used for reflection. */

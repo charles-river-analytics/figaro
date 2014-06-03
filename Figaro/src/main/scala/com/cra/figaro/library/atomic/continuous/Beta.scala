@@ -16,15 +16,18 @@ package com.cra.figaro.library.atomic.continuous
 import com.cra.figaro.language._
 import math.pow
 import JSci.maths.SpecialMath.{ beta, gamma }
+import com.cra.figaro.algorithm.ValuesMaker
+import com.cra.figaro.algorithm.lazyfactored.ValueSet
 
 /**
- * A Beta distribution in which the parameters are constants.
+ * A Beta distribution in which the alpha and beta parameters are provided.
+ * This Beta element can be used as the parameter for a ParameterizedFlip.
  * 
- * @param a The alpha parameter
- * @param b The beta parameter
+ * @param a The prior alpha parameter
+ * @param b The prior beta parameter
  */
 class AtomicBeta(name: Name[Double], a: Double, b: Double, collection: ElementCollection)
-  extends Element[Double](name, collection) with Atomic[Double] {
+  extends Element[Double](name, collection) with Atomic[Double] with Parameter[Double] with ValuesMaker[Double] {
   type Randomness = Double
 
   def generateRandomness() = Util.generateBeta(a, b)
@@ -40,6 +43,64 @@ class AtomicBeta(name: Name[Double], a: Double, b: Double, collection: ElementCo
    * Density of a value.
    */
   def density(x: Double) = pow(x, a - 1) * pow(1 - x, b - 1) * normalizer
+
+  /**
+   * The learned alpha parameter
+   */
+  var learnedAlpha = a
+  /**
+   * The learned beta parameter
+   */
+  var learnedBeta = b
+  
+  /**
+   * Returns an empty sufficient statistics vector. 
+   */
+  override def zeroSufficientStatistics(): Seq[Double] = {
+      Seq(0.0, 0.0)
+    }
+
+  /**
+   * Returns an element that models the learned distribution.
+   */
+  def getLearnedElement: AtomicFlip = {
+      new AtomicFlip("", MAPValue, collection)
+    }
+
+  override def sufficientStatistics[Boolean](b: Boolean): Seq[Double] = {
+    if (b == true) {
+      Seq(1.0, 0.0)
+    } else {
+      Seq(0.0, 1.0)
+    }
+  }
+  
+  private[figaro] override def sufficientStatistics[Boolean](i: Int): Seq[Double] = {
+    if (i == 0) {
+      Seq(1.0, 0.0)
+    } else {
+      Seq(0.0, 1.0)
+    }
+  }
+
+
+  def expectedValue: Double = {
+    (learnedAlpha) / (learnedAlpha + learnedBeta)
+  }
+  
+  def MAPValue: Double = {
+    (learnedAlpha - 1) / (learnedAlpha + learnedBeta - 2)
+  }
+
+  def makeValues(depth: Int) = ValueSet.withoutStar(Set(MAPValue))
+
+  def maximize(sufficientStatistics: Seq[Double]) {
+
+    require(sufficientStatistics.size == 2)
+    learnedAlpha = sufficientStatistics(0) + a
+    learnedBeta = sufficientStatistics(1) + b
+
+  }
 
   override def toString = "Beta(" + a + ", " + b + ")"
 }
