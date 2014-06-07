@@ -61,6 +61,13 @@ class ParameterTest extends WordSpec with Matchers {
       b2.expectedValue should be(0.6 +- 0.001)
     }
 
+    "properly calculate MAP value" in {
+      val b = BetaParameter(1, 1)
+      b.MAPValue should equal(0.5)
+      val b2 = BetaParameter(3, 2)
+      b2.MAPValue should be((2.0 / 3.0) +- 0.001)
+    }
+
     "properly maximize its alpha and beta hyperparameters" in {
       val b = BetaParameter(3, 2)
       b.maximize(Seq(1.0, 1.0))
@@ -95,8 +102,15 @@ class ParameterTest extends WordSpec with Matchers {
     "properly calculate expected value" in {
       val d = DirichletParameter(1, 1)
       d.expectedValue(0) should equal(0.5)
+      val d2 = DirichletParameter(3, 2)
+      d2.expectedValue(0) should be(0.6 +- 0.001)
+    }
+
+    "properly calculate MAP value" in {
+      val d = DirichletParameter(1, 1)
+      d.MAPValue(0) should equal(0.5)
       val d2 = BetaParameter(3, 2)
-      d2.expectedValue should be(0.6 +- 0.001)
+      d2.MAPValue should be((2.0 / 3.0) +- 0.001)
     }
 
     "properly maximize its hyperparameters" in {

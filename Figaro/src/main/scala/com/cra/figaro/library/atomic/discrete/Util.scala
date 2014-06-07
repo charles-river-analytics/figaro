@@ -22,5 +22,25 @@ object Util {
    */
   def generateGeometric(probFail: Double) =
     ceil(log(random.nextDouble()) / log(probFail)).toInt
+    
+  /**
+   * Density of the given number of positive outcomes under a binomial random variable with the given number of trials.
+   * Computing a binomial coefficient exactly can be very expensive for a large number of trials, so this method uses
+   * an approximation algorithm when the number of trials is sufficiently large.
+   */  
+  def binomialDensity(numTrials: Int, probSuccess: Double, numPositive: Int): Double = {
+    val q = 1 - probSuccess
+    if (numTrials > 10) {
+      val logNFact = JSci.maths.ExtraMath.logFactorial(numTrials)
+      val logKFact = JSci.maths.ExtraMath.logFactorial(numPositive)
+      val logNMinusKFact = JSci.maths.ExtraMath.logFactorial(numTrials-numPositive)
+      val logBinomialCoefficient = logNFact - (logKFact + logNMinusKFact)
+      val result = logBinomialCoefficient + (numPositive*Math.log(probSuccess) + ((numTrials-numPositive)*Math.log(q)))
+      Math.exp(result)
+    } else {
+      JSci.maths.ExtraMath.binomial(numTrials, numPositive) * math.pow(probSuccess, numPositive) * math.pow(q, numTrials - numPositive)
+    }
+
+  }
 }
 

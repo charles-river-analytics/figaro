@@ -66,7 +66,7 @@ trait Anytime extends Algorithm {
   /**
    * Optional function to run when the algorithm is stopped (not killed). Used in samplers to update lazy values
    */
-  def stopUpdate(): Unit = {}
+  def stopUpdate(): Unit = {  }
 
   /**
    * A class representing the actor running the algorithm.

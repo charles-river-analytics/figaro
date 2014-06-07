@@ -68,11 +68,13 @@ abstract class WeightedSampler(override val universe: Universe, targets: Element
 
   protected def doSample(): Unit = {
     val s = sample()
+    universe.clearTemporaries()
     totalWeight = logSum(s._1, totalWeight)
     allWeightsSeen foreach (updateWeightSeenForTarget(s, _))
   }
 
-  protected def update(): Unit = {}
+  protected def update(): Unit = {
+  }
 
   private def projection[T](target: Element[T]): List[(T, Double)] = {
     val weightSeen = allWeightsSeen.find(_._1 == target).get._2.asInstanceOf[Map[T, Double]]

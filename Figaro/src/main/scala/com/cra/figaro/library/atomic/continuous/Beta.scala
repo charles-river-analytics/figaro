@@ -62,6 +62,8 @@ class AtomicBeta(name: Name[Double], a: Double, b: Double, collection: ElementCo
 
   /**
    * Returns an element that models the learned distribution.
+   * 
+   * @deprecated
    */
   def getLearnedElement: AtomicFlip = {
       new AtomicFlip("", MAPValue, collection)
@@ -89,7 +91,8 @@ class AtomicBeta(name: Name[Double], a: Double, b: Double, collection: ElementCo
   }
   
   def MAPValue: Double = {
-    (learnedAlpha - 1) / (learnedAlpha + learnedBeta - 2)
+    if (learnedAlpha + learnedBeta == 2) 0.5
+    else (learnedAlpha - 1) / (learnedAlpha + learnedBeta - 2)
   }
 
   def makeValues(depth: Int) = ValueSet.withoutStar(Set(MAPValue))
