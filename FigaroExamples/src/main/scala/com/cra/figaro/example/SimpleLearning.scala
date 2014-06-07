@@ -127,7 +127,7 @@ object SimpleLearning {
 
   def learningFlipConstructor(parameter: Element[Double], name: String, universe: Universe) = {
     parameter match {
-      case p: AtomicBetaParameter => new ParameterizedFlip(name, p, universe)
+      case p: AtomicBeta => new ParameterizedFlip(name, p, universe)
       case _ => throw new IllegalArgumentException("Not a beta parameter")
     }
   }

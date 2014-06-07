@@ -19,10 +19,14 @@ import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.library.decision._
 import com.cra.figaro.language._
+import com.cra.figaro.library.atomic.discrete.ParameterizedBinomialFixedNumTrials
 import com.cra.figaro.util._
 import annotation.tailrec
 import scala.collection._
 import scala.collection.mutable.{ Set, Map }
+import com.cra.figaro.library.atomic.discrete.ParameterizedBinomialFixedNumTrials
+import scala.math.{ floor, pow }
+import JSci.maths.ExtraMath.binomial
 
 /**
  * Methods for creating probabilistic factors associated with elements and their sufficient statistics.
@@ -69,7 +73,7 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
   private def makeFactors(flip: ParameterizedFlip): List[Factor[(Double, Map[Parameter[_], Seq[Double]])]] = {
     val flipVar = Variable(flip)
     val factor = new Factor[(Double, Map[Parameter[_], Seq[Double]])](List(flipVar))
-    val prob = flip.parameter.expectedValue
+    val prob = flip.parameter.MAPValue
     val i = flipVar.range.indexOf(Regular(true))
 
     val falseMapping = mutable.Map(parameterMap.toSeq: _*)
@@ -82,6 +86,25 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
     factor.set(List(i), (prob, trueMapping))
     factor.set(List(1 - i), (1.0 - prob, falseMapping))
 
+    List(factor)
+  }
+
+  private def makeFactors(bin: ParameterizedBinomialFixedNumTrials): List[Factor[(Double, Map[Parameter[_], Seq[Double]])]] = {
+    val binVar = Variable(bin)
+    val factor = new Factor[(Double, Map[Parameter[_], Seq[Double]])](List(binVar))
+    val prob = bin.parameter.MAPValue.asInstanceOf[Double]
+    val mappings = binVar.range.map(i => (i, mutable.Map(parameterMap.toSeq: _*)))
+    for { 
+      (ext, map) <- mappings
+      if (ext.isRegular)
+    } { 
+      val i = ext.value
+      map.remove(bin.parameter)
+      map.put(bin.parameter, Seq(i, bin.numTrials - i))
+      val density = binomial(bin.numTrials, i) * pow(prob, i) * pow(1 - prob, bin.numTrials - i)
+      val index = binVar.range.indexOf(ext)
+      factor.set(List(index), (density, map))
+    }
     List(factor)
   }
 
@@ -142,8 +165,8 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
   private def selectVarAndProbs[U, T](select: ParameterizedSelect[T]): (Variable[T], List[Double]) = {
     val selectVar = Variable(select)
     val unzippedClauses = select.clauses.unzip
-    val expectedValue = select.parameter.expectedValue
-    val probs = for { xvalue <- selectVar.range } yield expectedValue(unzippedClauses._2.indexOf(xvalue.value))
+    val MAPValue = select.parameter.MAPValue
+    val probs = for { xvalue <- selectVar.range } yield MAPValue(unzippedClauses._2.indexOf(xvalue.value))
     val result = (selectVar, probs)
     result
   }
@@ -430,13 +453,15 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
 
     List(factor)
   }
-
-  /*
-   * We shouldn't make sufficient statistics factors for parameters; this is taken care of in SufficientStatisticsVariableElimination
-  private def makeFactors(param: Parameter[_]): List[Factor[(Double, Map[Parameter[_], Seq[Double]])]] = {
-    makeFactors(Constant(param.expectedValue))
+  
+  private def convertProbFactor(probFactor: Factor[Double]): Factor[(Double, Map[Parameter[_], Seq[Double]])] = {
+    val result = new Factor[(Double, Map[Parameter[_], Seq[Double]])](probFactor.variables)
+    for { indices <- result.allIndices } {
+      result.set(indices, (probFactor.get(indices), mutable.Map(parameterMap.toSeq: _*)))
+    }
+    result
   }
-  */
+
   private def concreteFactors[T](elem: Element[T]): List[Factor[(Double, Map[Parameter[_], Seq[Double]])]] =
     elem match {
       case c: Constant[_] => makeFactors(c)
@@ -444,6 +469,7 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
       case f: CompoundFlip => makeFactors(f)
       case f: ParameterizedFlip => makeFactors(f)
       case s: ParameterizedSelect[_] => makeFactors(s)
+      case b: ParameterizedBinomialFixedNumTrials => makeFactors(b)
       case s: AtomicSelect[_] => makeFactors(s)
       case s: CompoundSelect[_] => makeFactors(s)
       case d: AtomicDist[_] => makeFactors(d)
@@ -455,7 +481,8 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
       case a: Apply4[_, _, _, _, _] => makeFactors(a)
       case a: Apply5[_, _, _, _, _, _] => makeFactors(a)
       case i: Inject[_] => makeFactors(i)
-      case f: ProbFactorMaker => throw new UnsupportedAlgorithmException(elem)
+      case f: ProbFactorMaker => 
+        ProbFactor.concreteFactors(f).map(convertProbFactor(_))
       /*case p: Parameter[_] => makeFactors(p)*/
       case _ => throw new UnsupportedAlgorithmException(elem)
     }

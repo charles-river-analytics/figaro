@@ -231,7 +231,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
     "with an observation on a compound flip, terminate quickly and produce the correct result" in {
       // Tests the likelihood weighting implementation for compound flip
       Universe.createNew()
-      val b = Beta(2.0, 5.0)
+      val b = Uniform(0.0, 1.0)
       val f1 = Flip(b)
       val f2 = Flip(b)
       val f3 = Flip(b)
@@ -274,12 +274,13 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       f20.observe(false)
       val alg = Importance(b)
       alg.start()
-      Thread.sleep(200)
+      Thread.sleep(100)
       val time0 = System.currentTimeMillis()
       alg.stop()
-      // Result is beta(2 + 16,5 + 4)
-      // Expectation is (alpha) / (alpha + beta) = 18/27
-      alg.expectation(b, (d: Double) => d) should be ((18.0/27.0) +- 0.02)
+      // Uniform(0,1) is beta(1,1)
+      // Result is beta(1 + 16,1 + 4)
+      // Expectation is (alpha) / (alpha + beta) = 17/22
+      alg.expectation(b, (d: Double) => d) should be ((17.0/22.0) +- 0.02)
       val time1 = System.currentTimeMillis()
       // If likelihood weighting is working, stopping and querying the algorithm should be almost instantaneous
       // If likelihood weighting is not working, stopping and querying the algorithm requires waiting for a non-rejected sample
@@ -332,7 +333,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       f20.observe(false)
       val alg = Importance(b)
       alg.start()
-      Thread.sleep(200)
+      Thread.sleep(100)
       val time0 = System.currentTimeMillis()
       alg.stop()
       // Result is beta(2 + 16,5 + 4)
@@ -344,7 +345,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       (time1 - time0) should be <= (100L)
     }
  
-    "with an observation on a chain, terminate quickly and produce the correct result" in {
+    "with an observation on a parameterized binomial, terminate quickly and produce the correct result" in {
       // Tests the likelihood weighting implementation for chain
       Universe.createNew()
       val beta = Beta(2.0, 5.0)
@@ -352,12 +353,33 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       bin.observe(1600)
       val alg = Importance(beta)
       alg.start()
-      Thread.sleep(2000)
+      Thread.sleep(1000)
       val time0 = System.currentTimeMillis()
       alg.stop()
       // Result is beta(2 + 1600,5 + 400)
       // Expectation is (alpha) / (alpha + beta) = 1602/2007
       alg.expectation(beta, (d: Double) => d) should be ((1602.0/2007.0) +- 0.02)
+      val time1 = System.currentTimeMillis()
+      // If likelihood weighting is working, stopping and querying the algorithm should be almost instantaneous
+      // If likelihood weighting is not working, stopping and querying the algorithm requires waiting for a non-rejected sample
+      (time1 - time0) should be <= (100L)
+    }
+
+    "with an observation on a chain, terminate quickly and produce the correct result" in {
+      // Tests the likelihood weighting implementation for chain
+      Universe.createNew()
+      val beta = Uniform(0.0, 1.0)
+      val bin = Binomial(2000, beta)
+      bin.observe(1600)
+      val alg = Importance(beta)
+      alg.start()
+      Thread.sleep(1000)
+      val time0 = System.currentTimeMillis()
+      alg.stop()
+      // uniform(0,1) is beta(1,1)
+      // Result is beta(1 + 1600,1 + 400)
+      // Expectation is (alpha) / (alpha + beta) = 1601/2003
+      alg.expectation(beta, (d: Double) => d) should be ((1601.0/2003.0) +- 0.02)
       val time1 = System.currentTimeMillis()
       // If likelihood weighting is working, stopping and querying the algorithm should be almost instantaneous
       // If likelihood weighting is not working, stopping and querying the algorithm requires waiting for a non-rejected sample
@@ -372,7 +394,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       dist.observe(1600) // forces it to choose bin, and observation should propagate to it
       val alg = Importance(beta)
       alg.start()
-      Thread.sleep(2000)
+      Thread.sleep(1000)
       val time0 = System.currentTimeMillis()
       alg.stop()
       // Result is beta(2 + 1600,5 + 400)
@@ -421,7 +443,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       class temp {
         val t1 = Flip(0.9)
       }
-      val a = Chain(Constant(0), (i: Int) => Constant(new temp))
+      val a = CachingChain(Constant(0), (i: Int) => Constant(new temp))
       val b = Apply(a, (t: temp) => t.t1.value)
       val alg = Importance(10000, b)
       alg.start
@@ -434,7 +456,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       class temp {
         val t1 = Flip(0.9)
       }
-      val a = Chain(Constant(0), (i: Int) => Constant(new temp))
+      val a = CachingChain(Constant(0), (i: Int) => Constant(new temp))
       val b = Apply(a, (t: temp) => t.t1.value)
       val prob = List.fill(1000){Forward(Universe.universe); b.value}
       prob.count(_ == true).toDouble/1000.0 should be (0.9 +- .01)

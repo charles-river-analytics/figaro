@@ -17,12 +17,9 @@ package com.cra.figaro.language
  * The Atomic trait characterizes elements that do not depend on any related elements.
  */
 
-trait Atomic[T] extends Element[T] {
+trait Atomic[T] extends Element[T] with HasDensity[T] {
   /**
    * Returns an empty list.
    */
   def args: List[Element[_]] = List()
-
-  /** The probability density of a value. */
-  def density(t: T): Double
 }

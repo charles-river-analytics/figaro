@@ -19,31 +19,29 @@ import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
 import annotation.tailrec
-import scala.math.{ floor, pow }
-import JSci.maths.ExtraMath.binomial
 
 /**
  * A binomial distribution in which the parameters are constants.
  */
-class AtomicBinomial(name: Name[Int], n: Int, p: Double, collection: ElementCollection)
+class AtomicBinomial(name: Name[Int], val numTrials: Int, val probSuccess: Double, collection: ElementCollection)
   extends Element[Int](name, collection) with Atomic[Int] with ValuesMaker[Int] with ProbFactorMaker with Cacheable[Int]
   with OneShifter {
   protected lazy val lowerBound = 0
-  protected lazy val upperBound = n
+  protected lazy val upperBound = numTrials
 
-  private lazy val q = 1 - p
+  private lazy val q = 1 - probSuccess
 
   // Devroye, p. 525
   @tailrec
   private def generateHelper(x: Int, sum: Int): Int = {
-    val g = Util.generateGeometric(1 - p)
+    val g = Util.generateGeometric(1 - probSuccess)
     val newSum = sum + g
     val newX = x + 1
-    if (newSum <= n) generateHelper(newX, newSum)
+    if (newSum <= numTrials) generateHelper(newX, newSum)
     else newX
   }
 
-  def generateRandomness() = if (p <= 0) 0; else if (p < 1) generateHelper(-1, 0); else n
+  def generateRandomness() = if (probSuccess <= 0) 0; else if (probSuccess < 1) generateHelper(-1, 0); else numTrials
 
   /**
    * The Metropolis-Hastings proposal is to increase or decrease the value of by 1.
@@ -56,22 +54,13 @@ class AtomicBinomial(name: Name[Int], n: Int, p: Double, collection: ElementColl
    * Probability of a value.
    */
   def density(k: Int) = {
-    if (n > 10) {
-      val logNFact = JSci.maths.ExtraMath.logFactorial(n)
-      val logKFact = JSci.maths.ExtraMath.logFactorial(k)
-      val logNMinusKFact = JSci.maths.ExtraMath.logFactorial(n-k)
-      val logBinomialCoefficient = logNFact - (logKFact + logNMinusKFact)
-      val result = logBinomialCoefficient + (k*Math.log(p) + ((n-k)*Math.log(q)))
-      Math.exp(result)
-    } else {
-      binomial(n, k) * pow(p, k) * pow(q, n - k)
-    }
+    Util.binomialDensity(numTrials, probSuccess, k)
   }
 
   /**
    * Return the range of values of the element.
    */
-  def makeValues(depth: Int) = ValueSet.withoutStar((for { i <- 0 to n } yield i).toSet)
+  def makeValues(depth: Int) = ValueSet.withoutStar((for { i <- 0 to numTrials } yield i).toSet)
 
   /**
    * Convert an element into a list of factors.
@@ -85,29 +74,63 @@ class AtomicBinomial(name: Name[Int], n: Int, p: Double, collection: ElementColl
     List(factor)
   }
 
-  override def toString = "Binomial(" + n + ", " + p + ")"
+  override def toString = "Binomial(" + numTrials + ", " + probSuccess + ")"
 }
 
 /**
  * A binomial distribution in which the number of trials is fixed and the success probability is an element.
  */
-class BinomialFixedNumTrials(name: Name[Int], n: Int, p: Element[Double], collection: ElementCollection)
-  extends NonCachingChain[Double, Int](name, p, (p: Double) => new AtomicBinomial("", n, p, collection), collection)
+class BinomialFixedNumTrials(name: Name[Int], val numTrials: Int, val probSuccess: Element[Double], collection: ElementCollection)
+  extends NonCachingChain[Double, Int](name, probSuccess, (p: Double) => new AtomicBinomial("", numTrials, p, collection), collection) {
+  override def toString = "Binomial(" + numTrials + ", " + probSuccess + ")"
+}
 
+/**
+ * A binomial with a fixed number of trials parameterized by a beta distribution.
+ */
+class ParameterizedBinomialFixedNumTrials(name: Name[Int], val numTrials: Int, val probSuccess: AtomicBeta, collection: ElementCollection)
+  extends CachingChain[Double, Int](name, probSuccess, (p: Double) => new AtomicBinomial("", numTrials, p, collection), collection)
+  with Parameterized[Int] {
+  val parameter = probSuccess
+  
+  def distributionToStatistics(distribution: Stream[(Double, Int)]): Seq[Double] = {
+    val distList = distribution.toList
+    var totalPos = 0.0
+    var totalNeg = 0.0
+    for { i <- 0 to numTrials } {
+      distList.find(_._2 == i) match {
+        case Some((prob, _)) =>
+          totalPos += prob * i
+          totalNeg += prob * (numTrials - i)
+        case None => ()
+      }
+    }
+    List(totalPos, totalNeg)
+  }
+  
+  def density(value: Int): Double = {
+    val probSuccess = parameter.value
+    if (value < 0 || value > numTrials) 0.0
+    else Util.binomialDensity(numTrials, probSuccess, value)
+  }
+  
+  override def toString = "ParameterizedBinomial(" + numTrials + ", " + probSuccess + ")"
+} 
+ 
 /**
  * A binomial distribution in which the parameters are elements.
  */
-class CompoundBinomial(name: Name[Int], n: Element[Int], p: Element[Double], collection: ElementCollection)
+class CompoundBinomial(name: Name[Int], val numTrials: Element[Int], val probSuccess: Element[Double], collection: ElementCollection)
   extends CachingChain[Int, Int](
     name,
-    n,
+    numTrials,
     (n: Int) => new NonCachingChain(
       "",
-      p,
+      probSuccess,
       (p: Double) => new AtomicBinomial("", n, p, collection),
       collection),
     collection) {
-  override def toString = "Binomial(" + n + ", " + p + ")"
+  override def toString = "Binomial(" + numTrials + ", " + probSuccess + ")"
 }
 
 object Binomial extends Creatable {
@@ -119,9 +142,16 @@ object Binomial extends Creatable {
 
   /**
    * Create a binomial distribution in which the number of trials is fixed and the success probability is an element.
+   *
+   * If the element is an atomic beta element, the flip uses that element
+   * as a learnable parameter.
    */
-  def apply(n: Int, p: Element[Double])(implicit name: Name[Int], collection: ElementCollection) =
-    new BinomialFixedNumTrials(name, n, p, collection)
+  def apply(n: Int, p: Element[Double])(implicit name: Name[Int], collection: ElementCollection) = {
+    if (p.isInstanceOf[AtomicBeta])
+    new ParameterizedBinomialFixedNumTrials(name, n, p.asInstanceOf[AtomicBeta], collection)
+    else new BinomialFixedNumTrials(name, n, p, collection)
+  }
+  
   /**
    * Create a binomial distribution in which the parameters are elements.
    */

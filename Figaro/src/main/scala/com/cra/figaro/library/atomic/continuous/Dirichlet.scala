@@ -28,6 +28,11 @@ import scala.collection.mutable
  */
 class AtomicDirichlet(name: Name[Array[Double]], val alphas: Array[Double], collection: ElementCollection)
   extends Element[Array[Double]](name, collection) with Atomic[Array[Double]] with Parameter[Array[Double]] with ValuesMaker[Array[Double]] {
+  /**
+   * The number of concentration parameters in the Dirichlet distribution.
+   */
+  val size = alphas.size
+  
   type Randomness = Array[Double]
 
   def generateRandomness(): Array[Double] = {
@@ -61,6 +66,8 @@ class AtomicDirichlet(name: Name[Array[Double]], val alphas: Array[Double], coll
 
   /**
    * Returns an element that models the learned distribution.
+   * 
+   * @deprecated
    */
   def getLearnedElement[T](outcomes: List[T]): AtomicSelect[T] = {
     new AtomicSelect("", MAPValue.toList zip outcomes, collection)
@@ -68,20 +75,13 @@ class AtomicDirichlet(name: Name[Array[Double]], val alphas: Array[Double], coll
   
   def maximize(sufficientStatistics: Seq[Double]) = {
     require(sufficientStatistics.size == concentrationParameters.size)
-
     for (i <- sufficientStatistics.indices) {
       concentrationParameters(i) = sufficientStatistics(i) + alphas(i)
     }
-
   }
 
   private val vector = alphas.map(a => 0.0)
 
-  /**
-   * The number of concentration parameters in the Dirichlet distribution.
-   */
-  val size = alphas.size
-  
   private[figaro] override def sufficientStatistics[A](i: Int): Seq[Double] = {
     val result = vector
     require(i < result.size)
@@ -102,7 +102,7 @@ class AtomicDirichlet(name: Name[Array[Double]], val alphas: Array[Double], coll
   override def expectedValue: Array[Double] = {
 
     val sumObservedAlphas = concentrationParameters reduceLeft (_ + _)
-    val result = new Array[Double](concentrationParameters.size)
+    val result = new Array[Double](size)
 
     concentrationParameters.zipWithIndex.foreach {
       case (v, i) => {
@@ -116,14 +116,15 @@ class AtomicDirichlet(name: Name[Array[Double]], val alphas: Array[Double], coll
   
   override def MAPValue: Array[Double] = {
     val sumObservedAlphas = concentrationParameters reduceLeft (_ + _)
-    val result = new Array[Double](concentrationParameters.size)
+    val result = new Array[Double](size)
 
     concentrationParameters.zipWithIndex.foreach {
       case (v, i) => {
-          result(i) = (v - 1) / (sumObservedAlphas - concentrationParameters.size)
+          result(i) = 
+            if (sumObservedAlphas == size) 1.0 / size
+            else (v - 1) / (sumObservedAlphas - size)
         }
     }
-    
     result
   }
 
