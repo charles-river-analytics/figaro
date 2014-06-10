@@ -31,10 +31,15 @@ class BayesianNetworkTest extends WordSpec with Matchers {
     "produce the correct probability under importance sampling" taggedAs (ExampleTest) in {
       test((e1: Element[Boolean], e2: Element[Boolean]) => Importance(20000, e1, e2))
     }
-
-    "produce the correct probability under Metropolis-Hastings" taggedAs (ExampleTest) in {
+    
+    "produce the correct probability under Metropolis-Hastings without burn-in or interval" taggedAs (ExampleTest) in {
       test((e1: Element[Boolean], e2: Element[Boolean]) =>
-        MetropolisHastings(8000000, ProposalScheme.default, e1, e2))
+        MetropolisHastings(80000, ProposalScheme.default, e1, e2))
+    }
+    
+    "produce the correct probability under Metropolis-Hastings with burn-in and interval" taggedAs (ExampleTest) in {
+      test((e1: Element[Boolean], e2: Element[Boolean]) =>
+        MetropolisHastings(80000, ProposalScheme.default, 800, 10, e1, e2))
     }
   }
 
