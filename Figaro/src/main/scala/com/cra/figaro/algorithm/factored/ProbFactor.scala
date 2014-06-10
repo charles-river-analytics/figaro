@@ -115,9 +115,12 @@ object ProbFactor {
   }
 
   private def parameterizedGetProbs[T](select: ParameterizedSelect[T]): List[Double] = {
-    val selectVar = Variable(select)
-    val probs = select.parameter.expectedValue.toList
-    probs
+    val outcomes = select.outcomes
+    val map = select.parameter.MAPValue
+    for {
+      xvalue <- Variable(select).range
+      index = outcomes.indexOf(xvalue.value)
+    } yield map(index)
   }
 
   private def makeFactors[T](select: AtomicSelect[T]): List[Factor[Double]] = {
@@ -567,14 +570,14 @@ object ProbFactor {
   private def makeFactors(flip: ParameterizedFlip): List[Factor[Double]] = {
     val flipVar = Variable(flip)
     val factor = new Factor[Double](List(flipVar))
-    val prob = flip.parameter.expectedValue
+    val prob = flip.parameter.MAPValue
     val i = flipVar.range.indexOf(Regular(true))
     factor.set(List(i), prob)
     factor.set(List(1 - i), 1.0 - prob)
     List(factor)
   }
 
-  private def concreteFactors[T](elem: Element[T]): List[Factor[Double]] =
+  def concreteFactors[T](elem: Element[T]): List[Factor[Double]] =
     elem match {
       case f: ParameterizedFlip => makeFactors(f)
       case s: ParameterizedSelect[_] => makeFactors(s)

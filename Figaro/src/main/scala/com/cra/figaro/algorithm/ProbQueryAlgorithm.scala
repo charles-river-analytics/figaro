@@ -89,6 +89,7 @@ trait ProbQueryAlgorithm
    * Throws AlgorithmInactiveException if the algorithm is inactive.
    */
   def expectation[T](target: Element[T], function: T => Double): Double = {
+    println("In expectation")
     check(target)
     doExpectation(target, function)
   }

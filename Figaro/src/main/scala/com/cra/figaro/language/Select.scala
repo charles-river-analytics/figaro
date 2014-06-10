@@ -79,6 +79,24 @@ class ParameterizedSelect[T](name: Name[T], override val parameter: AtomicDirich
   def args: List[Element[_]] = List(parameter)
   private lazy val normalizedClauses = normalizedProbs zip outcomes
 
+  def distributionToStatistics(distribution: Stream[(Double, T)]): Seq[Double] = {
+    val distList = distribution.toList
+    for { outcome <- outcomes } 
+    yield {
+      distList.find(_._2 == outcome) match {
+        case Some((prob, _)) => prob
+        case None => 0.0
+      }
+    }
+  }
+  
+  def density(value: T): Double = {
+    outcomes.indexOf(value) match {
+      case -1 => 0.0
+      case i => parameter.value(i)
+    }
+  }
+  
   def generateValue(rand: Randomness) = selectMultinomial(rand, normalizedClauses)
 
 }

@@ -68,7 +68,8 @@ trait AnytimeProbQuery extends ProbQueryAlgorithm with Anytime {
   protected def doExpectation[T](target: Element[T], function: T => Double): Double = {
     runner ! Handle(ComputeExpectation(target, function))
     receive {
-      case Expectation(result) => result
+      case Expectation(result) =>
+        result
     }
   }
 
