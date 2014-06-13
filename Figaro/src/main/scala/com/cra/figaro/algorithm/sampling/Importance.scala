@@ -26,21 +26,51 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
   extends WeightedSampler(universe, targets: _*) {
   import Importance.State
 
+/*
+ *  Likelihood weighting works by propagating observations through Dists and Chains
+ *  to the variables they depend on. If we don't make sure we sample those Dists and
+ *  Chains first, we may end up sampling those other elements without the correct
+ *  observations. To avoid this, we keep track of all these dependencies.
+ *  The dependencies map contains all the elements that could propagate an
+ *  observation to any given element.
+ *  Note: the dependencies map is only concerned with active elements that are present 
+ *  at the beginning of sampling (even though we get a new active elements list each sample).
+ *  Temporary elements will always be created after the element that could propagate
+ *  an observation to them, because that propagation has to go through a permanent 
+ *  element.
+ *  Therefore, we can generate the dependencies map once before all the samples are generated.
+ */  
+  private val dependencies = scala.collection.mutable.Map[Element[_], Set[Element[_]]]()
+  private def makeDependencies() = {
+    for {
+      element <- universe.activeElements
+    } {
+      element match {
+        case d: Dist[_,_] => 
+          for { o <- d.outcomes } { dependencies += o -> (dependencies.getOrElse(o, Set()) + d) }
+        case c: CachingChain[_,_] => 
+          val outcomes = Values(universe)(c.parent).map(c.get(_))
+          for { o <- outcomes } { dependencies += o -> (dependencies.getOrElse(o, Set()) + c) }
+        case _ => ()
+      }
+    }
+  }
+  makeDependencies()
+  
   /*
    * Produce one weighted sample of the given element. weightedSample takes into account conditions and constraints
    * on all elements in the Universe, including those that depend on this element.
    */
   @tailrec final def sample(): Sample = {
+    /* 
+     * We need to recreate the activeElements each sample, because non-temporary elements may have been made active
+     * in a previous iteration. See the relevant test in ImportanceTest.
+     */    
+    val activeElements = universe.activeElements
     val resultOpt: Option[Sample] =
       try {
         val state = State()
-        // We must make a fresh copy of the active elements since sampling can add active elements to the Universe      
-        //val activeElements = universe.permanentElements
-        // use active elements instead of permanent elements since permenentElements may not resample elements inside a chain
-        val activeElements = universe.activeElements
-        // Hack alert: Using reverse gets us to sample Dists before their choices, which is important for likelihood weighting
-        // The algorithm is basically correct with and without reverse. This is an optimization.
-        activeElements.reverse.foreach(e => if (e.active) sampleOne(state, e, None))
+        activeElements.foreach(e => if (e.active) sampleOne(state, e, None))
         val bindings = targets map (elem => elem -> elem.value)
         Some((state.weight, Map(bindings: _*)))
       } catch {
@@ -49,7 +79,8 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
       }
 
     resultOpt match {
-      case Some(x) => x
+      case Some(x) =>
+        x
       case None =>
         sample()
     }
@@ -63,7 +94,14 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
    * This is made private[figaro] to allow easy testing
    */
   private[figaro] def sampleOne[T](state: State, element: Element[T], observation: Option[T]): T = {
-    if (element.universe != universe || (state.assigned contains element)) element.value
+    /*
+     * We have to make sure to sample any elements this element depends on first so we can get the right
+     * observation for this element.
+     */
+    dependencies.getOrElse(element, Set()).filter(!state.assigned.contains(_)).foreach(sampleOne(state, _, None))
+    if (element.universe != universe || (state.assigned contains element)) {
+      element.value
+    }
     else {
       state.assigned += element
       sampleFresh(state, element, observation)
@@ -85,7 +123,7 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
       case _ => throw Importance.Reject // incompatible observations
     }
     val value: T = 
-      if (fullObservation.isEmpty || !element.isInstanceOf[Atomic[_]]) {
+      if (fullObservation.isEmpty || !element.isInstanceOf[HasDensity[_]]) {
         val result = sampleValue(state, element, fullObservation)
         if (!element.condition(result)) throw Importance.Reject
         result
@@ -94,10 +132,18 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
         // This partially implements likelihood weighting by clamping the element to its
         // desired value and multiplying the weight by the density of the value.
         // This can dramatically reduce the number of rejections.
+        element.args.foreach(sampleOne(state, _, None))
         val obs = fullObservation.get
-        state.weight += math.log(element.asInstanceOf[Atomic[T]].density(obs))
+
+        // Subtle issue taken care of by the following line
+        // A parameterized element may or may not be a chain to an atomic element
+        // If it's not, we have to make sure to set its value to the observation here
+        // If it is, we have to make sure to propagate the observation through the chain
+        sampleValue(state, element, Some(obs))        
+        state.weight += math.log(element.asInstanceOf[HasDensity[T]].density(obs))
         obs
       }
+    element.value = value
     state.weight += element.constraint(value)
     value
   }
@@ -130,24 +176,11 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
         d.value
       case c: Chain[_, _] =>
         val parentValue = sampleOne(state, c.parent, None)
-        c.value = sampleOne(state, c.get(parentValue), observation)
+        val next = c.get(parentValue)
+        c.value = sampleOne(state, next, observation)
         c.value
       case f: CompoundFlip =>
         val probValue = sampleOne(state, f.prob, None)
-        observation match {
-          case Some(true) =>
-            state.weight += math.log(probValue)
-            true
-          case Some(false) =>
-            state.weight += math.log(1 - probValue)
-            false
-          case _ => 
-            val result = random.nextDouble() < probValue
-            f.value = result
-            result
-        }
-      case f: ParameterizedFlip =>
-        val probValue = sampleOne(state, f.parameter, None)
         observation match {
           case Some(true) =>
             state.weight += math.log(probValue)

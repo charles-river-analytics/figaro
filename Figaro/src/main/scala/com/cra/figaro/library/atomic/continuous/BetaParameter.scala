@@ -22,7 +22,7 @@ object BetaParameter extends Creatable {
   /**
    * Create a beta parameter with prior hyperparameters a and b
    * 
-   * @depracated
+   * @deprecated
    */
   def apply(a: Double, b: Double)(implicit name: Name[Double], collection: ElementCollection) =
     new AtomicBeta(name, a, b, collection)
