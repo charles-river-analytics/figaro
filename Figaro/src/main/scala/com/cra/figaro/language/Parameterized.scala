@@ -18,9 +18,11 @@ package com.cra.figaro.language
   * Parameterized elements are compound elements whose outcome is determined by a learnable parameter.
   */
 
-trait Parameterized[T] extends Element[T] {
+trait Parameterized[T] extends Element[T] with HasDensity[T] {
   /**
   * The parameter for this element.
   */
   val parameter: Parameter[_]
+  
+  def distributionToStatistics(distribution: Stream[(Double, T)]): Seq[Double]
 }
