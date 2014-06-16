@@ -14,7 +14,7 @@
 package com.cra.figaro.algorithm
 
 import com.cra.figaro.language._
-import actors._
+import akka.actor._
 
 /**
  * Class of services implemented by the anytime algorithm.
@@ -25,23 +25,30 @@ abstract class Service
  * Class of responses to services.
  */
 abstract class Response
-
+/**
+ * General Response (String)
+ */
+case class ExceptionResponse(msg: String) extends Response
 /**
  * Messages to or from the actor.
  */
 sealed abstract class Message
 /**
+ * Message to start the anytime algorithm
+ */
+//case object Start extends Message
+/**
  * Message to stop the anytime algorithm
  */
-case object Stop extends Message
+//case object Stop extends Message
 /**
  * Message to resume the anytime algorithm
  */
-case object Resume extends Message
+//case object Resume extends Message
 /**
  * Message to kill the anytime algorithm
  */
-case object Kill extends Message
+//case object Kill extends Message
 
 /**
  * A message to the handler to handle the given service.
@@ -72,46 +79,78 @@ trait Anytime extends Algorithm {
    * A class representing the actor running the algorithm.
    */
   class Runner extends Actor {
-    private var running = false
-
-    def act() {
-      running = true
-      while (true) {
-        if (running) runStep()
-        receiveWithin(0) {
-          case TIMEOUT => ()
-          case Stop => { running = false; stopUpdate() }
-          case Resume => running = true
-          case Kill =>
-            exit()
-          case Handle(service) => sender ! handle(service)
-        }
-      }
+    import context._
+    
+    def active: Receive = {
+      case "stop" => 
+        become (inactive)
+        stopUpdate()
+      case "next" => 
+        runStep()
+        self ! "next"
+      case Kill => 
+         become(killed)
+         kill()
+         cleanUp()
+      case _ => 
+        sender ! ExceptionResponse("Algorithm is still running")
     }
+
+    def inactive: Receive = {
+      case Handle(service) => sender ! handle(service)
+      case "start" => become(active)
+        self ! "next"
+      case "resume" => become(active)
+      	self ! "next"
+      case _ => 
+        sender ! ExceptionResponse("Algorithm is stopped")
+    }
+    
+    def killed: Receive = {
+      case _ => 
+        sender ! ExceptionResponse("Algorithm has terminated")
+    }
+    
+    def receive = inactive
+//    
+//    def act() {
+//      running = true
+//      while (true) {
+//        if (running) runStep()
+//        receiveWithin(0) {
+//          case TIMEOUT => ()
+//          case Stop => { running = false; stopUpdate() }
+//          case Resume => running = true
+//          case Kill =>
+//            exit()
+//          case Handle(service) => sender ! handle(service)
+//        }
+//      }
+//    }
   }
 
   /**
    * The actor running the algorithm.
    */
-  protected var runner: Runner = _
+  protected var runner: ActorRef = _
 
   /**
    * A handler of services provided by the algorithm.
    */
   def handle(service: Service): Response
 
+  val system = ActorSystem()
+  
   protected def doStart() = {
     initialize()
-    runner = new Runner
-    runner.start()
+    
+    runner = system.actorOf(Props[Runner], "Anytime")
+    runner ! "start"
   }
 
-  protected def doStop() = runner ! Stop
+  protected def doStop() = runner ! "stop"
 
-  protected def doResume() = runner ! Resume
+  protected def doResume() = runner ! "resume"
 
-  protected def doKill() = {
-    runner ! Kill
-    cleanUp()
-  }
+  protected def doKill() = runner ! "kill"
 }
