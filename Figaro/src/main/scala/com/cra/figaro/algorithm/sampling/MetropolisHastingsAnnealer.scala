@@ -36,7 +36,7 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
   import MetropolisHastings._
 
   // Used for debugging
-  private var elementsToTrack: Map[Element[_], Unit] = Map()
+  private var elementsToTrack: Map[Element[_], Null] = Map()
   private var proposalCounts: Map[Element[_], Int] = Map()
   // Make sure these maps don't cause memory leaks
   universe.register(elementsToTrack)
@@ -336,7 +336,7 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
    */
   def test(numSamples: Int, predicates: Seq[Predicate[_]], elementsToTrack: Seq[Element[_]]): (Map[Predicate[_], Double], Map[Element[_], Double]) = {
     val successes: Map[Predicate[_], Int] = Map((predicates map (_ -> 0)): _*)
-    this.elementsToTrack = Map((elementsToTrack map (_ -> ()): _*))
+    this.elementsToTrack = Map((elementsToTrack map (_ -> null): _*))
     proposalCounts = Map((elementsToTrack map (_ -> 0)): _*)
     def collectResults() =
       for { predicate <- predicates } {
