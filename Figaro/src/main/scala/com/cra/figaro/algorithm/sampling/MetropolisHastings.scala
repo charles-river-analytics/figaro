@@ -34,7 +34,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
   import MetropolisHastings._
 
   // Used for debugging
-  private var elementsToTrack: Map[Element[_], Unit] = Map()
+  private var elementsToTrack: Map[Element[_], Null] = Map()
   private var proposalCounts: Map[Element[_], Int] = Map()
   // Make sure these maps don't cause memory leaks
   universe.register(elementsToTrack)
@@ -347,7 +347,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
     rejects = 0
     proposalCounts = Map((elementsToTrack map (_ -> 0)): _*)
     val successes: Map[Predicate[_], Int] = Map((predicates map (_ -> 0)): _*)
-    this.elementsToTrack = Map((elementsToTrack map (_ -> ()): _*))
+    this.elementsToTrack = Map((elementsToTrack map (_ -> null): _*))
     def collectResults() =
       for { predicate <- predicates } {
         if (predicate.test) successes += predicate -> (successes(predicate) + 1)
