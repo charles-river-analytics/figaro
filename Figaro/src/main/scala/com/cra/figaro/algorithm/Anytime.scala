@@ -67,10 +67,11 @@ trait Anytime extends Algorithm {
     import context._
     
     def active: Receive = {
-      case Handle(service) => sender ! handle(service)
+      case Handle(service) =>
+        sender ! handle(service)
       case "stop" => 
-        become (inactive)
         stopUpdate()
+        become (inactive)
       case "next" => 
         runStep()
         self ! "next"
@@ -79,8 +80,10 @@ trait Anytime extends Algorithm {
     }
 
     def inactive: Receive = {
-      case Handle(service) => sender ! handle(service)
-      case "start" => become(active)
+      case Handle(service) =>
+        sender ! handle(service)
+      case "start" =>
+        become(active)
         self ! "next"
       case "resume" => become(active)
       	self ! "next"
@@ -96,10 +99,7 @@ trait Anytime extends Algorithm {
     }
     
     def receive = inactive
-
-    override def postStop {
-      cleanUp()
-    }
+    
   }
 
   /**
@@ -124,8 +124,8 @@ trait Anytime extends Algorithm {
   
   protected def doStart() = {
     initialize()
+    runStep()
     runner ! "start"
-    Thread.sleep(10)
   }
 
   protected def doStop() = runner ! "stop"
@@ -133,8 +133,9 @@ trait Anytime extends Algorithm {
   protected def doResume() = runner ! "resume"
 
   protected def doKill() = {
+    cleanUp()
+    
     runner ! "kill"
     system.shutdown
-    Thread.sleep(10)
   }
 }
