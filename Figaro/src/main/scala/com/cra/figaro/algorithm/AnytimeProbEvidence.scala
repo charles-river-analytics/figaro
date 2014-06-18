@@ -38,7 +38,7 @@ trait AnytimeProbEvidence extends ProbEvidenceAlgorithm with Anytime {
    * Returns the probability of evidence of the universe on which the algorithm operates.
    * Throws AlgorithmInactiveException if the algorithm is not active.
    */
-  implicit val timeout = Timeout(1, TimeUnit.SECONDS)
+  implicit val timeout = Timeout(5000, TimeUnit.MILLISECONDS)
   def probabilityOfEvidence(): Double = {
     if (!active) throw new AlgorithmInactiveException
     val response = runner ? Handle(ComputeProbEvidence)

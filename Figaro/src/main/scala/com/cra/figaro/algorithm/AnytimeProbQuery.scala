@@ -61,12 +61,8 @@ trait AnytimeProbQuery extends ProbQueryAlgorithm with Anytime {
         Probability(computeProbability(target, predicate))
     }
 
-  implicit val timeout = Timeout(1, TimeUnit.SECONDS)
+  implicit val timeout = Timeout(5000, TimeUnit.MILLISECONDS)
   protected def doDistribution[T](target: Element[T]): Stream[(Double, T)] = {
-//    runner ! Handle(ComputeDistribution(target))
-//    receive {
-//      case Distribution(result) => result.asInstanceOf[Stream[(Double, T)]]
-//    }
     val response = runner ? Handle(ComputeDistribution(target))
     Await.result(response, timeout.duration ).asInstanceOf[Response] match {
       case Distribution(result) => result.asInstanceOf[Stream[(Double, T)]]
@@ -78,11 +74,6 @@ trait AnytimeProbQuery extends ProbQueryAlgorithm with Anytime {
   }
 
   protected def doExpectation[T](target: Element[T], function: T => Double): Double = {
-//    runner ! Handle(ComputeExpectation(target, function))
-//    receive {
-//      case Expectation(result) =>
-//        result
-//    }
     val response = runner ? Handle(ComputeExpectation(target, function))
     Await.result(response, timeout.duration ).asInstanceOf[Response] match {
       case Expectation(result) => result
@@ -94,10 +85,6 @@ trait AnytimeProbQuery extends ProbQueryAlgorithm with Anytime {
   }
 
   protected override def doProbability[T](target: Element[T], predicate: T => Boolean): Double = {
-//    runner ! Handle(ComputeProbability(target, predicate))
-//    receive {
-//      case Probability(result) => result
-//    }
     val response = runner ? Handle(ComputeProbability(target, predicate))
     Await.result(response, timeout.duration ).asInstanceOf[Response] match {
       case Probability(result) => result
