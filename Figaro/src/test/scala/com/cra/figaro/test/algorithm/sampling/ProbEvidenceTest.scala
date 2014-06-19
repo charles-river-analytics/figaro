@@ -257,14 +257,14 @@ class ProbEvidenceTest extends WordSpec with Matchers {
     }
   }
 
-//  "Computing probability of evidence" should {
-//    "not suffer from memory leaks" taggedAs (PerformanceTest) in {
-//      Universe.createNew()
-//      val c = NonCachingChain(Uniform(0.2, 1.0), (d: Double) => Flip(d))
-//      val alg = ProbEvidenceSampler(1000000, List())
-//      alg.start()
-//    }
-//  }
+  "Computing probability of evidence" should {
+    "not suffer from memory leaks" taggedAs (PerformanceTest) in {
+      Universe.createNew()
+      val c = NonCachingChain(Uniform(0.2, 1.0), (d: Double) => Flip(d))
+      val alg = ProbEvidenceSampler(1000000, List())
+      alg.start()
+    }
+  }
 
   def sampleTest(prob: Double, evidence: List[NamedEvidence[_]]) {
     ProbEvidenceSampler.computeProbEvidence(60000, evidence) should be(prob +- 0.01)
