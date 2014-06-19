@@ -83,9 +83,12 @@ trait Anytime extends Algorithm {
       case Handle(service) =>
         sender ! handle(service)
       case "start" =>
+        runStep()
         become(active)
         self ! "next"
-      case "resume" => become(active)
+      case "resume" => 
+        resume()
+        become(active)
       	self ! "next"
       case "kill" => 
          become(shuttingDown)
@@ -100,6 +103,7 @@ trait Anytime extends Algorithm {
     
     def receive = inactive
     
+
   }
 
   /**
@@ -113,8 +117,9 @@ trait Anytime extends Algorithm {
 		  }
 		  """)
 		  
-  val system = ActorSystem("Anytime", ConfigFactory.load(customConf))
-  val runner = system.actorOf(Props(new Runner))
+  var system: ActorSystem = null
+  var runner: ActorRef = null
+  var running = false;
 
   /**
    * A handler of services provided by the algorithm.
@@ -123,8 +128,14 @@ trait Anytime extends Algorithm {
 
   
   protected def doStart() = {
-    initialize()
-    runStep()
+    if (!running) {
+    	system = ActorSystem("Anytime", ConfigFactory.load(customConf))
+    	runner = system.actorOf(Props(new Runner))
+    	initialize()
+//    	println("Using ANYTIME")
+    	running = true
+    }
+      
     runner ! "start"
   }
 
@@ -133,9 +144,14 @@ trait Anytime extends Algorithm {
   protected def doResume() = runner ! "resume"
 
   protected def doKill() = {
+    shutdown
+  }
+  
+  def shutdown {
     cleanUp()
-    
     runner ! "kill"
+    system.stop(runner)
     system.shutdown
+//    println("Shutdown ANYTIME")
   }
 }
