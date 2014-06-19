@@ -118,7 +118,7 @@ class AlgorithmTest extends WordSpec with Matchers {
       val a = new SimpleAnytime(c)
       a.start()
       a.expectation(c, (b: Boolean) => -1.0) should be > (0.0)
-      a.kill()
+      a.shutdown
     }
 
     "have a stable answer after stopping" in {
