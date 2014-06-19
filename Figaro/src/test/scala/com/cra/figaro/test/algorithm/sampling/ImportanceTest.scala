@@ -428,20 +428,20 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       i.kill()
     }
 
-//    "not suffer from stack overflow with small probability of success" taggedAs (PerformanceTest) in {
-//      Universe.createNew()
-//      val f = Flip(0.000001)
-//      f.observe(true)
-//      val i = Importance(1, f)
-//      i.start()
-//    }
+    "not suffer from stack overflow with small probability of success" taggedAs (PerformanceTest) in {
+      Universe.createNew()
+      val f = Flip(0.000001)
+      f.observe(true)
+      val i = Importance(1, f)
+      i.start()
+    }
 
-//    "not suffer from memory leaks" taggedAs (PerformanceTest) in {
-//      Universe.createNew()
-//      val c = NonCachingChain(Uniform(0.2, 1.0), (d: Double) => Flip(d))
-//      val i = Importance(1000000, c)
-//      i.start()
-//    }
+    "not suffer from memory leaks" taggedAs (PerformanceTest) in {
+      Universe.createNew()
+      val c = NonCachingChain(Uniform(0.2, 1.0), (d: Double) => Flip(d))
+      val i = Importance(1000000, c)
+      i.start()
+    }
 
     "resample elements inside class defined in a chain" in {
       Universe.createNew()
@@ -493,7 +493,8 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
         (state.weight, value.asInstanceOf[T])
       } catch {
         case Importance.Reject => attempt()
-      }
+      } 
+      
     }
 
     var totalWeight = Double.NegativeInfinity
@@ -505,4 +506,6 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
     }    
     math.exp(successWeight - totalWeight) should be(prob +- tolerance)
   }
+  
+  
 }
