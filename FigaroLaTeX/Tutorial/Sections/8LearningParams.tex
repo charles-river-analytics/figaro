@@ -58,6 +58,7 @@ From a practical standpoint, learning a parameter with expectation maximization 
 \begin{flushleft}
 \texttt{val learningAlgorithm = ExpectationMaximization(fairness)
 \newline learningAlgorithm.start
+\newline learningAlgorithm.kill
 \newline 
 \newline val coin = fairness.getLearnedElement
 \newline println("The probability of a coin with this fairness showing
@@ -115,9 +116,9 @@ The first step is to define the possible outcomes from a dice roll. This is easi
 Next, we create a parameter representing the fairness of each die:
 
 \begin{flushleft}
-\texttt{val fairness1 = DirichletParameter(1.0,1.0,1.0,1.0,1.0,1.0) 
-\newline val fairness2 = DirichletParameter(1.0,1.0,1.0,1.0,1.0,1.0) 
-\newline val fairness3 = DirichletParameter(1.0,1.0,1.0,1.0,1.0,1.0) 
+\texttt{val fairness1 = DirichletParameter(1,1,1,1,1,1) 
+\newline val fairness2 = DirichletParameter(1,1,1,1,1,1) 
+\newline val fairness3 = DirichletParameter(1,1,1,1,1,1) 
 \newline val parameters = Seq(fairness1, fairness2, fairness3)
 }
 \end{flushleft}
@@ -133,7 +134,7 @@ Each die is initially assumed to be fair. For convenience, we can place all thre
 To model the outcome of the sum, we can use an \texttt{Apply} element with a function which sums the outcome of its arguments.
 
 \begin{flushleft}
-\texttt{def trial(p1: AtomicDirichletParameter, p2: AtomicDirichletParameter, result: Int) = \{
+\texttt{def trial(p1: AtomicDirichlet, p2: AtomicDirichlet, result: Int) = \{
 \newline \tab val sum = (i1: Int, i2: Int) => i1 + i2 
 \newline \tab val die1 = Select(p1, outcomes: \_*)
 \newline \tab val die2 = Select(p2, outcomes: \_*)
@@ -171,41 +172,40 @@ Just as in the fair coin example, we create an expectation maximization algorith
 }
 \end{flushleft}
 
-The code block above will retrieve learned elements from the parameters. Note that for a Dirichlet parameter, a list of outcomes must be supplied as an argument to \texttt{getLearnedElement}. This is because the number of concentration parameters is may vary, and the type of the outcomes is not fixed. Running this code results in the following output, in which we see the model has estimated the probabilities of each value for each die. If one examines the full data declaration in the example code, it is quite easy to see that there are only three observed values of the sum of the die (3, 7 and 8), so the
-learning algorithm has correctly inferred that the most likely values of the die are 1, 2 and 6, respectively.
+The code block above will retrieve learned elements from the parameters. Note that for a Dirichlet parameter, a list of outcomes must be supplied as an argument to \texttt{getLearnedElement}. This is because the number of concentration parameters is may vary, and the type of the outcomes is not fixed. Running this code results in the following output, in which we see the model has estimated the probabilities of each value for each die. If one examines the full data declaration in the example code, it is quite easy to see that there are only three observed values of the sum of the die (3, 7 and 8), so the learning algorithm has correctly inferred that the most likely values of the die are 1, 2 and 6, respectively.
 
 \begin{flushleft}
 \texttt{The probabilities of seeing each side of d\_1 are:
-\newline \tab 0.8188128994726971 -> 1
-\newline \tab 0.02758618154457299 -> 2
-\newline \tab 0.027187536514221913 -> 3
-\newline \tab 0.02718754004129875 -> 4
-\newline \tab 0.0720455051458327 -> 5
-\newline \tab 0.027180337281376442 -> 6
+\newline \tab 0.906250000442371 -> 1
+\newline \tab 0.0 -> 2
+\newline \tab 0.0 -> 3
+\newline \tab 0.0 -> 4
+\newline \tab 0.09374999955762903 -> 5
+\newline \tab 0.0 -> 6
 }
 \end{flushleft}
 
 
 \begin{flushleft}
 \texttt{The probabilities of seeing each side of d\_2 are:
-\newline \tab 0.024601050364553095 -> 1
-\newline \tab 0.8475328824964514 -> 2
-\newline \tab 0.024642652617350196 -> 3
-\newline \tab 0.024642566789335425 -> 4
-\newline \tab 0.024649300514031563 -> 5
-\newline \tab 0.05393154721827825 -> 6
+\newline \tab 0.0 -> 1
+\newline \tab 0.9999999996067813 -> 2
+\newline \tab 0.0 -> 3
+\newline \tab 0.0 -> 4
+\newline \tab 0.0 -> 5
+\newline \tab 3.9321864899990694E-10 -> 6
 }
 \end{flushleft}
 
 
 \begin{flushleft}
 \texttt{The probabilities of seeing each side of d\_3 are:
-\newline \tab 0.026691136667745217 -> 1
-\newline \tab 0.028357892704022745 -> 2
-\newline \tab 0.027128077618261647 -> 3
-\newline \tab 0.027127956278181584 -> 4
-\newline \tab 0.0271337269201185 -> 5
-\newline \tab 0.8635612098116704 -> 6
+\newline \tab 0.0 -> 1
+\newline \tab 0.0 -> 2
+\newline \tab 0.0 -> 3
+\newline \tab 0.0 -> 4
+\newline \tab 0.0 -> 5
+\newline \tab 1.0 -> 6
 }
 \end{flushleft}
 
