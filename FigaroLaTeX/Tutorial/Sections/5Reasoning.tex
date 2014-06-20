@@ -179,9 +179,11 @@ The value of \texttt{SwitchingFlip} is that now we can change which appearance g
 \newline \tab val other = unawarded(random.nextInt(numAppearances $-$ 1)) 
 \newline \tab ProposalScheme(awarded(0).award, other.award)
 \newline \tab case 0 => 
-\newline \tab ProposalScheme(appearances(random.nextInt(numAppearances)).award)
+\newline \tab ProposalScheme(appearances(random.nextInt(numAppearances))
+\newline \tab .award)
 \newline \tab case \_ => 
-\newline \tab ProposalScheme(awarded(random.nextInt(awarded.length)).award)
+\newline \tab ProposalScheme(awarded(random.nextInt(awarded.length))
+\newline \tab .award)
 \newline \}
 \newline \}
 }
