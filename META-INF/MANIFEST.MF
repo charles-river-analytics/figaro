@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Figaro
 Bundle-SymbolicName: com.cra.figaro
-Bundle-Version: 2.2.1
+Bundle-Version: 2.2.2
 Bundle-ClassPath: .,
  lib/jsci-core.jar
 Export-Package: com.cra.figaro.algorithm,
