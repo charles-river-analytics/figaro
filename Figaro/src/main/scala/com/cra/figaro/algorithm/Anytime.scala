@@ -149,9 +149,12 @@ trait Anytime extends Algorithm {
   
   def shutdown {
     cleanUp()
-    runner ! "kill"
-    system.stop(runner)
-    system.shutdown
+    if (running)
+    {
+    	runner ! "kill"
+    	system.stop(runner)
+    	system.shutdown
+    }
 //    println("Shutdown ANYTIME")
   }
 }
