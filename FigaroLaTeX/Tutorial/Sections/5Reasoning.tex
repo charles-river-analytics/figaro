@@ -179,9 +179,11 @@ The value of \texttt{SwitchingFlip} is that now we can change which appearance g
 \newline \tab val other = unawarded(random.nextInt(numAppearances $-$ 1)) 
 \newline \tab ProposalScheme(awarded(0).award, other.award)
 \newline \tab case 0 => 
-\newline \tab ProposalScheme(appearances(random.nextInt(numAppearances)).award)
+\newline \tab ProposalScheme(appearances(random.nextInt(numAppearances))
+\newline \tab .award)
 \newline \tab case \_ => 
-\newline \tab ProposalScheme(awarded(random.nextInt(awarded.length)).award)
+\newline \tab ProposalScheme(awarded(random.nextInt(awarded.length))
+\newline \tab .award)
 \newline \}
 \newline \}
 }
@@ -208,7 +210,7 @@ In general, the proposal scheme argument of \texttt{MetropolisHastings} is actua
 
 \begin{flushleft}
 \texttt{val alg =
-\newline \tab MetropolisHastings(10000, chooseScheme, 1000, appearance1.award, appearance2.award, appearance3.award) }
+\newline \tab MetropolisHastings(200000, chooseScheme, 5000, appearance1.award, appearance2.award, appearance3.award) }
 \end{flushleft}
 
 In some cases, it might be useful to have the decision as to which later elements to propose depend on the proposed values of earlier elements. \texttt{TypedScheme} is provided for this purpose. It has a type parameter \texttt{T} which is the value type of the first element to be proposed. The first argument to \texttt{TypedScheme} is a function of zero arguments that returns an \texttt{Element[T]}. The second argument is a function from a value of type \texttt{T} to an \texttt{Option[ProposalScheme]}. An \texttt{Option[Proposal\-Scheme]}, as its name implies, is an optional proposal scheme. It can take the value \texttt{None}, meaning that there is no proposal scheme, or the value \texttt{Some(ps)}, where \texttt{ps} is a proposal scheme. This allows the proposed value of the first element to determine, first of all, whether there will be any more proposals, and if there will be more proposals, what the subsequent proposal scheme will be.
@@ -360,7 +362,7 @@ In Figaro, the Metropolis-Hastings based simulated annealing is instantiated ver
 \newline \tab \textasciicircum\textasciicircum(p1.smokes, p2.smokes).setConstraint(smokingInfluence)
 \newline \}
 \newline 
-\newline val mhAnnealer = MetropolisHastingsAnnealer(ProposalScheme.default, Schedule.default(2.0)) }
+\newline val mhAnnealer = MetropolisHastingsAnnealer(ProposalScheme.default, Schedule.default(3.0)) }
 \end{flushleft}
 
 The second argument is an instance of a \texttt{Schedule} class (similar to a \texttt{ProposalScheme}), and contains the method that slowly moves the sampler towards a more likely state. It is defined as:
@@ -389,9 +391,9 @@ Earlier we saw that variable elimination does not work for all models. One way t
 \texttt{import com.cra.figaro.language.\_
 \newline import com.cra.figaro.algorithm.factored.\_
 \newline 
-\newline class Source(val name: Name)
+\newline class Source(val name: String)
 \newline 
-\newline abstract class Sample(val name: Name) \{
+\newline abstract class Sample(val name: String) \{
 \newline \tab val fromSource : Element[Source]
 \newline \}
 \newline 
@@ -450,11 +452,11 @@ Depending on the structure of which samples can come from which sources, we migh
 \texttt{class Pair(val source: Source, val sample: Sample) \{ 
 \newline \tab val universe = new Universe(List(sample.fromSource)) 
 \newline \tab val isTheRightSource =
-\newline \tab Apply(sample.fromSource, (s: Source) => s == source)( "", universe)
-\newline \tab val rightSourceDistance = Normal(0.0, 1.0)("", universe)
-\newline \tab val wrongSourceDistance = Uniform(0.0, 10.0)("", universe)
+\newline \tab Apply(sample.fromSource, (s: Source) => s == source)("isTheRightSource", universe)
+\newline \tab val rightSourceDistance = Normal(0.0, 1.0)("rightSourceDistance", universe)
+\newline \tab val wrongSourceDistance = Uniform(0.0, 10.0)("wrongSourceDistance", universe)
 \newline \tab val distance =
-\newline \tab If(isTheRightSource, rightSourceDistance, wrongSourceDistance)("", universe)
+\newline \tab If(isTheRightSource, rightSourceDistance, wrongSourceDistance)("distance", universe)
 \newline \} }
 \end{flushleft}
 
@@ -462,18 +464,17 @@ Observe that each element created in the Pair class is added to the universe of 
 with a function that provides the algorithm to use to compute the probability of evidence in a dependent universe, as follows:
 
 \begin{flushleft}
-\texttt{pair1.distance.addCondition((d: Double) => d > 0.5 \&\& d < 0.6) 
-\newline pair2.distance.addCondition((d: Double) => d > 1.5 \&\& d < 1.6) 
-\newline pair3.distance.addCondition((d: Double) => d > 2.5 \&\& d < 2.6) 
-\newline pair4.distance.addCondition((d: Double) => d > 0.5 \&\& d < 0.6)
-\newline 
-\newline def peAlg(universe: Universe) =
-\newline \tab probEvidenceSampler(100000)(universe)
-\newline val alg = VariableElimination(
-\newline \tab List(pair1.universe, pair2.universe, pair3.universe, pair4.universe),
-\newline peAlg \_, ssample1.fromSource
-\newline )
-}
+\texttt{val evidence1 = NamedEvidence("distance", Condition((d: Double) => d > 0.5 \&\& d < 0.6))
+\newline val evidence2 = NamedEvidence("distance", Condition((d: Double) => d > 1.5 \&\& d < 1.6))
+\newline val evidence3 = NamedEvidence("distance", Condition((d: Double) => d > 2.5 \&\& d < 2.6))
+\newline val evidence4 = NamedEvidence("distance", Condition((d: Double) => d > 0.5 \&\& d < 0.6))
+\newline val ue1 = (pair1.universe, List(evidence1))
+\newline val ue2 = (pair2.universe, List(evidence2))
+\newline val ue3 = (pair3.universe, List(evidence3))
+\newline val ue4 = (pair4.universe, List(evidence4))
+\newline def peAlg(universe: Universe, evidence: List[NamedEvidence[\_]]) = () => 
+\newline ProbEvidenceSampler.computeProbEvidence(100000, evidence)(universe)
+\newline val alg = VariableElimination(List(ue1, ue2, ue3, ue4), peAlg \_, sample1.fromSource)}
 \end{flushleft}
 
 
