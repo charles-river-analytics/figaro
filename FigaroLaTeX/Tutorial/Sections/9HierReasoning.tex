@@ -82,7 +82,7 @@ We have introduced a new element here: \texttt{Dist}. \texttt{Dist} is a combina
 \newline universe.assertEvidence(List(NamedEvidence("v1.size", Observation('medium))))
 \newline val isPickup = Apply(myVehicle, (v: Vehicle) =>
 \newline v.isInstanceOf[Pickup])
-\newline val alg = VariableElimination(isPickup)
+\newline val alg = VariableElimination(isPickup, name)
 \newline alg.start()}
 \end{flushleft}
 
