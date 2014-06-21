@@ -14,8 +14,6 @@
 package com.cra.figaro.algorithm
 
 import com.cra.figaro.language._
-import actors._
-import Actor._
 
 /**
  * Anytime algorithms that compute most likely values of elements.

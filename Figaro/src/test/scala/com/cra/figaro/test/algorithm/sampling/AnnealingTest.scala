@@ -74,6 +74,9 @@ class AnnealingTest extends WordSpec with Matchers with PrivateMethodTester {
       val temp2 = annealer2.getTemperature
 
       temp2 should be > temp1
+      
+      annealer1.kill
+      annealer2.kill
     }
 
     "increase the temperature with more iterations" in {
