@@ -50,20 +50,11 @@ object Entrepreneur {
 
   def main(args: Array[String]) {
 
-    val ve_before = VariableElimination(value)
-    ve_before.start()
-
     val alg = DecisionVariableElimination(List(value), found)
 
     alg.start()
 
     alg.setPolicy(found)
-
-    val ve_after = VariableElimination(value)
-    ve_after.start()
-
-    println("Expected Utility Before Optimization: " + ve_before.computeExpectation(value, (t: Double) => t))
-    println("Expected Utility After Optimization: " + ve_after.computeExpectation(value, (t: Double) => t))
 
     println("Optimal Decisions: ")
     println("0 -> " + found.getPolicy(0) + ", (" + alg.getUtility(0, false).norm + " vs " + alg.getUtility(0, true).norm + ")")
