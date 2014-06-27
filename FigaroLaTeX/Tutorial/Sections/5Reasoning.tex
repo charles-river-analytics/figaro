@@ -98,6 +98,41 @@ Once you are done with the results of variable elimination, you can call \texttt
 
 These methods \texttt{start, kill,  distribution, probability}, and \texttt{ex\-pectation} are a uniform interface to all reasoning algorithms that compute the conditional probability of query variables given evidence. We will see below how this interface is extended for anytime algorithms.
 
+\section{Approximate inference using belief propagation}
+
+Figaro also contains another factored inference algorithm called belief propagation (BP). BP is a message passing algorithm on a factor graph (a bipartite graph of variables and factors). On factor graphs with no loops, BP is an exact inference algorithm. On graphs with loops (loopy factor graph), BP can be used to perform approximate inference on the target variables. Note that in Figaro, the way that Chains are converted to factors always produces a loopy factor graph, even if the actual definition of the model contains no loops. Therefore, most inference with BP in Figaro is approximate.
+
+The algorithm works in three steps:
+\begin{enumerate}
+\item Expand the universe to include all elements generated in any possible world.
+\item Convert each element into a factor and create a factor graph from the factors
+\item Pass messages between the factor nodes and variables nodes for the specified number of iterations
+\item Queries are answered on the targets using the posterior distributions computed at each variable node
+\end{enumerate}
+
+Steps 1 and 2 operate in the same manner as variable elimination, and the same restrictions on factors also applies. Just like in variable elimination, you need to specify a set of query elements whose conditional probability you want to compute given the evidence. For example,
+
+\begin{flushleft}
+\texttt{import com.cra.figaro.language.\_
+\newline import com.cra.figaro.algorithm.factored.\_
+\newline import com.cra.figaro.algorithm.factored.beliefpropagation.\_
+\newline 
+\newline val e1 = Select(0.25 -> 0.3, 0.25 -> 0.5, 0.25 -> 0.7, 0.25 -> 0.9)
+\newline val e2 = Flip(e1)
+\newline val e3 = If(e2, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
+\newline e3.setCondition((i: Int) => i == 2)
+\newline 
+\newline val bp = BeliefPropagation(100, e2)}
+\end{flushleft}
+
+This will create a \texttt{BeliefPropagation} object that will pass messages on a factor graph created from the universe containing \texttt{e1, e2, and e3}. The first argument is the number of iterations to pass messages between the factor and variable nodes. However, it won't perform BP immediately. To tell it to run the algorithm, you have to say
+
+\begin{flushleft}
+\texttt{bp.start()}
+\end{flushleft}
+
+When this call terminates, you can use \texttt{bp} to answer the same queries as defined in the variable elimination section.
+
 \section{Importance sampling}
 
 Figaro's importance sampling algorithm is actually a combination of importance and rejection sampling. It uses a simple forward sampling approach. When it encounters a condition, it checks to see if the condition is satisfied and rejects if it is not. When it encounters a constraint, it multiplies the weight of the sample by the value of the constraint.
