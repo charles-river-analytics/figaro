@@ -60,14 +60,14 @@ From a practical standpoint, learning a parameter with expectation maximization 
 \newline learningAlgorithm.start
 \newline learningAlgorithm.kill
 \newline 
-\newline val coin = fairness.getLearnedElement
+\newline val coin = Flip(fairness.MAPValue)
 \newline println("The probability of a coin with this fairness showing
 'heads' is: ")
 \newline println(coin.prob)
 }
 \end{flushleft}
 
-After the algorithm has finished running, we can retrieve an element learned from the parameter by using \texttt{fairness.getLearnedEle\-ment}. The element \texttt{coin} is a \texttt{Flip}, where the probability of producing true is determined from the data we observed above. It is important to make a distinction between parameterized elements and learned elements. Parameterized elements are compound elements and serve as our means of supplying data about a parameter. A learned element is an atomic element with arguments learned from the data we have observed.
+After the algorithm has finished running, we can retrieve an element learned from the parameter by using \texttt{Flip(fairness.MAPValue)}. The element \texttt{coin} is a \texttt{Flip}, where the probability of producing true is determined from the data we observed above. It is important to make a distinction between parameterized elements and learned elements. Parameterized elements are compound elements and serve as our means of supplying data about a parameter. A learned element is an atomic element with arguments learned from the data we have observed.
 
 After running the program, we see:
 
@@ -79,8 +79,8 @@ After running the program, we see:
 We may want to make further explorations about the learned model. For instance, if we wanted to know the probability that two flips of this coin show the same side, we could use
 
 \begin{flushleft}
-\texttt{val t1 = fairness.getLearnedElement 
-\newline val t2 = fairness.getLearnedElement 
+\texttt{val t1 = Flip(fairness.MAPValue) 
+\newline val t2 = Flip(fairness.MAPValue) 
 \newline val equal = t1 === t2}
 \end{flushleft}
 
@@ -166,13 +166,13 @@ Just as in the fair coin example, we create an expectation maximization algorith
 \newline val algorithm = ExpectationMaximization(numberOfIterations, parameters: \_*)
 \newline algorithm.start
 \newline 
-\newline val die1 = fairness1.getLearnedElement(outcomes) 
-\newline val die2 = fairness2.getLearnedElement(outcomes) 
-\newline val die3 = fairness3.getLearnedElement(outcomes)
+\newline val die1 = Select(fairness1.MAPValue.view(0,fairness1.MAPValue.size).toList, outcomes)  
+\newline val die2 = Select(fairness2.MAPValue.view(0,fairness2.MAPValue.size).toList, outcomes) 
+\newline val die3 = Select(fairness3.MAPValue.view(0,fairness3.MAPValue.size).toList, outcomes) 
 }
 \end{flushleft}
 
-The code block above will retrieve learned elements from the parameters. Note that for a Dirichlet parameter, a list of outcomes must be supplied as an argument to \texttt{getLearnedElement}. This is because the number of concentration parameters is may vary, and the type of the outcomes is not fixed. Running this code results in the following output, in which we see the model has estimated the probabilities of each value for each die. If one examines the full data declaration in the example code, it is quite easy to see that there are only three observed values of the sum of the die (3, 7 and 8), so the learning algorithm has correctly inferred that the most likely values of the die are 1, 2 and 6, respectively.
+The code block above will retrieve learned elements from the parameters. Note that for a Select, a list of outcomes must be supplied as an argument to along with their corresponding probabilities, which is the array returned by \texttt{MAPValue}. This is because the number of concentration parameters is may vary, and the type of the outcomes is not fixed. Running this code results in the following output, in which we see the model has estimated the probabilities of each value for each die. If one examines the full data declaration in the example code, it is quite easy to see that there are only three observed values of the sum of the die (3, 7 and 8), so the learning algorithm has correctly inferred that the most likely values of the die are 1, 2 and 6, respectively.
 
 \begin{flushleft}
 \texttt{The probabilities of seeing each side of d\_1 are:

@@ -59,6 +59,7 @@ object FigaroBuild extends Build {
       "asm" % "asm" % "3.3.1",
       "org.apache.commons" % "commons-math3" % "3.3",
       "net.sf.jsci" % "jsci" % "1.2",
+      "com.typesafe.akka" %% "akka-actor" % "2.3.3",
       "org.scalatest" %% "scalatest" % "2.1.7" % "test"
     ))
     .settings(parallelExecution in Test := false)

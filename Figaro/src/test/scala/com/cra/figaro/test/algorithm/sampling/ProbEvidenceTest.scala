@@ -262,7 +262,9 @@ class ProbEvidenceTest extends WordSpec with Matchers {
       Universe.createNew()
       val c = NonCachingChain(Uniform(0.2, 1.0), (d: Double) => Flip(d))
       val alg = ProbEvidenceSampler(1000000, List())
-      alg.start()
+      alg.start
+      alg.stop
+      alg.kill
     }
   }
 

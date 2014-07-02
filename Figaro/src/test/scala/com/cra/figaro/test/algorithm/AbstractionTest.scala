@@ -347,6 +347,7 @@ class AbstractionTest extends WordSpec with Matchers {
        * Therefore flip should be around 0.4 for true.
        */
       ve.probability(flip, (b: Boolean) => b) should be(0.4 +- 0.02)
+      ve.kill
     }
   }
 }
