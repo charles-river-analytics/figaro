@@ -9,7 +9,7 @@ object FigaroBuild extends Build {
   override val settings = super.settings ++ Seq(
     organization := "com.cra.figaro",
     description := "Figaro: a language for probablistic programming",
-    version := "2.2.1.0",
+    version := "2.2.2.0",
     scalaVersion := "2.10.4",
     //scalaVersion := "2.11.1",
     crossScalaVersions := Seq("2.10.4", "2.11.1"),
@@ -47,7 +47,7 @@ object FigaroBuild extends Build {
     .dependsOn(figaro, examples)
     .aggregate(figaro, examples)
 
-  lazy val figaro = Project("figaro", file("Figaro"))
+  lazy val figaro = Project("Figaro", file("Figaro"))
     .settings (scalacOptions ++= Seq(
 	"-feature",
 	"-language:existentials",
@@ -59,6 +59,7 @@ object FigaroBuild extends Build {
       "asm" % "asm" % "3.3.1",
       "org.apache.commons" % "commons-math3" % "3.3",
       "net.sf.jsci" % "jsci" % "1.2",
+      "com.typesafe.akka" %% "akka-actor" % "2.3.3",
       "org.scalatest" %% "scalatest" % "2.1.7" % "test"
     ))
     .settings(parallelExecution in Test := false)
@@ -67,6 +68,6 @@ object FigaroBuild extends Build {
     .settings(jarName in assembly := "figaro_" + scalaVersion.value + "-" + version.value + "-fat.jar")
     .settings(assemblyOption in assembly ~= { _.copy(includeScala = false) })
       
-  lazy val examples = Project("figaro-examples", file("FigaroExamples"))
+  lazy val examples = Project("FigaroExamples", file("FigaroExamples"))
     .dependsOn(figaro)
 }

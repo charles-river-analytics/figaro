@@ -86,7 +86,7 @@ object GraphDecision {
 
     println("Running MH Before...")
     val ImpBefore = MetropolisHastings(20000, ProposalScheme.default, 5000, GraphUtil)
-    ImpBefore.run()
+    ImpBefore.start()
     val BeforeExp = ImpBefore.computeExpectation(GraphUtil, (t: Double) => t)
 
     println("Computing Optimal Decision...")
@@ -98,7 +98,7 @@ object GraphDecision {
 
     println("Running MH After...")
     val ImpAfter = MetropolisHastings(20000, ProposalScheme.default, 5000, GraphUtil)
-    ImpAfter.run()
+    ImpAfter.start()
     val AfterExp = ImpAfter.computeExpectation(GraphUtil, (t: Double) => t)
 
     println("Expected Utility Before Optimization: " + BeforeExp)

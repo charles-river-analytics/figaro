@@ -200,7 +200,7 @@ class ContinuousTest extends WordSpec with Matchers {
       var ss2 = 0.0
       var sc12 = 0.0
       
-     for (i <- 0 to 1000) {
+     for (i <- 0 to 10000) {
         val rand = elem.generateRandomness()
         val values = elem.generateValue(rand)
         

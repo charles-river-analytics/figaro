@@ -108,5 +108,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
     val alg = BeliefPropagation(100, universe.activeElements.toList:_*)
     alg.start
     alg.computeEvidence should be(prob +- 0.01)
+    
+    alg.kill
   }
 }
