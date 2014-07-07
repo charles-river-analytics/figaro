@@ -54,13 +54,13 @@ object FigaroBuild extends Build {
 	"-deprecation"
     ))
     .settings(libraryDependencies ++= Seq(
-      "org.scala-lang" % "scala-actors" % scalaVersion.value,
+      //"org.scala-lang" % "scala-actors" % scalaVersion.value,
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "asm" % "asm" % "3.3.1",
       "org.apache.commons" % "commons-math3" % "3.3",
       "net.sf.jsci" % "jsci" % "1.2",
-      "com.typesafe.akka" %% "akka-actor" % "2.3.3",
-      "org.scalatest" %% "scalatest" % "2.1.7" % "test"
+      "com.typesafe.akka" % "akka-actor_2.11" % "2.3.3",
+      "org.scalatest" % "scalatest_2.11" % "2.2.0"
     ))
     .settings(parallelExecution in Test := false)
     .settings(assemblySettings: _*)
