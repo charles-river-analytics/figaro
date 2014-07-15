@@ -9,10 +9,10 @@ object FigaroBuild extends Build {
   override val settings = super.settings ++ Seq(
     organization := "com.cra.figaro",
     description := "Figaro: a language for probablistic programming",
-    version := "2.2.2.0",
-    scalaVersion := "2.10.4",
-    //scalaVersion := "2.11.1",
-    crossScalaVersions := Seq("2.10.4", "2.11.1"),
+    version := "2.3.0.0",
+    scalaVersion := "2.11.1",
+    //scalaVersion := "2.10.4",
+    //crossScalaVersions := Seq("2.10.4", "2.11.1"),
     crossPaths := true,
     publishMavenStyle := true,
     pomExtra :=
@@ -54,13 +54,13 @@ object FigaroBuild extends Build {
 	"-deprecation"
     ))
     .settings(libraryDependencies ++= Seq(
-      "org.scala-lang" % "scala-actors" % scalaVersion.value,
+      //"org.scala-lang" % "scala-actors" % scalaVersion.value,
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "asm" % "asm" % "3.3.1",
       "org.apache.commons" % "commons-math3" % "3.3",
       "net.sf.jsci" % "jsci" % "1.2",
-      "com.typesafe.akka" %% "akka-actor" % "2.3.3",
-      "org.scalatest" %% "scalatest" % "2.1.7" % "test"
+      "com.typesafe.akka" % "akka-actor_2.11" % "2.3.3",
+      "org.scalatest" % "scalatest_2.11" % "2.2.0"
     ))
     .settings(parallelExecution in Test := false)
     .settings(assemblySettings: _*)
