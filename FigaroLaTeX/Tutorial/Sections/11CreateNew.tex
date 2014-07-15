@@ -118,33 +118,9 @@ This creates an anonymous subclass of \texttt{OneTimeProbQuerySampler} in which 
 
 \section{Learning algorithms}
 
-This section describes how to use learning algorithms and sufficient statistics factors. Learning algorithms (using sufficient statistics) require that the sufficient statistics of a parameter are modified with the learned result. Expectation maximization uses a version of variable elimination to produce an estimate of the sufficient statistics at each iteration. This version of variable elimination is called \texttt{SufficientStatis\-ticsVariableElimination}. It relies on the \texttt{SufficientStatisticsFactor} class described in the 'Parameters and Parameterized Elements' section.
+Learning algorithms (using sufficient statistics) require that the sufficient statistics of a parameter are modified with the learned result. The EM algorithm is defined in the base class GeneralizedEM, which accepts any \texttt{ProbQueryAlgorithm} inference algorithm as an argument. Figaro provides implementations of expectation maximization using algorithms like importance sampling, Metropolis-Hastings and belief propagation for the estimates the sufficient statistics of the target parameters using an inference algorithm like importance sampling or belief propagation. To complete the expectation step, the expected sufficient statistics factors must be retrieved for all of the parameters. This can be accomplished by calling the method \texttt{distribution} from the inference algorithm, then using \texttt{distributionToStatistics}, which is implemented by parameterized elements.
 
-The semiring used by \texttt{SufficientStati\-sticsVariableElimination} is called \texttt{SufficientStatisticsSemiring}. This provides operations on sufficient statistics which can be used by factored algorithms like variable elimination.
-
-\begin{flushleft}
-\texttt{val semiring = new SufficientStatisticsSemiring(parameterMap)
-\newline val statFactor = new
-\newline \tab SufficientStatisticsFactor(parameterMap)
-}
-\end{flushleft}
-
-The only other requirement to use the parameter mapping is to create an instance of the sufficient statistics factor class inside the algorithm, call the \texttt{getFactors} method, and clear the factors when the algorithm is finished. This is important, because otherwise the factors will be cached and will not reflect changes in parameter values unless they are regenerated. The factored can be cleared by using the \texttt{removeFactors} method
-
-At the end of the inference algorithm, it must provide the sufficient statistics factors for all of the parameters. This can be accomplished by calling the method get on the factor resulting from inference. For example, in variable elimination, we can do \texttt{result = finalFactor.get(List())} to retrieve the resulting sufficient statistics.
-
-\texttt{SufficientStat\-isticsVariableElimination} does not change the values of parameters. It only produces an estimate of the sufficient statistics given the observed data. The actual modification of parameter elements is handled in the maximization step of expectation maximization, using the maximize method defined by the parameter. Other learning algorithms might use the sufficient statistics produced by variable elimination in a different way. The important part is to choose the hyperparameter values in \texttt{Parameter} correctly, and use methods to modify them inside the learning algorithm.
-
-However, if an inference algorithm like \texttt{SufficientStatisticsVari\-ableElimination} is to be used as part of the learning algorithm, then the parameter mapping must be derived from the input parameters to their respective sufficient statistics. We have already seen in several places where this parameter mapping is used. It is inside a learning algorithm that the mapping is actually created. This is
-easy to do, as shown in the \texttt{ExpectationMaximization} class:
-
-\begin{flushleft}
-\texttt{protected val paramMap : immutable.Map[Parameter[\_],Seq[Double]] = 
-\newline immutable.Map(targetParameters.map(p => p -> p.zeroSufficientStatistics):\_*)
-}
-\end{flushleft}
-
-This code simply maps each parameter to its sufficient statistics. This map can now be provided as an argument to an inference algorithm to reason about the parameters and their sufficient statistics.
+\texttt{GeneralizedEM} does not directly change the values of parameters. It only produces an estimate of the sufficient statistics given the observed data. The actual modification of parameter elements is handled in the maximization step of expectation maximization, using the maximize method defined by the parameter. 
 
 \section{Allowing extension to new element classes}
 

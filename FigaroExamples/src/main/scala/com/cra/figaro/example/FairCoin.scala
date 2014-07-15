@@ -58,7 +58,7 @@ object CoinExample {
         }
     }
 
-    val learningAlgorithm = ExpectationMaximization(fairness)
+    val learningAlgorithm = EMWithMH(10000, 100, ProposalScheme.default, c.fairness)
     learningAlgorithm.start
     learningAlgorithm.kill
     /*
