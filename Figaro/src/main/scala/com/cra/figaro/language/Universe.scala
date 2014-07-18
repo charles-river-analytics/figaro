@@ -150,7 +150,7 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
   private[figaro] def registerUses[T, U](user: Element[T], used: Element[U]): Unit = {
     if (!(myUses contains user)) myUses += user -> Set()
     if (!(myUsedBy contains used)) myUsedBy += used -> Set()
-    if (used.universe == this && !(myUsedBy(used) contains user)) {
+    if (!(myUsedBy(used) contains user)) {
       myUses(user) += used
       myUsedBy(used) += user
       myRecursiveUsedBy.clear
@@ -159,12 +159,10 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
   }
 
   private[figaro] def deregisterUses[T, U](user: Element[T], used: Element[U]): Unit = {
-    if (used.universe == this) {
-      if (myUses.contains(user)) myUses(user) -= used
-      if (myUsedBy.contains(used)) myUsedBy(used) -= user
-      myRecursiveUsedBy.clear
-      myRecursiveUses.clear
-    }
+    if (myUses.contains(user)) myUses(user) -= used
+    if (myUsedBy.contains(used)) myUsedBy(used) -= user
+    myRecursiveUsedBy.clear
+    myRecursiveUses.clear
   }
 
   private[language] def activate(element: Element[_]): Unit = {
@@ -265,6 +263,9 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
    * This avoids memory management problems.
    */
   def register(collection: Shrinkable[Element[_]]): Unit = registeredMaps += collection
+  
+  /** Deregister a map of elements. */
+  def deregister(collection: Shrinkable[Element[_]]): Unit = registeredMaps -= collection
 
   // Immediately register the constrained and conditioned elements
   register(myConditionedElements)
@@ -276,6 +277,9 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
    */
   def registerUniverse(map: Map[Universe, _]): Unit = registeredUniverseMaps += map
 
+  /** Deregister a map that uses this universe as a key. */
+  def deregisterUniverse(map: Map[Universe, _]): Unit = registeredUniverseMaps -= map
+  
   /**
    * Register algorithms that use this universe.
    * When the Universe is cleared, all previous algorithms are no longer valid,
