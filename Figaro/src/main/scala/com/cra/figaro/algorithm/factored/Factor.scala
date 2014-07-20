@@ -309,7 +309,7 @@ class Factor[T](val variables: List[Variable[_]]) {
     val resultWidth = contents.values.map(_.toString.length).foldLeft(4)(_ max _) + 2
     def addBorderRow() {
       for { width <- valueWidths } { result.append("|" + "-" * width) }
-      result.append("|" + "-" * resultWidth + "|\n") //   
+      result.append("|" + "-" * resultWidth + "|\n") //
     }
     def addCentered(string: String, width: Int) {
       val buffer = (width - string.length) / 2
@@ -339,6 +339,133 @@ class Factor[T](val variables: List[Variable[_]]) {
     result.toString
   }
 
+ /**
+   * Returns a new factor identical to this factor
+   */
+  def copy():Factor[T] = {
+    val res = new Factor[T](variables)
+    for (ind <- this.allIndices) yield {
+      res.set(ind, this.get(ind))
+    }
+    res
+  }
+
+  /**
+   * Slice: produces a factor defined by clamping some of this factor's arguments to the passed variable,value pairs
+   *
+   * vars - list of variables to condition on
+   * varValues - the actual value  of the variables (i.e true/false, 'rainy ...)
+   */
+  def slice(vars:List[Variable[_]], varValues:List[Any]):Factor[T] = {
+    // make index map Map(vari-> vari_val_indx) to be consistent with factor representation
+    // Pick out the variables included in this factor
+    val varsMap = Map[Int,Int]()
+    for (variPair <- (vars.zip(varValues).filter((x) => this.variables contains x._1))) {
+      val idx = variPair._1.range.indexWhere((x)=>x.value == variPair._2)
+      if (idx != -1) {
+        varsMap(this.variables.indexOf(variPair._1)) = idx
+      }
+
+    }
+
+    if (!varsMap.isEmpty) // if there are variables to slice
+      sliceHelper(varsMap)
+    else {
+      this.copy
+    }
+
+  }
+
+  def slice(vars:scala.collection.immutable.Map[Variable[_], Any]):Factor[T] = {
+    // make map of indices, Map(vari_indx -> vari_val_indx) to be consistent with factor representation
+    // Pick out the variables included in this factor
+    val varsMap:Map[Int ,Int] = Map[Int,Int]() // Map (idx_of_variable -> idx_of_variable's_value)
+    for ((k,v) <- vars.filterKeys((k) => this.variables contains k)) {
+      val valIdx =  k.range.indexWhere((x)=>x.value == v)
+      if(valIdx != -1)
+      varsMap(variables.indexOf(k)) =valIdx
+    }
+    // Condition the factor
+    if(!(varsMap.isEmpty))
+      sliceHelper(varsMap)
+    else
+      this.copy
+  }
+
+
+
+  /**
+   * Input:
+   * variables:  a map of variable's index -> index of the value of the variable; clamps these variable's values
+   * 				should already be filtered to only contain variables contained in this factor
+   * Return:
+   * new factor with the values of the variables in variables that are actually in the factor fixed
+   */
+
+  private def sliceHelper(vars:Map[Int,Int]):Factor[T] = {
+    // vars: Map(vari_idx -> value_idx)
+    val res:Factor[T] = new Factor(this.variables)
+    var keepValues = this.allIndices
+    for ((k,v) <- vars)
+    {
+      keepValues = keepValues.filter((factorIdxs) => factorIdxs(k) == v) // searches all of the indices to find the ones with the right variable's value
+    }
+    keepValues.foreach((kv) => res.set(kv,this.get(kv))) // set the result factor's values
+    res
+  }
+
+  /**
+   * Returns the maximizing value of the variable(s)
+   *
+   * @params
+   * greaterThan(A,B): comparison function.  Returns true iff A > B
+   * @return
+   * List((variable -> variable_value))
+   */
+  def argMax(greaterThan:(T,T)=>Boolean):List[Pair[Variable[_],Any]] = {
+    // error checks - empty factor
+    if (this.variables.size == 0)
+      return List()
+
+
+    var maxFactVal = this.contents.values.head // initialize to first value in the factor
+    var maxVariValsIdx = this.contents.keys.head  // initialize to first set of keys
+    // Find maximum value and track the keys
+    for ((k,v) <- this.contents)
+    {
+      if(greaterThan(v,maxFactVal))
+      {
+        maxFactVal = v
+        maxVariValsIdx = k
+      }
+    }
+
+    val variVals = for ((idx,vari) <- maxVariValsIdx.zip(this.variables)) yield  (vari, vari.range(idx).value) // get the values for the variables
+    variVals
+
+  }
+
+  /**
+   * Returns the maximum value of the factor
+   *
+   * @params
+   * greaterThan(A,B): comparison function.  Returns true iff A > B
+
+   */
+  def max(greaterThan:(T,T)=>Boolean):T = {
+    var maxFactVal = this.contents.values.head // initialize to first value in the factor
+    // Find maximum value and track the keys
+    for ((k,v) <- this.contents)
+    {
+      if(greaterThan(v,maxFactVal))
+      {
+        maxFactVal = v
+      }
+    }
+
+    maxFactVal
+  }
+
 }
 
 object Factor {
@@ -350,4 +477,18 @@ object Factor {
     result.set(List(), semiring.one)
     result
   }
+  /**
+   * Copy Constructor
+   * Construct a new Factor by setting all of the new Factor's values to the
+   * same values as the parameter Factor
+   */
+  def apply(f:Factor[_]):Factor[_] = f.copy
+
+  /**
+   * Implicit conversion of a Factor of Doubles to a DoubleFactor, allowing standard Double operators
+   * to be applied to it.
+   */
+
+  implicit def toDoubleFactor(factor:Factor[Double]):DoubleFactor = new DoubleFactor(factor)
+
 }

@@ -19,3 +19,6 @@ project/plugins/project/
 .cache
 .classpath
 .project
+.iml
+.idea/
+

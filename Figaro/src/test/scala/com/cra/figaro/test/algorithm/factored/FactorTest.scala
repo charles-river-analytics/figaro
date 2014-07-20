@@ -1108,4 +1108,43 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
       }
     }
   }
+  
+  // Added by Kathryn Rodgers
+  "Copying a Factor" when {
+    "using copy constructor" should {
+      "return a new factor with the same variables in same order with same values" in {
+
+        val v1 = Select(0.3 -> 1, 0.2 -> 2, 0.5 -> 3)
+        val v2 = Select(0.5 -> 4, 0.5 -> 5)
+        val v3 = Inject(v1, v2)
+        Values()(v3)
+        val List(factor) = ProbFactor.make(v3)
+        val fCopy = Factor(factor)
+
+        factor.allIndices should contain theSameElementsInOrderAs(fCopy.allIndices)
+        for(ind <- factor.allIndices)
+          factor.get(ind) should equal(fCopy.get(ind))
+
+
+
+      }
+    }
+
+    "using a copy function" should {
+      "return a new factor with the same variables in same order with same values" in {
+
+        val v1 = Select(0.3 -> 1, 0.2 -> 2, 0.5 -> 3)
+        val v2 = Select(0.5 -> 4, 0.5 -> 5)
+        val v3 = Inject(v1, v2)
+        Values()(v3)
+        val List(factor) = ProbFactor.make(v3)
+        val fCopy = factor.copy
+
+        factor.allIndices should contain theSameElementsInOrderAs(fCopy.allIndices)
+        for(ind <- factor.allIndices)
+          factor.get(ind) should equal(fCopy.get(ind))
+      }
+   
+    }
+  }
 }
