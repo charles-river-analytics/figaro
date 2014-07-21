@@ -72,6 +72,11 @@ abstract class FactoredFrontier(static: Universe, initial: Universe, transition:
     
     LazyValues.clear(previousUniverse)
     bp.kill()
+    
+    /*
+     * We don't want to clear the static universe given to us in the constructor, as this would kill the FF algorithm.
+     * Note that this reference to the original static universe is also needed so that the garbage collector does not clear it.
+     */
     if(previousStatic != static) previousStatic.clear() else LazyValues.clear(previousStatic)
     
     currentUniverse = transition(currentStatic, dummyUniverse)
