@@ -169,6 +169,17 @@ class DiscreteTest extends WordSpec with Matchers {
       Universe.createNew()
       Poisson(0.9).toString should equal("Poisson(0.9)")
     }
+    
+    "calculate an accurate density for a large parameter" in {
+      val tolerance = 0.0001
+      val p1 = Poisson(50)
+      val d1 = p1.density(25)
+      d1 should equal (0.00010873 +- tolerance)
+      
+      val p2 = Poisson(100)
+      val d2 = p2.density(50)
+      d2 should equal (0.00000015 +- tolerance)
+    }
   }
 
   "A CompoundAtomic" should {

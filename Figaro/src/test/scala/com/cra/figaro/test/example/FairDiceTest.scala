@@ -53,7 +53,7 @@ class FairDiceTest extends WordSpec with Matchers {
     (1, 3, 7), (2, 3, 8), (2, 3, 8), (1, 2, 7), (1, 2, 7), (1, 2, 7), (2, 3, 8),
     (1, 3, 7), (1, 3, 7), (1, 2, 3))
 
-  def Trial(p1: AtomicDirichletParameter, p2: AtomicDirichletParameter, result: Int) =
+  def Trial(p1: AtomicDirichlet, p2: AtomicDirichlet, result: Int) =
     {
       val sum = (i1: Int, i2: Int) => i1 + i2
       val die1 = Select(p1, outcomes: _*)

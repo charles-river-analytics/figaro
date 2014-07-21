@@ -21,6 +21,7 @@ import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.language._
 import JSci.maths.statistics._
 import JSci.maths.SpecialMath.gamma
+import org.apache.commons.math3.distribution.MultivariateNormalDistribution
 
 class ContinuousTest extends WordSpec with Matchers {
   "A AtomicUniform" should {
@@ -77,7 +78,7 @@ class ContinuousTest extends WordSpec with Matchers {
     }
   }
 
-  "A AtomicNormal" should {
+  "An AtomicNormal" should {
     "have value within a range with probability equal to the cumulative probability of the upper minus the lower" in {
       Universe.createNew()
       val elem = Normal(1.0, 2.0)
@@ -153,6 +154,84 @@ class ContinuousTest extends WordSpec with Matchers {
       val sel1 = Select(0.5 -> 0.5, 0.5 -> 1.0)
       val sel2 = Select(0.5 -> 2.0, 0.5 -> 3.0)
       Normal(sel1, sel2).toString should equal("Normal(" + sel1 + ", " + sel2 + ")")
+    }
+  }
+
+  "An AtomicMultivariateNormal" should {
+      val means = List(1.0, 2.0)
+      val covariances = List(List(.25, .15), List(.15, .25))
+
+//    "have value within a range with probability equal to the cumulative probability of the upper minus the lower" in {
+//      Universe.createNew()
+//      val elem = Normal(1.0, 2.0)
+//      val alg = Importance(20000, elem)
+//      alg.start()
+//      val dist = new NormalDistribution(1.0, 2.0)
+//      val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
+//      alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
+//    }
+
+//    "compute the correct probability under Metropolis-Hastings" in {
+//      Universe.createNew()
+//      val elem = Normal(1.0, 2.0)
+//      val alg = MetropolisHastings(20000, ProposalScheme.default, elem)
+//      alg.start()
+//      val dist = new NormalDistribution(1.0, 2.0)
+//      val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
+//      alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
+//    }
+
+    "have the correct density" in {
+      Universe.createNew()
+      val elem = MultivariateNormal(means, covariances)
+      val dist = new MultivariateNormalDistribution(means.toArray, covariances.map((l: List[Double]) => l.toArray).toArray)
+      
+      elem.density(List(1.5, 2.5)) should be(dist.density(Array(1.5, 2.5)) +- 0.00000001)
+    }
+
+    "produce samples with the correct means and covariances" in {
+      Universe.createNew()
+      val elem = MultivariateNormal(means, covariances)
+      
+      var n = 0
+      var sumx1 = 0.0
+      var sumx2 = 0.0
+      var ss1 = 0.0
+      var ss2 = 0.0
+      var sc12 = 0.0
+      
+     for (i <- 0 to 10000) {
+        val rand = elem.generateRandomness()
+        val values = elem.generateValue(rand)
+        
+        val x1 = values(0)
+        val x2 = values(1)
+        
+        n += 1
+        sumx1 += x1
+        sumx2 += x2
+        ss1 += x1 * x1
+        ss2 += x2 * x2
+        sc12 += x1 * x2
+      }
+      
+      val mean1 = sumx1 / n
+      val mean2 = sumx2 / n
+      val var1 = (ss1 - (sumx1 * sumx1 / n)) / (n - 1)
+      val var2 = (ss2 - (sumx2 * sumx2 / n)) / (n - 1)
+      val cov = (sc12 - (sumx1 * sumx2 / n)) / (n - 1)
+      
+      mean1 should be (means(0) +- 0.01)
+      mean2 should be (means(1) +- 0.01)
+      
+      var1 should be (covariances(0)(0) +- 0.01)
+      var2 should be (covariances(1)(1) +- 0.01)
+      cov should be (covariances(0)(1) +- 0.01)
+    }
+    
+    "convert to the correct string" in {
+      Universe.createNew()
+      MultivariateNormal(means, covariances).toString should equal( "MultivariateNormal(" + means + ",\n" + covariances + ")")
     }
   }
 

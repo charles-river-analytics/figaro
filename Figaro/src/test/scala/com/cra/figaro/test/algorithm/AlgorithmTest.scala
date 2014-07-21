@@ -17,7 +17,10 @@ import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
+import com.cra.figaro.algorithm.factored.VariableElimination
 import com.cra.figaro.language._
+import com.cra.figaro.library.atomic.continuous._
+import com.cra.figaro.library.compound._
 import scala.collection.mutable.Map
 
 class AlgorithmTest extends WordSpec with Matchers {
@@ -26,10 +29,10 @@ class AlgorithmTest extends WordSpec with Matchers {
       Universe.createNew()
       val c = Flip(0.3)
       val a = new SimpleAlgorithm(c)
-      evaluating { a.distribution(c) } should produce[AlgorithmInactiveException]
-      evaluating { a.expectation(c, (b: Boolean) => 1.0) } should produce[AlgorithmInactiveException]
-      evaluating { a.probability(c, (b: Boolean) => true) } should produce[AlgorithmInactiveException]
-      evaluating { a.probability(c, true) } should produce[AlgorithmInactiveException]
+      an [AlgorithmInactiveException] should be thrownBy { a.distribution(c) } 
+      an [AlgorithmInactiveException] should be thrownBy { a.expectation(c, (b: Boolean) => 1.0) }
+      an [AlgorithmInactiveException] should be thrownBy  { a.probability(c, (b: Boolean) => true) }
+      an [AlgorithmInactiveException] should be thrownBy  { a.probability(c, true) }
     }
 
     "allow queries after starting, stopping, and resuming" in {
@@ -59,10 +62,10 @@ class AlgorithmTest extends WordSpec with Matchers {
       val a = new SimpleAlgorithm(c)
       a.start()
       a.kill()
-      evaluating { a.distribution(c) } should produce[AlgorithmInactiveException]
-      evaluating { a.expectation(c, (b: Boolean) => 1.0) } should produce[AlgorithmInactiveException]
-      evaluating { a.probability(c, (b: Boolean) => true) } should produce[AlgorithmInactiveException]
-      evaluating { a.probability(c, true) } should produce[AlgorithmInactiveException]
+      an [AlgorithmInactiveException] should be thrownBy  { a.distribution(c) }
+      an [AlgorithmInactiveException] should be thrownBy  { a.expectation(c, (b: Boolean) => 1.0) }
+      an [AlgorithmInactiveException] should be thrownBy  { a.probability(c, (b: Boolean) => true) }
+      an [AlgorithmInactiveException] should be thrownBy  { a.probability(c, true) } 
     }
 
     "not allow start after starting" in {
@@ -70,16 +73,16 @@ class AlgorithmTest extends WordSpec with Matchers {
       val c = Flip(0.3)
       val a = new SimpleAlgorithm(c)
       a.start()
-      evaluating { a.start() } should produce[AlgorithmActiveException]
+      an [AlgorithmActiveException] should be thrownBy  { a.start() }
     }
 
     "not allow stop, resume, or kill before starting" in {
       Universe.createNew()
       val c = Flip(0.3)
       val a = new SimpleAlgorithm(c)
-      evaluating { a.stop() } should produce[AlgorithmInactiveException]
-      evaluating { a.resume() } should produce[AlgorithmInactiveException]
-      evaluating { a.kill() } should produce[AlgorithmInactiveException]
+      an [AlgorithmInactiveException] should be thrownBy  { a.stop() }
+      an [AlgorithmInactiveException] should be thrownBy  { a.resume() }
+      an [AlgorithmInactiveException] should be thrownBy  { a.kill() }
     }
 
     "allow start after starting and killing" in {
@@ -115,7 +118,7 @@ class AlgorithmTest extends WordSpec with Matchers {
       val a = new SimpleAnytime(c)
       a.start()
       a.expectation(c, (b: Boolean) => -1.0) should be > (0.0)
-      a.kill()
+      a.shutdown
     }
 
     "have a stable answer after stopping" in {
@@ -171,6 +174,43 @@ class AlgorithmTest extends WordSpec with Matchers {
       val s = new SimpleWeighted(myFlip)
       s.start()
       s.probability(myFlip, (b: Boolean) => b) should be(1.0 / 3 +- 0.001)
+    }
+  }
+  
+  "A probability of query algorithm" should {
+    "return the correct mean of an element" in {
+      Universe.createNew()
+      val u = Normal(0.5, 1)
+      val n = Normal(u, 1)
+      val imp = Importance(100000, n)
+      imp.start()
+      imp.mean(n) should be (0.5 +- 0.01)
+    }
+
+    "return the correct variance of an element" in {
+      Universe.createNew()
+      val u = Normal(0.5, 1)
+      val n = Normal(u, 1)
+      val imp = Importance(100000, n)
+      imp.start()
+      imp.variance(n) should be (2.0 +- 0.05)
+      imp.kill()
+    }
+    
+    "return the correct element representing the posterior probability distribution of an element" in {
+      val u1 = Universe.createNew()
+      val x = Flip(0.6)
+      val y = If(x, Flip(0.6), Flip(0.3))
+      y.observe(true)
+      val alg1 = VariableElimination(x)
+      alg1.start()
+      val u2 = Universe.createNew()
+      val z = alg1.posteriorElement(x, u2)
+      alg1.kill()
+      val alg2 = VariableElimination(z)
+      alg2.start()
+      alg2.probability(z, true) should be (0.75 +- 0.00000001)
+      alg2.kill()
     }
   }
 

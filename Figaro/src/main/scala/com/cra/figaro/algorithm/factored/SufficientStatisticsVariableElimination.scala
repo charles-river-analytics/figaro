@@ -50,7 +50,6 @@ class SufficientStatisticsVariableElimination(
    */
   def getFactors(neededElements: List[Element[_]], targetElements: List[Element[_]], upper: Boolean = false): List[Factor[(Double, mutable.Map[Parameter[_], Seq[Double]])]] = {
     val allElements = neededElements.filter(p => p.isInstanceOf[Parameter[_]] == false)
-
     if (debug) {
       println("Elements appearing in factors and their ranges:")
       for { element <- allElements } { 

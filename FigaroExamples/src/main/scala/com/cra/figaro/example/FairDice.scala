@@ -48,7 +48,7 @@ object DiceExample {
     (1, 3, 7), (1, 3, 7), (1, 2, 3))
 
 
-  def trial(p1: AtomicDirichletParameter, p2: AtomicDirichletParameter, result: Int) =
+  def trial(p1: AtomicDirichlet, p2: AtomicDirichlet, result: Int) =
     {
       val sum = (i1: Int, i2: Int) => i1 + i2
       val die1 = Select(p1, outcomes: _*)
@@ -84,9 +84,9 @@ object DiceExample {
     val algorithm = ExpectationMaximization(numberOfIterations, parameters: _*)
     algorithm.start
 
-    val die1 = fairness1.getLearnedElement(outcomes)
-    val die2 = fairness2.getLearnedElement(outcomes)
-    val die3 = fairness3.getLearnedElement(outcomes)
+    val die1 = Select(fairness1.MAPValue.view(0,fairness1.MAPValue.size).toList, outcomes) 
+    val die2 = Select(fairness2.MAPValue.view(0,fairness2.MAPValue.size).toList, outcomes)
+    val die3 = Select(fairness3.MAPValue.view(0,fairness3.MAPValue.size).toList, outcomes)
 
     println("The probabilities of seeing each side of d_1 are: ")
     val probsAndSides1 = die1.probs zip die1.outcomes

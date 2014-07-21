@@ -1,0 +1,128 @@
+% Chapter X
+
+\chapter{Introduction} % Chapter title
+
+\label{Introduction} % For referencing the chapter elsewhere, use \autoref{ch:name} 
+
+%----------------------------------------------------------------------------------------
+
+\section{What is Figaro?}
+
+Reasoning under uncertainty requires taking what you know and inferring what you don't know, when what you know doesn't tell you for sure what you don't know. A well established approach for reasoning under uncertainty is probabilistic reasoning. Typically, you create a probabilistic model over all the variables you're interested in, observe the values of some variables, and query others. There is a huge variety of probabilistic models, and new ones are being developed constantly. Figaro is designed to help build and reason with the wide range of probabilistic models.
+
+Developing a new probabilistic model normally requires developing a representation for the model and a reasoning algorithm that can draw useful conclusions from evidence, and in many cases also an algorithm to learn aspects of the model from data. These can be challenging tasks, making probabilistic reasoning require significant effort and expertise. Furthermore, most probabilistic reasoning tools are standalone and difficult to integrate into larger programs.
+
+Figaro is a probabilistic programming language that helps address both these issues. Figaro makes it possible to express probabilistic models using the power of programming languages, giving the modeler the expressive tools to create all sorts of models. Figaro comes with a number of built-in reasoning algorithms that can be applied automatically to new models. In addition, Figaro models are data structures in the Scala programming language, which is interoperable with Java, and can be constructed, manipulated, and used directly within any Scala or Java program.
+
+Figaro is extremely expressive. It can represent a wide variety of models, including:
+\begin{itemize}
+\item Directed and undirected models
+\item Models in which conditions and constraints are expressed by arbitrary Scala functions
+\item Models involving inter-related objects
+\item Open universe models in which we don't know what or how many objects exist
+\item Models involving discrete and continuous elements
+\item Models in which the elements are rich data structures such as trees
+\item Models with structured decisions
+\item Models with unknown parameters
+\end{itemize}
+
+Figaro provides a rich library of constructs to build these models, and provides ways to extend this library to create your own model elements.
+
+Figaro's library of reasoning algorithms is also extensible. Current built-in algorithms include:
+\begin{itemize}
+\item Exact inference using variable elimination
+\item Importance sampling
+\item Metropolis-Hastings, with an expressive language to define proposal distributions
+\item Support computation
+\item Most probable explanation (MPE) using variable elimination or simulated annealing
+\item Probability of evidence using importance sampling
+\item Particle Filtering
+\item Parameter learning using expectation maximization
+\end{itemize}
+
+Figaro provides both regular (the algorithm is run once) and anytime (the algorithm is run until stopped) versions of some of these algorithms. In addition to the built-in algorithms, Figaro provides a number of tools for creating your own reasoning algorithms.
+
+Figaro is free and is released under an open-source license (see license file). The public code
+repository for Figaro can also be found at \url{https://github.com/p2t2}
+
+
+%------------------------------------------------
+
+\section{This tutorial}
+
+This tutorial is a guide to using Figaro. Figaro is a probabilistic programming language, meaning that it can be used to create probabilistic models by writing programs in a programming language. In Figaro's case, the underlying programming language is Scala. Scala combines object-oriented and functional programming styles and is interoperable with Java, so a Figaro program can be used within a Java program directly.
+
+To be precise, Figaro is a Scala library. It defines rich data structures for probabilistic models and reasoning algorithms for reasoning with those models. Because these are Scala data structures, Figaro
+models can be created using the full power of Scala. These three things are the key to Figaro: the ability to represent an extremely large and interesting class of probabilistic models using these data structures;
+the ability to use a reasoning algorithm on these data structures to draw conclusions about the probabilistic model; and the ability to create and manipulate the data structures using Scala. This means that any function, data structure or operation in Scala or Java be incorporated into a Figaro model, giving
+the user many powerful tools for building probabilistic models.
+
+Figaro is also extensible. It is easy to create new kinds of data structures in the library, and, while developing new algorithms is a more complex task, Figaro also provides the means to develop new
+algorithms for the library.
+
+This tutorial assumes some basic knowledge of probabilistic modeling and inference to derive the maximum benefit from it. Also, while this tutorial is not an introduction to Scala, it will explain some Scala constructs as it goes along, so that the reader can make basic use of Figaro after reading the tutorial. However, to get the full benefit of Figaro, it is recommended that the reader learn some Scala. This could prove well worth the reader's while, because Scala is a language that combines elegance and practicality in a useful way. "Programming in Scala" by Martin Odersky is available for free online.
+
+After presenting a "Hello world!" example, the tutorial will begin with a discussion of Figaro's representation, i.e. the data structures that underlie the probabilistic models. Next, it will give examples
+using Scala of creating Figaro models. It will then describe how to use the built-in reasoning algorithms, including a brief discussion of probabilistic programming for dynamic models, decision networks,
+parameter learning and hierarchical reasoning. The last two sections of the tutorial are geared towards users who want to extend Figaro, first describing how to create new modeling data structures and then describing how to create new algorithms. All of the code for the examples presented in this tutorial can be
+found with the set of examples distributed with Figaro.
+
+\section{Installation}
+
+To run Figaro, you will first need Scala. The Scala compiler can either be run from the command line or within an Integrated Development Environment (IDE). Available IDEs that support Scala development include Eclipse and IntelliJ Idea. NetBeans also has a Scala plugin but it does not appear to support recent versions of Scala. In the following guide, I'm going to show you how to obtain Scala and Figaro and run Scala programs that use Figaro from the command line. I'm not going to provide instructions for specific IDEs. Please see the documentation of your IDEs and Scala plugins for details of how to include the Figaro library.
+
+\begin{enumerate}
+\item To get started with Scala, download Scala from http://scala-lang.org/download/. You will need either Scala version 2.10.0 or later, or Scala version 2.11.0 or later, to run Figaro. Follow the Scala installation instructions at http://scala-lang.org/download/install.html and make sure you can run, compile, and execute the "Hello World" program provided in the documentation.
+\item The next step is to obtain Figaro. The Figaro binary distribution is hosted at the Charles River Analytics, Inc. Web site. Go to https://www.cra.com/figaro. The current version, as of June 2014, is 2.2.1.0, and is available for either Scala 2.10 or Scala 2.11. Each available download link is a compressed archive containing the Figaro jar (jar is the Java/Scala format for compiled byte code), examples, documentation, Scaladoc, and source code files. Click the appropriate link and then uncompress the downloaded archive to access the file.
+\item [Optional] Add the fully qualified path name of the Figaro jar to your class path. This can be done by adding the Figaro jar to the CLASSPATH environment variable in your operating system. The process for editing the CLASSPATH varies from operating system to operating system. You can see details about using the PATH and CLASSPATH environment variables in http://docs.oracle
+\newline .com/javase/tutorial/essential/environment/paths.html.
+\begin{enumerate}
+\item If the CLASSPATH does not exist yet, create. I always like the CLASSPATH to include the current working directory, so set the CLASSPATH to ".". Then proceed to add the Figaro jar, as in the next step. 
+\item By this point, the CLASSPATH already exists, so we can add the Figaro path to it. For example, on Windows 7, if figaro-2.1.0.0.jar is in the "C:\textbackslash Users\textbackslash apfeffer" folder, and the CLASSPATH is currently equal to ".", change the CLASSPATH to "C:\textbackslash Users\textbackslash apfeffer\textbackslash figaro-2.2.1.0;.". Replace 2.2.1.0 with the appropriate version number. 
+\end{enumerate}
+\item Now you can compile and run Figaro programs just like any Scala program. Put the Test program below in a file named Test.scala. First, let's assume you followed step 4and updated the CLASSPATH.
+\begin{enumerate}
+\item If you run scala Test.scala from the directory containing Test.scala, the Scala compiler will first compile the program and then execute it. It should produce the output 1.0.
+\item If you run scalac Test.scala (note the c at the end of "scalac"), the Scala compiler runs and produces .class files. You can then execute the program by running scala Test from the same directory.
+\item If you did not follow step 4, you can set the CLASSPATH from the command line using the --cp option. For example, to compile and execute Test.scala, assuming figaro-2.2.1.0.jar is in the "C:\textbackslash Users\textbackslash apfeffer" folder, you can run scala --cp C:\textbackslash Users\textbackslash apfeffer\textbackslash figaro-2.2.1.0 Test.scala.
+\end{enumerate}
+\end{enumerate}
+
+Here's the test program:
+
+\texttt{
+\newline import com.cra.figaro.language.\_
+\newline import com.cra.figaro.algorithm.sampling.\_
+\newline 
+\newline object Test \{
+\newline   def main(args: Array[String]) \{
+\newline     val test = Constant("Test")
+\newline     val algorithm = Importance(1000, test)
+\newline     algorithm.start()
+\newline     println(algorithm.probability(test, "Test"))
+\newline   \}
+\newline \}
+}
+\newline
+
+This program should output 1.0.
+
+Finally, Figaro is maintained as open source on GitHub. The GitHub project is Probabilistic Programming Tools and Techniques (P2T2), located at https://github.com/p2t2. P2T2 currently contains the Figaro sources, but we plan to update it with more tools. If you want to see the source code and build Figaro yourself, please visit our GitHub site.
+
+Figaro uses the Simple Build Tool (SBT v0.13.5) to manage builds. To build Figaro from GitHub source, make a fork of the repository to your GitHub account, then use git's clone feature to get the source code from your GitHub account to your machine.
+
+\texttt{git clone https://github.com/[your-github-username]/figaro.git}
+
+There are several branches available; checkout "master" for the latest stable release or the latest "DEV" branch for more cutting edge work and features (this is work in progress and therefore less stable). Download and install SBT, start the program to get its command prompt, and enter these commands in order
+
+\texttt{
+\newline > + clean
+\newline > + compile
+\newline > + package
+\newline > + assembly
+\newline > exit
+}
+\newline
+
+This will create cross-compiled versions of Figaro for Scala 2.10 and Scala 2.11; you will find the artifacts in the "target" directory.
+

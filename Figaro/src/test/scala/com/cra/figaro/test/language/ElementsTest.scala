@@ -589,6 +589,22 @@ class ElementsTest extends WordSpec with Matchers {
         z.constraint(false) should equal(math.log(3.0))
       }
     }
+    
+    "correctly set the observation" should {
+      Universe.createNew()
+      val x = Flip(0.3)
+      x.observation should equal (None)
+      x.addConstraint((b: Boolean) => if (b) 1.0; else 2.0)
+      x.observation should equal (None)
+      x.addCondition((b: Boolean) => b)
+      x.observation should equal (None)
+      x.observe(true)
+      x.observation should equal (Some(true))
+      x.addConstraint((b: Boolean) => if (b) 1.0; else 2.0)
+      x.observation should equal (Some(true))
+      x.addCondition((b: Boolean) => b)
+      x.observation should equal (None)
+    }
   }
 
   def sampleTest[T](targetElem: Element[T], predicate: T => Boolean, prob: Double) = {

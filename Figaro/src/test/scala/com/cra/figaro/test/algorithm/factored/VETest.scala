@@ -442,6 +442,14 @@ class VETest extends WordSpec with Matchers {
       ve.start()
       ve.probability(y, true) should be(((0.1 * 0.2 + 0.9 * 0.2) / (0.1 * 0.2 + 0.9 * 0.2 + 0.9 * 0.8)) +- 0.0000000001)
     }
+    
+    "should not support non-caching chains" in {
+      Universe.createNew()
+      val f = Flip(0.5)
+      val x = NonCachingChain(f, (b: Boolean) => if (b) Constant(0) else Constant(1))
+      val ve = VariableElimination(x)
+      an [UnsupportedAlgorithmException] should be thrownBy { ve.getNeededElements(List(x), Int.MaxValue) } 
+    }
   }
 
   "MPEVariableElimination" should {

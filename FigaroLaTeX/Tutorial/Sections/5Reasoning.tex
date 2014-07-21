@@ -1,0 +1,568 @@
+% Chapter X
+
+\chapter{Reasoning} % Chapter title
+
+\label{Reasoning} % For referencing the chapter elsewhere, use 
+
+Figaro contains a number of reasoning algorithms that allow you to do useful things with probabilistic models. First, we describe an algorithm that simply computes the range of possible values of all elements in a universe. Then, we describe three algorithms for computing the conditional probability of query elements given evidence (conditions and constraints) on elements. These are variable elimination, importance sampling, and Markov chain Monte Carlo. Next, we describe algorithms for performing other kinds of reasoning. One is an importance sampling algorithm for computing the probability of evidence in a universe. We also discuss a variable elimination algorithm and a simulated annealing algorithm for computing the most likely values of elements given the evidence. Finally, we describe two additional features of the reasoning: the ability to reason across multiple universes, and a way to use abstractions in reasoning algorithms.
+
+\section{Computing ranges}
+
+It is possible to compute the set of possible values of elements in a universe, as long as expanding the probabilistic model of the universe does not (1) result in generating an infinite number of elements; (2) result in an infinite number of values for an element; or (3) involves an element class for which getting the range has not been implemented.
+
+To explain (1), computing the possible values of a chain requires computing the possible values of the arguments and, for each value, generating the appropriate element and computing all its possible values. If the generated element also contains a chain, it will require recursively generating new elements for all possible values of the contained chain's arguments. This could potentially lead to an infinite recursion, in which case computing ranges will not terminate.
+
+For (2), most built in element classes have a finite number of possible values. Exceptions are the atomic continuous classes like \texttt{Uniform} and \texttt{Normal}.
+
+To compute the values of elements in universe \texttt{u}, you first create a \texttt{Values} object using
+
+\begin{flushleft}
+\texttt{import com.cra.figaro.algorithm.\_
+\newline val values = Values(u)}
+\end{flushleft}
+
+You can also create a \texttt{Values} object for the current universe simply with
+
+\begin{flushleft}
+\texttt{val values = Values()}
+\end{flushleft}
+
+\texttt{values} can then be used to get the possible values of any object. For example,
+
+\begin{flushleft}
+\texttt{val e1 = Flip(0.7)
+\newline val e2 = If(e1, Select(.2 -> 1, .8 -> 2), Select(.4 -> 2, .6 -> 3)
+\newline val values = Values()
+\newline values(e2)}
+\end{flushleft}
+
+returns a \texttt{Set[Int]} equal to \{ 1, 2, 3 \}.
+
+If you are only interested in getting the range of the single element \texttt{e2}, you can use the shorthand \texttt{Values()(e2)}. However, if you want the range of multiple elements, you are better off creating a \texttt{Values} object and applying it repeatedly to get the range of the different elements. The reason is that within a \texttt{Values} object, computing the range of an element is memoized (cached), meaning that the range is only computed once for each object and then stored for future use.
+
+\section{Asserting evidence}
+
+Most Figaro reasoning involves drawing conclusions from evidence. Evidence in Figaro is specified in one of two ways. The first is through conditions and constraints, as we described earlier. The second is by providing \emph{named evidence}, in which the evidence is associated with an element with a particular name or reference.
+
+There are a variety of situations where using named evidence is beneficial. One might have a situation where the actual element referred to by a reference is uncertain, so we can't directly specify a condition or constraint on the element, but by associating the evidence with the reference, we can ensure that it is applied correctly. Names also allow us to keep track of and apply evidence to elements that correspond to the same object in different universes, as will be seen below with dynamic reasoning. Finally, associating evidence with names and references allows us to keep the evidence separate from the definition of the probabilistic model, which is not achieved by conditions and constraints.
+
+Named evidence is specified by
+\newline \texttt{NamedEvidence(reference, evidence)}
+\newline where \texttt{reference} is a reference, and \texttt{evidence} is an instance of the \texttt{Evidence} class. There are three concrete subclasses of \texttt{Evidence: Condit\-ion, Constraint, and Observation}, which behave like an element's \texttt{setCond\-ition, setConstraint}, and \texttt{observe} methods respectively.
+
+For example,
+\newline \texttt{NamedEvidence("car.size", Condition((s: Symbol) => s != 'small\-)))}
+\newline represents the evidence that the element referred to by \texttt{"car.size"} does not have value  \texttt{'small}.
+
+\section{Exact inference using variable elimination}
+
+Figaro provides the ability to perform exact inference using variable elimination. The algorithm works in three steps:
+\begin{enumerate}
+\item Expand the universe to include all elements generated in any possible world.
+\item Convert each element into a factor.
+\item  Apply variable elimination to all the factors.
+\end{enumerate}
+
+Step 1, like for range computation, requires that the expansion of the universe terminate in a finite amount of time. Step 2 requires that each element be of a class that can be converted into a set of factors. Every built-in class can be converted into a set of factors except for atomic continuous classes with infinite range, although see later in the section on abstractions how to make variable elimination work for continuous classes. Also see later, in the section on creating a new element class, how to specify a way to convert a new class into a set of factors.
+
+To use variable elimination, you need to specify a set of query elements whose conditional probability you want to compute given the evidence. For example,
+
+\begin{flushleft}
+\texttt{import com.cra.figaro.language.\_
+\newline import com.cra.figaro.algorithm.factored.\_
+\newline 
+\newline val e1 = Select(0.25 -> 0.3, 0.25 -> 0.5, 0.25 -> 0.7, 0.25 -> 0.9)
+\newline val e2 = Flip(e1)
+\newline val e3 = If(e2, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
+\newline e3.setCondition((i: Int) => i == 2)
+\newline 
+\newline val ve = VariableElimination(e2)}
+\end{flushleft}
+
+This will create a \texttt{VariableElimination} object that will apply variable elimination to the universe containing \texttt{e1, e2, and e3}, leaving query variable \texttt{e2} uneliminated. However, it won't perform the variable elimination immediately. To tell it to perform variable elimination, you have to say
+
+\begin{flushleft}
+\texttt{ve.start()}
+\end{flushleft}
+
+When this call terminates, you can use \texttt{ve} to answer queries using three methods:
+
+\texttt{ve.distribution(e2)}  will return a stream containing possible values of \texttt{e2} with their associated probabilities.
+
+\texttt{ve.probability(e2, predicate)} will return the probability that the value of \texttt{e2} satisfies the given predicate. For example, \texttt{(b: Boolean) => b} is the function that takes a  Boolean argument and returns true precisely if its argument is true. So, \texttt{ve.probability(e2, (b: Boolean) => b}) computes the probability that \texttt{e2} has value true. The \texttt{probability} method also provides a shorthand version that specifies a value as the second argument instead of a predicate and returns the probability the element takes that specific value. So, for the previous example, we could have written \texttt{ve.probability(e2, true)}.
+
+\texttt{ve.expectation(e2, (b: Boolean) => if (b) 3.0; else 1.5)} returns the
+expectation of the given function applied to \texttt{e2}. If you just want the expectation of the element, you just provide a function that returns the value of the function.
+
+Once you are done with the results of variable elimination, you can call \texttt{ve.kill()}. This has the effect of freeing up memory used for the results. Note that only elements provided in the argument list of the \texttt{VariableElimination} class can be queried; if at a later point you want to query a different element not in the argument list, you must create a new instance of \texttt{VariableElimination}. 
+
+These methods \texttt{start, kill,  distribution, probability}, and \texttt{ex\-pectation} are a uniform interface to all reasoning algorithms that compute the conditional probability of query variables given evidence. We will see below how this interface is extended for anytime algorithms.
+
+\section{Approximate inference using belief propagation}
+
+Figaro also contains another factored inference algorithm called belief propagation (BP). BP is a message passing algorithm on a factor graph (a bipartite graph of variables and factors). On factor graphs with no loops, BP is an exact inference algorithm. On graphs with loops (loopy factor graph), BP can be used to perform approximate inference on the target variables. Note that in Figaro, the way that Chains are converted to factors always produces a loopy factor graph, even if the actual definition of the model contains no loops. Therefore, most inference with BP in Figaro is approximate.
+
+The algorithm works in three steps:
+\begin{enumerate}
+\item Expand the universe to include all elements generated in any possible world.
+\item Convert each element into a factor and create a factor graph from the factors
+\item Pass messages between the factor nodes and variables nodes for the specified number of iterations
+\item Queries are answered on the targets using the posterior distributions computed at each variable node
+\end{enumerate}
+
+Steps 1 and 2 operate in the same manner as variable elimination, and the same restrictions on factors also applies. Just like in variable elimination, you need to specify a set of query elements whose conditional probability you want to compute given the evidence. For example,
+
+\begin{flushleft}
+\texttt{import com.cra.figaro.language.\_
+\newline import com.cra.figaro.algorithm.factored.\_
+\newline import com.cra.figaro.algorithm.factored.beliefpropagation.\_
+\newline 
+\newline val e1 = Select(0.25 -> 0.3, 0.25 -> 0.5, 0.25 -> 0.7, 0.25 -> 0.9)
+\newline val e2 = Flip(e1)
+\newline val e3 = If(e2, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
+\newline e3.setCondition((i: Int) => i == 2)
+\newline 
+\newline val bp = BeliefPropagation(100, e2)}
+\end{flushleft}
+
+This will create a \texttt{BeliefPropagation} object that will pass messages on a factor graph created from the universe containing \texttt{e1, e2, and e3}. The first argument is the number of iterations to pass messages between the factor and variable nodes. However, it won't perform BP immediately. To tell it to run the algorithm, you have to say
+
+\begin{flushleft}
+\texttt{bp.start()}
+\end{flushleft}
+
+When this call terminates, you can use \texttt{bp} to answer the same queries as defined in the variable elimination section.
+
+\section{Importance sampling}
+
+Figaro's importance sampling algorithm is actually a combination of importance and rejection sampling. It uses a simple forward sampling approach. When it encounters a condition, it checks to see if the condition is satisfied and rejects if it is not. When it encounters a constraint, it multiplies the weight of the sample by the value of the constraint.
+
+Unlike variable elimination, this algorithm can be applied to models whose expansion produces an infinite number of elements, provided any particular possible world only requires a finite number of elements to be generated. Also, this algorithm works for atomic continuous models. In addition, as an approximate algorithm, it can produce reasonably accurate answers much more quickly than the exact variable elimination.
+
+The interface to importance sampling is very similar to that to variable elimination. For example,
+
+\begin{flushleft}
+\texttt{import com.cra.figaro.language.\_
+\newline import com.cra.figaro.algorithm.sampling.\_
+\newline
+\newline val e1 = Select(0.25 -> 0.3, 0.25 -> 0.5, 0.25 -> 0.7, 0.25 -> 0.9)
+\newline val e2 = Flip(e1)
+\newline val e3 = If(e2, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
+\newline e3.setCondition((i: Int) => i == 2)
+\newline 
+\newline val imp = Importance(10000, e2) }
+\end{flushleft}
+
+The first argument to \texttt{Importance} is an indication of how many samples the algorithm should take. The second argument (and subsequent arguments) lists the element(s) that will be queried. After calling \texttt{imp.start()}, you can use the methods \texttt{distribution, probabil\-ity}, and \texttt{expectation} to answer queries.
+
+The importance sampling algorithm used above is an example of a "one-time" algorithm. That is, the algorithm is run for 10,000 iterations and terminates; it cannot be used again. Figaro also provides an "anytime" importance sampling algorithm that runs in a separate thread and continues to accumulate samples until it is stopped. A major benefit of an anytime algorithm is that it can be queried while it is running. Another benefit is that you can tell it how long you want it to run.
+
+Two additional methods are provided in the interface. \texttt{imp.stop()} stops it from accumulating samples, while \texttt{imp.resume()} starts it going again, carrying on from where it left off before. In addition, the kill method has the additional effect of killing the thread, so it is essential that it be called when you are finished with the \texttt{Importance} object. To create an anytime importance algorithm, simply omit the number of samples argument to \texttt{Importance}. A typical way of using anytime importance sampling, allowing it to run for one second, is as follows:
+
+\begin{flushleft}
+\texttt{val imp = Importance(e2) 
+\newline imp.start() 
+\newline Thread.sleep(1000) 
+\newline imp.stop()
+\newline println(imp.probability(e2, (b: Boolean) => b))
+\newline imp.kill() }
+\end{flushleft}
+
+\section{Markov chain Monte Carlo}
+
+Figaro provides a Metropolis-Hastings Markov chain Monte Carlo algorithm. Metropolis-Hastings uses a proposal distribution to propose a new state at each step of the algorithm, and either accepts or rejects the proposal. In Figaro, a proposal involves proposing new randomnesses for any number of elements. After proposing these new randomnesses, any element that depends on those randomnesses must have its value updated. Recall that the value of an element is a deterministic function of its randomness and the values of its arguments, so this update process is a deterministic result of the randomness proposal.
+
+Proposing the randomness of an element involves calling the \texttt{next\-Randomness} method of the element, which takes the current value of the randomness as the argument. \texttt{nextRandomness} has been implemented for all the built-in model classes, so you will not need to worry about it unless you define your own class. See the section on creating a new element class for details.
+
+Computing the acceptance probability requires computing the ratio of the element's constraint of the new value divided by the constraint of the old value. Ordinarily, this is achieved by applying the
+constraint to the new and old value separately and taking the ratio. However, sometimes we want to define a constraint on a large data structure, and applying the constraint to either the new or old value will produce overflow or underflow, so the ratio won't be well defined. It might be the case that the ratio is well defined even though the constraints are large, since only a small part of the data structure changes in a single Metropolis-Hastings situation. For example, we might want to define a constraint on an ordering, penalizing the number of items out of order. The total number of items out of order might be large, but if a single iteration consists of swapping two elements, the number that change might be small. For this reason, an element contains a \texttt{score} method that takes the old value and the new value and produces the ratio of the constraint of the new value to the old value.
+
+Figaro allows the user to specify which elements get proposed using a \emph{proposal scheme}. Figaro also provides a default proposal scheme that simply chooses a non-deterministic element in the universe uniformly at random and proposes a new randomness for it. To create an anytime Metropolis-Hastings algorithm using the default proposal scheme, use
+
+\begin{flushleft}
+\texttt{import com.cra.figaro.language.\_
+\newline import com.cra.figaro.algorithm.sampling.\_
+\newline 
+\newline val e1 = Select(0.25 -> 0.3, 0.25 -> 0.5, 0.25 -> 0.7, 0.25 -> 0.9)
+\newline val e2 = Flip(e1)
+\newline val e3 = If(e2, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
+\newline e3.setCondition((i: Int) => i == 2)
+\newline 
+\newline val mh = MetropolisHastings(ProposalScheme.default, e2)
+}
+\end{flushleft}
+
+Metropolis-Hastings takes two additional optional arguments. The first represents the burn-in, which is the number of proposal steps the algorithm goes through before collecting samples, while the second is the number of proposal steps between samples. The default burn-in is 0, while the default interval is 1. These arguments appear before the query elements.
+
+To use a one-time (i.e., non-anytime) Metropolis-Hastings algorithm, simply provide the number of samples as the first argument.
+
+\subsection{Defining a proposal scheme}
+
+A proposal scheme is an instance of the \texttt{ProposalScheme} class. A number of constructs are provided to help define proposal schemes. We will illustrate some of them using the first movie example from the section titled "Classes, instances, and relationships". The default proposal scheme does not work well for this example because it is unlikely to maintain the condition that exactly one appearance is awarded. A better proposal scheme will maintain this condition by always replacing one awarded appearance with another.
+
+The \texttt{SwitchingFlip} class is defined to facilitate this. \texttt{SwitchingFlip} is just like a regular Flip except that its \texttt{nextRandomness} method always returns the opposite of its argument. The \texttt{award} attribute of \texttt{Appearance} is defined to be a \texttt{SwitchingFlip}. 
+
+The value of \texttt{SwitchingFlip} is that now we can change which appearance gets awarded by proposing the award attribute of the appearance that is currently awarded and one other appearance. This idea is implemented in the function \texttt{switchAwards}, which returns a proposal scheme depending on the current state of awards.
+
+\begin{flushleft}
+\marginpar{This example can be found in SimpleMovie.scala}
+\texttt{def switchAwards(): ProposalScheme = \{
+\newline \tab val (awarded, unawarded) = 
+\newline \tab appearances.partition(\_.award.value)
+\newline \tab awarded.length match \{
+\newline \tab case 1 =>
+\newline \tab val other = unawarded(random.nextInt(numAppearances $-$ 1)) 
+\newline \tab ProposalScheme(awarded(0).award, other.award)
+\newline \tab case 0 => 
+\newline \tab ProposalScheme(appearances(random.nextInt(numAppearances))
+\newline \tab .award)
+\newline \tab case \_ => 
+\newline \tab ProposalScheme(awarded(random.nextInt(awarded.length))
+\newline \tab .award)
+\newline \}
+\newline \}
+}
+\end{flushleft}
+
+\texttt{switchAwards} first makes lists of the awarded and unawarded appearances. Then, if exactly one appearance is awarded, it chooses one unawarded element and returns \texttt{ProposalScheme(awarded(0).award, other.award)}. This scheme first proposes the award attribute of the only awarded appearance and then proposes the \texttt{award} attribute of the chosen unawarded appearance. Since \texttt{award} is now defined as a \texttt{SwitchingFlip}, each \texttt{award} will switch value so there will still be only one award awarded. In general, a \texttt{ProposalScheme} with a sequence of elements as arguments proposes each of them in turn. Moving on, if zero appearances are currently awarded, it proposes a single randomly chosen appearance's award to bring the number of awarded appearances to one. If more than one appearance is currently awarded, it proposes one of the awarded appearance's awards to reduce the number of awarded appearances.
+
+In this example, we will also sometimes want to propose the fame of actors or the quality of movies. To achieve this, we use a \texttt{Disjoint\-Scheme}, which returns various proposal schemes with different probabilities. This is implemented in the following \texttt{chooseScheme} function:
+
+\begin{flushleft}
+\texttt{private def chooseScheme(): ProposalScheme = \{ 
+\newline \tab DisjointScheme(
+\newline \tab (0.5, () => switchAwards()), 
+\newline \tab (0.25, () => 
+\newline \tab ProposalScheme(actors(random.nextInt(numActors)).famous)), 
+\newline \tab (0.25, () =>
+\newline \tab ProposalScheme(movies(random.nextInt(numMovies)).quality))
+\newline )
+\newline \}
+}
+\end{flushleft}
+
+In general, the proposal scheme argument of \texttt{MetropolisHastings} is actually a function of zero arguments that returns a \texttt{ProposalScheme}. The \texttt{ProposalScheme.default} is just that. Since \texttt{chooseScheme} is the same, it can be passed directly to \texttt{MetropolisHastings}. So we can call
+
+\begin{flushleft}
+\texttt{val alg =
+\newline \tab MetropolisHastings(200000, chooseScheme, 5000, appearance1.award, appearance2.award, appearance3.award) }
+\end{flushleft}
+
+In some cases, it might be useful to have the decision as to which later elements to propose depend on the proposed values of earlier elements. \texttt{TypedScheme} is provided for this purpose. It has a type parameter \texttt{T} which is the value type of the first element to be proposed. The first argument to \texttt{TypedScheme} is a function of zero arguments that returns an \texttt{Element[T]}. The second argument is a function from a value of type \texttt{T} to an \texttt{Option[ProposalScheme]}. An \texttt{Option[Proposal\-Scheme]}, as its name implies, is an optional proposal scheme. It can take the value \texttt{None}, meaning that there is no proposal scheme, or the value \texttt{Some(ps)}, where \texttt{ps} is a proposal scheme. This allows the proposed value of the first element to determine, first of all, whether there will be any more proposals, and if there will be more proposals, what the subsequent proposal scheme will be.
+
+\subsection{Chains and Metropolis-Hastings}
+
+In designing a Metropolis-Hastings algorithm using chains, there are design considerations of the model that can affect the run-time and memory performance of the algorithm. Chains contain an internal cache of previously generated elements from different combinations of its argument values. When a chain's function is invoked on an argument to produce a result element, the cache is first checked to determine if there exists an entry for the argument value. If an entry does exist, the cached element is retrieved and used to determine the value of the chain. If no entry exists, then the chain's function is invoked, an element is returned from the function and placed in the cache. The cache also contains a maximum capacity; once the capacity of the cache is reached, a random element is selected in the cache and discarded. The capacity of the cache can significantly impact the performance of the Metropolis-Hastings algorithm. 
+
+The standard advantage of a large cache capacity is that it can save significant time if the function is executed repeatedly on a finite set of argument values. In Metropolis-Hastings, there is an important additional advantage. After an element is created, it may go through a sequence of proposals and eventually reach a region of high probability. Large capacity caches increases the chance that this work is saved and reused every time the parent of the chain returns to the same value. With a small capacity
+cache, elements can be evicted if there are many different parent values. If at a later stage the parent returns to the same original value, it may have been evicted from the cache and we'll need to begin the
+search process from scratch.
+
+However, the standard disadvantage of large caches is that they use more memory. In particular, a different element is stored for every value of the parent that has been seen, and may never be released if the cache is large enough. If the parent can have a large or infinite number of possible values, this can lead to exhausting the memory of the machine.
+
+Fortunately, most of the cache management is automatically handled internally by Figaro. There are two types of chains defined in Figaro: \texttt{CachingChain} and \texttt{NonCachingChain}. \texttt{CachingChain} by default instantiates a chain with a cache capacity of 1000, whereas a \texttt{NonCachi\-ngChain} instantiates a chain with a capacity of 1. In general, a \texttt{Caching\-Chain} is usually better for elements with discrete parents with relatively few values, and a \texttt{NonCachingChain} is better for elements with continuous parents. When a user creates a new \texttt{Chain} class, Figaro attempts to determine the best chain to use given the parents of the chain. In most cases, the cache capacity selected by Figaro will be adequate to use the model efficiently in a Metropolis-Hastings algorithm. However, should you need to ensure the efficiency of the model in a Metropolis-Hastings algorithm, the user can still explicitly instantiate a \texttt{Chain} class with specific cache capacity.
+
+\subsection{Debugging Metropolis-Hastings}
+
+Designing good proposal schemes is more of an art than a science and can be quite challenging. Finding a good proposal scheme for the movies example was quite time consuming. It also required implementing the \texttt{SwitchingFlip} element class, which, as we will see below, is not difficult. Unfortunately, a problem with Metropolis-Hastings algorithms is that they can be quite difficult to debug. Developing good methodologies and tools for debugging Metropolis-Hastings is an important research problem. For now, Figaro provides a couple of tools that may be useful to users.
+
+The \texttt{Metropolis-Hastings} class has a \texttt{debug} variable, which by default is set to false. If you set it to true, you get debugging output when you run the algorithm. This includes every element that is proposed or updated and whether each proposal is accepted or rejected. The debugging output uses the names of elements, so to make use of it, you need to give the elements you are interested in a name. 
+
+In addition, if you have a \texttt{Metropolis-Hastings} object \texttt{mh}, you can define an initial state by setting the values of elements. Then call \texttt{mh.test} and provide it a number of samples to generate. It will repeatedly propose a new state from the initial state and either accept or reject it, restoring to the original state each time. You can provide a sequence of predicates, and it will report how often each predicate was satisfied after one step of Metropolis-Hastings from the initial state. You can also provide a sequence of elements to track, and it will report how often each element is proposed. For example, in the movies example, you could set the initial state to be one in which exactly one appearance is awarded and test the fraction of times this condition holds after one step.
+
+\section{Probability of evidence algorithm}
+
+The previous three algorithms all computed the conditional probability of query variables given evidence. Sometimes we just want to compute the probability of evidence. Since there is the potential for ambiguity here, Figaro is careful to define what constitutes evidence for computing probability of evidence. Conditions and constraints often constitute evidence. Sometimes, however, they can be considered to be part of the model specification. Consider, for example, the constraint on pairs of friends that they share the same smoking habits — this is part of the model definition, not evidence.
+
+For this reason, Figaro allows the probability of evidence to be computed in steps. To compute the probability of conditions and constraints that are in the Figaro program, you can use
+
+\begin{flushleft}
+\texttt{import com.cra.figaro.language.\_
+\newline \tab import com.cra.figaro.algorithm.sampling.ProbEvidenceSampler
+\newline 
+\newline val alg = new ProbEvidenceSampler(universe) with
+\newline \tab OneTimeProbEvidenceSampler \{ val numSamples = n \}
+\newline alg.start()
+}
+\end{flushleft}
+
+where \texttt{n} is an integer indicating number of samples for one-time sampling. To retrieve the probability of the evidence, you simply call \texttt{alg.probEvidence}.
+
+If you want to compute the probability of additional evidence, in addition to the conditions and constraints in the program, you can pass this additional evidence as the second argument to new \texttt{ProbEvid\-enceSampler}. This argument takes the form of a list of \texttt{NamedEvidence} items, where each item specifies a reference and evidence to apply to the element pointed to by the reference. For example, you could supply the following list as the second argument to \texttt{ProbEvidenceSampler}.
+
+\begin{flushleft}
+\texttt{List(NamedEvidence("f", Observation(\textbf{true})), 
+\newline NamedEvidence("u", Observation(0.7))) }
+\end{flushleft}
+
+\texttt{ProbEvidenceSampler} will then compute the probability of all the evidence, both the named evidence and the existing evidence in the program. It does this by temporarily asserting the named evidence, running the probability of evidence computation, and then retracting the named evidence.
+
+If you don't want to include the existing conditions and constraints in the program in the probability of evidence calculation, there are four ways to proceed. Each method is more verbose than the previous but provides more control. The simplest is to use
+
+\begin{flushleft}
+\texttt{ProbEvidenceSampler.computeProbEvidence(n, namedEvidence)}
+\end{flushleft}
+
+This takes care of running the necessary algorithms and returns the probability of the named evidence, treating the existing conditions and constraints as part of the program definition. You can also use the following
+
+\begin{flushleft}
+\texttt{val alg = ProbEvidenceSampler(n, namedEvidence)
+\newline alg.start()
+}
+\end{flushleft}
+
+This method enables you to control when to run \texttt{alg}, and also to reuse \texttt{alg} for different purposes. The final two methods explicitly compute probability of the conditions and constraints in the program, which becomes the denominator for subsequent probability of evidence computations. The \texttt{ProbEvidenceSampler} class provides a method called \texttt{probAdditionalEvidence} that creates a new algorithm that uses the probability of evidence of the current algorithm as denominator. You could proceed as follows
+
+\begin{flushleft}
+\texttt{val alg1 = new ProbEvidenceSampler(universe) with
+\newline \tab OneTimeProbEvidenceSampler \{ val numSamples = n \}
+\newline alg1.start()
+\newline val alg2 = alg1.probAdditionalEvidence(namedEvidence)
+\newline alg2.start()
+}
+\end{flushleft}
+
+The major advantage of this method is that you can call \texttt{alg1.prob\-AdditionalEvidence} multiple times with different named evidence without having to repeat the denominator computation. The final method, which provides maximum control, is:
+
+\begin{flushleft}
+\texttt{val alg1 = new ProbEvidenceSampler(universe) with
+\newline \tab OneTimeProbEvidenceSampler \{ val numSamples = n1 \}
+\newline alg1.start()
+\newline val alg2 = new ProbEvidenceSampler(universe) with
+\newline \tab OneTimeProbEvidenceSampler \{ val numSamples = n2 \}
+\newline alg2.start()
+}
+\end{flushleft}
+
+In this example, a different number of samples is used for the initial denominator calculation and the subsequent probability of evidence calculation.
+
+Currently, only forward sampling probability of evidence is provided, but the framework exists to create additional probability of evidence algorithms. There is also an anytime version of the probability of evidence algorithms. To create one, use
+
+\begin{flushleft}
+\texttt{new ProbEvidenceSampler(universe) with AnytimeProbEvidenceSampler}
+\end{flushleft}
+
+For the methods that require you to specify the number of samples \texttt{n}, replace \texttt{n} with \texttt{t}, where \texttt{t} is a long value indicating the number of milliseconds to wait while computing the denominator (and also while computing the probability of the named evidence for the \texttt{computeProbEvidence} shorthand method.)
+
+\section{Computing the most likely values of elements}
+
+Rather than computing a probability distribution over the values of elements given evidence, a natural question to ask is "What are the most likely values of all the elements given the available evidence?" This is known as computing the most probable explanation (MPE) of the evidence. There are two ways to compute MPE: Variable Elimination and Simulated Annealing. An example that shows how to compute the MPE using Variable Elimination is:
+
+\begin{flushleft}
+\texttt{import com.cra.figaro.language.\_
+\newline import com.cra.figaro.algorithm.factored.\_
+\newline 
+\newline val e1 = Flip(0.5)
+\newline e1.setConstraint((b: Boolean) => if (b) 3.0; else 1.0)
+\newline val e2 = If(e1, Flip(0.4), Flip(0.9)) 
+\newline val e3 = If(e1, Flip(0.52), Flip(0.4)) 
+\newline val e4 = e2 === e3
+\newline e4.observe(true)
+\newline 
+\newline val alg = MPEVariableElimination()
+\newline alg.start()
+\newline println(alg.mostLikelyValue(e1)) // should print true 
+\newline println(alg.mostLikelyValue(e2)) // should print false 
+\newline println(alg.mostLikelyValue(e3)) // should print false 
+\newline println(alg.mostLikelyValue(e4)) // should print true
+}
+\end{flushleft}
+
+Computing the most likely value of an element can also be accomplished using simulated annealing, which is based on the Metropolis-Hastings algorithm. The main idea behind simulated annealing is to sample the space of the model and make transitions to higher probability states of the model. Over many iterations, the algorithm slowly makes it less likely that the sampler will transition to a lower probability state than the one it is already in, with the intent of slowly moving the model towards the global maximum probability state.
+
+Central to this idea is the cooling schedule of the algorithm; this determines how fast the model converges toward the most likely state. A faster schedule means the algorithm will quickly converge upon a high probability state, but since it allows for little exploration of the model space the risk that algorithm gets stuck in a local maxima is high. Conversely, a slow schedule allows for a more thorough exploration of the model space but can take long to converge.
+
+In Figaro, the Metropolis-Hastings based simulated annealing is instantiated very similarly to the normal MH algorithm. Consider an example of using simulated annealing on the smokers model presented earlier:
+
+\begin{flushleft}
+\marginpar{This example can be found in AnnealingSmokers.scala}
+\texttt{import com.cra.figaro.language.\_
+\newline import com.cra.figaro.library.compound.\textasciicircum\textasciicircum
+\newline import com.cra.figaro.algorithm.sampling.ProposalScheme
+\newline import com.cra.figaro.algorithm.sampling.MetropolisHastingsAnnealer 
+\newline import com.cra.figaro.algorithm.sampling.Schedule
+\newline 
+\newline class Person \{
+\newline \tab val smokes = Flip(0.6)
+\newline \}
+\newline 
+\newline val alice, bob, clara = new Person
+\newline val friends = List((alice, bob), (bob, clara))
+\newline clara.smokes.observe(true)
+\newline 
+\newline def smokingInfluence(pair: (Boolean, Boolean)) =
+\newline \tab if (pair.\_1 == pair.\_2) 3.0; else 1.0
+\newline 
+\newline for \{ (p1, p2) <- friends \} \{
+\newline \tab \textasciicircum\textasciicircum(p1.smokes, p2.smokes).setConstraint(smokingInfluence)
+\newline \}
+\newline 
+\newline val mhAnnealer = MetropolisHastingsAnnealer(ProposalScheme.default, Schedule.default(3.0)) }
+\end{flushleft}
+
+The second argument is an instance of a \texttt{Schedule} class (similar to a \texttt{ProposalScheme}), and contains the method that slowly moves the sampler towards a more likely state. It is defined as:
+
+\begin{flushleft}
+\texttt{class Schedule(sch: (Double, Int) => Double) \{
+\newline \tab def temperature(current: Double, iter: Int) = sch(current, iter)
+\newline \} }
+\end{flushleft}
+
+This class takes in a function from a tuple of  \texttt{(Double, Int)} to a \texttt{Double.} At each iteration (after any burn-in), the simulated annealing will call \texttt{schedule.temperature} with the current transition probability and iteration count. The schedule will then return a new transition probability that will be used to accept or reject the new sampler state. The default schedule is defined as:
+
+\begin{flushleft}
+\texttt{def default(k: Double = 1.0) = new Schedule((c: Double, i: Int) 
+\newline \tab => math.log(i.toDouble+1.0)/k)}
+\end{flushleft}
+
+To run simulated annealing, one simply calls \texttt{run()} as in a normal Metropolis-Hastings algorithm. Once the algorithm has completed, one can retrieve the most likely value of an element by calling \texttt{mhAnneal\-er.mostLikelyValue(element)}. Note that when the algorithm finds the most probable state of the model, it records the values for each active element. Therefore, queries on the most likely values of temporary elements that are \emph{not} part of the optimal state of the model may fail.
+
+\section{Reasoning with dependent universes}
+
+Earlier we saw that variable elimination does not work for all models. One way to get around this in some cases is to use dependent universes. As an example, consider a problem in which we have a number of sources and a number of sample points, and we want to associate each point with its source. The distance between a point and a source depends on whether it is its correct source or not. We can capture this situation with the following model:
+
+\begin{flushleft}\
+\marginpar{This example can be found in Sources.scala}
+\texttt{import com.cra.figaro.language.\_
+\newline import com.cra.figaro.algorithm.factored.\_
+\newline 
+\newline class Source(val name: String)
+\newline 
+\newline abstract class Sample(val name: String) \{
+\newline \tab val fromSource : Element[Source]
+\newline \}
+\newline 
+\newline class Pair(val source: Source, val sample: Sample) \{
+\newline \tab val isTheRightSource =
+\newline \tab Apply(sample.fromSource, (s: Source) => s == source)
+\newline \tab val rightSourceDistance = Normal(0.0, 1.0) 
+\newline \tab val wrongSourceDistance = Uniform(0.0, 10.0) 
+\newline \tab val distance =
+\newline \tab If(isTheRightSource, rightSourceDistance, wrongSourceDistance)
+\newline \}
+}
+\end{flushleft}
+
+Now, suppose that each sample has a set of potential sources, and at most one sample can come from each source. This creates a constraint over the samples that could come from each source.  First, we create some sources, samples, and pair them up.
+
+\begin{flushleft}
+\texttt{val source1 = new Source("Source 1") 
+\newline val source2 = new Source("Source 2") 
+\newline val source3 = new Source("Source 3") 
+\newline val sample1 = new Sample("Sample 1") \{
+\newline \tab val fromSource = Select(0.5 -> source1, 0.5 -> source2)
+\newline \}
+\newline 
+\newline val sample2 = new Sample("Sample 2") \{
+\newline \tab val fromSource = Select(0.3 -> source1, 0.7 -> source3)
+\newline \}
+\newline 
+\newline val pair1 = new Pair(source1, sample1) 
+\newline val pair2 = new Pair(source2, sample1) 
+\newline val pair3 = new Pair(source1, sample2) 
+\newline val pair4 = new Pair(source3, sample2)}
+\end{flushleft}
+
+Note that \texttt{Sample} is an abstract class, so when we create particular samples we must provide a value for \texttt{fromSource}. Now we can enforce the constraint as follows:
+
+\begin{flushleft}
+\texttt{val values = Values()
+\newline val samples = List(sample1, sample2)
+\newline for \{
+\newline \tab (firstSample, secondSample) <- upperTriangle(samples)
+\newline \tab sources1 = values(firstSample.fromSource) 
+\newline \tab sources2 = values(secondSample.fromSource) 
+\newline if sources1.intersect(sources2).nonEmpty
+\newline \} \{
+\newline \tab \textasciicircum\textasciicircum(firstSample.fromSource, secondSample.fromSource).addCondition( (p: (Source, Source)) => p.\_1 != p.\_2)
+\newline \}
+}
+\end{flushleft}
+
+The first thing we do is create a \texttt{Values} object, because we will need to repeatedly get the possible sources of each sample. The for comprehension first generates all pairs of elements in the \texttt{samples} list in which the first element precedes the second in the list (\texttt{upperTriangle} is in the Figaro package) . It then sees if the two samples have a possible source in common. If they do, it imposes a condition on the pair of sources of the two samples saying that they must be different. We go through this process to avoid setting a constraint on the source variables of all pairs of samples, which would lead them to be one large clique.
+
+Depending on the structure of which samples can come from which sources, we might want to solve this problem using variable elimination. Unfortunately, the distances are defined by atomic continuous elements that cannot be used in variable elimination. The solution is to use dependent universes. We create a universe for each \texttt{Pair} as follows:
+
+\begin{flushleft}
+\texttt{class Pair(val source: Source, val sample: Sample) \{ 
+\newline \tab val universe = new Universe(List(sample.fromSource)) 
+\newline \tab val isTheRightSource =
+\newline \tab Apply(sample.fromSource, (s: Source) => s == source)("isTheRightSource", universe)
+\newline \tab val rightSourceDistance = Normal(0.0, 1.0)("rightSourceDistance", universe)
+\newline \tab val wrongSourceDistance = Uniform(0.0, 10.0)("wrongSourceDistance", universe)
+\newline \tab val distance =
+\newline \tab If(isTheRightSource, rightSourceDistance, wrongSourceDistance)("distance", universe)
+\newline \} }
+\end{flushleft}
+
+Observe that each element created in the Pair class is added to the universe of the Pair, not the universe that contains \texttt{sample.fromSource}. Now, we can use variable elimination and condition each of the source assignment on the probability of the evidence in the corresponding dependent universe. To do this, we pass a list of the dependent universes as extra arguments to variable elimination, along
+with a function that provides the algorithm to use to compute the probability of evidence in a dependent universe, as follows:
+
+\begin{flushleft}
+\texttt{val evidence1 = NamedEvidence("distance", Condition((d: Double) => d > 0.5 \&\& d < 0.6))
+\newline val evidence2 = NamedEvidence("distance", Condition((d: Double) => d > 1.5 \&\& d < 1.6))
+\newline val evidence3 = NamedEvidence("distance", Condition((d: Double) => d > 2.5 \&\& d < 2.6))
+\newline val evidence4 = NamedEvidence("distance", Condition((d: Double) => d > 0.5 \&\& d < 0.6))
+\newline val ue1 = (pair1.universe, List(evidence1))
+\newline val ue2 = (pair2.universe, List(evidence2))
+\newline val ue3 = (pair3.universe, List(evidence3))
+\newline val ue4 = (pair4.universe, List(evidence4))
+\newline def peAlg(universe: Universe, evidence: List[NamedEvidence[\_]]) = () => 
+\newline ProbEvidenceSampler.computeProbEvidence(100000, evidence)(universe)
+\newline val alg = VariableElimination(List(ue1, ue2, ue3, ue4), peAlg \_, sample1.fromSource)}
+\end{flushleft}
+
+
+\section{Abstractions}
+
+An alternative way to dealing with elements with many possible values, such as continuous elements, is to map the values to a smaller abstract space of values. An element can have \emph{pragmas}, which are instructions to algorithms on how to deal with the element. The only pragmas currently defined are abstractions, but more might be defined in the future. To add an abstraction to an element, use the element's \texttt{addPragma} method.
+
+Let us build abstractions in steps. We start with a \texttt{PointMapper}. A point mapper defines a map method that takes a concrete point and a set of possible abstract points and chooses one of the abstract points. A natural point mapper for continuous elements maps each continuous value to the closest abstract point.
+
+Next, we define an \texttt{AbstractionScheme}. In addition to being a point mapper, an abstraction scheme also provides a \texttt{select} method that takes a set of concrete points and a target number of abstract points and chooses a set of abstract points from the concrete points of the given size. A default abstraction scheme is provided for continuous elements that provides a uniform discretization of the given concrete values. More intelligent abstraction schemes that perform other discretizations can easily be developed.
+
+An \texttt{Abstraction} consists of a target number of abstract points, a desired number of concrete points per abstract point from which to generate the abstract points (which defaults to 10), and an abstraction scheme. An example of using abstractions to discretize continuous elements is as follows:
+
+\begin{flushleft}
+\texttt{import com.cra.figaro.language.\_
+\newline import com.cra.figaro.library.atomic.continuous.Uniform
+\newline import com.cra.figaro.library.compound.If
+\newline import com.cra.figaro.algorithm.{AbstractionScheme, Abstraction}
+\newline import com.cra.figaro.algorithm.factored.\_
+\newline 
+\newline val flip = Flip(0.5)
+\newline val uniform1 = Uniform(0.0, 1.0)
+\newline val uniform2 = Uniform(1.0, 2.0)
+\newline val chain = If(flip, uniform1, uniform2)
+\newline val apply = Apply(chain, (d: Double) => d + 1.0)
+\newline apply.addConstraint((d: Double) => d)
+\newline 
+\newline uniform1.addPragma(Abstraction(10)) 
+\newline uniform2.addPragma(Abstraction(10)) 
+\newline chain.addPragma(Abstraction(10)) 
+\newline apply.addPragma(Abstraction(10))
+\newline 
+\newline val ve = VariableElimination(flip)
+\newline ve.start()
+\newline println(ve.probability(flip, true)) 
+\newline // should print about 0.4 }
+\end{flushleft}
+
+It is up to individual algorithms to decide whether and to use a pragma such as an abstraction. For example, importance sampling, which has no difficulty with elements with many possible values, ignores abstractions. The process of computing ranges, which is a subroutine of variable elimination and can also be used in other algorithms, does use abstractions.
+
+The process used by range computation to determine the range of an abstract element is as follows. First it generates concrete values, then selects the abstract values from the concrete values. If the element is atomic, it generates the concrete points directly. The number of concrete values is equal to the number of abstract values times the number of concrete values per abstract value, both of which can be specified. If the element is compound, it uses the sets of the values of the element's arguments and the definition of the element to produce concrete values. Remember that the sets of values of the arguments (e.g., for the apply in the above example) may themselves be the result of abstractions. Once it has generated the concrete points, the range computation calls the \texttt{select} method of the abstraction scheme associated with the element to generate the abstract values.
+
+\section{Reproducing inference results}
+
+Running inference on a model is generally a random process, and performing the same inference repeatedly on a model may produce slightly different results. This can sometimes make debugging difficult, as bugs may or may not be encountered, depending on the random values that were generated during inference. For that reason, Figaro has the ability to generate reproducible inference runs.
+
+All elements in Figaro use the same random number generator to retrieve random values. This can be accessed by importing the \texttt{util} Figaro package and using the value random, which is Figaro's random number generator. For example, the \texttt{generateRandomness()} function in the Select element is:
+
+\begin{flushleft}
+\texttt{import com.cra.figaro.util.\_
+\newline 
+\newline def generateRandomness() = random.nextDouble()
+}
+\end{flushleft}
+
+To reproduce the results of an inference algorithm, you must set the seed in the random number generator. Repeated runs of the same algorithm with the same seed will then be identical, making debugging much easier since errors can be tracked between runs. To set the seed, you import the util package, and simply call \texttt{setSeed(s: Long)}. To retrieve the current random number generator seed, one calls \texttt{getSeed()}.
