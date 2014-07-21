@@ -32,10 +32,10 @@ abstract class FactoredFrontier(static: Universe, initial: Universe, transition:
   protected var currentStatic = static
   protected var currentUniverse = initial
   
-  LazyValues.clear(static)
   protected var bp: ProbQueryBeliefPropagation = _
   
   override def initialize() {
+    LazyValues.clear(static)
     createBP(getNamedElements(currentUniverse) ::: getNamedElements(currentStatic))
   }
   
