@@ -83,24 +83,28 @@ trait FactoredAlgorithm[T] extends Algorithm {
      * For any variable that is expanded, we need to make sure that a variable that it is contingent on is also expanded.
      * 
      * */
-    val newlyNeededElements: scala.collection.Set[(Element[_], Int)] = 
+    val newlyNeededElements = 
       Element.closeUnderContingencies(starterElements.toSet).map((elem: Element[_]) => (elem, depth))
-      
-    def expandElements(curr: scala.collection.Set[(Element[_], Int)]): Unit = {
-      if (curr.isEmpty) return
-      for((elem, depth) <- curr){
-        val values = LazyValues(elem.universe)
-        values.expandAll(Set((elem, depth)))
+    
+    @tailrec
+    def expandElements(curr: Set[(Element[_], Int)]): Unit = {
+      if(curr.isEmpty) return
+      val currGrouped = curr.groupBy(_._1.universe)
+      val allNeededElements = currGrouped.flatMap((pair: (Universe, Set[(Element[_], Int)])) => {
+        val (uni, set) = pair
+        val values = LazyValues(uni)
+        values.expandAll(set)
         val currentlyExpanded = values.expandedElements.toSet
         val currentDepths = currentlyExpanded.map(d => (d, values.expandedDepth(d).getOrElse(0)))
         val others = currentDepths.flatMap(e => chaseDown(e._1, e._2, currentlyExpanded))
         val filteredElements = others.filter(o => boundsInducingElements.contains(o._1))
         val neededElements = filteredElements.flatMap(f => (f._1.elementsIAmContingentOn + f._1).map((_, f._2)))
-        expandElements(neededElements.toSet)
-      }
+        neededElements
+      })
+      expandElements(allNeededElements.toSet)
     }
     
-    expandElements(newlyNeededElements)
+    expandElements(newlyNeededElements.toSet)
     
     // We only include elements from other universes if they are specified in the starter elements.
     val resultElements = values.expandedElements.toList ::: starterElements.filter(_.universe != universe)
