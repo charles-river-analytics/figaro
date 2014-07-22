@@ -150,7 +150,7 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
   private[figaro] def registerUses[T, U](user: Element[T], used: Element[U]): Unit = {
     if (!(myUses contains user)) myUses += user -> Set()
     if (!(myUsedBy contains used)) myUsedBy += used -> Set()
-    if (!(myUsedBy(used) contains user)) {
+    if (used.universe == this && !(myUsedBy(used) contains user)) {
       myUses(user) += used
       myUsedBy(used) += user
       myRecursiveUsedBy.clear
@@ -159,10 +159,12 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
   }
 
   private[figaro] def deregisterUses[T, U](user: Element[T], used: Element[U]): Unit = {
-    if (myUses.contains(user)) myUses(user) -= used
-    if (myUsedBy.contains(used)) myUsedBy(used) -= user
-    myRecursiveUsedBy.clear
-    myRecursiveUses.clear
+    if(used.universe == this){
+      if (myUses.contains(user)) myUses(user) -= used
+      if (myUsedBy.contains(used)) myUsedBy(used) -= user
+      myRecursiveUsedBy.clear
+      myRecursiveUses.clear
+    }
   }
 
   private[language] def activate(element: Element[_]): Unit = {
