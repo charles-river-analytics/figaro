@@ -2,7 +2,7 @@
  * FactoredFrontier.scala  
  * A factored filtering algorithm.
  * 
- * Created By:      William Kretschmer, Brian Ruttenberg (bruttenberg@cra.com)
+ * Created By:      William Kretschmer (kretsch@mit.edu), Brian Ruttenberg (bruttenberg@cra.com)
  * Creation Date:   Jul 16, 2014
  * 
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
@@ -21,6 +21,10 @@ import com.cra.figaro.language._
 
 /**
  * Abstract class that runs the Factored Frontier algorithm.
+ * Like a particle filter, the algorithm is supplied with models representing initial and static universes, as well as a universe transition function.
+ * 
+ * At each time step, the algorithm copies the marginal probabilities for each named element to a new dummy universe.
+ * This dummy universe is then supplied to the transition function.
  * 
  * @param static The universe of elements that do not change over time.
  * @param initial The universe describing the distribution over the initial state of the system.
@@ -82,6 +86,10 @@ abstract class FactoredFrontier(static: Universe, initial: Universe, transition:
     currentUniverse = transition(currentStatic, dummyUniverse)
     currentUniverse.assertEvidence(evidence)
     
+    /*
+     * We must explicitly add all named elements from the two dummy universes, as FactoredAlgorithm cannot get them by default.
+     * This is to ensure that they are correctly expanded and included for factor creation.
+     */
     createBP(getNamedElements(currentUniverse) ::: getNamedElements(currentStatic) ::: getNamedElements(dummyUniverse))
     runBP()
     

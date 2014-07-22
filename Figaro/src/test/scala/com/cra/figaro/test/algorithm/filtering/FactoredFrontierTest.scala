@@ -2,7 +2,7 @@
  * FactoredFrontierTest.scala  
  * Tests for the Factored Frontier Algorithm.
  * 
- * Created By:      William Kretschmer, Brian Ruttenberg (bruttenberg@cra.com)
+ * Created By:      William Kretschmer (kretsch@mit.edu), Brian Ruttenberg (bruttenberg@cra.com)
  * Creation Date:   Jul 16, 2014
  * 
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
@@ -25,7 +25,7 @@ import com.cra.figaro.algorithm.filtering.FactoredFrontier
 import com.cra.figaro.test.PerformanceTest
 import com.cra.figaro.algorithm.lazyfactored.LazyValues
 
-class FactoredFrontierTest extends WordSpec with PrivateMethodTester with Matchers {
+class FactoredFrontierTest extends WordSpec with Matchers {
   "A factored frontier" when {
     "creating a new universe from a previous time step" should {
       "create dummy universes for the previous and static universes" in {
