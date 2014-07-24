@@ -13,6 +13,7 @@
 
 package com.cra.figaro.example
 
+import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.algorithm.learning._
 import com.cra.figaro.language._
@@ -58,7 +59,7 @@ object CoinExample {
         }
     }
 
-    val learningAlgorithm = EMWithMH(10000, 100, ProposalScheme.default, c.fairness)
+    val learningAlgorithm = EMWithMH(10000, 100, ProposalScheme.default, fairness)
     learningAlgorithm.start
     learningAlgorithm.kill
     /*
