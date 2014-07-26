@@ -69,6 +69,7 @@ trait ProbabilisticVariableEliminationDecision extends VariableElimination[(Doub
       }
     }
 
+    ProbFactor.removeFactors()
     val thisUniverseFactorsExceptUtil = neededElements flatMap (ProbFactor.make(_))
     // Make special utility factors for utility elements
     val thisUniverseFactorsUtil = getUtilityNodes map (makeUtilFactor(_))
