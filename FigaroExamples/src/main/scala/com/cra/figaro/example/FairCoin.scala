@@ -39,9 +39,9 @@ object CoinExample {
     'H', 'H', 'H', 'H', 'H', 'H', 'H', 'T', 'H','T',
      'H', 'H', 'H')
 
-  def Toss(fairness: AtomicBetaParameter): AtomicFlip =
+  def Toss(fairness: AtomicBeta): AtomicFlip =
     {
-      val f = fairness.getLearnedElement
+      val f = Flip(fairness.MAPValue)
       f
     }
 
@@ -64,12 +64,12 @@ object CoinExample {
     /*
      * This will create a flip having a probability of 'true' learned from the input data. 
      */
-    val coin = fairness.getLearnedElement
+    val coin = Flip(fairness.MAPValue)
     println("The probability of a coin with this fairness showing 'heads' is: ")
     println(coin.prob)
 
-    val t1 = fairness.getLearnedElement
-    val t2 = fairness.getLearnedElement
+    val t1 = Flip(fairness.MAPValue)
+    val t2 = Flip(fairness.MAPValue)
     
     val equal = t1 === t2
 

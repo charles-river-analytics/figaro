@@ -1,0 +1,75 @@
+% Chapter X
+
+\chapter{Hello world!} % Chapter title
+
+\label{Hello world!} % For referencing the chapter elsewhere, use \autoref{ch:name} 
+
+%----------------------------------------------------------------------------------------
+
+Make sure Scala version 2.10.0 or later is installed on your machine. Follow the instructions to either extract the figaro.jar to some location or build the jar from the code repository. Change directory to that location and enter at the command prompt
+
+\begin{flushleft}
+\texttt{scala $-$classpath "figaro.jar;\$CLASSPATH"}
+\end{flushleft}
+
+This starts the Scala interactive console and makes sure all the Figaro classes are available. The interactive console reads one line of Scala code at a time and interprets it. It is useful for learning and trying new things. Ordinarily, you would use the compiler to compile a program into Java byte code and run it. To use the Scala compiler, use the \texttt{scalac} or  \texttt{fsc} command, again making sure \texttt{Figaro.jar} is in the class path.
+
+Once in the interactive console, at the Scala prompt, enter
+
+\begin{flushleft}
+\texttt{import com.cra.figaro.language.\_}
+\end{flushleft}
+
+This loads the portion of the Figaro package that allows you to create models using the core language. Now we'll create a probabilistic model and give it a name:
+
+\begin{flushleft}
+\texttt{val hw = Constant("Hello world!")}
+\end{flushleft}
+
+This line creates a field \texttt{hw} whose value is the probabilistic model that produces the string "Hello world!" with probability 1. To exercise the model, we need to create an instance of an algorithm. We'll use an importance sampling algorithm. First we need to import the algorithm's definition:
+
+\begin{flushleft}
+\texttt{import com.cra.figaro.algorithm.sampling.\_}
+\end{flushleft}
+
+Now we create the algorithm, telling it that the target model is \texttt{hw}:
+
+\begin{flushleft}
+\texttt{val alg = Importance(1000, hw)}
+\end{flushleft}
+
+The \texttt{1000} tells the sampler to take 1000 samples. Before we can query the algorithm for an answer, we have to tell it to start running:
+
+\begin{flushleft}
+\texttt{alg.start()}
+\end{flushleft}
+We can now ask for the probability of various strings. Enter
+
+\begin{flushleft}
+\texttt{alg.probability(hw, "Hello world!")}
+\end{flushleft}
+Scala responds with something like
+
+\begin{flushleft}
+\texttt{res3: Double = 1.0}
+\end{flushleft}
+This means that the answer is of type \texttt{Double}, has value 1.0, and is given the name \texttt{res3}. We can similarly ask
+
+\begin{flushleft}
+\texttt{alg.probability(hw, "Goodbye!")}
+\end{flushleft}
+
+Scala responds with something like
+
+\begin{flushleft}
+\texttt{res4: Double = 0.0}
+\end{flushleft}
+
+While this scenario is quite trivial, this example outlines the typical process involved with using probabilistic models in Figaro: Build the model, run an inference algorithm, and query for a result.
+
+
+
+
+
+
+

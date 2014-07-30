@@ -115,9 +115,12 @@ object ProbFactor {
   }
 
   private def parameterizedGetProbs[T](select: ParameterizedSelect[T]): List[Double] = {
-    val selectVar = Variable(select)
-    val probs = select.parameter.expectedValue.toList
-    probs
+    val outcomes = select.outcomes
+    val map = select.parameter.MAPValue
+    for {
+      xvalue <- Variable(select).range
+      index = outcomes.indexOf(xvalue.value)
+    } yield map(index)
   }
 
   private def makeFactors[T](select: AtomicSelect[T]): List[Factor[Double]] = {
@@ -424,7 +427,7 @@ object ProbFactor {
           if (resultVal.value == mapper.map(applyMap((arg1Val.value, arg2Val.value)), applyValues.regularValues)) 1.0
           else 0.0
         } else if ((!arg1Val.isRegular || !arg2Val.isRegular) && !resultVal.isRegular) 1.0
-        else if ((!arg1Val.isRegular || arg2Val.isRegular) && resultVal.isRegular) 0.0
+        else if ((!arg1Val.isRegular || !arg2Val.isRegular) && resultVal.isRegular) 0.0
         else 0.0
       factor.set(List(arg1Index, arg2Index, resultIndex), entry)
     }
@@ -456,7 +459,7 @@ object ProbFactor {
           if (resultVal.value == mapper.map(applyMap((arg1Val.value, arg2Val.value, arg3Val.value)), applyValues.regularValues)) 1.0
           else 0.0
         } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular) && !resultVal.isRegular) 1.0
-        else if ((!arg1Val.isRegular || arg2Val.isRegular || !arg3Val.isRegular) && resultVal.isRegular) 0.0
+        else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular) && resultVal.isRegular) 0.0
         else 0.0
       factor.set(List(arg1Index, arg2Index, arg3Index, resultIndex), entry)
     }
@@ -491,7 +494,7 @@ object ProbFactor {
           if (resultVal.value == mapper.map(applyMap((arg1Val.value, arg2Val.value, arg3Val.value, arg4Val.value)), applyValues.regularValues)) 1.0
           else 0.0
         } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular) && !resultVal.isRegular) 1.0
-        else if ((!arg1Val.isRegular || arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular) && resultVal.isRegular) 0.0
+        else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular) && resultVal.isRegular) 0.0
         else 0.0
       factor.set(List(arg1Index, arg2Index, arg3Index, arg4Index, resultIndex), entry)
     }
@@ -529,7 +532,7 @@ object ProbFactor {
           if (resultVal.value == mapper.map(applyMap((arg1Val.value, arg2Val.value, arg3Val.value, arg4Val.value, arg5Val.value)), applyValues.regularValues)) 1.0
           else 0.0
         } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular || !arg5Val.isRegular) && !resultVal.isRegular) 1.0
-        else if ((!arg1Val.isRegular || arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular || !arg5Val.isRegular) && resultVal.isRegular) 0.0
+        else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular || !arg5Val.isRegular) && resultVal.isRegular) 0.0
         else 0.0
       factor.set(List(arg1Index, arg2Index, arg3Index, arg4Index, arg5Index, resultIndex), entry)
     }
@@ -567,14 +570,14 @@ object ProbFactor {
   private def makeFactors(flip: ParameterizedFlip): List[Factor[Double]] = {
     val flipVar = Variable(flip)
     val factor = new Factor[Double](List(flipVar))
-    val prob = flip.parameter.expectedValue
+    val prob = flip.parameter.MAPValue
     val i = flipVar.range.indexOf(Regular(true))
     factor.set(List(i), prob)
     factor.set(List(1 - i), 1.0 - prob)
     List(factor)
   }
 
-  private def concreteFactors[T](elem: Element[T]): List[Factor[Double]] =
+  def concreteFactors[T](elem: Element[T]): List[Factor[Double]] =
     elem match {
       case f: ParameterizedFlip => makeFactors(f)
       case s: ParameterizedSelect[_] => makeFactors(s)

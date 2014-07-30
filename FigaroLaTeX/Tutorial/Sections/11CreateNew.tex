@@ -1,0 +1,270 @@
+% Chapter X
+
+\chapter{Creating a new algorithm} % Chapter title
+
+\label{Creating a new algorithm} % For referencing the chapter elsewhere, use 
+
+In addition to creating new element classes, Figaro provides support for creating new algorithms and integrating them into the existing library. Support is provided for query answering algorithms (like Metropolis-Hastings and variable elimination), probability of evidence algorithms, most probable explanation, and defining new kinds of algorithms. Support is also provided both for anytime and one- time algorithms. We start this section by describing how to create a new one-time query-answering algorithm. We then discuss creating an anytime version of the algorithm, paying attention to sharing code between the one-time and anytime versions. We then describe how to create a learning algorithm, how to define an algorithm to be extensible to new classes, and how to define a new category of algorithm.
+
+A good way to learn about creating algorithms, after reading this section, is to examine the Figaro code in \texttt{com.cra.figaro.algorithm} and its subpackages. If you do develop a new algorithm, please consider sharing it.
+
+\section{General considerations}
+
+All algorithms inherit from the \texttt{Algorithm} class, which provides a basic framework for algorithms, including starting, stopping, and killing them. \texttt{Algorithm} contains \texttt{initialize} and \texttt{cleanup} methods. The default implementation of these methods is to do nothing. You can override this for your algorithms if they require bookkeeping. For example, probability of evidence algorithms assert the named evidence at the beginning and remove it at the end, so they override these methods as follows:
+
+\begin{flushleft}
+\texttt{def initialize()\{
+\newline super.initialize()
+\newline // assert the evidence
+\newline \}
+\newline 
+\newline def cleanup() \{
+\newline // remove the evidence
+\newline super.cleanUp()
+\newline \}
+}
+\end{flushleft}
+
+Note that we make sure to do the superclass's initialization and cleanup, and note that the superclass's initialization happens before this class, and its cleanup happens after this class.
+
+
+\section{One-time query answering algorithm}
+
+One-time query answering algorithms inherit from the trait \texttt{OneTimeProb\-Query}. To implement such an algorithm, you need to provide implementations for:
+
+\begin{itemize}
+\item A constructor that allows the universe on which to operate and the set of query elements to be specified.
+\item \texttt{run()}, which runs the algorithm, putting it in a state where it can answer queries. For example, for a sampling algorithm, it collects and stores the required number of samples. For variable elimination, it eliminates all variables except the query variables.
+\item \texttt{computeDistribution(element)}, which returns a distribution over values of the element. The element must be one of the query elements specified when the algorithm is created. The distribution is represented as a stream of probabilities paired with values. A stream is a lazy data structure that is potentially infinite. Streams are used for the return values of distributions to allow for algorithms that can return distributions with a non-zero probability of an infinite number of elements, although there are no such algorithms currently.
+\item \texttt{computeExpectation(element, function)}, which computes the expectation of the element under the given function that maps a value of the element to a double.
+\item Optionally, \texttt{computeProbability(element, predicate)}, which computes the probability that the element satisfies the given predicate that maps a value of the element to a Boolean.
+\end{itemize}
+
+\subsection{Sampling}
+
+Extra support is provided for sampling algorithms in the form of \texttt{UnweightedSampler} and \texttt{WeightedSampler} classes. These take care of everything for you except for the process of producing a single sample. All you have to do for an unweighted sampler is extend \texttt{Unweight\-edSampler} and write a \texttt{sample} method that returns an instance of the \texttt{Sample} type, which stores the values of elements. The \texttt{Sample} type is defined to be \texttt{Map[Element[\_], Any]}. The \_ in place of the type parameter of \texttt{Element} indicates that the type parameter is unspecified, so any element can appear here. The element is mapped to an instance of \texttt{Any} which is the common supertype of all Scala types. So any element can be mapped to any value. To get a value out of a sample, you can use the Scala \texttt{asInstanceOf[T]} method of the sample.
+
+\subsection{Expansion and factors}
+
+A useful operation is to expand all chains in a universe to obtain the complete set of elements in the universe. This is achieved using the syntax
+
+\begin{flushleft}
+\texttt{Expand(universe).expand()}
+\end{flushleft}
+
+As usual, the \texttt{universe} argument can be omitted, using the current default universe. Support is provided for algorithms that are based on factors. Variable elimination is one example, but there are many other such algorithms. To create all the factors for an element, use
+
+\begin{flushleft}
+\texttt{ProbFactor.make(element)}
+\end{flushleft}
+
+The standard procedure to turn a universe into a list of factors is to
+\begin{enumerate}
+\item Expand the universe.
+\item Call \texttt{universe.activeElements} to get all the elements in the universe.
+\item Make the factors for every element and collect them
+\end{enumerate}
+
+Operations in factored algorithms are defined by a semiring algebraic structure. There are several semiring definitions in the package \texttt{com.cra.figaro.algorithm.factored}. Each semiring defines a product and sum operation, and a value for zero and one which satisfy a set of properties. Different semirings are appropriate for certain algorithms and data types; however, the most frequently used set of operations is \texttt{SumProductSemiring}.
+
+\section{Anytime algorithms}
+
+An anytime algorithm proceeds in a series of steps. The algorithm can be interrupted after any step. For a sampling algorithm, a natural step is taking a single sample. The algorithm blocks while running a step, only answering queries when the step has terminated.
+
+To create an anytime algorithm, in addition to the query answering methods like
+\texttt{computeDistribution}, you need to define the following:
+
+\begin{itemize}
+\item \texttt{runStep()}, which is called repeatedly to run a single step. Answering queries should be a valid operation after any step.
+\end{itemize}
+
+\subsection{Code sharing}
+
+Some algorithms, such as Figaro's built-in sampling algorithms, might come in both anytime and one-time versions. It is desirable to share as much code as possible between these versions. In addition, different algorithms might share the same underlying code. For example, Metropolis-Hastings and importance sampling are both sampling algorithms, but they are somewhat different because the first uses unweighted samples while the second uses weighted samples. Two different unweighted sampling algorithms will want to share even more code. Figaro uses Scala's abstract classes and traits to help achieve code sharing.
+
+A word on abstract classes versus traits. Neither can be instantiated. The main differences are that classes can take arguments, while traits support multiple inheritance. An inherited class must always be the first thing from which a subclass inherits, while traits can appear subsequently in the inheritance list.
+
+All algorithms that compute conditional probabilities inherit from \texttt{ProbQueryAlgorithm}, from which  \texttt{OneTimeProbQuery} and \texttt{AnytimeProb\-Query} inherit. Algorithms that implement both versions can contain their core functionality in a class and provide a subclass or a constructor that inherits from one or the other of these traits, providing the specific methods for anytime or one-time algorithms.
+
+For sampling algorithms, \texttt{AnytimeSampler} and \texttt{OneTimeSampler} are provided. These take care of the mechanics of running the sampler repeatedly. In particular, the \texttt{AnytimeSampler} implements the \texttt{initialize} and \texttt{runStep} methods so all you have to write is sample. These traits have the subtraits \texttt{AnytimeProbQuerySampler} and \texttt{OneTimeProbQuery\-Sampler} that specifically capture sampling algorithms that compute the conditional probability of queries. In addition, Figaro provides \texttt{Unweighted\-Sampler} and \texttt{WeightedSampler} that handle the mechanics of Sample data types, initializing sample sets, accumulating samples, and answering queries involving samples.
+
+Using all these traits and classes, anytime and one-time importance sampling can be defined easily. First we create an \texttt{Importance} class, as follows:
+
+\begin{flushleft}
+\texttt{abstract class Importance(universe: Universe, targets: Element[\_]*) \newline extends WeightedSampler(universe, targets:\_*) \{
+\newline // implementation of sample() goes here
+\newline \}
+}
+\end{flushleft}
+
+
+It takes the universe to operate on as its first argument and a comma-separated sequence of target query elements as its second. It is specified to be a weighted sampler using the same universe and targets. The body of the class implements the \texttt{sample} method. Note that this class is abstract and cannot be instantiated. We provide a companion \texttt{Importance} object that provides two factory constructors, one for anytime and one for one-time importance sampling:
+
+\begin{flushleft}
+\texttt{object Importance \{
+\newline \tab def apply(targets: Element[\_]*)(implicit universe: Universe) =
+\newline \tab new Importance(universe, targets:\_*)
+\newline \tab with AnytimeProbQuerySampler
+\newline 
+\newline \tab def apply(myNumSamples: Int, targets: Element[\_]*)(implicit universe: Universe) = new Importance(universe, targets:\_*) 
+\newline \tab with OneTimeProbQuerySampler \{ val numSamples = myNumSamples \}
+\newline \}
+}
+\end{flushleft}
+
+The first constructor takes has two argument lists. The first is a comma-separated sequence of query targets, and the second provides the universe. Since it implicit, it can be omitted and the default universe is used. Since the number of samples is not explicitly provided, it is assumed that the anytime version is wanted, so the constructor inherits from \texttt{AnytimeProbQuerySampler}. In the second, case, the number of samples is specified, so it inherits from \texttt{OneTimeProbQuerySampler}. One detail to note is that \texttt{OneTimeProbQuerySampler} contains an abstract field named \texttt{numSamples} that must be defined to create an instance of the trait. This is accomplished through the code
+\newline \texttt{OneTimeProbQuerySampler \{ val numSamples = myNumSamples \}}
+This creates an anonymous subclass of \texttt{OneTimeProbQuerySampler} in which the \texttt{numSamples} field is defined to be the value passed into the constructor.
+
+\section{Learning algorithms}
+
+This section describes how to use learning algorithms and sufficient statistics factors. Learning algorithms (using sufficient statistics) require that the sufficient statistics of a parameter are modified with the learned result. Expectation maximization uses a version of variable elimination to produce an estimate of the sufficient statistics at each iteration. This version of variable elimination is called \texttt{SufficientStatis\-ticsVariableElimination}. It relies on the \texttt{SufficientStatisticsFactor} class described in the 'Parameters and Parameterized Elements' section.
+
+The semiring used by \texttt{SufficientStati\-sticsVariableElimination} is called \texttt{SufficientStatisticsSemiring}. This provides operations on sufficient statistics which can be used by factored algorithms like variable elimination.
+
+\begin{flushleft}
+\texttt{val semiring = new SufficientStatisticsSemiring(parameterMap)
+\newline val statFactor = new
+\newline \tab SufficientStatisticsFactor(parameterMap)
+}
+\end{flushleft}
+
+The only other requirement to use the parameter mapping is to create an instance of the sufficient statistics factor class inside the algorithm, call the \texttt{getFactors} method, and clear the factors when the algorithm is finished. This is important, because otherwise the factors will be cached and will not reflect changes in parameter values unless they are regenerated. The factored can be cleared by using the \texttt{removeFactors} method
+
+At the end of the inference algorithm, it must provide the sufficient statistics factors for all of the parameters. This can be accomplished by calling the method get on the factor resulting from inference. For example, in variable elimination, we can do \texttt{result = finalFactor.get(List())} to retrieve the resulting sufficient statistics.
+
+\texttt{SufficientStat\-isticsVariableElimination} does not change the values of parameters. It only produces an estimate of the sufficient statistics given the observed data. The actual modification of parameter elements is handled in the maximization step of expectation maximization, using the maximize method defined by the parameter. Other learning algorithms might use the sufficient statistics produced by variable elimination in a different way. The important part is to choose the hyperparameter values in \texttt{Parameter} correctly, and use methods to modify them inside the learning algorithm.
+
+However, if an inference algorithm like \texttt{SufficientStatisticsVari\-ableElimination} is to be used as part of the learning algorithm, then the parameter mapping must be derived from the input parameters to their respective sufficient statistics. We have already seen in several places where this parameter mapping is used. It is inside a learning algorithm that the mapping is actually created. This is
+easy to do, as shown in the \texttt{ExpectationMaximization} class:
+
+\begin{flushleft}
+\texttt{protected val paramMap : immutable.Map[Parameter[\_],Seq[Double]] = 
+\newline immutable.Map(targetParameters.map(p => p -> p.zeroSufficientStatistics):\_*)
+}
+\end{flushleft}
+
+This code simply maps each parameter to its sufficient statistics. This map can now be provided as an argument to an inference algorithm to reason about the parameters and their sufficient statistics.
+
+\section{Allowing extension to new element classes}
+
+We saw in the section on making a class usable by variable elimination how to make a new element class work under an existing algorithm without modifying the algorithm's code. To allow this, the algorithm must be defined to support extension in this way. We illustrate how to do this using range computation. The computation uses at its heart a function called \texttt{concreteValues} whose definition is as follows:
+
+
+\begin{flushleft}
+\texttt{private def concreteValues[T](element: Element[T]): Set[T] =
+element match \{
+\newline \tab case c: Constant [\_] => Set(c.constant)
+\newline \tab case f: Flip => Set(true, false)
+\newline \tab ...
+\newline \tab case v: ValuesMaker[\_] => v.makeValues.toSet
+\newline \tab case \_ => throw new UnsupportedAlgorithmException(element)
+\newline \}
+}
+\end{flushleft}
+
+This function takes an element and tests to see what kind of element it is. If it is a constant, the values is a singleton set containing the constant; if it is a flip, it is a set containing true and false, and so on. If the value fails to match any of the built-in types for which this function is defined, it arrives at the second to last case. This tests if the value is an instance of \texttt{ValuesMaker}. If it is, the values \texttt{makeValues} method is used. The final case is a catchall - the notation \_ represents a pattern that catches all values. If the value has arrived at this case, its values cannot be computed, so we throw an \texttt{UnsupportedAlgorithmException}.
+
+\section{Creating a new category of algorithm}
+
+Suppose you want to create a new category of algorithm. For example, probability of query algorithms, probability of evidence, and most likely value algorithms are all different categories. Figaro provides some infrastructure to help with creating a new kind of algorithm. We will illustrate how this is done for most likely value algorithms, and the same pattern can be used elsewhere.
+
+All algorithms extend the \texttt{Algorithm} trait, which defines the general interface to algorithms using \texttt{start, stop,  resume}, and \texttt{kill}. To define a new category of algorithm, you extend algorithm and define methods for the different ways the algorithm can be queried. For example,
+
+\marginpar{The \texttt{val} in front of the universe argument indicates that universe is a field of MPEAlgorithm that can be accessed}
+
+\begin{flushleft}
+\texttt{abstract class MPEAlgorithm(val universe: Universe)
+\newline extends Algorithm \{
+\newline \tab /** 
+\newline \tab * Returns the most likely value for the target element.
+\newline \tab */
+\newline \tab def mostLikelyValue[T](target: Element[T]): T
+\newline \}
+}
+\end{flushleft}
+
+An \texttt{MPEAlgorithm} takes the universe on which it is defined as an argument. It provides one query method, which returns the most likely value of a target method. This method is abstract (it has no implementation) and must be implemented in a particular implementation of  \texttt{MPEAlgorithm}.
+
+Next, we provide one-time and anytime traits for MPE algorithms. The one-time trait is very easy:
+
+\begin{flushleft}
+\texttt{trait OneTimeMPE extends MPEAlgorithm with OneTime}
+\end{flushleft}
+
+That's all there is to it. Figaro's \texttt{OneTime} implements the general algorithm operations for starting, stopping, and killing algorithms (fairly trivial in this case). It also declares an abstract \texttt{run()} method, which is called when the algorithm is started. This method must be implemented in implementations of \texttt{OneTime}, and, by extension, implementations of \texttt{OneTimeMPE}. An example of a one-time MPE algorithm is a one-time Metropolis-Hastings annealer, which is captured in the \texttt{OneTimeMetropolisHastingsAnnealer} class. This class extends (indirectly) \texttt{OneTimeSampler}, which is defined as follows.
+
+\begin{flushleft}
+\texttt{trait OneTimeSampler extends Sampler with OneTime \{
+\newline \tab /**
+\newline \tab * The number of samples to collect from the model.
+\newline \tab */
+\newline \tab val numSamples: Int
+\newline 
+\newline \tab /**
+\newline \tab * Run the algorithm, performing its computation to completion.
+\newline \tab */
+\newline \tab def run() = \{
+\newline \tab resetCounts()
+\newline \tab for \{ i <- 1 to numSamples \} \{ doSample() \}
+\newline \tab update()
+\newline \}
+\newline \}
+}
+\end{flushleft}
+
+In this case, \texttt{run} resets the statistics of the sampler, calls \texttt{doSample} the required number of times, and updates the representation of the result. Different categories of algorithms can use the same general sampling process; for example, the one-time importance sampling algorithm for computing the probability of query variables also inherits from \texttt{OneTimeSampler}.
+
+For the anytime version of an \texttt{MPEAlgorithm}, we need to do more work to define the services provided by the thread that computes the MPE and the responses it produces.
+
+\begin{flushleft}
+\texttt{trait AnytimeMPE extends MPEAlgorithm with Anytime \{
+\newline \tab /**
+\newline \tab * A message instructing the handler to compute the most likely
+value of the target element.
+\newline \tab */
+\newline \tab case class ComputeMostLikelyValue[T](target: Element[T]) extends
+Service
+\newline 
+\newline \tab /**
+\newline \tab * A message from the handler containing the most likely value of the previously requested element.
+\newline \tab */
+\newline 
+\newline \tab case class MostLikelyValue[T](value: T) extends Response
+\newline 
+\newline \tab def handle(service: Service): Response =
+\newline \tab service match \{
+\newline \tab case ComputeMostLikelyValue(target) =>
+\newline \tab MostLikelyValue(mostLikelyValue(target))
+\newline \}
+\newline \}
+}
+\end{flushleft}
+
+Anytime algorithms run in a separate thread, and we need to be able to communicate with the thread to get the probability of evidence out of it. This is accomplished using Scala's \emph{actors} framework.  Actors communicate by sending and processing messages. The \texttt{Anytime} trait defines the \texttt{runner} field, which is the actor that runs the algorithm. A request can be sent to the runner to compute the most likely value of a target element. The syntax for sending the message to the runner is
+
+\begin{flushleft}
+\texttt{runner ! Handle(ComputeMostLikelyValue(target))}
+\end{flushleft}
+
+which sends a message whose content is \texttt{Handle(ComputeMostLikely\-Value(target))}. The runner dispatches this message to a method called \texttt{handle} (which is abstract in Anytime and defined in \texttt{AnytimeMPE}. This method knows how to handle \texttt{ComputeMostLikelyValue} - it calls the method \texttt{mostLike\-lyValue}, which, as we have seen, is abstract in \texttt{MPEAlgorithm} and must be provided by an implementation. It turns the resulting value \texttt{v} into a message \texttt{MostLikelyValue(v)}, which is sent back to the caller from the runner.
+
+\marginpar{Case classes are simple classes in Scala that contain some values. Case objects are like classes but with no values; they are essentially constants.}
+
+To summarize, to define an anytime version of the algorithm, you need to do the following:
+
+\begin{enumerate}
+\item Create a case class or object to represent the services provided by your algorithm. Here, it is accomplished by
+\newline \texttt{case class ComputeMostLikelyValue(target: Element[T]) 
+\newline extends Service}
+\item Create a case class or object to represent the responses provided by these
+services. Here,
+\newline \texttt{case class MostLikelyValue[T](value: T)
+\newline extends Response} 
+\item Create a handler in the method \texttt{handle} that takes a service, performs some computation, and returns a response.
+\item In each method that provides an interface to querying the algorithm
+\end{enumerate}
+\begin{aenumerate}
+\item Send a message to the runner asking for the appropriate service
+\item Receive a message from the runner, extract the result, and return it.
+\end{aenumerate}

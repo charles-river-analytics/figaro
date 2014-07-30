@@ -165,6 +165,12 @@ object LogMaxProductSemiring extends DivideableSemiRing[Double] {
   def divide(x: Double, y: Double) = if (y == zero) zero else x - y
 
   def sum(x: Double, y: Double) = x max y
+
+ /**
+   * Power operation
+   * x ^ y
+   */
+  def power(x:Double, y:Double):Double = x*y
 }
 
 /**
@@ -218,5 +224,12 @@ object MaxProductSemiring extends DivideableSemiRing[Double] {
    * 1
    */
   val one = 1.0
+
+  /**
+   * Power operation
+   * x ^ y
+   */
+  def power(x:Double, y:Double):Double = math.pow(x,y)
+
 }
 

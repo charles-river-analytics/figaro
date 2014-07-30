@@ -72,20 +72,38 @@ class CompoundSelect[T](name: Name[T], clauses: List[(Element[Double], T)], coll
 /**
  * A distribution in which the probabilities are learnable parameters and the outcomes are values.
  */
-class ParameterizedSelect[T](name: Name[T], override val parameter: AtomicDirichletParameter, outcomes: List[T], collection: ElementCollection)
+class ParameterizedSelect[T](name: Name[T], override val parameter: AtomicDirichlet, outcomes: List[T], collection: ElementCollection)
   extends Select(name, parameter.alphas.toList zip outcomes, collection) with Parameterized[T] {
 
   private lazy val normalizedProbs = normalize(probs)
   def args: List[Element[_]] = List(parameter)
   private lazy val normalizedClauses = normalizedProbs zip outcomes
 
+  def distributionToStatistics(distribution: Stream[(Double, T)]): Seq[Double] = {
+    val distList = distribution.toList
+    for { outcome <- outcomes } 
+    yield {
+      distList.find(_._2 == outcome) match {
+        case Some((prob, _)) => prob
+        case None => 0.0
+      }
+    }
+  }
+  
+  def density(value: T): Double = {
+    outcomes.indexOf(value) match {
+      case -1 => 0.0
+      case i => parameter.value(i)
+    }
+  }
+  
   def generateValue(rand: Randomness) = selectMultinomial(rand, normalizedClauses)
 
 }
 
 object Select {
 
-  private def makeParameterizedSelect[T](name: Name[T], parameter: AtomicDirichletParameter, outcomes: List[T], collection: ElementCollection): ParameterizedSelect[T] = {
+  private def makeParameterizedSelect[T](name: Name[T], parameter: AtomicDirichlet, outcomes: List[T], collection: ElementCollection): ParameterizedSelect[T] = {
     new ParameterizedSelect(name, parameter, outcomes, collection)
   }
   /**
@@ -115,7 +133,7 @@ object Select {
   /**
   * A distribution in which the probabilities are specified by a learnable parameter and the outcomes are values.
   */
-  def apply[T](parameter: AtomicDirichletParameter, outcomes: T*)(implicit name: Name[T], collection: ElementCollection) =
+  def apply[T](parameter: AtomicDirichlet, outcomes: T*)(implicit name: Name[T], collection: ElementCollection) =
     makeParameterizedSelect(name, parameter, outcomes.toList, collection)
         
 }

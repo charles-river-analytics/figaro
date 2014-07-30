@@ -61,24 +61,31 @@ class ParameterTest extends WordSpec with Matchers {
       b2.expectedValue should be(0.6 +- 0.001)
     }
 
+    "properly calculate MAP value" in {
+      val b = BetaParameter(1, 1)
+      b.MAPValue should equal(0.5)
+      val b2 = BetaParameter(3, 2)
+      b2.MAPValue should be((2.0 / 3.0) +- 0.001)
+    }
+    
     "properly maximize its alpha and beta hyperparameters" in {
       val b = BetaParameter(3, 2)
       b.maximize(Seq(1.0, 1.0))
 
-      b.alpha should equal(4)
-      b.beta should equal(3)
+      b.learnedAlpha should equal(4)
+      b.learnedBeta should equal(3)
 
       b.maximize(Seq(3.0, 2.0))
-      b.alpha should equal(6)
-      b.beta should equal(4)
+      b.learnedAlpha should equal(6)
+      b.learnedBeta should equal(4)
 
       b.maximize(Seq(0.0, 0.0))
-      b.alpha should equal(3)
-      b.beta should equal(2)
+      b.learnedAlpha should equal(3)
+      b.learnedBeta should equal(2)
 
       b.maximize(Seq(0.5, 1.3))
-      b.alpha should equal(3.5)
-      b.beta should equal(3.3)
+      b.learnedAlpha should equal(3.5)
+      b.learnedBeta should equal(3.3)
     }
 
     "provide the correct format of its sufficient statistics vector" in {
@@ -95,8 +102,16 @@ class ParameterTest extends WordSpec with Matchers {
     "properly calculate expected value" in {
       val d = DirichletParameter(1, 1)
       d.expectedValue(0) should equal(0.5)
+      val d2 = DirichletParameter(3, 2)
+      d2.expectedValue(0) should be(0.6 +- 0.001)
+    }
+
+    "properly calculate MAP value" in {
+      val d = DirichletParameter(1, 1)
+      d.MAPValue(0) should equal(0.5)
+
       val d2 = BetaParameter(3, 2)
-      d2.expectedValue should be(0.6 +- 0.001)
+      d2.MAPValue should be((2.0 / 3.0) +- 0.001)
     }
 
     "properly maximize its hyperparameters" in {

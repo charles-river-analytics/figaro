@@ -1,0 +1,89 @@
+% Chapter X
+
+\chapter{Hierarchical Reasoning} % Chapter title
+
+\label{Hierarchical Reasoning} % For referencing the chapter elsewhere, use 
+
+As was previously shown, Figaro is well suited for building PRMs due to the object-oriented nature of Figaro and Scala. PRMs are a powerful alternative to traditional Bayesian networks because they can represent structural uncertainty about the model. There are many different types of structural uncertainty: \emph{type uncertainty}, in which the class of an object is unknown; \emph{number uncertainty}, in which the number of objects to which an object is related is unknown; \emph{existence uncertainty}, in which we do not know if a particular object exists; and \emph{reference uncertainty}, in which we do not know to which other object a given object is related. Figaro presents an easy for users to model structural uncertainty in a probabilistic model and perform reasoning over that uncertainty.
+
+Consider a situation with type uncertainty. Using Scala's object-oriented features, we can construct a class hierarchy that represents different features and properties of a parent class and use the hierarchy to reason about observations. For example, consider the abstract class below:
+
+\begin{flushleft}
+\texttt{import com.cra.figaro.language.\_
+\newline import com.cra.figaro.algorithm.factored.VariableElimination 
+\newline import com.cra.figaro.library.atomic.discrete.Uniform
+\newline 
+\newline abstract class Vehicle extends ElementCollection \{
+\newline \tab val size: Element[Symbol]
+\newline \tab val speed: Element[Int]
+\newline \tab lazy val capacity: Element[Int] = Constant(0)
+\newline \}
+}
+\end{flushleft}
+
+A \texttt{Vehicle} is an abstract class that contains a size, speed and capacity. The class is abstract since there are many types of vehicles and each type of vehicle may have different distributions of size, speed and capacity. Now, we will create some specific vehicles:
+
+\begin{flushleft}
+\texttt{class Truck extends Vehicle \{
+\marginpar{This example is found in Hierarchy.scala}
+\newline val size: Element[Symbol] =
+\newline \tab Select(0.25 -> 'medium, 0.75 -> 'big)("size", this)  
+\newline val speed: Element[Int] = Uniform(50,60,70)("speed", this)
+\newline override lazy val capacity: Element[Int] =
+\newline \tab Chain(size, (s: Symbol) => if (s == 'big) Select(0.5 -> 1000, 0.5 -> 2000); else Constant(100))("capacity", this)
+\newline \}
+\newline 
+\newline class Pickup extends Truck \{
+\newline \tab override val speed: Element[Int] = Uniform(70,80)("speed", this)
+\newline \tab override val size: Element[Symbol] = Constant('medium)("size", this)
+\newline \}
+\newline 
+\newline class TwentyWheeler extends Truck \{
+\newline \tab override val size: Element[Symbol] = Constant('huge)("size", this)
+\newline \tab override lazy val capacity = Constant(5000)("capacity", this)
+\newline \}
+\newline 
+\newline class Car extends Vehicle \{
+\newline \tab val size = Constant('small)("size", this)
+\newline \tab val speed = Uniform(70,80)("speed", this)
+\newline \}
+}
+\end{flushleft}
+
+Each class definition specifies more details about the properties of vehicles; most trucks, for example are either medium or big, except for a specific type of truck (Twenty Wheeler) which is always huge. This is an example of how Figaro can be combined with class hierarchies, where specific classes can override or modify the parent class probabilistic model.
+
+We can now perform reasoning about the hierarchy. First, let us define some methods to create types of vehicles:
+
+\begin{flushleft}
+\texttt{object Vehicle \{
+\newline def generate(name: String): Element[Vehicle] =
+\newline \tab Dist(0.6 -> Car.generate, 0.4 -> Truck.generate)(name, universe)
+\newline \}
+\newline object Truck \{
+\newline \tab def generate: Element[Vehicle] =
+\newline \tab Dist(0.1 -> TwentyWheeler.generate, 0.3 -> Pickup.generate,
+\newline \tab 0.6 -> Constant[Vehicle](new Truck))
+\newline \}
+\newline object Pickup \{
+\newline \tab def generate: Element[Vehicle] = Constant(new Pickup)
+\newline \}
+\newline object TwentyWheeler \{
+\newline \tab def generate: Element[Vehicle] = Constant(new TwentyWheeler)
+\newline \}
+\newline object Car \{
+\newline \tab def generate: Element[Vehicle] = Constant(new Car)
+\newline \}}
+\end{flushleft}
+
+We have introduced a new element here: \texttt{Dist}. \texttt{Dist} is a combination of \texttt{Chain} and \texttt{Select}. \texttt{Dist} selects an element at random from the elements in the argument list, using the provided probabilities, and sets the value of the \texttt{Dist} as the value of the element selected. We use the objects above and the \texttt{Dist} element to generate vehicles from the vehicle hierarchy. That is, with probability 0.4, the \texttt{Vehicle.generate} produces a \texttt{Truck} class, and the specific type of truck generate is determined by \texttt{Truck.generate}, and so forth. Now let's create the rest of the Figaro model and perform some reasoning:
+
+\begin{flushleft}
+\texttt{val myVehicle = Vehicle.generate("v1")
+\newline universe.assertEvidence(List(NamedEvidence("v1.size", Observation('medium))))
+\newline val isPickup = Apply(myVehicle, (v: Vehicle) =>
+\newline v.isInstanceOf[Pickup])
+\newline val alg = VariableElimination(isPickup, name)
+\newline alg.start()}
+\end{flushleft}
+
+In this example, we're reasoning about the \emph{type} of an instance of a class. First, we apply the evidence that the vehicle's size is medium using the \texttt{assertEvidence} method. Here, we apply the evidence by referring the name of the element, without actually specifying which element to apply the evidence; the 'medium will be applied to the size element in any instantiation of the \texttt{Vehicle} class. Next, we instantiate a \texttt{Boolean} element that is true when the type of the vehicle is an instance of \texttt{Pickup}. The \texttt{isInstanceOf[Pickup]} is a Scala operation that returns true when the variable is an instance of the specified class. We then run variable elimination on the model to determine the probability that the instantiated class is a \texttt{Pickup}.

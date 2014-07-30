@@ -22,7 +22,7 @@ import scala.math.log
 
 /**
  * Metropolis-Hastings based Annealer
- * 
+ *
  * @param annealSchedule The schedule that determines how to anneal the model
  * @param burnIn The number of iterations to run before annealing starts
  * @param interval The number of iterations to perform before recording the annealing state
@@ -36,7 +36,7 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
   import MetropolisHastings._
 
   // Used for debugging
-  private var elementsToTrack: Map[Element[_], Unit] = Map()
+  private var elementsToTrack: Map[Element[_], Null] = Map()
   private var proposalCounts: Map[Element[_], Int] = Map()
   // Make sure these maps don't cause memory leaks
   universe.register(elementsToTrack)
@@ -44,6 +44,9 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
 
   private var accepts = 0
   private var rejects = 0
+
+  private val nextConstraintValues: Map[Element[_], Double] = Map()
+  universe.register(nextConstraintValues)
 
   /**
    * Set this flag to true to obtain debugging information
@@ -55,9 +58,9 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
   private var lastTemperature = 1.0
   private var lastIter = 0
   private var transProb = 0.0
-  
+
   /**
-   * The last computed transition probability. 
+   * The last computed transition probability.
    */
   def lastTransProb = transProb
   /**
@@ -77,8 +80,8 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
       // if an old value is already stored, don't overwrite it
       val newOldValues =
         if (state.oldValues contains elem) state.oldValues; else state.oldValues + (elem -> elem.value)
-      val newProb =
-        state.modelProb + elem.score(elem.value, newValue)
+      val newProb = state.modelProb
+      //state.modelProb + elem.score(elem.value, newValue)
       val newDissatisfied =
         if (elem.condition(newValue)) state.dissatisfied - elem; else state.dissatisfied + elem
       elem.value = newValue
@@ -227,8 +230,22 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
 
   private def getDissatisfied = dissatisfied // for testing
 
+  /*
+   * Computes the scores of the constrained elements from caches scores. If the element
+   * is not found in the cache, then it's value is 1.0.
+   */
+  private def computeScores(): Double = {
+    val constrainedElements = universe.constrainedElements
+    constrainedElements foreach (e => nextConstraintValues.update(e, e.constraintValue))
+    val scores = constrainedElements.map { e =>
+      nextConstraintValues(e) - currentConstraintValues.getOrElseUpdate(e, 0.0)
+    }
+    scores.sum
+  }
+
   private def accept(state: State): Unit = {
     if (debug) println("Accepting!\n")
+    currentConstraintValues.keys.foreach(e => currentConstraintValues += e -> nextConstraintValues(e))
     dissatisfied = (dissatisfied filter (!_.conditionSatisfied)) ++ state.dissatisfied
   }
 
@@ -268,8 +285,14 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
     }
   }
 
+  private def initConstrainedValues() = {
+    universe.constrainedElements.foreach(e => currentConstraintValues += (e -> e.constraintValue))
+  }
+
   protected final def mhStep(annealer: Schedule, iter: Int): State = {
-    val nextState = proposeAndUpdate()
+    val nextStateUnconstrained = proposeAndUpdate()
+    val nextState = State(nextStateUnconstrained.oldValues, nextStateUnconstrained.oldRandomness,
+      nextStateUnconstrained.proposalProb, nextStateUnconstrained.modelProb + computeScores, nextStateUnconstrained.dissatisfied)
     if (decideToAccept(nextState, annealer, iter)) {
       accepts += 1
       accept(nextState)
@@ -302,6 +325,7 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
 
   protected def doInitialize(): Unit = {
     universe.generateAll()
+    initConstrainedValues()
     for { i <- 1 to burnIn } mhStep(Schedule.schedule, 1)
   }
   /**
@@ -312,7 +336,7 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
    */
   def test(numSamples: Int, predicates: Seq[Predicate[_]], elementsToTrack: Seq[Element[_]]): (Map[Predicate[_], Double], Map[Element[_], Double]) = {
     val successes: Map[Predicate[_], Int] = Map((predicates map (_ -> 0)): _*)
-    this.elementsToTrack = Map((elementsToTrack map (_ -> ()): _*))
+    this.elementsToTrack = Map((elementsToTrack map (_ -> null): _*))
     proposalCounts = Map((elementsToTrack map (_ -> 0)): _*)
     def collectResults() =
       for { predicate <- predicates } {
@@ -320,7 +344,9 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
       }
 
     for { i <- 1 to numSamples } {
-      val state1 = proposeAndUpdate()
+      val newStateUnconstrained = proposeAndUpdate()
+      val state1 = State(newStateUnconstrained.oldValues, newStateUnconstrained.oldRandomness,
+      newStateUnconstrained.proposalProb, newStateUnconstrained.modelProb + computeScores, newStateUnconstrained.dissatisfied)
       if (decideToAccept(state1, Schedule.schedule, 1)) {
         accepts += 1
         // collect results for the new state and restore the original state
@@ -343,11 +369,11 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
 
 /**
  * Anytime Metropolis-Hastings annealer.
- * 
+ *
  * @param annealSchedule The schedule that determines how to anneal the model
  * @param burnIn The number of iterations to run before annealing starts
  * @param interval The number of iterations to perform before recording the annealing state
- * 
+ *
  */
 class AnytimeMetropolisHastingsAnnealer(universe: Universe,
   scheme: ProposalScheme, annealSchedule: Schedule, burnIn: Int, interval: Int,
@@ -373,11 +399,11 @@ class AnytimeMetropolisHastingsAnnealer(universe: Universe,
 
 /**
  * One-time Metropolis-Hastings annealer.
- * 
+ *
  * @param annealSchedule The schedule that determines how to anneal the model
  * @param burnIn The number of iterations to run before annealing starts
  * @param interval The number of iterations to perform before recording the annealing state
- * 
+ *
  */
 class OneTimeMetropolisHastingsAnnealer(universe: Universe, myNumSamples: Int, scheme: ProposalScheme, annealSchedule: Schedule,
   burnIn: Int, interval: Int, targets: Element[_]*)
@@ -418,7 +444,7 @@ object MetropolisHastingsAnnealer {
     new AnytimeMetropolisHastingsAnnealer(universe, scheme, annealSchedule, burnIn, 1, List(): _*)
 
   /**
-   * Create a one-time Metropolis-Hastings annealer using the given number of samples, proposal scheme, 
+   * Create a one-time Metropolis-Hastings annealer using the given number of samples, proposal scheme,
    *  annealing schedule and number of burn-in samples.
    */
   def apply(numSamples: Int, scheme: ProposalScheme, annealSchedule: Schedule, burnIn: Int)(implicit universe: Universe) =

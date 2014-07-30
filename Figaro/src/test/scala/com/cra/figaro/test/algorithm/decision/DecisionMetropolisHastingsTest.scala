@@ -40,7 +40,7 @@ class DecisionMetropolisHastingsTest extends WordSpec with Matchers {
         val r1 = Flip(0.5)
         val d1 = Decision[Boolean, Boolean](r1, List(true, false))
         val u1 = If(d1, Constant(true), Constant(false))
-        evaluating { DecisionMetropolisHastings(2000, ProposalScheme.default, List(u1), d1) } should produce[IllegalArgumentException]
+        an [IllegalArgumentException] should be thrownBy { DecisionMetropolisHastings(2000, ProposalScheme.default, List(u1), d1) } 
       }
     }
 
@@ -48,7 +48,7 @@ class DecisionMetropolisHastingsTest extends WordSpec with Matchers {
       "throw ParentValueNotFoundException if decision not encountered" in {
         val d = DecisionDiscrete((e1: List[Element[Double]], e2: Decision[Int, Boolean]) =>
           DecisionMetropolisHastings(5000, ProposalScheme.default, 5000, e1, e2))
-        evaluating { d._1.getPolicy(1) } should produce[ParentValueNotFoundException]
+        an [ParentValueNotFoundException] should be thrownBy { d._1.getPolicy(1) } 
       }
 
       "produce the correct strategy with discrete strategies" in {

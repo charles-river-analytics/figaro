@@ -1,6 +1,6 @@
 /*
  * ExpectationMaximization.scala
- * Expectation maximization algorithm.
+ * Expectation maximization algorithm using variable elimination as the inference algorithm.
  * 
  * Created By:      Michael Howard (mhoward@cra.com)
  * Creation Date:   Jun 1, 2013
@@ -50,13 +50,13 @@ class ExpectationMaximization(universe: Universe, targetParameters: Parameter[_]
       /*
        * Obtain an estimate of sufficient statistics from expectation step
        */
+      //println("EM iteration " + iteration)
       val sufficientStatistics = doExpectationStep()
       doMaximizationStep(sufficientStatistics)
     }
   }
 
   protected def doExpectationStep(): Map[Parameter[_], Seq[Double]] = {
-
     val algorithm = SufficientStatisticsVariableElimination(paramMap)(universe)
     algorithm.start
     val result = algorithm.getSufficientStatisticsForAllParameters
@@ -67,7 +67,7 @@ class ExpectationMaximization(universe: Universe, targetParameters: Parameter[_]
 
   protected def doMaximizationStep(parameterMapping: Map[Parameter[_], Seq[Double]]): Unit = {
 
-    for (p <- targetParameters) {
+    for (p <- targetParameters) yield {
       p.maximize(parameterMapping(p))
     }
   }
@@ -87,19 +87,39 @@ class ExpectationMaximization(universe: Universe, targetParameters: Parameter[_]
   protected def doKill(): Unit = {}
 }
 
+/**
+ * @deprecated
+ */
 object ExpectationMaximization {
 
   /**
    * An expectation maximization algorithm which will run for the default of 10 iterations
+   * 
+   * @deprecated
    */
   def apply(p: Parameter[_]*)(implicit universe: Universe) =
     new ExpectationMaximization(universe, p: _*)(10)
 
   /**
    * An expectation maximization algorithm which will run for the number of iterations specified
+   * 
+   * @deprecated
    */
   def apply(iterations: Int, p: Parameter[_]*)(implicit universe: Universe) =
     new ExpectationMaximization(universe, p: _*)(iterations)
 
 }
 
+object EMWithVE {
+  /**
+   * An expectation maximization algorithm which will run for the default of 10 iterations
+   */
+   def apply(p: Parameter[_]*)(implicit universe: Universe) =
+     new ExpectationMaximization(universe, p: _*)(10)
+
+   /**
+    * An expectation maximization algorithm which will run for the number of iterations specified
+    */
+   def apply(iterations: Int, p: Parameter[_]*)(implicit universe: Universe) =
+     new ExpectationMaximization(universe, p: _*)(iterations)
+ }

@@ -44,7 +44,7 @@ class FairCoinTest extends WordSpec with Matchers {
     'H', 'H', 'H', 'H', 'H', 'H', 'H', 'T', 'H','T',
      'H', 'H', 'H')
 
-  def Toss(fairness: AtomicBetaParameter): AtomicFlip = {
+  def Toss(fairness: AtomicBeta): AtomicFlip = {
     val f = fairness.getLearnedElement
     f
   }

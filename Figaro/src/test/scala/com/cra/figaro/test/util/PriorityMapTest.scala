@@ -15,7 +15,7 @@ package com.cra.figaro.test.util
 
 import org.scalatest.Matchers
 import org.scalatest.WordSpec
-import testing.Benchmark
+// import testing.Benchmark
 import math.log
 import com.cra.figaro.util._
 import com.cra.figaro.test._
@@ -82,7 +82,7 @@ class PriorityMapTest extends WordSpec with Matchers {
       hpm.extractMin() should equal(("bar", 1))
       hpm.extractMin() should equal(("foo", 2))
       hpm.extractMin() should equal(("baz", 3))
-      evaluating { hpm.extractMin() } should produce[IllegalArgumentException]
+      an [IllegalArgumentException] should be thrownBy { hpm.extractMin() } 
     }
 
     "iterate over the elements from lowest to highest" in {
@@ -113,7 +113,7 @@ class PriorityMapTest extends WordSpec with Matchers {
       hpm2.extractMin() should equal(("bar", 1))
       hpm2.extractMin() should equal(("foo", 2))
       hpm2.extractMin() should equal(("baz", 3))
-      evaluating { hpm2.extractMin() } should produce[IllegalArgumentException]
+      an [IllegalArgumentException] should be thrownBy { hpm2.extractMin() } 
     }
 
     "take roughly log n time for inserting" taggedAs (PerformanceTest) in {

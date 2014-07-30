@@ -56,11 +56,31 @@ class CompoundFlip(name: Name[Boolean], val prob: Element[Double], collection: E
 /**
  * A coin toss where the weight is specified by a learnable parameter.
  */
-class ParameterizedFlip(name: Name[Boolean], override val parameter: AtomicBetaParameter, collection: ElementCollection)
+class ParameterizedFlip(name: Name[Boolean], override val parameter: AtomicBeta, collection: ElementCollection)
   extends Element[Boolean](name, collection) with Flip with Parameterized[Boolean] {
   def args: List[Element[_]] = List(parameter)
 
   protected def probValue = parameter.value
+
+  def distributionToStatistics(distribution: Stream[(Double, Boolean)]): Seq[Double] = {
+    val distList = distribution.toList
+    val trueProb = 
+      distList.find(_._2) match {
+        case Some((prob,_)) => prob
+        case None => 0.0
+      }
+    val falseProb = 
+      distList.find(!_._2) match {
+        case Some((prob,_)) => prob
+        case None => 0.0
+      } 
+    List(trueProb, falseProb)
+  }
+  
+  def density(value: Boolean): Double = {
+    val prob = parameter.value
+    if (value) prob; else 1.0 - prob
+  }
 
   override def toString = "Parameterized Flip(" + parameter + ")"
 }
@@ -74,15 +94,14 @@ object Flip extends Creatable {
 
   /**
    * A coin toss where the weight is itself an element.
+   * 
+   * If the element is an atomic beta element, the flip uses that element
+   * as a learnable parameter.
    */
-  def apply(prob: Element[Double])(implicit name: Name[Boolean], collection: ElementCollection) =
-    new CompoundFlip(name, prob, collection)
-
-  /**
-  * A coin toss where the weight is specified by a learnable parameter.
-  */
-  def apply(prob: AtomicBetaParameter)(implicit name: Name[Boolean], collection: ElementCollection) =
-    new ParameterizedFlip(name, prob, collection)
+  def apply(prob: Element[Double])(implicit name: Name[Boolean], collection: ElementCollection) = {
+    if (prob.isInstanceOf[AtomicBeta]) new ParameterizedFlip(name, prob.asInstanceOf[AtomicBeta], collection)
+    else new CompoundFlip(name, prob, collection) 
+  }
 
   /** Used for reflection. */
   type ResultType = Boolean

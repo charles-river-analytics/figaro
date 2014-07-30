@@ -41,7 +41,7 @@ class DecisionImportanceTest extends WordSpec with Matchers {
         val r1 = Flip(0.5)
         val d1 = Decision[Boolean, Boolean](r1, List(true, false))
         val u1 = If(d1, Constant(true), Constant(false))
-        evaluating { DecisionImportance(2000, List(u1), d1) } should produce[IllegalArgumentException]
+        an [IllegalArgumentException] should be thrownBy { DecisionImportance(2000, List(u1), d1) } 
       }
 
     }
@@ -49,7 +49,7 @@ class DecisionImportanceTest extends WordSpec with Matchers {
     "Running Importance Sampling with discrete decisons" should {
       "throw ParentValueNotFoundException if decision not encountered" in {
         val d = DecisionDiscrete((e1: List[Element[Double]], e2: Decision[Int, Boolean]) => DecisionImportance(10000, e1, e2))
-        evaluating { d._1.getPolicy(1) } should produce[ParentValueNotFoundException]
+        an [ParentValueNotFoundException] should be thrownBy { d._1.getPolicy(1) } 
       }
 
       "produce the correct strategy with discrete strategies" in {

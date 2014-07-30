@@ -1043,12 +1043,12 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val v11 = v1Vals indexOf Regular(1)
         val v12 = v1Vals indexOf Regular(2)
         val v13 = v1Vals indexOf Regular(3)
-        condFactor.get(List(v11)) should equal(1.0)
-        condFactor.get(List(v12)) should equal(0.0)
-        condFactor.get(List(v13)) should equal(1.0)
-        constrFactor.get(List(v11)) should equal(1.0)
-        constrFactor.get(List(v12)) should equal(2.0)
-        constrFactor.get(List(v13)) should equal(3.0)
+        condFactor.get(List(v11)) should be (1.0 +- 0.000000001)
+        condFactor.get(List(v12)) should be (0.0 +- 0.000000001)
+        condFactor.get(List(v13)) should be (1.0 +- 0.000000001)
+        constrFactor.get(List(v11)) should be (1.0 +- 0.000000001)
+        constrFactor.get(List(v12)) should be (2.0 +- 0.000000001)
+        constrFactor.get(List(v13)) should be (3.0 +- 0.000000001)
       }
     }
     
@@ -1106,6 +1106,45 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         factor.get(List(y2, xFalse)) should be(0.5 +- 0.01)
         factor.get(List(y3, xFalse)) should be(0.5 +- 0.01)
       }
+    }
+  }
+  
+  // Added by Kathryn Rodgers
+  "Copying a Factor" when {
+    "using copy constructor" should {
+      "return a new factor with the same variables in same order with same values" in {
+
+        val v1 = Select(0.3 -> 1, 0.2 -> 2, 0.5 -> 3)
+        val v2 = Select(0.5 -> 4, 0.5 -> 5)
+        val v3 = Inject(v1, v2)
+        Values()(v3)
+        val List(factor) = ProbFactor.make(v3)
+        val fCopy = Factor(factor)
+
+        factor.allIndices should contain theSameElementsInOrderAs(fCopy.allIndices)
+        for(ind <- factor.allIndices)
+          factor.get(ind) should equal(fCopy.get(ind))
+
+
+
+      }
+    }
+
+    "using a copy function" should {
+      "return a new factor with the same variables in same order with same values" in {
+
+        val v1 = Select(0.3 -> 1, 0.2 -> 2, 0.5 -> 3)
+        val v2 = Select(0.5 -> 4, 0.5 -> 5)
+        val v3 = Inject(v1, v2)
+        Values()(v3)
+        val List(factor) = ProbFactor.make(v3)
+        val fCopy = factor.copy
+
+        factor.allIndices should contain theSameElementsInOrderAs(fCopy.allIndices)
+        for(ind <- factor.allIndices)
+          factor.get(ind) should equal(fCopy.get(ind))
+      }
+   
     }
   }
 }
