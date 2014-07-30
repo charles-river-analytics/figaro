@@ -9,11 +9,13 @@ package com.cra.figaro.algorithm.factored
  * 
 */
 
+import java.lang.Double.{isNaN,isInfinite}
 
 /**
  * Class with functions specialized for Factor[Double]
  * 
  */
+
 class DoubleFactor(fact:Factor[Double]) {
 val semi = SumProductSemiring
 	/**
@@ -31,7 +33,15 @@ val semi = SumProductSemiring
 	 *  Double Subtraction
 	 *  This - That
 	 */
-	def -(that:Factor[Double]) = fact.combination(that, (x,y) => x-y)
+	def -(that:Factor[Double]) = {
+    def sub(x:Double,y:Double):Double = {
+      if(isInfinite(x) || isInfinite(y))
+        java.lang.Double.NEGATIVE_INFINITY
+      else
+        x - y
+    }
+    fact.combination(that, sub)
+  }
 
 	/**
 	 *  Double Division
@@ -117,13 +127,25 @@ val semi = SumProductSemiring
 	def sumOver(variable:Variable[_]) = {
 		 fact.sumOver(variable,semi)
 		}
-	
+
+
 	/**
    * Returns the maximum value of the factor
    *   
    */
 	def max():Double= {
-	  fact.max((x,y) => x > y)
+    //
+    def comp(x:Double,y:Double) = {
+      val yNum = isInfinite(y) || isNaN(y)
+      val xNum = isInfinite(x) || isNaN(x)
+      if(xNum && !yNum)
+         false
+      else if(yNum && !xNum)
+        true
+      else
+        x > y
+    }
+	  fact.max(comp)
 	}
 	
 	 
@@ -133,7 +155,17 @@ val semi = SumProductSemiring
    * List((variable -> variable_value))
    */
 	def argMax():List[Pair[Variable[_],Any]] = {
-	  fact.argMax((x,y) => x > y)
+    def comp(x:Double,y:Double) = {
+      val yNum = isInfinite(y) || isNaN(y)
+      val xNum = isInfinite(x) || isNaN(x)
+      if(xNum && !yNum)
+        false
+      else if(yNum && !xNum)
+        true
+      else
+        x > y
+    }
+	  fact.argMax(comp)
 	  
 	}
 	

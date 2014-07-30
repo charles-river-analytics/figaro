@@ -18,6 +18,7 @@ import scala.annotation.tailrec
 import scala.collection.mutable.Map
 import com.cra.figaro.language.Element
 import com.cra.figaro.algorithm.lazyfactored.Extended
+import java.lang.Double.{isInfinite,isNaN}
 
 /**
  * General class of factors. A factor is associated with a set of variables and specifies a value for every
@@ -427,7 +428,6 @@ class Factor[T](val variables: List[Variable[_]]) {
     if (this.variables.size == 0)
       return List()
 
-
     var maxFactVal = this.contents.values.head // initialize to first value in the factor
     var maxVariValsIdx = this.contents.keys.head  // initialize to first set of keys
     // Find maximum value and track the keys
@@ -439,7 +439,6 @@ class Factor[T](val variables: List[Variable[_]]) {
         maxVariValsIdx = k
       }
     }
-
     val variVals = for ((idx,vari) <- maxVariValsIdx.zip(this.variables)) yield  (vari, vari.range(idx).value) // get the values for the variables
     variVals
 
