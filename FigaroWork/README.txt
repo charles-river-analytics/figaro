@@ -2,7 +2,7 @@ To run Figaro test programs that you create:
 
 1) Install SBT v0.13.5 for your chosen operating system
 2) Open a command line prompt
-3) Navigate to this "work" directory
+3) Navigate to your local FigaroWork directory
 4) At the command prompt, type
 	a) sbt "runMain <class_with_main> <parameters>"
 
