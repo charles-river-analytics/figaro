@@ -60,7 +60,7 @@ abstract class FactoredFrontier(static: Universe, initial: Universe, transition:
   private def createDummyUniverse(u: Universe): Universe = {
     val dummyUniverse = new Universe
     for(e <- getNamedElements(u)) {
-      Select(bp.getBeliefsForElement(e):_*)(e.name.string, dummyUniverse)
+      Select(bp.getBeliefsForElement(e).filterNot(_._1 == 0.0):_*)(e.name.string, dummyUniverse)
     }
     dummyUniverse
   }
