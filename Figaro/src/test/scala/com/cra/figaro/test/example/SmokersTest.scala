@@ -21,18 +21,19 @@ import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound._
 import com.cra.figaro.test._
+import com.cra.figaro.test.tags.Example
 
 class SmokersTest extends WordSpec with Matchers {
   "The friends and smokers example" should {
-    "produce the correct answer under importance sampling" taggedAs (ExampleTest) in {
+    "produce the correct answer under importance sampling" taggedAs (Example) in {
       test((e: Element[Boolean]) => Importance(20000, e))
     }
 
-    "produce the correct answer under Metropolis-Hastings" taggedAs (ExampleTest) in {
+    "produce the correct answer under Metropolis-Hastings" taggedAs (Example) in {
       test((e: Element[Boolean]) => MetropolisHastings(50000, ProposalScheme.default, e))
     }
 
-    "produce the correct answer under variable elimination" taggedAs (ExampleTest) in {
+    "produce the correct answer under variable elimination" taggedAs (Example) in {
       test((e: Element[Boolean]) => VariableElimination(e))
     }
   }

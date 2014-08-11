@@ -21,6 +21,7 @@ import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.library.compound._
+import com.cra.figaro.test.tags.NonDeterministic
 
 class AbstractionTest extends WordSpec with Matchers {
   "A regular discretization" should {
@@ -325,7 +326,7 @@ class AbstractionTest extends WordSpec with Matchers {
   }
 
   "Running variable elimination on a model with multiple discretized elements" should {
-    "produce the correct answer" in {
+    "produce the correct answer" taggedAs(NonDeterministic) in {
       Universe.createNew()
       val flip = Flip(0.5)
       val uniform1 = Uniform(0.0, 1.0)

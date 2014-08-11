@@ -64,7 +64,17 @@ object FigaroBuild extends Build {
     .settings(test in assembly := {})
     .settings(jarName in assembly := "figaro_" + scalaVersion.value + "-" + version.value + "-fat.jar")
     .settings(assemblyOption in assembly ~= { _.copy(includeScala = false) })
+    .configs(detTest)
+    .settings(inConfig(detTest)(Defaults.testTasks): _*)
+    .settings(testOptions in detTest := Seq(Tests.Argument("-l", "com.cra.figaro.test.nonDeterministic")))
+    .configs(nonDetTest)
+    .settings(inConfig(nonDetTest)(Defaults.testTasks): _*)
+    .settings(testOptions in nonDetTest := Seq(Tests.Argument("-n", "com.cra.figaro.test.nonDeterministic")))
+    
       
   lazy val examples = Project("FigaroExamples", file("FigaroExamples"))
     .dependsOn(figaro)
+    
+  lazy val detTest = config("det") extend(Test)
+  lazy val nonDetTest = config("nonDet") extend(Test)
 }

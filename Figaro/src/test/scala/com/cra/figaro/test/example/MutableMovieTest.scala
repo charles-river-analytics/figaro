@@ -21,18 +21,19 @@ import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.discrete._
 import com.cra.figaro.test._
+import com.cra.figaro.test.tags.Example
 
 class MutableMovieTest extends WordSpec with Matchers {
   "A PRM with a global constraint with mutation" should {
-    "produce the correct probability under variable elimination" taggedAs (ExampleTest) in {
+    "produce the correct probability under variable elimination" taggedAs (Example) in {
       test((e: Element[Boolean]) => VariableElimination(e))
     }
 
-    "produce the correct probability under importance sampling" taggedAs (ExampleTest) in {
+    "produce the correct probability under importance sampling" taggedAs (Example) in {
       test((e: Element[Boolean]) => Importance(12000, e))
     }
 
-    "produce the correct probability under Metropolis-Hastings" taggedAs (ExampleTest) in {
+    "produce the correct probability under Metropolis-Hastings" taggedAs (Example) in {
       test((e: Element[Boolean]) => MetropolisHastings(200000, chooseScheme, e))
     }
   }
