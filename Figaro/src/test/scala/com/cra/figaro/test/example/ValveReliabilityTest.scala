@@ -15,13 +15,13 @@ package com.cra.figaro.test.example
 
 import org.scalatest.Matchers
 import org.scalatest.WordSpec
-import com.cra.figaro.test.ExampleTest
+import com.cra.figaro.test.tags.Example
 import com.cra.figaro.language._
 import com.cra.figaro.algorithm.filtering.FactoredFrontier
 
 class ValveReliabilityTest extends WordSpec with Matchers {
   "A simple ValveReliabilityTest" should {
-    "produce the correct probability using Factored Frontier" taggedAs (ExampleTest) in {
+    "produce the correct probability using Factored Frontier" taggedAs (Example) in {
       trait ValveState
       case object OK extends ValveState
       case object RO extends ValveState

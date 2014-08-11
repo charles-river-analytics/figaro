@@ -23,10 +23,11 @@ import com.cra.figaro.library.compound._
 import com.cra.figaro.library.atomic._
 import com.cra.figaro.util._
 import com.cra.figaro.test._
+import com.cra.figaro.test.tags.Example
 
 class OpenUniverseTest extends WordSpec with Matchers {
   "The open universe example" should {
-    "produce the correct answer under Metropolis-Hastings" taggedAs (ExampleTest) in {
+    "produce the correct answer under Metropolis-Hastings" taggedAs (Example) in {
       test()
     }
   }

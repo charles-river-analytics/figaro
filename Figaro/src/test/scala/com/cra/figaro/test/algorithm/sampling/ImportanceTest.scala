@@ -24,6 +24,7 @@ import com.cra.figaro.library.compound._
 import com.cra.figaro.test._
 import com.cra.figaro.util.logSum
 import JSci.maths.statistics._
+import com.cra.figaro.test.tags.Performance
 
 
 class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
@@ -454,7 +455,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
 
     }
 
-   "not suffer from stack overflow with small probability of success" taggedAs (PerformanceTest) in {
+   "not suffer from stack overflow with small probability of success" taggedAs (Performance) in {
       Universe.createNew()
       val f = Flip(0.000001)
       f.observe(true)
@@ -462,7 +463,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       i.start
     }
 
-    "not suffer from memory leaks" taggedAs (PerformanceTest) in {
+    "not suffer from memory leaks" taggedAs (Performance) in {
       Universe.createNew()
       val c = NonCachingChain(Uniform(0.2, 1.0), (d: Double) => Flip(d))
       val i = Importance(1000000, c)

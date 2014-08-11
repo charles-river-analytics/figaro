@@ -21,6 +21,7 @@ import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.test._
 import com.cra.figaro.util._
 import com.cra.figaro.library.compound._
+import com.cra.figaro.test.tags.Performance
 
 class ProbEvidenceTest extends WordSpec with Matchers {
 
@@ -258,7 +259,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
   }
 
   "Computing probability of evidence" should {
-    "not suffer from memory leaks" taggedAs (PerformanceTest) in {
+    "not suffer from memory leaks" taggedAs (Performance) in {
       Universe.createNew()
       val c = NonCachingChain(Uniform(0.2, 1.0), (d: Double) => Flip(d))
       val alg = ProbEvidenceSampler(1000000, List())

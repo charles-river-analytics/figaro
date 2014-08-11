@@ -16,9 +16,9 @@ package com.cra.figaro.test.util
 import org.scalatest.Matchers
 import org.scalatest.{ WordSpec, PrivateMethodTester }
 import math.log
-// import scala.testing.Benchmark
 import com.cra.figaro.util._
 import com.cra.figaro.test._
+import com.cra.figaro.test.tags.Performance
 
 class SelectableSetTest extends WordSpec with PrivateMethodTester with Matchers {
   "A SelectableSet" should {   
@@ -65,7 +65,7 @@ class SelectableSetTest extends WordSpec with PrivateMethodTester with Matchers 
       s2.contains(1) should be(true)
     }
 
-    "take roughly constant time for insertion" taggedAs (PerformanceTest) in {
+    "take roughly constant time for insertion" taggedAs (Performance) in {
       val small = 2000
       val large = 4000
       def insert(n: Int)() = {
@@ -79,7 +79,7 @@ class SelectableSetTest extends WordSpec with PrivateMethodTester with Matchers 
       time2 / time1 should be < (large.toDouble / small * slack)
     }
 
-    "take roughly constant time for removal" taggedAs (PerformanceTest) in {
+    "take roughly constant time for removal" taggedAs (Performance) in {
       val small = 2000
       val large = 4000
       def remove(n: Int, s: SelectableSet[Int])() = {
@@ -97,7 +97,7 @@ class SelectableSetTest extends WordSpec with PrivateMethodTester with Matchers 
       time2 / time1 should be < (large.toDouble / small * slack)
     }
 
-    "take roughly constant time for searching" taggedAs (PerformanceTest) in {
+    "take roughly constant time for searching" taggedAs (Performance) in {
       val small = 2000
       val large = 4000
       def search(n: Int, s: SelectableSet[Int])() =
@@ -113,7 +113,7 @@ class SelectableSetTest extends WordSpec with PrivateMethodTester with Matchers 
       time2 / time1 should be < (large.toDouble / small * slack)
     }
 
-    "take roughly log n time for selection" taggedAs (PerformanceTest) in {
+    "take roughly log n time for selection" taggedAs (Performance) in {
       val small = 1024
       val large = 2048
       def select(n: Int, s: SelectableSet[Double])() =
@@ -129,7 +129,7 @@ class SelectableSetTest extends WordSpec with PrivateMethodTester with Matchers 
       time2 / time1 should be < (large.toDouble / small * log(large) / log(small) * slack)
     }
 
-    "take roughly linear time for enumeration" taggedAs (PerformanceTest) in {
+    "take roughly linear time for enumeration" taggedAs (Performance) in {
       def enumerate(s: SelectableSet[Double])() =
         s.toList
       val size1 = 1000

@@ -24,6 +24,7 @@ import com.cra.figaro.library.compound._
 import com.cra.figaro.test._
 import scala.collection.mutable.Map
 import scala.language.existentials
+import com.cra.figaro.test.tags.Performance
 
 class MHTest extends WordSpec with Matchers with PrivateMethodTester {
   "Anytime MetropolisHastings" should {
@@ -295,7 +296,7 @@ class MHTest extends WordSpec with Matchers with PrivateMethodTester {
       }
     }
 
-    "not suffer from memory leaks" taggedAs (PerformanceTest) in {
+    "not suffer from memory leaks" taggedAs (Performance) in {
       Universe.createNew()
       val c = NonCachingChain(Uniform(0.2, 1.0), (d: Double) => Constant(d))
       val mh = MetropolisHastings(1000000, ProposalScheme.default, c)
@@ -305,7 +306,7 @@ class MHTest extends WordSpec with Matchers with PrivateMethodTester {
       println(((time2 - time1).toDouble / 1000000000))
     }
 
-    "not suffer from memory leaks with chain2" taggedAs (PerformanceTest) in {
+    "not suffer from memory leaks with chain2" taggedAs (Performance) in {
       Universe.createNew()
       val c = NonCachingChain(Uniform(0.2, 1.0), Uniform(0.1, 0.9), (d1: Double, d2: Double) => Constant(d1 + d2))
       val mh = MetropolisHastings(1000000, ProposalScheme.default, c)
