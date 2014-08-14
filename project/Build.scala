@@ -3,6 +3,7 @@ import Keys._
 import sbtassembly.Plugin._
 import AssemblyKeys._
 import sbt.Package.ManifestAttributes
+import scoverage.ScoverageSbtPlugin._
 
 object FigaroBuild extends Build {
 
@@ -57,20 +58,24 @@ object FigaroBuild extends Build {
       "org.apache.commons" % "commons-math3" % "3.3",
       "net.sf.jsci" % "jsci" % "1.2",
       "com.typesafe.akka" % "akka-actor_2.11" % "2.3.4",
-      "org.scalatest" % "scalatest_2.11" % "2.2.1"
+      "org.scalatest" % "scalatest_2.11" % "2.2.1" % "test"
     ))
+    // test settings
     .settings(parallelExecution in Test := false)
-    .settings(assemblySettings: _*)
-    .settings(test in assembly := {})
-    .settings(jarName in assembly := "figaro_" + scalaVersion.value + "-" + version.value + "-fat.jar")
-    .settings(assemblyOption in assembly ~= { _.copy(includeScala = false) })
     .configs(detTest)
     .settings(inConfig(detTest)(Defaults.testTasks): _*)
     .settings(testOptions in detTest := Seq(Tests.Argument("-l", "com.cra.figaro.test.nonDeterministic")))
     .configs(nonDetTest)
     .settings(inConfig(nonDetTest)(Defaults.testTasks): _*)
     .settings(testOptions in nonDetTest := Seq(Tests.Argument("-n", "com.cra.figaro.test.nonDeterministic")))
-    
+    // sbt-assembly settings
+    .settings(assemblySettings: _*)
+    .settings(test in assembly := {})
+    .settings(jarName in assembly := "figaro_" + scalaVersion.value + "-" + version.value + "-fat.jar")
+    .settings(assemblyOption in assembly ~= { _.copy(includeScala = false) })
+    // sbt-scoverage settings
+    .settings(instrumentSettings: _*)
+    .settings(parallelExecution in ScoverageTest := false)
       
   lazy val examples = Project("FigaroExamples", file("FigaroExamples"))
     .dependsOn(figaro)

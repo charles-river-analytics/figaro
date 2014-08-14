@@ -75,7 +75,7 @@ class AbstractionTest extends WordSpec with Matchers {
 
   "Computing the values of an abstract element" when {
     "given an atomic element using a regular discretization scheme" should {
-      "produce an sequence of the correct size of uniformly distributed values" in {
+      "produce an sequence of the correct size of uniformly distributed values" taggedAs(NonDeterministic) in {
         Universe.createNew()
         val u = Uniform(0.0, 1.0)
         u.addPragma(Abstraction(100)(AbstractionScheme.RegularDiscretization))

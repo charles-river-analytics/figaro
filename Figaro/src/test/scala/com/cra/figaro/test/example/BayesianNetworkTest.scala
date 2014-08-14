@@ -22,23 +22,24 @@ import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.test._
 import com.cra.figaro.test.tags.Example
+import com.cra.figaro.test.tags.NonDeterministic
 
 class BayesianNetworkTest extends WordSpec with Matchers {
   "A simple Bayesian network" should {
-    "produce the correct probability under variable elimination" taggedAs (Example) in {
+    "produce the correct probability under variable elimination" taggedAs (Example, NonDeterministic) in {
       test((e1: Element[Boolean], e2: Element[Boolean]) => VariableElimination(e1, e2))
     }
 
-    "produce the correct probability under importance sampling" taggedAs (Example) in {
+    "produce the correct probability under importance sampling" taggedAs (Example, NonDeterministic) in {
       test((e1: Element[Boolean], e2: Element[Boolean]) => Importance(20000, e1, e2))
     }
     
-    "produce the correct probability under Metropolis-Hastings without burn-in or interval" taggedAs (Example) in {
+    "produce the correct probability under Metropolis-Hastings without burn-in or interval" taggedAs (Example, NonDeterministic) in {
       test((e1: Element[Boolean], e2: Element[Boolean]) =>
         MetropolisHastings(80000, ProposalScheme.default, e1, e2))
     }
     
-    "produce the correct probability under Metropolis-Hastings with burn-in and interval" taggedAs (Example) in {
+    "produce the correct probability under Metropolis-Hastings with burn-in and interval" taggedAs (Example, NonDeterministic) in {
       test((e1: Element[Boolean], e2: Element[Boolean]) =>
         MetropolisHastings(80000, ProposalScheme.default, 800, 10, e1, e2))
     }
