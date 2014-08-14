@@ -142,12 +142,12 @@ class ParticleFilterTest extends WordSpec with PrivateMethodTester with Matchers
         val static = createNew()
         val x = Flip(0.2)("x", static)
         val universe2 = createNew()
-        def trans(u: Universe): Universe = {
+        def trans(static: Universe, previous: Universe): Universe = {
           val universe3 = createNew()
           val y = If(static.get[Boolean]("x"), Flip(0.8), Flip(0.1))("y", universe3)
           universe3
         }
-        val pf = ParticleFilter(static, universe2, trans, numParticles)
+        val pf = ParticleFilter(static, universe2, trans(_, _), numParticles)
         pf.start()
         pf.advanceTime(List(NamedEvidence("y", Observation(true))))
         val qxTrue = 0.2 * 0.8
@@ -199,12 +199,12 @@ class ParticleFilterTest extends WordSpec with PrivateMethodTester with Matchers
         val x = Flip(0.2)("x", static)
         val initial = createNew()
         val y = Flip(0.3)("y", initial)
-        def trans(previous: Universe): Universe = {
+        def trans(static: Universe, previous: Universe): Universe = {
           val universe3 = createNew()
           val y = If(static.get[Boolean]("x"), Flip(0.8), previous.get[Boolean]("y"))("y", universe3)
           universe3
         }
-        val pf = ParticleFilter(static, initial, trans, numParticles)
+        val pf = ParticleFilter(static, initial, trans(_, _), numParticles)
         pf.start()
         pf.advanceTime(List(NamedEvidence("y", Observation(true))))
         val pXY0TT = 0.2 * 0.3

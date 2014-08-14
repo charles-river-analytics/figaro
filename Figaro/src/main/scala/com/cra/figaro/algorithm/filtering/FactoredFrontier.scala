@@ -28,10 +28,10 @@ import com.cra.figaro.language._
  * 
  * @param static The universe of elements that do not change over time.
  * @param initial The universe describing the distribution over the initial state of the system.
- * @param transition The transition model describing how the current state of the system depends on the previous.
+ * @param transition The transition model describing how the current state of the system depends on the static and previous, respectively.
  */
 abstract class FactoredFrontier(static: Universe, initial: Universe, transition: (Universe, Universe) => Universe)
-  extends Filtering(static, initial, transition(static, _)) with OneTimeFiltering with BPHandler {
+  extends Filtering(static, initial, transition) with OneTimeFiltering with BPHandler {
   
   protected var currentStatic = static
   protected var currentUniverse = initial
@@ -56,6 +56,7 @@ abstract class FactoredFrontier(static: Universe, initial: Universe, transition:
   /*
    * Creates a dummy universe based on the final factors of the corresponding element from the last iteration of BP.
    * All elements become atomic selects, thus preventing a memory leak as the algorithm runs over time.
+   * We do not copy the zero probability states into the dummy universe.
    */
   private def createDummyUniverse(u: Universe): Universe = {
     val dummyUniverse = new Universe
@@ -203,7 +204,7 @@ object FactoredFrontier {
    * 
    * @param static The universe of elements that do not change over time.
    * @param initial The universe describing the distribution over the initial state of the system.
-   * @param transition The transition model describing how the current state of the system depends on the previous.
+   * @param transition The transition model describing how the current state of the system depends on the static and previous, respectively.
    * @param iterations The number of iterations with which to run Belief Propagation at each time step.
    */
   def apply(static: Universe, initial: Universe, transition: (Universe, Universe) => Universe, iterations: Int): FactoredFrontier = 
@@ -224,7 +225,7 @@ object FactoredFrontier {
    * 
    * @param static The universe of elements that do not change over time.
    * @param initial The universe describing the distribution over the initial state of the system.
-   * @param transition The transition model describing how the current state of the system depends on the previous.
+   * @param transition The transition model describing how the current state of the system depends on the static and previous, respectively.
    * @param stepTimeMillis The time, in milliseconds, for which to run Belief Propagation at each time step.
    */
   def apply(static: Universe, initial: Universe, transition: (Universe, Universe) => Universe, stepTimeMillis: Long): FactoredFrontier = 
