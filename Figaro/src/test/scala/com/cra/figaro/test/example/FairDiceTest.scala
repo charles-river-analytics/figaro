@@ -23,10 +23,11 @@ import com.cra.figaro.library.compound._
 import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.language._
 import com.cra.figaro.test._
+import com.cra.figaro.test.tags.Example
 
 class FairDiceTest extends WordSpec with Matchers {
   "A simple FairDiceTest" should {
-    "produce the correct probability under expectation maximization" taggedAs (ExampleTest) in {
+    "produce the correct probability under expectation maximization" taggedAs (Example) in {
       test()
     }
 

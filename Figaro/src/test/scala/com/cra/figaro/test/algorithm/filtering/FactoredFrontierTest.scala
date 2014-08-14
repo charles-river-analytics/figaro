@@ -22,7 +22,7 @@ import com.cra.figaro.language.Flip
 import com.cra.figaro.language.Select
 import com.cra.figaro.library.compound.If
 import com.cra.figaro.algorithm.filtering.FactoredFrontier
-import com.cra.figaro.test.PerformanceTest
+import com.cra.figaro.test.tags.Performance
 import com.cra.figaro.algorithm.lazyfactored.LazyValues
 
 class FactoredFrontierTest extends WordSpec with Matchers {
@@ -292,7 +292,7 @@ class FactoredFrontierTest extends WordSpec with Matchers {
     }
 
     "iterating over many time steps" should {
-      "not suffer from memory leaks" taggedAs (PerformanceTest) in {
+      "not suffer from memory leaks" taggedAs (Performance) in {
         class BooleanTest{
           var b = false
         }

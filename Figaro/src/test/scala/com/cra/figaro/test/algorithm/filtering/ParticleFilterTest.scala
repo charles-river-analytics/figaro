@@ -21,6 +21,7 @@ import com.cra.figaro.language.Universe._
 import com.cra.figaro.library.compound._
 import com.cra.figaro.test._
 import scala.language.existentials
+import com.cra.figaro.test.tags.Performance
 
 class ParticleFilterTest extends WordSpec with PrivateMethodTester with Matchers {
   "A snapshot" should {
@@ -270,7 +271,7 @@ class ParticleFilterTest extends WordSpec with PrivateMethodTester with Matchers
     }
 
     "iterating over many time steps" should {
-      "not suffer from memory leaks" taggedAs (PerformanceTest) in {
+      "not suffer from memory leaks" taggedAs (Performance) in {
         val numParticles = 1000
         val numSteps = 1000
         val universe1 = createNew()

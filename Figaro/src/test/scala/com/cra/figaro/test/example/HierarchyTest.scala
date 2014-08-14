@@ -22,21 +22,22 @@ import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.discrete._
 import com.cra.figaro.test._
+import com.cra.figaro.test.tags.Example
 
 class HierarchyTest extends WordSpec with Matchers {
 
   var universe = Universe.createNew
 
   "A simple HierarchyTest" should {
-    "produce the correct probability under variable elimination" taggedAs (ExampleTest) in {
+    "produce the correct probability under variable elimination" taggedAs (Example) in {
       test((e1: Element[Boolean], e2: Element[String]) => VariableElimination(e1, e2))
     }
 
-    "produce the correct probability under importance sampling" taggedAs (ExampleTest) in {
+    "produce the correct probability under importance sampling" taggedAs (Example) in {
       test((e1: Element[Boolean], e2: Element[String]) => Importance(10000, e1, e2))
     }
 
-    "produce the correct probability under Metropolis-Hastings" taggedAs (ExampleTest) in {
+    "produce the correct probability under Metropolis-Hastings" taggedAs (Example) in {
       test((e1: Element[Boolean], e2: Element[String]) =>
         MetropolisHastings(200000, ProposalScheme.default, e1, e2))
     }

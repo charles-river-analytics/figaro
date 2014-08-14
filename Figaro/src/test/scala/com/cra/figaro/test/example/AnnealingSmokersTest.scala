@@ -21,11 +21,12 @@ import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.library.compound.^^
 import com.cra.figaro.test._
+import com.cra.figaro.test.tags.Example
 
 class AnnealingSmokersTest extends WordSpec with Matchers {
 
   "A simple AnnealingSmokersTest" should {
-    "produce the correct probability under Metropolis-Hastings Annealing" taggedAs (ExampleTest) in {
+    "produce the correct probability under Metropolis-Hastings Annealing" taggedAs (Example) in {
 
       Universe.createNew
 

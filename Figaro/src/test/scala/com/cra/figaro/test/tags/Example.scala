@@ -1,5 +1,5 @@
 /*
- * PerformanceTest.scala 
+ * ExampleTest.scala 
  * Tag for example tests.
  * 
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
@@ -11,8 +11,8 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
-package com.cra.figaro.test
+package com.cra.figaro.test.tags
 
 import org.scalatest.Tag
 
-object PerformanceTest extends Tag("PerformanceTest")
+object Example extends Tag("com.cra.figaro.test.Example")
