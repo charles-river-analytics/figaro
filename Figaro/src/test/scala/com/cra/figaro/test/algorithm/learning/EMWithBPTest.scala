@@ -28,6 +28,7 @@ import com.cra.figaro.util._
 import com.cra.figaro.util.random
 import scala.math.abs
 import java.io._
+import com.cra.figaro.test.tags.NonDeterministic
 
 class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
 
@@ -641,7 +642,7 @@ class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
         (new Model(learnedParameters, normalFlipConstructor), totalTime)
       }
 
-      "derive parameters within a reasonable accuracy for random data" in
+      "derive parameters within a reasonable accuracy for random data" taggedAs(NonDeterministic) in
         {
 
           val numEMIterations = 5

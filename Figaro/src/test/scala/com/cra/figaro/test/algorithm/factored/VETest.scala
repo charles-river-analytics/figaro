@@ -26,6 +26,7 @@ import com.cra.figaro.util._
 import com.cra.figaro.test._
 import scala.collection.mutable.Map
 import com.cra.figaro.test.tags.Performance
+import com.cra.figaro.test.tags.NonDeterministic
 
 class VETest extends WordSpec with Matchers {
   "A VEGraph" when {
@@ -284,7 +285,7 @@ class VETest extends WordSpec with Matchers {
           order == List(v3, v6, v4, v1, v7, v2))
       }
 
-    "take O(|factors| log |variables|)" taggedAs (Performance) in {
+    "take O(|factors| log |variables|)" taggedAs (Performance, NonDeterministic) in {
       Universe.createNew()
       val small = 100
       val large = 200

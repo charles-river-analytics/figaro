@@ -22,6 +22,7 @@ import com.cra.figaro.library.compound._
 import com.cra.figaro.test._
 import scala.language.existentials
 import com.cra.figaro.test.tags.Performance
+import com.cra.figaro.test.tags.NonDeterministic
 
 class ParticleFilterTest extends WordSpec with PrivateMethodTester with Matchers {
   "A snapshot" should {
@@ -84,7 +85,7 @@ class ParticleFilterTest extends WordSpec with PrivateMethodTester with Matchers
     }
 
     "constructing the initial belief state" should {
-      "contain a state with fraction proportional to its probability" in {
+      "contain a state with fraction proportional to its probability" taggedAs(NonDeterministic) in {
         createNew()
         val numParticles = 20000
         val f1 = Flip(0.2)("f1", universe)
