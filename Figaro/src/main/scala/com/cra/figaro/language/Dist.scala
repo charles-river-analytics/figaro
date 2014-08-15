@@ -85,7 +85,6 @@ class CompoundDist[T](name: Name[T], clauses: List[(Element[Double], Element[T])
    * Select which outcome clause will be used, based on the randomness.
    */
   def selectIndex(rand: Randomness) = {
-    // This statement generates a warning but it is not applicable
     probs.foreach(prob => if (prob.value.asInstanceOf[java.lang.Double] == null) prob.generate())
     val unnormalized = probs map (_.value)
     val normalized = normalize(unnormalized)

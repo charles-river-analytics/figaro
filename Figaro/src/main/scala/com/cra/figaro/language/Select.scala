@@ -61,7 +61,6 @@ class CompoundSelect[T](name: Name[T], clauses: List[(Element[Double], T)], coll
   def args: List[Element[_]] = probs
 
   def generateValue(rand: Randomness) = {
-    // This line generates a warning but it is not applicable
     probs.foreach(prob => if (prob.value.asInstanceOf[java.lang.Double] == null) prob.generate())
     val unnormalized = probs map (_.value)
     val normalized = normalize(unnormalized)
