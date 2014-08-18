@@ -40,8 +40,11 @@ Apache Ivy Projects
 ## How do I run the Figaro Examples?
 
 1) Download and install Scala 2.11
+
 2) Download the latest Figaro binary bundle for Scala 2.11 and uncompress the archive
+
 3) Open a command prompt
+
 4) Switch to the uncompressed Figaro binary bundle directory, and use the Scala command line:
 ```
 scala -cp figaro_2.11-2.3.0.0-fat.jar;figaroexamples_2.11-2.3.0.0.jar <example_class>
