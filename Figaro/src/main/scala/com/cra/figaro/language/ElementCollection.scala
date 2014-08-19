@@ -34,8 +34,12 @@ trait ElementCollection {
    */
   private val myElementMap: Map[Name[_], List[Element[_]]] = Map()
 
-  /** All the elements in this collection. */
+  /** All named elements in this collection. */
+  @deprecated("Use namedElements instead", "2.3.0.0")
   def allElements: List[Element[_]] = myElementMap.values.flatten.toList
+  
+  /** All named elements in this collection. */
+  def namedElements: List[Element[_]] = myElementMap.values.flatten.toList
 
   /**
    * Returns a reference element representing the single-valued reference.

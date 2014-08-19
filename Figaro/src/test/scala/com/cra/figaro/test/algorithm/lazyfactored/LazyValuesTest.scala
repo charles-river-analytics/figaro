@@ -155,5 +155,16 @@ class LazyValuesTest extends WordSpec with Matchers {
       
       
     }
+    
+    "not include elements from other universes" in {
+      Universe.createNew()
+      val v1 = Flip(0.5)
+      Universe.createNew()
+      val v2 = Constant(v1)
+      
+      val lv = LazyValues()
+      lv.expandAll(Set((v2, Int.MaxValue)))
+      lv.storedValues(v1).xvalues should be(empty)
+    }
   }
 }

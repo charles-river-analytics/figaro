@@ -21,6 +21,8 @@ import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.test._
 import com.cra.figaro.util._
 import com.cra.figaro.library.compound._
+import com.cra.figaro.test.tags.Performance
+import com.cra.figaro.test.tags.NonDeterministic
 
 class ProbEvidenceTest extends WordSpec with Matchers {
 
@@ -49,7 +51,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
         sampleTest(0.7 * 0.4, List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true))))
       }
 
-      "return the log probability both conditions are satisfied" in {
+      "return the log probability both conditions are satisfied" taggedAs(NonDeterministic) in {
         val universe = Universe.createNew()
         val f1 = Flip(0.7)("f1", universe)
         val f2 = Flip(0.4)("f2", universe)
@@ -207,7 +209,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
         sampleTest(0.25, List(NamedEvidence("a", Condition(condition))))
       }
 
-      "return the correct log probability of evidence in the result" in {
+      "return the correct log probability of evidence in the result" taggedAs(NonDeterministic) in {
         val universe = Universe.createNew()
         val x = Constant(false)
         val y = Constant(false)
@@ -258,7 +260,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
   }
 
   "Computing probability of evidence" should {
-    "not suffer from memory leaks" taggedAs (PerformanceTest) in {
+    "not suffer from memory leaks" taggedAs (Performance) in {
       Universe.createNew()
       val c = NonCachingChain(Uniform(0.2, 1.0), (d: Double) => Flip(d))
       val alg = ProbEvidenceSampler(1000000, List())

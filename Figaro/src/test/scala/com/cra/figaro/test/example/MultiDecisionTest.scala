@@ -23,21 +23,22 @@ import com.cra.figaro.language._
 import com.cra.figaro.library.compound._
 import com.cra.figaro.library.decision._
 import com.cra.figaro.test._
+import com.cra.figaro.test.tags.Example
 
 class MultiDecisionTest extends WordSpec with Matchers {
 
   def propmaker = (mv: Universe, e: Element[_]) => ProposalScheme.default(mv)
 
   "A multi decision network" should {
-    "produce the correct decisions under variable elimination" taggedAs (ExampleTest) in {
+    "produce the correct decisions under variable elimination" taggedAs (Example) in {
       test((e1: List[Element[Double]], e2: List[Decision[_, _]]) => MultiDecisionVariableElimination(e1, e2: _*))
     }
 
-    "produce the correct decisions under importance sampling" taggedAs (ExampleTest) in {
+    "produce the correct decisions under importance sampling" taggedAs (Example) in {
       test((e1: List[Element[Double]], e2: List[Decision[_, _]]) => MultiDecisionImportance(30000, e1, e2: _*))
     }
 
-    "produce the correct decisions under Metropolis-Hastings" taggedAs (ExampleTest) in {
+    "produce the correct decisions under Metropolis-Hastings" taggedAs (Example) in {
       test((e1: List[Element[Double]], e2: List[Decision[_, _]]) =>
         MultiDecisionMetropolisHastings(200000, propmaker, 10000, e1, e2: _*))
     }

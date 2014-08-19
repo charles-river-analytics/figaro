@@ -24,7 +24,8 @@ import com.cra.figaro.library.compound._
 import com.cra.figaro.test._
 import com.cra.figaro.util.logSum
 import JSci.maths.statistics._
-
+import com.cra.figaro.test.tags.Performance
+import com.cra.figaro.test.tags.NonDeterministic
 
 class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
 
@@ -228,7 +229,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       weightedSampleTest(d, (b: Boolean) => b, 0.73)
     }
     
-    "with an observation on a compound flip, terminate quickly and produce the correct result" in {
+    "with an observation on a compound flip, terminate quickly and produce the correct result" taggedAs(NonDeterministic) in {
       // Tests the likelihood weighting implementation for compound flip
       Universe.createNew()
       val b = Uniform(0.0, 1.0)
@@ -288,7 +289,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       alg.shutdown
     }
  
-    "with an observation on a parameterized flip, terminate quickly and produce the correct result" in {
+    "with an observation on a parameterized flip, terminate quickly and produce the correct result" taggedAs(NonDeterministic) in {
       // Tests the likelihood weighting implementation for compound flip
       Universe.createNew()
       val b = BetaParameter(2.0, 5.0)
@@ -441,7 +442,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       alg.kill
     }
 
-    "resample elements inside class defined in a chain for foward sampling" in {
+    "resample elements inside class defined in a chain for foward sampling" taggedAs(NonDeterministic) in {
       Universe.createNew()
       class temp {
         val t1 = Flip(0.9)
@@ -454,7 +455,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
 
     }
 
-   "not suffer from stack overflow with small probability of success" taggedAs (PerformanceTest) in {
+   "not suffer from stack overflow with small probability of success" taggedAs (Performance) in {
       Universe.createNew()
       val f = Flip(0.000001)
       f.observe(true)
@@ -462,7 +463,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       i.start
     }
 
-    "not suffer from memory leaks" taggedAs (PerformanceTest) in {
+    "not suffer from memory leaks" taggedAs (Performance) in {
       Universe.createNew()
       val c = NonCachingChain(Uniform(0.2, 1.0), (d: Double) => Flip(d))
       val i = Importance(1000000, c)

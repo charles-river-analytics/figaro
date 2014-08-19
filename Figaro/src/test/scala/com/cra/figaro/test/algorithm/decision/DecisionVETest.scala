@@ -22,7 +22,7 @@ import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.algorithm.lazyfactored._
 import ProbFactor._
 import com.cra.figaro.algorithm.sampling._
-import com.cra.figaro.test.PerformanceTest
+import com.cra.figaro.test.tags.Performance
 import com.cra.figaro.library.decision._
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound._

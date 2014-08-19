@@ -70,7 +70,7 @@ trait FactoredAlgorithm[T] extends Algorithm {
      */
     def chaseDown(element: Element[_], depth: Int, chasedSoFar: Set[Element[_]]): Set[(Element[_], Int)] = {
         if (depth >= 0) {
-          val includeThisElement = depth > values.expandedDepth(element).getOrElse(-1)
+          val includeThisElement = depth > LazyValues(element.universe).expandedDepth(element).getOrElse(-1)
           // Keeping track of what's been chased so far avoids infinite recursion
           val toChase = element.universe.directlyUsedBy(element).toSet ++ dependentUniverseCoparents.getOrElse(element, Set()) -- chasedSoFar
           val rest = toChase.flatMap((elem: Element[_]) => chaseDown(elem, depth - 1, chasedSoFar ++ toChase))
@@ -83,23 +83,31 @@ trait FactoredAlgorithm[T] extends Algorithm {
      * For any variable that is expanded, we need to make sure that a variable that it is contingent on is also expanded.
      * 
      * */
-    var newlyNeededElements: scala.collection.Set[(Element[_], Int)] = 
+    val newlyNeededElements = 
       Element.closeUnderContingencies(starterElements.toSet).map((elem: Element[_]) => (elem, depth))
-      
-    def expandElements(curr: scala.collection.Set[(Element[_], Int)]): Unit = {
-      if (curr.isEmpty) return
-      values.expandAll(curr)
-      val currentlyExpanded = values.expandedElements.toSet
-      val currentDepths = currentlyExpanded.map(d => (d, values.expandedDepth(d).getOrElse(0)))
-      val others = currentDepths.flatMap(e => chaseDown(e._1, e._2, currentlyExpanded))
-      val filteredElements = others.filter(o => boundsInducingElements.contains(o._1))
-      val neededElements = filteredElements.flatMap(f => (f._1.elementsIAmContingentOn + f._1).map((_, f._2)))
-      expandElements(neededElements.toSet)
+    
+    @tailrec
+    def expandElements(curr: Set[(Element[_], Int)]): Unit = {
+      if(curr.isEmpty) return
+      val currGrouped = curr.groupBy(_._1.universe)
+      val allNeededElements = currGrouped.flatMap((pair: (Universe, Set[(Element[_], Int)])) => {
+        val (uni, set) = pair
+        val values = LazyValues(uni)
+        values.expandAll(set)
+        val currentlyExpanded = values.expandedElements.toSet
+        val currentDepths = currentlyExpanded.map(d => (d, values.expandedDepth(d).getOrElse(0)))
+        val others = currentDepths.flatMap(e => chaseDown(e._1, e._2, currentlyExpanded))
+        val filteredElements = others.filter(o => boundsInducingElements.contains(o._1))
+        val neededElements = filteredElements.flatMap(f => (f._1.elementsIAmContingentOn + f._1).map((_, f._2)))
+        neededElements
+      })
+      expandElements(allNeededElements.toSet)
     }
     
-    expandElements(newlyNeededElements)
-       
-    val resultElements = values.expandedElements.toList
+    expandElements(newlyNeededElements.toSet)
+    
+    // We only include elements from other universes if they are specified in the starter elements.
+    val resultElements = values.expandedElements.toList ::: starterElements.filter(_.universe != universe)
     
     resultElements.foreach(p => p match {
       case n: NonCachingChain[_,_] => throw new UnsupportedAlgorithmException(n)
@@ -108,7 +116,7 @@ trait FactoredAlgorithm[T] extends Algorithm {
         
     // Only conditions and constraints produce distinct lower and upper bounds for *. So, if there are not such elements with * as one
     // of their values, we don't need to compute bounds and can save computation.
-    val boundsNeeded = boundsInducingElements.exists(LazyValues(universe).storedValues(_).hasStar)
+    val boundsNeeded = boundsInducingElements.exists(e => LazyValues(e.universe).storedValues(e).hasStar)
     // We make sure to clear the variable cache now, once all values have been computed.
     // This ensures that any created variables will be consistent with the computed values.
     Variable.clearCache()

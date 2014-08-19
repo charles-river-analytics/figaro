@@ -80,8 +80,8 @@ object DiceExample {
 
     }
 
-    val numberOfIterations = 100
-    val algorithm = ExpectationMaximization(numberOfIterations, parameters: _*)
+    val numberOfIterations = 10000
+	val algorithm = EMWithMH(numberOfIterations, 100, ProposalScheme.default, parameters: _*)
     algorithm.start
 
     val die1 = Select(fairness1.MAPValue.view(0,fairness1.MAPValue.size).toList, outcomes) 

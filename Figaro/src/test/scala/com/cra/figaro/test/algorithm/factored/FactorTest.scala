@@ -1108,4 +1108,135 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
       }
     }
   }
+  
+  "Making factors for multiple universes" should {
+    "produce the same range of values as if it were in a single universe" when {
+      "given a simple model with two universes" in {
+        Universe.createNew()
+        val v1u1 = Select(0.3 -> 0, 0.5 -> 1, 0.2 -> 3)
+        val v2u1 = Apply(v1u1, (i: Int) => i % 3)
+        
+        Universe.createNew()
+        val v1u2 = Select(0.3 -> 0, 0.5 -> 1, 0.2 -> 3)
+        Universe.createNew
+        val v2u3 = Apply(v1u1, (i: Int) => i % 3)
+        
+        (Variable(v1u1).range) should equal(Variable(v1u2).range)
+        (Variable(v2u1).range) should equal(Variable(v2u3).range)
+      }
+      
+      "given a model with multiple universes" in {
+        Universe.createNew()
+        val func = (i: Int, b: Boolean) => if(b) i else i + 1
+        val v1u1 = Select(0.1 -> 0, 0.2 -> 2, 0.7 -> 5)
+        val v2u1 = Flip(0.3)
+        val v3u1 = Apply(v1u1, v2u1, func)
+        val v4u1 = Flip(0.5)
+        val v5u1 = Apply(v3u1, v4u1, func)
+        
+        Universe.createNew()
+        val v1u2 = Select(0.1 -> 0, 0.2 -> 2, 0.7 -> 5)
+        Universe.createNew()
+        val v2u3 = Flip(0.3)
+        Universe.createNew()
+        val v3u4 = Apply(v1u1, v2u1, func)
+        Universe.createNew()
+        val v4u5 = Flip(0.5)
+        Universe.createNew()
+        val v5u6 = Apply(v3u1, v4u1, func)
+        
+        (Variable(v5u1).range) should equal(Variable(v5u6).range)
+      }
+      
+      "given a multi-universe model with Chains" in {
+        Universe.createNew()
+        val func1 = (i: Int) => if(i % 2 == 0) Constant(i) else Select(0.4 -> (i - 1), 0.6 -> (i + 1))
+        val func2 = (i: Int) => if(i % 4 == 0) Select(0.2 -> (i - 1), 0.8 -> (i + 1)) else Constant(i)
+        val v1u1 = Select(0.2 -> 0, 0.5 -> 3, 0.3 -> 6)
+        val v2u1 = Chain(v1u1, func1)
+        val v3u1 = Chain(v2u1, func2)
+        
+        Universe.createNew()
+        val v1u2 = Select(0.2 -> 0, 0.5 -> 3, 0.3 -> 6)
+        Universe.createNew()
+        val v2u3 = Chain(v1u1, func1)
+        Universe.createNew()
+        val v3u4 = Chain(v2u1, func2)
+        
+        (Variable(v3u1).range) should equal(Variable(v3u4).range)
+      }
+    }
+    
+    "correctly produce a factor between elements in multiple universes" when {
+      "given a simple model in two universes" in {
+        Universe.createNew()
+        val v1 = Select(0.3 -> 0, 0.2 -> 1, 0.4 -> 2, 0.1 -> 3)
+        Universe.createNew()
+        val v2 = Apply(v1, (i: Int) => i / 2)
+        Values()(v2)
+        val v1Vals = Variable(v1).range
+        val v2Vals = Variable(v2).range
+        val v10 = v1Vals indexOf Regular(0)
+        val v11 = v1Vals indexOf Regular(1)
+        val v12 = v1Vals indexOf Regular(2)
+        val v13 = v1Vals indexOf Regular(3)
+        val v20 = v2Vals indexOf Regular(0)
+        val v21 = v2Vals indexOf Regular(1)
+        val List(factor) = ProbFactor.make(v2)
+        factor.get(List(v10, v20)) should equal(1.0)
+        factor.get(List(v10, v21)) should equal(0.0)
+        factor.get(List(v11, v20)) should equal(1.0)
+        factor.get(List(v11, v21)) should equal(0.0)
+        factor.get(List(v12, v20)) should equal(0.0)
+        factor.get(List(v12, v21)) should equal(1.0)
+        factor.get(List(v13, v20)) should equal(0.0)
+        factor.get(List(v13, v21)) should equal(1.0)
+      }
+      
+      "given a multi-universe model with Chains" in {
+        Universe.createNew()
+        val v1 = Select(0.2 -> 0, 0.7 -> 1, 0.1 -> 2)
+        Universe.createNew()
+        val v2 = Constant(2)
+        Universe.createNew()
+        val v3 = Select(0.4 -> 0, 0.6 -> 1)
+        Universe.createNew()
+        val v4 = Chain(v1, (i: Int) => if (i % 2 == 0) v2 else v3)
+        Values()(v4)
+        val v1Vals = Variable(v1).range
+        val v3Vals = Variable(v3).range
+        val v4Vals = Variable(v4).range
+        val v10 = v1Vals indexOf Regular(0)
+        val v11 = v1Vals indexOf Regular(1)
+        val v12 = v1Vals indexOf Regular(2)
+        val v30 = v3Vals indexOf Regular(0)
+        val v31 = v3Vals indexOf Regular(1)
+        val v40 = v4Vals indexOf Regular(0)
+        val v41 = v4Vals indexOf Regular(1)
+        val v42 = v4Vals indexOf Regular(2)
+        
+        val factor = ProbFactor.make(v4)
+        val List(v4Factor) = ProbFactor.combineFactors(factor, SumProductSemiring, true)
+        
+        v4Factor.get(List(v10, v40, 0, v30)) should equal(0.0)
+        v4Factor.get(List(v10, v40, 0, v31)) should equal(0.0)
+        v4Factor.get(List(v10, v41, 0, v30)) should equal(0.0)
+        v4Factor.get(List(v10, v41, 0, v31)) should equal(0.0)
+        v4Factor.get(List(v10, v42, 0, v30)) should equal(1.0)
+        v4Factor.get(List(v10, v42, 0, v31)) should equal(1.0)
+        v4Factor.get(List(v11, v40, 0, v30)) should equal(1.0)
+        v4Factor.get(List(v11, v40, 0, v31)) should equal(0.0)
+        v4Factor.get(List(v11, v41, 0, v30)) should equal(0.0)
+        v4Factor.get(List(v11, v41, 0, v31)) should equal(1.0)
+        v4Factor.get(List(v11, v42, 0, v30)) should equal(0.0)
+        v4Factor.get(List(v11, v42, 0, v31)) should equal(0.0)
+        v4Factor.get(List(v12, v40, 0, v30)) should equal(0.0)
+        v4Factor.get(List(v12, v40, 0, v31)) should equal(0.0)
+        v4Factor.get(List(v12, v41, 0, v30)) should equal(0.0)
+        v4Factor.get(List(v12, v41, 0, v31)) should equal(0.0)
+        v4Factor.get(List(v12, v42, 0, v30)) should equal(1.0)
+        v4Factor.get(List(v12, v42, 0, v31)) should equal(1.0)
+      }
+    }
+  }
 }

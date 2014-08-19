@@ -22,18 +22,19 @@ import com.cra.figaro.library.atomic.discrete._
 import com.cra.figaro.language._
 import com.cra.figaro.language.Universe._
 import com.cra.figaro.test._
+import com.cra.figaro.test.tags.Example
 
 class SimpleMovieTest extends WordSpec with Matchers {
   "A PRM with a global constraint without mutation" should {
-    "produce the correct probability under variable elimination" taggedAs (ExampleTest) in {
+    "produce the correct probability under variable elimination" taggedAs (Example) in {
       test((e: Element[Boolean]) => VariableElimination(e))
     }
 
-    "produce the correct probability under importance sampling" taggedAs (ExampleTest) in {
+    "produce the correct probability under importance sampling" taggedAs (Example) in {
       test((e: Element[Boolean]) => Importance(20000, e))
     }
 
-    "produce the correct probability under Metropolis-Hastings" taggedAs (ExampleTest) in {
+    "produce the correct probability under Metropolis-Hastings" taggedAs (Example) in {
       test((e: Element[Boolean]) => { val m = MetropolisHastings(100000, chooseScheme, 0, e); /*m.debug = true;*/ m })
     }
   }
