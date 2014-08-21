@@ -4,6 +4,22 @@ Figaro is a probabilistic programming language that supports development of very
 
 Figaro makes it possible to express probabilistic models using the power of programming languages, giving the modeler the expressive tools to create a wide variety of models. Figaro comes with a number of built-in reasoning algorithms that can be applied automatically to new models. In addition, Figaro models are data structures in the Scala programming language, which is interoperable with Java, and can be constructed, manipulated, and used directly within any Scala or Java program.
 
+## What algorithms are supported in Figaro?
+
+Current built-in algorithms include:
+```
+Exact inference using variable elimination
+Importance sampling
+Metropolis-Hastings, with an expressive language to define proposal distributions
+Support computation
+Most probable explanation (MPE) using variable elimination or simulated annealing
+Probability of evidence using importance sampling
+Particle Filtering
+Parameter learning using expectation maximization
+```
+
+Figaro provides both regular (the algorithm is run once) and anytime (the algorithm is run until stopped) versions of some of these algorithms. In addition to the built-in algorithms, Figaro provides a number of tools for creating your own reasoning algorithms.
+
 ## Where can I get Figaro binary distributions?
 
 Figaro “fat JAR” binary distributions are available for download from the [Charles River Analytics, Inc. Web site](http://www.cra.com/figaro).
