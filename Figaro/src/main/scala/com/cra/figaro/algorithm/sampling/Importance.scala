@@ -262,4 +262,16 @@ object Importance {
     }
       
   }
+  
+  /**
+   * Use IS to compute the probability that the given element has the given value.
+   */    
+  def probability[T](target: Element[T], value: T, numSamples: Int = 10000): Double = {
+    val alg = Importance(numSamples, target)
+    alg.start()
+    val result = alg.probability(target, value)
+    alg.kill()
+    result
+  }    
+  
 }
