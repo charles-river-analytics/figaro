@@ -475,6 +475,17 @@ object MetropolisHastings {
     burnIn: Int, interval: Int, targets: Element[_]*)(implicit universe: Universe) =
     new OneTimeMetropolisHastings(universe, numSamples, scheme, burnIn, interval: Int, targets: _*)
 
+  /**
+   * Use MH to compute the probability that the given element has the given value.
+   */    
+  def probability[T](target: Element[T], value: T, numSamples: Int = 100000): Double = {
+    val alg = MetropolisHastings(numSamples, ProposalScheme.default, target)
+    alg.start()
+    val result = alg.probability(target, value)
+    alg.kill()
+    result
+  }    
+
   private[figaro] case class State(oldValues: Map[Element[_], Any],
     oldRandomness: Map[Element[_], Any],
     proposalProb: Double,
