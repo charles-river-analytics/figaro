@@ -311,12 +311,12 @@ with LazyAlgorithm {
   def eliminationOrder(allVars: Set[Variable[_]], factors: Traversable[Factor[Double]], toPreserve: Traversable[Variable[_]]): List[Variable[_]] = {
     val eliminableVars =  allVars -- toPreserve
     var initialGraph = new VEGraph(factors)
-    val candidates = new HeapPriorityMap[Variable[_], Long]
+    val candidates = new HeapPriorityMap[Variable[_], Double]
     eliminableVars foreach (v => candidates += v.asInstanceOf[Variable[_]] -> initialGraph.score(v))
     eliminationOrderHelper(candidates, toPreserve, initialGraph, List())
   }
 
-  @tailrec private def eliminationOrderHelper(candidates: PriorityMap[Variable[_], Long],
+  @tailrec private def eliminationOrderHelper(candidates: PriorityMap[Variable[_], Double],
     toPreserve: Traversable[Variable[_]],
     graph: VEGraph,
     accum: List[Variable[_]]): List[Variable[_]] = {

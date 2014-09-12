@@ -231,15 +231,25 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
   /**
    * Get the belief for an element
    */
-  protected[figaro] def getBeliefsForElement[T](target: Element[T]): List[(Double, T)] = {
+  protected[figaro] def getBeliefsForElement[T](target: Element[T], upperBounds: Boolean = false): List[(Double, T)] = {
     val finalFactor = getFinalFactorForElement(target)
     if (finalFactor.isEmpty) {
       List[(Double, T)]()
     } else {
       val factor = normalize(finalFactor)
       val factorVariable = Variable(target)
+      val valuesWithIndices = factorVariable.range.zipWithIndex
       // Since all computations have been in log space, we get out of log space here to provide the final beliefs
-      factorVariable.range.zipWithIndex.map(pair => (Math.exp(factor.get(List(pair._2))), pair._1.value))
+      val result0 =
+        valuesWithIndices.filter(_._1.isRegular).map(pair => {
+          (Math.exp(factor.get(List(pair._2))), pair._1.value)
+        })
+      val starProbability: Double = 
+        valuesWithIndices.filter(!_._1.isRegular).map(pair => {
+          Math.exp(factor.get(List(pair._2)))
+        }).sum
+      if (upperBounds) result0.map(pair => ((pair._1 / (1 - starProbability)), pair._2))
+      else result0
     }
   }
 
@@ -329,7 +339,7 @@ abstract class ProbQueryBeliefPropagation(override val universe: Universe, targe
 
   val factorGraph = new BasicFactorGraph(factors, semiring)
 
-  def computeDistribution[T](target: Element[T]): Stream[(Double, T)] = getBeliefsForElement(target).toStream
+  def computeDistribution[T](target: Element[T]): Stream[(Double, T)] = getBeliefsForElement(target, upperBounds).toStream
 
   def computeExpectation[T](target: Element[T], function: T => Double): Double = {
     computeDistribution(target).map((pair: (Double, T)) => pair._1 * function(pair._2)).sum
