@@ -59,8 +59,11 @@ object CoinExample {
         }
     }
 
-    val learningAlgorithm = EMWithMH(10000, 100, ProposalScheme.default, fairness)
+	val numberOfEMIterations = 10
+	val numberOfBPIterations = 10
+    val learningAlgorithm = EMWithBP(10, 10, fairness)
     learningAlgorithm.start
+	learningAlgorithm.stop
     learningAlgorithm.kill
     /*
      * This will create a flip having a probability of 'true' learned from the input data. 
