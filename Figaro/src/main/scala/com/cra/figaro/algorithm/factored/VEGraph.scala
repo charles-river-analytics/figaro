@@ -68,9 +68,9 @@ class VEGraph private (val info: Map[Variable[_], VariableInfo]) {
     val oldCost = VEGraph.cost(oldFactors)
     val newFactor = AbstractFactor((allVars - variable).toList)
     val newCost = VEGraph.cost(newFactor)
-    //newCost - oldCost
+    newCost - oldCost
     //Experimental: what if we just consider the new cost?
-    newCost
+    //newCost
   }
 }
 
