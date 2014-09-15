@@ -193,10 +193,10 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
   def normalize(factor: Factor[Double]): Factor[Double] = {
     //val z = factor.foldLeft(semiring.zero, _ + _)
     val z = semiring.sumMany(factor.contents.values)
-    val normedFactor = new Factor[Double](factor.variables)
+    //val normedFactor = /*new Factor[Double](factor.variables)*/Factory.make[Double](factor.variables)
     // Since we're in log space, d - z = log(exp(d)/exp(z))
-    factor.mapTo((d: Double) => if (z != semiring.zero) d - z else semiring.zero, normedFactor)
-    normedFactor
+    factor.mapTo((d: Double) => if (z != semiring.zero) d - z else semiring.zero, factor.variables)
+    //normedFactor
   }
 
   /*
@@ -214,42 +214,32 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
    */
   def getFactors(neededElements: List[Element[_]], targetElements: List[Element[_]], upperBounds: Boolean = false): List[Factor[Double]] = {
 
-    ProbFactor.removeFactors()
+    Factory.removeFactors()
     val thisUniverseFactors = (neededElements flatMap (BoundedProbFactor.make(_, upperBounds))).filterNot(_.isEmpty)
     val dependentUniverseFactors =
-      for { (dependentUniverse, evidence) <- dependentUniverses } yield ProbFactor.makeDependentFactor(universe, dependentUniverse, dependentAlgorithm(dependentUniverse, evidence))
+      for { (dependentUniverse, evidence) <- dependentUniverses } yield Factory.makeDependentFactor(universe, dependentUniverse, dependentAlgorithm(dependentUniverse, evidence))
     val factors = dependentUniverseFactors ::: thisUniverseFactors
     // To prevent underflow, we do all computation in log space
     factors.map(makeLogarithmic(_))
   }
 
   private def makeLogarithmic(factor: Factor[Double]): Factor[Double] = {
-    val result = new Factor[Double](factor.variables)
-    factor.mapTo((d: Double) => Math.log(d), result)
-    result
+    //val result = Factory.make[Double](factor.variables)
+    factor.mapTo((d: Double) => Math.log(d), factor.variables)
+    //result
   }
   /**
    * Get the belief for an element
    */
-  protected[figaro] def getBeliefsForElement[T](target: Element[T], upperBounds: Boolean = false): List[(Double, T)] = {
+  protected[figaro] def getBeliefsForElement[T](target: Element[T]): List[(Double, T)] = {
     val finalFactor = getFinalFactorForElement(target)
     if (finalFactor.isEmpty) {
       List[(Double, T)]()
     } else {
       val factor = normalize(finalFactor)
       val factorVariable = Variable(target)
-      val valuesWithIndices = factorVariable.range.zipWithIndex
       // Since all computations have been in log space, we get out of log space here to provide the final beliefs
-      val result0 =
-        valuesWithIndices.filter(_._1.isRegular).map(pair => {
-          (Math.exp(factor.get(List(pair._2))), pair._1.value)
-        })
-      val starProbability: Double = 
-        valuesWithIndices.filter(!_._1.isRegular).map(pair => {
-          Math.exp(factor.get(List(pair._2)))
-        }).sum
-      if (upperBounds) result0.map(pair => ((pair._1 / (1 - starProbability)), pair._2))
-      else result0
+      factorVariable.range.zipWithIndex.map(pair => (Math.exp(factor.get(List(pair._2))), pair._1.value))
     }
   }
 
@@ -339,7 +329,7 @@ abstract class ProbQueryBeliefPropagation(override val universe: Universe, targe
 
   val factorGraph = new BasicFactorGraph(factors, semiring)
 
-  def computeDistribution[T](target: Element[T]): Stream[(Double, T)] = getBeliefsForElement(target, upperBounds).toStream
+  def computeDistribution[T](target: Element[T]): Stream[(Double, T)] = getBeliefsForElement(target).toStream
 
   def computeExpectation[T](target: Element[T], function: T => Double): Double = {
     computeDistribution(target).map((pair: (Double, T)) => pair._1 * function(pair._2)).sum
@@ -360,15 +350,15 @@ trait ProbEvidenceBeliefPropagation extends ProbabilisticBeliefPropagation {
   def entropy(probFactor: Factor[Double], logFactor: Factor[Double]): Double = {
     //println("probfactor: " + probFactor.toReadableString)
     //println("logfactor: " + logFactor.toReadableString)
-    
+
     // Even though the variables in each factor are the same, the order of the vars might be different
     val logFactorMapping = probFactor.variables.map(v => logFactor.variables.indexOf(v))
     def remap(l: List[Int]) = l.zipWithIndex.map(s => (s._1, logFactorMapping(s._2))).sortBy(_._2).unzip._1
-    
+
     val e = (0.0 /: probFactor.allIndices)((c: Double, i: List[Int]) => {
       val p = probFcn(probFactor.get(i))
       if (p == 0) c else c + p * logFcn(logFactor.get(remap(i)))
-    })   
+    })
     e
   }
 
@@ -391,24 +381,24 @@ trait ProbEvidenceBeliefPropagation extends ProbabilisticBeliefPropagation {
     val varNodes = factorGraph.getNodes.filter(_.isInstanceOf[VariableNode]).toList
 
     val nonZeroEvidence = factorNodes.exists(p => beliefMap(p).contents.exists(_._2 != Double.NegativeInfinity))
-    
+
     if (nonZeroEvidence) {
-    //println("Computing energy")
-    val betheEnergy = -1*factorNodes.map(f => {
-      entropy(normalize(beliefMap(f)), factorGraph.getFactorForNode(f.asInstanceOf[FactorNode]))
-    }).sum
-    //println("Computing entropy")
-    val betheEntropy = {
-      val factorEntropy = -1*factorNodes.map(f => {
-        entropy(normalize(beliefMap(f)), normalize(beliefMap(f)))
+      //println("Computing energy")
+      val betheEnergy = -1 * factorNodes.map(f => {
+        entropy(normalize(beliefMap(f)), factorGraph.getFactorForNode(f.asInstanceOf[FactorNode]))
       }).sum
-      val varEntropy = varNodes.map(v => {
-        (factorGraph.getNeighbors(v).size-1)*entropy(normalize(beliefMap(v)), normalize(beliefMap(v))) 
-      }).sum
-      factorEntropy + varEntropy
-    }
-    //println("energy: " + betheEnergy + ", entropy: " + betheEntropy)
-    math.exp(-1*(betheEnergy - betheEntropy))
+      //println("Computing entropy")
+      val betheEntropy = {
+        val factorEntropy = -1 * factorNodes.map(f => {
+          entropy(normalize(beliefMap(f)), normalize(beliefMap(f)))
+        }).sum
+        val varEntropy = varNodes.map(v => {
+          (factorGraph.getNeighbors(v).size - 1) * entropy(normalize(beliefMap(v)), normalize(beliefMap(v)))
+        }).sum
+        factorEntropy + varEntropy
+      }
+      //println("energy: " + betheEnergy + ", entropy: " + betheEntropy)
+      math.exp(-1 * (betheEnergy - betheEntropy))
     } else {
       0.0
     }
@@ -481,17 +471,17 @@ object BeliefPropagation {
     new ProbQueryBeliefPropagation(universe, targets: _*)(
       dependentUniverses,
       dependentAlgorithm) with AnytimeProbabilisticBeliefPropagation with AnytimeProbQuery
-      
+
   /**
    * Use BP to compute the probability that the given element has the given value.
-   */    
+   */
   def probability[T](target: Element[T], value: T, numIterations: Int = 10): Double = {
     val alg = BeliefPropagation(numIterations, target)
     alg.start()
     val result = alg.probability(target, value)
     alg.kill()
     result
-  }    
+  }
 
   /**
    * Lazy version of BP that operates only on bounds
