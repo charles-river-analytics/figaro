@@ -47,7 +47,6 @@ object DiceExample {
     (1, 3, 7), (2, 3, 8), (2, 3, 8), (1, 2, 7), (1, 2, 7), (1, 2, 7), (2, 3, 8),
     (1, 3, 7), (1, 3, 7), (1, 2, 3))
 
-
   def trial(p1: AtomicDirichlet, p2: AtomicDirichlet, result: Int) =
     {
       val sum = (i1: Int, i2: Int) => i1 + i2
@@ -59,15 +58,14 @@ object DiceExample {
 
   def main(args: Array[String]) {
 
-    
     /*
      * Each coin is initially assumed to be fair
      */
-    val fairness1 = DirichletParameter(1,1,1,1,1,1)
-    val fairness2 = DirichletParameter(1,1,1,1,1,1)
-    val fairness3 = DirichletParameter(1,1,1,1,1,1)
+    val fairness1 = DirichletParameter(2.0, 2.0, 2.0, 2.0, 2.0, 2.0)
+    val fairness2 = DirichletParameter(2.0, 2.0, 2.0, 2.0, 2.0, 2.0)
+    val fairness3 = DirichletParameter(2.0, 2.0, 2.0, 2.0, 2.0, 2.0)
     val parameters = Seq(fairness1, fairness2, fairness3)
- 
+
     data.foreach {
       d =>
         if (d._1 == 1 && d._2 == 2) {
@@ -79,14 +77,15 @@ object DiceExample {
         }
 
     }
-
-    val numberOfIterations = 10000
-	val algorithm = EMWithMH(numberOfIterations, 100, ProposalScheme.default, parameters: _*)
+    val numberOfEMIterations = 10
+    val numberOfBPIterations = 10
+    val algorithm = EMWithBP(numberOfEMIterations, numberOfBPIterations, parameters: _*)
     algorithm.start
 
-    val die1 = Select(fairness1.MAPValue.view(0,fairness1.MAPValue.size).toList, outcomes) 
-    val die2 = Select(fairness2.MAPValue.view(0,fairness2.MAPValue.size).toList, outcomes)
-    val die3 = Select(fairness3.MAPValue.view(0,fairness3.MAPValue.size).toList, outcomes)
+    algorithm.stop
+    val die1 = Select(fairness1.MAPValue.view(0, fairness1.MAPValue.size).toList, outcomes)
+    val die2 = Select(fairness2.MAPValue.view(0, fairness2.MAPValue.size).toList, outcomes)
+    val die3 = Select(fairness3.MAPValue.view(0, fairness3.MAPValue.size).toList, outcomes)
 
     println("The probabilities of seeing each side of d_1 are: ")
     val probsAndSides1 = die1.probs zip die1.outcomes

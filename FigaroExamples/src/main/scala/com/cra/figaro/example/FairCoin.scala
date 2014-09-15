@@ -37,8 +37,8 @@ object CoinExample {
     'T', 'H', 'H', 'T', 'H', 'T', 'H', 'T', 'T', 'H', 'T', 'H', 'H', 'H', 'H', 'H',
     'H', 'H', 'H', 'H', 'T', 'H', 'T', 'H', 'H', 'T', 'H', 'H', 'H', 'H', 'H',
     'H', 'T', 'H', 'H', 'H', 'T', 'H', 'H', 'H', 'H', 'H', 'H', 'H',
-    'H', 'H', 'H', 'H', 'H', 'H', 'H', 'T', 'H','T',
-     'H', 'H', 'H')
+    'H', 'H', 'H', 'H', 'H', 'H', 'H', 'T', 'H', 'T',
+    'H', 'H', 'H')
 
   def Toss(fairness: AtomicBeta): AtomicFlip =
     {
@@ -48,7 +48,7 @@ object CoinExample {
 
   def main(args: Array[String]) {
     val fairness = BetaParameter(1, 1)
-    
+
     data.foreach {
       d =>
         val f = Flip(fairness)
@@ -59,8 +59,11 @@ object CoinExample {
         }
     }
 
-    val learningAlgorithm = EMWithMH(10000, 100, ProposalScheme.default, fairness)
+    val numberOfEMIterations = 10
+    val numberOfBPIterations = 10
+    val learningAlgorithm = EMWithBP(10, 10, fairness)
     learningAlgorithm.start
+    learningAlgorithm.stop
     learningAlgorithm.kill
     /*
      * This will create a flip having a probability of 'true' learned from the input data. 
@@ -71,7 +74,7 @@ object CoinExample {
 
     val t1 = Flip(fairness.MAPValue)
     val t2 = Flip(fairness.MAPValue)
-    
+
     val equal = t1 === t2
 
     val alg = VariableElimination(equal)

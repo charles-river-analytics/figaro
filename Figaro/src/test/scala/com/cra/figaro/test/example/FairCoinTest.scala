@@ -28,7 +28,7 @@ import com.cra.figaro.test.tags.Example
 class FairCoinTest extends WordSpec with Matchers {
   "A simple FairCoinTest" should {
     "produce the correct probability under expectation maximization" taggedAs (Example) in {
-     test()
+      test()
     }
 
   }
@@ -42,8 +42,8 @@ class FairCoinTest extends WordSpec with Matchers {
     'T', 'H', 'H', 'T', 'H', 'T', 'H', 'T', 'T', 'H', 'T', 'H', 'H', 'H', 'H', 'H',
     'H', 'H', 'H', 'H', 'T', 'H', 'T', 'H', 'H', 'T', 'H', 'H', 'H', 'H', 'H',
     'H', 'T', 'H', 'H', 'H', 'T', 'H', 'H', 'H', 'H', 'H', 'H', 'H',
-    'H', 'H', 'H', 'H', 'H', 'H', 'H', 'T', 'H','T',
-     'H', 'H', 'H')
+    'H', 'H', 'H', 'H', 'H', 'H', 'H', 'T', 'H', 'T',
+    'H', 'H', 'H')
 
   def Toss(fairness: AtomicBeta): AtomicFlip = {
     val f = fairness.getLearnedElement
@@ -65,27 +65,29 @@ class FairCoinTest extends WordSpec with Matchers {
 
     }
 
-    val learningAlgorithm = ExpectationMaximization(fairness)
+    val numberOfEMIterations = 10
+    val numberOfBPIterations = 10
+    val learningAlgorithm = EMWithBP(10, 10, fairness)
     learningAlgorithm.start
+    learningAlgorithm.kill
     /*
      * This will create a flip having a probability of 'true' learned from the input data. 
      */
-    val coin = fairness.getLearnedElement
+    val coin = Flip(fairness.MAPValue)
     println("The probability of a coin with this fairness showing 'heads' is: ")
     println(coin.prob)
-    //62/(62+38)
-    coin.prob should be (0.72 +- (0.01))
-    val t1 = fairness.getLearnedElement
-    val t2 = fairness.getLearnedElement
-    
+
+    val t1 = Flip(fairness.MAPValue)
+    val t2 = Flip(fairness.MAPValue)
+
     val equal = t1 === t2
 
     val alg = VariableElimination(equal)
     alg.start()
     println("The probability of two coins that exhibit this fairness showing the same side is: " + alg.probability(equal, true))
     //.62*.62 + .38*.38
-    alg.probability(equal, true) should be (0.60 +-(0.01))
-    
+    alg.probability(equal, true) should be(0.60 +- (0.01))
+
     alg.kill()
 
   }
