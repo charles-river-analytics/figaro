@@ -40,7 +40,7 @@ object BoundedProbFactor {
 
   private def makeUncontingentConstraintFactor[T](elem: Element[T], constraint: T => Double, upper: Boolean): Factor[Double] = {
     val elemVar = Variable(elem)
-    val factor = new Factor[Double](List(elemVar))
+    val factor = Factory.make[Double](List(elemVar))
     for { (elemVal, index) <- elemVar.range.zipWithIndex } {
       val entry = if (elemVal.isRegular) {
         val c = math.exp(constraint(elemVal.value))
@@ -68,7 +68,7 @@ object BoundedProbFactor {
     val firstValues = firstVar.range
     val numFirstValues = firstValues.size
     val matchingIndex: Int = firstValues.indexOf(Regular(firstValue))
-    val resultFactor = new Factor[Double](firstVar :: restFactor.variables)
+    val resultFactor = Factory.make[Double](firstVar :: restFactor.variables)
     for { restIndices <- restFactor.allIndices } {
       val restEntry = restFactor.get(restIndices)
       for { firstIndex <- 0 until numFirstValues } {
@@ -85,7 +85,7 @@ object BoundedProbFactor {
    */
   def make(elem: Element[_], upper: Boolean): List[Factor[Double]] = {
     val constraintFactors = makeConditionAndConstraintFactors(elem, upper)
-    constraintFactors ::: ProbFactor.makeNonConstraintFactors(elem)
+    constraintFactors ::: Factory.makeNonConstraintFactors(elem)
   }
 
   /**
@@ -107,9 +107,9 @@ object BoundedProbFactor {
       }
     }
     val variables = uses map (Variable(_))
-    val lb = new Factor[Double](variables)
+    val lb = Factory.make[Double](variables)
     lb.fillByRule(rule(false))
-    val ub = new Factor[Double](variables)
+    val ub = Factory.make[Double](variables)
     ub.fillByRule(rule(true))
     (lb, ub)
   }
