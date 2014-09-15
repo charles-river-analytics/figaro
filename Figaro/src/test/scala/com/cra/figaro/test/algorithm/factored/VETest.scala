@@ -118,8 +118,7 @@ class VETest extends WordSpec with Matchers {
         val h = new Factor[Double](List(v1, v7))
         val graph1 = new VEGraph(List(f, g, h))
         val score = graph1.score(v3)
-        //score should equal(-10) // 2*1*2*1*2 - (2*1*3*2 + 1*3*1*2) // old cost used to be taken into account
-        score should equal(8) // 2*1*2*1*2
+        score should equal(-10) // 2*1*2*1*2 - (2*1*3*2 + 1*3*1*2)
       }
     }
 
@@ -210,7 +209,6 @@ class VETest extends WordSpec with Matchers {
         val g = new Factor[Double](List(v5, v3, v2, v6))
         val h = new Factor[Double](List(v1, v7))
         val i = new Factor[Double](List(v8, v1, v3))
-        /* Old method that considered old cost of factor containing variable */
         // Initially:
         // Assume we will not eliminate v5 or v8
         // cost(f) = 2*1*3*2 = 12
@@ -277,42 +275,14 @@ class VETest extends WordSpec with Matchers {
         // v3, v6, v1, v4, v7, v2
         // v3, v6, v1, v7, v4, v2
         // v3, v6, v4, v1, v7, v2
-        /*
+        val ve = VariableElimination(e5, e8)
+        val order = ve.eliminationOrder(List(f, g, h, i), Set(v5, v8))
         assert(order == List(v3, v4, v1, v6, v7, v2) ||
           order == List(v3, v4, v1, v7, v6, v2) ||
           order == List(v3, v4, v6, v1, v7, v2) ||
           order == List(v3, v6, v1, v4, v7, v2) ||
           order == List(v3, v6, v1, v7, v4, v2) ||
           order == List(v3, v6, v4, v1, v7, v2))
-         *
-         */
-        /* New method where only cost of new factors is taken into account. */
-        // Initially:
-        // Assume we will not eliminate v5 or v8
-        // cost(f) = 2*1*3*2 = 12
-        // cost(g) = 1*3*1*2 = 6
-        // cost(h) = 2*2 = 4
-        // cost(i) = 2*2*3 = 12
-        // Eliminating v1 will produce a factor X1(v2,v3,v4,v7,v8) with cost 1*3*2*2*2 = 24
-        // Eliminating v2 will produce a factor X2(v1,v3,v4,v5,v6) with cost 2*3*2*1*2 = 24
-        // Eliminating v3 will produce a factor X3(v1,v2,v4,v5,v6,v8) with cost 2*1*2*1*2*2 = 16
-        // Eliminating v4 will produce a factor X4(v1,v2,v3) with cost 2*1*3 = 6
-        // Eliminating v6 will produce a factor X5(v2,v3,v5) with cost 1*3*1 = 3
-        // Eliminating v7 will produce a factor X6(v1) with cost 2
-        // Choose v7 first.
-        // We now have:
-        // X6(v1) with cost 2
-        // Eliminating v1 will produce a factor X7(v2,v4,v5,v6,v8) with cost 1*2*1*2*2 = 8
-        // Eliminating v2 will produce a factor X8(v1,v4,v5,v6,v8) with cost 2*2*1*2*2 = 16
-        // Eliminating v4 will produce a factor X9(v1,v2,v5,v6,v8) with cost 2*1*1*2*2 = 8
-        // Eliminating v6 will produce a factor X10(v1,v2,v4,v5,v8) with cost 2*1*2*1*2 = 8
-        // Choose v1, v4 or v6
-        // We won't check the rest.
-        
-        val ve = VariableElimination(e5, e8)
-        val order = ve.eliminationOrder(List(f, g, h, i), Set(v5, v8))
-        assert(order(0) == v7)
-        assert(order(1) == v1 || order(1) == v4 || order(1) == v6)
       }
 
     "take O(|factors| log |variables|)" taggedAs (Performance, NonDeterministic) in {
