@@ -26,7 +26,7 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
   extends WeightedSampler(universe, targets: _*) {
   import Importance.State
 
-/*
+  /*
  *  Likelihood weighting works by propagating observations through Dists and Chains
  *  to the variables they depend on. If we don't make sure we sample those Dists and
  *  Chains first, we may end up sampling those other elements without the correct
@@ -39,16 +39,16 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
  *  an observation to them, because that propagation has to go through a permanent 
  *  element.
  *  Therefore, we can generate the dependencies map once before all the samples are generated.
- */  
+ */
   private val dependencies = scala.collection.mutable.Map[Element[_], Set[Element[_]]]()
   private def makeDependencies() = {
     for {
       element <- universe.activeElements
     } {
       element match {
-        case d: Dist[_,_] => 
+        case d: Dist[_, _] =>
           for { o <- d.outcomes } { dependencies += o -> (dependencies.getOrElse(o, Set()) + d) }
-        case c: CachingChain[_,_] => 
+        case c: CachingChain[_, _] =>
           val outcomes = Values(universe)(c.parent).map(c.get(_))
           for { o <- outcomes } { dependencies += o -> (dependencies.getOrElse(o, Set()) + c) }
         case _ => ()
@@ -56,19 +56,18 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
     }
   }
   makeDependencies()
-  
+
   private var numRejections = 0
   private var logSuccessWeight = 0.0
   private var numSamples = 0
-  
+
   override protected def resetCounts() {
     super.resetCounts()
     numRejections = 0
     logSuccessWeight = 0.0
     numSamples = 0
   }
-  
-  
+
   /*
    * Produce one weighted sample of the given element. weightedSample takes into account conditions and constraints
    * on all elements in the Universe, including those that depend on this element.
@@ -77,7 +76,7 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
     /* 
      * We need to recreate the activeElements each sample, because non-temporary elements may have been made active
      * in a previous iteration. See the relevant test in ImportanceTest.
-     */    
+     */
     val activeElements = universe.activeElements
     val resultOpt: Option[Sample] =
       try {
@@ -116,8 +115,7 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
     dependencies.getOrElse(element, Set()).filter(!state.assigned.contains(_)).foreach(sampleOne(state, _, None))
     if (element.universe != universe || (state.assigned contains element)) {
       element.value
-    }
-    else {
+    } else {
       state.assigned += element
       sampleFresh(state, element, observation)
     }
@@ -137,7 +135,7 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
       case (Some(obs1), Some(obs2)) if obs1 == obs2 => Some(obs1)
       case _ => throw Importance.Reject // incompatible observations
     }
-    val value: T = 
+    val value: T =
       if (fullObservation.isEmpty || !element.isInstanceOf[HasDensity[_]]) {
         val result = sampleValue(state, element, fullObservation)
         if (!element.condition(result)) throw Importance.Reject
@@ -154,7 +152,7 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
         // A parameterized element may or may not be a chain to an atomic element
         // If it's not, we have to make sure to set its value to the observation here
         // If it is, we have to make sure to propagate the observation through the chain
-        sampleValue(state, element, Some(obs))       
+        sampleValue(state, element, Some(obs))
         state.weight += math.log(element.asInstanceOf[HasDensity[T]].density(obs))
         obs
       }
@@ -203,7 +201,7 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
           case Some(false) =>
             state.weight += math.log(1 - probValue)
             false
-          case _ => 
+          case _ =>
             val result = random.nextDouble() < probValue
             f.value = result
             result
@@ -217,9 +215,9 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
   }
 
   def logProbEvidence: Double = {
-	logSuccessWeight - Math.log(numSamples + numRejections)
+    logSuccessWeight - Math.log(numSamples + numRejections)
   }
-  
+
 }
 
 object Importance {
@@ -245,21 +243,33 @@ object Importance {
    * using the given number of samples.
    */
   def apply(myNumSamples: Int, targets: Element[_]*)(implicit universe: Universe) =
-    new Importance(universe, targets: _*) with OneTimeProbQuerySampler { 
-      val numSamples = myNumSamples 
+    new Importance(universe, targets: _*) with OneTimeProbQuerySampler {
+      val numSamples = myNumSamples
 
-    /**
-      * Use one-time sampling to compute the probability of the given named evidence.
-      * Takes the conditions and constraints in the model as part of the model definition.
-      * This method takes care of creating and running the necessary algorithms.
-      */
-    def probabilityOfEvidence(evidence: List[NamedEvidence[_]]): Double = {
-      val logPartition = logProbEvidence
-      universe.assertEvidence(evidence)
-      if (active) kill()
-      start()
-      Math.exp(logProbEvidence - logPartition)
+      /**
+       * Use one-time sampling to compute the probability of the given named evidence.
+       * Takes the conditions and constraints in the model as part of the model definition.
+       * This method takes care of creating and running the necessary algorithms.
+       */
+      def probabilityOfEvidence(evidence: List[NamedEvidence[_]]): Double = {
+        val logPartition = logProbEvidence
+        universe.assertEvidence(evidence)
+        if (active) kill()
+        start()
+        Math.exp(logProbEvidence - logPartition)
+      }
+
     }
-      
+
+  /**
+   * Use IS to compute the probability that the given element has the given value.
+   */
+  def probability[T](target: Element[T], value: T, numSamples: Int = 10000): Double = {
+    val alg = Importance(numSamples, target)
+    alg.start()
+    val result = alg.probability(target, value)
+    alg.kill()
+    result
   }
+
 }
