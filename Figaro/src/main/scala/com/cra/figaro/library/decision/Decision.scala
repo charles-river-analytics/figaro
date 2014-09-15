@@ -100,7 +100,7 @@ abstract class Decision[T, U](name: Name[U], parent: Element[T], private var fcn
     fcn = new_fcn
 
     // Remove all factors since the old factors are now out of date
-    ProbFactor.removeFactors
+    Factory.removeFactors
     // Have to nullify the last result even if parents the same since the function changed
     clearContext
     // Have to clear the last element in the cache since clearTempory always leaves an element in the cache

@@ -67,7 +67,7 @@ class AtomicBinomial(name: Name[Int], val numTrials: Int, val probSuccess: Doubl
    */
   def makeFactors = {
     val binVar = Variable(this)
-    val factor = new Factor[Double](List(binVar))
+    val factor = Factory.make[Double](List(binVar))
     for { (xvalue, index) <- binVar.range.zipWithIndex } {
       factor.set(List(index), density(xvalue.value))
     }

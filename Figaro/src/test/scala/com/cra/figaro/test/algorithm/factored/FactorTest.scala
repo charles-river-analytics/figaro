@@ -73,7 +73,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
       val v2 = Variable(e2)
       val v3 = Variable(e3)
       val v4 = Variable(e4)
-      val f = new Factor[Double](List(v1, v2, v3, v4))
+      val f = Factory.make[Double](List(v1, v2, v3, v4))
       val indices = List(1, 0, 2, 1)
       f.set(indices, 0.2)
       f.set(indices, 0.3)
@@ -94,7 +94,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
       val v2 = Variable(e2)
       val v3 = Variable(e3)
       val v4 = Variable(e4)
-      val f = new Factor[Double](List(v1, v2, v3, v4))
+      val f = Factory.make[Double](List(v1, v2, v3, v4))
       f.firstIndices should equal(List(0, 0, 0, 0))
     }
 
@@ -112,7 +112,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
       val v2 = Variable(e2)
       val v3 = Variable(e3)
       val v4 = Variable(e4)
-      val f = new Factor[Double](List(v1, v2, v3, v4))
+      val f = Factory.make[Double](List(v1, v2, v3, v4))
       val ia = List(1, 0, 1, 1)
       val ar = f.nextIndices(ia).get
       ar should equal(List(0, 0, 2, 1))
@@ -132,7 +132,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
       val v2 = Variable(e2)
       val v3 = Variable(e3)
       val v4 = Variable(e4)
-      val f = new Factor[Double](List(v1, v2, v3, v4))
+      val f = Factory.make[Double](List(v1, v2, v3, v4))
       val ia = List(1, 0, 2, 1)
       f.nextIndices(ia) should equal(None)
     }
@@ -157,8 +157,8 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
       val v4 = Variable(e4)
       val v5 = Variable(e5)
       val v6 = Variable(e6)
-      val f = new Factor[Double](List(v1, v2, v3, v4))
-      val g = new Factor[Double](List(v5, v3, v2, v6))
+      val f = Factory.make[Double](List(v1, v2, v3, v4))
+      val g = Factory.make[Double](List(v5, v3, v2, v6))
       val unionVars = PrivateMethod[(List[Variable[_]], List[Int], List[Int])]('unionVars)
       val (union, indexMap1, indexMap2) = f invokePrivate unionVars(g)
       union should equal(List(v1, v2, v3, v4, v5, v6))
@@ -181,8 +181,8 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val v2 = Variable(e2)
         val v3 = Variable(e3)
         val v4 = Variable(e4)
-        val f = new Factor[Double](List(v1, v2, v3))
-        val g = new Factor[Double](List(v4, v3))
+        val f = Factory.make[Double](List(v1, v2, v3))
+        val g = Factory.make[Double](List(v4, v3))
         f.set(List(0, 0, 0), 0.0)
         f.set(List(1, 0, 0), 0.1)
         f.set(List(2, 0, 0), 0.2)
@@ -222,7 +222,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val v1 = Variable(e1)
         val v2 = Variable(e2)
         val v3 = Variable(e3)
-        val f = new Factor[Double](List(v1, v2, v3))
+        val f = Factory.make[Double](List(v1, v2, v3))
         f.set(List(0, 0, 0), 0.0)
         f.set(List(1, 0, 0), 0.1)
         f.set(List(2, 0, 0), 0.2)
@@ -247,7 +247,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val v1 = Variable(e1)
         val v2 = Variable(e2)
         val v3 = Variable(e3)
-        val f = new Factor[Double](List(v1, v2))
+        val f = Factory.make[Double](List(v1, v2))
         f.set(List(0, 0), 0.0)
         f.set(List(1, 0), 0.2)
         f.set(List(2, 0), 0.4)
@@ -267,7 +267,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
           Values()(e2)
           val v1 = Variable(e1)
           val v2 = Variable(e2)
-          val f = new Factor[Double](List(v1, v2, v1))
+          val f = Factory.make[Double](List(v1, v2, v1))
           f.set(List(0, 0, 0), 0.1)
           f.set(List(1, 0, 0), 0.2)
           f.set(List(0, 1, 0), 0.3)
@@ -295,7 +295,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val v1 = Variable(e1)
         val v2 = Variable(e2)
         val v3 = Variable(e3)
-        val f = new Factor[Double](List(v1, v2, v3))
+        val f = Factory.make[Double](List(v1, v2, v3))
         f.set(List(0, 0, 0), 0.6)
         f.set(List(1, 0, 0), 0.1)
         f.set(List(2, 0, 0), 0.2)
@@ -322,7 +322,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val v1 = Variable(e1)
         val v2 = Variable(e2)
         val v3 = Variable(e3)
-        val f = new Factor[Double](List(v1, v2, v3))
+        val f = Factory.make[Double](List(v1, v2, v3))
         f.set(List(0, 0, 0), 0.0)
         f.set(List(1, 0, 0), 0.1)
         f.set(List(2, 0, 0), 0.2)
@@ -351,7 +351,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val v1 = Variable(e1)
         val v2 = Variable(e2)
         val v3 = Variable(e3)
-        val f = new Factor[Double](List(v1, v2, v3))
+        val f = Factory.make[Double](List(v1, v2, v3))
         f.set(List(0, 0, 0), 0.0)
         f.set(List(1, 0, 0), 0.05)
         f.set(List(2, 0, 0), 0.1)
@@ -384,7 +384,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         Values()(e2)
         val v1 = Variable(e1)
         val v2 = Variable(e2)
-        val f = new Factor[Double](List(v1, v2, v2))
+        val f = Factory.make[Double](List(v1, v2, v2))
         f.set(List(0, 0, 0), 0.06)
         f.set(List(0, 0, 1), 0.25)
         f.set(List(0, 1, 0), 0.44)
@@ -432,7 +432,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         Universe.createNew()
         val v1 = Constant(7)
         Values()(v1)
-        val List(factor) = ProbFactor.make(v1)
+        val List(factor) = Factory.make(v1)
         factor.get(List(0)) should equal(1.0)
       }
     }
@@ -443,7 +443,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
           Universe.createNew()
           val v1 = Flip(0.3)
           Values()(v1)
-          val List(factor) = ProbFactor.make(v1)
+          val List(factor) = Factory.make(v1)
           factor.get(List(0)) should equal(0.3)
           factor.get(List(1)) should equal(0.7)
         }
@@ -456,7 +456,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
           val v1 = Select(0.2 -> 0.1, 0.8 -> 0.3)
           val v2 = Flip(v1)
           Values()(v2)
-          val List(factor) = ProbFactor.make(v2)
+          val List(factor) = Factory.make(v2)
           val vals = Variable(v1).range
           println("vals = " + vals)
           println("v2.range = " + Variable(v2).range)
@@ -474,7 +474,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         Universe.createNew()
         val v1 = Select(0.2 -> 1, 0.3 -> 0, 0.1 -> 2, 0.05 -> 5, 0.35 -> 4)
         Values()(v1)
-        val List(factor) = ProbFactor.make(v1)
+        val List(factor) = Factory.make(v1)
         val vals = Variable(v1).range
         val i1 = vals.indexOf(Regular(1))
         val i0 = vals.indexOf(Regular(0))
@@ -498,7 +498,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
           val c3 = Constant(0.5)
           val v3 = Select(v1 -> 1, v2 -> 2, c1 -> 4, c2 -> 5, c3 -> 3)
           Values()(v3)
-          val List(factor) = ProbFactor.make(v3)
+          val List(factor) = Factory.make(v3)
           val v1Vals = Variable(v1).range
           val v2Vals = Variable(v2).range
           val v3Vals = Variable(v3).range
@@ -548,7 +548,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
           val v3FalseIndex = v3Vals.indexOf(Regular(false))
           val v1Index = v3.outcomes.indexOf(v1)
           val v2Index = v3.outcomes.indexOf(v2)
-          val selectFactor :: outcomeFactors = ProbFactor.make(v3)
+          val selectFactor :: outcomeFactors = Factory.make(v3)
           outcomeFactors.size should equal(2)
           val v1Factor = outcomeFactors(v1Index)
           val v2Factor = outcomeFactors(v2Index)
@@ -590,7 +590,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
           val v3t = v3Vals.indexOf(Regular(true))
           val v5f = v5Vals.indexOf(Regular(false))
           val v5t = v5Vals.indexOf(Regular(true))
-          val selectFactor :: outcomeFactors = ProbFactor.make(v5)
+          val selectFactor :: outcomeFactors = Factory.make(v5)
           outcomeFactors.size should equal(2)
           val v1Factor = outcomeFactors(v3Index)
           val v2Factor = outcomeFactors(v4Index)
@@ -632,8 +632,8 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val v42 = v4Vals indexOf Regular(2)
         val v43 = v4Vals indexOf Regular(3)
 
-        val factor = ProbFactor.make(v4)
-        val List(v4Factor) = ProbFactor.combineFactors(factor, SumProductSemiring, true)
+        val factor = Factory.make(v4)
+        val List(v4Factor) = Factory.combineFactors(factor, SumProductSemiring, true)
         
         v4Factor.get(List(v1t, v41, v21, 0)) should equal(1.0)
         v4Factor.get(List(v1t, v41, v22, 0)) should equal(0.0)
@@ -664,8 +664,8 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val v42 = v4Vals indexOf Regular(2)
         val v43 = v4Vals indexOf Regular(3)
 
-        val factor = ProbFactor.make(v4)
-        val List(v4Factor) = ProbFactor.combineFactors(factor, SumProductSemiring, true)
+        val factor = Factory.make(v4)
+        val List(v4Factor) = Factory.combineFactors(factor, SumProductSemiring, true)
 
         v4Factor.get(List(v1t, v41)) should equal(0.1)
         v4Factor.get(List(v1t, v42)) should equal(0.9)
@@ -696,8 +696,8 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
     	  val v4t = 0
     	  val v4f = 1
     	  
-    	  val factor = ProbFactor.make(v2)
-          val List(v2Factor) = ProbFactor.combineFactors(factor, SumProductSemiring, true)
+    	  val factor = Factory.make(v2)
+          val List(v2Factor) = Factory.combineFactors(factor, SumProductSemiring, true)
           
     	  v2Factor.get(List(v1t, v2t, v3t, v4t)) should equal(1.0)
     	  v2Factor.get(List(v1t, v2t, v3t, v4f)) should equal(1.0)
@@ -731,7 +731,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val v13 = v1Vals indexOf Regular(3)
         val v20 = v2Vals indexOf Regular(0)
         val v21 = v2Vals indexOf Regular(1)
-        val List(factor) = ProbFactor.make(v2)
+        val List(factor) = Factory.make(v2)
         factor.get(List(v11, v20)) should equal(0.0)
         factor.get(List(v11, v21)) should equal(1.0)
         factor.get(List(v12, v20)) should equal(1.0)
@@ -759,7 +759,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val v30 = v3Vals indexOf Regular(0)
         val v31 = v3Vals indexOf Regular(1)
         val v32 = v3Vals indexOf Regular(2)
-        val List(factor) = ProbFactor.make(v3)
+        val List(factor) = Factory.make(v3)
         factor.get(List(v11, v22, v30)) should equal(0.0)
         factor.get(List(v11, v22, v31)) should equal(1.0)
         factor.get(List(v11, v22, v32)) should equal(0.0)
@@ -802,7 +802,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val v40 = v4Vals indexOf Regular(0)
         val v41 = v4Vals indexOf Regular(1)
         val v42 = v4Vals indexOf Regular(2)
-        val List(factor) = ProbFactor.make(v4)
+        val List(factor) = Factory.make(v4)
         factor.get(List(v11, v21, v31, v40)) should equal(0.0)
         factor.get(List(v11, v21, v31, v41)) should equal(1.0)
         factor.get(List(v11, v21, v31, v42)) should equal(0.0)
@@ -850,7 +850,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val v50 = v5Vals indexOf Regular(0)
         val v51 = v5Vals indexOf Regular(1)
         val v52 = v5Vals indexOf Regular(2)
-        val List(factor) = ProbFactor.make(v5)
+        val List(factor) = Factory.make(v5)
         factor.get(List(v11, v21, v31, v4false, v50)) should equal(0.0)
         factor.get(List(v11, v21, v31, v4false, v51)) should equal(1.0)
         factor.get(List(v11, v21, v31, v4false, v52)) should equal(0.0)
@@ -921,7 +921,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val v60 = v6Vals indexOf Regular(0)
         val v61 = v6Vals indexOf Regular(1)
         val v62 = v6Vals indexOf Regular(2)
-        val List(factor) = ProbFactor.make(v6)
+        val List(factor) = Factory.make(v6)
 
         factor.get(List(v11, v21, v31, v4false, v5false, v60)) should equal(0.0)
         factor.get(List(v11, v21, v31, v4false, v5false, v61)) should equal(1.0)
@@ -970,7 +970,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val v2 = Select(0.5 -> 4, 0.5 -> 5)
         val v3 = Inject(v1, v2)
         Values()(v3)
-        val List(factor) = ProbFactor.make(v3)
+        val List(factor) = Factory.make(v3)
 
         val v1Vals = Variable(v1).range
         val v2Vals = Variable(v2).range
@@ -1038,7 +1038,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         v1.setCondition((i: Int) => i != 2)
         v1.setConstraint(((i: Int) => i.toDouble))
         Values()(v1)
-        val List(condFactor, constrFactor, _) = ProbFactor.make(v1)
+        val List(condFactor, constrFactor, _) = Factory.make(v1)
         val v1Vals = Variable(v1).range
         val v11 = v1Vals indexOf Regular(1)
         val v12 = v1Vals indexOf Regular(2)
@@ -1058,7 +1058,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val f = Flip(0.5)
         val lv = LazyValues()
         lv.expandAll(Set((f, -1)))
-        val factors = ProbFactor.make(f)
+        val factors = Factory.make(f)
         factors should be (empty)
       }
     }
@@ -1078,7 +1078,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
       Values(dependentUniverse)(a)
       val evidence = List(NamedEvidence("a", Condition((d: Double) => d < 0.5)))
       val factor =
-        ProbFactor.makeDependentFactor(Universe.universe, dependentUniverse, () => ProbEvidenceSampler.computeProbEvidence(20000, evidence)(dependentUniverse))
+        Factory.makeDependentFactor(Universe.universe, dependentUniverse, () => ProbEvidenceSampler.computeProbEvidence(20000, evidence)(dependentUniverse))
       val xVar = Variable(x)
       val yVar = Variable(y)
       val variables = factor.variables
@@ -1182,7 +1182,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val v13 = v1Vals indexOf Regular(3)
         val v20 = v2Vals indexOf Regular(0)
         val v21 = v2Vals indexOf Regular(1)
-        val List(factor) = ProbFactor.make(v2)
+        val List(factor) = Factory.make(v2)
         factor.get(List(v10, v20)) should equal(1.0)
         factor.get(List(v10, v21)) should equal(0.0)
         factor.get(List(v11, v20)) should equal(1.0)
@@ -1215,8 +1215,8 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val v41 = v4Vals indexOf Regular(1)
         val v42 = v4Vals indexOf Regular(2)
         
-        val factor = ProbFactor.make(v4)
-        val List(v4Factor) = ProbFactor.combineFactors(factor, SumProductSemiring, true)
+        val factor = Factory.make(v4)
+        val List(v4Factor) = Factory.combineFactors(factor, SumProductSemiring, true)
         
         v4Factor.get(List(v10, v40, 0, v30)) should equal(0.0)
         v4Factor.get(List(v10, v40, 0, v31)) should equal(0.0)

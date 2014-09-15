@@ -83,7 +83,7 @@ class SingleValuedReferenceElement[T](collection: ElementCollection, reference: 
       case None =>
         val thisVar = Variable(this)
         val refVar = Variable(first)
-        val factor = new Factor[Double](List(thisVar, refVar))
+        val factor = Factory.make[Double](List(thisVar, refVar))
         for {
           i <- 0 until refVar.range.size
           j <- 0 until refVar.range.size
@@ -99,7 +99,7 @@ class SingleValuedReferenceElement[T](collection: ElementCollection, reference: 
             firstCollection = firstXvalue.value.asInstanceOf[ElementCollection]
             restElement = embeddedElements(firstCollection)
           } yield {
-            ProbFactor.makeConditionalSelector(this, firstVar, firstIndex, Variable(restElement)) :: restElement.makeFactors
+            Factory.makeConditionalSelector(this, firstVar, firstIndex, Variable(restElement)) :: restElement.makeFactors
           }
         selectedFactors.flatten
     }
@@ -234,7 +234,7 @@ class Aggregate[T, U](collection: ElementCollection, reference: Reference[T], ag
           case None =>
             val thisVar = Variable(this)
             val refVar = Variable(first)
-            val factor = new Factor[Double](List(thisVar, refVar))
+            val factor = Factory.make[Double](List(thisVar, refVar))
             for {
               i <- 0 until refVar.range.size
               j <- 0 until refVar.range.size
@@ -252,7 +252,7 @@ class Aggregate[T, U](collection: ElementCollection, reference: Reference[T], ag
                   case firstCollection: ElementCollection =>
                     val restElement = embeddedElements(firstCollection)
                     val result: List[Factor[Double]] =
-                      ProbFactor.makeConditionalSelector(this, firstVar, firstIndex, Variable(restElement)) :: ProbFactor.make(restElement)
+                      Factory.makeConditionalSelector(this, firstVar, firstIndex, Variable(restElement)) :: Factory.make(restElement)
                     result
                   case cs: Traversable[_] =>
                     // Create a multi-valued reference element (MVRE) for each collection in the value of the first name.
@@ -266,11 +266,11 @@ class Aggregate[T, U](collection: ElementCollection, reference: Reference[T], ag
                     val combination = embeddedInject(collections)
                     val setMaker = embeddedApply(collections)
                     val result: List[Factor[Double]] =
-                      ProbFactor.makeConditionalSelector(this, firstVar, firstIndex, Variable(setMaker)) :: ProbFactor.make(combination) :::
-                        ProbFactor.make(setMaker)
+                      Factory.makeConditionalSelector(this, firstVar, firstIndex, Variable(setMaker)) :: Factory.make(combination) :::
+                        Factory.make(setMaker)
                     result
                 } 
-              } else ProbFactor.makeStarFactor(this)
+              } else Factory.makeStarFactor(this)
             }
         }
       }
@@ -293,7 +293,7 @@ class Aggregate[T, U](collection: ElementCollection, reference: Reference[T], ag
   def makeFactors = {
     val thisVar = Variable(this)
     val mvreVar = Variable(mvre)
-    val factor = new Factor[Double](List(thisVar, mvreVar))
+    val factor = Factory.make[Double](List(thisVar, mvreVar))
     for {
       (thisXvalue, thisIndex) <- thisVar.range.zipWithIndex
       (mvreXvalue, mvreIndex) <- mvreVar.range.zipWithIndex
