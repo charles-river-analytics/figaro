@@ -57,7 +57,7 @@ class SufficientStatisticsVariableElimination(
       }
     }
 
-    ProbFactor.removeFactors()
+    Factory.removeFactors()
     val thisUniverseFactors = allElements flatMap (statFactor.make(_))
     val dependentUniverseFactors =
       for { (dependentUniverse, evidence) <- dependentUniverses } yield statFactor.makeDependentFactor(universe, dependentUniverse, dependentAlgorithm(dependentUniverse, evidence))
