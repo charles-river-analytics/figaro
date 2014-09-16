@@ -63,12 +63,14 @@ class VEGraph private (val info: Map[Variable[_], VariableInfo]) {
    * Returns the elimination score, which is the increase in cost between the new factor involving the
    * variable and the existing factors (we want to minimize score).
    */
-  def score(variable: Variable[_]): Long = {
+  def score(variable: Variable[_]): Double = {
     val VariableInfo(oldFactors, allVars) = info(variable)
     val oldCost = VEGraph.cost(oldFactors)
     val newFactor = AbstractFactor((allVars - variable).toList)
     val newCost = VEGraph.cost(newFactor)
     newCost - oldCost
+    //Experimental: what if we just consider the new cost?
+    //newCost
   }
 }
 
@@ -76,14 +78,14 @@ object VEGraph {
   /**
    * The cost of a factor is the number of entries in it, which is the product of the ranges of its variables.
    */
-  def cost(factor: AbstractFactor): Long =
-    (1L /: factor.variables)(_ * _.size.toLong)
+  def cost(factor: AbstractFactor): Double =
+    (1.0 /: factor.variables)(_ * _.size.toDouble)
 
   /**
    * The cost of a set of factors is the sum of the costs of the individual factors.
    */
-  def cost(factors: Traversable[AbstractFactor]): Long =
-    (0L /: factors)(_ + cost(_))
+  def cost(factors: Traversable[AbstractFactor]): Double =
+    (0.0 /: factors)(_ + cost(_))
 
   private def makeInfo(factors: Traversable[Factor[_]]): Map[Variable[_], VariableInfo] =
     makeInfo(Map(), factors map ((f: Factor[_]) => AbstractFactor(f.variables)), List())

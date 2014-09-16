@@ -26,22 +26,22 @@ import sun.swing.AccumulativeRunnable
  * and a transition model, which is a function from the previous universe to a new universe. defining the way the distribution over the new state
  * of the time-varying variables depends on their values in the previous state.
  * The fourth argument to the particle filter is the number of particles to use at each time step.
- * 
+ *
  * The particle filter works in an online fashion. At each point in time, it maintains its current beliefs about the state of the system as a set of
  * representative states. advanceTime is used to move forward one time step. The particle filter updates its beliefs in light
  * of the new evidence.
- * 
+ *
  * @param static A universe with static elements that do not change over time.
  * @param intitial The universe describing the initial distribution of the model.
- * @param transition The transition function that returns a new universe from a previous one. 
+ * @param transition The transition function that returns a new universe from a static and previous universe, respectively.
  */
-abstract class ParticleFilter(static: Universe = new Universe(), initial: Universe, transition: Universe => Universe, numParticles: Int)
+abstract class ParticleFilter(static: Universe = new Universe(), initial: Universe, transition: (Universe, Universe) => Universe, numParticles: Int)
   extends Filtering(static, initial, transition) {
 
   /** The belief about the state of the system at the current point in time. */
   val beliefState: ParticleFilter.BeliefState = Array.fill(numParticles)(null)
-  
-  protected var logProbEvidence :  Double = 0.0
+
+  protected var logProbEvidence: Double = 0.0
   protected var previousUniverse: Universe = _
   protected var currentUniverse = initial
 
@@ -72,7 +72,7 @@ abstract class ParticleFilter(static: Universe = new Universe(), initial: Univer
     normalized.toStream
   }
 
-    /*
+  /*
    * Careful: makeWeightedParticle overwrites the previous state with the new state. That means we can't use it to generate another new particle from the same previous
    * state. The reason for this design is to avoid creating new snapshots and states to conserve memory.
    */
@@ -116,12 +116,12 @@ abstract class ParticleFilter(static: Universe = new Universe(), initial: Univer
       }
     }
   }
-  
+
   private[figaro] def computeProbEvidence(weightedParticles: Seq[ParticleFilter.WeightedParticle]) {
-     // compute probability of evidence here by taking the average weight of the weighted particles and store it so you can later return it as a query result
-     val weightedParticleArray = weightedParticles.toArray
-     val sum = weightedParticleArray.map(_._1).sum
-     logProbEvidence = logProbEvidence + scala.math.log(sum / numParticles) 
+    // compute probability of evidence here by taking the average weight of the weighted particles and store it so you can later return it as a query result
+    val weightedParticleArray = weightedParticles.toArray
+    val sum = weightedParticleArray.map(_._1).sum
+    logProbEvidence = logProbEvidence + scala.math.log(sum / numParticles)
   }
 
   protected def addWeightedParticle(evidence: Seq[NamedEvidence[_]], index: Int): ParticleFilter.WeightedParticle = {
@@ -152,39 +152,37 @@ abstract class ParticleFilter(static: Universe = new Universe(), initial: Univer
     for { element <- currentUniverse.activeElements.filter(!_.name.isEmpty) } {
       new Settable(element.name.string, element.value, previousUniverse)
     }
-    currentUniverse = transition(previousUniverse)
-
-    System.gc()
+    currentUniverse = transition(static, previousUniverse)
 
   }
-  
-   def getlogProbEvidence() : Double = { 
+
+  def getlogProbEvidence(): Double = {
     logProbEvidence
   }
-  
-  def probEvidence() : Double = { 
+
+  def probEvidence(): Double = {
     val probEvidence = scala.math.exp(logProbEvidence)
     probEvidence
   }
-  
+
 }
 
 /**
  * A one-time particle filter.
- * 
+ *
  * @param static The universe of elements whose values do not change over time
  * @param initial The universe describing the distribution over the initial state of the system
  * @param transition The transition model describing how the current state of the system depends on the previous
  * @param numParticles The number of particles to use at each time step
  */
-class OneTimeParticleFilter(static: Universe = new Universe(), initial: Universe, transition: Universe => Universe, numParticles: Int)
+class OneTimeParticleFilter(static: Universe = new Universe(), initial: Universe, transition: (Universe, Universe) => Universe, numParticles: Int)
   extends ParticleFilter(static, initial, transition, numParticles) with OneTimeFiltering {
   private def doTimeStep(weightedParticleCreator: Int => ParticleFilter.WeightedParticle) {
     val weightedParticles = for { i <- 0 until numParticles } yield weightedParticleCreator(i)
-    
+
     // compute probability of evidence here by taking the average weight of the weighted particles and store it so you can later return it as a query result
     computeProbEvidence(weightedParticles)
-    
+
     updateBeliefState(weightedParticles)
   }
 
@@ -210,25 +208,38 @@ object ParticleFilter {
 
   /**
    * A one-time particle filter.
- * 
- * @param static The universe of elements whose values do not change over time
- * @param initial The universe describing the distribution over the initial state of the system
- * @param transition The transition model describing how the current state of the system depends on the previous
- * @param numParticles Number of particles to use at each time step
+   *
+   * @param static The universe of elements whose values do not change over time
+   * @param initial The universe describing the distribution over the initial state of the system
+   * @param transition The transition model describing how the current state of the system depends on the static and previous, respectively
+   * @param numParticles Number of particles to use at each time step
    */
-  def apply(static: Universe, initial: Universe, transition: Universe => Universe, numParticles: Int): OneTimeParticleFilter =
+  def apply(static: Universe, initial: Universe, transition: (Universe, Universe) => Universe, numParticles: Int): OneTimeParticleFilter =
     new OneTimeParticleFilter(static, initial, transition, numParticles)
 
   /**
-   * A one-time particle filter in which the static universe is empty.
-   * 
+   * A one-time particle filter.
+   *
+   * @param static The universe of elements whose values do not change over time
    * @param initial The universe describing the distribution over the initial state of the system
    * @param transition The transition model describing how the current state of the system depends on the previous
    * @param numParticles Number of particles to use at each time step
    */
-  def apply(initial: Universe, transition: Universe => Universe, numParticles: Int): OneTimeParticleFilter = apply(new Universe(), initial, transition, numParticles)
+  @deprecated("If the static universe is defined, use the constructor where the transition function takes two universes", "2.3.0.0")
+  def apply(static: Universe, initial: Universe, transition: Universe => Universe, numParticles: Int): OneTimeParticleFilter =
+    new OneTimeParticleFilter(static, initial, (static: Universe, previous: Universe) => transition(previous), numParticles)
 
-  /** 
+  /**
+   * A one-time particle filter in which the static universe is empty.
+   *
+   * @param initial The universe describing the distribution over the initial state of the system
+   * @param transition The transition model describing how the current state of the system depends on the previous
+   * @param numParticles Number of particles to use at each time step
+   */
+  def apply(initial: Universe, transition: Universe => Universe, numParticles: Int): OneTimeParticleFilter =
+    apply(new Universe(), initial, (static: Universe, previous: Universe) => transition(previous), numParticles)
+
+  /**
    *  A representation of the current beliefs of the particle filter.
    *  A BeliefState should not be confused with a State, which is a particular configuration of the system.
    *  A BeliefState represents a distribution over States, and in a particle filter, it is implemented as a collection of representative States.
@@ -237,5 +248,5 @@ object ParticleFilter {
 
   /** Weighted particles, consisting of a weight and a state. */
   type WeightedParticle = (Double, State)
-  
+
 }

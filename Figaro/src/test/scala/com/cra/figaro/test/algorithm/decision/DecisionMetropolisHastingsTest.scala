@@ -29,6 +29,7 @@ import com.cra.figaro.library.decision._
 import com.cra.figaro.test._
 import com.cra.figaro.test.algorithm.decision.DecisionTestCases._
 import scala.collection.mutable.Map
+import com.cra.figaro.test.tags.NonDeterministic
 
 class DecisionMetropolisHastingsTest extends WordSpec with Matchers {
 
@@ -45,13 +46,13 @@ class DecisionMetropolisHastingsTest extends WordSpec with Matchers {
     }
 
     "Running Metropolis-Hastings with discrete decisons" should {
-      "throw ParentValueNotFoundException if decision not encountered" in {
+      "throw ParentValueNotFoundException if decision not encountered" taggedAs(NonDeterministic) in {
         val d = DecisionDiscrete((e1: List[Element[Double]], e2: Decision[Int, Boolean]) =>
           DecisionMetropolisHastings(5000, ProposalScheme.default, 5000, e1, e2))
         an [ParentValueNotFoundException] should be thrownBy { d._1.getPolicy(1) } 
       }
 
-      "produce the correct strategy with discrete strategies" in {
+      "produce the correct strategy with discrete strategies" taggedAs(NonDeterministic) in {
         val (d, alg) = DecisionDiscrete((e1: List[Element[Double]], e2: Decision[Int, Boolean]) =>
           DecisionMetropolisHastings(50000, ProposalScheme.default, 15000, e1, e2))
         val D1 = d.getPolicy(-2)
@@ -63,7 +64,7 @@ class DecisionMetropolisHastingsTest extends WordSpec with Matchers {
         alg.getUtility(0, false).norm should be(0.0 +- 0.1)
       }
 
-      "replace the old strategy" in {
+      "replace the old strategy" taggedAs(NonDeterministic) in {
         val (d, alg) = DecisionDiscrete((e1: List[Element[Double]], e2: Decision[Int, Boolean]) =>
           DecisionMetropolisHastings(50000, ProposalScheme.default, 5000, e1, e2))
         val v = Importance(5000, d)
@@ -72,7 +73,7 @@ class DecisionMetropolisHastingsTest extends WordSpec with Matchers {
         v.probability(d, false) should be(1 - .75 * .5 +- .02)
       }
 
-      "produce the correct strategy with discrete strategies and posted evidence" in {
+      "produce the correct strategy with discrete strategies and posted evidence" taggedAs(NonDeterministic) in {
         val (d, alg) = DecisionDiscreteEvidence((e1: List[Element[Double]], e2: Decision[Int, Boolean]) =>
           DecisionMetropolisHastings(50000, ProposalScheme.default, 15000, e1, e2))
         val D1 = d.getPolicy(-2)

@@ -24,6 +24,8 @@ import com.cra.figaro.library.compound._
 import com.cra.figaro.test._
 import scala.collection.mutable.Map
 import scala.language.existentials
+import com.cra.figaro.test.tags.Performance
+import com.cra.figaro.test.tags.NonDeterministic
 
 class MHTest extends WordSpec with Matchers with PrivateMethodTester {
   "Anytime MetropolisHastings" should {
@@ -257,7 +259,7 @@ class MHTest extends WordSpec with Matchers with PrivateMethodTester {
       }
     }
 
-    "with a condition on the result of an If in which both consequences are random, correctly condition the test" in {
+    "with a condition on the result of an If in which both consequences are random, correctly condition the test" taggedAs(NonDeterministic) in {
       val numSamples = 100000
       val tolerance = 0.01
       Universe.createNew()
@@ -295,7 +297,7 @@ class MHTest extends WordSpec with Matchers with PrivateMethodTester {
       }
     }
 
-    "not suffer from memory leaks" taggedAs (PerformanceTest) in {
+    "not suffer from memory leaks" taggedAs (Performance) in {
       Universe.createNew()
       val c = NonCachingChain(Uniform(0.2, 1.0), (d: Double) => Constant(d))
       val mh = MetropolisHastings(1000000, ProposalScheme.default, c)
@@ -305,7 +307,7 @@ class MHTest extends WordSpec with Matchers with PrivateMethodTester {
       println(((time2 - time1).toDouble / 1000000000))
     }
 
-    "not suffer from memory leaks with chain2" taggedAs (PerformanceTest) in {
+    "not suffer from memory leaks with chain2" taggedAs (Performance) in {
       Universe.createNew()
       val c = NonCachingChain(Uniform(0.2, 1.0), Uniform(0.1, 0.9), (d1: Double, d2: Double) => Constant(d1 + d2))
       val mh = MetropolisHastings(1000000, ProposalScheme.default, c)
@@ -370,7 +372,7 @@ class MHTest extends WordSpec with Matchers with PrivateMethodTester {
   }
 
   "Fixed bugs" should {
-    "propose temporary elements when non-temporary elements are non-stochastic" in {
+    "propose temporary elements when non-temporary elements are non-stochastic" taggedAs(NonDeterministic) in {
       Universe.createNew()
       val c1 = NonCachingChain(Constant(0), (i: Int) => Flip(0.7))
       val a1 = If(c1, Constant(1), Constant(0))

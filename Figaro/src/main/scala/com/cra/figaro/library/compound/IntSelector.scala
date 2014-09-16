@@ -52,7 +52,7 @@ class IntSelector(name: Name[Int], counter: Element[Int], collection: ElementCol
   def makeFactors: List[Factor[Double]] = {
     val thisVar = Variable(this)
     val counterVar = Variable(counter)
-    val comb = new Factor[Double](List(thisVar, counterVar))
+    val comb = Factory.make[Double](List(thisVar, counterVar))
     comb.fillByRule((l: List[Any]) => {
       val xvalue0 :: xvalue1 :: _ = l.asInstanceOf[List[Extended[Int]]]
       if (xvalue0.isRegular && xvalue1.isRegular) {

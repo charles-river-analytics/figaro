@@ -29,6 +29,7 @@ import com.cra.figaro.util._
 import com.cra.figaro.test._
 import com.cra.figaro.test.algorithm.decision.DecisionTestCases._
 import scala.collection.mutable.Map
+import com.cra.figaro.test.tags.NonDeterministic
 
 class DecisionImportanceTest extends WordSpec with Matchers {
 
@@ -52,7 +53,7 @@ class DecisionImportanceTest extends WordSpec with Matchers {
         an [ParentValueNotFoundException] should be thrownBy { d._1.getPolicy(1) } 
       }
 
-      "produce the correct strategy with discrete strategies" in {
+      "produce the correct strategy with discrete strategies" taggedAs(NonDeterministic) in {
         val (d, alg) = DecisionDiscrete((e1: List[Element[Double]], e2: Decision[Int, Boolean]) => DecisionImportance(20000, e1, e2))
         val D1 = d.getPolicy(-2)
         val D2 = d.getPolicy(0)

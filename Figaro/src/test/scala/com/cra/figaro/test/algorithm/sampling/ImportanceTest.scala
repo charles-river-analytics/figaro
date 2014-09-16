@@ -24,7 +24,9 @@ import com.cra.figaro.library.compound._
 import com.cra.figaro.test._
 import com.cra.figaro.util.logSum
 import JSci.maths.statistics._
-
+import com.cra.figaro.test.tags.Performance
+import com.cra.figaro.test.tags.NonDeterministic
+import scala.language.reflectiveCalls 
 
 class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
 
@@ -228,7 +230,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       weightedSampleTest(d, (b: Boolean) => b, 0.73)
     }
     
-    "with an observation on a compound flip, terminate quickly and produce the correct result" in {
+    "with an observation on a compound flip, terminate quickly and produce the correct result" taggedAs(NonDeterministic) in {
       // Tests the likelihood weighting implementation for compound flip
       Universe.createNew()
       val b = Uniform(0.0, 1.0)
@@ -284,11 +286,11 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       val time1 = System.currentTimeMillis()
       // If likelihood weighting is working, stopping and querying the algorithm should be almost instantaneous
       // If likelihood weighting is not working, stopping and querying the algorithm requires waiting for a non-rejected sample
-      (time1 - time0) should be <= (100L)
+      (time1 - time0) should be <= (500L)
       alg.shutdown
     }
  
-    "with an observation on a parameterized flip, terminate quickly and produce the correct result" in {
+    "with an observation on a parameterized flip, terminate quickly and produce the correct result" taggedAs(NonDeterministic) in {
       // Tests the likelihood weighting implementation for compound flip
       Universe.createNew()
       val b = BetaParameter(2.0, 5.0)
@@ -343,7 +345,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       val time1 = System.currentTimeMillis()
       // If likelihood weighting is working, stopping and querying the algorithm should be almost instantaneous
       // If likelihood weighting is not working, stopping and querying the algorithm requires waiting for a non-rejected sample
-      (time1 - time0) should be <= (100L)
+      (time1 - time0) should be <= (500L)
       alg.shutdown
     }
  
@@ -364,7 +366,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       val time1 = System.currentTimeMillis()
       // If likelihood weighting is working, stopping and querying the algorithm should be almost instantaneous
       // If likelihood weighting is not working, stopping and querying the algorithm requires waiting for a non-rejected sample
-      (time1 - time0) should be <= (100L)
+      (time1 - time0) should be <= (500L)
       alg.shutdown
     }
 
@@ -386,7 +388,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       val time1 = System.currentTimeMillis()
       // If likelihood weighting is working, stopping and querying the algorithm should be almost instantaneous
       // If likelihood weighting is not working, stopping and querying the algorithm requires waiting for a non-rejected sample
-      (time1 - time0) should be <= (100L)
+      (time1 - time0) should be <= (500L)
       alg.shutdown
     }
 
@@ -407,7 +409,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       val time1 = System.currentTimeMillis()
       // If likelihood weighting is working, stopping and querying the algorithm should be almost instantaneous
       // If likelihood weighting is not working, stopping and querying the algorithm requires waiting for a non-rejected sample
-      (time1 - time0) should be <= (100L)
+      (time1 - time0) should be <= (500L)
       alg.shutdown
     }
   }
@@ -441,7 +443,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       alg.kill
     }
 
-    "resample elements inside class defined in a chain for foward sampling" in {
+    "resample elements inside class defined in a chain for foward sampling" taggedAs(NonDeterministic) in {
       Universe.createNew()
       class temp {
         val t1 = Flip(0.9)
@@ -454,7 +456,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
 
     }
 
-   "not suffer from stack overflow with small probability of success" taggedAs (PerformanceTest) in {
+   "not suffer from stack overflow with small probability of success" taggedAs (Performance) in {
       Universe.createNew()
       val f = Flip(0.000001)
       f.observe(true)
@@ -462,12 +464,113 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       i.start
     }
 
-    "not suffer from memory leaks" taggedAs (PerformanceTest) in {
+    "not suffer from memory leaks" taggedAs (Performance) in {
       Universe.createNew()
       val c = NonCachingChain(Uniform(0.2, 1.0), (d: Double) => Flip(d))
       val i = Importance(1000000, c)
       i.start
     }
+  }
+
+  "Computing probability of evidence using importance sampling" when {
+
+    "given a vanilla model with one condition" should {
+      "return the probability the condition is satisfied" in {
+        val universe = Universe.createNew()
+        val f = Flip(0.7)("f", universe)
+        probEvidenceTest(0.7, List(NamedEvidence("f", Observation(true))))
+      }
+    }
+
+    "given a vanilla model with two independent conditions" should {
+      "return the probability both conditions are satisfied" in {
+        val universe = Universe.createNew()
+        val f1 = Flip(0.7)("f1", universe)
+        val f2 = Flip(0.4)("f2", universe)
+        probEvidenceTest(0.7 * 0.4, List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true))))
+      }
+    }
+
+    "given a vanilla mode with two dependent conditions" should {
+      "return the probability both conditions are jointly satisfied" in {
+        val universe = Universe.createNew()
+        val d = Select(0.2 -> 0.6, 0.8 -> 0.9)
+        val f1 = Flip(d)("f1", universe)
+        val f2 = Flip(d)("f2", universe)
+        probEvidenceTest(0.2 * 0.6 * 0.6 + 0.8 * 0.9 * 0.9, List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true))))
+      }
+    }
+
+    "given a vanilla model with two dependent conditions and a constraint" should {
+      "return the probability both conditions are satisfied, taking into account the constraint" in {
+        val universe = Universe.createNew()
+        val d = Select(0.5 -> 0.6, 0.5 -> 0.9)("d", universe)
+        d.setConstraint((d: Double) => if (d > 0.7) 0.8; else 0.2)
+        val f1 = Flip(d)("f1", universe)
+        val f2 = Flip(d)("f2", universe)
+        probEvidenceTest(0.2 * 0.6 * 0.6 + 0.8 * 0.9 * 0.9, List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true))))
+      }
+    }
+
+    "given a simple dist with a condition on the result" should {
+      "return the expectation over the clauses of the probability the result satisfies the condition" in {
+        val universe = Universe.createNew()
+        val d = Dist(0.3 -> Flip(0.6), 0.7 -> Flip(0.9))("d", universe)
+        probEvidenceTest(0.3 * 0.6 + 0.7 * 0.9, List(NamedEvidence("d", Observation(true))))
+      }
+    }
+
+    "given a complex dist with a condition on the result" should {
+      "return the expectation over the clauses of the probability the result satisfies the condition" in {
+        val universe = Universe.createNew()
+        val p1 = Select(0.2 -> 0.4, 0.8 -> 0.6)
+        val p2 = Constant(0.4)
+        val d = Dist(p1 -> Flip(0.6), p2 -> Flip(0.9))("d", universe)
+        probEvidenceTest(0.2 * (0.5 * 0.6 + 0.5 * 0.9) + 0.8 * (0.6 * 0.6 + 0.4 * 0.9), List(NamedEvidence("d", Observation(true))))
+      }
+    }
+
+    "given a continuous uniform with a condition" should {
+      "return the uniform probability of the condition" in {
+        val universe = Universe.createNew()
+        val u = Uniform(0.0, 1.0)("u", universe)
+        val condition = (d: Double) => d < 0.4
+        probEvidenceTest(0.4, List(NamedEvidence("u", Condition(condition))))
+      }
+    }
+
+    "given a caching chain with a condition on the result" should {
+      "return the expectation over the parent of the probability the result satisfies the condition" in {
+        val universe = Universe.createNew()
+        val p1 = Select(0.4 -> 0.3, 0.6 -> 0.9)
+        val c = CachingChain(p1, (d: Double) => if (d < 0.4) Flip(0.3); else Flip(0.8))("c", universe)
+        probEvidenceTest(0.4 * 0.3 + 0.6 * 0.8, List(NamedEvidence("c", Observation(true))))
+      }
+    }
+
+    "given a non-caching chain with a condition on the result" should {
+
+      "return the expectation over the parent of the probability the result satisfies the condition" in {
+        val universe = Universe.createNew()
+        val p1 = Uniform(0.0, 1.0)
+        val c = NonCachingChain(p1, (d: Double) => if (d < 0.4) Flip(0.3); else Flip(0.8))("c", universe)
+        probEvidenceTest(0.4 * 0.3 + 0.6 * 0.8, List(NamedEvidence("c", Observation(true))))
+      }
+    }
+
+    "given a chain of two arguments whose result is a different element with a condition on the result" should {
+      "return the correct probability of evidence in the result" in {
+        val universe = Universe.createNew()
+        val x = Constant(false)
+        val y = Constant(false)
+        val u1 = Uniform(0.0, 1.0)
+        val u2 = Uniform(0.0, 2.0)
+        val a = CachingChain(x, y, (x: Boolean, y: Boolean) => if (x || y) u1; else u2)("a", universe)
+        def condition(d: Double) = d < 0.5
+        probEvidenceTest(0.25, List(NamedEvidence("a", Condition(condition))))
+      }
+    }
+
   }
 
   def weightedSampleTest[T](target: Element[T], predicate: T => Boolean, prob: Double) {
@@ -506,5 +609,11 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
     imp.shutdown
   }
   
+  def probEvidenceTest(prob: Double, evidence: List[NamedEvidence[_]]) {
+    val alg = Importance(10000)
+    alg.start()
+    alg.probabilityOfEvidence(evidence) should be (prob +- 0.01)
+  }
+
   
 }

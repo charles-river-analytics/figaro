@@ -22,18 +22,19 @@ import com.cra.figaro.library.compound._
 import com.cra.figaro.library.atomic.discrete._
 import com.cra.figaro.language._
 import com.cra.figaro.test._
+import com.cra.figaro.test.tags.Example
 
 class CarAndEngineTest extends WordSpec with Matchers {
   "A simple CarAndEngineTest" should {
-    "produce the correct probability under variable elimination" taggedAs (ExampleTest) in {
+    "produce the correct probability under variable elimination" taggedAs (Example) in {
       test((e1: Element[Double]) => VariableElimination(e1))
     }
 
-    "produce the correct probability under importance sampling" taggedAs (ExampleTest) in {
+    "produce the correct probability under importance sampling" taggedAs (Example) in {
       test((e1: Element[Double]) => Importance(10000, e1))
     }
 
-    "produce the correct probability under Metropolis-Hastings" taggedAs (ExampleTest) in {
+    "produce the correct probability under Metropolis-Hastings" taggedAs (Example) in {
       test((e1: Element[Double]) =>
         MetropolisHastings(100000, ProposalScheme.default, e1))
     } 

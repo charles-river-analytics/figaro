@@ -36,18 +36,15 @@ class ValueSet[T](val xvalues: Set[Extended[T]]) {
   }
   
   /**
-   * Returns true if this value set does not contain any unspecified values.
+   * True if this value set does not contain any unspecified values.
    */
-  def hasStar: Boolean = {
-    xvalues.exists(!_.isRegular)
-  }
-
+  val hasStar = xvalues.exists(!_.isRegular)
+  
   /**
-   * Returns the regular values of this value set as plain values.
+   * The regular values of this value set as plain values.
    */
-  def regularValues: Set[T] = {
-    xvalues.filter(_.isRegular).map(_.value)
-  }
+  val regularValues = xvalues.filter(_.isRegular).map(_.value)
+
   /*
   /**
    * Returns the particular Star value in this value set. Throws an exception if there is no Star.

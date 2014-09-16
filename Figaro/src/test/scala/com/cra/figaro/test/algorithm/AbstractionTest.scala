@@ -21,6 +21,7 @@ import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.library.compound._
+import com.cra.figaro.test.tags.NonDeterministic
 
 class AbstractionTest extends WordSpec with Matchers {
   "A regular discretization" should {
@@ -74,7 +75,7 @@ class AbstractionTest extends WordSpec with Matchers {
 
   "Computing the values of an abstract element" when {
     "given an atomic element using a regular discretization scheme" should {
-      "produce an sequence of the correct size of uniformly distributed values" in {
+      "produce an sequence of the correct size of uniformly distributed values" taggedAs(NonDeterministic) in {
         Universe.createNew()
         val u = Uniform(0.0, 1.0)
         u.addPragma(Abstraction(100)(AbstractionScheme.RegularDiscretization))
@@ -130,7 +131,7 @@ class AbstractionTest extends WordSpec with Matchers {
         val uniform = Uniform(0.0, max)
         uniform.addPragma(Abstraction(numBins)(AbstractionScheme.RegularDiscretization))
         Values()(uniform)
-        val factors = ProbFactor.make(uniform)
+        val factors = Factory.make(uniform)
         factors.size should equal(1)
         val factor = factors(0)
         val variable = Variable(uniform)
@@ -154,7 +155,7 @@ class AbstractionTest extends WordSpec with Matchers {
         val apply = Apply(uniform, (d: Double) => d * d)
         apply.addPragma(Abstraction(numBinsApply)(AbstractionScheme.RegularDiscretization))
         Values()(apply)
-        val factors = ProbFactor.make(apply)
+        val factors = Factory.make(apply)
         factors.size should equal(1)
         val factor = factors(0)
         val uniformVariable = Variable(uniform)
@@ -192,7 +193,7 @@ class AbstractionTest extends WordSpec with Matchers {
         val apply = Apply(uniform1, uniform2, (d1: Double, d2: Double) => d1 * d2)
         apply.addPragma(Abstraction(numBinsApply)(AbstractionScheme.RegularDiscretization))
         Values()(apply)
-        val factors = ProbFactor.make(apply)
+        val factors = Factory.make(apply)
         factors.size should equal(1)
         val factor = factors(0)
         val uniform1Variable = Variable(uniform1)
@@ -236,7 +237,7 @@ class AbstractionTest extends WordSpec with Matchers {
         val apply = Apply(uniform1, uniform2, uniform3, (d1: Double, d2: Double, d3: Double) => d1 * d2 * d3)
         apply.addPragma(Abstraction(numBinsApply)(AbstractionScheme.RegularDiscretization))
         Values()(apply)
-        val factors = ProbFactor.make(apply)
+        val factors = Factory.make(apply)
         factors.size should equal(1)
         val factor = factors(0)
         val uniform1Variable = Variable(uniform1)
@@ -281,7 +282,7 @@ class AbstractionTest extends WordSpec with Matchers {
         val chain = Chain(flip, (b: Boolean) => if (b) uniform1; else uniform2)
         chain.addPragma(Abstraction(numBinsChain)(AbstractionScheme.RegularDiscretization))
         Values()(chain)
-        val factors = ProbFactor.make(chain)
+        val factors = Factory.make(chain)
         factors.size should equal(2) // 2 for the conditional selectors
         val List(factor1, factor2) = factors
         val flipVariable = Variable(flip)
@@ -325,7 +326,7 @@ class AbstractionTest extends WordSpec with Matchers {
   }
 
   "Running variable elimination on a model with multiple discretized elements" should {
-    "produce the correct answer" in {
+    "produce the correct answer" taggedAs(NonDeterministic) in {
       Universe.createNew()
       val flip = Flip(0.5)
       val uniform1 = Uniform(0.0, 1.0)

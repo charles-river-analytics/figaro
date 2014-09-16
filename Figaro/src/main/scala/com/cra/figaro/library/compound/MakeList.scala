@@ -95,16 +95,16 @@ class MakeList[T](
     // We need to create factors for the items and the lists themselves, which are encapsulated in this MakeList
     val regularParents = parentVar.range.filter(_.isRegular).map(_.value)
     val maxItem = regularParents.reduce(_ max _)
-    val itemFactors = List.tabulate(maxItem)((i: Int) => ProbFactor.make(items(i)))
+    val itemFactors = List.tabulate(maxItem)((i: Int) => Factory.make(items(i)))
     val indexedResultElemsAndFactors =
       for { i <- regularParents } yield {
         val elem = embeddedInject(i)
-        val factors = ProbFactor.make(elem)
+        val factors = Factory.make(elem)
         (Regular(i), elem, factors)
       }
     val conditionalFactors =
       parentVar.range.zipWithIndex map (pair =>
-        ProbFactor.makeConditionalSelector(this, parentVar, pair._2, Variable(indexedResultElemsAndFactors.find(_._1 == pair._1).get._2)))
+        Factory.makeConditionalSelector(this, parentVar, pair._2, Variable(indexedResultElemsAndFactors.find(_._1 == pair._1).get._2)))
     conditionalFactors ::: itemFactors.flatten ::: indexedResultElemsAndFactors.flatMap(_._3)
   }
 

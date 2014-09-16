@@ -17,6 +17,7 @@ import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.util._
 import com.cra.figaro.test._
+import com.cra.figaro.test.tags.Performance
 
 class UtilTest extends WordSpec with Matchers {
   "Util.round" when {
@@ -255,7 +256,7 @@ class UtilTest extends WordSpec with Matchers {
         r should equal(r.distinct)
       }
 
-      "take time roughly linear in the number of edges of the graph" taggedAs (PerformanceTest) in {
+      "take time roughly linear in the number of edges of the graph" taggedAs (Performance) in {
         val graph1 = Map(
           1 -> List(2, 3),
           2 -> List(4, 5), 3 -> List(4, 5),

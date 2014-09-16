@@ -28,6 +28,7 @@ import com.cra.figaro.util._
 import com.cra.figaro.util.random
 import scala.math.abs
 import java.io._
+import com.cra.figaro.test.tags.NonDeterministic
 
 class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matchers {
   "Expectation Maximization with importance sampling" when
@@ -224,7 +225,7 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
 
             }
 
-          "calculate sufficient statistics in the correct order for long lists of concentration parameters, taking into account a condition" in
+          "calculate sufficient statistics in the correct order for long lists of concentration parameters, taking into account a condition" taggedAs(NonDeterministic) in
             {
               val universe = Universe.createNew
               val alphas = Seq[Double](1.0476, 1.0476, 1.0476, 1.0476, 1.0476)
@@ -641,7 +642,7 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
         (new Model(learnedParameters, normalFlipConstructor), totalTime)
       }
 
-      "derive parameters within a reasonable accuracy for random data" in
+      "derive parameters within a reasonable accuracy for random data" taggedAs(NonDeterministic) in
         {
 
           val numEMIterations = 5

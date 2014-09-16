@@ -8,21 +8,21 @@ Figaro provides support for learning model parameters from data. In this section
 
 \section{Parameters and parameterized elements}
 
-This section discusses elements which are learnable parameters. For clarity, a distinction should be made on the meaning of the word \emph{parameter} in this context. This is different from a method parameter or Scala type parameter. In this section, we use \emph{parameter} to refer to a Figaro element which can be learned from data. There are currently two such types of parameters in Figaro - \texttt{BetaParameter} and \texttt{DirichletParameter}.
+This section discusses elements which are learnable parameters. For clarity, a distinction should be made on the meaning of the word \emph{parameter} in this context. This is different from a method parameter or Scala type parameter. In this section, we use \emph{parameter} to refer to a Figaro element which can be learned from data. There are currently two such types of parameters in Figaro - \texttt{Beta} and \texttt{Dirichlet}.
 
 A customary illustration of parameter learning is to consider the outcomes of a coin flip and determine whether or not the coin is fair. In the case of a \texttt{Flip} element (which is a Bernoulli distribution), the conjugate prior distribution is a Beta distribution. If the coin is not fair, we would expect a prior distribution to have a higher value of alpha or beta (the shape variables of a Beta). First, we will create the conjugate prior distribution of a \texttt{Flip}
 
 \begin{flushleft}
-\texttt{val fairness = BetaParameter(1,1)}
+\texttt{val fairness = Beta(1,1)}
 \end{flushleft}
 
-The element \texttt{fairness} is the parameter we will use to model the bias of our coin. The behavior of a \texttt{BetaParameter} is similar to a normal \texttt{Beta} element, with a few extra methods and properties. Most importantly, we later use it to create a model learned from parameterized elements. Creation of a parameterized element is accomplished in exactly the same way as creating a compound element.
+The element \texttt{fairness} is the parameter we will use to model the bias of our coin. The creation of the parameter is no different than  Most importantly, we later use it to create a model learned from parameterized elements. Creation of a parameterized element is accomplished in exactly the same way as creating a compound element.
 
 \begin{flushleft}
 \texttt{val f = Flip(fairness)}
 \end{flushleft}
 
-This element models a flip of a coin having the fairness specified by the beta parameter, using a value of \texttt{true} to represent heads and \texttt{false} to represent tails. We have actually created an instance of \texttt{ParameterizedFlip}, which is a special type of compound element. A  \texttt{ParameterizedFlip} is created simply by providing a \texttt{BetaParameter} as the argument to \texttt{Flip}.
+This element models a flip of a coin having the fairness specified by the beta parameter, using a value of \texttt{true} to represent heads and \texttt{false} to represent tails. We have actually created an instance of \texttt{ParameterizedFlip}, which is a special type of compound element. A  \texttt{ParameterizedFlip} is created simply by providing a \texttt{Beta} as the argument to \texttt{Flip}.
 
 By using a \texttt{ParameterizedFlip}, the evidence we observe on f can be used to learn the value of \texttt{fairness}. Thus, the next step is to provide the data observed from flips of the coin. Values can be observed just as with other elements, by using \texttt{f.observe(true)} or \texttt{f.observe(false)}. We could also use conditions or constraints.
 
@@ -37,26 +37,26 @@ The following block of Scala code will iterate through each of the items in the 
 
 \begin{flushleft}
 \texttt{data.foreach \{ d =>
-\newline val f = Flip(fairness)
-\newline \tab if (d == 'H') \{
-\newline \tab f.observe(true)
-\newline \} else if (d == 'T') \{ 
-\newline \tab f.observe(false)
-\newline \}
+\newline \tab val f = Flip(fairness)
+\newline \tab \tab if (d == 'H') \{
+\newline \tab \tab f.observe(true)
+\newline \tab \} else if (d == 'T') \{ 
+\newline \tab \tab f.observe(false)
+\newline \tab \}
 \newline \}
 }
 \end{flushleft}
 
-We have created a parameter, parameterized elements and considered a set of data. Note that each time a parameterize flip is created, it is using the same \texttt{BetaParameter}. It is now desirable to employ a learning mechanism to determine the fairness of the coin, and to create a new element corresponding to the learned value. This is possible by using a learning algorithm.
+We have created a parameter, parameterized elements and considered a set of data. Note that each time a parameterize flip is created, it is using the same \texttt{Beta}. It is now desirable to employ a learning mechanism to determine the fairness of the coin, and to create a new element corresponding to the learned value. This is possible by using a learning algorithm.
 
 \section{Expectation maximization}
 
-A learning algorithm can be used to determine the values of parameterized elements. At the end of the process, a parameter targeted by the learning algorithm can provide a new element according to the observed data. Presently, Figaro provides one learning algorithm, expectation maximization, based on variable elimination to compute sufficient statistics. Recall that expectation maximization is an iterative algorithm consisting of an expectation step and a maximization step. During the expectation step, an estimate is produced for the sufficient statistics of the parameter. The estimates are then used in the maximization step to find the most likely value of the parameter. This continues for a set number of iterations and converges toward the true parameter value.
+A learning algorithm can be used to determine the maximum a posteriori estimate for parameter elements. Parameter elements have a \texttt{MAPValue} which is set when the parameter is used as a target in a learning algorithm. Presently, Figaro provides one learning algorithm, expectation maximization, which uses existing Figaro algorithms to estimate sufficient statistics. Recall that expectation maximization is an iterative algorithm consisting of an expectation step and a maximization step. During the expectation step, an estimate is produced for the sufficient statistics of the parameter. The estimates are then used in the maximization step to find the most likely value of the parameter. This continues for a set number of iterations and converges toward the true MAP value.
 
-From a practical standpoint, learning a parameter with expectation maximization is very simple. We need only provide the target parameter and, optionally, the number of iterations to the algorithm. The default number of iterations is 10. This can be done in the following way:
+From a practical standpoint, learning a parameter with expectation maximization is very simple. We need only provide the target parameter and, optionally, the number of iterations to the algorithm. The default number of iterations is 10. We can also choose an inference algorithm for estimating the sufficient statistics of the target parameters. Currently, Metropolis Hastings, Importance Sampling, Variable Elimination or Belief Propagation can be used for this purpose. Figaro's Generalized EM algorithm is used in the following way:
 
 \begin{flushleft}
-\texttt{val learningAlgorithm = ExpectationMaximization(fairness)
+\texttt{val learningAlgorithm = EMwithMH(fairness)
 \newline learningAlgorithm.start
 \newline learningAlgorithm.kill
 \newline 
@@ -67,7 +67,10 @@ From a practical standpoint, learning a parameter with expectation maximization 
 }
 \end{flushleft}
 
-After the algorithm has finished running, we can retrieve an element learned from the parameter by using \texttt{Flip(fairness.MAPValue)}. The element \texttt{coin} is a \texttt{Flip}, where the probability of producing true is determined from the data we observed above. It is important to make a distinction between parameterized elements and learned elements. Parameterized elements are compound elements and serve as our means of supplying data about a parameter. A learned element is an atomic element with arguments learned from the data we have observed.
+The line \texttt{val learningAlgorithm = EMwithMH(fairness)} creates an EM algorithm which uses Metropolis Hastings to estimate sufficient statistics. We could also have used \texttt{EMwithBP(fairness)} or 
+\texttt{EMwithImportance(fairness)}. 
+
+After the algorithm has finished running, we can create an element learned from the parameter by using \texttt{Flip(fairness.MAPValue)}. The element \texttt{coin} is a \texttt{Flip}, where the probability of producing true is determined from the data we observed above.
 
 After running the program, we see:
 
@@ -84,7 +87,7 @@ We may want to make further explorations about the learned model. For instance, 
 \newline val equal = t1 === t2}
 \end{flushleft}
 
-We can then use variable elimination to determine the probability that the coins show the same side:
+We can then use an algorithm like variable elimination to determine the probability that the coins show the same side:
 
 \begin{flushleft}
 \texttt{val alg = VariableElimination(equal)
@@ -116,9 +119,9 @@ The first step is to define the possible outcomes from a dice roll. This is easi
 Next, we create a parameter representing the fairness of each die:
 
 \begin{flushleft}
-\texttt{val fairness1 = DirichletParameter(1,1,1,1,1,1) 
-\newline val fairness2 = DirichletParameter(1,1,1,1,1,1) 
-\newline val fairness3 = DirichletParameter(1,1,1,1,1,1) 
+\texttt{val fairness1 = Dirichlet(1,1,1,1,1,1) 
+\newline val fairness2 = Dirichlet(1,1,1,1,1,1) 
+\newline val fairness3 = Dirichlet(1,1,1,1,1,1) 
 \newline val parameters = Seq(fairness1, fairness2, fairness3)
 }
 \end{flushleft}
@@ -163,7 +166,7 @@ Just as in the fair coin example, we create an expectation maximization algorith
 
 \begin{flushleft}
 \texttt{val numberOfIterations = 100
-\newline val algorithm = ExpectationMaximization(numberOfIterations, parameters: \_*)
+\newline val algorithm = EMWithMH(numberOfIterations, parameters: \_*)
 \newline algorithm.start
 \newline 
 \newline val die1 = Select(fairness1.MAPValue.view(0,fairness1.MAPValue.size).toList, outcomes)  
@@ -172,7 +175,7 @@ Just as in the fair coin example, we create an expectation maximization algorith
 }
 \end{flushleft}
 
-The code block above will retrieve learned elements from the parameters. Note that for a Select, a list of outcomes must be supplied as an argument to along with their corresponding probabilities, which is the array returned by \texttt{MAPValue}. This is because the number of concentration parameters is may vary, and the type of the outcomes is not fixed. Running this code results in the following output, in which we see the model has estimated the probabilities of each value for each die. If one examines the full data declaration in the example code, it is quite easy to see that there are only three observed values of the sum of the die (3, 7 and 8), so the learning algorithm has correctly inferred that the most likely values of the die are 1, 2 and 6, respectively.
+The code block above will create \texttt{Select} elements according to the MAP value of the learned parameters.. Note that for a Select, a list of outcomes must be supplied as an argument to along with their corresponding probabilities, which is the array returned by \texttt{MAPValue}. This is because the number of concentration parameters is may vary, and the type of the outcomes is not fixed. Running this code results in the following output, in which we see the model has estimated the probabilities of each value for each die. If one examines the full data declaration in the example code, it is quite easy to see that there are only three observed values of the sum of the die (3, 7 and 8), so the learning algorithm has correctly inferred that the most likely values of the die are 1, 2 and 6, respectively.
 
 \begin{flushleft}
 \texttt{The probabilities of seeing each side of d\_1 are:

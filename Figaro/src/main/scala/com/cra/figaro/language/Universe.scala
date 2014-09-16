@@ -159,7 +159,7 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
   }
 
   private[figaro] def deregisterUses[T, U](user: Element[T], used: Element[U]): Unit = {
-    if (used.universe == this) {
+    if(used.universe == this){
       if (myUses.contains(user)) myUses(user) -= used
       if (myUsedBy.contains(used)) myUsedBy(used) -= user
       myRecursiveUsedBy.clear
@@ -265,6 +265,9 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
    * This avoids memory management problems.
    */
   def register(collection: Shrinkable[Element[_]]): Unit = registeredMaps += collection
+  
+  /** Deregister a map of elements. */
+  def deregister(collection: Shrinkable[Element[_]]): Unit = registeredMaps -= collection
 
   // Immediately register the constrained and conditioned elements
   register(myConditionedElements)
@@ -276,6 +279,9 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
    */
   def registerUniverse(map: Map[Universe, _]): Unit = registeredUniverseMaps += map
 
+  /** Deregister a map that uses this universe as a key. */
+  def deregisterUniverse(map: Map[Universe, _]): Unit = registeredUniverseMaps -= map
+  
   /**
    * Register algorithms that use this universe.
    * When the Universe is cleared, all previous algorithms are no longer valid,
