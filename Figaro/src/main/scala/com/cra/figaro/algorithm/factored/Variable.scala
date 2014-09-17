@@ -57,13 +57,6 @@ class ElementVariable[T](val element: Element[T]) extends Variable(LazyValues(el
  * @param range The range of values of the variable
  */
 class ParameterizedVariable[T](override val element: Parameterized[T]) extends ElementVariable(element) {
-  /**
-   * Get the sufficient statistics for the parameter of this variable.
-   */
-  def sufficientStatistics(t: T) = {
-    element.parameter.sufficientStatistics(t)
-  }
-
   override def toString = "Parameterized variable:" + element.toString
 }
 
