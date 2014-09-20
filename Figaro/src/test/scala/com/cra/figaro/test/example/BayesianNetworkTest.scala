@@ -16,59 +16,73 @@ package com.cra.figaro.test.example
 import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm.factored._
+import beliefpropagation.BeliefPropagation
 import com.cra.figaro.library.compound._
 import com.cra.figaro.language._
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.test._
+import com.cra.figaro.test.tags.Example
+import com.cra.figaro.test.tags.NonDeterministic
 
 class BayesianNetworkTest extends WordSpec with Matchers {
   "A simple Bayesian network" should {
-    "produce the correct probability under variable elimination" taggedAs (ExampleTest) in {
-      test((e1: Element[Boolean], e2: Element[Boolean]) => VariableElimination(e1, e2))
+    "produce the correct probability under variable elimination" taggedAs (Example, NonDeterministic) in {
+      val model = new Model
+      VariableElimination.probability(model.burglary, true) should be (model.pBurglary +- 0.01)
     }
 
-    "produce the correct probability under importance sampling" taggedAs (ExampleTest) in {
-      test((e1: Element[Boolean], e2: Element[Boolean]) => Importance(20000, e1, e2))
+    "produce the correct probability under belief propagation" taggedAs (Example, NonDeterministic) in {
+      val model = new Model
+      BeliefPropagation.probability(model.burglary, true) should be (model.pBurglary +- 0.01)
+    }
+
+    "produce the correct probability under importance sampling" taggedAs (Example, NonDeterministic) in {
+      val model = new Model
+      Importance.probability(model.burglary, true) should be (model.pBurglary +- 0.01)
     }
     
-    "produce the correct probability under Metropolis-Hastings without burn-in or interval" taggedAs (ExampleTest) in {
-      test((e1: Element[Boolean], e2: Element[Boolean]) =>
-        MetropolisHastings(80000, ProposalScheme.default, e1, e2))
+    "produce the correct probability under Metropolis-Hastings without burn-in or interval" taggedAs (Example, NonDeterministic) in {
+      val model = new Model
+      MetropolisHastings.probability(model.burglary, true, 2000000) should be (model.pBurglary +- 0.01)
     }
     
-    "produce the correct probability under Metropolis-Hastings with burn-in and interval" taggedAs (ExampleTest) in {
-      test((e1: Element[Boolean], e2: Element[Boolean]) =>
-        MetropolisHastings(80000, ProposalScheme.default, 800, 10, e1, e2))
+    "produce the correct probability under Metropolis-Hastings with burn-in and interval" taggedAs (Example, NonDeterministic) in {
+      val model = new Model
+      val alg = MetropolisHastings(200000, ProposalScheme.default, 800, 10, model.burglary)
+      alg.start()
+      alg.probability(model.burglary, true) should be (model.pBurglary +- 0.01)
     }
   }
 
-  def test(algorithmCreator: (Element[Boolean], Element[Boolean]) => ProbQueryAlgorithm): Unit = {
+  class Model {
     Universe.createNew()
-    val burglary = Flip(0.01)
-    val earthquake = Flip(0.0001)
+    val burglaryProb = 0.1
+    val earthquakeProb = 0.001
+    val alarmGivenNotBNotEProb = 0.003
+    val alarmGivenNotBEProb = 0.1
+    val alarmGivenBNotEProb = 0.9
+    val alarmGivenBEProb = 0.99
+    val johnGivenNotAProb = 0.01
+    val johnGivenAProb = 0.7
+    val burglary = Flip(burglaryProb)
+    val earthquake = Flip(earthquakeProb)
     val alarm = CPD(burglary, earthquake,
-      (false, false) -> Flip(0.001),
-      (false, true) -> Flip(0.1),
-      (true, false) -> Flip(0.9),
-      (true, true) -> Flip(0.99))
+      (false, false) -> Flip(alarmGivenNotBNotEProb),
+      (false, true) -> Flip(alarmGivenNotBEProb),
+      (true, false) -> Flip(alarmGivenBNotEProb),
+      (true, true) -> Flip(alarmGivenBEProb))
     val johnCalls = CPD(alarm,
-      false -> Flip(0.01),
-      true -> Flip(0.7))
+      false -> Flip(johnGivenNotAProb),
+      true -> Flip(johnGivenAProb))
     johnCalls.observe(true)
 
-    val pAlarmGivenBurglary = 0.0001 * 0.99 + 0.9999 * 0.9
-    val pAlarmGivenNotBurglary = 0.0001 * 0.1 + 0.9999 * 0.001
-    val pJohnGivenBurglary = pAlarmGivenBurglary * 0.7 + (1 - pAlarmGivenBurglary) * 0.01
-    val pJohnGivenNotBurglary = pAlarmGivenNotBurglary * 0.7 + (1 - pAlarmGivenNotBurglary) * 0.01
-    val qBurglary = 0.01 * pJohnGivenBurglary
-    val qNotBurglary = 0.99 * pJohnGivenNotBurglary
+    val pAlarmGivenBurglary = earthquakeProb * alarmGivenBEProb + (1 - earthquakeProb) * alarmGivenBNotEProb
+    val pAlarmGivenNotBurglary = earthquakeProb * alarmGivenNotBEProb + (1 - earthquakeProb) * alarmGivenNotBNotEProb
+    val pJohnGivenBurglary = pAlarmGivenBurglary * johnGivenAProb + (1 - pAlarmGivenBurglary) * johnGivenNotAProb
+    val pJohnGivenNotBurglary = pAlarmGivenNotBurglary * johnGivenAProb + (1 - pAlarmGivenNotBurglary) * johnGivenNotAProb
+    val qBurglary = burglaryProb * pJohnGivenBurglary
+    val qNotBurglary = (1 - burglaryProb) * pJohnGivenNotBurglary
     val pBurglary = qBurglary / (qBurglary + qNotBurglary)
-
-    val alg = algorithmCreator(burglary, earthquake)
-    alg.start()
-    alg.stop()
-    alg.probability(burglary, true) should be(pBurglary +- 0.01)
-    alg.kill()
   }
 }

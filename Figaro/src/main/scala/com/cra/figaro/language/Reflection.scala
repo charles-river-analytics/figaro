@@ -40,7 +40,7 @@ object Create {
     if (!obj.isInstanceOf[Creatable]) throw new IllegalArgumentException("Attempt to use non-reflectable external distribution")
     val objType = ru.typeOf[Creatable]
     val objMirror = rootMirror.reflect(obj)
-    val methodSymbol = objType.declaration(ru.newTermName("create")).asMethod
+    val methodSymbol = objType.decl(ru.TermName("create")).asMethod
     val methodMirror = objMirror.reflectMethod(methodSymbol)
     try {
       methodMirror(inputs.toList).asInstanceOf[Element[T]]

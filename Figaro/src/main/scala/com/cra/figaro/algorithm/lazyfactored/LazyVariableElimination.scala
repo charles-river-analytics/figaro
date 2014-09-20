@@ -49,15 +49,15 @@ with LazyAlgorithm {
     val (includedElements, needsBounds) = getNeededElements(targetElements.toList, depth)
     val targetVariables = targetElements.map(Variable(_))
     if (needsBounds) {
-      ProbFactor.removeFactors()
+      Factory.removeFactors()
       val lowerFactors = getFactors(includedElements, targetElements.toList, false)
-      ProbFactor.removeFactors()
+      Factory.removeFactors()
       val upperFactors = getFactors(includedElements, targetElements.toList, true)
       val lowerFactorsAfterElimination = doElimination(lowerFactors, targetVariables)
       val upperFactorsAfterElimination = doElimination(upperFactors, targetVariables)
       currentResult = finishWithBounds(lowerFactorsAfterElimination, upperFactorsAfterElimination)
     } else {
-      ProbFactor.removeFactors()
+      Factory.removeFactors()
       val allFactors = getFactors(includedElements, targetElements.toList)
       val factorsAfterElimination = doElimination(allFactors, targetVariables)
       currentResult = finishNoBounds(factorsAfterElimination)
@@ -142,7 +142,7 @@ with LazyAlgorithm {
     /*
      * First, we compute the sum of unnormalized lower and upper bounds.
      */
-    val result = new Factor[(Double, Double)](lowerFactor.variables)
+    val result = Factory.make[(Double, Double)](lowerFactor.variables)
     var lowerTotal = 0.0
     var upperTotal = 0.0
     var starTotal = 0.0
@@ -311,12 +311,12 @@ with LazyAlgorithm {
   def eliminationOrder(allVars: Set[Variable[_]], factors: Traversable[Factor[Double]], toPreserve: Traversable[Variable[_]]): List[Variable[_]] = {
     val eliminableVars =  allVars -- toPreserve
     var initialGraph = new VEGraph(factors)
-    val candidates = new HeapPriorityMap[Variable[_], Long]
+    val candidates = new HeapPriorityMap[Variable[_], Double]
     eliminableVars foreach (v => candidates += v.asInstanceOf[Variable[_]] -> initialGraph.score(v))
     eliminationOrderHelper(candidates, toPreserve, initialGraph, List())
   }
 
-  @tailrec private def eliminationOrderHelper(candidates: PriorityMap[Variable[_], Long],
+  @tailrec private def eliminationOrderHelper(candidates: PriorityMap[Variable[_], Double],
     toPreserve: Traversable[Variable[_]],
     graph: VEGraph,
     accum: List[Variable[_]]): List[Variable[_]] = {

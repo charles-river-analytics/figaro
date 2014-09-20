@@ -13,6 +13,7 @@
 
 package com.cra.figaro.example
 
+import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.algorithm.learning._
 import com.cra.figaro.language._
@@ -41,7 +42,7 @@ object CoinExample {
 
   def Toss(fairness: AtomicBeta): AtomicFlip =
     {
-      val f = fairness.getLearnedElement
+      val f = Flip(fairness.MAPValue)
       f
     }
 
@@ -58,18 +59,21 @@ object CoinExample {
         }
     }
 
-    val learningAlgorithm = ExpectationMaximization(fairness)
+	val numberOfEMIterations = 10
+	val numberOfBPIterations = 10
+    val learningAlgorithm = EMWithBP(10, 10, fairness)
     learningAlgorithm.start
+	learningAlgorithm.stop
     learningAlgorithm.kill
     /*
      * This will create a flip having a probability of 'true' learned from the input data. 
      */
-    val coin = fairness.getLearnedElement
+    val coin = Flip(fairness.MAPValue)
     println("The probability of a coin with this fairness showing 'heads' is: ")
     println(coin.prob)
 
-    val t1 = fairness.getLearnedElement
-    val t2 = fairness.getLearnedElement
+    val t1 = Flip(fairness.MAPValue)
+    val t2 = Flip(fairness.MAPValue)
     
     val equal = t1 === t2
 

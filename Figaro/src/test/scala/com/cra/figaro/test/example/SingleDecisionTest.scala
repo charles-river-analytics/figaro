@@ -23,18 +23,19 @@ import com.cra.figaro.language._
 import com.cra.figaro.library.compound._
 import com.cra.figaro.library.decision._
 import com.cra.figaro.test._
+import com.cra.figaro.test.tags.Example
 
 class SingleDecisionTest extends WordSpec with Matchers {
   "A single decision network" should {
-    "produce the correct decisions under variable elimination" taggedAs (ExampleTest) in {
+    "produce the correct decisions under variable elimination" taggedAs (Example) in {
       test((e1: List[Element[Double]], e2: Decision[Int, Boolean]) => DecisionVariableElimination(e1, e2))
     }
 
-    "produce the correct decisions under importance sampling" taggedAs (ExampleTest) in {
+    "produce the correct decisions under importance sampling" taggedAs (Example) in {
       test((e1: List[Element[Double]], e2: Decision[Int, Boolean]) => DecisionImportance(10000, e1, e2))
     }
 
-    "produce the correct decisions under Metropolis-Hastings" taggedAs (ExampleTest) in {
+    "produce the correct decisions under Metropolis-Hastings" taggedAs (Example) in {
       test((e1: List[Element[Double]], e2: Decision[Int, Boolean]) =>
         DecisionMetropolisHastings(50000, ProposalScheme.default, 5000, e1, e2))
     }

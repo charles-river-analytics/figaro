@@ -222,9 +222,9 @@ At the end, \texttt{makeFactors} returns a list consisting of this single factor
 
 \section{Making parameters and parameterized elements}
 
-Support for learning models from data is accomplished through parameters and parameterized elements. Defining new elements of these types requires the use of a couple of traits $-$ \texttt{Parameter} and \texttt{Parameter\-ized} $-$ and a method to produce factors. Much of the required code is centered on the idea of sufficient statistics, as they are currently the means by which parameters are learned.
+Support for learning models from data is accomplished through parameters and parameterized elements. Defining new elements of these types requires the use of a couple of traits $-$ \texttt{Parameter} and \texttt{Parameter\-ized} $-$ and a method to produce factors. Much of the required code is centered on the idea of sufficient statistics, as they are currently the means by which parameters are learned. 
 
-A parameter must extend the \texttt{Parameter} trait. This trait contains several important methods which allow use with the learning algorithms. First, the method \texttt{zeroSufficientStatistics} must provide an appropriate result for this parameter type. For example, a Beta parameter has two hyperparameters, alpha and beta. Hence, \texttt{zeroSuffic\-ientStatistics} returns a sequence of length two.
+A parameter must extend the \texttt{Parameter} trait. This trait contains several important methods which allow use with the learning algorithms. First, the method \texttt{zeroSufficientStatistics} must provide an appropriate result for this parameter type. For example, a Beta parameter has two hyperparameters, alpha and beta. Hence, \texttt{zeroSufficientStatistics} returns a sequence of length two.
 
 \begin{flushleft}
 \texttt{override def zeroSufficientStatistics (): Seq[Double] = \{ 
@@ -238,24 +238,25 @@ An additional method,  \texttt{sufficientStatistics}, provides sufficient statis
 We can create a parameterized version of an existing element by extending that type of element and including the \texttt{Parameter} trait. In the case of \texttt{Beta}, we have
 
 \begin{flushleft}
-\texttt{class AtomicBetaParameter(name: Name[Double], a: Double, b: Double, collection: ElementCollection) extends AtomicBeta(name, a, b, collection) with
+\texttt{class AtomicBeta(name: Name[Double], a: Double, b: Double, collection: ElementCollection) extends AtomicBeta(name, a, b, collection) with
 Parameter[Double] with ValuesMaker[Double] \{ ... \}
 }
 \end{flushleft}
 
-Next, we must decide which values are actually learned within the parameter. In the case of Beta, the alpha and beta hyperparameters are already inputs to the \texttt{AtomicBeta} element. We will use these to represent prior knowledge or belief about the parameter. This is a good practice when extending existing elements into parameters. To facilitate parameter learning, we can create Scala variables which are modified by learning algorithms. Again, in the case of Beta, we can define
+Next, we must decide which values are actually learned within the parameter. In the case of Beta, the alpha and beta hyperparameters are already inputs to the \texttt{AtomicBeta} element. We will use these to represent prior knowledge or belief about the parameter. To facilitate parameter learning, we can create Scala variables which are modified by learning algorithms. Again, in the case of Beta, we can define
 
 \begin{flushleft}
-\texttt{var alpha = a 
-\newline var beta = b
+\texttt{var learnedAlpha = a 
+\newline var learnedBeta = b
 }
 \end{flushleft}
 
-The expected value for a beta distribution is well known and easily defined:
+The MAP value for a beta distribution is well known and easily defined:
 
 \begin{flushleft}
-\texttt{def expectedValue: Double = \{
-\newline \tab (alpha) / (alpha + beta)
+\texttt{def MAPValue: Double = \{
+\newline \tab if (learnedAlpha + learnedBeta == 2) 0.5 (alpha) / (alpha + beta)
+\newline \tab else (learnedAlpha - 1) / ( learnedAlpha  + learnedBeta - 2)
 \newline \}
 }
 \end{flushleft}
@@ -271,25 +272,16 @@ It is also necessary to define how the parameter value is maximized according to
 }
 \end{flushleft}
 
-Of critical importance is the \texttt{getLearnedElement} method. This method provides an atomic element which is the result of parameter learning. In most cases, the learned element can simply use the expected value of the parameter as its argument.  Note that when creating the learned element, we must be sure to supply arguments for the element name and collection.
+Having created a parameter, we may now create an element which uses it. Compound elements which use \texttt{Parameter}s as their arguments are defined by the \texttt{Parameterized} trait. This trait is quite simple and contains only a reference to the element's parameter. Continuing the example, we can create a version of \texttt{Flip} which uses \texttt{Beta} in the following way:
 
 \begin{flushleft}
-\texttt{def getLearnedElement: AtomicFlip = \{
-\newline \tab new AtomicFlip("", expectedValue, collection)
-\newline \}
-}
-\end{flushleft}
-
-Having created a parameter, we may now create an element which uses it. Compound elements which use \texttt{Parameter} as their arguments are defined by the \texttt{Parameterized} trait. This trait is quite simple and contains only a reference to the element's parameter. Continuing the example, we can create a version of \texttt{Flip} which uses \texttt{BetaParameter} in the following way:
-
-\begin{flushleft}
-\texttt{class ParameterizedFlip(name: Name[Boolean], override val parameter: AtomicBetaParameter, collection: ElementCollection)
+\texttt{class Flip(name: Name[Boolean], override val parameter: AtomicBeta, collection: ElementCollection)
 \newline extends Element[Boolean](name, collection) with Flip 
 \newline with Parameterized[Boolean]
 }
 \end{flushleft}
 
-This class inherits most of its behavior from \texttt{Flip}. Much like a compound flip, the probability of producing true is derived from the \texttt{BetaParameter}:
+This class inherits most of its behavior from \texttt{Flip}. Much like a compound flip, the probability of producing true is derived from the \texttt{Beta}:
 
 \begin{flushleft}
 \texttt{def probValue = parameter.value}
@@ -298,51 +290,30 @@ This class inherits most of its behavior from \texttt{Flip}. Much like a compoun
 If an existing element is being extended, it is advisable to define a factory method in the companion object which accepts a \texttt{Parameter} element as input, and creates an instance of the parameterized element. To illustrate, consider the apply method for \texttt{ParameterizedFlip}:
 
 \begin{flushleft}
-\texttt{def apply(prob: AtomicBetaParameter)(implicit name: Name[Boolean], collection: ElementCollection) =
+\texttt{def apply(prob: AtomicBeta)(implicit name: Name[Boolean], collection: ElementCollection) =
 \newline \tab new ParameterizedFlip(name, prob, collection)
 }
 \end{flushleft}
 
-By defining this method, we are able create a parameterized flip simply by supplying a beta parameter as an argument to \texttt{Flip}.
-
-To use a parameterized element with expectation maximization, the last step is to provide a method for making factors in \texttt{SufficientStat\-isticsFactor.scala}. This class creates factors intended to be used with learning algorithms. Each factor entry consists of a probability and a map from parameters to sufficient statistics. The map from parameters to sufficient statistics is created by the learning algorithm which uses the factors. This class is discussed in further detail in the Factors and Factored Algorithms section.
+To learn the MAP value of the parameter, Figaro provides an implementation of the expectation maximization algorithm. During the expectation step, the algorithm retrieves the distribution of the element according to the current value of the parameter, then converts the distribution to sufficient statistics. This conversion needs to be defined inside the parameter, using the method \texttt{distributionToStatistics}. It accepts as an argument a Scala stream consisting of pairs of double values (probabilities) and possible outcomes of the element. The implementation for a \texttt{Flip} is shown below. 
 
 \begin{flushleft}
-\texttt{private def makeFactors(flip: ParameterizedFlip): List[Factor[(Double, Map[Parameter[\_], Seq[Double]])]] = \{
-\newline 
-\newline val flipVar = Variable(flip)
-\newline val factor = new Factor[(Double, Map[Parameter[\_], Seq[Double]])](List(flipVar))
-\newline val prob = flip.parameter.expectedValue 
-\newline val i = flipVar.range.indexOf(true)
-\newline 
-\newline val falseMapping = mutable.Map(parameterMap.toSeq: \_*)
-\newline val trueMapping = mutable.Map(parameterMap.toSeq: \_*)
-\newline 
-\newline trueMapping.remove(flip.parameter) falseMapping.remove(flip.parameter) \newline trueMapping.put(flip.parameter, Seq(1.0, 0.0)) \newline falseMapping.put(flip.parameter, Seq(0.0, 1.0)) factor.set(List(i), (prob, trueMapping)) 
-\newline factor.set(List(1 $-$ i), (1.0 $-$ prob, falseMapping))
-\newline List(factor)
+\texttt{def distributionToStatistics(distribution: Stream[(Double, Boolean)]): Seq[Double] = \{
+\newline \tab val distList = distribution.toList
+\newline \tab val trueProb = 
+\newline \tab \tab distList.find(\textunderscore.\textunderscore2) match \{
+\newline \tab \tab \tab case Some((prob,\textunderscore) => prob
+\newline \tab \tab \tab case None => 0.0
+\newline \tab \tab \}
+\newline \tab val falseProb = 
+\newline \tab \tab distList.find(!\textunderscore.\textunderscore2) match \{
+\newline \tab \tab \tab case Some((prob,\textunderscore)) => prob
+\newline \tab \tab \tab case None => 0.0
+\newline \tab \tab \} 
+\newline \tab List(trueProb, falseProb)
 \newline \}
 }
 \end{flushleft}
-
-First, note that for the value of \texttt{prob}, we use the expected value of the parameter. For a regular compound \texttt{Flip}, this would be the weight specified by the value of another element. However, since the hyperparameters of the parameter can change as a learning algorithm is executed, it is important to use expected value.
-
-When creating factors for parameterized elements, care should be taken to ensure that the correct sufficient statistics correspond with the possible outcomes of the element. In the code block above, an entry created for both possible outcomes of the \texttt{Flip}. Each entry contains sufficient statistics with 1.0 in the position corresponding to the outcomes of true and false, respectively. Note that we also could have used the \texttt{sufficientStatistics} method in the Parameter trait to retrieve sequences corresponding to these outcomes.
-
-The map structure is necessary because there may be multiple parameters being learned at a time, and sufficient statistics should only be counted for the parameter used by the element this factor is being created for. This map, called \texttt{parameterMap}, is created automatically by the learning algorithm based on its target parameters and provided as an input to instances of \texttt{SufficientStatisticsFactor}.
-
-Consider the following line of code:
-
-\begin{flushleft}
-\texttt{val falseMapping = mutable.Map(parameterMap.toSeq: \_*)}
-\end{flushleft}
-
-This line created an empty Scala map of parameters to sequences of double values, and adds the contents of the parameter map. The result is that a mapping is created in which sufficient statistics for all parameters are zero. Then, in the subsequent lines, the entry in the map associated with this parameter is replaced with a value corresponding to a specific outcome of the parameterized element.
-
-By creating factors with sufficient statistics, we can use implementations of algorithms like variable elimination to assist in learning parameter values. For instance, each iteration of expectation maximization uses variable elimination to produce an estimate of the sufficient statistics.
-
-As a final note, if one is interested in creating learning algorithms that do not rely on sufficient statistics, the same traits for parameters and parameterized elements should be still used. Simply create an algorithm which learns the values of the hyperparameters and sets their values, then retrieves the resulting model by using \texttt{getLearnedElement}.
-
 
 \section{Creating a class with special Metropolis-Hastings behavior}
 

@@ -63,9 +63,9 @@ object DiceExample {
     /*
      * Each coin is initially assumed to be fair
      */
-    val fairness1 = DirichletParameter(1,1,1,1,1,1)
-    val fairness2 = DirichletParameter(1,1,1,1,1,1)
-    val fairness3 = DirichletParameter(1,1,1,1,1,1)
+    val fairness1 = DirichletParameter(2.0,2.0,2.0,2.0,2.0,2.0)
+    val fairness2 = DirichletParameter(2.0,2.0,2.0,2.0,2.0,2.0)
+    val fairness3 = DirichletParameter(2.0,2.0,2.0,2.0,2.0,2.0)
     val parameters = Seq(fairness1, fairness2, fairness3)
  
     data.foreach {
@@ -80,13 +80,14 @@ object DiceExample {
 
     }
 
-    val numberOfIterations = 100
-    val algorithm = ExpectationMaximization(numberOfIterations, parameters: _*)
+    val numberOfEMIterations = 10
+	val numberOfBPIterations = 10
+	val algorithm = EMWithBP(numberOfEMIterations, numberOfBPIterations, parameters: _*)
     algorithm.start
-
-    val die1 = fairness1.getLearnedElement(outcomes)
-    val die2 = fairness2.getLearnedElement(outcomes)
-    val die3 = fairness3.getLearnedElement(outcomes)
+	algorithm.stop
+    val die1 = Select(fairness1.MAPValue.view(0,fairness1.MAPValue.size).toList, outcomes) 
+    val die2 = Select(fairness2.MAPValue.view(0,fairness2.MAPValue.size).toList, outcomes)
+    val die3 = Select(fairness3.MAPValue.view(0,fairness3.MAPValue.size).toList, outcomes)
 
     println("The probabilities of seeing each side of d_1 are: ")
     val probsAndSides1 = die1.probs zip die1.outcomes

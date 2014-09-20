@@ -134,7 +134,7 @@ is the Figaro element representing the probabilistic model in which first either
 
 Often, one needs to apply a function to a whole sequence of arguments. \texttt{Inject} is provided for this. \texttt{Inject} takes a sequence of elements with value type \texttt{T} and produces an element whose value type is sequences of values of type \texttt{T}. In Scala notation, \texttt{Inject} takes a variable number of arguments of type \texttt{Element[T]} and produces an \texttt{Element[Seq[T]]}. The name "inject" refers to the fact that the sequence of arguments is injected inside the element.
 
-In Scala, a variable number of arguments are simply listed as arguments. For example, suppose we have the elements \texttt{Constant(1)} and  \texttt{Select(0.2 -> 2, 0.8 -> 3))}. Then
+In Scala, a variable number of arguments are simply listed as arguments. For example, suppose we have the elements \texttt{Constant(1)} and  \texttt{Select(0.2 -> 2, 0.8 -> 3)}. Then
 
 \begin{flushleft}
 \marginpar{The notation: \_* will turn any Scala sequence into a variable argument list. The function receiving the variable argument list will have a * on the last argument}
@@ -156,7 +156,7 @@ Using \texttt{Inject} and \texttt{Apply}, we can apply a function to a sequence 
 
 \begin{flushleft}
 \marginpar{Calling map on a Scala sequence will apply the same function to every value in the sequence and return a new sequence. It uses anonymous function semantics}
-\texttt{xs: Seq[Int]) => xs.map((x: Int) => x + 5)}
+\texttt{(xs: Seq[Int]) => xs.map((x: Int) => x + 5)}
 \end{flushleft}
 
 \texttt{map} is a Scala method that can be applied to sequences. It takes as argument a function on elements of the sequence, applies the function to every member of the sequence, and returns the resulting sequence. So, the above function takes a sequence of integers and adds 5 to every element in the sequence. Now we can write
