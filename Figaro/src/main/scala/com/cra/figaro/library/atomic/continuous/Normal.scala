@@ -21,7 +21,7 @@ import scala.math._
  * A normal distribution in which the mean and variance are constants.
  */
 class AtomicNormal(name: Name[Double], val mean: Double, val variance: Double, collection: ElementCollection)
-  extends Element[Double](name, collection) with Atomic[Double] {
+  extends Element[Double](name, collection) with Atomic[Double] with Normal {
   lazy val standardDeviation = sqrt(variance)
 
   type Randomness = Double
@@ -51,6 +51,8 @@ class AtomicNormal(name: Name[Double], val mean: Double, val variance: Double, c
   }
 
   override def toString = "Normal(" + mean + ", " + variance + ")"
+
+  lazy val constraint = Constant((mean, variance))
 }
 
 /**
@@ -61,8 +63,11 @@ class NormalCompoundMean(name: Name[Double], val mean: Element[Double], val vari
     name,
     mean,
     (m: Double) => new AtomicNormal("", m, variance, collection),
-    collection) {
+    collection)
+  with Normal {
   override def toString = "Normal(" + mean + ", " + variance + ")"
+
+  lazy val constraint = Apply(mean, (m: Double) => (m,variance))
 }
 
 /**
@@ -77,8 +82,30 @@ class CompoundNormal(name: Name[Double], val mean: Element[Double], val variance
       variance,
       (v: Double) => new AtomicNormal("", m, v, collection),
       collection),
-    collection) {
+    collection)
+  with Normal {
   override def toString = "Normal(" + mean + ", " + variance + ")"
+
+  lazy val constraint = Apply(mean, variance, (m: Double, v: Double) => (m, v))
+}
+
+trait Normal extends Element[Double] {
+
+  def constraint: Element[(Double,Double)]
+
+  override def observe(observation: Double) {
+    constraint.addLogConstraint { e: (Double, Double) =>
+      val (m, v) = e
+      (- (observation - m) * (observation - m) / v + log(1 / Pi / 2.0 / v)) / 2.0
+    }
+    this.deactivate()
+  }
+
+  override def unobserve() {
+    constraint.deactivate()
+    this.activate()
+  }
+
 }
 
 object Normal extends Creatable {
