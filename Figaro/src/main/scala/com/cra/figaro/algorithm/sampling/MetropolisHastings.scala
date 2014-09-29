@@ -70,7 +70,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
     val newValue = elem.generateValue(elem.randomness)
     // if an old value is already stored, don't overwrite it
     val newOldValues =
-      if (state.oldValues contains elem) state.oldValues; else state.oldValues + (elem -> elem.value)
+      if (state.oldValues contains elem) state.oldValues; else state.oldValues += (elem -> elem.value)
     if (elem.value != newValue) {
       //val newProb =
       //  state.modelProb * elem.score(elem.value, newValue)
