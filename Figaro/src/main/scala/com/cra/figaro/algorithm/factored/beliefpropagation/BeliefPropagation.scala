@@ -332,20 +332,6 @@ abstract class ProbQueryBeliefPropagation(override val universe: Universe, targe
     super.initialize
   }
 
-  /*
-  val (neededElements, needsBounds) = getNeededElements(starterElements, depth)
-
-  // Depth < MaxValue implies we are using bounds  
-  val factors = if (depth < Int.MaxValue && needsBounds) {
-    getFactors(neededElements, targetElements, upperBounds)
-  } else {
-    getFactors(neededElements, targetElements)
-  }
-
-  val factorGraph = new BasicFactorGraph(factors, semiring)
-  * 
-  */
-
   def computeDistribution[T](target: Element[T]): Stream[(Double, T)] = getBeliefsForElement(target).toStream
 
   def computeExpectation[T](target: Element[T], function: T => Double): Double = {
