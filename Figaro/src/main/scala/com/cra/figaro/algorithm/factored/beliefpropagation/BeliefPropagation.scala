@@ -65,7 +65,7 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
   def starterElements: List[Element[_]] = targetElements
 
   /* The factor graph for this BP object */
-  protected[figaro] val factorGraph: FactorGraph[T]
+  protected[figaro] var factorGraph: FactorGraph[T] = _
 
   /* The beliefs associated with each node in the factor graph. The belief is the product 
    * of all messages to the node times any factor at the node
@@ -318,6 +318,21 @@ abstract class ProbQueryBeliefPropagation(override val universe: Universe, targe
 
   val semiring = LogSumProductSemiring
 
+  override def initialize() = {
+    val (neededElements, needsBounds) = getNeededElements(starterElements, depth)
+
+    // Depth < MaxValue implies we are using bounds  
+    val factors = if (depth < Int.MaxValue && needsBounds) {
+      getFactors(neededElements, targetElements, upperBounds)
+    } else {
+      getFactors(neededElements, targetElements)
+    }
+
+    factorGraph = new BasicFactorGraph(factors, semiring): FactorGraph[Double]
+    super.initialize
+  }
+
+  /*
   val (neededElements, needsBounds) = getNeededElements(starterElements, depth)
 
   // Depth < MaxValue implies we are using bounds  
@@ -328,6 +343,8 @@ abstract class ProbQueryBeliefPropagation(override val universe: Universe, targe
   }
 
   val factorGraph = new BasicFactorGraph(factors, semiring)
+  * 
+  */
 
   def computeDistribution[T](target: Element[T]): Stream[(Double, T)] = getBeliefsForElement(target).toStream
 
