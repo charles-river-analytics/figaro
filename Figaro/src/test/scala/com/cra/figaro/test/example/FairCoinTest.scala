@@ -23,10 +23,11 @@ import com.cra.figaro.library.compound._
 import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.language._
 import com.cra.figaro.test._
+import com.cra.figaro.test.tags.Example
 
 class FairCoinTest extends WordSpec with Matchers {
   "A simple FairCoinTest" should {
-    "produce the correct probability under expectation maximization" taggedAs (ExampleTest) in {
+    "produce the correct probability under expectation maximization" taggedAs (Example) in {
      test()
     }
 
@@ -64,18 +65,20 @@ class FairCoinTest extends WordSpec with Matchers {
 
     }
 
-    val learningAlgorithm = ExpectationMaximization(fairness)
+	val numberOfEMIterations = 10
+	val numberOfBPIterations = 10
+    val learningAlgorithm = EMWithBP(10, 10, fairness)
     learningAlgorithm.start
+    learningAlgorithm.kill
     /*
      * This will create a flip having a probability of 'true' learned from the input data. 
      */
-    val coin = fairness.getLearnedElement
+    val coin = Flip(fairness.MAPValue)
     println("The probability of a coin with this fairness showing 'heads' is: ")
     println(coin.prob)
-    //62/(62+38)
-    coin.prob should be (0.72 +- (0.01))
-    val t1 = fairness.getLearnedElement
-    val t2 = fairness.getLearnedElement
+
+    val t1 = Flip(fairness.MAPValue)
+    val t2 = Flip(fairness.MAPValue)
     
     val equal = t1 === t2
 

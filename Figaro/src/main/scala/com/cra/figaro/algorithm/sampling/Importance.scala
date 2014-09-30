@@ -57,6 +57,18 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
   }
   makeDependencies()
   
+  private var numRejections = 0
+  private var logSuccessWeight = 0.0
+  private var numSamples = 0
+  
+  override protected def resetCounts() {
+    super.resetCounts()
+    numRejections = 0
+    logSuccessWeight = 0.0
+    numSamples = 0
+  }
+  
+  
   /*
    * Produce one weighted sample of the given element. weightedSample takes into account conditions and constraints
    * on all elements in the Universe, including those that depend on this element.
@@ -80,8 +92,11 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
 
     resultOpt match {
       case Some(x) =>
+        logSuccessWeight = logSum(logSuccessWeight, x._1)
+        numSamples += 1
         x
       case None =>
+        numRejections += 1
         sample()
     }
   }
@@ -139,7 +154,7 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
         // A parameterized element may or may not be a chain to an atomic element
         // If it's not, we have to make sure to set its value to the observation here
         // If it is, we have to make sure to propagate the observation through the chain
-        sampleValue(state, element, Some(obs))        
+        sampleValue(state, element, Some(obs))       
         state.weight += math.log(element.asInstanceOf[HasDensity[T]].density(obs))
         obs
       }
@@ -200,6 +215,11 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
         element.value
     }
   }
+
+  def logProbEvidence: Double = {
+	logSuccessWeight - Math.log(numSamples + numRejections)
+  }
+  
 }
 
 object Importance {
@@ -225,5 +245,33 @@ object Importance {
    * using the given number of samples.
    */
   def apply(myNumSamples: Int, targets: Element[_]*)(implicit universe: Universe) =
-    new Importance(universe, targets: _*) with OneTimeProbQuerySampler { val numSamples = myNumSamples }
+    new Importance(universe, targets: _*) with OneTimeProbQuerySampler { 
+      val numSamples = myNumSamples 
+
+    /**
+      * Use one-time sampling to compute the probability of the given named evidence.
+      * Takes the conditions and constraints in the model as part of the model definition.
+      * This method takes care of creating and running the necessary algorithms.
+      */
+    def probabilityOfEvidence(evidence: List[NamedEvidence[_]]): Double = {
+      val logPartition = logProbEvidence
+      universe.assertEvidence(evidence)
+      if (active) kill()
+      start()
+      Math.exp(logProbEvidence - logPartition)
+    }
+      
+  }
+  
+  /**
+   * Use IS to compute the probability that the given element has the given value.
+   */    
+  def probability[T](target: Element[T], value: T, numSamples: Int = 10000): Double = {
+    val alg = Importance(numSamples, target)
+    alg.start()
+    val result = alg.probability(target, value)
+    alg.kill()
+    result
+  }    
+  
 }

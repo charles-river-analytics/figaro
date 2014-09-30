@@ -31,7 +31,7 @@ import com.cra.figaro.language._
  * @param transition A transition function from a universe at the old time step to a new.
  */
 
-abstract class Filtering(static: Universe = new Universe(), initial: Universe, transition: Universe => Universe) extends Algorithm {
+abstract class Filtering(static: Universe = new Universe(), initial: Universe, transition: (Universe, Universe) => Universe) extends Algorithm {
 
   static.registerAlgorithm(this)
 

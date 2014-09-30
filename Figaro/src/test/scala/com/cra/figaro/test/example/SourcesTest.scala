@@ -23,10 +23,11 @@ import com.cra.figaro.library.compound._
 import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.util._
 import com.cra.figaro.test._
+import com.cra.figaro.test.tags.Example
 
 class SourcesTest extends WordSpec with Matchers {
   "The sources example" should {
-    "produce the correct answer under variable elimination with dependent universe reasoning" taggedAs (ExampleTest) in {
+    "produce the correct answer under variable elimination with dependent universe reasoning" taggedAs (Example) in {
       def peAlg(universe: Universe, evidence: List[NamedEvidence[_]]) = () => ProbEvidenceSampler.computeProbEvidence(1000000, evidence)(universe)
       test((dependentUniverses: List[(Universe, List[NamedEvidence[_]])], element: Element[Source]) =>
         VariableElimination(dependentUniverses, peAlg _, element))

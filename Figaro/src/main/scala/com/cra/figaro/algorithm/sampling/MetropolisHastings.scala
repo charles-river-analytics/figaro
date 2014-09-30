@@ -34,7 +34,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
   import MetropolisHastings._
 
   // Used for debugging
-  private var elementsToTrack: Map[Element[_], Unit] = Map()
+  private var elementsToTrack: Map[Element[_], Null] = Map()
   private var proposalCounts: Map[Element[_], Int] = Map()
   // Make sure these maps don't cause memory leaks
   universe.register(elementsToTrack)
@@ -347,7 +347,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
     rejects = 0
     proposalCounts = Map((elementsToTrack map (_ -> 0)): _*)
     val successes: Map[Predicate[_], Int] = Map((predicates map (_ -> 0)): _*)
-    this.elementsToTrack = Map((elementsToTrack map (_ -> ()): _*))
+    this.elementsToTrack = Map((elementsToTrack map (_ -> null): _*))
     def collectResults() =
       for { predicate <- predicates } {
         if (predicate.test) successes += predicate -> (successes(predicate) + 1)
@@ -474,6 +474,17 @@ object MetropolisHastings {
   def apply(numSamples: Int, scheme: ProposalScheme,
     burnIn: Int, interval: Int, targets: Element[_]*)(implicit universe: Universe) =
     new OneTimeMetropolisHastings(universe, numSamples, scheme, burnIn, interval: Int, targets: _*)
+
+  /**
+   * Use MH to compute the probability that the given element has the given value.
+   */    
+  def probability[T](target: Element[T], value: T, numSamples: Int = 100000): Double = {
+    val alg = MetropolisHastings(numSamples, ProposalScheme.default, target)
+    alg.start()
+    val result = alg.probability(target, value)
+    alg.kill()
+    result
+  }    
 
   private[figaro] case class State(oldValues: Map[Element[_], Any],
     oldRandomness: Map[Element[_], Any],

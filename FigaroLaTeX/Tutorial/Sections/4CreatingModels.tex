@@ -230,13 +230,16 @@ Using similar techniques, we can create a PRM. The following example shows the c
 \newline
 \marginpar{The ' in front of a string creates a Scala symbol, which are treated like \texttt{String} constants}
 \newline class Appearance(actor: Actor, movie: Movie) \{
-\newline \tab val award = CPD(movie.quality, actor.famous, 
-\newline \tab  \tab ('low, false) -> Flip(0.001), 
-\newline \tab \tab ('low, true) -> Flip(0.01), 
-\newline \tab \tab ('medium, false) -> Flip(0.01), 
-\newline \tab \tab ('medium, true) -> Flip(0.05), 
-\newline \tab \tab ('high, false) -> Flip(0.05), 
-\newline \tab \tab ('high, true) -> Flip(0.2))
+\newline \tab def probAward(quality: Symbol, famous: Boolean) = 
+\newline \tab  \tab  (quality, famous) match \{ 
+\newline \tab \tab  case ('low, false) => 0.001
+\newline \tab \tab  case ('low, true) => 0.01 
+\newline \tab \tab  case ('medium, false) => 0.01
+\newline \tab \tab  case ('medium, true) => 0.05
+\newline \tab \tab  case ('high, false) => 0.05
+\newline \tab \tab  case ('high, true) => 0.2
+\newline \tab \tab \}
+\newline \tab  val award = SwitchingFlip(Apply(movie.quality, actor.famous, (q: Symbol, f: Boolean) => probAward(q, f)))
 \newline \}
 \newline
 \newline val actor1 = new Actor 
@@ -244,7 +247,7 @@ Using similar techniques, we can create a PRM. The following example shows the c
 \newline val actor3 = new Actor 
 \newline val movie1 = new Movie 
 \newline val movie2 = new Movie
-val appearance1 = new Appearance(actor1, movie1) 
+\newline val appearance1 = new Appearance(actor1, movie1) 
 \newline val appearance2 = new Appearance(actor2, movie2) 
 \newline val appearance3 = new Appearance(actor3, movie2) 
 \newline actor3.famous.observe(true) 
@@ -252,16 +255,16 @@ val appearance1 = new Appearance(actor1, movie1)
 \newline 
 \marginpar{The \texttt{\_.award} notation is Scala shorthand to retrieve the award value of each element of the map}
 \newline // Ensure that exactly one appearance gets an award. 
-\newline def uniqueAwardCondition(awards: Seq[Boolean]) =
+\newline def uniqueAwardCondition(awards: List[Boolean]) =
 \newline \tab awards.count((b: Boolean) => b) == 1
-\newline val allAwards: Element[Seq[Boolean]] = 
+\newline val allAwards: Element[List[Boolean]] = 
 \newline \tab Inject(appearances.map(\_.award):\_*)
 \newline allAwards.setCondition(uniqueAwardCondition)}
 \end{flushleft}
 
-The code is self-explanatory except for the last few lines, which enforce the condition that an award is given to exactly one appearance. The function \texttt{uniqueAwardCondition} takes a sequence of award Booleans and returns true if exactly one Boolean in the list is true. The count method counts the number of elements in the sequence that satisfy the predicate contained in its argument. In this case the predicate is \texttt{(b: Boolean) => b} which is true precisely when the element of the sequence is true. So \texttt{awards.count((b: Boolean) => b)} counts the number of elements in the sequence that are true.
+The code is self-explanatory except for the last few lines, which enforce the condition that an award is given to exactly one appearance. The function \texttt{uniqueAwardCondition} takes a list of award Booleans and returns true if exactly one Boolean in the list is true. The count method counts the number of elements in the list that satisfy the predicate contained in its argument. In this case the predicate is \texttt{(b: Boolean) => b} which is true precisely when the element of the list is true. So \texttt{awards.count((b: Boolean) => b)} counts the number of elements in the list that are true.
 
-We then define the \texttt{allAwards} element to be the element over sequences of Booleans consisting of the award field of all the appearances.  Here we have a new notation: \texttt{appearances.map(\_.award)}. We have already seen the \texttt{map} method, which applies a function to every element of a sequence and returns a new sequence consisting of the results. In this case, the argument to map is the function \texttt{\_.award}. This is shorthand for a function of one argument in which the argument appears once in the body and in which the type of the argument is known. Here, the type of the argument is clearly an appearance. We could have used \texttt{appearance => appearance.award}. The notation \texttt{\_.award} is short for this. Finally, we impose the \texttt{uniqueAwardCondition} on \texttt{allAwards}, ensuring that exactly one appearance is awarded.
+We then define the \texttt{allAwards} element to be the element over lists of Booleans consisting of the award field of all the appearances.  Here we have a new notation: \texttt{appearances.map(\_.award)}. We have already seen the \texttt{map} method, which applies a function to every element of a list and returns a new list consisting of the results. In this case, the argument to map is the function \texttt{\_.award}. This is shorthand for a function of one argument in which the argument appears once in the body and in which the type of the argument is known. Here, the type of the argument is clearly an appearance. We could have used \texttt{appearance => appearance.award}. The notation \texttt{\_.award} is short for this. Finally, we impose the \texttt{uniqueAwardCondition} on \texttt{allAwards}, ensuring that exactly one appearance is awarded.
 
 \section{Mutable fields}
 
@@ -270,29 +273,28 @@ Up to this point, all our Figaro programs have been purely functional. All eleme
 For example, let's expand the actors and movies example so that actors have a skill, and the quality of a movie depends on the skill of the actors in it. In turn, the fame of an actor depends on the quality of the movies in which he or she has appeared. We have created a mutual dependence of actors on movies which is hard to represent in a purely functional style. We can capture it in Figaro using the following code:
 
 \begin{flushleft}
+\marginpar{This example can be found in MutableMovie.scala}
 \texttt{import com.cra.figaro.library.compound.CPD
 \newline import com.cra.figaro.language.\_
 \newline 
 \newline class Actor \{
 \newline \tab var movies: List[Movie] = List()
-\newline 
 \newline \tab lazy val skillful = Flip(0.1)
-\newline 
 \newline \tab lazy val famous =
 \newline \tab Flip(Apply(Inject(movies.map(\_.quality):\_*), probFamous \_))
-\newline 
 \newline \tab private def probFamous(qualities: Seq[Symbol]) =
 \newline \tab if (qualities.count(\_ == 'high) >= 2) 0.8; else 0.1
 \newline \}
 \newline 
 \newline class Movie \{
 \newline \tab var actors: List[Actor] = List()
-\newline 
 \newline \tab lazy val actorsAllGood = Apply(Inject(actors.map(\_.skillful):\_*), (s: Seq[Boolean]) => !(s.contains(false)))
-\newline \tab lazy val quality = 
-\newline \tab If(actorsAllGood,
-\newline \tab \tab Select(0.2: 'low, 0.3: 'medium, 0.5: 'high), 
-\newline \tab \tab Select(0.5: 'low, 0.3: 'medium, 0.2: 'high))
+\newline lazy val probLow = 
+\newline Apply(actorsAllGood, (b: Boolean) => if (b) 0.2; else 0.5)
+\newline lazy val probHigh = 
+\newline Apply(actorsAllGood, (b: Boolean) => if (b) 0.5; else 0.2)
+\newline lazy val quality = 
+\newline Select(probLow -> 'low, Constant(0.3) -> 'medium, probHigh -> 'high)
 \newline \}
 \newline 
 \newline class Appearance(actor: Actor, movie: Movie) \{
@@ -300,13 +302,16 @@ For example, let's expand the actors and movies example so that actors have a sk
 \marginpar{\texttt{::=} is Scala shorthand for list concatenation}
 \newline \tab movie.actors ::= actor
 \newline 
-\newline lazy val award = CPD(movie.quality, actor.famous, 
-\newline \tab \tab ('low, false) -> Flip(0.001), 
-\newline \tab \tab ('low, true) -> Flip(0.01), 
-\newline \tab \tab ('medium, false) -> Flip(0.01), 
-\newline \tab \tab ('medium, true) -> Flip(0.05), 
-\newline \tab \tab ('high, false) -> Flip(0.05), 
-\newline \tab \tab ('high, true) -> Flip(0.2))
+\newline \tab def probAward(quality: Symbol, famous: Boolean) =
+\newline \tab \tab (quality, famous) match \{
+\newline \tab \tab case ('low, false) => 0.001
+\newline \tab \tab case ('low, true) => 0.01
+\newline \tab \tab case ('medium, false) => 0.01
+\newline \tab \tab case ('medium, true) => 0.05
+\newline \tab \tab case ('high, false) => 0.05
+\newline \tab \tab case ('high, true) => 0.2
+\newline \tab \tab \}
+\newline \tab lazy val award = SwitchingFlip(Apply(movie.quality, actor.famous, (q: Symbol, f: Boolean) => probAward(q, f)))
 \newline \}
 \newline 
 \newline val actor1 = new Actor 
@@ -321,9 +326,9 @@ For example, let's expand the actors and movies example so that actors have a sk
 \newline movie2.quality.observe('high)
 \newline 
 \newline // Ensure that exactly one appearance gets an award. 
-\newline def uniqueAwardCondition(awards: Seq[Boolean]) =
+\newline def uniqueAwardCondition(awards: List[Boolean]) =
 \newline \tab awards.count((b: Boolean) => b) == 1 
-\newline val allAwards: Element[Seq[Boolean]] =
+\newline val allAwards: Element[List[Boolean]] =
 \newline \tab Inject(appearances.map(\_.award):\_*)
 \newline allAwards.setCondition(uniqueAwardCondition)
 }
@@ -333,7 +338,7 @@ First, note that the \texttt{Actor} class has a \texttt{movies} field, whose pur
 
 The initial value of both \texttt{movies} and \texttt{actors} is an empty list. We add elements to them later. In fact, whenever we create an appearance, we make sure to add the movie to the actor's list of movies and vice versa. This is achieved by the first two lines of the \texttt{Appearance} class. The notation \texttt{actor.movies ::= movie} is short for \texttt{actor.movies = movie :: actor.movies}, which prepends movie to the current \texttt{actor.movies} list, and replaces the current list with the new list. The \texttt{::=} notation is a variant of the familiar \texttt{+=} notation common in many languages.
 
-The \texttt{Actor} class has \texttt{skillful} and \texttt{famous} fields. Rather than an ordinary \texttt{val}, each of these fields is defined to be \texttt{lazy val}, which means that their contents are not determined until they are required by some other computation. This is necessary for us because their contents can depend on the list of movies the actor appears in. For example, whether the actor is famous depends on whether at least two movies have high quality, as defined by \texttt{probFamous}. (Comment on the notation: the underscore after \texttt{probFamous} is required here to tell Scala that what is desired is the \texttt{probFamous} function itself, not its application to arguments.)   If \texttt{famous} was an ordinary \texttt{val}, its value (an \texttt{Element[Boolean]}) would be computed at the point it is defined, so it would use an empty list of movies. Because we want to use the correct list of movies in defining it, we postpone evaluating it until the movies list has been filled. For \texttt{actor3}, this will happen when we make the observation \texttt{actor3.famous.observe(true)}, which we make sure to delay until after all the appearances have been created. For other actors, the \texttt{famous} field will be evaluated even later, during inference.
+The \texttt{Actor} class has \texttt{skillful} and \texttt{famous} fields. Rather than an ordinary \texttt{val}, each of these fields is defined to be \texttt{lazy val}, which means that their contents are not determined until they are required by some other computation. This is necessary for us because their contents can depend on the list of movies the actor appears in. For example, whether the actor is famous depends on whether at least two movies have high quality, as defined by \texttt{probFamous}. (Comment on the notation: the underscore after \texttt{probFamous} is required here to tell Scala that what is desired is the \texttt{probFamous} function itself, not its application to arguments.)   If \texttt{famous} was an ordinary \texttt{val}, its value (an \texttt{Element[Boolean]}) would be computed at the point it is defined, so it would use an empty list of movies. Because we want to use the correct list of movies in defining it, we postpone evaluating it until the movies list has been filled. For \texttt{actor3}, this will happen when we make the observation \texttt{actor3.famous.observe(true)}, which we make sure to delay until after all the appearances have been created. For other actors, the \texttt{famous} field will be evaluated even later, during inference. Care should be taken with declaring elements as lazy. Side effects and unintended consequences can occur if a lazy element declared outside a Chain is first required (i.e., created) during the execution of a Chain.
 
 Do not hesitate to use mutation if it will help you organize your program in a logical way. In one application, we have found it convenient to use a hash table that maps concepts to their associated elements. This allowed us to create the element associated with a concept as the concept was introduced. If we later had to refer to the same concept again, we could easily access its element.
 
@@ -368,22 +373,22 @@ Suppose we want to create a PRM in which we are uncertain about the value of an 
 \texttt{import com.cra.figaro.language.\_
 \newline 
 \newline abstract class Engine \{ val power : Element[Symbol] \}
-\newline class I4 extends Engine \{
+\newline class V8 extends Engine \{
 \newline \tab val power = Select(0.8 -> 'low, 0.2 -> 'high) 
 \newline \}
-\newline class V8 extends Engine \{
+\newline class V6 extends Engine \{
 \newline \tab val power = Select(0.8 -> 'low, 0.2 -> 'high)
 \newline \}
 \newline 
-\newline object MyEngine extends Engine \{
+\newline object MySuperEngine extends V8 \{
 \newline \tab val power = Constant('high)
 \newline \}
 \newline class Car \{
-\newline \tab val engine: Element[Engine] =
-\newline \tab Select(0.2 -> new I4, 0.3 -> new V8, 0.5 -> MyEngine)
+\newline \tab val engine = Uniform[Engine](new V8, new V6, MySuperEngine)
 \newline \tab val speed = CPD(?,
-\newline \tab 'low -> Constant (65)
-\newline \tab 'high -> Select(0.5 -> 80, 0.5 -> 90)
+\newline \tab 'high -> Constant(90.0),
+\newline \tab 'medium -> Constant(80.0),
+\newline \tab 'low -> Constant(70.0))
 \newline \}
 }
 \end{flushleft}
@@ -396,13 +401,12 @@ We can give the engine a name and make it belong to the car as an element collec
 
 \begin{flushleft}
 \texttt{class Car extends ElementCollection \{
-\newline \tab val engine: Element[Engine] =
-\newline \tab Select(0.2 -> new I4, 0.3 -> new V6, 0.5 -> MyEngine)( "engine", this)
+\newline \tab val engine = Uniform[Engine](new V8, new V6, MySuperEngine)("engine", this)
 \newline \}
 }
 \end{flushleft}
 
-In the first line we make the \texttt{Car} class inherit from \texttt{ElementCollect\-ion}, so that every instance of \texttt{Car} is an element collection. In the fourth line, we assign engine the name "engine" and add it to the instance of Car being created, which is referred to by \texttt{this} within the \texttt{Car} class. We similarly make the abstract \texttt{Engine} class inherit  element collections and assign \texttt{power} the name "power" within \texttt{I4, V8, and MyEngine} within each subclass of  \texttt{Engine}.
+In the first line we make the \texttt{Car} class inherit from \texttt{ElementCollect\-ion}, so that every instance of \texttt{Car} is an element collection. In the fourth line, we assign engine the name "engine" and add it to the instance of Car being created, which is referred to by \texttt{this} within the \texttt{Car} class. We similarly make the abstract \texttt{Engine} class inherit  element collections and assign \texttt{power} the name "power" within \texttt{V*, V6, and MySuperEngine} within each subclass of  \texttt{Engine}.
 
 An element collection, like a universe, is simply a set of elements. The difference is that a universe is also a set of elements on which a reasoning algorithm operates. An element collection provides the ability to refer to an element by name. For example, if \texttt{car} is an instance of \texttt{Car}, we can use \texttt{car.get[Engine]("engine")} to get at the element named "engine". The \texttt{get} method takes a type parameter, which is the value type of the element being referred to. The notation \texttt{[Engine]} specifies this type parameter, and serves to make sure that the expression \texttt{car.get[Engine]("engine")} has type \texttt{Element[Engine]}.
 
@@ -411,29 +415,28 @@ The key ability of element collections that allows them to solve our puzzle is t
 So, finally, the answer to our puzzle is that in place of the question mark, we put \texttt{get[Symbol]("engine.power")}. This applies the get method to the instance of \texttt{Car} being created. Here is the full example:
 
 \begin{flushleft}
+\marginpar{This example can be found in MultiValuedReferenceUncertainty.scala}
 \texttt{import com.cra.figaro.language.\_
 \newline
 \newline abstract class Engine extends ElementCollection \{
 \newline \tab val power : Element[Symbol]
 \newline \}
-\newline class I4 extends Engine \{
-\newline \tab val power = Select(0.8 -> 'low, 0.2 -> 'high)("power", this)
-\newline \}
 \newline class V8 extends Engine \{
 \newline \tab val power = Select(0.8 -> 'low, 0.2 -> 'high)("power", this)
 \newline \}
-\newline object MyEngine extends Engine \{
+\newline class V6 extends Engine \{
+\newline \tab val power = Select(0.8 -> 'low, 0.2 -> 'high)("power", this)
+\newline \}
+\newline object MySuperEngine extends V8 \{
 \newline \tab val power = Constant('high)("power", this)
 \newline \}
 \newline class Car extends ElementCollection \{
-\newline \tab val engine: Element[Engine] =
-\newline \tab Select(0.2 -> new I4, 0.3 -> new V8, 0.5 -> MyEngine)(
-"engine", this
-\newline )
+\newline \tab val engine = Uniform[Engine](new V8, new V6, MySuperEngine)("engine", this)
 \newline \tab val speed = CPD(
 \newline \tab get[Symbol]("engine.power"),
-\newline \tab 'low -> Constant(65)
-\newline \tab 'high -> Select(0.5 -> 80, 0.5 -> 90)
+\newline \tab 'high -> Constant(90.0),
+\newline \tab 'medium -> Constant(80.0),
+\newline \tab 'low -> Constant(70.0))
 \newline )
 \newline \}
 }
@@ -459,26 +462,20 @@ The previous subsection described how to refer to elements using references that
 \newline \tab 0.7 -> new Component)
 \newline 
 \newline class Container extends ElementCollection \{
-\newline \tab val components =
-\newline \tab Select(0.5 -> List(makeComponent()),
-\newline \tab 0.5 -> List(makeComponent(), makeComponent())) 
-\newline \tab ("components", this)
+\newline \tab  val components = MakeList(Select(0.5 -> 1, 0.5 -> 2), makeComponent)("components", this)
 \newline 
 \marginpar{The body of the sum function is shorthand notation for Scala's fold function. Fold iterates through a sequence and applies a function to the previous
 result and each new entry in turn. The (\_ + \_ ) notation will add the previous value to each value in \texttt{xs}.}
-\newline def sum(xs: List[Int]) = (0 /: xs) (\_ + \_)
-\newline 
-\newline \tab val totalComponents =
-\newline \tab getAggregate(sum)("components.f")
+\newline val sum = getAggregate((xs: MultiSet[Int]) => (0 /: xs)(\_ + \_))("components.f") 
 \newline \}
 }
 \end{flushleft}
 
-First, we create a \texttt{Component} class with an element named "f". We then define two specific instances of \texttt{Component}. Next, we define a \texttt{makeComponent} function that either produces one of the specific instances or a new instance of \texttt{Component} that is distinct from all other instances. We then define a \texttt{Container} class that contains components. Now, the contained components are a list that has either one or two elements, each produced by \texttt{makeComponent}. We then create a \texttt{totalComponents} element that aggregates the values of all elements referred to by "components.f"; that is, the values of the elements named "f" in all the values of the element named "components".
+First, we create a \texttt{Component} class with an element named "f". We then define two specific instances of \texttt{Component}. Next, we define a \texttt{makeComponent} function that either produces one of the specific instances or a new instance of \texttt{Component} that is distinct from all other instances. We then define a \texttt{Container} class that contains components. Now, the contained components are a list that has either one or two elements, each produced by \texttt{makeComponent}. We then create a \texttt{sum} element that aggregates the values of all elements referred to by "components.f"; that is, the values of the elements named "f" in all the values of the element named "components".
 
 Multi-valued references have "set semantics". If the same element appears more than once as the target of the reference, it only contributes one value to the aggregate. So, if the components list has two components, both of which are \texttt{specialComponent1}, whose value is 2, the value of the aggregate will be 2, not 4. On the other hand, if two different target elements both have the same value, both values contribute to the aggregate. For example, if the components are \texttt{specialComponent1} and \texttt{specialComponent2}, and both have value 2, the value of the aggregate is 4.
 
-A comment on the code: The definition of the \texttt{sum} function might look mysterious. This function takes a list of integers and returns their sum. This is a standard Scala idiom that unfortunately is a bit obscure if you're not familiar with it. It is used to "fold" a function through a list. We begin with 0 and then repeatedly add the current result to the next element of the list until the list is exhausted. The notation \texttt{(\_ + \_)} is shorthand for the function that takes two arguments and adds them. The notation \texttt{(0 /: xs}) means that this function should be folded through \texttt{xs}, starting from 0.
+A comment on the code: The code defining \texttt{sum} might look mysterious. This code takes a list of integers and returns their sum. This is a standard Scala idiom that unfortunately is a bit obscure if you're not familiar with it. It is used to "fold" a function through a list. We begin with 0 and then repeatedly add the current result to the next element of the list until the list is exhausted. The notation \texttt{(\_ + \_)} is shorthand for the function that takes two arguments and adds them. The notation \texttt{(0 /: xs}) means that this function should be folded through \texttt{xs}, starting from 0.
 
 \section{Open Universe Models}
 
@@ -503,7 +500,7 @@ We close this section by showing how Figaro can be used to represent "open unive
 \newline \tab val source =
 \newline \tab Apply(sources, sourceNum, (s: Seq[Double], i: Int) => s(i))
 \newline \tab val position =
-\newline \tab Chain(source, (x: Double) => Normal(x, 1.0))
+\newline \tab NonCachingChain(source, (x: Double) => Normal(x, 1.0))
 \newline \}
 \newline 
 \newline val sample1 = new Sample 

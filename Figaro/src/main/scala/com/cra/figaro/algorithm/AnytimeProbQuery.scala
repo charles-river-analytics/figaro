@@ -14,8 +14,11 @@
 package com.cra.figaro.algorithm
 
 import com.cra.figaro.language._
-import actors._
-import Actor._
+import java.util.concurrent.TimeUnit
+import akka.util.Timeout
+import akka.pattern.{ask}
+import scala.concurrent.duration
+import scala.concurrent.Await
 
 /**
  * Anytime algorithms that compute conditional probability of query elements.
@@ -58,25 +61,37 @@ trait AnytimeProbQuery extends ProbQueryAlgorithm with Anytime {
         Probability(computeProbability(target, predicate))
     }
 
+  implicit val timeout = Timeout(5000, TimeUnit.MILLISECONDS)
   protected def doDistribution[T](target: Element[T]): Stream[(Double, T)] = {
-    runner ! Handle(ComputeDistribution(target))
-    receive {
+    val response = runner ? Handle(ComputeDistribution(target))
+    Await.result(response, timeout.duration ).asInstanceOf[Response] match {
       case Distribution(result) => result.asInstanceOf[Stream[(Double, T)]]
+      case ExceptionResponse(msg) =>
+        println(msg)
+        Stream()
+      case _ => Stream()
     }
   }
 
   protected def doExpectation[T](target: Element[T], function: T => Double): Double = {
-    runner ! Handle(ComputeExpectation(target, function))
-    receive {
-      case Expectation(result) =>
-        result
+    val response = runner ? Handle(ComputeExpectation(target, function))
+    Await.result(response, timeout.duration ).asInstanceOf[Response] match {
+      case Expectation(result) => result
+      case ExceptionResponse(msg) =>
+        println(msg)
+        0.0
+      case _ => 0.0
     }
   }
 
   protected override def doProbability[T](target: Element[T], predicate: T => Boolean): Double = {
-    runner ! Handle(ComputeProbability(target, predicate))
-    receive {
+    val response = runner ? Handle(ComputeProbability(target, predicate))
+    Await.result(response, timeout.duration ).asInstanceOf[Response] match {
       case Probability(result) => result
+      case ExceptionResponse(msg) =>
+        println(msg)
+        0.0
+      case _ => 0.0
     }
   }
 }

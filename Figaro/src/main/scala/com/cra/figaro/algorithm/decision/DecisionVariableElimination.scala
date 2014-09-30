@@ -48,7 +48,7 @@ trait ProbabilisticVariableEliminationDecision extends VariableElimination[(Doub
    * where the first value is 1.0 and the second is a possible utility of the element 
    */
   def makeUtilFactor(e: Element[_]): Factor[(Double, Double)] = {
-    val f = new Factor[(Double, Double)](List(Variable(e)))
+    val f = Factory.make[(Double, Double)](List(Variable(e)))
     f.fillByRule((l: List[Any]) => (1.0, l.asInstanceOf[List[Extended[Double]]](0).value))
     f
   }
@@ -69,12 +69,13 @@ trait ProbabilisticVariableEliminationDecision extends VariableElimination[(Doub
       }
     }
 
-    val thisUniverseFactorsExceptUtil = neededElements flatMap (ProbFactor.make(_))
+    Factory.removeFactors()
+    val thisUniverseFactorsExceptUtil = neededElements flatMap (Factory.make(_))
     // Make special utility factors for utility elements
     val thisUniverseFactorsUtil = getUtilityNodes map (makeUtilFactor(_))
 
     val dependentUniverseFactors =
-      for { (dependentUniverse, evidence) <- dependentUniverses } yield ProbFactor.makeDependentFactor(universe, dependentUniverse, dependentAlgorithm(dependentUniverse, evidence))
+      for { (dependentUniverse, evidence) <- dependentUniverses } yield Factory.makeDependentFactor(universe, dependentUniverse, dependentAlgorithm(dependentUniverse, evidence))
 
     // Convert all non-utility factors from standard factors to decision factors, ie, factors are now tuples of (Double, _)
     val thisUniverseFactorsExceptUtil_conv = thisUniverseFactorsExceptUtil.map(s => convert(s, false))
@@ -89,7 +90,7 @@ trait ProbabilisticVariableEliminationDecision extends VariableElimination[(Doub
    * all non-utility nodes, and Prob is 1 for all utility nodes
    */
   private def convert(f: Factor[Double], utility: Boolean): Factor[(Double, Double)] = {
-    val factor = new Factor[(Double, Double)](f.variables)
+    val factor = Factory.make[(Double, Double)](f.variables)
     val allIndices = f.allIndices
 
     allIndices.foreach { k: List[Int] =>
@@ -128,7 +129,7 @@ class ProbQueryVariableEliminationDecision[T, U](override val universe: Universe
 
   def getUtilityNodes = utilityNodes
 
-  private var finalFactors: Factor[(Double, Double)] = new Factor[(Double, Double)](List[Variable[_]]())
+  private var finalFactors: Factor[(Double, Double)] = Factory.make[(Double, Double)](List[Variable[_]]())
 
   /* Marginalizes the final factor using the semiring for decisions
    * 
@@ -136,8 +137,8 @@ class ProbQueryVariableEliminationDecision[T, U](override val universe: Universe
   private def marginalizeToTarget(factor: Factor[(Double, Double)], target: Element[_]): Unit = {
     val unnormalizedTargetFactor = factor.marginalizeTo(semiring, Variable(target))
     val z = unnormalizedTargetFactor.foldLeft(semiring.zero, (x: (Double, Double), y: (Double, Double)) => (x._1 + y._1, 0.0))
-    val targetFactor = new Factor[(Double, Double)](unnormalizedTargetFactor.variables)
-    unnormalizedTargetFactor.mapTo((d: (Double, Double)) => (d._1 / z._1, d._2), targetFactor)
+   //val targetFactor = Factory.make[(Double, Double)](unnormalizedTargetFactor.variables)
+    val targetFactor = unnormalizedTargetFactor.mapTo((d: (Double, Double)) => (d._1 / z._1, d._2), unnormalizedTargetFactor.variables)
     targetFactors += target -> targetFactor
   }
 

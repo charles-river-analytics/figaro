@@ -15,10 +15,10 @@ package com.cra.figaro.test.util
 
 import org.scalatest.Matchers
 import org.scalatest.WordSpec
-// import testing.Benchmark
 import math.log
 import com.cra.figaro.util._
 import com.cra.figaro.test._
+import com.cra.figaro.test.tags.Performance
 
 class PriorityMapTest extends WordSpec with Matchers {
   "A HeapPriorityMap" should {
@@ -116,7 +116,7 @@ class PriorityMapTest extends WordSpec with Matchers {
       an [IllegalArgumentException] should be thrownBy { hpm2.extractMin() } 
     }
 
-    "take roughly log n time for inserting" taggedAs (PerformanceTest) in {
+    "take roughly log n time for inserting" taggedAs (Performance) in {
       val small = 256
       val large = 512
       def insert(n: Int)() = {
@@ -130,7 +130,7 @@ class PriorityMapTest extends WordSpec with Matchers {
       time2 / time1 should be < (large.toDouble / small * log(large) / log(small) * slack)
     }
 
-    "take roughly log n time for extracting the minimum element" taggedAs (PerformanceTest) in {
+    "take roughly log n time for extracting the minimum element" taggedAs (Performance) in {
       val small = 256
       val large = 512
       def extract(pm: HeapPriorityMap[Int, Double])() = {
