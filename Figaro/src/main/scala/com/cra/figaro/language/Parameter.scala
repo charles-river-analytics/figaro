@@ -31,7 +31,7 @@ abstract trait Parameter[T] extends Element[T] {
    * Returns a sufficient statistics vector corresponding to the evidence that an element using this parameter 
    * took on the value a.
    */
-  def sufficientStatistics[A](a: A): Seq[Double]
+  private[figaro] def sufficientStatistics[A](a: A): Seq[Double]
   /*
    * Returns a sufficient statistics vector with '1' in the position corresponding with the specified index
    */

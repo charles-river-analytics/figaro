@@ -396,16 +396,21 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
       if (resultValue.asInstanceOf[List[T]].toList == inputValues) (1.0, rowMapping)
       else (0.0, rowMapping)
     }
-
+	
     def parameterRule(values: List[T], p: ParameterizedVariable[T]) = {
       val resultValue :: inputValues = values
 
       val rowMapping = mutable.Map(parameterMap.toSeq: _*)
-      rowMapping.remove(p.element.parameter)
+      p.element.parameters.foreach(rowMapping.remove(_))
+
       if (resultValue.asInstanceOf[List[T]].toList == inputValues) {
-        rowMapping.put(p.element.parameter, p.sufficientStatistics(resultValue))
+        for (pr <- p.element.parameters) {
+         rowMapping.put(pr, pr.sufficientStatistics(resultValue)) 
+        }
       } else {
-        rowMapping.put(p.element.parameter, p.sufficientStatistics(resultValue))
+        for (pr <- p.element.parameters) {
+         rowMapping.put(pr, pr.sufficientStatistics(resultValue)) 
+        }
       }
       if (resultValue.asInstanceOf[List[T]].toList == inputValues) (1.0, rowMapping)
       else (0.0, rowMapping)
