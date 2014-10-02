@@ -34,9 +34,8 @@ abstract class FactoredFrontier(static: Universe, initial: Universe, transition:
   extends Filtering(static, initial, transition) with OneTimeFiltering with FFBPHandler {
 
   protected var currentStatic = static
-  protected var currentUniverse = initial
-
-  protected var bp: ProbQueryBeliefPropagation = _
+  currentUniverse = initial
+  
 
   override def initialize() {
     LazyValues.clear(static)
@@ -150,7 +149,7 @@ object FactoredFrontier {
    * @param iterations The number of iterations with which to run Belief Propagation at each time step.
    */
   def apply(static: Universe, initial: Universe, transition: (Universe, Universe) => Universe, iterations: Int): FactoredFrontier =
-    new FactoredFrontier(static, initial, transition) with OneTimeInnerBPHandler { val myIterations = iterations }
+    new FactoredFrontier(static, initial, transition) with OneTimeInnerBPHandler { val innerIterations = iterations }
 
   /**
    * A Factored Frontier that runs with one time Belief Propagation.
