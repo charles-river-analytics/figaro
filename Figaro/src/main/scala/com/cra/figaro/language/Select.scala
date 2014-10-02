@@ -72,7 +72,7 @@ class CompoundSelect[T](name: Name[T], clauses: List[(Element[Double], T)], coll
  * A distribution in which the probabilities are learnable parameters and the outcomes are values.
  */
 class ParameterizedSelect[T](name: Name[T], override val parameter: AtomicDirichlet, outcomes: List[T], collection: ElementCollection)
-  extends Select(name, parameter.alphas.toList zip outcomes, collection) with Parameterized[T] {
+  extends Select(name, parameter.alphas.toList zip outcomes, collection) with SingleParameterized[T] {
 
   private lazy val normalizedProbs = normalize(probs)
   def args: List[Element[_]] = List(parameter)

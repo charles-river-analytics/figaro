@@ -45,6 +45,7 @@ class GeneralizedEM(inferenceAlgorithmConstructor: Seq[Element[_]] => Universe =
   protected def doExpectationStep(): Map[Parameter[_], Seq[Double]] = {
     val inferenceTargets = 
       universe.activeElements.filter(_.isInstanceOf[Parameterized[_]]).map(_.asInstanceOf[Parameterized[_]])
+
     val algorithm = inferenceAlgorithmConstructor(inferenceTargets)(universe)
     algorithm.start()
 
@@ -54,11 +55,11 @@ class GeneralizedEM(inferenceAlgorithmConstructor: Seq[Element[_]] => Universe =
       var stats = parameter.zeroSufficientStatistics
       for { 
         target <- inferenceTargets
-        if target.parameter == parameter
+        if target.parameters.contains(parameter)
       } {
         val t: Parameterized[target.Value] = target.asInstanceOf[Parameterized[target.Value]]
         val distribution: Stream[(Double, target.Value)] = algorithm.distribution(t)
-        val newStats = t.distributionToStatistics(distribution)
+        val newStats = t.distributionToStatistics(parameter,distribution)
         stats = (stats.zip(newStats)).map(pair => pair._1 + pair._2)
       }
       result += parameter -> stats
