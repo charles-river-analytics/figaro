@@ -155,6 +155,28 @@ class ContinuousTest extends WordSpec with Matchers {
       val sel2 = Select(0.5 -> 2.0, 0.5 -> 3.0)
       Normal(sel1, sel2).toString should equal("Normal(" + sel1 + ", " + sel2 + ")")
     }
+
+    "produce the right probability when conditioned under Metropolis-Hastings" in {
+      val sampleUniverse = Universe.createNew()
+      val nSamples = Normal(2.5, 2.0)("", sampleUniverse)
+      val samples = for(i <- 1 to 100)
+                    yield nSamples.generateValue(nSamples.generateRandomness())
+
+      val samplesMean = samples.sum / samples.size
+      val samplesVariance = samples.map(s => (s - samplesMean) * (s - samplesMean)).sum / samples.size
+
+      val universe = Universe.createNew()
+      val mean = Uniform(-5, 5)("mean", universe)
+      val variance = Uniform(0, 5)("variance", universe)
+      for (sample <- samples) {
+        val normal = Normal(mean, variance)
+        normal.observe(sample)
+      }
+      val alg = MetropolisHastings(100000, ProposalScheme.default, mean, variance)
+      alg.start()
+      alg.mean(mean) should be(samplesMean +- 0.1)
+      alg.mean(variance) should be(samplesVariance +- 0.1)
+    }
   }
 
   "An AtomicMultivariateNormal" should {
@@ -288,6 +310,23 @@ class ContinuousTest extends WordSpec with Matchers {
       Universe.createNew()
       val sel = Select(0.5 -> 1.0, 0.5 -> 2.0)
       Exponential(sel).toString should equal("Exponential(" + sel + ")")
+    }
+
+    "produce the right probability when conditioned under Metropolis-Hastings" in {
+      val sampleUniverse = Universe.createNew()
+      val nSamples = Exponential(2)("", sampleUniverse)
+      val samples = for(i <- 1 to 100)
+                    yield nSamples.generateValue(nSamples.generateRandomness())
+
+      val universe = Universe.createNew()
+      val lambda = Uniform(0, 10)("lambda", universe)
+      for (sample <- samples) {
+        val exponential = Exponential(lambda)
+        exponential.observe(sample)
+      }
+      val alg = MetropolisHastings(200000, ProposalScheme.default, lambda)
+      alg.start()
+      alg.mean(lambda) should be(2.0 +- 0.5)
     }
   }
 
@@ -458,6 +497,25 @@ class ContinuousTest extends WordSpec with Matchers {
       val sel2 = Select(0.5 -> 2.0, 0.5 -> 3.0)
       Gamma(sel1, sel2).toString should equal("Gamma(" + sel1 + ", " + sel2 + ")")
     }
+
+    "produce the right probability when conditioned under Metropolis-Hastings" in {
+      val sampleUniverse = Universe.createNew()
+      val nSamples = Gamma(2, 2)("", sampleUniverse)
+      val samples = for(i <- 1 to 100)
+                    yield nSamples.generateValue(nSamples.generateRandomness())
+
+      val universe = Universe.createNew()
+      val k = Uniform(0, 10)("k", universe)
+      val theta = Uniform(0, 10)("theta", universe)
+      for (sample <- samples) {
+        val gamma = Gamma(k, theta)
+        gamma.observe(sample)
+      }
+      val alg = MetropolisHastings(200000, ProposalScheme.default, k, theta)
+      alg.start()
+      alg.mean(k) should be(2.0 +- 0.5)
+      alg.mean(theta) should be(2.0 +- 0.5)
+    }
   }
 
   "A AtomicBeta" should {
@@ -521,6 +579,25 @@ class ContinuousTest extends WordSpec with Matchers {
       val sel1 = Select(0.5 -> 0.5, 0.5 -> 1.0)
       val sel2 = Select(0.5 -> 2.0, 0.5 -> 3.0)
       Beta(sel1, sel2).toString should equal("Beta(" + sel1 + ", " + sel2 + ")")
+    }
+
+    "produce the right probability when conditioned under Metropolis-Hastings" in {
+      val sampleUniverse = Universe.createNew()
+      val nSamples = Beta(2, 5)("", sampleUniverse)
+      val samples = for(i <- 1 to 100)
+                    yield nSamples.generateValue(nSamples.generateRandomness())
+
+      val universe = Universe.createNew()
+      val a = Uniform(0, 10)("a", universe)
+      val b = Uniform(0, 10)("b", universe)
+      for (sample <- samples) {
+        val beta = Beta(a, b)
+        beta.observe(sample)
+      }
+      val alg = MetropolisHastings(200000, ProposalScheme.default, a, b)
+      alg.start()
+      alg.mean(a) should be(2.0 +- 0.5)
+      alg.mean(b) should be(5.0 +- 0.5)
     }
   }
 

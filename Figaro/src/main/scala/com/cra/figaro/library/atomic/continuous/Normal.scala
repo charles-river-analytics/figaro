@@ -50,9 +50,10 @@ class AtomicNormal(name: Name[Double], val mean: Double, val variance: Double, c
     normalizer * exp(exponent)
   }
 
-  override def toString = "Normal(" + mean + ", " + variance + ")"
+  lazy val meanValue = mean
+  lazy val varianceValue = variance
 
-  lazy val constraint = Constant((mean, variance))
+  override def toString = "Normal(" + mean + ", " + variance + ")"
 }
 
 /**
@@ -65,9 +66,11 @@ class NormalCompoundMean(name: Name[Double], val mean: Element[Double], val vari
     (m: Double) => new AtomicNormal("", m, variance, collection),
     collection)
   with Normal {
-  override def toString = "Normal(" + mean + ", " + variance + ")"
 
-  lazy val constraint = Apply(mean, (m: Double) => (m,variance))
+  def meanValue = mean.value
+  lazy val varianceValue = variance
+
+  override def toString = "Normal(" + mean + ", " + variance + ")"
 }
 
 /**
@@ -84,27 +87,27 @@ class CompoundNormal(name: Name[Double], val mean: Element[Double], val variance
       collection),
     collection)
   with Normal {
-  override def toString = "Normal(" + mean + ", " + variance + ")"
 
-  lazy val constraint = Apply(mean, variance, (m: Double, v: Double) => (m, v))
+  def meanValue = mean.value
+  def varianceValue = variance.value
+
+  override def toString = "Normal(" + mean + ", " + variance + ")"
 }
 
-trait Normal extends Element[Double] {
+trait Normal extends Continuous[Double] {
 
-  def constraint: Element[(Double,Double)]
+  /**
+   * Current mean value.
+   */
+  def meanValue: Double
 
-  override def observe(observation: Double) {
-    constraint.addLogConstraint { e: (Double, Double) =>
-      val (m, v) = e
-      (- (observation - m) * (observation - m) / v + log(1 / Pi / 2.0 / v)) / 2.0
-    }
-    this.deactivate()
-  }
+  /**
+   * Current variance value.
+   */
+  def varianceValue: Double
 
-  override def unobserve() {
-    constraint.deactivate()
-    this.activate()
-  }
+  def logp(value: Double) =
+    (- (value - meanValue) * (value - meanValue) / varianceValue + log(1 / Pi / 2.0 / varianceValue)) / 2.0
 
 }
 

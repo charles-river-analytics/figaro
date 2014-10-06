@@ -21,7 +21,7 @@ import scala.math.{ log, exp }
  * An exponential distribution in which the parameter is a constant.
  */
 class AtomicExponential(name: Name[Double], lambda: Double, collection: ElementCollection)
-  extends Element[Double](name, collection) with Atomic[Double] {
+  extends Element[Double](name, collection) with Atomic[Double] with Exponential {
   type Randomness = Double
 
   def generateRandomness() = Util.generateExponential(lambda)
@@ -33,19 +33,36 @@ class AtomicExponential(name: Name[Double], lambda: Double, collection: ElementC
    */
   def density(d: Double) = lambda * exp(-lambda * d)
 
+  lazy val lambdaValue = lambda
+
   override def toString = "Exponential(" + lambda + ")"
 }
 
 /**
  * An exponential distribution in which the parameter is an element.
  */
-class CompoundExponential(name: Name[Double], lambda: Element[Double], collection: ElementCollection)
+class CompoundExponential(name: Name[Double], val lambda: Element[Double], collection: ElementCollection)
   extends NonCachingChain(
     name,
     lambda,
     (l: Double) => new AtomicExponential("", l, collection),
-    collection) {
+    collection)
+  with Exponential {
+
+  def lambdaValue = lambda.value
+
   override def toString = "Exponential(" + lambda + ")"
+}
+
+trait Exponential extends Continuous[Double] {
+
+  /**
+   * Current lambda value.
+   */
+  def lambdaValue: Double
+
+  def logp(value: Double) =
+    log(lambdaValue) - lambdaValue * value
 }
 
 object Exponential extends Creatable {

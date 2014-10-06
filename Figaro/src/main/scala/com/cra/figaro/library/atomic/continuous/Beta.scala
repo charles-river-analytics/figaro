@@ -14,8 +14,8 @@
 package com.cra.figaro.library.atomic.continuous
 
 import com.cra.figaro.language._
-import math.pow
-import JSci.maths.SpecialMath.{ beta, gamma }
+import math.{ pow, log }
+import JSci.maths.SpecialMath.{ beta, gamma, logGamma }
 import com.cra.figaro.algorithm.ValuesMaker
 import com.cra.figaro.algorithm.lazyfactored.ValueSet
 
@@ -105,13 +105,16 @@ class AtomicBeta(name: Name[Double], a: Double, b: Double, collection: ElementCo
 
   }
 
+  lazy val aValue = a
+  lazy val bValue = b
+
   override def toString = "Beta(" + a + ", " + b + ")"
 }
 
 /**
  * A Beta distribution in which the parameters are elements.
  */
-class CompoundBeta(name: Name[Double], a: Element[Double], b: Element[Double], collection: ElementCollection)
+class CompoundBeta(name: Name[Double], val a: Element[Double], val b: Element[Double], collection: ElementCollection)
   extends NonCachingChain[Double, Double](
     name,
     a,
@@ -120,8 +123,31 @@ class CompoundBeta(name: Name[Double], a: Element[Double], b: Element[Double], c
       b,
       (b: Double) => new AtomicBeta("", a, b, collection),
       collection),
-    collection) {
+    collection)
+  with Beta {
+
+  def aValue = a.value
+  def bValue = b.value
+
   override def toString = "Beta(" + a + ", " + b + ")"
+}
+
+trait Beta extends Continuous[Double] {
+
+  /**
+   * Current a value.
+   */
+  def aValue: Double
+
+  /**
+   * Current b value.
+   */
+  def bValue: Double
+
+  def logp(value: Double) =
+    logGamma(aValue + bValue) - logGamma(aValue) - logGamma(bValue) +
+      (aValue - 1) * log(value) + (bValue - 1) * log(1 - value)
+
 }
 
 object Beta extends Creatable {

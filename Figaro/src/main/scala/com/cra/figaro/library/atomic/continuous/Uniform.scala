@@ -14,13 +14,14 @@
 package com.cra.figaro.library.atomic.continuous
 
 import com.cra.figaro.language._
-import com.cra.figaro.util._
+import com.cra.figaro.util.random
+import scala.math.log
 
 /**
  * A continuous uniform distribution in which the parameters are constants.
  */
 class AtomicUniform(name: Name[Double], val lower: Double, val upper: Double, collection: ElementCollection)
-  extends Element[Double](name, collection) with Atomic[Double] {
+  extends Element[Double](name, collection) with Atomic[Double] with Uniform {
   type Randomness = Double
 
   private lazy val diff = upper - lower
@@ -32,6 +33,9 @@ class AtomicUniform(name: Name[Double], val lower: Double, val upper: Double, co
   private lazy val constantDensity = 1.0 / diff
 
   def density(d: Double) = if (d >= lower && d < upper) constantDensity; else 0.0
+
+  lazy val upperValue = upper
+  lazy val lowerValue = lower
 
   override def toString = "Uniform(" + lower + ", " + upper + ")"
 }
@@ -48,8 +52,31 @@ class CompoundUniform(name: Name[Double], val lower: Element[Double], val upper:
       upper,
       (u: Double) => new AtomicUniform("", l, u, collection),
       collection),
-    collection) {
+    collection)
+  with Uniform {
+
+  def lowerValue = lower.value
+  def upperValue = upper.value
+
   override def toString = "Uniform(" + lower.toString + ", " + upper.toString + ")"
+}
+
+trait Uniform extends Continuous[Double] {
+
+  /**
+   * Current lower value.
+   */
+  def lowerValue: Double
+
+  /**
+   * Current upper value.
+   */
+  def upperValue: Double
+
+  // TODO return -Inf if value is outside of bounds
+  def logp(value: Double) =
+    -log(upperValue - lowerValue)
+
 }
 
 object Uniform extends Creatable {
