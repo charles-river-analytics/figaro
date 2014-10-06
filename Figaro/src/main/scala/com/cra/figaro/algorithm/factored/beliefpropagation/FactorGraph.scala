@@ -26,6 +26,11 @@ trait FactorGraph[T] {
   def uniformFactor(v: List[Variable[_]]): Factor[T]
   
   /**
+   * Returns true if the graph contains a node for a (single) variable
+   */
+  def contains(v: Variable[_]): Boolean
+  
+  /**
    * Returns all nodes in the factor graph
    */
   def getNodes(): Iterable[Node]
