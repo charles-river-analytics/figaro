@@ -80,4 +80,6 @@ class BasicFactorGraph(factors: List[Factor[Double]], semiring: Semiring[Double]
     adjacencyList(from) += (to -> f)
     this
   }
+  
+  def contains(v: Variable[_]): Boolean = adjacencyList.contains(VariableNode(v))
 }

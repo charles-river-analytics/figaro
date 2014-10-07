@@ -18,6 +18,7 @@ import com.cra.figaro.algorithm.lazyfactored.LazyValues
 import com.cra.figaro.algorithm.sampling.ProbEvidenceSampler
 import com.cra.figaro.algorithm.{ OneTimeProbQuery, AnytimeProbQuery }
 import com.cra.figaro.language._
+import com.cra.figaro.algorithm.factored.Factory
 
 /**
  * Abstract class that runs the Factored Frontier algorithm.
@@ -90,10 +91,12 @@ abstract class FactoredFrontier(static: Universe, initial: Universe, transition:
      * We must explicitly add all named elements from the two dummy universes, as FactoredAlgorithm cannot get them by default.
      * This is to ensure that they are correctly expanded and included for factor creation.
      */
+    Factory.removeFactors
     createBP(getNamedElements(currentUniverse) ::: getNamedElements(currentStatic) ::: getNamedElements(dummyUniverse))
     runBP()
 
     dummyUniverse.clear()
+    previousUniverse.clear()
   }
 
   /**

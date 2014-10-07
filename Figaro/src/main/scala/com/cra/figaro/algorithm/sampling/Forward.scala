@@ -32,6 +32,10 @@ object Forward {
       elementsRemaining = elementsRemaining.tail
     }
   }
+  
+  def apply[T](element: Element[T]) = {
+    sampleInState(element, Set[Element[_]](), element.universe)
+  }
 
   private type State = Set[Element[_]]
 

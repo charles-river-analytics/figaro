@@ -17,6 +17,7 @@ import com.cra.figaro.language._
 import com.cra.figaro.algorithm.{Algorithm, ParameterLearner, ProbQueryAlgorithm, OneTime}
 import com.cra.figaro.algorithm.factored.beliefpropagation.BeliefPropagation
 import com.cra.figaro.algorithm.sampling.{Importance, MetropolisHastings, ProposalScheme}
+import com.cra.figaro.algorithm.factored.Factory
 
 /*
  * @param inferenceAlgorithmConstructor
@@ -93,7 +94,8 @@ class GeneralizedEM(inferenceAlgorithmConstructor: Seq[Element[_]] => Universe =
 }
  
 object EMWithBP {
-  private def makeBP(numIterations: Int, targets: Seq[Element[_]])(universe: Universe) = {
+  private def makeBP(numIterations: Int, targets: Seq[Element[_]])(universe: Universe) = {    
+    Factory.removeFactors()
     BeliefPropagation(numIterations, targets:_*)(universe)
   }
   
