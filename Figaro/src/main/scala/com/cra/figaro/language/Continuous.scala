@@ -9,12 +9,10 @@ trait Continuous[T] extends Element[T] {
 
   override def observe(value: T) {
     addLogConstraint { _ => logp(value) }
-    deactivate()
     set(value)
   }
 
   override def unobserve() {
-    activate()
     unset()
   }
 
