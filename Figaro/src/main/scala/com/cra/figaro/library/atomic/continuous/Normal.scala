@@ -44,11 +44,7 @@ class AtomicNormal(name: Name[Double], val mean: Double, val variance: Double, c
   /**
    * Density of a value.
    */
-  def density(d: Double) = {
-    val diff = d - mean
-    val exponent = -(diff * diff) / (2.0 * variance)
-    normalizer * exp(exponent)
-  }
+  def density(d: Double) = Normal.density(mean, variance, normalizer)(d)
 
   override def toString = "Normal(" + mean + ", " + variance + ")"
 }
@@ -82,6 +78,13 @@ class CompoundNormal(name: Name[Double], val mean: Element[Double], val variance
 }
 
 object Normal extends Creatable {
+  
+  def density(mean: Double, variance: Double, normalizer: Double)(d: Double) = {
+    val diff = d - mean
+    val exponent = -(diff * diff) / (2.0 * variance)
+    normalizer * exp(exponent)
+  }
+  
   /**
    * Create a normal distribution in which the mean and variance are constants.
    */
