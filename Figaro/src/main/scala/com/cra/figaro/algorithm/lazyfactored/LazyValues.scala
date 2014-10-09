@@ -20,6 +20,7 @@ import com.cra.figaro.library.compound._
 import scala.collection.mutable.Map
 import scala.collection.SortedSet
 import ValueSet._
+import com.cra.figaro.algorithm.factored.ParticleGenerator
 
 /*
  * The Values class takes a universe and a depth and provides a 
@@ -29,24 +30,31 @@ import ValueSet._
  */
 
 class LazyValues(universe: Universe) {
-  private def values[T](element: Element[T], depth: Int): ValueSet[T] = {
+  private def values[T](element: Element[T], depth: Int, numArgSamples: Int, numTotalSamples: Int): ValueSet[T] = {
     // In some cases (e.g. CompoundFlip), we might know the value of an element without getting the values of its arguments.
     // However, future algorithms rely on the values of the arguments having been gotten already.
     // Therefore, we compute the values of the arguments (to a lesser depth) first, 
     // and use the stored values of the arguments when we actually compute the values of the element.
-    for { arg <- element.args } {
-      LazyValues(arg.universe)(arg, depth - 1)
+    
+    // Override the argument list for chains since the resultElement of the chain will be processed as the chain is processed
+    val elementArgs = element match {
+      case c: Chain[_,_] => List(c.parent) 
+      case _ => element.args
+    }
+       
+    for { arg <- elementArgs } {
+      LazyValues(arg.universe)(arg, depth - 1, numArgSamples, numTotalSamples)
       usedBy(arg) = usedBy.getOrElse(arg, Set()) + element
     }
 
     Abstraction.fromPragmas(element.pragmas) match {
-      case None => concreteValues(element, depth)
-      case Some(abstraction) => abstractValues(element, abstraction, depth)
+      case None => concreteValues(element, depth, numArgSamples, numTotalSamples)
+      case Some(abstraction) => abstractValues(element, abstraction, depth, numArgSamples, numTotalSamples)
     }
 
   }
 
-  private def concreteValues[T](element: Element[T], depth: Int): ValueSet[T] =
+  private def concreteValues[T](element: Element[T], depth: Int, numArgSamples: Int, numTotalSamples: Int): ValueSet[T] =
     element match {
       case c: Constant[_] => withoutStar(Set(c.constant))
       case f: Flip => withoutStar(Set(true, false))
@@ -139,10 +147,10 @@ class LazyValues(universe: Universe) {
         if (vs1.hasStar || vs2.hasStar || vs3.hasStar || vs4.hasStar || vs5.hasStar) withStar(resultsList.toSet); else withoutStar(resultsList.toSet)
       case c: Chain[_, _] =>
 
-        def findChainValues[T, U](chain: Chain[T, U], cmap: Map[T, Element[U]], pVals: ValueSet[T]): Set[ValueSet[U]] = {
+        def findChainValues[T, U](chain: Chain[T, U], cmap: Map[T, Element[U]], pVals: ValueSet[T], samples: Int): Set[ValueSet[U]] = {
           val chainVals = pVals.regularValues.map { parentVal =>
-            val resultElem = getOrElseInsert(cmap, parentVal, chain.get(parentVal))
-            val result = LazyValues(resultElem.universe)(resultElem, depth - 1) //.asInstanceOf[ValueSet[c.Value]]
+            val resultElem = getOrElseInsert(cmap, parentVal, chain.getUncached(parentVal))
+            val result = LazyValues(resultElem.universe)(resultElem, depth - 1, samples, samples) 
             usedBy(resultElem) = usedBy.getOrElse(resultElem, Set()) + element
             result
           }
@@ -150,13 +158,15 @@ class LazyValues(universe: Universe) {
           if (newParentVals == pVals) {
             chainVals
           } else {
-            findChainValues(chain, cmap, newParentVals)
+            findChainValues(chain, cmap, newParentVals, samples)
           }
         }
 
         val chainMap = getMap(c)
-        val parentVS = LazyValues(c.parent.universe).storedValues(c.parent)
-        val resultVSs = findChainValues(c, chainMap, parentVS)
+        val parentVS = LazyValues(c.parent.universe).storedValues(c.parent)        
+        val samplesPerValue = math.max(1, (numTotalSamples.toDouble/parentVS.regularValues.size).toInt)
+        
+        val resultVSs = findChainValues(c, chainMap, parentVS, samplesPerValue)
 
         val startVS: ValueSet[c.Value] =
           if (parentVS.hasStar) withStar[c.Value](Set()); else withoutStar[c.Value](Set())
@@ -170,12 +180,21 @@ class LazyValues(universe: Universe) {
       case v: ValuesMaker[_] => {
         v.makeValues(depth)
       }
+      case a: Atomic[_] => {
+        if (!ParticleGenerator.exists(universe)) {
+          println("Warning: Sampling element " + a + " even though no sampler defined for this universe")
+        }
+        val thisSampler = ParticleGenerator(universe)
+    	val samples = thisSampler(a, numArgSamples)
+        withoutStar(samples.unzip._2.toSet)
+      }
       case _ =>
         /* A new improvement - if we can't compute the values, we just make them *, so the rest of the computation can proceed */
         withStar(Set())
     }
 
-  private def abstractValues[T](element: Element[T], abstraction: Abstraction[T], depth: Int): ValueSet[T] = {
+  private def abstractValues[T](element: Element[T], abstraction: Abstraction[T], depth: Int,
+      numArgSamples: Int, numTotalSamples: Int): ValueSet[T] = {
     val (inputs, hasStar): (List[T], Boolean) = {
       element match {
         case _: Atomic[_] =>
@@ -184,7 +203,7 @@ class LazyValues(universe: Universe) {
               yield element.generateValue(element.generateRandomness)
           (values.toList, false)
         case _ =>
-          val values = concreteValues(element, depth)
+          val values = concreteValues(element, depth, numArgSamples, numTotalSamples)
           (values.regularValues.toList, values.hasStar)
       }
     }
@@ -216,6 +235,10 @@ class LazyValues(universe: Universe) {
    * or if a previous call has resulted in a result with no Star, the previous result is reused.
    */
   def apply[T](element: Element[T], depth: Int): ValueSet[T] = {
+    apply(element, depth, ParticleGenerator.defaultArgSamples, ParticleGenerator.defaultTotalSamples )
+  }
+  
+  def apply[T](element: Element[T], depth: Int, numArgSamples: Int, numTotalSamples: Int): ValueSet[T] = {
     val myDepth = requiredDepths.getOrElse(element, -1).max(depth)
     if (LazyValues.debug) {
       println("Computing values for " + element.toNameString + "@" + element.hashCode + ", depth = " + myDepth)
@@ -227,7 +250,7 @@ class LazyValues(universe: Universe) {
         }
         result.asInstanceOf[ValueSet[T]]
       case _ =>
-        val vs = if (myDepth >= 0) values(element, myDepth); else withStar[T](Set())
+        val vs = if (myDepth >= 0) values(element, myDepth, numArgSamples, numTotalSamples); else withStar[T](Set())
         memoValues += element -> (vs, myDepth)
         if (LazyValues.debug) {
           println("Newly computed values for " + element.toNameString + ": " + vs)

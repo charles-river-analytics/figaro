@@ -109,10 +109,13 @@ trait FactoredAlgorithm[T] extends Algorithm {
     // We only include elements from other universes if they are specified in the starter elements.
     val resultElements = values.expandedElements.toList ::: starterElements.filter(_.universe != universe)
     
-    resultElements.foreach(p => p match {
-      case n: NonCachingChain[_,_] => throw new UnsupportedAlgorithmException(n)
-      case _ => 
-    })
+    /* We support non caching chains now using sampling 
+    * resultElements.foreach(p => p match {
+    *   case n: NonCachingChain[_,_] => throw new UnsupportedAlgorithmException(n)
+    *   case _ => 
+    }* )
+    * 
+    */
         
     // Only conditions and constraints produce distinct lower and upper bounds for *. So, if there are not such elements with * as one
     // of their values, we don't need to compute bounds and can save computation.

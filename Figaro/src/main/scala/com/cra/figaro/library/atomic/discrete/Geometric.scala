@@ -42,7 +42,7 @@ class AtomicGeometric(name: Name[Int], probFail: Double, collection: ElementColl
   /**
    * Probability of a value.
    */
-  def density(x: Int) = pow(probFail, x - 1) * probSuccess
+  def density(x: Int) = if (x < lowerBound) 0.0 else pow(probFail, x - 1) * probSuccess
 
   override def toString = "Geometric(" + probFail + ")"
 }

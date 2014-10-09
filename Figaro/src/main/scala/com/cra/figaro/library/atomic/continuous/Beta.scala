@@ -42,7 +42,7 @@ class AtomicBeta(name: Name[Double], a: Double, b: Double, collection: ElementCo
   /**
    * Density of a value.
    */
-  def density(x: Double) = pow(x, a - 1) * pow(1 - x, b - 1) * normalizer
+  def density(x: Double) = if (x < 0.0 || x > 1.0) 0.0 else pow(x, a - 1) * pow(1 - x, b - 1) * normalizer
 
   /**
    * The learned alpha parameter
