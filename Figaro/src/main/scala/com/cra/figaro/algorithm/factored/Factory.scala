@@ -21,7 +21,6 @@ import scala.language.existentials
 import com.cra.figaro.algorithm.lazyfactored._
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.SetBuilder
-import com.cra.figaro.algorithm.factored.ParticleGenerator
 
 /**
  * Methods for creating probabilistic factors associated with elements.

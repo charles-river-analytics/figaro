@@ -7,7 +7,6 @@ import com.cra.figaro.util._
 import com.cra.figaro.language.Universe
 import com.cra.figaro.language.Atomic
 import com.cra.figaro.library.atomic.discrete.OneShifter
-import com.cra.figaro.experimental.particlebp.DensityEstimator
 import com.cra.figaro.experimental.particlebp.GMMDensityEstimator
 
 /**
@@ -130,7 +129,7 @@ object ParticleGenerator {
       }
     }
 
-  def apply(univ: Universe): ParticleGenerator = apply(univ, new GMMDensityEstimator(1.0))
+  def apply(univ: Universe): ParticleGenerator = apply(univ, new ConstantDensityEstimator)
 
   def exists(univ: Universe): Boolean = samplerMap.contains(univ)
 
