@@ -7,7 +7,6 @@ import com.cra.figaro.util._
 import com.cra.figaro.language.Universe
 import com.cra.figaro.language.Atomic
 import com.cra.figaro.library.atomic.discrete.OneShifter
-import com.cra.figaro.experimental.particlebp.GMMDensityEstimator
 
 /**
  * Class to handle sampling from continuous elements in PBP
