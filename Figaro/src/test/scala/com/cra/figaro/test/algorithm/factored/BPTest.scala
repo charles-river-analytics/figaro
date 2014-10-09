@@ -282,6 +282,8 @@ class BPTest extends WordSpec with Matchers {
       bp.probability(x, true) should be (1.0)
     }
         
+    // Removed, we now support non-caching chains
+    /*
     "should not support non-caching chains" in {
       Universe.createNew()
       val f = Flip(0.5)
@@ -289,6 +291,8 @@ class BPTest extends WordSpec with Matchers {
       val ve = BeliefPropagation(50)
       an [UnsupportedAlgorithmException] should be thrownBy { ve.getNeededElements(List(x), Int.MaxValue) } 
     }
+    * 
+    */
   }
 
   "MaxProductBeliefPropagation" should {

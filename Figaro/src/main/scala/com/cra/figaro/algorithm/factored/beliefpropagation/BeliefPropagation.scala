@@ -191,12 +191,9 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
    *  Normalize a factor
    */
   def normalize(factor: Factor[Double]): Factor[Double] = {
-    //val z = factor.foldLeft(semiring.zero, _ + _)
     val z = semiring.sumMany(factor.contents.values)
-    //val normedFactor = /*new Factor[Double](factor.variables)*/Factory.make[Double](factor.variables)
     // Since we're in log space, d - z = log(exp(d)/exp(z))
-    factor.mapTo((d: Double) => if (z != semiring.zero) d - z else semiring.zero, factor.variables)
-    //normedFactor
+    factor.mapTo((d: Double) => if (z != semiring.zero) d - z else semiring.zero, factor.variables)    
   }
 
   /*
@@ -205,7 +202,6 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
   override protected[figaro] def newMessage(source: Node, target: Node): Factor[Double] = {
     val newMessage = super.newMessage(source, target)
     normalize(newMessage)
-    //newMessage
   }
 
   /**
@@ -214,7 +210,6 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
    */
   def getFactors(neededElements: List[Element[_]], targetElements: List[Element[_]], upperBounds: Boolean = false): List[Factor[Double]] = {
 
-    Factory.removeFactors()
     val thisUniverseFactors = (neededElements flatMap (BoundedProbFactor.make(_, upperBounds))).filterNot(_.isEmpty)
     val dependentUniverseFactors =
       for { (dependentUniverse, evidence) <- dependentUniverses } yield Factory.makeDependentFactor(universe, dependentUniverse, dependentAlgorithm(dependentUniverse, evidence))
@@ -223,11 +218,14 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
     factors.map(makeLogarithmic(_))
   }
 
-  private def makeLogarithmic(factor: Factor[Double]): Factor[Double] = {
-    //val result = Factory.make[Double](factor.variables)
-    factor.mapTo((d: Double) => Math.log(d), factor.variables)
-    //result
+  private[figaro] def makeLogarithmic(factor: Factor[Double]): Factor[Double] = {
+    factor.mapTo((d: Double) => Math.log(d), factor.variables)    
   }
+  
+  private[figaro] def unmakeLogarithmic(factor: Factor[Double]): Factor[Double] = {
+    factor.mapTo((d: Double) => Math.exp(d), factor.variables)
+  }
+  
   /**
    * Get the belief for an element
    */
@@ -318,8 +316,13 @@ abstract class ProbQueryBeliefPropagation(override val universe: Universe, targe
 
   val semiring = LogSumProductSemiring
 
+  var neededElements: List[Element[_]] = _ 
+  var needsBounds: Boolean = _ 
+  
   override def initialize() = {
-    val (neededElements, needsBounds) = getNeededElements(starterElements, depth)
+    val needs = getNeededElements(starterElements, depth)
+    neededElements = needs._1
+    needsBounds = needs._2
 
     // Depth < MaxValue implies we are using bounds  
     val factors = if (depth < Int.MaxValue && needsBounds) {
