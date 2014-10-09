@@ -22,7 +22,23 @@ trait Parameterized[T] extends Element[T] with HasDensity[T] {
   /**
   * The parameter for this element.
   */
-  val parameter: Parameter[_]
+  val parameters: Set[Parameter[_]]
   
+  def distributionToStatistics(p: Parameter[_], distribution: Stream[(Double, T)]): Seq[Double]
+}
+
+trait SingleParameterized[T] extends Parameterized[T] {
+  val parameter: Parameter[_]
+  override val parameters: Set[Parameter[_]] = Set(parameter)
+  
+  override def distributionToStatistics(p: Parameter[_], distribution: Stream[(Double, T)]): Seq[Double] = {
+    if (p == parameter) {
+      distributionToStatistics(distribution)
+    }
+    else {
+      p.zeroSufficientStatistics
+    }
+    
+  }
   def distributionToStatistics(distribution: Stream[(Double, T)]): Seq[Double]
 }

@@ -124,6 +124,20 @@ class Chain[T, U](name: Name[U], val parent: Element[T], fcn: T => Element[U], c
     newResult
   }
   
+  /**
+   * Get the distribution over the result corresponding to the given parent value. This call is UNCACHED, 
+   * meaning it will not be stored in the Chain's cache, and subsequent calls using the same parentValue
+   * could return different elements
+   */
+  def getUncached(parentValue: T): Element[U] = {
+    if (lastParentValue == null || lastParentValue != parentValue) {
+      myMappedContextContents.getOrElseUpdate(parentValue, Set())
+      lastParentValue = parentValue
+      resultElement = getResult(parentValue)
+      universe.registerUses(this, resultElement)
+    }
+    resultElement
+  }
   
   // All elements created in cpd will be created in this Chain's context with a subContext of parentValue
   private def getResult(parentValue: T): Element[U] = {

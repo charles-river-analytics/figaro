@@ -32,11 +32,11 @@ import scala.math.log
 abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, proposalScheme: ProposalScheme, burnIn: Int, interval: Int,
   utilityNodes: List[Element[_]], decisionTarget: Decision[T, U], dummyTarget: Element[_])
   extends UnweightedSampler(universe, dummyTarget) with DecisionAlgorithm[T, U] {
-  
+
   def this(universe: Universe, proposalScheme: ProposalScheme, burnIn: Int, interval: Int,
-  utilityNodes: List[Element[_]], decisionTarget: Decision[T, U]) = this(universe, proposalScheme, 
-      burnIn, interval, utilityNodes, decisionTarget, createDecisionDummy(decisionTarget))
-  
+    utilityNodes: List[Element[_]], decisionTarget: Decision[T, U]) = this(universe, proposalScheme,
+    burnIn, interval, utilityNodes, decisionTarget, createDecisionDummy(decisionTarget))
+
   import MetropolisHastings._
 
   // Used for debugging
@@ -55,13 +55,13 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
   private var allUtilitiesSeen: List[WeightSeen[_]] = _
 
   private def utilitySum = (0.0 /: utilityNodes)((s: Double, n: Element[_]) => s + n.value.asInstanceOf[Double])
-  
+
   /**
    * Cleans up the temporary elements created during sampling
    */
   def cleanup() = universe.deactivate(queryTargets)
 
-    /* Overrides DecisionAlgorithm Trait */
+  /* Overrides DecisionAlgorithm Trait */
   def computeUtility(): scala.collection.immutable.Map[(T, U), DecisionSample] = {
     val TimesSeen = allTimesSeen.find(_._1 == dummyTarget).get._2.asInstanceOf[Map[(T, U), Int]]
     val utilitySeen = allUtilitiesSeen.find(_._1 == dummyTarget).get._2.asInstanceOf[Map[(T, U), Double]]
@@ -285,7 +285,7 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
     if (decideToAccept(newState)) accept(newState)
     else undo(newState)
   }
-  
+
   protected def updateWeightSeenWithValue[T](value: T, weight: Double, weightSeen: WeightSeen[T]): Unit =
     weightSeen._2 += value -> (weightSeen._2.getOrElse(value, 0.0) + weight)
 
@@ -324,6 +324,13 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
       sampleCount += 1
       s._2 foreach (t => updateTimesSeenForTarget(t._1.asInstanceOf[Element[t._1.Value]], t._2.asInstanceOf[t._1.Value]))
     }
+  }
+
+  protected override def update(): Unit = {
+    super.update
+    sampleCount += 1
+    allUtilitiesSeen foreach (updateWeightSeenForTarget((utilitySum, Map[Element[_], Any](dummyTarget -> dummyTarget.value)), _))    
+    sampleCount -= 1
   }
 
   protected def doInitialize(): Unit = {
@@ -410,6 +417,7 @@ class OneTimeDecisionMetropolisHastings[T, U](universe: Universe, myNumSamples: 
   override def run(): Unit = {
     doInitialize()
     super.run()
+    update
   }
 }
 
@@ -430,8 +438,8 @@ object DecisionMetropolisHastings {
     }
   }
 
-   /**
-   * Create an Anytime DecisionMetropolis-Hastings sampler using the given proposal scheme with the given 
+  /**
+   * Create an Anytime DecisionMetropolis-Hastings sampler using the given proposal scheme with the given
    * decision.
    */
   /*

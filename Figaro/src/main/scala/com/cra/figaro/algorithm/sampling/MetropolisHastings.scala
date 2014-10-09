@@ -427,6 +427,7 @@ class OneTimeMetropolisHastings(universe: Universe, myNumSamples: Int, scheme: P
   override def run(): Unit = {
     doInitialize()
     super.run()
+    update
   }
 }
 

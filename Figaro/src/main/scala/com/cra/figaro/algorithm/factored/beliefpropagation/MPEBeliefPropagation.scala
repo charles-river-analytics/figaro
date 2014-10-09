@@ -35,11 +35,12 @@ abstract class MPEBeliefPropagation(override val universe: Universe)(
    */
   val targetElements = List[Element[_]]()
 
-  //val queryTargets = universe.activeElements
+  override def initialize() = {
+    val (neededElements, _) = getNeededElements(universe.activeElements, Int.MaxValue)
 
-  val (neededElements, _) = getNeededElements(universe.activeElements, Int.MaxValue)
-
-  val factorGraph = new BasicFactorGraph(getFactors(neededElements, targetElements), semiring)
+    factorGraph = new BasicFactorGraph(getFactors(neededElements, targetElements), semiring): FactorGraph[Double]
+    super.initialize
+  }
 
   def mostLikelyValue[T](target: Element[T]): T = {
     val beliefs = getBeliefsForElement(target)
