@@ -41,8 +41,10 @@ class AtomicGamma(name: Name[Double], k: Double, theta: Double = 1.0, collection
    * Density of a value.
    */
   def density(x: Double) = {
-    val numer = pow(x, k - 1) * exp(-x / theta)
-    numer * normalizer
+    if (x < 0.0) 0.0 else {
+      val numer = pow(x, k - 1) * exp(-x / theta)
+      numer * normalizer
+    }
   }
 
   override def toString =

@@ -54,6 +54,7 @@ class AtomicBinomial(name: Name[Int], val numTrials: Int, val probSuccess: Doubl
    * Probability of a value.
    */
   def density(k: Int) = {
+    if (k < 0 || k > numTrials) 0.0 else
     Util.binomialDensity(numTrials, probSuccess, k)
   }
 
