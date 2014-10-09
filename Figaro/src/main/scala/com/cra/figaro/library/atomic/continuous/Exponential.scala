@@ -31,7 +31,7 @@ class AtomicExponential(name: Name[Double], lambda: Double, collection: ElementC
   /**
    * Density of a value.
    */
-  def density(d: Double) = lambda * exp(-lambda * d)
+  def density(d: Double) = if (d < 0.0) 0.0 else lambda * exp(-lambda * d)
 
   override def toString = "Exponential(" + lambda + ")"
 }

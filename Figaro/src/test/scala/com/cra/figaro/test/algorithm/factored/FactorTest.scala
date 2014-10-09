@@ -14,16 +14,36 @@
 package com.cra.figaro.test.algorithm.factored
 
 import org.scalatest.Matchers
-import org.scalatest.{ WordSpec, PrivateMethodTester }
-import com.cra.figaro.algorithm._
-import com.cra.figaro.algorithm.factored._
-import com.cra.figaro.algorithm.sampling._
-import com.cra.figaro.language._
-import com.cra.figaro.library.atomic.continuous._
-import com.cra.figaro.library.compound._
-import com.cra.figaro.algorithm.lazyfactored.{Regular}
+import org.scalatest.PrivateMethodTester
+import org.scalatest.WordSpec
+import com.cra.figaro.algorithm.Values
+import com.cra.figaro.algorithm.factored.Factory
+import com.cra.figaro.algorithm.factored.SumProductSemiring
+import com.cra.figaro.algorithm.factored.Variable
 import com.cra.figaro.algorithm.lazyfactored.LazyValues
-
+import com.cra.figaro.algorithm.lazyfactored.Regular
+import com.cra.figaro.algorithm.lazyfactored.ValueSet
+import com.cra.figaro.algorithm.sampling.ProbEvidenceSampler
+import com.cra.figaro.language.Apply
+import com.cra.figaro.language.Apply3
+import com.cra.figaro.language.Apply4
+import com.cra.figaro.language.Apply5
+import com.cra.figaro.language.CachingChain
+import com.cra.figaro.language.Chain
+import com.cra.figaro.language.Condition
+import com.cra.figaro.language.Constant
+import com.cra.figaro.language.Dist
+import com.cra.figaro.language.Flip
+import com.cra.figaro.language.Inject
+import com.cra.figaro.language.Name.stringToName
+import com.cra.figaro.language.NamedEvidence
+import com.cra.figaro.language.Reference.stringToReference
+import com.cra.figaro.language.Select
+import com.cra.figaro.language.Universe
+import com.cra.figaro.library.atomic.continuous.Normal
+import com.cra.figaro.library.atomic.continuous.Uniform
+import com.cra.figaro.library.compound.CPD
+import com.cra.figaro.algorithm.factored.ParticleGenerator
 
 class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
 
@@ -44,6 +64,27 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
       val v1 = Variable(e1)
       val v2 = Variable(e1)
       v1 should equal(v2)
+    }
+
+    "always contain the same id even if the Variable cache is cleared" in {
+      Universe.createNew()
+      val e1 = Flip(0.2)
+      Values()(e1)
+      val v1 = Variable(e1).id 
+      Variable.clearCache
+      LazyValues.clear(Universe.universe)
+      Values()(e1)
+      val v2 = Variable(e1).id
+      v1 should equal(v2)
+    }
+    
+    "always be equal to a variable with the same id" in {
+      Universe.createNew()
+      val e1 = Flip(0.2)
+      Values()(e1)
+      val v1 = Variable(e1)
+      val v2 = new Variable(ValueSet.withStar(Set[Boolean]())) {override val id = v1.id}
+      v1 == v2 should equal(true)
     }
 
     "be different to a variable for a different element with the same definition" in {
@@ -79,6 +120,16 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
       f.set(indices, 0.3)
       f.get(indices) should equal(0.3)
     }
+    
+    "get updated set of factors for an element when the factors have been updated" in {
+      Universe.createNew()
+      val v1 = Flip(0.5)
+      Values()(v1)
+      val f1 = Factory.make(v1)(0)
+      val f1mod = f1.mapTo((d: Double) => 2.0*d, f1.variables)
+      Factory.updateFactor(v1, List(f1mod))
+      Factory.make(v1)(0).get(List(0)) should equal(f1mod.get(List(0)))
+    } 
 
     "have the first index List be all zeros" in {
       Universe.createNew()
@@ -338,96 +389,93 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
       }
     }
   }
-  
+
   "after marginalizing to two variables" should {
-      "return the marginal distribution over the variables" in {
-        Universe.createNew()
-        val e1 = Select(0.2 -> "a", 0.3 -> "b", 0.5 -> "c")
-        val e2 = Flip(0.5)
-        val e3 = Flip(0.1)
-        Values()(e1)
-        Values()(e2)
-        Values()(e3)
-        val v1 = Variable(e1)
-        val v2 = Variable(e2)
-        val v3 = Variable(e3)
-        val f = Factory.make[Double](List(v1, v2, v3))
-        f.set(List(0, 0, 0), 0.0)
-        f.set(List(1, 0, 0), 0.05)
-        f.set(List(2, 0, 0), 0.1)
-        f.set(List(0, 0, 1), 0.15)
-        f.set(List(1, 0, 1), 0.2)
-        f.set(List(2, 0, 1), 0.25)
-        f.set(List(0, 1, 0), 0.0)
-        f.set(List(1, 1, 0), 0.05)
-        f.set(List(2, 1, 0), 0.1)
-        f.set(List(0, 1, 1), 0.15)
-        f.set(List(1, 1, 1), 0.2)
-        f.set(List(2, 1, 1), 0.25)
-        val g = f.marginalizeTo(SumProductSemiring, v1, v3)
-        g.variables should equal(List(v1, v3))
-        g.get(List(0, 0)) should be(0.0 +- 0.000001)
-        g.get(List(1, 0)) should be(0.1 +- 0.000001)
-        g.get(List(2, 0)) should be(0.2 +- 0.000001)
-        g.get(List(0, 1)) should be(0.3 +- 0.000001)
-        g.get(List(1, 1)) should be(0.4 +- 0.000001)
-        g.get(List(2, 1)) should be(0.5 +- 0.000001)
-      }
+    "return the marginal distribution over the variables" in {
+      Universe.createNew()
+      val e1 = Select(0.2 -> "a", 0.3 -> "b", 0.5 -> "c")
+      val e2 = Flip(0.5)
+      val e3 = Flip(0.1)
+      Values()(e1)
+      Values()(e2)
+      Values()(e3)
+      val v1 = Variable(e1)
+      val v2 = Variable(e2)
+      val v3 = Variable(e3)
+      val f = Factory.make[Double](List(v1, v2, v3))
+      f.set(List(0, 0, 0), 0.0)
+      f.set(List(1, 0, 0), 0.05)
+      f.set(List(2, 0, 0), 0.1)
+      f.set(List(0, 0, 1), 0.15)
+      f.set(List(1, 0, 1), 0.2)
+      f.set(List(2, 0, 1), 0.25)
+      f.set(List(0, 1, 0), 0.0)
+      f.set(List(1, 1, 0), 0.05)
+      f.set(List(2, 1, 0), 0.1)
+      f.set(List(0, 1, 1), 0.15)
+      f.set(List(1, 1, 1), 0.2)
+      f.set(List(2, 1, 1), 0.25)
+      val g = f.marginalizeTo(SumProductSemiring, v1, v3)
+      g.variables should equal(List(v1, v3))
+      g.get(List(0, 0)) should be(0.0 +- 0.000001)
+      g.get(List(1, 0)) should be(0.1 +- 0.000001)
+      g.get(List(2, 0)) should be(0.2 +- 0.000001)
+      g.get(List(0, 1)) should be(0.3 +- 0.000001)
+      g.get(List(1, 1)) should be(0.4 +- 0.000001)
+      g.get(List(2, 1)) should be(0.5 +- 0.000001)
     }
-  
-  	"after deduplicating a factor" should {
-      "have no repeated variables" in {
-        Universe.createNew()
-        val e1 = Select(0.2 -> "a", 0.3 -> "b", 0.5 -> "c")
-        val e2 = Flip(0.3)
-        Values()(e1)
-        Values()(e2)
-        val v1 = Variable(e1)
-        val v2 = Variable(e2)
-        val f = Factory.make[Double](List(v1, v2, v2))
-        f.set(List(0, 0, 0), 0.06)
-        f.set(List(0, 0, 1), 0.25)
-        f.set(List(0, 1, 0), 0.44)
-        f.set(List(0, 1, 1), 0.25)
-        f.set(List(1, 0, 0), 0.15)
-        f.set(List(1, 0, 1), 0.2)
-        f.set(List(1, 1, 0), 0.15)
-        f.set(List(1, 1, 1), 0.5)
-        f.set(List(2, 0, 0), 0.1)
-        f.set(List(2, 0, 1), 0.25)
-        f.set(List(2, 1, 0), 0.4)
-        f.set(List(2, 1, 1), 0.25)
+  }
 
-        val g = f.deDuplicate()
-                
-        g.variables.size should be (2)
-        g.variables.contains(v1) should be (true)
-        g.variables.contains(v2) should be (true)
-        
-        if (g.variables.indexOf(v1) == 0)
-        {
-        	g.get(List(0, 0)) should be (0.06 +- 0.000001)
-        	g.get(List(0, 1)) should be (0.25 +- 0.000001)
-        	g.get(List(1, 0)) should be (0.15 +- 0.000001)
-        	g.get(List(1, 1)) should be (0.5 +- 0.000001)
-        	g.get(List(2, 0)) should be (0.1 +- 0.000001)
-        	g.get(List(2, 1)) should be (0.25 +- 0.000001)
-        }
-        else
-        {
-            g.get(List(0, 0)) should be (0.06 +- 0.000001)
-        	g.get(List(1, 0)) should be (0.25 +- 0.000001)
-        	g.get(List(0, 1)) should be (0.15 +- 0.000001)
-        	g.get(List(1, 1)) should be (0.5 +- 0.000001)
-        	g.get(List(0, 2)) should be (0.1 +- 0.000001)
-        	g.get(List(1, 2)) should be (0.25 +- 0.000001)
-        }
+  "after deduplicating a factor" should {
+    "have no repeated variables" in {
+      Universe.createNew()
+      val e1 = Select(0.2 -> "a", 0.3 -> "b", 0.5 -> "c")
+      val e2 = Flip(0.3)
+      Values()(e1)
+      Values()(e2)
+      val v1 = Variable(e1)
+      val v2 = Variable(e2)
+      val f = Factory.make[Double](List(v1, v2, v2))
+      f.set(List(0, 0, 0), 0.06)
+      f.set(List(0, 0, 1), 0.25)
+      f.set(List(0, 1, 0), 0.44)
+      f.set(List(0, 1, 1), 0.25)
+      f.set(List(1, 0, 0), 0.15)
+      f.set(List(1, 0, 1), 0.2)
+      f.set(List(1, 1, 0), 0.15)
+      f.set(List(1, 1, 1), 0.5)
+      f.set(List(2, 0, 0), 0.1)
+      f.set(List(2, 0, 1), 0.25)
+      f.set(List(2, 1, 0), 0.4)
+      f.set(List(2, 1, 1), 0.25)
 
+      val g = f.deDuplicate()
+
+      g.variables.size should be(2)
+      g.variables.contains(v1) should be(true)
+      g.variables.contains(v2) should be(true)
+
+      if (g.variables.indexOf(v1) == 0) {
+        g.get(List(0, 0)) should be(0.06 +- 0.000001)
+        g.get(List(0, 1)) should be(0.25 +- 0.000001)
+        g.get(List(1, 0)) should be(0.15 +- 0.000001)
+        g.get(List(1, 1)) should be(0.5 +- 0.000001)
+        g.get(List(2, 0)) should be(0.1 +- 0.000001)
+        g.get(List(2, 1)) should be(0.25 +- 0.000001)
+      } else {
+        g.get(List(0, 0)) should be(0.06 +- 0.000001)
+        g.get(List(1, 0)) should be(0.25 +- 0.000001)
+        g.get(List(0, 1)) should be(0.15 +- 0.000001)
+        g.get(List(1, 1)) should be(0.5 +- 0.000001)
+        g.get(List(0, 2)) should be(0.1 +- 0.000001)
+        g.get(List(1, 2)) should be(0.25 +- 0.000001)
       }
+
     }
+  }
   "Making factors from an element" when {
 
-         "given a constant" should {
+    "given a constant" should {
       "produce a single factor with one entry whose value is 1.0" in {
         Universe.createNew()
         val v1 = Constant(7)
@@ -613,6 +661,17 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         }
     }
 
+    "given an atomic not in the factor" should {
+      "automatically sample the element" in {
+        Universe.createNew()        
+        val v1 = Normal(0.0, 1.0)
+        Values()(v1)
+        val factor = Factory.make(v1)
+        factor(0).size should equal(ParticleGenerator.defaultArgSamples)
+        factor(0).get(List(0)) should equal(1.0/ParticleGenerator.defaultArgSamples)
+      }
+    }
+    
     "given a chain" should {
       "produce a conditional selector for each parent value" in {
         Universe.createNew()
@@ -634,7 +693,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
 
         val factor = Factory.make(v4)
         val List(v4Factor) = Factory.combineFactors(factor, SumProductSemiring, true)
-        
+
         v4Factor.get(List(v1t, v41, v21, 0)) should equal(1.0)
         v4Factor.get(List(v1t, v41, v22, 0)) should equal(0.0)
         v4Factor.get(List(v1t, v42, v21, 0)) should equal(0.0)
@@ -649,7 +708,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         v4Factor.get(List(v1f, v43, v22, 0)) should equal(1.0)
 
       }
-      
+
       "produce a conditional selector for each non-temporary parent value" in {
         Universe.createNew()
         val v1 = Flip(0.2)
@@ -657,7 +716,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         Values()(v4)
         val v1Vals = Variable(v1).range
         val v4Vals = Variable(v4).range
-        
+
         val v1t = v1Vals indexOf Regular(true)
         val v1f = v1Vals indexOf Regular(false)
         val v41 = v4Vals indexOf Regular(1)
@@ -675,49 +734,49 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         v4Factor.get(List(v1f, v43)) should equal(1.0)
       }
     }
-    
+
     "given a CPD with one argument" should {
       "produce a single factor with a case for each parent value" in {
-    	  Universe.createNew()
-    	  val v1 = Flip(0.2)
-    	  
-    	  val v2 = CPD(v1, false -> Flip(0.1), true -> Flip(0.7))
-    	  Values()(v2)
-    	  
-    	  val v1Vals = Variable(v1).range
-    	  val v2Vals = Variable(v2).range
-    	    	  
-    	  val v1t = v1Vals indexOf Regular(true)
-    	  val v1f = v1Vals indexOf Regular(false)
-    	  val v2t = v2Vals indexOf Regular(true)
-    	  val v2f = v2Vals indexOf Regular(false)
-    	  val v3t = 0
-    	  val v3f = 1
-    	  val v4t = 0
-    	  val v4f = 1
-    	  
-    	  val factor = Factory.make(v2)
-          val List(v2Factor) = Factory.combineFactors(factor, SumProductSemiring, true)
-          
-    	  v2Factor.get(List(v1t, v2t, v3t, v4t)) should equal(1.0)
-    	  v2Factor.get(List(v1t, v2t, v3t, v4f)) should equal(1.0)
-    	  v2Factor.get(List(v1t, v2t, v3f, v4t)) should equal(0.0)
-    	  v2Factor.get(List(v1t, v2t, v3f, v4f)) should equal(0.0)
-    	  v2Factor.get(List(v1t, v2f, v3t, v4t)) should equal(0.0)
-    	  v2Factor.get(List(v1t, v2f, v3t, v4f)) should equal(0.0)
-    	  v2Factor.get(List(v1t, v2f, v3f, v4t)) should equal(1.0)
-    	  v2Factor.get(List(v1t, v2f, v3f, v4f)) should equal(1.0)
-    	  v2Factor.get(List(v1f, v2t, v3t, v4t)) should equal(1.0)
-    	  v2Factor.get(List(v1f, v2t, v3t, v4f)) should equal(0.0)
-    	  v2Factor.get(List(v1f, v2t, v3f, v4t)) should equal(1.0)
-    	  v2Factor.get(List(v1f, v2t, v3f, v4f)) should equal(0.0)
-    	  v2Factor.get(List(v1f, v2f, v3t, v4t)) should equal(0.0)
-    	  v2Factor.get(List(v1f, v2f, v3t, v4f)) should equal(1.0)
-    	  v2Factor.get(List(v1f, v2f, v3f, v4t)) should equal(0.0)
-    	  v2Factor.get(List(v1f, v2f, v3f, v4f)) should equal(1.0)
+        Universe.createNew()
+        val v1 = Flip(0.2)
+
+        val v2 = CPD(v1, false -> Flip(0.1), true -> Flip(0.7))
+        Values()(v2)
+
+        val v1Vals = Variable(v1).range
+        val v2Vals = Variable(v2).range
+
+        val v1t = v1Vals indexOf Regular(true)
+        val v1f = v1Vals indexOf Regular(false)
+        val v2t = v2Vals indexOf Regular(true)
+        val v2f = v2Vals indexOf Regular(false)
+        val v3t = 0
+        val v3f = 1
+        val v4t = 0
+        val v4f = 1
+
+        val factor = Factory.make(v2)
+        val List(v2Factor) = Factory.combineFactors(factor, SumProductSemiring, true)
+
+        v2Factor.get(List(v1t, v2t, v3t, v4t)) should equal(1.0)
+        v2Factor.get(List(v1t, v2t, v3t, v4f)) should equal(1.0)
+        v2Factor.get(List(v1t, v2t, v3f, v4t)) should equal(0.0)
+        v2Factor.get(List(v1t, v2t, v3f, v4f)) should equal(0.0)
+        v2Factor.get(List(v1t, v2f, v3t, v4t)) should equal(0.0)
+        v2Factor.get(List(v1t, v2f, v3t, v4f)) should equal(0.0)
+        v2Factor.get(List(v1t, v2f, v3f, v4t)) should equal(1.0)
+        v2Factor.get(List(v1t, v2f, v3f, v4f)) should equal(1.0)
+        v2Factor.get(List(v1f, v2t, v3t, v4t)) should equal(1.0)
+        v2Factor.get(List(v1f, v2t, v3t, v4f)) should equal(0.0)
+        v2Factor.get(List(v1f, v2t, v3f, v4t)) should equal(1.0)
+        v2Factor.get(List(v1f, v2t, v3f, v4f)) should equal(0.0)
+        v2Factor.get(List(v1f, v2f, v3t, v4t)) should equal(0.0)
+        v2Factor.get(List(v1f, v2f, v3t, v4f)) should equal(1.0)
+        v2Factor.get(List(v1f, v2f, v3f, v4t)) should equal(0.0)
+        v2Factor.get(List(v1f, v2f, v3f, v4f)) should equal(1.0)
       }
     }
-    
+
     "given an apply of one argument" should {
       "produce a factor that matches the argument to the result via the function" in {
         Universe.createNew()
@@ -1043,15 +1102,15 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val v11 = v1Vals indexOf Regular(1)
         val v12 = v1Vals indexOf Regular(2)
         val v13 = v1Vals indexOf Regular(3)
-        condFactor.get(List(v11)) should be (1.0 +- 0.000000001)
-        condFactor.get(List(v12)) should be (0.0 +- 0.000000001)
-        condFactor.get(List(v13)) should be (1.0 +- 0.000000001)
-        constrFactor.get(List(v11)) should be (1.0 +- 0.000000001)
-        constrFactor.get(List(v12)) should be (2.0 +- 0.000000001)
-        constrFactor.get(List(v13)) should be (3.0 +- 0.000000001)
+        condFactor.get(List(v11)) should be(1.0 +- 0.000000001)
+        condFactor.get(List(v12)) should be(0.0 +- 0.000000001)
+        condFactor.get(List(v13)) should be(1.0 +- 0.000000001)
+        constrFactor.get(List(v11)) should be(1.0 +- 0.000000001)
+        constrFactor.get(List(v12)) should be(2.0 +- 0.000000001)
+        constrFactor.get(List(v13)) should be(3.0 +- 0.000000001)
       }
     }
-    
+
     "given an element whose expanded values are only *" should {
       "produce no factors" in {
         Universe.createNew()
@@ -1059,7 +1118,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val lv = LazyValues()
         lv.expandAll(Set((f, -1)))
         val factors = Factory.make(f)
-        factors should be (empty)
+        factors should be(empty)
       }
     }
   }
@@ -1108,32 +1167,32 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
       }
     }
   }
-  
+
   "Making factors for multiple universes" should {
     "produce the same range of values as if it were in a single universe" when {
       "given a simple model with two universes" in {
         Universe.createNew()
         val v1u1 = Select(0.3 -> 0, 0.5 -> 1, 0.2 -> 3)
         val v2u1 = Apply(v1u1, (i: Int) => i % 3)
-        
+
         Universe.createNew()
         val v1u2 = Select(0.3 -> 0, 0.5 -> 1, 0.2 -> 3)
         Universe.createNew
         val v2u3 = Apply(v1u1, (i: Int) => i % 3)
-        
+
         (Variable(v1u1).range) should equal(Variable(v1u2).range)
         (Variable(v2u1).range) should equal(Variable(v2u3).range)
       }
-      
+
       "given a model with multiple universes" in {
         Universe.createNew()
-        val func = (i: Int, b: Boolean) => if(b) i else i + 1
+        val func = (i: Int, b: Boolean) => if (b) i else i + 1
         val v1u1 = Select(0.1 -> 0, 0.2 -> 2, 0.7 -> 5)
         val v2u1 = Flip(0.3)
         val v3u1 = Apply(v1u1, v2u1, func)
         val v4u1 = Flip(0.5)
         val v5u1 = Apply(v3u1, v4u1, func)
-        
+
         Universe.createNew()
         val v1u2 = Select(0.1 -> 0, 0.2 -> 2, 0.7 -> 5)
         Universe.createNew()
@@ -1144,29 +1203,29 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val v4u5 = Flip(0.5)
         Universe.createNew()
         val v5u6 = Apply(v3u1, v4u1, func)
-        
+
         (Variable(v5u1).range) should equal(Variable(v5u6).range)
       }
-      
+
       "given a multi-universe model with Chains" in {
         Universe.createNew()
-        val func1 = (i: Int) => if(i % 2 == 0) Constant(i) else Select(0.4 -> (i - 1), 0.6 -> (i + 1))
-        val func2 = (i: Int) => if(i % 4 == 0) Select(0.2 -> (i - 1), 0.8 -> (i + 1)) else Constant(i)
+        val func1 = (i: Int) => if (i % 2 == 0) Constant(i) else Select(0.4 -> (i - 1), 0.6 -> (i + 1))
+        val func2 = (i: Int) => if (i % 4 == 0) Select(0.2 -> (i - 1), 0.8 -> (i + 1)) else Constant(i)
         val v1u1 = Select(0.2 -> 0, 0.5 -> 3, 0.3 -> 6)
         val v2u1 = Chain(v1u1, func1)
         val v3u1 = Chain(v2u1, func2)
-        
+
         Universe.createNew()
         val v1u2 = Select(0.2 -> 0, 0.5 -> 3, 0.3 -> 6)
         Universe.createNew()
         val v2u3 = Chain(v1u1, func1)
         Universe.createNew()
         val v3u4 = Chain(v2u1, func2)
-        
+
         (Variable(v3u1).range) should equal(Variable(v3u4).range)
       }
     }
-    
+
     "correctly produce a factor between elements in multiple universes" when {
       "given a simple model in two universes" in {
         Universe.createNew()
@@ -1192,7 +1251,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         factor.get(List(v13, v20)) should equal(0.0)
         factor.get(List(v13, v21)) should equal(1.0)
       }
-      
+
       "given a multi-universe model with Chains" in {
         Universe.createNew()
         val v1 = Select(0.2 -> 0, 0.7 -> 1, 0.1 -> 2)
@@ -1214,10 +1273,10 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val v40 = v4Vals indexOf Regular(0)
         val v41 = v4Vals indexOf Regular(1)
         val v42 = v4Vals indexOf Regular(2)
-        
+
         val factor = Factory.make(v4)
         val List(v4Factor) = Factory.combineFactors(factor, SumProductSemiring, true)
-        
+
         v4Factor.get(List(v10, v40, 0, v30)) should equal(0.0)
         v4Factor.get(List(v10, v40, 0, v31)) should equal(0.0)
         v4Factor.get(List(v10, v41, 0, v30)) should equal(0.0)
