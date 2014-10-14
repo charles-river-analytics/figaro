@@ -264,14 +264,20 @@ object Importance {
   }
   
   /**
-   * Use IS to compute the probability that the given element has the given value.
+   * Use IS to compute the probability that the given element satisfies the given predicate.
    */    
-  def probability[T](target: Element[T], value: T, numSamples: Int = 10000): Double = {
-    val alg = Importance(numSamples, target)
+  def probability[T](target: Element[T], predicate: T => Boolean): Double = {
+    val alg = Importance(10000, target)
     alg.start()
-    val result = alg.probability(target, value)
+    val result = alg.probability(target, predicate)
     alg.kill()
     result
   }    
   
+  /**
+   * Use IS to compute the probability that the given element has the given value.
+   */
+  def probability[T](target: Element[T], value: T): Double =
+    probability(target, (t: T) => t == value)
+
 }
