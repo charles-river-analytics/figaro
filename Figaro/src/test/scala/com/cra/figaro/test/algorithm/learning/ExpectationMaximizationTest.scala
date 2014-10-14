@@ -556,7 +556,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
 
       def generateDatum(): Datum = {
         val model = TrueModel
-        model.universe.generateAll()
+        Forward(model.universe)
         Datum(model.x.value, model.y.value, model.z.value, model.w.value)
       }
 
