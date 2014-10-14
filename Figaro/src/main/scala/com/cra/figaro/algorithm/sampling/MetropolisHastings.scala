@@ -427,6 +427,7 @@ class OneTimeMetropolisHastings(universe: Universe, myNumSamples: Int, scheme: P
   override def run(): Unit = {
     doInitialize()
     super.run()
+    update
   }
 }
 
@@ -478,13 +479,19 @@ object MetropolisHastings {
   /**
    * Use MH to compute the probability that the given element has the given value.
    */    
-  def probability[T](target: Element[T], value: T, numSamples: Int = 100000): Double = {
-    val alg = MetropolisHastings(numSamples, ProposalScheme.default, target)
+  def probability[T](target: Element[T], predicate: T => Boolean): Double = {
+    val alg = MetropolisHastings(1000000, ProposalScheme.default, target)
     alg.start()
-    val result = alg.probability(target, value)
+    val result = alg.probability(target, predicate)
     alg.kill()
     result
   }    
+
+  /**
+   * Use MH to compute the probability that the given element has the given value.
+   */
+  def probability[T](target: Element[T], value: T): Double =
+    probability(target, (t: T) => t == value)
 
   private[figaro] case class State(oldValues: Map[Element[_], Any],
     oldRandomness: Map[Element[_], Any],

@@ -57,7 +57,7 @@ class AtomicDirichlet(name: Name[Array[Double]], val alphas: Array[Double], coll
   /**
    * Density of a value.
    */
-  def density(xs: Array[Double]) =
+  def density(xs: Array[Double]) = if (xs.exists(p => p < 0.0 || p > 1.0)) 0.0 else
     (1.0 /: (xs zip alphas))(_ * onePow(_)) * normalizer
 
   /**
