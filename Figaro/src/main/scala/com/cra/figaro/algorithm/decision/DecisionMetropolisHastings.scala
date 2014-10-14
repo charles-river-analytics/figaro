@@ -23,6 +23,7 @@ import com.cra.figaro.util._
 import scala.collection.mutable.Map
 import scala.language.existentials
 import scala.math.log
+import scala.annotation.tailrec
 
 /**
  * Metropolis-Hastings Decision sampler. Almost the exact same as normal MH except that it keeps
@@ -79,7 +80,7 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
    */
   var debug = false
 
-  private def newState: State = State(Map(), Map(), 0.0, 0.0, Set())
+  private def newState: State = State(Map(), Map(), 0.0, 0.0, scala.collection.mutable.Set())
 
   /*
    * We continually update the values of elements while making a proposal. In order to be able to undo it, we need to
@@ -87,27 +88,32 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
    * We keep track of the improvement in the constraints for the new proposal compared to the original value.
    * We keep track of which elements do not have their condition satisfied by the new proposal.
    */
-  private def attemptChange[T](state: State, elem: Element[T]): State = {
-    val newValue = elem.generateValue(elem.randomness)
-    if (elem.value != newValue) {
-      // if an old value is already stored, don't overwrite it
-      val newOldValues =
-        if (state.oldValues contains elem) state.oldValues; else state.oldValues + (elem -> elem.value)
-      val newProb =
-        state.modelProb + elem.score(elem.value, newValue)
-      val newDissatisfied =
-        if (elem.condition(newValue)) state.dissatisfied - elem; else state.dissatisfied + elem
-      elem.value = newValue
-      State(newOldValues, state.oldRandomness, state.proposalProb, newProb, newDissatisfied)
-    } else {
-      // We need to make sure to add the element to the dissatisfied set if its condition is not satisfied,
-      // even if the value has not changed, because we compare the dissatisfied set with the old dissatisfied set
-      // when deciding whether to accept the proposal.
-      val newDissatisfied =
-        if (elem.condition(newValue)) state.dissatisfied - elem; else state.dissatisfied + elem
-      State(state.oldValues, state.oldRandomness, state.proposalProb, state.modelProb, newDissatisfied)
-    }
-  }
+private def attemptChange[T](state: State, elem: Element[T]): State = {
+val newValue = elem.generateValue(elem.randomness)
+// if an old value is already stored, don't overwrite it
+val newOldValues =
+if (state.oldValues contains elem) state.oldValues; else state.oldValues + (elem -> elem.value)
+if (elem.value != newValue) {
+//val newProb =
+// state.modelProb * elem.score(elem.value, newValue)
+val newProb = state.modelProb
+val newDissatisfied =
+if (elem.condition(newValue)) state.dissatisfied -= elem; else state.dissatisfied += elem
+elem.value = newValue
+State(newOldValues, state.oldRandomness, state.proposalProb, newProb, newDissatisfied)
+} else {
+// We need to make sure to add the element to the dissatisfied set if its condition is not satisfied,
+// even if the value has not changed, because we compare the dissatisfied set with the old dissatisfied set
+// when deciding whether to accept the proposal.
+val newDissatisfied =
+if (elem.condition(newValue)) {
+state.dissatisfied - elem
+} else {
+state.dissatisfied + elem
+}
+State(newOldValues, state.oldRandomness, state.proposalProb, state.modelProb, newDissatisfied)
+}
+}
 
   private def propose[T](state: State, elem: Element[T]): State = {
     if (debug) println("Proposing " + elem.name.string)
@@ -221,13 +227,30 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
     result
   }
 
-  private def updateMany(currentState: State, toUpdate: Traversable[Element[_]]): State = {
-    val updateSequence =
-      for {
-        layer <- universe.layers(toUpdate)
-        elem <- layer
-      } yield elem
-    (currentState /: updateSequence)(updateOne(_, _))
+def updateMany[T](state: State, toUpdate: Set[Element[_]]): State = {
+    var returnState = state
+    var updatesLeft = toUpdate
+    while (!updatesLeft.isEmpty){ 
+       var argsRemaining = universe.uses(updatesLeft.head).intersect(updatesLeft)
+        while (!argsRemaining.isEmpty) { 
+        returnState = updateManyHelper(returnState, argsRemaining.toSet) 
+        argsRemaining = argsRemaining.tail 
+      }
+      returnState = updateOne(returnState, updatesLeft.head) 
+      updatesLeft = updatesLeft.tail
+      }
+      returnState
+  }
+  
+  @tailrec
+  private def updateManyHelper(state: State, toUpdate: Set[Element[_]]): State = {
+	  var returnState = state
+	  var updatesLeft = toUpdate
+	  var argsRemaining = universe.uses(updatesLeft.head).intersect(updatesLeft)
+	  if (argsRemaining.isEmpty){
+	        returnState = updateOne(returnState, updatesLeft.head) 
+	        returnState } 
+	  else { updateManyHelper(returnState, argsRemaining.toSet) }
   }
 
   /*
@@ -237,7 +260,7 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
   private def proposeAndUpdate(): State = {
     val state1 = runScheme()
     val updatesNeeded = state1.oldValues.keySet flatMap (universe.usedBy(_))
-    updateMany(state1, updatesNeeded)
+    updateMany(state1, updatesNeeded.toSet)
   }
 
   private var dissatisfied: Set[Element[_]] = universe.conditionedElements.toSet filter (!_.conditionSatisfied)
@@ -334,7 +357,7 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
   }
 
   protected def doInitialize(): Unit = {
-    universe.generateAll()
+    Forward(universe)
     for { i <- 1 to burnIn } mhStep()
   }
 
@@ -508,5 +531,5 @@ object DecisionMetropolisHastings {
     oldRandomness: Map[Element[_], Any],
     proposalProb: Double,
     modelProb: Double,
-    dissatisfied: Set[Element[_]])
+    dissatisfied: scala.collection.mutable.Set[Element[_]])
 }

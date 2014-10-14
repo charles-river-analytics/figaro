@@ -79,7 +79,8 @@ object Forward {
               state1 = sampleInState(argsRemaining.head, state1, universe)
               argsRemaining = argsRemaining.tail
             }
-            (state1, element.generateValue(element.generateRandomness()))
+            element.randomness = element.generateRandomness
+            (state1, element.generateValue(element.randomness))
         }
       }
       element.value = sampledValue.asInstanceOf[T]
