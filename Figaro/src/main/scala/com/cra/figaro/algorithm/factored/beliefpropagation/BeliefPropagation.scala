@@ -479,15 +479,21 @@ object BeliefPropagation {
       dependentAlgorithm) with AnytimeProbabilisticBeliefPropagation with AnytimeProbQuery
 
   /**
-   * Use BP to compute the probability that the given element has the given value.
+   * Use BP to compute the probability that the given element satisfies the given predicate.
    */
-  def probability[T](target: Element[T], value: T, numIterations: Int = 10): Double = {
-    val alg = BeliefPropagation(numIterations, target)
+  def probability[T](target: Element[T], predicate: T => Boolean): Double = {
+    val alg = BeliefPropagation(10, target)
     alg.start()
-    val result = alg.probability(target, value)
+    val result = alg.probability(target, predicate)
     alg.kill()
     result
   }
+
+  /**
+   * Use BP to compute the probability that the given element has the given value.
+   */
+  def probability[T](target: Element[T], value: T): Double =
+    probability(target, (t: T) => t == value)
 
   /**
    * Lazy version of BP that operates only on bounds
