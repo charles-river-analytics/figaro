@@ -62,7 +62,10 @@ trait Exponential extends Continuous[Double] {
   def lambdaValue: Double
 
   def logp(value: Double) =
-    log(lambdaValue) - lambdaValue * value
+    bound(
+      log(lambdaValue) - lambdaValue * value,
+      lambdaValue > 0
+    )
 }
 
 object Exponential extends Creatable {

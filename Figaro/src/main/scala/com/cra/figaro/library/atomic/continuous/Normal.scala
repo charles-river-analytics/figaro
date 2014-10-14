@@ -14,7 +14,7 @@
 package com.cra.figaro.library.atomic.continuous
 
 import com.cra.figaro.language._
-import com.cra.figaro.util.random
+import com.cra.figaro.util.{ random, bound }
 import scala.math._
 
 /**
@@ -107,7 +107,10 @@ trait Normal extends Continuous[Double] {
   def varianceValue: Double
 
   def logp(value: Double) =
-    (- (value - meanValue) * (value - meanValue) / varianceValue + log(1 / Pi / 2.0 / varianceValue)) / 2.0
+    bound(
+      (- (value - meanValue) * (value - meanValue) / varianceValue + log(1 / Pi / 2.0 / varianceValue)) / 2.0,
+      varianceValue > 0
+    )
 
 }
 

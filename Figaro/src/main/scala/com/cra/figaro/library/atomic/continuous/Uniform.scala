@@ -14,7 +14,7 @@
 package com.cra.figaro.library.atomic.continuous
 
 import com.cra.figaro.language._
-import com.cra.figaro.util.random
+import com.cra.figaro.util.{ random, bound }
 import scala.math.log
 
 /**
@@ -73,9 +73,12 @@ trait Uniform extends Continuous[Double] {
    */
   def upperValue: Double
 
-  // TODO return -Inf if value is outside of bounds
   def logp(value: Double) =
-    -log(upperValue - lowerValue)
+    bound (
+      -log(upperValue - lowerValue),
+      lowerValue > 0,
+      upperValue > 0
+    )
 
 }
 

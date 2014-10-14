@@ -106,7 +106,11 @@ trait Gamma extends Continuous[Double] {
   def thetaValue: Double
 
   def logp(value: Double) =
-    -logGamma(kValue) + kValue * log(1 / thetaValue) - value / thetaValue + (kValue - 1) * log(value)
+    bound(
+      -logGamma(kValue) + kValue * log(1 / thetaValue) - value / thetaValue + (kValue - 1) * log(value),
+      kValue > 0,
+      thetaValue > 0
+    )
 
 }
 

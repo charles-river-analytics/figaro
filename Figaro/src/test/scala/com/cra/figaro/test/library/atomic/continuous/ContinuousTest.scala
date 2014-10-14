@@ -207,28 +207,28 @@ class ContinuousTest extends WordSpec with Matchers {
       Universe.createNew()
       val elem = MultivariateNormal(means, covariances)
       val dist = new MultivariateNormalDistribution(means.toArray, covariances.map((l: List[Double]) => l.toArray).toArray)
-      
+
       elem.density(List(1.5, 2.5)) should be(dist.density(Array(1.5, 2.5)) +- 0.00000001)
     }
 
     "produce samples with the correct means and covariances" in {
       Universe.createNew()
       val elem = MultivariateNormal(means, covariances)
-      
+
       var n = 0
       var sumx1 = 0.0
       var sumx2 = 0.0
       var ss1 = 0.0
       var ss2 = 0.0
       var sc12 = 0.0
-      
+
      for (i <- 0 to 10000) {
         val rand = elem.generateRandomness()
         val values = elem.generateValue(rand)
-        
+
         val x1 = values(0)
         val x2 = values(1)
-        
+
         n += 1
         sumx1 += x1
         sumx2 += x2
@@ -236,21 +236,21 @@ class ContinuousTest extends WordSpec with Matchers {
         ss2 += x2 * x2
         sc12 += x1 * x2
       }
-      
+
       val mean1 = sumx1 / n
       val mean2 = sumx2 / n
       val var1 = (ss1 - (sumx1 * sumx1 / n)) / (n - 1)
       val var2 = (ss2 - (sumx2 * sumx2 / n)) / (n - 1)
       val cov = (sc12 - (sumx1 * sumx2 / n)) / (n - 1)
-      
+
       mean1 should be (means(0) +- 0.01)
       mean2 should be (means(1) +- 0.01)
-      
+
       var1 should be (covariances(0)(0) +- 0.01)
       var2 should be (covariances(1)(1) +- 0.01)
       cov should be (covariances(0)(1) +- 0.01)
     }
-    
+
     "convert to the correct string" in {
       Universe.createNew()
       MultivariateNormal(means, covariances).toString should equal( "MultivariateNormal(" + means + ",\n" + covariances + ")")
@@ -689,6 +689,27 @@ class ContinuousTest extends WordSpec with Matchers {
       val a = Select(0.5 -> 0.7, 0.5 -> 1.2)
       val b = Constant(0.5)
       Dirichlet(a, b).toString should equal("Dirichlet(" + a + ", " + b + ")")
+    }
+
+    "produce the right probability when conditioned under Metropolis-Hastings" in {
+      val sampleUniverse = Universe.createNew()
+      val nSamples = Dirichlet(1, 2, 3)("", sampleUniverse)
+      val samples = for(i <- 1 to 100)
+                    yield nSamples.generateValue(nSamples.generateRandomness())
+
+      val universe = Universe.createNew()
+      val alpha1 = Uniform(0, 10)("a1", universe)
+      val alpha2 = Uniform(0, 10)("a2", universe)
+      val alpha3 = Uniform(0, 10)("a3", universe)
+      for (sample <- samples) {
+        val dirichlet = Dirichlet(alpha1, alpha2, alpha3)
+        dirichlet.observe(sample)
+      }
+      val alg = MetropolisHastings(200000, ProposalScheme.default, alpha1, alpha2, alpha3)
+      alg.start()
+      alg.mean(alpha1) should be(1.0 +- 0.5)
+      alg.mean(alpha2) should be(2.0 +- 0.5)
+      alg.mean(alpha3) should be(3.0 +- 0.5)
     }
   }
 }

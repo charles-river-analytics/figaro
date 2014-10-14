@@ -14,6 +14,7 @@
 package com.cra.figaro.library.atomic.continuous
 
 import com.cra.figaro.language._
+import com.cra.figaro.util._
 import math.{ pow, log }
 import JSci.maths.SpecialMath.{ beta, gamma, logGamma }
 import com.cra.figaro.algorithm.ValuesMaker
@@ -145,8 +146,12 @@ trait Beta extends Continuous[Double] {
   def bValue: Double
 
   def logp(value: Double) =
-    logGamma(aValue + bValue) - logGamma(aValue) - logGamma(bValue) +
-      (aValue - 1) * log(value) + (bValue - 1) * log(1 - value)
+    bound(
+      logGamma(aValue + bValue) - logGamma(aValue) - logGamma(bValue) +
+        (aValue - 1) * log(value) + (bValue - 1) * log(1 - value),
+      aValue > 0,
+      bValue > 0
+    )
 
 }
 
