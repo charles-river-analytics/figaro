@@ -106,9 +106,6 @@ class AtomicBeta(name: Name[Double], a: Double, b: Double, collection: ElementCo
 
   }
 
-  lazy val aValue = a
-  lazy val bValue = b
-
   override def toString = "Beta(" + a + ", " + b + ")"
 }
 

@@ -21,7 +21,7 @@ import scala.math.log
  * A continuous uniform distribution in which the parameters are constants.
  */
 class AtomicUniform(name: Name[Double], val lower: Double, val upper: Double, collection: ElementCollection)
-  extends Element[Double](name, collection) with Atomic[Double] with Uniform {
+  extends Element[Double](name, collection) with Atomic[Double] {
   type Randomness = Double
 
   private lazy val diff = upper - lower
@@ -33,9 +33,6 @@ class AtomicUniform(name: Name[Double], val lower: Double, val upper: Double, co
   private lazy val constantDensity = 1.0 / diff
 
   def density(d: Double) = if (d >= lower && d < upper) constantDensity; else 0.0
-
-  lazy val upperValue = upper
-  lazy val lowerValue = lower
 
   override def toString = "Uniform(" + lower + ", " + upper + ")"
 }

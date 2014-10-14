@@ -24,7 +24,7 @@ import JSci.maths.SpecialMath.{ gamma, logGamma }
  * Theta defaults to 1.
  */
 class AtomicGamma(name: Name[Double], k: Double, theta: Double = 1.0, collection: ElementCollection)
-  extends Element[Double](name, collection) with Atomic[Double] with Gamma {
+  extends Element[Double](name, collection) with Atomic[Double] {
   type Randomness = Double
 
   def generateRandomness() = Util.generateGamma(k)
@@ -44,9 +44,6 @@ class AtomicGamma(name: Name[Double], k: Double, theta: Double = 1.0, collection
     val numer = pow(x, k - 1) * exp(-x / theta)
     numer * normalizer
   }
-
-  lazy val kValue = k
-  lazy val thetaValue = theta
 
   override def toString =
     if (theta == 1.0) "Gamma(" + k + ")"
