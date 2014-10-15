@@ -40,6 +40,8 @@ object FigaroBuild extends Build {
     ))
   )
 
+  lazy val scalaMajorMinor = "2.11"
+
   lazy val root = Project("root", file("."))
     .settings(publishLocal := {})
     .settings(publish := {})
@@ -71,7 +73,7 @@ object FigaroBuild extends Build {
     // sbt-assembly settings
     .settings(assemblySettings: _*)
     .settings(test in assembly := {})
-    .settings(jarName in assembly := "figaro_" + scalaVersion.value + "-" + version.value + "-fat.jar")
+    .settings(jarName in assembly := "figaro_" + scalaMajorMinor + "-" + version.value + "-fat.jar")
     .settings(assemblyOption in assembly ~= { _.copy(includeScala = false) })
     // sbt-scoverage settings
     .settings(instrumentSettings: _*)
