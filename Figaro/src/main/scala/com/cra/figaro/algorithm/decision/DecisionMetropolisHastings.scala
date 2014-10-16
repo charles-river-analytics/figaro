@@ -23,6 +23,7 @@ import com.cra.figaro.util._
 import scala.collection.mutable.Map
 import scala.language.existentials
 import scala.math.log
+import scala.annotation.tailrec
 
 /**
  * Metropolis-Hastings Decision sampler. Almost the exact same as normal MH except that it keeps
@@ -32,11 +33,11 @@ import scala.math.log
 abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, proposalScheme: ProposalScheme, burnIn: Int, interval: Int,
   utilityNodes: List[Element[_]], decisionTarget: Decision[T, U], dummyTarget: Element[_])
   extends UnweightedSampler(universe, dummyTarget) with DecisionAlgorithm[T, U] {
-  
+
   def this(universe: Universe, proposalScheme: ProposalScheme, burnIn: Int, interval: Int,
-  utilityNodes: List[Element[_]], decisionTarget: Decision[T, U]) = this(universe, proposalScheme, 
-      burnIn, interval, utilityNodes, decisionTarget, createDecisionDummy(decisionTarget))
-  
+    utilityNodes: List[Element[_]], decisionTarget: Decision[T, U]) = this(universe, proposalScheme,
+    burnIn, interval, utilityNodes, decisionTarget, createDecisionDummy(decisionTarget))
+
   import MetropolisHastings._
 
   // Used for debugging
@@ -55,13 +56,13 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
   private var allUtilitiesSeen: List[WeightSeen[_]] = _
 
   private def utilitySum = (0.0 /: utilityNodes)((s: Double, n: Element[_]) => s + n.value.asInstanceOf[Double])
-  
+
   /**
    * Cleans up the temporary elements created during sampling
    */
   def cleanup() = universe.deactivate(queryTargets)
 
-    /* Overrides DecisionAlgorithm Trait */
+  /* Overrides DecisionAlgorithm Trait */
   def computeUtility(): scala.collection.immutable.Map[(T, U), DecisionSample] = {
     val TimesSeen = allTimesSeen.find(_._1 == dummyTarget).get._2.asInstanceOf[Map[(T, U), Int]]
     val utilitySeen = allUtilitiesSeen.find(_._1 == dummyTarget).get._2.asInstanceOf[Map[(T, U), Double]]
@@ -79,7 +80,7 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
    */
   var debug = false
 
-  private def newState: State = State(Map(), Map(), 0.0, 0.0, Set())
+  private def newState: State = State(Map(), Map(), 0.0, 0.0, scala.collection.mutable.Set())
 
   /*
    * We continually update the values of elements while making a proposal. In order to be able to undo it, we need to
@@ -87,27 +88,32 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
    * We keep track of the improvement in the constraints for the new proposal compared to the original value.
    * We keep track of which elements do not have their condition satisfied by the new proposal.
    */
-  private def attemptChange[T](state: State, elem: Element[T]): State = {
-    val newValue = elem.generateValue(elem.randomness)
-    if (elem.value != newValue) {
-      // if an old value is already stored, don't overwrite it
-      val newOldValues =
-        if (state.oldValues contains elem) state.oldValues; else state.oldValues + (elem -> elem.value)
-      val newProb =
-        state.modelProb + elem.score(elem.value, newValue)
-      val newDissatisfied =
-        if (elem.condition(newValue)) state.dissatisfied - elem; else state.dissatisfied + elem
-      elem.value = newValue
-      State(newOldValues, state.oldRandomness, state.proposalProb, newProb, newDissatisfied)
-    } else {
-      // We need to make sure to add the element to the dissatisfied set if its condition is not satisfied,
-      // even if the value has not changed, because we compare the dissatisfied set with the old dissatisfied set
-      // when deciding whether to accept the proposal.
-      val newDissatisfied =
-        if (elem.condition(newValue)) state.dissatisfied - elem; else state.dissatisfied + elem
-      State(state.oldValues, state.oldRandomness, state.proposalProb, state.modelProb, newDissatisfied)
-    }
-  }
+private def attemptChange[T](state: State, elem: Element[T]): State = {
+val newValue = elem.generateValue(elem.randomness)
+// if an old value is already stored, don't overwrite it
+val newOldValues =
+if (state.oldValues contains elem) state.oldValues; else state.oldValues + (elem -> elem.value)
+if (elem.value != newValue) {
+//val newProb =
+// state.modelProb * elem.score(elem.value, newValue)
+val newProb = state.modelProb
+val newDissatisfied =
+if (elem.condition(newValue)) state.dissatisfied -= elem; else state.dissatisfied += elem
+elem.value = newValue
+State(newOldValues, state.oldRandomness, state.proposalProb, newProb, newDissatisfied)
+} else {
+// We need to make sure to add the element to the dissatisfied set if its condition is not satisfied,
+// even if the value has not changed, because we compare the dissatisfied set with the old dissatisfied set
+// when deciding whether to accept the proposal.
+val newDissatisfied =
+if (elem.condition(newValue)) {
+state.dissatisfied - elem
+} else {
+state.dissatisfied + elem
+}
+State(newOldValues, state.oldRandomness, state.proposalProb, state.modelProb, newDissatisfied)
+}
+}
 
   private def propose[T](state: State, elem: Element[T]): State = {
     if (debug) println("Proposing " + elem.name.string)
@@ -221,13 +227,30 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
     result
   }
 
-  private def updateMany(currentState: State, toUpdate: Traversable[Element[_]]): State = {
-    val updateSequence =
-      for {
-        layer <- universe.layers(toUpdate)
-        elem <- layer
-      } yield elem
-    (currentState /: updateSequence)(updateOne(_, _))
+def updateMany[T](state: State, toUpdate: Set[Element[_]]): State = {
+    var returnState = state
+    var updatesLeft = toUpdate
+    while (!updatesLeft.isEmpty){ 
+       var argsRemaining = universe.uses(updatesLeft.head).intersect(updatesLeft)
+        while (!argsRemaining.isEmpty) { 
+        returnState = updateManyHelper(returnState, argsRemaining.toSet) 
+        argsRemaining = argsRemaining.tail 
+      }
+      returnState = updateOne(returnState, updatesLeft.head) 
+      updatesLeft = updatesLeft.tail
+      }
+      returnState
+  }
+  
+  @tailrec
+  private def updateManyHelper(state: State, toUpdate: Set[Element[_]]): State = {
+	  var returnState = state
+	  var updatesLeft = toUpdate
+	  var argsRemaining = universe.uses(updatesLeft.head).intersect(updatesLeft)
+	  if (argsRemaining.isEmpty){
+	        returnState = updateOne(returnState, updatesLeft.head) 
+	        returnState } 
+	  else { updateManyHelper(returnState, argsRemaining.toSet) }
   }
 
   /*
@@ -237,7 +260,7 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
   private def proposeAndUpdate(): State = {
     val state1 = runScheme()
     val updatesNeeded = state1.oldValues.keySet flatMap (universe.usedBy(_))
-    updateMany(state1, updatesNeeded)
+    updateMany(state1, updatesNeeded.toSet)
   }
 
   private var dissatisfied: Set[Element[_]] = universe.conditionedElements.toSet filter (!_.conditionSatisfied)
@@ -285,7 +308,7 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
     if (decideToAccept(newState)) accept(newState)
     else undo(newState)
   }
-  
+
   protected def updateWeightSeenWithValue[T](value: T, weight: Double, weightSeen: WeightSeen[T]): Unit =
     weightSeen._2 += value -> (weightSeen._2.getOrElse(value, 0.0) + weight)
 
@@ -326,8 +349,15 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
     }
   }
 
+  protected override def update(): Unit = {
+    super.update
+    sampleCount += 1
+    allUtilitiesSeen foreach (updateWeightSeenForTarget((utilitySum, Map[Element[_], Any](dummyTarget -> dummyTarget.value)), _))    
+    sampleCount -= 1
+  }
+
   protected def doInitialize(): Unit = {
-    universe.generateAll()
+    Forward(universe)
     for { i <- 1 to burnIn } mhStep()
   }
 
@@ -410,6 +440,7 @@ class OneTimeDecisionMetropolisHastings[T, U](universe: Universe, myNumSamples: 
   override def run(): Unit = {
     doInitialize()
     super.run()
+    update
   }
 }
 
@@ -430,8 +461,8 @@ object DecisionMetropolisHastings {
     }
   }
 
-   /**
-   * Create an Anytime DecisionMetropolis-Hastings sampler using the given proposal scheme with the given 
+  /**
+   * Create an Anytime DecisionMetropolis-Hastings sampler using the given proposal scheme with the given
    * decision.
    */
   /*
@@ -500,5 +531,5 @@ object DecisionMetropolisHastings {
     oldRandomness: Map[Element[_], Any],
     proposalProb: Double,
     modelProb: Double,
-    dissatisfied: Set[Element[_]])
+    dissatisfied: scala.collection.mutable.Set[Element[_]])
 }

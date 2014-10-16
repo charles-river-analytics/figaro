@@ -73,7 +73,7 @@ class CompoundTest extends WordSpec with Matchers {
       val c1 = Constant("a")
       val c2 = Constant(1)
       val t = ^^(c1, c2)
-      Universe.universe.generateAll()
+      Forward(Universe.universe)
       t.value should equal("a", 1)
     }
 
@@ -84,7 +84,7 @@ class CompoundTest extends WordSpec with Matchers {
       val d = ^^(c1, c2)
       val d1 = d._1
       val d2 = d._2
-      Universe.universe.generateAll()
+      Forward(Universe.universe)
       d1.value should equal(1)
       d2.value should equal('a')
     }
@@ -97,7 +97,7 @@ class CompoundTest extends WordSpec with Matchers {
       val c2 = Constant(1)
       val c3 = Constant(true)
       val t = ^^(c1, c2, c3)
-      Universe.universe.generateAll()
+      Forward(Universe.universe)
       t.value should equal("a", 1, true)
     }
 
@@ -107,7 +107,7 @@ class CompoundTest extends WordSpec with Matchers {
       val t1 = t._1
       val t2 = t._2
       val t3 = t._3
-      Universe.universe.generateAll()
+      Forward(Universe.universe)
       t1.value should equal("a")
       t2.value should equal(1)
       t3.value should equal(true)
@@ -121,7 +121,7 @@ class CompoundTest extends WordSpec with Matchers {
       val c2 = Constant(1)
       val c3 = Constant(true)
       val c4 = Constant(8.0)
-      Universe.universe.generateAll()
+      Forward(Universe.universe)
       val t = ^^(c1, c2, c3, c4)
       t.generate()
       t.value should equal("a", 1, true, 8.0)
@@ -134,7 +134,7 @@ class CompoundTest extends WordSpec with Matchers {
       val t2 = t._2
       val t3 = t._3
       val t4 = t._4
-      Universe.universe.generateAll()
+      Forward(Universe.universe)
       t1.value should equal("a")
       t2.value should equal(1)
       t3.value should equal(true)
@@ -151,7 +151,7 @@ class CompoundTest extends WordSpec with Matchers {
       val c4 = Constant(8.0)
       val c5 = Constant(2)
       val t = ^^(c1, c2, c3, c4, c5)
-      Universe.universe.generateAll()
+      Forward(Universe.universe)
       t.value should equal("a", 1, true, 8.0, 2)
     }
 
@@ -163,7 +163,7 @@ class CompoundTest extends WordSpec with Matchers {
       val t3 = t._3
       val t4 = t._4
       val t5 = t._5
-      Universe.universe.generateAll()
+      Forward(Universe.universe)
       t1.value should equal("a")
       t2.value should equal(1)
       t3.value should equal(true)
@@ -183,7 +183,7 @@ class CompoundTest extends WordSpec with Matchers {
       val b2Or2 = b2 || b2
       val negB1 = !b1
       val negB2 = !b2
-      Universe.universe.generateAll()
+      Forward(Universe.universe)
       b1And1.value should equal(true)
       b1And2.value should equal(false)
       b1Or2.value should equal(true)
@@ -203,7 +203,7 @@ class CompoundTest extends WordSpec with Matchers {
       val d1Times2 = d1 * d2
       val d1Div2 = d1 / d2
       val negD2 = -d2
-      Universe.universe.generateAll()
+      Forward(Universe.universe)
       d1Plus2.value should equal(3.0)
       d1Minus2.value should equal(-1.0)
       d1Times2.value should equal(2.0)
@@ -223,7 +223,7 @@ class CompoundTest extends WordSpec with Matchers {
       val i2Div1 = i2 / i1
       val i2Mod1 = i2 % i1
       val negI2 = -i2
-      Universe.universe.generateAll()
+      Forward(Universe.universe)
       i1Plus2.value should equal(7)
       i1Minus2.value should equal(-3)
       i1Times2.value should equal(10)

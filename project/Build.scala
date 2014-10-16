@@ -10,7 +10,7 @@ object FigaroBuild extends Build {
   override val settings = super.settings ++ Seq(
     organization := "com.cra.figaro",
     description := "Figaro: a language for probablistic programming",
-    version := "2.3.0.0",
+    version := "2.4.0.0",
     scalaVersion := "2.11.2",
     crossPaths := true,
     publishMavenStyle := true,
@@ -39,6 +39,8 @@ object FigaroBuild extends Build {
       ("Bundle-RequiredExecutionEnvironment", "JavaSE-1.6")
     ))
   )
+
+  lazy val scalaMajorMinor = "2.11"
 
   lazy val root = Project("root", file("."))
     .settings(publishLocal := {})
@@ -71,7 +73,7 @@ object FigaroBuild extends Build {
     // sbt-assembly settings
     .settings(assemblySettings: _*)
     .settings(test in assembly := {})
-    .settings(jarName in assembly := "figaro_" + scalaVersion.value + "-" + version.value + "-fat.jar")
+    .settings(jarName in assembly := "figaro_" + scalaMajorMinor + "-" + version.value + "-fat.jar")
     .settings(assemblyOption in assembly ~= { _.copy(includeScala = false) })
     // sbt-scoverage settings
     .settings(instrumentSettings: _*)

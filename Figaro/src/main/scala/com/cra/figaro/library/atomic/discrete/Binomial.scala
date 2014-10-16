@@ -54,6 +54,7 @@ class AtomicBinomial(name: Name[Int], val numTrials: Int, val probSuccess: Doubl
    * Probability of a value.
    */
   def density(k: Int) = {
+    if (k < 0 || k > numTrials) 0.0 else
     Util.binomialDensity(numTrials, probSuccess, k)
   }
 
@@ -88,12 +89,12 @@ class BinomialFixedNumTrials(name: Name[Int], val numTrials: Int, val probSucces
  /**
  * A binomial with a fixed number of trials parameterized by a beta distribution.
  */
-class ParameterizedBinomialFixedNumTrials(name: Name[Int], val numTrials: Int, val probSuccess: AtomicBeta, collection: ElementCollection)
-  extends CachingChain[Double, Int](name, probSuccess, (p: Double) => new AtomicBinomial("", numTrials, p, collection), collection)
-  with Parameterized[Int] {
-  val parameter = probSuccess
+class ParameterizedBinomialFixedNumTrials(name: Name[Int], val numTrials: Int, override val parameter: AtomicBeta, collection: ElementCollection)
+  extends CachingChain[Double, Int](name, parameter, (p: Double) => new AtomicBinomial("", numTrials, p, collection), collection)
+  with SingleParameterized[Int] {
   
-  def distributionToStatistics(distribution: Stream[(Double, Int)]): Seq[Double] = {
+  
+  override def distributionToStatistics(distribution: Stream[(Double, Int)]): Seq[Double] = {
     val distList = distribution.toList
     var totalPos = 0.0
     var totalNeg = 0.0
@@ -114,7 +115,7 @@ class ParameterizedBinomialFixedNumTrials(name: Name[Int], val numTrials: Int, v
     else Util.binomialDensity(numTrials, probSuccess, value)
   }
 
- override def toString = "ParameterizedBinomial(" + numTrials + ", " + probSuccess + ")"
+ override def toString = "ParameterizedBinomial(" + numTrials + ", " + parameter + ")"
 } 
 
 /**

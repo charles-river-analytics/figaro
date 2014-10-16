@@ -77,8 +77,9 @@ class BPTest extends WordSpec with Matchers {
       val f = Flip(u)
       val a = If(f, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
       val bp = BeliefPropagation(3)
-      val fn = bp.factorGraph.adjacencyList.filter(p => { p._1 match { case fn: FactorNode => true; case _ => false; } })
-      val vn = bp.factorGraph.adjacencyList.filter(p => { p._1 match { case vn: VariableNode => true; case _ => false; } })
+      bp.start
+      val fn = bp.factorGraph.asInstanceOf[BasicFactorGraph].adjacencyList.filter(p => { p._1 match { case fn: FactorNode => true; case _ => false; } })
+      val vn = bp.factorGraph.asInstanceOf[BasicFactorGraph].adjacencyList.filter(p => { p._1 match { case vn: VariableNode => true; case _ => false; } })
 
       fn.foreach { s =>
         s._2.foreach { d =>
@@ -281,6 +282,8 @@ class BPTest extends WordSpec with Matchers {
       bp.probability(x, true) should be (1.0)
     }
         
+    // Removed, we now support non-caching chains
+    /*
     "should not support non-caching chains" in {
       Universe.createNew()
       val f = Flip(0.5)
@@ -288,6 +291,8 @@ class BPTest extends WordSpec with Matchers {
       val ve = BeliefPropagation(50)
       an [UnsupportedAlgorithmException] should be thrownBy { ve.getNeededElements(List(x), Int.MaxValue) } 
     }
+    * 
+    */
   }
 
   "MaxProductBeliefPropagation" should {

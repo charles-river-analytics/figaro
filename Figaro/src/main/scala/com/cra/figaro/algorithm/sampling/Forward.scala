@@ -32,6 +32,10 @@ object Forward {
       elementsRemaining = elementsRemaining.tail
     }
   }
+  
+  def apply[T](element: Element[T]) = {
+    sampleInState(element, Set[Element[_]](), element.universe)
+  }
 
   private type State = Set[Element[_]]
 
@@ -75,7 +79,8 @@ object Forward {
               state1 = sampleInState(argsRemaining.head, state1, universe)
               argsRemaining = argsRemaining.tail
             }
-            (state1, element.generateValue(element.generateRandomness()))
+            element.randomness = element.generateRandomness
+            (state1, element.generateValue(element.randomness))
         }
       }
       element.value = sampledValue.asInstanceOf[T]

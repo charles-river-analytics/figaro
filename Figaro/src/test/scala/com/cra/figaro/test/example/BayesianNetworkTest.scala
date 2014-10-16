@@ -39,19 +39,19 @@ class BayesianNetworkTest extends WordSpec with Matchers {
 
     "produce the correct probability under importance sampling" taggedAs (Example, NonDeterministic) in {
       val model = new Model
-      Importance.probability(model.burglary, true) should be (model.pBurglary +- 0.01)
+      Importance.probability(model.burglary, true) should be (model.pBurglary +- 0.02)
     }
     
     "produce the correct probability under Metropolis-Hastings without burn-in or interval" taggedAs (Example, NonDeterministic) in {
       val model = new Model
-      MetropolisHastings.probability(model.burglary, true, 2000000) should be (model.pBurglary +- 0.01)
+      MetropolisHastings.probability(model.burglary, true) should be (model.pBurglary +- 0.02)
     }
     
     "produce the correct probability under Metropolis-Hastings with burn-in and interval" taggedAs (Example, NonDeterministic) in {
       val model = new Model
       val alg = MetropolisHastings(200000, ProposalScheme.default, 800, 10, model.burglary)
       alg.start()
-      alg.probability(model.burglary, true) should be (model.pBurglary +- 0.01)
+      alg.probability(model.burglary, true) should be (model.pBurglary +- 0.02)
     }
   }
 

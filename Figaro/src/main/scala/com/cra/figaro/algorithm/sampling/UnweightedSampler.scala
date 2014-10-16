@@ -50,7 +50,7 @@ abstract class UnweightedSampler(override val universe: Universe, targets: Eleme
   protected type LastUpdate[T] = (T, Int)
 
   protected def newTimesSeen[T](target: Element[T]): TimesSeen[T] = Map()
-  protected def newLastUpdate[T](target: Element[T]): LastUpdate[T] = (target.value, 0)
+  protected def newLastUpdate[T](target: Element[T]): LastUpdate[T] = (target.value, 1)
 
   protected var allTimesSeen: Map[Element[_], TimesSeen[_]] = _
 
@@ -84,7 +84,9 @@ abstract class UnweightedSampler(override val universe: Universe, targets: Eleme
   }
 
   protected def update(): Unit = {
+    sampleCount += 1
     targets.foreach(t => updateTimesSeenForTarget(t.asInstanceOf[Element[t.Value]], t.value))
+    sampleCount -= 1
   }
 
   private def projection[T](target: Element[T]): List[(T, Double)] = {

@@ -61,7 +61,7 @@ class MakeList[T](
     case _ => throw new IllegalArgumentException("Invalid indices to MakeList")
   }
 
-  val values = LazyValues(universe)
+  def values = LazyValues(universe)
   
   /* We need to make sure that values are computed on the embedded Injects. Therefore, we create them in makeValues, store them, and use them in makeFactors.
    */
