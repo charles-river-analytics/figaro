@@ -10,7 +10,7 @@ object FigaroBuild extends Build {
   override val settings = super.settings ++ Seq(
     organization := "com.cra.figaro",
     description := "Figaro: a language for probablistic programming",
-    version := "2.4.0.0",
+    version := "2.5.0.0",
     scalaVersion := "2.11.2",
     crossPaths := true,
     publishMavenStyle := true,

@@ -2,8 +2,8 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: FigaroExamples
 Bundle-SymbolicName: com.cra.figaro.examples
-Bundle-Version: 2.4.0
-Require-Bundle: com.cra.figaro;bundle-version="2.4.0",
+Bundle-Version: 2.5.0
+Require-Bundle: com.cra.figaro;bundle-version="2.5.0",
  org.scala-lang.scala-library
 Bundle-Vendor: Charles River Analytics
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6

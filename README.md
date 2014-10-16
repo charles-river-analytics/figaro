@@ -36,7 +36,7 @@ Figaro and its dependencies are available on [Maven Central](http://search.maven
 
 Simple Build Tool (SBT) Projects
 ```
-libraryDependencies += "com.cra.figaro" %%  "figaro" % "2.4.0.0"
+libraryDependencies += "com.cra.figaro" %%  "figaro" % "2.5.0.0"
 ```
 
 Apache Maven Projects
@@ -44,13 +44,13 @@ Apache Maven Projects
 <dependency>
     <groupId>com.cra.figaro</groupId>
     <artifactId>figaro_2.11</artifactId>
-    <version>2.4.0.0</version>
+    <version>2.5.0.0</version>
 </dependency>
 ```
 
 Apache Ivy Projects
 ```
-<dependency org="com.cra.figaro" name="figaro_2.11" rev="2.4.0.0" />
+<dependency org="com.cra.figaro" name="figaro_2.11" rev="2.5.0.0" />
 ```
 
 ## How do I run the Figaro Examples?
@@ -63,12 +63,12 @@ Apache Ivy Projects
 
 4) Switch to the uncompressed Figaro binary bundle directory, and use the Scala command line:
 ```
-scala -cp figaro_2.11-2.4.0.0-fat.jar;figaroexamples_2.11-2.4.0.0.jar <example_class>
+scala -cp figaro_2.11-2.5.0.0-fat.jar;figaroexamples_2.11-2.5.0.0.jar <example_class>
 ```
 
 For instance:
 ```
-scala -cp figaro_2.11-2.4.0.0-fat.jar;figaroexamples_2.11-2.4.0.0.jar com.cra.figaro.example.Burglary
+scala -cp figaro_2.11-2.5.0.0-fat.jar;figaroexamples_2.11-2.5.0.0.jar com.cra.figaro.example.Burglary
 ```
 
 ## What Figaro Example classes are available?
