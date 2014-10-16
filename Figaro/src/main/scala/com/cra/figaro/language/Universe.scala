@@ -313,19 +313,6 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
     }
   }
 
-  /**
-   * Generate values for the elements in the universe, making sure to generate arguments before their dependent elements.
-   * This method should be called by algorithms that need elements to be initialized with values.
-   */
-  def generateAll(): Unit = {
-    for {
-      layer <- layers(myActiveElements)
-      elem <- layer
-    } {
-      elem.generate()
-    }
-  }
-
   override def finalize = {
     clear()
     super.finalize()

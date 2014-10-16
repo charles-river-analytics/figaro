@@ -13,23 +13,43 @@
 
 package com.cra.figaro.test.algorithm.lazyfactored
 
-import org.scalatest.WordSpec
-import com.cra.figaro.algorithm.lazyfactored._
-import com.cra.figaro.language._
-import com.cra.figaro.library.atomic._
-import com.cra.figaro.library.compound._
-import com.cra.figaro.library.atomic._
 import org.scalatest.Matchers
+import org.scalatest.WordSpec
+
+import com.cra.figaro.algorithm.lazyfactored.LazyValues
+import com.cra.figaro.algorithm.lazyfactored.Regular
+import com.cra.figaro.language.Apply
+import com.cra.figaro.language.Chain
+import com.cra.figaro.language.Constant
+import com.cra.figaro.language.Dist
+import com.cra.figaro.language.Element
+import com.cra.figaro.language.ElementCollection
+import com.cra.figaro.language.Flip
+import com.cra.figaro.language.Name
+import com.cra.figaro.language.NonCachingChain
+import com.cra.figaro.language.Select
+import com.cra.figaro.language.Universe
+import com.cra.figaro.library.atomic.continuous
+import com.cra.figaro.library.atomic.discrete
 
 /*
  * The tests for unbounded depth values computation are in com.cra.figaro.test.algorithm.ValuesTest.
  */
 class LazyValuesTest extends WordSpec with Matchers {
   "Calling values()" should {
-    "given a non-enumerable element such as a continuous Uniform" should {
+    
+    // This should be changed to a non-atomic element, since we now automatically sample atomic elements
+    "given a non-enumerable element" should {
       "return the value set consisting only of *" in {
+        class testElem(name: Name[Int], collection: ElementCollection) extends Element[Int](name, collection) {
+          type Randomness = Int
+          def args = List()
+          def generateValue(rand: Randomness) = 1
+          def generateRandomness() = 1         
+        }
+        
         val universe = Universe.createNew()
-        val vs = LazyValues(universe)(continuous.Uniform(0.0, 1.0), 1)
+        val vs = LazyValues(universe)(new testElem("", universe), 1)
         vs.regularValues should equal (Set())
         vs.hasStar should equal (true)
       }

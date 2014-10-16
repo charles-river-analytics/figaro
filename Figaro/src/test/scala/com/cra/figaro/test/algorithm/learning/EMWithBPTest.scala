@@ -58,9 +58,9 @@ class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
               val algorithm = EMWithBP(15, 10, b)(universe)
               algorithm.start
 
-              val result = b.getLearnedElement
+              val result = b.MAPValue
               algorithm.kill
-              result.prob should be(0.6666 +- 0.01)
+              result should be(0.6666 +- 0.01)
 
             }
 
@@ -83,9 +83,9 @@ class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
               val algorithm = EMWithBP(15, 10, b)(universe)
               algorithm.start
 
-              val result = b.getLearnedElement
+              val result = b.MAPValue
               algorithm.kill
-              result.prob should be(0.50 +- 0.01)
+              result should be(0.50 +- 0.01)
             }
 
           "learn the bias from observations of binomial elements" in {
@@ -100,9 +100,9 @@ class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
               val algorithm = EMWithBP(15, 10, b)(universe)
               algorithm.start
 
-              val result = b.getLearnedElement
+              val result = b.MAPValue
               algorithm.kill
-              result.prob should be(0.6666 +- 0.01)
+              result should be(0.6666 +- 0.01)
           }
         }
 
@@ -118,9 +118,9 @@ class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
               val algorithm = EMWithBP(15, 10, b)(universe)
               algorithm.start
 
-              val result = b.getLearnedElement
+              val result = b.MAPValue
               algorithm.kill
-              result.prob should be(0.7 +- 0.01)
+              result should be(0.7 +- 0.01)
 
             
           }
@@ -148,9 +148,9 @@ class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
               val algorithm = EMWithBP(15, 10, b)(universe)
               algorithm.start
 
-              val result = b.getLearnedElement(List(true, false))
+              val result = b.MAPValue
               algorithm.kill
-              result.probs(0) should be(0.6666 +- 0.01)
+              result(0) should be(0.6666 +- 0.01)
             }
 
           "take the prior concentration parameters into account" in
@@ -173,9 +173,9 @@ class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
              val algorithm = EMWithBP(15, 10, b)(universe)
               algorithm.start
 
-              val result = b.getLearnedElement(List(true, false))
+              val result = b.MAPValue
               algorithm.kill
-              result.probs(0) should be(0.50 +- 0.01)
+              result(0) should be(0.50 +- 0.01)
 
             }
 
@@ -195,30 +195,30 @@ class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
               val algorithm = EMWithBP(5, 10, d)
               algorithm.start
 
-              val result = d.getLearnedElement(outcomes)
+              val result = d.MAPValue
               algorithm.kill
-              result.probs(0) should be(0.04 +- 0.01)
-              result.probs(1) should be(0.04 +- 0.01)
-              result.probs(2) should be(0.04 +- 0.01)
-              result.probs(3) should be(0.04 +- 0.01)
-              result.probs(4) should be(0.04 +- 0.01)
-              result.probs(5) should be(0.04 +- 0.01)
-              result.probs(6) should be(0.04 +- 0.01)
-              result.probs(7) should be(0.04 +- 0.01)
-              result.probs(8) should be(0.04 +- 0.01)
-              result.probs(9) should be(0.04 +- 0.01)
-              result.probs(10) should be(0.04 +- 0.01)
-              result.probs(11) should be(0.04 +- 0.01)
-              result.probs(12) should be(0.04 +- 0.01)
-              result.probs(13) should be(0.04 +- 0.01)
-              result.probs(14) should be(0.04 +- 0.01)
-              result.probs(15) should be(0.04 +- 0.01)
-              result.probs(16) should be(0.04 +- 0.01)
-              result.probs(17) should be(0.04 +- 0.01)
-              result.probs(18) should be(0.04 +- 0.01)
-              result.probs(19) should be(0.04 +- 0.01)
-              result.probs(20) should be(0.04 +- 0.01)
-              result.probs(21) should be(0.04 +- 0.01)
+              result(0) should be(0.04 +- 0.01)
+              result(1) should be(0.04 +- 0.01)
+              result(2) should be(0.04 +- 0.01)
+              result(3) should be(0.04 +- 0.01)
+              result(4) should be(0.04 +- 0.01)
+              result(5) should be(0.04 +- 0.01)
+              result(6) should be(0.04 +- 0.01)
+              result(7) should be(0.04 +- 0.01)
+              result(8) should be(0.04 +- 0.01)
+              result(9) should be(0.04 +- 0.01)
+              result(10) should be(0.04 +- 0.01)
+              result(11) should be(0.04 +- 0.01)
+              result(12) should be(0.04 +- 0.01)
+              result(13) should be(0.04 +- 0.01)
+              result(14) should be(0.04 +- 0.01)
+              result(15) should be(0.04 +- 0.01)
+              result(16) should be(0.04 +- 0.01)
+              result(17) should be(0.04 +- 0.01)
+              result(18) should be(0.04 +- 0.01)
+              result(19) should be(0.04 +- 0.01)
+              result(20) should be(0.04 +- 0.01)
+              result(21) should be(0.04 +- 0.01)
 
             }
 
@@ -237,13 +237,13 @@ class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
              val algorithm = EMWithBP(2, 10, d)
              algorithm.start
 
-             val result = d.getLearnedElement(outcomes)
+             val result = d.MAPValue
               algorithm.kill
-              result.probs(0) should be(0.0 +- 0.01)
-              result.probs(1) should be(0.25 +- 0.01)
-              result.probs(2) should be(0.25 +- 0.01)
-              result.probs(3) should be(0.25 +- 0.01)
-              result.probs(4) should be(0.25 +- 0.01)
+              result(0) should be(0.0 +- 0.01)
+              result(1) should be(0.25 +- 0.01)
+              result(2) should be(0.25 +- 0.01)
+              result(3) should be(0.25 +- 0.01)
+              result(4) should be(0.25 +- 0.01)
             }
 
           "detect bias after a large enough number of trials" in
@@ -270,14 +270,14 @@ class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
               val algorithm = EMWithBP(15, 10, b)(universe)
               algorithm.start
 
-              val result = b.getLearnedElement(outcomes)
+              val result = b.MAPValue
               algorithm.kill
               //9/19
-              result.probs(0) should be(0.47 +- errorTolerance)
+              result(0) should be(0.47 +- errorTolerance)
               //7/19
-              result.probs(1) should be(0.36 +- errorTolerance)
+              result(1) should be(0.36 +- errorTolerance)
               //3/19
-              result.probs(2) should be(0.15 +- errorTolerance)
+              result(2) should be(0.15 +- errorTolerance)
             }
 
           "take the prior concentration parameters into account" in
@@ -306,11 +306,11 @@ class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
               val algorithm = EMWithBP(3, 10, b)(universe)
               algorithm.start
 
-              val result = b.getLearnedElement(outcomes)
+              val result = b.MAPValue
               algorithm.kill
-              result.probs(0) should be(0.33 +- 0.01)
-              result.probs(1) should be(0.33 +- 0.01)
-              result.probs(2) should be(0.33 +- 0.01)
+              result(0) should be(0.33 +- 0.01)
+              result(1) should be(0.33 +- 0.01)
+              result(2) should be(0.33 +- 0.01)
 
             }
 
@@ -340,11 +340,11 @@ class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
               val algorithm = EMWithBP(3, 10, b)(universe)
               algorithm.start
 
-              val result = b.getLearnedElement(outcomes)
+              val result = b.MAPValue
               algorithm.kill
-              result.probs(0) should be(0.33 +- 0.01)
-              result.probs(1) should be(0.33 +- 0.01)
-              result.probs(2) should be(0.33 +- 0.01)
+              result(0) should be(0.33 +- 0.01)
+              result(1) should be(0.33 +- 0.01)
+              result(2) should be(0.33 +- 0.01)
             }
 
         }
@@ -380,14 +380,14 @@ class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
                   val algorithm = EMWithBP(100, 10, d, b)(universe)
                   algorithm.start
 
-                  val result = d.getLearnedElement(outcomes)
+                  val result = d.MAPValue
                   algorithm.kill
-                  result.probs(0) should be(0.33 +- 0.01)
-                  result.probs(1) should be(0.33 +- 0.01)
-                  result.probs(2) should be(0.33 +- 0.01)
+                  result(0) should be(0.33 +- 0.01)
+                  result(1) should be(0.33 +- 0.01)
+                  result(2) should be(0.33 +- 0.01)
 
-                  val betaResult = b.getLearnedElement
-                  betaResult.prob should be(0.5)
+                  val betaResult = b.MAPValue
+                  betaResult should be(0.5)
 
                 }
 
@@ -430,14 +430,14 @@ class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
                   val algorithm = EMWithBP(5, 10, b,d)(universe)
                   algorithm.start
 
-                  val result = d.getLearnedElement(outcomes)
+                  val result = d.MAPValue
 
-                  result.probs(0) should be(0.33 +- 0.01)
-                  result.probs(1) should be(0.33 +- 0.01)
-                  result.probs(2) should be(0.33 +- 0.01)
+                  result(0) should be(0.33 +- 0.01)
+                  result(1) should be(0.33 +- 0.01)
+                  result(2) should be(0.33 +- 0.01)
 
-                  val betaResult = b.getLearnedElement
-                  betaResult.prob should be(0.5 +- 0.01)
+                  val betaResult = b.MAPValue
+                  betaResult should be(0.5 +- 0.01)
 
                 }
           }
@@ -533,7 +533,7 @@ class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
 
       def generateDatum(): Datum = {
         val model = TrueModel
-        model.universe.generateAll()
+        Forward(model.universe)
         Datum(model.x.value, model.y.value, model.z.value, model.w.value)
       }
 
