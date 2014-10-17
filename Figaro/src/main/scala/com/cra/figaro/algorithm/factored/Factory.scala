@@ -103,11 +103,13 @@ object Factory {
     }
     factor
   }
-
-  private def getProbs[U, T](select: Select[U, T]): List[U] = {
-    val selectVar = Variable(select)
+ 
+  private def getProbs[U, T](select: Select[U, T]): List[U] = getProbs(select, select.clauses)
+  
+  private def getProbs[U, T](elem: Element[T], clauses: List[(U, T)]): List[U] = {
+    val selectVar = Variable(elem)
     def getProb(xvalue: Extended[T]): U = {
-      select.clauses.find(_._2 == xvalue.value).get._1 // * cannot be a value of a Select
+      clauses.find(_._2 == xvalue.value).get._1 // * cannot be a value of a Select
     }
     val probs = 
       for { xvalue <- selectVar.range } yield getProb(xvalue) 
@@ -577,6 +579,21 @@ object Factory {
     List(factor)
   }
 
+  private def makeFactors[T](atomic: Atomic[T]): List[Factor[Double]] = {
+    val atomicVar = Variable(atomic)
+    val pbpSampler = ParticleGenerator(atomic.universe)
+    // Note, don't need number of samples because values should have already been expanded on it 
+    // (and values will initiate the sampling)
+    val samples = pbpSampler(atomic)
+    if (atomicVar.range.exists(!_.isRegular)) {
+      assert(atomicVar.range.size == 1) // Select's range must either be a list of regular values or {*}
+      makeStarFactor(atomic)
+    } else {
+      val probs = getProbs(atomic, samples)
+      List(makeSimpleDistribution(atomicVar, probs))
+    }
+  }
+  
   def concreteFactors[T](elem: Element[T]): List[Factor[Double]] =
     elem match {
       case f: ParameterizedFlip => makeFactors(f)
@@ -597,7 +614,8 @@ object Factory {
       case a: Apply5[_, _, _, _, _, _] => makeFactors(a)
       case i: Inject[_] => makeFactors(i)
       case f: ProbFactorMaker => f.makeFactors
-
+      case a: Atomic[_] => makeFactors(a)
+      
       case _ => throw new UnsupportedAlgorithmException(elem)
     }
 
@@ -736,6 +754,11 @@ object Factory {
    */
   def removeFactors() { factorCache.clear }
 
+    /**
+   * Update the factor cache.
+   */
+  def updateFactor[T](elem: Element[_], f: List[Factor[Double]]) { factorCache.update(elem, f) }
+  
   /**
    * Create the probabilistic factor encoding the probability of evidence in the dependent universe as a function of the
    * values of variables in the parent universe. The third argument is the the function to use for computing
