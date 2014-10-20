@@ -235,7 +235,13 @@ class LazyValues(universe: Universe) {
    * or if a previous call has resulted in a result with no Star, the previous result is reused.
    */
   def apply[T](element: Element[T], depth: Int): ValueSet[T] = {
-    apply(element, depth, ParticleGenerator.defaultArgSamples, ParticleGenerator.defaultTotalSamples )
+    val (numArgSamples, numTotalSamples) = if (ParticleGenerator.exists(universe)) {
+      val pg = ParticleGenerator(universe)
+      (pg.numArgSamples, pg.numTotalSamples )
+    } else {
+      (ParticleGenerator.defaultArgSamples, ParticleGenerator.defaultTotalSamples)
+    }
+    apply(element, depth, numArgSamples, numTotalSamples)
   }
   
   def apply[T](element: Element[T], depth: Int, numArgSamples: Int, numTotalSamples: Int): ValueSet[T] = {
