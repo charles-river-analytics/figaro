@@ -79,8 +79,8 @@ object Forward {
               state1 = sampleInState(argsRemaining.head, state1, universe)
               argsRemaining = argsRemaining.tail
             }
-            element.randomness = element.generateRandomness
-            (state1, element.generateValue(element.randomness))
+            element.generate
+            (state1, element.value)
         }
       }
       element.value = sampledValue.asInstanceOf[T]
@@ -88,3 +88,28 @@ object Forward {
     }
   }
 }
+
+//  /**
+//   * Returns a list of layers of elements in the given set of elements, where the elements in each layer can be
+//   * generated independently of each other given elements in previous layers.
+//   */
+//  def layers(elems: Traversable[Element[_]]): List[List[Element[_]]] = {
+//    if (elems.isEmpty) List()
+//    else {
+//      val (first, rest) = independentElements(elems)
+//      if (first == Set()) throw new IllegalArgumentException("Cyclic set of elements - cannot produce layers")
+//      first.toList :: layers(rest)
+//    }
+//  }
+//  /**
+//   * Generate values for the elements in the universe, making sure to generate arguments before their dependent elements.
+//   * This method should be called by algorithms that need elements to be initialized with values.
+//   */
+//  def generateAll(): Unit = {
+//    for {
+//      layer <- layers(myActiveElements)
+//      elem <- layer
+//    } {
+//      elem.generate()
+//    }
+//  }
