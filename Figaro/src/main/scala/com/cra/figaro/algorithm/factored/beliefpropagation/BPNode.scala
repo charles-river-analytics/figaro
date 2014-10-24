@@ -24,7 +24,7 @@ trait Node
 /**
  * Class for FactorNodes in a FactorGraph
  */
-final class FactorNode(val variables: List[Variable[_]]) extends Node {
+final case class FactorNode(val variables: Set[Variable[_]]) extends Node {
   override def toString() = "F(" + variables.map(_.id).mkString(",") + ")"
 }
 

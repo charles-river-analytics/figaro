@@ -121,7 +121,7 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
 
     val f = if (messageList.isEmpty) {
       source match {
-        case fn: FactorNode => factorGraph.uniformFactor(fn.variables)
+        case fn: FactorNode => factorGraph.uniformFactor(fn.variables.toList)
         case vn: VariableNode => factorGraph.uniformFactor(List(vn.variable))
       }
     } else {
@@ -174,6 +174,14 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
       println()
     }
     synchronousUpdate()
+    if (debug) { 
+      beliefMap.foreach(a => println(a._1 + " => " + a._2)); println 
+      println("Factor Messages:")
+      factorGraph.getNodes.foreach{n =>
+        println(n + ": ")
+        println(factorGraph.getMessagesForNode(n))
+      }
+    }
   }
 
   override def initialize() = {
@@ -193,7 +201,7 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
   def normalize(factor: Factor[Double]): Factor[Double] = {
     val z = semiring.sumMany(factor.contents.values)
     // Since we're in log space, d - z = log(exp(d)/exp(z))
-    factor.mapTo((d: Double) => if (z != semiring.zero) d - z else semiring.zero, factor.variables)    
+    factor.mapTo((d: Double) => if (z != semiring.zero) d - z else semiring.zero, factor.variables)
   }
 
   /*
@@ -219,13 +227,13 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
   }
 
   private[figaro] def makeLogarithmic(factor: Factor[Double]): Factor[Double] = {
-    factor.mapTo((d: Double) => Math.log(d), factor.variables)    
+    factor.mapTo((d: Double) => Math.log(d), factor.variables)
   }
-  
+
   private[figaro] def unmakeLogarithmic(factor: Factor[Double]): Factor[Double] = {
     factor.mapTo((d: Double) => Math.exp(d), factor.variables)
   }
-  
+
   /**
    * Get the belief for an element
    */
@@ -316,10 +324,10 @@ abstract class ProbQueryBeliefPropagation(override val universe: Universe, targe
 
   val semiring = LogSumProductSemiring
 
-  var neededElements: List[Element[_]] = _ 
-  var needsBounds: Boolean = _ 
-  
-  override def initialize() = {
+  var neededElements: List[Element[_]] = _
+  var needsBounds: Boolean = _
+
+  def generateGraph() = {
     val needs = getNeededElements(starterElements, depth)
     neededElements = needs._1
     needsBounds = needs._2
@@ -331,7 +339,11 @@ abstract class ProbQueryBeliefPropagation(override val universe: Universe, targe
       getFactors(neededElements, targetElements)
     }
 
-    factorGraph = new BasicFactorGraph(factors, semiring): FactorGraph[Double]
+    factorGraph = new BasicFactorGraph(factors, semiring): FactorGraph[Double]     
+  }
+
+  override def initialize() = {
+    if (factorGraph == null) generateGraph() 
     super.initialize
   }
 
