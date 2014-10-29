@@ -27,7 +27,7 @@ import com.cra.figaro.algorithm.lazyfactored.ValueSet
  * @param b The prior beta parameter
  */
 class AtomicBeta(name: Name[Double], a: Double, b: Double, collection: ElementCollection)
-  extends Element[Double](name, collection) with Atomic[Double] with Parameter[Double] with ValuesMaker[Double] {
+  extends Element[Double](name, collection) with Atomic[Double] with DoubleParameter with ValuesMaker[Double] {
   type Randomness = Double
 
   def generateRandomness() = Util.generateBeta(a, b)
@@ -42,7 +42,7 @@ class AtomicBeta(name: Name[Double], a: Double, b: Double, collection: ElementCo
   /**
    * Density of a value.
    */
-  def density(x: Double) = if (x < 0.0 || x > 1.0) 0.0 else pow(x, a - 1) * pow(1 - x, b - 1) * normalizer
+  def density(x: Double) = pow(x, a - 1) * pow(1 - x, b - 1) * normalizer
 
   /**
    * The learned alpha parameter

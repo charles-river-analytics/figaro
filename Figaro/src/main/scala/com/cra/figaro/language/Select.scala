@@ -15,6 +15,9 @@ package com.cra.figaro.language
 
 import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.util._
+import com.cra.figaro.patterns.learning.ParameterArray
+import com.cra.figaro.patterns.learning.ParameterType
+import com.cra.figaro.patterns.learning.PrimitiveArray
 
 /**
  * Distributions with randomly chosen outcomes. The probabilities can
@@ -105,6 +108,45 @@ object Select {
   private def makeParameterizedSelect[T](name: Name[T], parameter: AtomicDirichlet, outcomes: List[T], collection: ElementCollection): ParameterizedSelect[T] = {
     new ParameterizedSelect(name, parameter, outcomes, collection)
   }
+  
+  
+  
+  
+  
+  def apply[T](parameter: ParameterType, outcomes: T*)(implicit name: Name[T], collection: ElementCollection) {
+    parameter match {
+      case d: ParameterArray => apply(d,outcomes,name,collection)
+      case e: PrimitiveArray => apply(e,outcomes,name,collection)
+    }
+  }
+
+  
+  
+  /*
+  def apply(parameter: ParameterType, outcomes: T*)(implicit name: Name[Boolean], collection: ElementCollection) {
+    val result = parameter match {
+      case a: ParameterArray => { this.apply(a.d)(name,collection) }
+      case b: PrimitiveArray => { 
+          b.p match {
+            case p: Parameter[Double] => this.apply(b.p)(name,collection) 
+          }
+        }
+    }
+    result
+  }
+  * 
+  */
+  
+  def apply[T](parameter: ParameterArray, outcomes: T*)(implicit name: Name[T], collection: ElementCollection) {
+    parameter.p match {
+      case d: AtomicDirichlet => makeParameterizedSelect(name, d, outcomes.toList,collection)
+    }
+  }
+  
+  def apply[T](parameter: PrimitiveArray, outcomes: T*)(implicit name: Name[T], collection: ElementCollection) {
+    this.apply(parameter.a.toList,outcomes.toList)
+  }
+  
   /**
    * A distribution in which both the probabilities and the outcomes are values. Each outcome is
    * chosen with the corresponding probability.

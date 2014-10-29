@@ -17,7 +17,14 @@ package com.cra.figaro.language
  * Trait of learnable parameters. Parameters are elements which can learn their value from data.
  *
  */
-abstract trait Parameter[T] extends Element[T] {
+
+/*
+abstract trait ElementDouble extends ObjectParameterType
+abstract trait ElementArray extends ObjectParameterType
+*/
+
+
+abstract trait Parameter[T] extends Atomic[T] {
 
   /**
    * Sets the hyperparameters of this parameter to their most likely value based on the sufficient statistics provided.
@@ -47,4 +54,9 @@ abstract trait Parameter[T] extends Element[T] {
    */
   def MAPValue: T
 }
+
+trait DoubleParameter extends Parameter[Double] 
+trait ArrayParameter extends Parameter[Array[Double]]
+
+
 

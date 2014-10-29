@@ -13,11 +13,19 @@
 
 package com.cra.figaro.algorithm.learning
 
-import com.cra.figaro.language._
-import com.cra.figaro.algorithm.{Algorithm, ParameterLearner, ProbQueryAlgorithm, OneTime}
+import com.cra.figaro.algorithm.Algorithm
+import com.cra.figaro.algorithm.OneTime
+import com.cra.figaro.algorithm.ParameterLearner
+import com.cra.figaro.algorithm.ProbQueryAlgorithm
 import com.cra.figaro.algorithm.factored.beliefpropagation.BeliefPropagation
-import com.cra.figaro.algorithm.sampling.{Importance, MetropolisHastings, ProposalScheme}
-import com.cra.figaro.algorithm.factored.Factory
+import com.cra.figaro.algorithm.sampling.Importance
+import com.cra.figaro.algorithm.sampling.MetropolisHastings
+import com.cra.figaro.algorithm.sampling.ProposalScheme
+import com.cra.figaro.language.Element
+import com.cra.figaro.language.Parameter
+import com.cra.figaro.language.Parameterized
+import com.cra.figaro.language.Universe
+import com.cra.figaro.patterns.learning.ModelParameters
 
 /*
  * @param inferenceAlgorithmConstructor
@@ -33,6 +41,10 @@ class GeneralizedEM(inferenceAlgorithmConstructor: Seq[Element[_]] => Universe =
   }
 
   protected def em(): Unit = {
+    //Not a good method
+    //The loop doesn't stop, it just doesn't enter if the criteria is false
+    //Meaning that it is checked each time
+    //shouldterminate() could be very expensive.
     for (iteration <- 1 to numberOfIterations) {
       /*
        * Obtain an estimate of sufficient statistics from expectation step
@@ -44,23 +56,24 @@ class GeneralizedEM(inferenceAlgorithmConstructor: Seq[Element[_]] => Universe =
   }
 
   protected def doExpectationStep(): Map[Parameter[_], Seq[Double]] = {
-    val inferenceTargets = 
+    val inferenceTargets =
       universe.activeElements.filter(_.isInstanceOf[Parameterized[_]]).map(_.asInstanceOf[Parameterized[_]])
 
     val algorithm = inferenceAlgorithmConstructor(inferenceTargets)(universe)
     algorithm.start()
 
     var result: Map[Parameter[_], Seq[Double]] = Map()
-   
+
     for { parameter <- targetParameters } {
+      //universe.myUsedBy(parameter)
       var stats = parameter.zeroSufficientStatistics
-      for { 
+      for {
         target <- inferenceTargets
         if target.parameters.contains(parameter)
       } {
         val t: Parameterized[target.Value] = target.asInstanceOf[Parameterized[target.Value]]
         val distribution: Stream[(Double, target.Value)] = algorithm.distribution(t)
-        val newStats = t.distributionToStatistics(parameter,distribution)
+        val newStats = t.distributionToStatistics(parameter, distribution)
         stats = (stats.zip(newStats)).map(pair => pair._1 + pair._2)
       }
       result += parameter -> stats
@@ -70,7 +83,7 @@ class GeneralizedEM(inferenceAlgorithmConstructor: Seq[Element[_]] => Universe =
   }
 
   protected def doMaximizationStep(parameterMapping: Map[Parameter[_], Seq[Double]]): Unit = {
-   for (p <- targetParameters) yield {
+    for (p <- targetParameters) yield {
       p.maximize(parameterMapping(p))
     }
   }
@@ -92,13 +105,24 @@ class GeneralizedEM(inferenceAlgorithmConstructor: Seq[Element[_]] => Universe =
 
   protected def doKill(): Unit = {}
 }
- 
+
 object EMWithBP {
-  private def makeBP(numIterations: Int, targets: Seq[Element[_]])(universe: Universe) = {    
-    Factory.removeFactors()
-    BeliefPropagation(numIterations, targets:_*)(universe)
+  private def makeBP(numIterations: Int, targets: Seq[Element[_]])(universe: Universe) = {
+    BeliefPropagation(numIterations, targets: _*)(universe)
   }
-  
+
+
+
+  def apply(p: ModelParameters)(implicit universe: Universe) = {
+    val parameters = p.convertToParameterList
+    new GeneralizedEM((targets: Seq[Element[_]]) => (universe: Universe) => makeBP(10, targets)(universe), universe, parameters: _*)(10)
+  }
+
+  def apply(emIterations: Int, bpIterations: Int, p: ModelParameters)(implicit universe: Universe) = {
+    val parameters = p.convertToParameterList
+    new GeneralizedEM((targets: Seq[Element[_]]) => (universe: Universe) => makeBP(bpIterations, targets)(universe), universe, parameters: _*)(emIterations)
+  }
+
   /**
    * An expectation maximization algorithm which will run for the default of 10 iterations
    */
@@ -114,27 +138,37 @@ object EMWithBP {
 
 object EMWithImportance {
   private def makeImportance(numParticles: Int, targets: Seq[Element[_]])(universe: Universe) = {
-    Importance(numParticles, targets:_*)(universe)
+    Importance(numParticles, targets: _*)(universe)
   }
-  
+
   /**
    * An expectation maximization algorithm using importance sampling for inference
-   * 
+   *
    * @param emIterations number of iterations of the EM algorithm
    * @param importanceParticles number of particles of the importance sampling algorithm
    */
   def apply(emIterations: Int, importanceParticles: Int, p: Parameter[_]*)(implicit universe: Universe) =
     new GeneralizedEM((targets: Seq[Element[_]]) => (universe: Universe) => makeImportance(importanceParticles, targets)(universe), universe, p: _*)(emIterations)
+
+  def apply(p: ModelParameters)(implicit universe: Universe) = {
+    val parameters = p.convertToParameterList
+    new GeneralizedEM((targets: Seq[Element[_]]) => (universe: Universe) => makeImportance(100000, targets)(universe), universe, parameters: _*)(10)
+  }
+
+  def apply(emIterations: Int, importanceParticles: Int, p: ModelParameters)(implicit universe: Universe) = {
+    val parameters = p.convertToParameterList
+    new GeneralizedEM((targets: Seq[Element[_]]) => (universe: Universe) => makeImportance(100000, targets)(universe), universe, parameters: _*)(emIterations)
+  }
 }
 
 object EMWithMH {
   private def makeMH(numParticles: Int, proposalScheme: ProposalScheme, targets: Seq[Element[_]])(universe: Universe) = {
-    MetropolisHastings(numParticles, proposalScheme, targets:_*)(universe)
+    MetropolisHastings(numParticles, proposalScheme, targets: _*)(universe)
   }
-  
+
   /**
    * An expectation maximization algorithm using Metropolis Hastings for inference.
-   * 
+   *
    * @param emIterations number of iterations of the EM algorithm
    * @param mhParticles number of particles of the MH algorithm
    */
@@ -143,10 +177,20 @@ object EMWithMH {
 
   /**
    * An expectation maximization algorithm using Metropolis Hastings for inference.
-   * 
+   *
    * @param emIterations number of iterations of the EM algorithm
    * @param mhParticles number of particles of the MH algorithm
    */
   def apply(emIterations: Int, mhParticles: Int, proposalScheme: ProposalScheme, p: Parameter[_]*)(implicit universe: Universe) =
     new GeneralizedEM((targets: Seq[Element[_]]) => (universe: Universe) => makeMH(mhParticles, proposalScheme, targets)(universe), universe, p: _*)(emIterations)
+
+  def apply(p: ModelParameters)(implicit universe: Universe) = {
+    val parameters = p.convertToParameterList
+    new GeneralizedEM((targets: Seq[Element[_]]) => (universe: Universe) => makeMH(100000, ProposalScheme.default(universe), targets)(universe), universe, parameters: _*)(10)
+  }
+  
+    def apply(emIterations: Int, mhParticles: Int, proposalScheme: ProposalScheme, p: ModelParameters)(implicit universe: Universe) = {
+    val parameters = p.convertToParameterList
+    new GeneralizedEM((targets: Seq[Element[_]]) => (universe: Universe) => makeMH(mhParticles, proposalScheme, targets)(universe), universe, parameters: _*)(emIterations)
+  }
 }

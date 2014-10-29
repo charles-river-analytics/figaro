@@ -109,6 +109,7 @@ object Factory {
   private def getProbs[U, T](elem: Element[T], clauses: List[(U, T)]): List[U] = {
     val selectVar = Variable(elem)
     def getProb(xvalue: Extended[T]): U = {
+      println("e: " + elem.toString())
       clauses.find(_._2 == xvalue.value).get._1 // * cannot be a value of a Select
     }
     val probs = 
@@ -561,7 +562,7 @@ object Factory {
   }
 
   // When we're using a parameter to compute expected sufficient statistics, we just use its expected value
-  private def makeFactors(param: Parameter[_]): List[Factor[Double]] = {
+  private def makeParameterFactors(param: Parameter[_]): List[Factor[Double]] = {
     // The parameter should have one possible value, which is its expected value
     assert(Variable(param).range.size == 1)
     val factor = new BasicFactor[Double](List(Variable(param)))
@@ -598,7 +599,8 @@ object Factory {
     elem match {
       case f: ParameterizedFlip => makeFactors(f)
       case s: ParameterizedSelect[_] => makeFactors(s)
-      case p: Parameter[_] => makeFactors(p)
+      case p: DoubleParameter => makeParameterFactors(p)
+      case p: ArrayParameter => makeParameterFactors(p)
       case c: Constant[_] => makeFactors(c)
       case f: AtomicFlip => makeFactors(f)
       case f: CompoundFlip => makeFactors(f)

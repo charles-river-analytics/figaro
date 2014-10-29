@@ -27,7 +27,7 @@ import scala.collection.mutable
  * @param alphas the prior concentration parameters
  */
 class AtomicDirichlet(name: Name[Array[Double]], val alphas: Array[Double], collection: ElementCollection)
-  extends Element[Array[Double]](name, collection) with Atomic[Array[Double]] with Parameter[Array[Double]] with ValuesMaker[Array[Double]] {
+  extends Element[Array[Double]](name, collection) with Atomic[Array[Double]] with ArrayParameter with ValuesMaker[Array[Double]] {
 
   /**
    * The number of concentration parameters in the Dirichlet distribution.
@@ -57,7 +57,7 @@ class AtomicDirichlet(name: Name[Array[Double]], val alphas: Array[Double], coll
   /**
    * Density of a value.
    */
-  def density(xs: Array[Double]) = if (xs.exists(p => p < 0.0 || p > 1.0)) 0.0 else
+  def density(xs: Array[Double]) =
     (1.0 /: (xs zip alphas))(_ * onePow(_)) * normalizer
 
   /**
