@@ -109,7 +109,6 @@ object Factory {
   private def getProbs[U, T](elem: Element[T], clauses: List[(U, T)]): List[U] = {
     val selectVar = Variable(elem)
     def getProb(xvalue: Extended[T]): U = {
-      println("e: " + elem.toString())
       clauses.find(_._2 == xvalue.value).get._1 // * cannot be a value of a Select
     }
     val probs = 

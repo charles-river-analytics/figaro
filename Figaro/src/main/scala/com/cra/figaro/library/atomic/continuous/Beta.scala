@@ -91,6 +91,7 @@ class AtomicBeta(name: Name[Double], a: Double, b: Double, collection: ElementCo
   }
   
   def MAPValue: Double = {
+    println(learnedAlpha + " " + learnedBeta)
     if (learnedAlpha + learnedBeta == 2) 0.5
     else (learnedAlpha - 1) / (learnedAlpha + learnedBeta - 2)
   }
@@ -98,7 +99,6 @@ class AtomicBeta(name: Name[Double], a: Double, b: Double, collection: ElementCo
   def makeValues(depth: Int) = ValueSet.withoutStar(Set(MAPValue))
 
   def maximize(sufficientStatistics: Seq[Double]) {
-
     require(sufficientStatistics.size == 2)
     learnedAlpha = sufficientStatistics(0) + a
     learnedBeta = sufficientStatistics(1) + b
