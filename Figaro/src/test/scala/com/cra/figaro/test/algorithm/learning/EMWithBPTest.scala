@@ -41,7 +41,7 @@ class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
           "detect bias after a large enough number of trials" in
             {
               val universe = Universe.createNew
-              val b = BetaParameter(2, 2)
+              val b = Beta(2, 2)
 
               for (i <- 1 to 7) {
 
@@ -67,7 +67,7 @@ class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
           "take the prior concentration parameters into account" in
             {
               val universe = Universe.createNew
-              val b = BetaParameter(3.0, 7.0)
+              val b = Beta(3.0, 7.0)
 
               for (i <- 1 to 7) {
 
@@ -90,7 +90,7 @@ class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
 
           "learn the bias from observations of binomial elements" in {
               val universe = Universe.createNew
-              val b = BetaParameter(2, 2)
+              val b = Beta(2, 2)
 
               val b1 = Binomial(7, b)
               b1.observe(6)
@@ -108,7 +108,7 @@ class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
 
           "correctly use a uniform prior" in {
               val universe = Universe.createNew
-              val b = BetaParameter(1, 1)
+              val b = Beta(1, 1)
 
               val b1 = Binomial(7, b)
               b1.observe(6)
@@ -131,7 +131,7 @@ class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
           "detect bias after a large enough number of trials" in
             {
               val universe = Universe.createNew
-              val b = DirichletParameter(2, 2)
+              val b = Dirichlet(2, 2)
 
               for (i <- 1 to 7) {
 
@@ -157,7 +157,7 @@ class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
             {
               val universe = Universe.createNew
 
-              val b = DirichletParameter(3, 7)
+              val b = Dirichlet(3, 7)
 
               for (i <- 1 to 7) {
 
@@ -189,7 +189,7 @@ class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
             {
               val universe = Universe.createNew
               val alphas = Seq[Double](0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476)
-              val d = DirichletParameter(alphas: _*)
+              val d = Dirichlet(alphas: _*)
               val outcomes = List(2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23)
               val outcome = Select(d, outcomes: _*)
               val algorithm = EMWithBP(5, 10, d)
@@ -226,7 +226,7 @@ class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
             {
               val universe = Universe.createNew
               val alphas = Seq[Double](1.0476, 1.0476, 1.0476, 1.0476, 1.0476)
-              val d = DirichletParameter(alphas: _*)
+              val d = Dirichlet(alphas: _*)
               val outcomes = List(2, 3, 4, 5, 6)
 
               for (i <- 1 to 10) {
@@ -249,7 +249,7 @@ class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
           "detect bias after a large enough number of trials" in
             {
               val universe = Universe.createNew
-              val b = DirichletParameter(2, 2, 2)
+              val b = Dirichlet(2, 2, 2)
               val outcomes = List(1, 2, 3)
               val errorTolerance = 0.01
               for (i <- 1 to 8) {
@@ -283,7 +283,7 @@ class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
           "take the prior concentration parameters into account" in
             {
               val universe = Universe.createNew
-              val b = DirichletParameter(2.0, 3.0, 2.0)
+              val b = Dirichlet(2.0, 3.0, 2.0)
               val outcomes = List(1, 2, 3)
 
               for (i <- 1 to 3) {
@@ -317,7 +317,7 @@ class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
           "correctly use a uniform prior" in 
             {
               val universe = Universe.createNew
-              val b = DirichletParameter(1.0, 1.0, 1.0)
+              val b = Dirichlet(1.0, 1.0, 1.0)
               val outcomes = List(1, 2, 3)
 
               for (i <- 1 to 3) {
@@ -355,8 +355,8 @@ class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
               "leave parameters having no observations unchanged" in
                 {
                   val universe = Universe.createNew
-                  val d = DirichletParameter(2.0, 4.0, 2.0)
-                  val b = BetaParameter(2.0, 2.0)
+                  val d = Dirichlet(2.0, 4.0, 2.0)
+                  val b = Beta(2.0, 2.0)
                   val outcomes = List(1, 2, 3)
 
                   for (i <- 1 to 4) {
@@ -394,8 +394,8 @@ class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
               "correctly estimate all parameters with observations" in
                 {
                   val universe = Universe.createNew
-                  val d = DirichletParameter(2.0, 3.0, 2.0)
-                  val b = BetaParameter(3.0, 7.0)
+                  val d = Dirichlet(2.0, 3.0, 2.0)
+                  val b = Beta(3.0, 7.0)
                   val outcomes = List(1, 2, 3)
 
                   for (i <- 1 to 3) {
@@ -487,15 +487,15 @@ class EMWithBPTest extends WordSpec with PrivateMethodTester with Matchers {
       }
 
       class LearnableParameters(universe: Universe) extends Parameters(universe) {
-        val b1 = BetaParameter(1, 1)("b1", universe)
-        val b2 = BetaParameter(1, 1)("b2", universe)
-        val b3 = BetaParameter(1, 1)("b3", universe)
-        val b4 = BetaParameter(1, 1)("b4", universe)
-        val b5 = BetaParameter(1, 1)("b5", universe)
-        val b6 = BetaParameter(1, 1)("b6", universe)
-        val b7 = BetaParameter(1, 1)("b7", universe)
-        val b8 = BetaParameter(1, 1)("b8", universe)
-        val b9 = BetaParameter(1, 1)("b9", universe)
+        val b1 = Beta(1, 1)("b1", universe)
+        val b2 = Beta(1, 1)("b2", universe)
+        val b3 = Beta(1, 1)("b3", universe)
+        val b4 = Beta(1, 1)("b4", universe)
+        val b5 = Beta(1, 1)("b5", universe)
+        val b6 = Beta(1, 1)("b6", universe)
+        val b7 = Beta(1, 1)("b7", universe)
+        val b8 = Beta(1, 1)("b8", universe)
+        val b9 = Beta(1, 1)("b9", universe)
       }
 
       var id = 0
