@@ -18,10 +18,17 @@ import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.algorithm.learning._
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
-
+import com.cra.figaro.patterns.learning._
 /**
  * A model for learning the fairness of a coin.
  */
+
+class Trials(val parameters: ParameterCollection) {
+  val trials = for (f <- 0 until 86) yield {
+    Flip(parameters.get("fairness"))
+  }
+}
+
 object CoinExample {
 
   Universe.createNew()
@@ -37,44 +44,33 @@ object CoinExample {
     'T', 'H', 'H', 'T', 'H', 'T', 'H', 'T', 'T', 'H', 'T', 'H', 'H', 'H', 'H', 'H',
     'H', 'H', 'H', 'H', 'T', 'H', 'T', 'H', 'H', 'T', 'H', 'H', 'H', 'H', 'H',
     'H', 'T', 'H', 'H', 'H', 'T', 'H', 'H', 'H', 'H', 'H', 'H', 'H',
-    'H', 'H', 'H', 'H', 'H', 'H', 'H', 'T', 'H','T',
-     'H', 'H', 'H')
-
-  def Toss(fairness: AtomicBeta): AtomicFlip =
-    {
-      val f = Flip(fairness.MAPValue)
-      f
-    }
+    'H', 'H', 'H', 'H', 'H', 'H', 'H', 'T', 'H', 'T',
+    'H', 'H', 'H')
 
   def main(args: Array[String]) {
-    val fairness = BetaParameter(1, 1)
-    
-    data.foreach {
-      d =>
-        val f = Flip(fairness)
-        if (d == 'H') {
-          f.observe(true)
-        } else if (d == 'T') {
-          f.observe(false)
-        }
+
+    val params = ModelParameters()
+    val fairness = Beta(2.0, 2.0)("fairness", params)
+    val model = new Trials(params.priorParameters)
+    data zip model.trials foreach {
+      (datum: (Char, Flip)) => if (datum._1 == 'H') datum._2.observe(true) else datum._2.observe(false)
     }
 
-	val numberOfEMIterations = 10
-	val numberOfBPIterations = 10
-    val learningAlgorithm = EMWithBP(10, 10, fairness)
+    val numberOfEMIterations = 10
+    val numberOfBPIterations = 10
+    val learningAlgorithm = EMWithBP(10, 10, params)
     learningAlgorithm.start
-	learningAlgorithm.stop
+    learningAlgorithm.stop
     learningAlgorithm.kill
     /*
      * This will create a flip having a probability of 'true' learned from the input data. 
      */
-    val coin = Flip(fairness.MAPValue)
     println("The probability of a coin with this fairness showing 'heads' is: ")
-    println(coin.prob)
+    println(params.posteriorParameters.get("fairness"))
 
-    val t1 = Flip(fairness.MAPValue)
-    val t2 = Flip(fairness.MAPValue)
-    
+    val t1 = Flip(params.posteriorParameters.get("fairness"))
+    val t2 = Flip(params.posteriorParameters.get("fairness"))
+
     val equal = t1 === t2
 
     val alg = VariableElimination(equal)
