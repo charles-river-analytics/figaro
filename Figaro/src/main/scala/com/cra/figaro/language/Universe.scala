@@ -360,3 +360,28 @@ object Universe {
     universe
   }
 }
+
+
+//This could go in Evidence instead of here.
+object AssertEvidence {
+  
+    /**
+   * Assert the given evidence associated with references to elements in the collection.
+   */
+  def apply(evidencePairs: Seq[NamedEvidence[_]]): Unit = {
+    for { NamedEvidence(reference, evidence, contingency) <- evidencePairs } Universe.universe.assertEvidence(reference, evidence, contingency)
+  }
+
+  def apply[T](evidence: NamedEvidence[T]): Unit = {
+    apply(evidence.reference, evidence.evidence)
+  }
+  
+  /**
+   *   Assert the given evidence on the given reference. The third argument is an optional contingency.
+   *   This method makes sure to assert the evidence on all possible resolutions of the reference.
+   */
+  def apply[T](reference: Reference[T], evidence: Evidence[T], contingency: Element.Contingency = List()): Unit = {
+    Universe.universe.assertEvidence(reference,evidence,contingency)
+  }
+
+}

@@ -91,7 +91,6 @@ class AtomicBeta(name: Name[Double], a: Double, b: Double, collection: ElementCo
   }
   
   def MAPValue: Double = {
-    println(learnedAlpha + " " + learnedBeta)
     if (learnedAlpha + learnedBeta == 2) 0.5
     else (learnedAlpha - 1) / (learnedAlpha + learnedBeta - 2)
   }
