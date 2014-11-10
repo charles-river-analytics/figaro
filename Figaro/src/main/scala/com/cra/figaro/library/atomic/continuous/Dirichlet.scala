@@ -14,8 +14,9 @@
 package com.cra.figaro.library.atomic.continuous
 
 import com.cra.figaro.language._
-import scala.math.pow
-import JSci.maths.SpecialMath.gamma
+import com.cra.figaro.util._
+import scala.math.{ pow, log }
+import JSci.maths.SpecialMath._
 import com.cra.figaro.algorithm.ValuesMaker
 import com.cra.figaro.algorithm.lazyfactored.ValueSet
 import scala.collection.mutable
@@ -142,8 +143,38 @@ class CompoundDirichlet(name: Name[Array[Double]], alphas: Array[Element[Double]
     name,
     new Inject("", alphas, collection),
     (aa: Seq[Double]) => new AtomicDirichlet("", aa.toArray, collection),
-    collection) {
+    collection)
+  with Dirichlet {
+
+  def alphaValues = alphas.map(_.value)
+
   override def toString = "Dirichlet(" + alphas.mkString(", ") + ")"
+}
+
+trait Dirichlet extends Continuous[Array[Double]] {
+
+  /**
+   * Current alpha values.
+   */
+  def alphaValues: Array[Double]
+
+  private def sumAlphasLogGamma = logGamma(alphaValues.sum)
+  private def prodGammasLog = alphaValues.map(logGamma).sum
+
+  /**
+   * The normalizing factor.
+   */
+  private def normalizer = sumAlphasLogGamma - prodGammasLog
+
+  def logp(values: Array[Double]) =
+    bound(
+      alphaValues.zip(values).map { v =>
+        val (a, x) = v
+        (a - 1) * log(x)
+      }.sum + normalizer,
+      alphaValues.map(_ > 0): _*
+    )
+
 }
 
 object Dirichlet extends Creatable {

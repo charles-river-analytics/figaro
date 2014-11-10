@@ -14,7 +14,8 @@
 package com.cra.figaro.library.atomic.continuous
 
 import com.cra.figaro.language._
-import com.cra.figaro.util._
+import com.cra.figaro.util.{ random, bound }
+import scala.math.log
 
 /**
  * A continuous uniform distribution in which the parameters are constants.
@@ -48,8 +49,34 @@ class CompoundUniform(name: Name[Double], val lower: Element[Double], val upper:
       upper,
       (u: Double) => new AtomicUniform("", l, u, collection),
       collection),
-    collection) {
+    collection)
+  with Uniform {
+
+  def lowerValue = lower.value
+  def upperValue = upper.value
+
   override def toString = "Uniform(" + lower.toString + ", " + upper.toString + ")"
+}
+
+trait Uniform extends Continuous[Double] {
+
+  /**
+   * Current lower value.
+   */
+  def lowerValue: Double
+
+  /**
+   * Current upper value.
+   */
+  def upperValue: Double
+
+  def logp(value: Double) =
+    bound (
+      -log(upperValue - lowerValue),
+      lowerValue > 0,
+      upperValue > 0
+    )
+
 }
 
 object Uniform extends Creatable {
