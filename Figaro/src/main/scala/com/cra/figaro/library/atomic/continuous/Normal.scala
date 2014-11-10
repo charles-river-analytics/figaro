@@ -14,7 +14,7 @@
 package com.cra.figaro.library.atomic.continuous
 
 import com.cra.figaro.language._
-import com.cra.figaro.util.random
+import com.cra.figaro.util.{ random, bound }
 import scala.math._
 
 /**
@@ -57,7 +57,12 @@ class NormalCompoundMean(name: Name[Double], val mean: Element[Double], val vari
     name,
     mean,
     (m: Double) => new AtomicNormal("", m, variance, collection),
-    collection) {
+    collection)
+  with Normal {
+
+  def meanValue = mean.value
+  lazy val varianceValue = variance
+
   override def toString = "Normal(" + mean + ", " + variance + ")"
 }
 
@@ -73,8 +78,33 @@ class CompoundNormal(name: Name[Double], val mean: Element[Double], val variance
       variance,
       (v: Double) => new AtomicNormal("", m, v, collection),
       collection),
-    collection) {
+    collection)
+  with Normal {
+
+  def meanValue = mean.value
+  def varianceValue = variance.value
+
   override def toString = "Normal(" + mean + ", " + variance + ")"
+}
+
+trait Normal extends Continuous[Double] {
+
+  /**
+   * Current mean value.
+   */
+  def meanValue: Double
+
+  /**
+   * Current variance value.
+   */
+  def varianceValue: Double
+
+  def logp(value: Double) =
+    bound(
+      (- (value - meanValue) * (value - meanValue) / varianceValue + log(1 / Pi / 2.0 / varianceValue)) / 2.0,
+      varianceValue > 0
+    )
+
 }
 
 object Normal extends Creatable {

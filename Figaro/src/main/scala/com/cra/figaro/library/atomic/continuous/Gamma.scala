@@ -16,8 +16,8 @@ package com.cra.figaro.library.atomic.continuous
 import com.cra.figaro.language._
 import com.cra.figaro.util._
 import annotation.tailrec
-import scala.math._
-import JSci.maths.SpecialMath.gamma
+import scala.math.{ exp, log, pow }
+import JSci.maths.SpecialMath.{ gamma, logGamma }
 
 /**
  * A Gamma distribution in which both the k and theta parameters are constants.
@@ -55,12 +55,17 @@ class AtomicGamma(name: Name[Double], k: Double, theta: Double = 1.0, collection
 /**
  * A Gamma distribution in which the k parameter is an element and theta is constant. Theta defaults to 1.
  */
-class GammaCompoundK(name: Name[Double], k: Element[Double], theta: Double = 1.0, collection: ElementCollection)
+class GammaCompoundK(name: Name[Double], val k: Element[Double], theta: Double = 1.0, collection: ElementCollection)
   extends NonCachingChain(
     name,
     k,
     (k: Double) => new AtomicGamma("", k, theta, collection),
-    collection) {
+    collection)
+  with Gamma {
+
+  def kValue = k.value
+  lazy val thetaValue = theta
+
   override def toString =
     if (theta == 1.0) "Gamma(" + k + ")"
     else "Gamma(" + k + ", " + theta + ")"
@@ -69,7 +74,7 @@ class GammaCompoundK(name: Name[Double], k: Element[Double], theta: Double = 1.0
 /**
  * A Gamma distribution in which k and theta are both elements.
  */
-class CompoundGamma(name: Name[Double], k: Element[Double], theta: Element[Double], collection: ElementCollection)
+class CompoundGamma(name: Name[Double], val k: Element[Double], val theta: Element[Double], collection: ElementCollection)
   extends NonCachingChain[Double, Double](
     name,
     k,
@@ -78,8 +83,34 @@ class CompoundGamma(name: Name[Double], k: Element[Double], theta: Element[Doubl
       theta,
       (t: Double) => new AtomicGamma("", k, t, collection),
       collection),
-    collection) {
+    collection)
+  with Gamma {
+
+  def kValue = k.value
+  def thetaValue = theta.value
+
   override def toString = "Gamma(" + k + ", " + theta + ")"
+}
+
+trait Gamma extends Continuous[Double] {
+
+  /**
+   * Current k value.
+   */
+  def kValue: Double
+
+  /**
+   * Current theta value.
+   */
+  def thetaValue: Double
+
+  def logp(value: Double) =
+    bound(
+      -logGamma(kValue) + kValue * log(1 / thetaValue) - value / thetaValue + (kValue - 1) * log(value),
+      kValue > 0,
+      thetaValue > 0
+    )
+
 }
 
 object Gamma extends Creatable {
