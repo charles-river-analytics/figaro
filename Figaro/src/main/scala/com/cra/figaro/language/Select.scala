@@ -13,11 +13,13 @@
 
 package com.cra.figaro.language
 
-import com.cra.figaro.library.atomic.continuous._
-import com.cra.figaro.util._
+import com.cra.figaro.library.atomic.continuous.AtomicDirichlet
 import com.cra.figaro.patterns.learning.ParameterArray
 import com.cra.figaro.patterns.learning.ParameterType
 import com.cra.figaro.patterns.learning.PrimitiveArray
+import com.cra.figaro.util.normalize
+import com.cra.figaro.util.random
+import com.cra.figaro.util.selectMultinomial
 
 /**
  * Distributions with randomly chosen outcomes. The probabilities can
@@ -76,7 +78,6 @@ class CompoundSelect[T](name: Name[T], clauses: List[(Element[Double], T)], coll
  */
 class ParameterizedSelect[T](name: Name[T], override val parameter: AtomicDirichlet, outcomes: List[T], collection: ElementCollection)
   extends Select(name, parameter.alphas.toList zip outcomes, collection) with SingleParameterized[T] {
-
   private lazy val normalizedProbs = normalize(probs)
   def args: List[Element[_]] = List(parameter)
   private lazy val normalizedClauses = normalizedProbs zip outcomes
@@ -108,45 +109,26 @@ object Select {
   private def makeParameterizedSelect[T](name: Name[T], parameter: AtomicDirichlet, outcomes: List[T], collection: ElementCollection): ParameterizedSelect[T] = {
     new ParameterizedSelect(name, parameter, outcomes, collection)
   }
-  
-  
-  
-  
-  
-  def apply[T](parameter: ParameterType, outcomes: T*)(implicit name: Name[T], collection: ElementCollection) {
-    parameter match {
-      case d: ParameterArray => apply(d,outcomes,name,collection)
-      case e: PrimitiveArray => apply(e,outcomes,name,collection)
-    }
-  }
 
-  
-  
-  /*
-  def apply(parameter: ParameterType, outcomes: T*)(implicit name: Name[Boolean], collection: ElementCollection) {
-    val result = parameter match {
-      case a: ParameterArray => { this.apply(a.d)(name,collection) }
-      case b: PrimitiveArray => { 
-          b.p match {
-            case p: Parameter[Double] => this.apply(b.p)(name,collection) 
-          }
-        }
+  //May have erasure problems
+  def apply[T](parameter: ParameterType, outcomes: T*)(implicit name: Name[T], collection: ElementCollection) = {
+    parameter match {
+      case d: ParameterArray => new ParameterizedSelect(name, d.p.asInstanceOf[AtomicDirichlet], outcomes.toList, collection)
+      case e: PrimitiveArray => new AtomicSelect("good", (e.a zip outcomes).toList, collection)
+      case _ => new AtomicSelect("bad", ((List.fill(outcomes.length)(1.0)) zip outcomes).toList, collection)//Kind of a trick - Needs a default case
     }
-    result
   }
-  * 
-  */
-  
+/*  
   def apply[T](parameter: ParameterArray, outcomes: T*)(implicit name: Name[T], collection: ElementCollection) {
     parameter.p match {
       case d: AtomicDirichlet => makeParameterizedSelect(name, d, outcomes.toList,collection)
+      case _ => apply((List.fill(outcomes.length)(1.0)),outcomes.toList)(name,collection)//Kind of a trick - Needs a default case
     }
   }
   
-  def apply[T](parameter: PrimitiveArray, outcomes: T*)(implicit name: Name[T], collection: ElementCollection) {
-    this.apply(parameter.a.toList,outcomes.toList)
-  }
-  
+  def apply[T](parameter: PrimitiveArray, outcomes: T*)(implicit name: Name[T], collection: ElementCollection)
+  = apply(parameter.a.toList,outcomes.toList)
+  */
   /**
    * A distribution in which both the probabilities and the outcomes are values. Each outcome is
    * chosen with the corresponding probability.

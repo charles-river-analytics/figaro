@@ -14,10 +14,19 @@ import com.cra.figaro.language.Parameter
 
 
 abstract class ParameterType 
-case class PrimitiveDouble(val d: Double) extends ParameterType
-case class ParameterDouble(val p: Parameter[Double]) extends ParameterType 
-case class PrimitiveArray(val a: Array[Double]) extends ParameterType
-case class ParameterArray(val p: Parameter[Array[Double]]) extends ParameterType
+case class PrimitiveDouble(val d: Double) extends ParameterType {
+  override def toString = d.toString()
+}
+case class ParameterDouble(val p: Parameter[Double]) extends ParameterType {
+  override def toString = p.toString()
+}
+case class PrimitiveArray(val a: Array[Double]) extends ParameterType {
+  override def toString = a.toString()
+}
+case class ParameterArray(val p: Parameter[Array[Double]]) extends ParameterType {
+  override def toString = p.toString()
+}
+
 
 object ParameterType {
   def apply(d: Double) = new PrimitiveDouble(d)
