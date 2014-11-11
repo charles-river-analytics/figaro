@@ -7,6 +7,19 @@ import scoverage.ScoverageSbtPlugin._
 
 object FigaroBuild extends Build {
 
+  // Copy dependency JARs to /target/<scala-version>/lib
+  // Courtesy of
+  // http://stackoverflow.com/questions/7351280/collecting-dependencies-under-sbt-0-10-putting-all-dependency-jars-to-target-sc
+  lazy val copyDependencies = TaskKey[Unit]("copy-deps")
+
+  def copyDepTask = copyDependencies <<= (update, crossTarget, scalaVersion) map {
+    (updateReport, out, scalaVer) =>
+    updateReport.allFiles foreach { srcPath =>
+      val destPath = out / "lib" / srcPath.getName
+      IO.copyFile(srcPath, destPath, preserveLastModified=true)
+    }
+  }
+
   override val settings = super.settings ++ Seq(
     organization := "com.cra.figaro",
     description := "Figaro: a language for probablistic programming",
@@ -86,11 +99,15 @@ object FigaroBuild extends Build {
     // sbt-scoverage settings
     .settings(instrumentSettings: _*)
     .settings(parallelExecution in ScoverageTest := false)
+    // Copy dependency JARs
+    .settings(copyDepTask)
       
   lazy val examples = Project("FigaroExamples", file("FigaroExamples"))
     .dependsOn(figaro)
     .settings(packageOptions := Seq(Package.JarManifest(examplesManifest)))
-    
+    // Copy dependency JARs
+    .settings(copyDepTask)
+
   lazy val detTest = config("det") extend(Test)
   lazy val nonDetTest = config("nonDet") extend(Test)
 }
