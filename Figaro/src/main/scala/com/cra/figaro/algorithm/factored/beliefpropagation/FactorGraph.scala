@@ -28,7 +28,7 @@ trait FactorGraph[T] {
   /**
    * Returns true if the graph contains a node for a (single) variable
    */
-  def contains(v: Variable[_]): Boolean
+  def contains(v: Node): Boolean
   
   /**
    * Returns all nodes in the factor graph

@@ -39,13 +39,31 @@ class AtomicExponential(name: Name[Double], lambda: Double, collection: ElementC
 /**
  * An exponential distribution in which the parameter is an element.
  */
-class CompoundExponential(name: Name[Double], lambda: Element[Double], collection: ElementCollection)
+class CompoundExponential(name: Name[Double], val lambda: Element[Double], collection: ElementCollection)
   extends NonCachingChain(
     name,
     lambda,
     (l: Double) => new AtomicExponential("", l, collection),
-    collection) {
+    collection)
+  with Exponential {
+
+  def lambdaValue = lambda.value
+
   override def toString = "Exponential(" + lambda + ")"
+}
+
+trait Exponential extends Continuous[Double] {
+
+  /**
+   * Current lambda value.
+   */
+  def lambdaValue: Double
+
+  def logp(value: Double) =
+    bound(
+      log(lambdaValue) - lambdaValue * value,
+      lambdaValue > 0
+    )
 }
 
 object Exponential extends Creatable {

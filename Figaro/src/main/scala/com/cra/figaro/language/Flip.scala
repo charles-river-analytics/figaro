@@ -15,6 +15,9 @@ package com.cra.figaro.language
 
 import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.util._
+import com.cra.figaro.patterns.learning.PrimitiveDouble
+import com.cra.figaro.patterns.learning.ParameterType
+import com.cra.figaro.patterns.learning.ParameterDouble
 
 /**
  * Weighted coin tosses, where the weight itself might be random.
@@ -92,6 +95,18 @@ object Flip extends Creatable {
   def apply(prob: Double)(implicit name: Name[Boolean], collection: ElementCollection) =
     new AtomicFlip(name, prob, collection)
 
+  def apply(prob: ParameterType)(implicit name: Name[Boolean], collection: ElementCollection): Flip = {
+    val result = prob match {
+      case a: PrimitiveDouble => { this.apply(a.d)(name,collection) }
+      case b: ParameterDouble => { 
+          b.p match {
+            case p: Parameter[Double] => this.apply(b.p)(name,collection) 
+          }
+        }
+    }
+    result
+  }
+  
   /**
    * A coin toss where the weight is itself an element.
    * 
