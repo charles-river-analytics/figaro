@@ -47,7 +47,7 @@ class ParameterTest extends WordSpec with Matchers {
       a4.addCondition((i: Int) => (i >= 4))
       val numberOfIterations = 2
 
-      val algorithm = ExpectationMaximization(numberOfIterations, b)
+      val algorithm = EM.withVE(numberOfIterations, b)
       algorithm.start
 
       println(b.toString)

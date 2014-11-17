@@ -1,6 +1,6 @@
 To run Figaro programs that you create:
 
-1) Install SBT v0.13.5 for your chosen operating system
+1) Install SBT v0.13.6 for your chosen operating system
 2) Copy your Figaro program files to FigaroWork\src\main\scala
 3) Open a command line prompt
 4) Navigate to your local FigaroWork directory

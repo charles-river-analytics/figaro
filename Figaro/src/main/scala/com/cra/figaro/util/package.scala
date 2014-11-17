@@ -267,5 +267,14 @@ package object util {
       Math.log(total) + max
     }
   }
+
+  /**
+   * Returns logp if all conditions are true. Else returns -Inf.
+   */
+  def bound(logp: Double, conditions: Boolean*): Double =
+    if (conditions.exists(!_))
+      Double.NegativeInfinity
+    else
+      logp
 }
 

@@ -14,7 +14,7 @@ import com.cra.figaro.library.atomic.discrete.OneShifter
  * @param totalSamples Maximum number of samples on the output of chains
  * @param de An instance to compute the density estimate of point during resampling
  */
-class ParticleGenerator(de: DensityEstimator) {
+class ParticleGenerator(de: DensityEstimator, val numArgSamples: Int, val numTotalSamples: Int) {
 
   // Caches the samples for an element
   private val sampleMap = Map[Element[_], List[(Double, _)]]()
@@ -37,7 +37,7 @@ class ParticleGenerator(de: DensityEstimator) {
   /**
    * Retrieves the samples for an element using the default number of samples.
    */
-  def apply[T](elem: Element[T]): List[(Double, T)] = apply(elem, ParticleGenerator.defaultArgSamples)
+  def apply[T](elem: Element[T]): List[(Double, T)] = apply(elem, numArgSamples)
 
   /**
    * Retrieves the samples for an element using the indicated number of samples
@@ -75,15 +75,19 @@ class ParticleGenerator(de: DensityEstimator) {
         beliefs.map(b => {
           val oldValue = b._2.asInstanceOf[Int]
           val newValue = nextInt(oldValue)
-          val nextValue = accept(oldValue, newValue, beliefs.asInstanceOf[List[(Double, Int)]])
+          val nextValue = if (o.density(newValue) > 0.0) {
+            accept(oldValue, newValue, beliefs.asInstanceOf[List[(Double, Int)]])
+          } else oldValue
           (sampleDensity, nextValue)
         })
       }      
-      case a: Atomic[_] => {
+      case a: Atomic[Double] => { // The double is unchecked, bad stuff if the atomic is not double
         beliefs.map(b => {
           val oldValue = b._2.asInstanceOf[Double]
           val newValue = nextDouble(oldValue)
-          val nextValue = accept(oldValue, newValue, beliefs.asInstanceOf[List[(Double, Double)]])
+          val nextValue = if (a.density(newValue) > 0.0) {
+            accept(oldValue, newValue, beliefs.asInstanceOf[List[(Double, Double)]])
+          } else oldValue
           (sampleDensity, nextValue)
         })        
       }
@@ -109,7 +113,7 @@ class ParticleGenerator(de: DensityEstimator) {
 }
 
 object ParticleGenerator {
-  var defaultArgSamples = 10
+  var defaultArgSamples = 20
   var defaultTotalSamples = 50
 
   private val samplerMap: Map[Universe, ParticleGenerator] = Map()
@@ -118,17 +122,18 @@ object ParticleGenerator {
 
   def clear() = samplerMap.clear
 
-  def apply(univ: Universe, de: DensityEstimator): ParticleGenerator =
+  def apply(univ: Universe, de: DensityEstimator, numArgSamples: Int, numTotalSamples: Int): ParticleGenerator =
     samplerMap.get(univ) match {
       case Some(e) => e
       case None => {
-        samplerMap += (univ -> new ParticleGenerator(de))
+        samplerMap += (univ -> new ParticleGenerator(de, numArgSamples, numTotalSamples))
         univ.registerUniverse(samplerMap)
         samplerMap(univ)
       }
     }
 
-  def apply(univ: Universe): ParticleGenerator = apply(univ, new ConstantDensityEstimator)
+  def apply(univ: Universe): ParticleGenerator = apply(univ, new ConstantDensityEstimator,
+      defaultArgSamples, defaultTotalSamples)
 
   def exists(univ: Universe): Boolean = samplerMap.contains(univ)
 

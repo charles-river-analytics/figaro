@@ -24,70 +24,70 @@ import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.language._
 import com.cra.figaro.test._
 import com.cra.figaro.test.tags.Example
+import com.cra.figaro.patterns.learning.ModelParameters
+import com.cra.figaro.patterns.learning.ParameterCollection
 
 class FairCoinTest extends WordSpec with Matchers {
   "A simple FairCoinTest" should {
     "produce the correct probability under expectation maximization" taggedAs (Example) in {
-     test()
+      test()
     }
 
   }
 
-  //This is an easy way of representing 100 coin flips.
-  //An 'H' represents 'heads' and 'T' represents tails.
-  //There are 62 'H's and 38 'T's.
-  val data = Seq(
-    'H', 'H', 'H', 'T', 'H', 'H', 'T', 'H', 'T', 'H', 'H', 'T', 'H',
-    'T', 'H', 'H', 'T', 'H', 'T', 'T', 'H', 'T', 'H', 'H', 'T', 'H', 'H', 'H', 'T',
-    'T', 'H', 'H', 'T', 'H', 'T', 'H', 'T', 'T', 'H', 'T', 'H', 'H', 'H', 'H', 'H',
-    'H', 'H', 'H', 'H', 'T', 'H', 'T', 'H', 'H', 'T', 'H', 'H', 'H', 'H', 'H',
-    'H', 'T', 'H', 'H', 'H', 'T', 'H', 'H', 'H', 'H', 'H', 'H', 'H',
-    'H', 'H', 'H', 'H', 'H', 'H', 'H', 'T', 'H','T',
-     'H', 'H', 'H')
-
-  def Toss(fairness: AtomicBeta): AtomicFlip = {
-    val f = fairness.getLearnedElement
-    f
+  class Trials(val parameters: ParameterCollection) {
+    val trials = for (f <- 0 until 86) yield {
+      Flip(parameters.get("fairness"))
+    }
   }
 
-  def test(): Unit = {
+  def test() = {
     Universe.createNew()
 
-    val fairness = BetaParameter(1, 1)
-    data.foreach {
-      d =>
-        val f = Flip(fairness)
-        if (d == 'H') {
-          f.observe(true)
-        } else if (d == 'T') {
-          f.observe(false)
-        }
+    /*
+   * This is an easy way of representing 86 coin flips.
+   * An 'H' represents 'heads' and 'T' represents tails.
+   * There are 62 'H's and 24 'T's.
+   */
+    val data = Seq(
+      'H', 'H', 'H', 'T', 'H', 'H', 'T', 'H', 'T', 'H', 'H', 'T', 'H',
+      'T', 'H', 'H', 'T', 'H', 'T', 'T', 'H', 'T', 'H', 'H', 'T', 'H', 'H', 'H', 'T',
+      'T', 'H', 'H', 'T', 'H', 'T', 'H', 'T', 'T', 'H', 'T', 'H', 'H', 'H', 'H', 'H',
+      'H', 'H', 'H', 'H', 'T', 'H', 'T', 'H', 'H', 'T', 'H', 'H', 'H', 'H', 'H',
+      'H', 'T', 'H', 'H', 'H', 'T', 'H', 'H', 'H', 'H', 'H', 'H', 'H',
+      'H', 'H', 'H', 'H', 'H', 'H', 'H', 'T', 'H', 'T',
+      'H', 'H', 'H')
 
+    val params = ModelParameters()
+    val fairness = Beta(2.0, 2.0)("fairness", params)
+    val model = new Trials(params.priorParameters)
+    data zip model.trials foreach {
+      (datum: (Char, Flip)) => if (datum._1 == 'H') datum._2.observe(true) else datum._2.observe(false)
     }
 
-	val numberOfEMIterations = 10
-	val numberOfBPIterations = 10
-    val learningAlgorithm = EMWithBP(10, 10, fairness)
+    val numberOfEMIterations = 10
+    val numberOfBPIterations = 10
+    val learningAlgorithm = EMWithBP(10, 10, params)
     learningAlgorithm.start
+    learningAlgorithm.stop
     learningAlgorithm.kill
     /*
      * This will create a flip having a probability of 'true' learned from the input data. 
      */
-    val coin = Flip(fairness.MAPValue)
     println("The probability of a coin with this fairness showing 'heads' is: ")
-    println(coin.prob)
+    println(params.posteriorParameters.get("fairness"))
 
-    val t1 = Flip(fairness.MAPValue)
-    val t2 = Flip(fairness.MAPValue)
-    
+    val t1 = Flip(params.posteriorParameters.get("fairness"))
+    val t2 = Flip(params.posteriorParameters.get("fairness"))
+
     val equal = t1 === t2
 
     val alg = VariableElimination(equal)
     alg.start()
-    println("The probability of two coins that exhibit this fairness showing the same side is: " + alg.probability(equal, true))
-    //.62*.62 + .38*.38
-    alg.probability(equal, true) should be (0.60 +-(0.01))
-    
+    println("The probability of two coins which exhibit this fairness showing the same side is: " + alg.probability(equal, true))
+
+    alg.probability(equal, true) should be(0.60 +- (0.01))
+
     alg.kill()
 
   }

@@ -14,8 +14,9 @@
 package com.cra.figaro.library.atomic.continuous
 
 import com.cra.figaro.language._
-import math.pow
-import JSci.maths.SpecialMath.{ beta, gamma }
+import com.cra.figaro.util._
+import math.{ pow, log }
+import JSci.maths.SpecialMath.{ beta, gamma, logGamma }
 import com.cra.figaro.algorithm.ValuesMaker
 import com.cra.figaro.algorithm.lazyfactored.ValueSet
 
@@ -27,7 +28,7 @@ import com.cra.figaro.algorithm.lazyfactored.ValueSet
  * @param b The prior beta parameter
  */
 class AtomicBeta(name: Name[Double], a: Double, b: Double, collection: ElementCollection)
-  extends Element[Double](name, collection) with Atomic[Double] with Parameter[Double] with ValuesMaker[Double] {
+  extends Element[Double](name, collection) with Atomic[Double] with DoubleParameter with ValuesMaker[Double] {
   type Randomness = Double
 
   def generateRandomness() = Util.generateBeta(a, b)
@@ -42,7 +43,7 @@ class AtomicBeta(name: Name[Double], a: Double, b: Double, collection: ElementCo
   /**
    * Density of a value.
    */
-  def density(x: Double) = if (x < 0.0 || x > 1.0) 0.0 else pow(x, a - 1) * pow(1 - x, b - 1) * normalizer
+  def density(x: Double) = pow(x, a - 1) * pow(1 - x, b - 1) * normalizer
 
   /**
    * The learned alpha parameter
@@ -98,7 +99,6 @@ class AtomicBeta(name: Name[Double], a: Double, b: Double, collection: ElementCo
   def makeValues(depth: Int) = ValueSet.withoutStar(Set(MAPValue))
 
   def maximize(sufficientStatistics: Seq[Double]) {
-
     require(sufficientStatistics.size == 2)
     learnedAlpha = sufficientStatistics(0) + a
     learnedBeta = sufficientStatistics(1) + b
@@ -111,7 +111,7 @@ class AtomicBeta(name: Name[Double], a: Double, b: Double, collection: ElementCo
 /**
  * A Beta distribution in which the parameters are elements.
  */
-class CompoundBeta(name: Name[Double], a: Element[Double], b: Element[Double], collection: ElementCollection)
+class CompoundBeta(name: Name[Double], val a: Element[Double], val b: Element[Double], collection: ElementCollection)
   extends NonCachingChain[Double, Double](
     name,
     a,
@@ -120,8 +120,35 @@ class CompoundBeta(name: Name[Double], a: Element[Double], b: Element[Double], c
       b,
       (b: Double) => new AtomicBeta("", a, b, collection),
       collection),
-    collection) {
+    collection)
+  with Beta {
+
+  def aValue = a.value
+  def bValue = b.value
+
   override def toString = "Beta(" + a + ", " + b + ")"
+}
+
+trait Beta extends Continuous[Double] {
+
+  /**
+   * Current a value.
+   */
+  def aValue: Double
+
+  /**
+   * Current b value.
+   */
+  def bValue: Double
+
+  def logp(value: Double) =
+    bound(
+      logGamma(aValue + bValue) - logGamma(aValue) - logGamma(bValue) +
+        (aValue - 1) * log(value) + (bValue - 1) * log(1 - value),
+      aValue > 0,
+      bValue > 0
+    )
+
 }
 
 object Beta extends Creatable {

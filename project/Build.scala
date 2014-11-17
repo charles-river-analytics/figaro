@@ -7,10 +7,23 @@ import scoverage.ScoverageSbtPlugin._
 
 object FigaroBuild extends Build {
 
+  // Copy dependency JARs to /target/<scala-version>/lib
+  // Courtesy of
+  // http://stackoverflow.com/questions/7351280/collecting-dependencies-under-sbt-0-10-putting-all-dependency-jars-to-target-sc
+  lazy val copyDependencies = TaskKey[Unit]("copy-deps")
+
+  def copyDepTask = copyDependencies <<= (update, crossTarget, scalaVersion) map {
+    (updateReport, out, scalaVer) =>
+    updateReport.allFiles foreach { srcPath =>
+      val destPath = out / "lib" / srcPath.getName
+      IO.copyFile(srcPath, destPath, preserveLastModified=true)
+    }
+  }
+
   override val settings = super.settings ++ Seq(
     organization := "com.cra.figaro",
     description := "Figaro: a language for probablistic programming",
-    version := "2.5.0.0",
+    version := "3.0.0.0",
     scalaVersion := "2.11.2",
     crossPaths := true,
     publishMavenStyle := true,
@@ -34,13 +47,20 @@ object FigaroBuild extends Build {
 	  <connection>scm:git:git@github.com:p2t2/figaro.git</connection>
 	  <developerConnection>scm:git:git@github.com:p2t2/figaro.git</developerConnection>
 	  <url>git@github.com:p2t2/figaro.git</url>
-	</scm>,
-    packageOptions := Seq(ManifestAttributes(
-      ("Bundle-RequiredExecutionEnvironment", "JavaSE-1.6")
-    ))
+	</scm>
   )
 
   lazy val scalaMajorMinor = "2.11"
+
+  // Read exisiting Figaro MANIFEST.MF rom file
+  lazy val figaroManifest = Using.fileInputStream(file("Figaro/META-INF/MANIFEST.MF")) { 
+    in => new java.util.jar.Manifest(in)
+  }
+
+  // Read exisiting FigaroExamples MANIFEST.MF rom file
+  lazy val examplesManifest = Using.fileInputStream(file("FigaroExamples/META-INF/MANIFEST.MF")) {
+    in => new java.util.jar.Manifest(in)
+  }
 
   lazy val root = Project("root", file("."))
     .settings(publishLocal := {})
@@ -54,6 +74,7 @@ object FigaroBuild extends Build {
 	"-language:existentials",
 	"-deprecation"
     ))
+    .settings(packageOptions := Seq(Package.JarManifest(figaroManifest)))
     .settings(libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "asm" % "asm" % "3.3.1",
@@ -78,10 +99,15 @@ object FigaroBuild extends Build {
     // sbt-scoverage settings
     .settings(instrumentSettings: _*)
     .settings(parallelExecution in ScoverageTest := false)
+    // Copy dependency JARs
+    .settings(copyDepTask)
       
   lazy val examples = Project("FigaroExamples", file("FigaroExamples"))
     .dependsOn(figaro)
-    
+    .settings(packageOptions := Seq(Package.JarManifest(examplesManifest)))
+    // Copy dependency JARs
+    .settings(copyDepTask)
+
   lazy val detTest = config("det") extend(Test)
   lazy val nonDetTest = config("nonDet") extend(Test)
 }
