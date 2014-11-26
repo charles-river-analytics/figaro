@@ -11,7 +11,7 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
-package com.cra.figaro.algorithm.factored
+package com.cra.figaro.library.factors
 
 import com.cra.figaro.algorithm._
 import com.cra.figaro.language._
@@ -37,7 +37,7 @@ class Variable[T](val valueSet: ValueSet[T]) {
    * Size of the range of the variable.
    */
   val size = range.size
-
+  
   /**
    * Override equality of Variable. Variables are the same if their id's are the same
    */
@@ -79,7 +79,7 @@ object Variable {
   // Make sure to register this map (or replace the memoMake)
   private val idCache: Map[Element[_], Int] = Map()
 
-  private var id: Int = 0
+  private var idState: Int = 0
 
   def nextId(elem: Element[_]): Int = {
     idCache.get(elem) match {
@@ -92,8 +92,8 @@ object Variable {
   }
 
   private def nextId(): Int = {
-    id += 1
-    id
+    idState += 1
+    idState
   }
 
   private def make[T](elem: Element[T]): Variable[T] = {
