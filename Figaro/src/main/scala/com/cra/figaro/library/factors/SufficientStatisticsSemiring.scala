@@ -11,7 +11,7 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
-package com.cra.figaro.algorithm.factored
+package com.cra.figaro.library.factors
 
 import com.cra.figaro.language._
 import scala.collection._
