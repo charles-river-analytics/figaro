@@ -16,6 +16,7 @@ package com.cra.figaro.algorithm.factored
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
+import com.cra.figaro.library.factors._
 import com.cra.figaro.util._
 import annotation.tailrec
 import scala.collection.mutable.{ Map, Set }
@@ -231,7 +232,7 @@ class ProbQueryVariableElimination(override val universe: Universe, targets: Ele
     val unnormalizedTargetFactor = factor.marginalizeTo(semiring, Variable(target))
     val z = unnormalizedTargetFactor.foldLeft(semiring.zero, _ + _)
     //val targetFactor = Factory.make[Double](unnormalizedTargetFactor.variables)
-    val targetFactor = unnormalizedTargetFactor.mapTo((d: Double) => d / z, unnormalizedTargetFactor.variables)
+    val targetFactor = unnormalizedTargetFactor.mapTo((d: Double) => d / z)
     targetFactors += target -> targetFactor
   }
 
@@ -241,7 +242,7 @@ class ProbQueryVariableElimination(override val universe: Universe, targets: Ele
   private def makeResultFactor(factorsAfterElimination: Set[Factor[Double]]): Factor[Double] = {
     // It is possible that there are no factors (this will happen if there are  no queries or evidence).
     // Therefore, we start with the unit factor and use foldLeft, instead of simply reducing the factorsAfterElimination.
-    factorsAfterElimination.foldLeft(Factor.unit(semiring))(_.product(_, semiring))
+    factorsAfterElimination.foldLeft(Factory.unit(semiring))(_.product(_, semiring))
   }
 
   def finish(factorsAfterElimination: Set[Factor[Double]], eliminationOrder: List[Variable[_]]) =
