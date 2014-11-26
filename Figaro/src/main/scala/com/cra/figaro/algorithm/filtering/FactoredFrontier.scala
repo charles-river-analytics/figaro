@@ -18,7 +18,7 @@ import com.cra.figaro.algorithm.lazyfactored.LazyValues
 import com.cra.figaro.algorithm.sampling.ProbEvidenceSampler
 import com.cra.figaro.algorithm.{ OneTimeProbQuery, AnytimeProbQuery }
 import com.cra.figaro.language._
-import com.cra.figaro.algorithm.factored.Factory
+import com.cra.figaro.library.factors.Factory
 
 /**
  * Abstract class that runs the Factored Frontier algorithm.
