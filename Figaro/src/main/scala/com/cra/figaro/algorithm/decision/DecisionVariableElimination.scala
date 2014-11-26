@@ -15,6 +15,8 @@ package com.cra.figaro.algorithm.decision
 
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.factored._
+import com.cra.figaro.library.factors._
+import com.cra.figaro.library.factors.factory._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
 import com.cra.figaro.library.decision._
@@ -48,7 +50,7 @@ trait ProbabilisticVariableEliminationDecision extends VariableElimination[(Doub
    * where the first value is 1.0 and the second is a possible utility of the element 
    */
   def makeUtilFactor(e: Element[_]): Factor[(Double, Double)] = {
-    val f = Factory.make[(Double, Double)](List(Variable(e)))
+    val f = Factory.defaultFactor[(Double, Double)](List(), List(Variable(e)))
     f.fillByRule((l: List[Any]) => (1.0, l.asInstanceOf[List[Extended[Double]]](0).value))
     f
   }
@@ -90,7 +92,7 @@ trait ProbabilisticVariableEliminationDecision extends VariableElimination[(Doub
    * all non-utility nodes, and Prob is 1 for all utility nodes
    */
   private def convert(f: Factor[Double], utility: Boolean): Factor[(Double, Double)] = {
-    val factor = Factory.make[(Double, Double)](f.variables)
+    val factor = Factory.defaultFactor[(Double, Double)](f.parents, f.output)
     val allIndices = f.allIndices
 
     allIndices.foreach { k: List[Int] =>
@@ -129,7 +131,7 @@ class ProbQueryVariableEliminationDecision[T, U](override val universe: Universe
 
   def getUtilityNodes = utilityNodes
 
-  private var finalFactors: Factor[(Double, Double)] = Factory.make[(Double, Double)](List[Variable[_]]())
+  private var finalFactors: Factor[(Double, Double)] = Factory.defaultFactor[(Double, Double)](List(), List())
 
   /* Marginalizes the final factor using the semiring for decisions
    * 
@@ -138,7 +140,7 @@ class ProbQueryVariableEliminationDecision[T, U](override val universe: Universe
     val unnormalizedTargetFactor = factor.marginalizeTo(semiring, Variable(target))
     val z = unnormalizedTargetFactor.foldLeft(semiring.zero, (x: (Double, Double), y: (Double, Double)) => (x._1 + y._1, 0.0))
    //val targetFactor = Factory.make[(Double, Double)](unnormalizedTargetFactor.variables)
-    val targetFactor = unnormalizedTargetFactor.mapTo((d: (Double, Double)) => (d._1 / z._1, d._2), unnormalizedTargetFactor.variables)
+    val targetFactor = unnormalizedTargetFactor.mapTo((d: (Double, Double)) => (d._1 / z._1, d._2))
     targetFactors += target -> targetFactor
   }
 
@@ -148,7 +150,7 @@ class ProbQueryVariableEliminationDecision[T, U](override val universe: Universe
   private def makeResultFactor(factorsAfterElimination: Set[Factor[(Double, Double)]]): Factor[(Double, Double)] = {
     // It is possible that there are no factors (this will happen if there are no decisions or utilities).
     // Therefore, we start with the unit factor and use foldLeft, instead of simply reducing the factorsAfterElimination.
-    factorsAfterElimination.foldLeft(Factor.unit(semiring))(_.product(_, semiring))
+    factorsAfterElimination.foldLeft(Factory.unit(semiring))(_.product(_, semiring))
   }
 
   def finish(factorsAfterElimination: Set[Factor[(Double, Double)]], eliminationOrder: List[Variable[_]]) =

@@ -14,8 +14,10 @@
 package com.cra.figaro.algorithm.lazyfactored
 
 import com.cra.figaro.algorithm.{LazyAlgorithm, ProbQueryAlgorithm}
+import com.cra.figaro.algorithm.factored.{FactoredAlgorithm, VEGraph}
 import com.cra.figaro.language.{Element, Universe}
-import com.cra.figaro.algorithm.factored._
+import com.cra.figaro.library.factors._
+import com.cra.figaro.library.factors.Factory
 import scala.annotation.tailrec
 import com.cra.figaro.util._
 import scala.collection.mutable.{Map, Set}
@@ -142,7 +144,7 @@ with LazyAlgorithm {
     /*
      * First, we compute the sum of unnormalized lower and upper bounds.
      */
-    val result = Factory.make[(Double, Double)](lowerFactor.variables)
+    val result = Factory.defaultFactor[(Double, Double)](lowerFactor.parents, lowerFactor.output)
     var lowerTotal = 0.0
     var upperTotal = 0.0
     var starTotal = 0.0
@@ -208,7 +210,7 @@ with LazyAlgorithm {
   def finishNoBounds(factorsAfterElimination: Set[Factor[Double]]): Factor[(Double, Double)] = {
     // It is possible that there are no factors (this will happen if there is no evidence).
     // Therefore, we start with the unit factor and use foldLeft, instead of simply reducing the factorsAfterElimination.
-    val multiplied = factorsAfterElimination.foldLeft(Factor.unit(semiring))(_.product(_, semiring))
+    val multiplied = factorsAfterElimination.foldLeft(Factory.unit(semiring))(_.product(_, semiring))
     val normalized = normalizeAndAbsorbNoBounds(multiplied)
     normalized
   }
@@ -216,8 +218,8 @@ with LazyAlgorithm {
   def finishWithBounds(lowerFactors: Set[Factor[Double]], upperFactors: Set[Factor[Double]]): Factor[(Double, Double)] = {
     // It is possible that there are no factors (this will happen if there is no evidence).
     // Therefore, we start with the unit factor and use foldLeft, instead of simply reducing the factorsAfterElimination.
-    val lowerMultiplied = lowerFactors.foldLeft(Factor.unit(semiring))(_.product(_, semiring))
-    val upperMultiplied = upperFactors.foldLeft(Factor.unit(semiring))(_.product(_, semiring))
+    val lowerMultiplied = lowerFactors.foldLeft(Factory.unit(semiring))(_.product(_, semiring))
+    val upperMultiplied = upperFactors.foldLeft(Factory.unit(semiring))(_.product(_, semiring))
     val normalized = normalizeAndAbsorbWithBounds(lowerMultiplied, upperMultiplied)
     normalized
   }

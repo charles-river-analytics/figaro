@@ -1,22 +1,22 @@
 /*
  * FactorGraph.scala  
- * Factor Graph trait used for BP
+ * Factor Graph
  * 
- * Created By:      Brian Ruttenberg (bruttenberg@cra.com)
- * Creation Date:   Jan 15, 2014
+ * Created By:      Glenn Takata (gtakata@cra.com)
+ * Creation Date:   Oct 25, 2014
  * 
- * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2014 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
-package com.cra.figaro.algorithm.factored.beliefpropagation
+package com.cra.figaro.library.factors.graph
 
 import com.cra.figaro.library.factors._
 
 /**
- * Trait for Factor graphs used by Belief Propagation algorithms
+ * Class for Factor graphs
  */
 trait FactorGraph[T] {
  

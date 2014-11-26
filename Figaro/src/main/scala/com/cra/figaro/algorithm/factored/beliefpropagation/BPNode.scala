@@ -13,7 +13,7 @@
 
 package com.cra.figaro.algorithm.factored.beliefpropagation
 
-import com.cra.figaro.algorithm.factored.Variable
+import com.cra.figaro.library.factors.Variable
 
 
 /**
