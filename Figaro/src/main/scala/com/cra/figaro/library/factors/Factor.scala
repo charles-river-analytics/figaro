@@ -10,9 +10,10 @@
  * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
-package com.cra.figaro.algorithm.factored
+package com.cra.figaro.library.factors
 
 import scala.annotation.tailrec
+import com.cra.figaro.language.Element
 import com.cra.figaro.algorithm.lazyfactored.Extended
 
 /**
@@ -22,7 +23,10 @@ import com.cra.figaro.algorithm.lazyfactored.Extended
  *
  */
 trait Factor[T] {
-  def variables: List[Variable[_]]
+  def parents: List[Variable[_]]
+  def output: List[Variable[_]]
+  def variables = parents ::: output
+  
   lazy val numVars = variables.size
 
   protected[figaro] var contents: Map[List[Int], T] = Map()
@@ -82,19 +86,19 @@ trait Factor[T] {
    */
   def nextIndices(indices: List[Int]): Option[List[Int]] = {
     def makeNext(position: Int) =
-      for { i <- 0 until numVars } yield if (i > position) indices(i)
-      else if (i < position) 0
+      for { i <- 0 until numVars } yield if (i < position) indices(i)
+      else if (i > position) 0
       else indices(position) + 1
     def helper(position: Int): Option[List[Int]] =
-      if (position == numVars) None
+      if (position < 0) None
       else if (indices(position) < variables(position).size - 1) Some(makeNext(position).toList)
-      else helper(position + 1)
-    helper(0)
+      else helper(position - 1)
+    helper(numVars - 1)
   }
 
   def fillByRule(rule: List[Extended[_]] => T):Factor[T]
   
-  def mapTo[U](fn: T => U, variables: List[Variable[_]]): Factor[U]
+  def mapTo[U](fn: T => U): Factor[U]
   
   def product(    
     that: Factor[T],
@@ -114,16 +118,8 @@ trait Factor[T] {
   
   def deDuplicate(): Factor[T]
   
+  def convert[U](): Factor[U]
+  
   def toReadableString: String
-}
 
-object Factor {
-  /**
-   * The mutliplicative identity factor.
-   */
-  def unit[T](semiring: Semiring[T]): Factor[T] = {
-    val result = new BasicFactor[T](List())
-    result.set(List(), semiring.one)
-    result
-  }
 }
