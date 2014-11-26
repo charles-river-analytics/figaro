@@ -15,7 +15,9 @@ package com.cra.figaro.algorithm.learning
 
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
-import com.cra.figaro.algorithm.factored._
+import com.cra.figaro.library.atomic.discrete._
+import com.cra.figaro.library.factors._
+import com.cra.figaro.library.factors.Factory
 import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.library.decision._
 import com.cra.figaro.language._
@@ -29,15 +31,14 @@ import JSci.maths.ExtraMath.binomial
 
 /**
  * Methods for creating probabilistic factors associated with elements and their sufficient statistics.
- * 
+ *
  * @param parameterMap Map of parameters to their sufficient statistics. Expectation
  */
 
-class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[Double]]) 
-{
+class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[Double]]) {
 
   private def makeFactors[T](const: Constant[T]): List[Factor[(Double, Map[Parameter[_], Seq[Double]])]] = {
-    val factor = Factory.make[(Double, Map[Parameter[_], Seq[Double]])](List(Variable(const)))
+    val factor = Factory.defaultFactor[(Double, Map[Parameter[_], Seq[Double]])](List(), List(Variable(const)))
     val mapping = mutable.Map(parameterMap.toSeq: _*)
     factor.set(List(0), (1.0, mapping))
     List(factor)
@@ -45,7 +46,7 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
 
   private def makeFactors(flip: AtomicFlip): List[Factor[(Double, Map[Parameter[_], Seq[Double]])]] = {
     val flipVar = Variable(flip)
-    val factor = Factory.make[(Double, Map[Parameter[_], Seq[Double]])](List(flipVar))
+    val factor = Factory.defaultFactor[(Double, Map[Parameter[_], Seq[Double]])](List(), List(flipVar))
     val i = flipVar.range.indexOf(Regular(true))
     val trueMapping = mutable.Map(parameterMap.toSeq: _*)
     val falseMapping = mutable.Map(parameterMap.toSeq: _*)
@@ -57,7 +58,7 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
   private def makeFactors(flip: CompoundFlip): List[Factor[(Double, Map[Parameter[_], Seq[Double]])]] = {
     val flipVar = Variable(flip)
     val probVar = Variable(flip.prob)
-    val factor = Factory.make[(Double, Map[Parameter[_], Seq[Double]])](List(probVar, flipVar))
+    val factor = Factory.defaultFactor[(Double, Map[Parameter[_], Seq[Double]])](List(probVar), List(flipVar))
     val parentVals = probVar.range
     val i = flipVar.range.indexOf(Regular(true))
 
@@ -71,7 +72,7 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
 
   private def makeFactors(flip: ParameterizedFlip): List[Factor[(Double, Map[Parameter[_], Seq[Double]])]] = {
     val flipVar = Variable(flip)
-    val factor = Factory.make[(Double, Map[Parameter[_], Seq[Double]])](List(flipVar))
+    val factor = Factory.defaultFactor[(Double, Map[Parameter[_], Seq[Double]])](List(), List(flipVar))
     val prob = flip.parameter.MAPValue
     val i = flipVar.range.indexOf(Regular(true))
 
@@ -90,13 +91,13 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
 
   private def makeFactors(bin: ParameterizedBinomialFixedNumTrials): List[Factor[(Double, Map[Parameter[_], Seq[Double]])]] = {
     val binVar = Variable(bin)
-    val factor = Factory.make[(Double, Map[Parameter[_], Seq[Double]])](List(binVar))
+    val factor = Factory.defaultFactor[(Double, Map[Parameter[_], Seq[Double]])](List(), List(binVar))
     val prob = bin.parameter.MAPValue.asInstanceOf[Double]
     val mappings = binVar.range.map(i => (i, mutable.Map(parameterMap.toSeq: _*)))
-    for { 
+    for {
       (ext, map) <- mappings
       if (ext.isRegular)
-    } { 
+    } {
       val i = ext.value
       map.remove(bin.parameter)
       map.put(bin.parameter, Seq(i, bin.numTrials - i))
@@ -109,7 +110,7 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
 
   private def makeSimpleDistribution[T](target: Variable[T], probs: List[Double]): Factor[(Double, Map[Parameter[_], Seq[Double]])] = {
 
-    val factor = Factory.make[(Double, Map[Parameter[_], Seq[Double]])](List(target))
+    val factor = Factory.defaultFactor[(Double, Map[Parameter[_], Seq[Double]])](List(), List(target))
     for { (prob, index) <- probs.zipWithIndex } {
       val rowMapping = mutable.Map(parameterMap.toSeq: _*)
       factor.set(List(index), (prob, rowMapping))
@@ -118,7 +119,7 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
   }
 
   private def makeSimpleDistributionForParameterized[T](target: Variable[T], probs: List[Double], select: ParameterizedSelect[T]): Factor[(Double, Map[Parameter[_], Seq[Double]])] = {
-    val factor = Factory.make[(Double, Map[Parameter[_], Seq[Double]])](List(target))
+    val factor = Factory.defaultFactor[(Double, Map[Parameter[_], Seq[Double]])](List(), List(target))
     //For each outcome
     val unzippedClauses = select.clauses.unzip
 
@@ -141,15 +142,15 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
 
   private def makeComplexDistribution[T](target: Variable[T], probElems: List[Element[Double]]): Factor[(Double, Map[Parameter[_], Seq[Double]])] = {
     val probVars = probElems map (Variable(_))
-    val factor = Factory.make[(Double, Map[Parameter[_], Seq[Double]])](List((target :: probVars): _*))
+    val factor = Factory.defaultFactor[(Double, Map[Parameter[_], Seq[Double]])](probVars, List(target))
     val probVals = probVars map (_.range)
     for { indices <- factor.allIndices } {
-      val probIndices = indices.toList.tail.zipWithIndex
+      val probIndices = indices.take(probElems.size).zipWithIndex
       val unnormalized = probIndices map (pair => probVals(pair._2)(pair._1).value)
       val normalized = normalize(unnormalized).toArray
       val rowMapping = mutable.Map(parameterMap.toSeq: _*)
 
-      factor.set(indices, (normalized(indices(0)), rowMapping))
+      factor.set(indices, (normalized(indices.last), rowMapping))
     }
     factor
   }
@@ -214,7 +215,6 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
     }
   }
 
-
   /**
    * Make a conditional selector factor used in the decomposition of chain and other elements.
    * A chain defines a factor over the parent element, each of the possible result elements of the chain,
@@ -228,10 +228,14 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
 
     val outcomeVar = Variable(resultElem)
 
-    val factor = Factory.make[(Double, Map[Parameter[_], Seq[Double]])](List(selector, overallVar, outcomeVar))
-    for { i <- 0 until outcomeIndex } { makeDontCares(factor, i, overallVar, outcomeVar) }
-    makeCares(factor, outcomeIndex, overallVar, outcomeVar, Values(overallElem.universe)(overallElem))(mapper)
-    for { i <- outcomeIndex + 1 until selector.size } { makeDontCares(factor, i, overallVar, outcomeVar) }
+    val factor = Factory.defaultFactor[(Double, Map[Parameter[_], Seq[Double]])](List(selector, outcomeVar), List(overallVar))
+    for { i <- 0 to selector.size } {
+      if (outcomeIndex == i) {
+        makeCares(factor, outcomeIndex, outcomeVar, overallVar, Values(overallElem.universe)(overallElem))(mapper)
+      } else {
+        makeDontCares(factor, i, outcomeVar, overallVar)
+      }
+    }
     factor
   }
 
@@ -268,7 +272,7 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
 
     val arg1Var = Variable(apply.arg1)
     val resultVar = Variable(apply)
-    val factor = Factory.make[(Double, Map[Parameter[_], Seq[Double]])](List(arg1Var, resultVar))
+    val factor = Factory.defaultFactor[(Double, Map[Parameter[_], Seq[Double]])](List(arg1Var), List(resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
     val resultIndices = resultVar.range.zipWithIndex
     for {
@@ -288,7 +292,7 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
     val arg1Var = Variable(apply.arg1)
     val arg2Var = Variable(apply.arg2)
     val resultVar = Variable(apply)
-    val factor = Factory.make[(Double, Map[Parameter[_], Seq[Double]])](List(arg1Var, arg2Var, resultVar))
+    val factor = Factory.defaultFactor[(Double, Map[Parameter[_], Seq[Double]])](List(arg1Var, arg2Var), List(resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
     val arg2Indices = arg2Var.range.zipWithIndex
     val resultIndices = resultVar.range.zipWithIndex
@@ -311,7 +315,7 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
     val arg2Var = Variable(apply.arg2)
     val arg3Var = Variable(apply.arg3)
     val resultVar = Variable(apply)
-    val factor = Factory.make[(Double, Map[Parameter[_], Seq[Double]])](List(arg1Var, arg2Var, arg3Var, resultVar))
+    val factor = Factory.defaultFactor[(Double, Map[Parameter[_], Seq[Double]])](List(arg1Var, arg2Var, arg3Var), List(resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
     val arg2Indices = arg2Var.range.zipWithIndex
     val arg3Indices = arg3Var.range.zipWithIndex
@@ -336,7 +340,7 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
     val arg3Var = Variable(apply.arg3)
     val arg4Var = Variable(apply.arg4)
     val resultVar = Variable(apply)
-    val factor = Factory.make[(Double, Map[Parameter[_], Seq[Double]])](List(arg1Var, arg2Var, arg3Var, arg4Var, resultVar))
+    val factor = Factory.defaultFactor[(Double, Map[Parameter[_], Seq[Double]])](List(arg1Var, arg2Var, arg3Var, arg4Var), List(resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
     val arg2Indices = arg2Var.range.zipWithIndex
     val arg3Indices = arg3Var.range.zipWithIndex
@@ -364,7 +368,7 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
     val arg4Var = Variable(apply.arg4)
     val arg5Var = Variable(apply.arg5)
     val resultVar = Variable(apply)
-    val factor = Factory.make[(Double, Map[Parameter[_], Seq[Double]])](List(arg1Var, arg2Var, arg3Var, arg4Var, arg5Var, resultVar))
+    val factor = Factory.defaultFactor[(Double, Map[Parameter[_], Seq[Double]])](List(arg1Var, arg2Var, arg3Var, arg4Var, arg5Var), List(resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
     val arg2Indices = arg2Var.range.zipWithIndex
     val arg3Indices = arg3Var.range.zipWithIndex
@@ -396,7 +400,7 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
       if (resultValue.asInstanceOf[List[T]].toList == inputValues) (1.0, rowMapping)
       else (0.0, rowMapping)
     }
-	
+
     def parameterRule(values: List[T], p: ParameterizedVariable[T]) = {
       val resultValue :: inputValues = values
 
@@ -405,11 +409,11 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
 
       if (resultValue.asInstanceOf[List[T]].toList == inputValues) {
         for (pr <- p.element.parameters) {
-         rowMapping.put(pr, pr.sufficientStatistics(resultValue)) 
+          rowMapping.put(pr, pr.sufficientStatistics(resultValue))
         }
       } else {
         for (pr <- p.element.parameters) {
-         rowMapping.put(pr, pr.sufficientStatistics(resultValue)) 
+          rowMapping.put(pr, pr.sufficientStatistics(resultValue))
         }
       }
       if (resultValue.asInstanceOf[List[T]].toList == inputValues) (1.0, rowMapping)
@@ -418,9 +422,10 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
 
     val inputVariables = inject.args map (Variable(_))
     val resultVariable = Variable(inject)
-    val variables = resultVariable :: inputVariables
-    val factor = Factory.make[(Double, Map[Parameter[_], Seq[Double]])](variables)
-
+    //val variables = inputresultVariable :: inputVariables
+    val factor = Factory.defaultFactor[(Double, Map[Parameter[_], Seq[Double]])](inputVariables, List(resultVariable))
+    val variables = factor.variables
+    
     val ranges: List[(List[(Any, Int)], Int)] = List()
 
     val mapping = Map.empty[Int, Variable[_]]
@@ -433,7 +438,6 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
     for (l <- ranges) {
       newRanges :: l._1.map(a => (a._1, a._2, l._2))
     }
-
 
     val cases: List[List[Any]] = cartesianProduct(newRanges: _*)
     for { cas <- cases } {
@@ -459,7 +463,7 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
   }
 
   private def convertProbFactor(probFactor: Factor[Double]): Factor[(Double, Map[Parameter[_], Seq[Double]])] = {
-    val result = Factory.make[(Double, Map[Parameter[_], Seq[Double]])](probFactor.variables)
+    val result = Factory.defaultFactor[(Double, Map[Parameter[_], Seq[Double]])](probFactor.parents, probFactor.output)
     for { indices <- result.allIndices } {
       result.set(indices, (probFactor.get(indices), mutable.Map(parameterMap.toSeq: _*)))
     }
@@ -473,6 +477,7 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
       case f: CompoundFlip => makeFactors(f)
       case f: ParameterizedFlip => makeFactors(f)
       case s: ParameterizedSelect[_] => makeFactors(s)
+      case ab: AtomicBinomial => Factory.concreteFactors(ab).map(convertProbFactor(_))
       case b: ParameterizedBinomialFixedNumTrials => makeFactors(b)
       case s: AtomicSelect[_] => makeFactors(s)
       case s: CompoundSelect[_] => makeFactors(s)
@@ -485,8 +490,8 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
       case a: Apply4[_, _, _, _, _] => makeFactors(a)
       case a: Apply5[_, _, _, _, _, _] => makeFactors(a)
       case i: Inject[_] => makeFactors(i)
-      case f: ProbFactorMaker => 
-        Factory.concreteFactors(f).map(convertProbFactor(_))
+      //      case f: ProbFactorMaker => 
+      //        Factory.concreteFactors(f).map(convertProbFactor(_))
       /*case p: Parameter[_] => makeFactors(p)*/
       case _ => throw new UnsupportedAlgorithmException(elem)
     }
@@ -499,7 +504,7 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
       val currentDensity = densityMap.getOrElse(v.value, 0.0)
       densityMap.update(v.value, currentDensity + atomic.density(v.value))
     }
-    val factor = Factory.make[(Double, Map[Parameter[_], Seq[Double]])](List(variable))
+    val factor = Factory.defaultFactor[(Double, Map[Parameter[_], Seq[Double]])](List(), List(variable))
     for { (v, i) <- values.zipWithIndex } {
       val rowMapping = Map.empty[Parameter[_], Seq[Double]] ++ parameterMap
       factor.set(List(i), (densityMap(v.value), rowMapping))
@@ -541,7 +546,7 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
 
   private def makeUncontingentConstraintFactor[T](elem: Element[T], constraint: T => Double): Factor[(Double, Map[Parameter[_], Seq[Double]])] = {
     val elemVar = Variable(elem)
-    val factor = Factory.make[(Double, Map[Parameter[_], Seq[Double]])](List(elemVar))
+    val factor = Factory.defaultFactor[(Double, Map[Parameter[_], Seq[Double]])](List(), List(elemVar))
     for { (elemVal, index) <- elemVar.range.zipWithIndex } {
       val rowMapping = mutable.Map(parameterMap.toSeq: _*)
       val entry = (math.exp(constraint(elemVal.value)), rowMapping)
@@ -563,7 +568,7 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
     val firstValues = firstVar.range
     val numFirstValues = firstValues.size
     val matchingIndex: Int = firstValues.indexOf(Regular(firstValue))
-    val resultFactor = Factory.make[(Double, Map[Parameter[_], Seq[Double]])](firstVar :: restFactor.variables)
+    val resultFactor = Factory.defaultFactor[(Double, Map[Parameter[_], Seq[Double]])](firstVar :: restFactor.parents, restFactor.output)
     for { restIndices <- restFactor.allIndices } {
       val restEntry = restFactor.get(restIndices)._1
       for { firstIndex <- 0 until numFirstValues } {
@@ -598,7 +603,7 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
    */
   def removeFactors(elem: Element[_]) { factorCache -= elem }
   /**
-   * Removes the factors for all elements from the cache. 
+   * Removes the factors for all elements from the cache.
    */
   def removeFactors() { factorCache.clear }
 
@@ -619,7 +624,7 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
       (result, rowMapping)
     }
     val variables = uses map (Variable(_))
-    val factor = Factory.make[(Double, Map[Parameter[_], Seq[Double]])](variables)
+    val factor = Factory.defaultFactor[(Double, Map[Parameter[_], Seq[Double]])](variables, List())
     factor.fillByRule(rule _)
     factor
   }
