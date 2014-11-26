@@ -132,7 +132,6 @@ trait Anytime extends Algorithm {
     	system = ActorSystem("Anytime", ConfigFactory.load(customConf))
     	runner = system.actorOf(Props(new Runner))
     	initialize()
-//    	println("Using ANYTIME")
     	running = true
     }
       
@@ -155,6 +154,5 @@ trait Anytime extends Algorithm {
     	system.stop(runner)
     	system.shutdown
     }
-//    println("Shutdown ANYTIME")
   }
 }
