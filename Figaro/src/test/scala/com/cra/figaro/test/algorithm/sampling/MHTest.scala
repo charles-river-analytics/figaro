@@ -288,8 +288,6 @@ class MHTest extends WordSpec with Matchers with PrivateMethodTester {
       val alg = MetropolisHastings(numSamples, ProposalScheme.default, elem2)
       try {
         alg.start()
-        println(elem1.value)
-        println(elem2.value)
         alg.stop()
         alg.probability(elem2, (d: Double) => 1.4 < d && d < 1.6) should be(1.0 +- tolerance)
       } finally {

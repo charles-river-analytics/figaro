@@ -23,6 +23,7 @@ import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
 import com.cra.figaro.language.Universe._
 import com.cra.figaro.library.atomic.continuous._
+import com.cra.figaro.library.factors._
 import com.cra.figaro.util
 import scala.collection._
 
