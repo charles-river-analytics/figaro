@@ -1,6 +1,6 @@
 /*
- * Factor.scala
- * General class of factors over values.
+ * BasicFactor.scala
+ * Default implementation of factors over values.
  * 
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
@@ -11,7 +11,7 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
-package com.cra.figaro.algorithm.factored
+package com.cra.figaro.library.factors
 
 import com.cra.figaro.util._
 import scala.annotation.tailrec
@@ -20,18 +20,23 @@ import com.cra.figaro.language.Element
 import com.cra.figaro.algorithm.lazyfactored.Extended
 
 /**
- * General class of factors. A factor is associated with a set of variables and specifies a value for every
+ * Default implementation of Factor. A factor is associated with a set of variables and specifies a value for every
  * combination of assignments to those variables. Factors are parameterized by the types of values they contain.
  */
-class BasicFactor[T](val variables: List[Variable[_]])  extends Factor[T] {
+class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_]])  extends Factor[T] {
 
+  override def convert[U](): Factor[U] = {
+    new BasicFactor[U](parents, output)
+  }
+  
   /**
    * Fill the contents of the target by applying the given function to all elements of this factor.
    */
-  override def mapTo[U](fn: T => U, variables: List[Variable[_]]): Factor[U] = {
-    val newFactor = Factory.make[U](variables)
+  override def mapTo[U](fn: T => U): Factor[U] = {
+    val newFactor = new BasicFactor[U](parents, output)
     for { (key, value) <- contents } {
-      newFactor.contents += key -> fn(value) }
+      newFactor.set(key, fn(value)) 
+    }
     newFactor
   }
 
@@ -43,18 +48,20 @@ class BasicFactor[T](val variables: List[Variable[_]])  extends Factor[T] {
     val cases: List[List[(Extended[_], Int)]] = homogeneousCartesianProduct(ranges: _*)
     for { cas <- cases } {
       val (values, indices) = cas.unzip
-      contents += indices -> rule(values)
+      set(indices, rule(values))
     }
     this
   }
 
-  // unionVars takes the variables in two factors and produces their union. In addition, it produces two lists that
-  // map indexMap in each input factor into indexMap in the union.
-  private def unionVars[U](that: Factor[U]): (List[Variable[_]], List[Int], List[Int]) = {
-    val resultVars = variables ++ (that.variables filter ((v: Variable[_]) => !(variables contains v)))
-    val indexMap1 = variables.zipWithIndex map (_._2)
+  // unionVars takes the variables in two factors and produces their union.
+  private def unionVars[U](that: Factor[U]): (List[Variable[_]], List[Variable[_]], List[Int], List[Int]) = {
+    val allParents = parents.union(that.parents).distinct
+    val allOutputs = output.union(that.output).distinct diff (allParents)
+    
+    val resultVars = allParents ::: allOutputs
+    val indexMap1 = variables map (resultVars.indexOf(_))
     val indexMap2 = that.variables map (resultVars.indexOf(_))
-    (resultVars, indexMap1, indexMap2)
+    (allParents, allOutputs, indexMap1, indexMap2)
   }
 
   /**
@@ -75,8 +82,12 @@ class BasicFactor[T](val variables: List[Variable[_]])  extends Factor[T] {
   override def combination(
     that: Factor[T],
     op: (T, T) => T): Factor[T] = {
-    val (allVars, indexMap1, indexMap2) = unionVars(that)
-    val result = new BasicFactor[T](allVars)
+    val (allParents, allChildren, indexMap1, indexMap2) = unionVars(that)
+    val result = new BasicFactor[T](allParents, allChildren)
+     
+//    val indexMap1 = variables map (result.variables.indexOf(_))
+//    val indexMap2 = that.variables map (result.variables.indexOf(_))
+
     for { indices <- result.allIndices } {
       val indexIntoThis = indexMap1 map (indices(_))
       val indexIntoThat = indexMap2 map (indices(_))
@@ -112,8 +123,11 @@ class BasicFactor[T](val variables: List[Variable[_]])  extends Factor[T] {
     if (variables contains variable) {
       // The summed over variable does not necessarily appear exactly once in the factor.
       val indicesOfSummedVariable = indices(variables, variable)
-      val resultVars = variables.toList.filterNot(_ == variable)
-      val result = new BasicFactor[T](resultVars)
+
+      val newParents = parents.filterNot(_ == variable)
+      val newOutput = output.filterNot(_ == variable)
+
+      val result = new BasicFactor[T](newParents, newOutput)
       for { indices <- result.allIndices } {
         result.set(indices, computeSum(indices, variable, indicesOfSummedVariable, semiring))
       }
@@ -151,8 +165,11 @@ class BasicFactor[T](val variables: List[Variable[_]])  extends Factor[T] {
   override def recordArgMax[U](variable: Variable[U], comparator: (T, T) => Boolean): Factor[U] = {
     if (!(variables contains variable)) throw new IllegalArgumentException("Recording value of a variable not present")
     val indicesOfSummedVariable = indices(variables, variable)
-    val resultVars = variables.toList.filterNot(_ == variable)
-    val result = new BasicFactor[U](resultVars)
+    
+    val newParents = parents.filterNot(_ == variable)
+    val newOutput = output.filterNot(_ == variable)
+
+    val result = new BasicFactor[U](newParents, newOutput)
     for { indices <- result.allIndices } yield {
       result.set(indices, computeArgMax(indices, variable, indicesOfSummedVariable, comparator))
     }
@@ -185,7 +202,10 @@ class BasicFactor[T](val variables: List[Variable[_]])  extends Factor[T] {
       val repeats = findRepeats(factor.variables)
       val hasRepeats = (false /: repeats.values)(_ || _.size > 1)
       if (hasRepeats) {
-        val reduced = new BasicFactor[T](repeats.keySet.toList)
+        val reducedVariables = repeats.keySet.toList
+        val reducedParents = reducedVariables.intersect(parents)
+        val reducedChildren = reducedVariables.diff(reducedParents)
+        val reduced = new BasicFactor[T](reducedParents, reducedChildren)
         val newVariableLocations = repeats.values.map(_(0))
 
         val repeatedVariables = repeats.values.filter(_.size > 1)
