@@ -44,12 +44,12 @@ class ContainerElementTest extends WordSpec with Matchers {
       val e2 = contElem.foldLeft(true)(and)
       val e3 = contElem.foldRight(true)(and)
       val e4 = contElem.aggregate(true)((b1: Boolean, b2: Boolean) => !b1 || b2, (b1: Boolean, b2: Boolean) => b1 && b2)
-      val alg = Importance(10000, e1, e2, e3, e4)
+      val alg = VariableElimination(e1, e2, e3, e4)
       alg.start()
-      alg.probability(e1, true) should be (answer +- 0.01)
-      alg.probability(e2, true) should be (answer +- 0.01)
-      alg.probability(e3, true) should be (answer +- 0.01)
-      alg.probability(e4, true) should be (answer +- 0.01)
+      alg.probability(e1, true) should be (answer +- 0.0000001)
+      alg.probability(e2, true) should be (answer +- 0.0000001)
+      alg.probability(e3, true) should be (answer +- 0.0000001)
+      alg.probability(e4, true) should be (answer +- 0.0000001)
       alg.kill()
     }
 
@@ -59,7 +59,7 @@ class ContainerElementTest extends WordSpec with Matchers {
       val elem1 = contElem.count((b: Boolean) => b)
       val elem2 = contElem.exists((b: Boolean) => b)
       val elem3 = contElem.forall((b: Boolean) => b)
-      val alg = Importance(10000, elem1, elem2, elem3)
+      val alg = VariableElimination(elem1, elem2, elem3)
       alg.start()
       val p10 = 0.9 * 0.8
       val p20 = 0.7 * 0.6 * 0.5
@@ -68,11 +68,11 @@ class ContainerElementTest extends WordSpec with Matchers {
       val p12 = 0.1 * 0.2
       val p22 = 0.7 * 0.4 * 0.5 + 0.3 * 0.6 * 0.5 + 0.3 * 0.4 * 0.5
       val p23 = 0.3 * 0.4 * 0.5
-      alg.probability(elem1, 0) should be ((0.5 * p10 + 0.5 * p20) +- 0.02)
-      alg.probability(elem1, 1) should be ((0.5 * p11 + 0.5 * p21) +- 0.02)
-      alg.probability(elem1, 2) should be ((0.5 * p12 + 0.5 * p22) +- 0.02)
-      alg.probability(elem2, true) should be ((1 - (0.5 * p10 + 0.5 * p20)) +- 0.02)
-      alg.probability(elem3, true) should be ((0.5 * p12 + 0.5 * p23) +- 0.02)
+      alg.probability(elem1, 0) should be ((0.5 * p10 + 0.5 * p20) +- 0.0000001)
+      alg.probability(elem1, 1) should be ((0.5 * p11 + 0.5 * p21) +- 0.0000001)
+      alg.probability(elem1, 2) should be ((0.5 * p12 + 0.5 * p22) +- 0.0000001)
+      alg.probability(elem2, true) should be ((1 - (0.5 * p10 + 0.5 * p20)) +- 0.0000001)
+      alg.probability(elem3, true) should be ((0.5 * p12 + 0.5 * p23) +- 0.0000001)
       alg.kill()
     }
 
@@ -80,12 +80,13 @@ class ContainerElementTest extends WordSpec with Matchers {
       Universe.createNew()
       val contElem = create()
       val len = contElem.length
-      val alg = Importance(10000, len)
+      val alg = VariableElimination(len)
       val answer = 0.5 * 2 + 0.5 * 3
       alg.start()
-      alg.expectation(len, (i: Int) => i.toDouble) should be (answer +- 0.01)
+      alg.expectation(len, (i: Int) => i.toDouble) should be (answer +- 0.0000001)
       alg.kill()
     }
+
     "when concatenating, have all the elements of both processes, with the second process following the first" in {
       Universe.createNew()
       val contElem1 = create()

@@ -105,7 +105,6 @@ class VariableSizeArrayTest extends WordSpec with Matchers {
       alg.kill()
     }
 
-    /* fold not currently supported by factored algorithms
     "return the correct probability under variable elimination" in {
       Universe.createNew()
       val x1 = Select(0.4 -> 2, 0.6 -> 3)
@@ -120,8 +119,6 @@ class VariableSizeArrayTest extends WordSpec with Matchers {
       alg.probability(x1, 3) should be(answer +- 0.0000001)
       alg.kill()
     }
-    *
-    */
 
     "return the correct probability under Metropolis-Hastings" in {
       Universe.createNew()

@@ -1,6 +1,35 @@
 package com.cra.figaro.library.compound
 
 import com.cra.figaro.language._
+import com.cra.figaro.algorithm.ValuesMaker
+import com.cra.figaro.algorithm.lazyfactored.{LazyValues, ValueSet}
+
+class FoldLeft[T,U](name: Name[U], val start: U, val function: (U, T) => U, val elements: Seq[Element[T]], collection: ElementCollection)
+extends Deterministic[U](name, collection) with ValuesMaker[U] {
+  def args = elements.toList
+  override def generateValue = elements.map(_.value).foldLeft(start)(function)
+
+  def makeValues(depth: Int): ValueSet[U] = {
+    val values = LazyValues(universe)
+
+    def helper(currentAccum: ValueSet[U], remainingElements: Seq[Element[T]]): ValueSet[U] = {
+      if (remainingElements.isEmpty) currentAccum
+      else {
+        val firstVS = values(remainingElements.head, depth - 1)
+        val nextRegular =
+          for {
+            currentAccumVal <- currentAccum.regularValues
+            firstVal <- firstVS.regularValues
+          } yield function(currentAccumVal, firstVal)
+        val nextHasStar = currentAccum.hasStar || firstVS.hasStar
+        val nextAccum = if (nextHasStar) ValueSet.withStar(nextRegular) else ValueSet.withoutStar(nextRegular)
+        helper(nextAccum, remainingElements.tail)
+      }
+    }
+
+    helper(ValueSet.withoutStar(Set(start)), elements)
+  }
+}
 
 object FoldLeft  {
   /*
@@ -13,10 +42,7 @@ object FoldLeft  {
     else {
       val elem = elements.head
       if (!elem.active) elem.activate
-      new Deterministic[U](name, collection) {
-        def args = elements.toList
-        override def generateValue = elements.map(_.value).foldLeft(start)(function)
-      }
+      new FoldLeft(name, start, function, elements, collection)
     }
   }
 }

@@ -128,7 +128,6 @@ object ComplexFactory {
   def makeFactors[T](element: com.cra.figaro.library.process.MakeArray[T]): List[Factor[Double]] = {
     val arg1Var = Variable(element.numItems)
     val resultVar = Variable(element)
-    val possibleResults = LazyValues(element.universe).storedValues(element)
     val factor = new BasicFactor[Double](List(arg1Var), List(resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
     val resultIndices = resultVar.range.zipWithIndex
@@ -136,11 +135,8 @@ object ComplexFactory {
       (arg1Val, arg1Index) <- arg1Indices
       (resultVal, resultIndex) <- resultIndices
     } {
-      // See logic in makeCares
       val entry =
         if (arg1Val.isRegular && resultVal.isRegular) {
-        // arg1Val.value should have been placed in applyMap at the time the values of this apply were computed.
-        // By using applyMap, we can make sure that any contained elements in the result of the apply are the same now as they were when values were computed.
         if (resultVal.value == element.arrays(arg1Val.value)) 1.0
           else 0.0
         } else if (!arg1Val.isRegular && !resultVal.isRegular) 1.0
@@ -149,5 +145,54 @@ object ComplexFactory {
       factor.set(List(arg1Index, resultIndex), entry)
     }
     List(factor)
+  }
+
+  def makeFactors[T,U](fold: FoldLeft[T,U]): List[Factor[Double]] = {
+    def makeOneFactor(currentAccumVar: Variable[U], elemVar: Variable[T], nextAccumVar: Variable[U]): Factor[Double] = {
+      val result = new BasicFactor[Double](List(currentAccumVar, elemVar), List(nextAccumVar))
+      val currentAccumIndices = currentAccumVar.range.zipWithIndex
+      val elemIndices = elemVar.range.zipWithIndex
+      val nextAccumIndices = nextAccumVar.range.zipWithIndex
+      for {
+        (currentAccumVal, currentAccumIndex) <- currentAccumIndices
+        (elemVal, elemIndex) <- elemIndices
+        (nextAccumVal, nextAccumIndex) <- nextAccumIndices
+    } {
+      val entry =
+        if (currentAccumVal.isRegular && elemVal.isRegular && nextAccumVal.isRegular) {
+          if (nextAccumVal.value == fold.function(currentAccumVal.value, elemVal.value)) 1.0
+          else 0.0
+        } else if ((!currentAccumVal.isRegular || !elemVal.isRegular) && !nextAccumVal.isRegular) 1.0
+        else 0.0
+      result.set(List(currentAccumIndex, elemIndex, nextAccumIndex), entry)
+    }
+      result
+    }
+
+    def makeFactorSequence(currentAccumVar: Variable[U], remaining: Seq[Element[T]]): List[Factor[Double]] = {
+      if (remaining.isEmpty) List()
+      else {
+        val firstVar = Variable(remaining.head)
+        val rest = remaining.tail
+        val nextAccumVar =
+          if (rest.isEmpty) Variable(fold)
+          else {
+          val currentAccumRegular = currentAccumVar.range.filter(_.isRegular).map(_.value)
+          val firstRegular = firstVar.range.filter(_.isRegular).map(_.value)
+          val nextVals =
+            for {
+              accum <- currentAccumRegular
+              first <- firstRegular
+            } yield fold.function(accum, first)
+          val nextHasStar = currentAccumVar.range.exists(!_.isRegular) || firstVar.range.exists(!_.isRegular)
+          val nextVS = if (nextHasStar) ValueSet.withStar(nextVals.toSet) else ValueSet.withoutStar(nextVals.toSet)
+            new Variable(nextVS)
+          }
+        val nextFactor = makeOneFactor(currentAccumVar, firstVar, nextAccumVar)
+        nextFactor :: makeFactorSequence(nextAccumVar, rest)
+      }
+    }
+    val startVar = new Variable(ValueSet.withoutStar(Set(fold.start)))
+    makeFactorSequence(startVar, fold.elements)
   }
 }

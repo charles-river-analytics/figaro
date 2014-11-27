@@ -666,7 +666,7 @@ class CompoundTest extends WordSpec with Matchers {
   }
 
   "Folding" should {
-    "produce the correct result" in {
+    "produce the correct result under importance sampling" in {
       val elems = List(Flip(0.3), Flip(0.4), Flip(0.6))
       val fl = FoldLeft(true, (b1: Boolean, b2: Boolean) => (b1 && b2))(elems:_*)
       val fr = FoldRight(true, (b1: Boolean, b2: Boolean) => (b1 && b2))(elems:_*)
@@ -680,11 +680,25 @@ class CompoundTest extends WordSpec with Matchers {
       alg.kill()
     }
 
+    "produce the correct result under variable elimination" in {
+      val elems = List(Flip(0.3), Flip(0.4), Flip(0.6))
+      val fl = FoldLeft(true, (b1: Boolean, b2: Boolean) => (b1 && b2))(elems:_*)
+      val fr = FoldRight(true, (b1: Boolean, b2: Boolean) => (b1 && b2))(elems:_*)
+      val red = Reduce((b1: Boolean, b2: Boolean) => (b1 && b2))(elems:_*)
+      val alg = VariableElimination(fl, fr, red)
+      alg.start()
+      val answer = 0.3 * 0.4 * 0.6
+      alg.probability(fl, true) should be (answer +- 0.00000001)
+      alg.probability(fr, true) should be (answer +- 0.00000001)
+      alg.probability(red, true) should be (answer +- 0.00000001)
+      alg.kill()
+    }
+
     "process items in the correct order" in {
       val elems = List(Constant('a), Constant('b))
       val fl = FoldLeft('z, (x: Symbol, y: Symbol) => if (x == 'z) y else x)(elems:_*)
       val fr = FoldRight('z, (x: Symbol, y: Symbol) => if (y == 'z) x else y)(elems:_*)
-      val alg = Importance(10000, fl, fr)
+      val alg = VariableElimination(fl, fr)
       alg.start()
       alg.probability(fl, 'a) should equal (1.0)
       alg.probability(fr, 'b) should equal (1.0)

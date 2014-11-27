@@ -643,6 +643,7 @@ object Factory {
       case r: Aggregate[_, _] => ComplexFactory.makeFactors(r)
       case m: MakeList[_] => ComplexFactory.makeFactors(m)
       case m: MakeArray[_] => ComplexFactory.makeFactors(m)
+      case f: FoldLeft[_,_] => ComplexFactory.makeFactors(f)
       //case f: ProbFactorMaker => f.makeFactors
       case a: Atomic[_] => makeFactors(a)
 

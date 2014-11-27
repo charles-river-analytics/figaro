@@ -64,8 +64,7 @@ class ContainerTest extends WordSpec with Matchers {
       alg.probability(elem3, true) should be (((1.0 / 2.0) * (1.0 / 3.0)) +- 0.02)
       alg.probability(elem4, true) should be (((1.0 / 2.0) * (1.0 / 3.0)) +- 0.02)
       alg.kill()
-      //Currently, folds are not supported by factored algorithms
-      //VariableElimination.probability(elem1, true) should be (((1.0 / 2.0) * (1.0 / 3.0)) +- 0.02)
+      VariableElimination.probability(elem1, true) should be (((1.0 / 2.0) * (1.0 / 3.0)) +- 0.02)
       MetropolisHastings.probability(elem1, true) should  be (((1.0 / 2.0) * (1.0 / 3.0)) +- 0.02)
     }
 
