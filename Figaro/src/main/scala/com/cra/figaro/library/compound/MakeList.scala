@@ -15,7 +15,7 @@ package com.cra.figaro.library.compound
 
 import com.cra.figaro.algorithm.ValuesMaker
 import com.cra.figaro.algorithm.lazyfactored.{ValueSet, LazyValues, Regular}
-import com.cra.figaro.algorithm.factored._
+import com.cra.figaro.library.factors._
 import com.cra.figaro.language._
 import com.cra.figaro.util._
 import scala.collection.mutable.Map
@@ -36,7 +36,7 @@ class MakeList[T](
   val itemMaker: () => Element[T],
   collection: ElementCollection)
   extends Deterministic[List[T]](name, collection)
-  with ValuesMaker[List[T]] with ProbFactorMaker with IfArgsCacheable[List[T]] {
+  with ValuesMaker[List[T]] with IfArgsCacheable[List[T]] {
   
   /**
    * An infinite stream of items in the list. At any point in time, the value of this element
@@ -90,23 +90,23 @@ class MakeList[T](
     if (incomplete) ValueSet.withStar(resultValues); else ValueSet.withoutStar(resultValues)
   }
 
-  def makeFactors: List[Factor[Double]] = {
-    val parentVar = Variable(numItems)
-    // We need to create factors for the items and the lists themselves, which are encapsulated in this MakeList
-    val regularParents = parentVar.range.filter(_.isRegular).map(_.value)
-    val maxItem = regularParents.reduce(_ max _)
-    val itemFactors = List.tabulate(maxItem)((i: Int) => Factory.make(items(i)))
-    val indexedResultElemsAndFactors =
-      for { i <- regularParents } yield {
-        val elem = embeddedInject(i)
-        val factors = Factory.make(elem)
-        (Regular(i), elem, factors)
-      }
-    val conditionalFactors =
-      parentVar.range.zipWithIndex map (pair =>
-        Factory.makeConditionalSelector(this, parentVar, pair._2, Variable(indexedResultElemsAndFactors.find(_._1 == pair._1).get._2)))
-    conditionalFactors ::: itemFactors.flatten ::: indexedResultElemsAndFactors.flatMap(_._3)
-  }
+//  def makeFactors: List[Factor[Double]] = {
+//    val parentVar = Variable(numItems)
+//    // We need to create factors for the items and the lists themselves, which are encapsulated in this MakeList
+//    val regularParents = parentVar.range.filter(_.isRegular).map(_.value)
+//    val maxItem = regularParents.reduce(_ max _)
+//    val itemFactors = List.tabulate(maxItem)((i: Int) => Factory.make(items(i)))
+//    val indexedResultElemsAndFactors =
+//      for { i <- regularParents } yield {
+//        val elem = embeddedInject(i)
+//        val factors = Factory.make(elem)
+//        (Regular(i), elem, factors)
+//      }
+//    val conditionalFactors =
+//      parentVar.range.zipWithIndex map (pair =>
+//        Factory.makeConditionalSelector(this, parentVar, pair._2, Variable(indexedResultElemsAndFactors.find(_._1 == pair._1).get._2)))
+//    conditionalFactors ::: itemFactors.flatten ::: indexedResultElemsAndFactors.flatMap(_._3)
+//  }
 
   override def isCachable = {
 

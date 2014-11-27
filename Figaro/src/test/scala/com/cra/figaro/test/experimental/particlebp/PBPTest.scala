@@ -97,9 +97,9 @@ class PBPTest extends WordSpec with Matchers {
 
       val tol = 0.025
       val a = bp.distribution(e1).toList
-      println(a)
+      
       val b = bp.distribution(ep).toList
-      println(b)
+      
       bp.probability(e2, (i: Int) => i == 0) should be(e2_0 +- tol)
       bp.probability(e2, (i: Int) => i == 1) should be(e2_1 +- tol)
       bp.probability(e2, (i: Int) => i == 2) should be(e2_2 +- tol)

@@ -454,7 +454,6 @@ object DecisionMetropolisHastings {
       u.value match {
         case d: Double => 1
         case _ => {
-          println(u.value)
           throw new IllegalArgumentException("Only double utilities are allowed")
         }
       }

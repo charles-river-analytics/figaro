@@ -13,13 +13,14 @@
 
 package com.cra.figaro.algorithm.factored
 
+import com.cra.figaro.library.factors._
 /**
  * Trait of elements for which probabilistic factors can be created. Elements that implement this trait must
  * implement the makeFactors method.
  */
-trait ProbFactorMaker {
-  /**
-   * Returns the factors corresponding to this element.
-   */
-  def makeFactors: List[Factor[Double]]
-}
+//trait ProbFactorMaker {
+//  /**
+//   * Returns the factors corresponding to this element.
+//   */
+//  def makeFactors: List[Factor[Double]]
+//}

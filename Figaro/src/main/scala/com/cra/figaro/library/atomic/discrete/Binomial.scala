@@ -15,7 +15,7 @@ package com.cra.figaro.library.atomic.discrete
 
 import com.cra.figaro.algorithm.ValuesMaker
 import com.cra.figaro.algorithm.lazyfactored.ValueSet
-import com.cra.figaro.algorithm.factored._
+import com.cra.figaro.library.factors._
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
 import annotation.tailrec
@@ -24,7 +24,7 @@ import annotation.tailrec
  * A binomial distribution in which the parameters are constants.
  */
 class AtomicBinomial(name: Name[Int], val numTrials: Int, val probSuccess: Double, collection: ElementCollection)
-  extends Element[Int](name, collection) with Atomic[Int] with ValuesMaker[Int] with ProbFactorMaker with Cacheable[Int]
+  extends Element[Int](name, collection) with Atomic[Int] with ValuesMaker[Int] with Cacheable[Int]
   with OneShifter {
   protected lazy val lowerBound = 0
   protected lazy val upperBound = numTrials
@@ -66,14 +66,14 @@ class AtomicBinomial(name: Name[Int], val numTrials: Int, val probSuccess: Doubl
   /**
    * Convert an element into a list of factors.
    */
-  def makeFactors = {
-    val binVar = Variable(this)
-    val factor = Factory.make[Double](List(binVar))
-    for { (xvalue, index) <- binVar.range.zipWithIndex } {
-      factor.set(List(index), density(xvalue.value))
-    }
-    List(factor)
-  }
+//  def makeFactors = {
+//    val binVar = Variable(this)
+//    val factor = Factory.make[Double](List(binVar))
+//    for { (xvalue, index) <- binVar.range.zipWithIndex } {
+//      factor.set(List(index), density(xvalue.value))
+//    }
+//    List(factor)
+//  }
 
   override def toString = "Binomial(" + numTrials + ", " + probSuccess + ")"
 }

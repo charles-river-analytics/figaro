@@ -49,9 +49,6 @@ class ParameterTest extends WordSpec with Matchers {
 
       val algorithm = EM.withVE(numberOfIterations, b)
       algorithm.start
-
-      println(b.toString)
-
     }
 
     "properly calculate expected value" in {

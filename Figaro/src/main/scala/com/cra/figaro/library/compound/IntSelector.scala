@@ -16,7 +16,7 @@ package com.cra.figaro.library.compound
 import com.cra.figaro.language._
 import com.cra.figaro.util._
 import com.cra.figaro.algorithm._
-import com.cra.figaro.algorithm.factored._
+import com.cra.figaro.library.factors._
 import com.cra.figaro.algorithm.lazyfactored._
 
 /**
@@ -27,8 +27,8 @@ import com.cra.figaro.algorithm.lazyfactored._
  * This latter property makes the class useful in an algorithm like Metropolis-Hastings, where we would like to
  * change as little as possible as we make a proposal.
  */
-class IntSelector(name: Name[Int], counter: Element[Int], collection: ElementCollection)
-  extends Element[Int](name, collection) with IfArgsCacheable[Int] with ValuesMaker[Int] with ProbFactorMaker {
+class IntSelector(name: Name[Int], val counter: Element[Int], collection: ElementCollection)
+  extends Element[Int](name, collection) with IfArgsCacheable[Int] with ValuesMaker[Int] {
   // We achieve the two properties by making the randomness a random stream of doubles and selecting the index
   // within range that has the highest randomness. If the bound changes, the double associated with the index
   // does not change, so quite often the highest index will stay the same.
@@ -49,19 +49,19 @@ class IntSelector(name: Name[Int], counter: Element[Int], collection: ElementCol
     } else { ValueSet.withStar(Set()) }
   }
 
-  def makeFactors: List[Factor[Double]] = {
-    val thisVar = Variable(this)
-    val counterVar = Variable(counter)
-    val comb = Factory.make[Double](List(thisVar, counterVar))
-    comb.fillByRule((l: List[Any]) => {
-      val xvalue0 :: xvalue1 :: _ = l.asInstanceOf[List[Extended[Int]]]
-      if (xvalue0.isRegular && xvalue1.isRegular) {
-        if (xvalue0.value < xvalue1.value) 1.0/xvalue1.value; else 0.0  
-      } else 1.0
-      
-    })
-    List(comb)
-  }
+//  def makeFactors: List[Factor[Double]] = {
+//    val thisVar = Variable(this)
+//    val counterVar = Variable(counter)
+//    val comb = Factory.make[Double](List(thisVar, counterVar))
+//    comb.fillByRule((l: List[Any]) => {
+//      val xvalue0 :: xvalue1 :: _ = l.asInstanceOf[List[Extended[Int]]]
+//      if (xvalue0.isRegular && xvalue1.isRegular) {
+//        if (xvalue0.value < xvalue1.value) 1.0/xvalue1.value; else 0.0  
+//      } else 1.0
+//      
+//    })
+//    List(comb)
+//  }
 }
 
 object IntSelector {

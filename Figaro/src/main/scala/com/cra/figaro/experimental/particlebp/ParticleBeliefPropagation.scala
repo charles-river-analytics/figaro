@@ -2,16 +2,13 @@ package com.cra.figaro.experimental.particlebp
 
 import com.cra.figaro.language._
 import com.cra.figaro.algorithm.factored.FactoredAlgorithm
-import com.cra.figaro.algorithm.factored.DivideableSemiRing
+import com.cra.figaro.library.factors.{DivideableSemiRing, Factor, LogSumProductSemiring, Variable}
 import com.cra.figaro.algorithm.lazyfactored.LazyValues
-import com.cra.figaro.algorithm.factored.Factory
-import com.cra.figaro.algorithm.factored.Variable
+import com.cra.figaro.library.factors.Factory
 import com.cra.figaro.algorithm.OneTime
 import com.cra.figaro.algorithm.Anytime
-import com.cra.figaro.algorithm.factored.LogSumProductSemiring
 import com.cra.figaro.algorithm.ProbQueryAlgorithm
 import com.cra.figaro.algorithm.OneTimeProbQuery
-import com.cra.figaro.algorithm.factored.Factor
 import scala.collection.immutable.Set
 import scala.collection.mutable.Map
 import com.cra.figaro.algorithm.factored.beliefpropagation.InnerBPHandler
