@@ -19,3 +19,4 @@ project/plugins/project/
 .cache
 .classpath
 .project
+/bin/

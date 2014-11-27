@@ -1,13 +1,13 @@
 /*
  * MakeList.scala
  * An element representing making a list of a random number of random items.
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Oct 17, 2011
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -25,11 +25,11 @@ import scala.collection.mutable.Map
  * The first argument is an element representing the number of items.
  * The second argument is an expression that generates an element representing an item.
  * MakeList is designed to store all the item elements and not change them as the number of elements changes.
- * 
+ *
  * @param numItems The element representing the number of items in the list
  * @param itemMaker A function that creates an element representing a single item in the list
  */
-
+@deprecated("Use Container or VariableSizeArray instead", "Figaro 3.0")
 class MakeList[T](
   name: Name[List[T]],
   val numItems: Element[Int],
@@ -37,7 +37,7 @@ class MakeList[T](
   collection: ElementCollection)
   extends Deterministic[List[T]](name, collection)
   with ValuesMaker[List[T]] with IfArgsCacheable[List[T]] {
-  
+
   /**
    * An infinite stream of items in the list. At any point in time, the value of this element
    * is the prefix of items specified by the value of numItems.
@@ -53,7 +53,7 @@ class MakeList[T](
   override def generateValue = (items take numItems.value map (_.value)).toList
 
   /**
-   * Return the i-th item in the list. Throws IllegalArgumentException if i is greater 
+   * Return the i-th item in the list. Throws IllegalArgumentException if i is greater
    * than the current value of numItems
    */
   def apply(i: Int) = i < numItems.value match {
@@ -62,11 +62,11 @@ class MakeList[T](
   }
 
   def values = LazyValues(universe)
-  
+
   /* We need to make sure that values are computed on the embedded Injects. Therefore, we create them in makeValues, store them, and use them in makeFactors.
    */
   val embeddedInject: Map[Int, Element[List[T]]] = Map()
-  
+
   def makeValues(depth: Int): ValueSet[List[T]] = {
     // This code is subtle.
     // If we used itemMaker here, it would create bugs, as the items that appeared in the values would be different from the ones actually used by the Makelist.
@@ -78,10 +78,10 @@ class MakeList[T](
       embeddedInject += length -> inject
      values(inject, depth - 1)
     }
-    val possibleLengthValues = values(numItems, depth - 1) 
+    val possibleLengthValues = values(numItems, depth - 1)
     val possibleLengths = possibleLengthValues.regularValues
     val itemListsForLengths = possibleLengths.map(possibleItemLists(_))
-    val resultValues = 
+    val resultValues =
       for {
         itemLists <- itemListsForLengths
         list <- itemLists.regularValues

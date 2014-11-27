@@ -2,7 +2,7 @@ package com.cra.figaro.library.process
 
 import com.cra.figaro.language._
 
-trait IncrementalContainer[Index, Value] extends Process[Index, Value] {
+trait IncrementalProcess[Index, Value] extends Process[Index, Value] {
   /**
    * Produce the elements representing the value of the process at the given indices.
    * Ensures that any dependencies between the elements are represented.
