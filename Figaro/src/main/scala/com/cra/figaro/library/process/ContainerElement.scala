@@ -8,7 +8,8 @@ class ContainerElement[Index, Value](val element: Element[Container[Index, Value
    * Creates an element whose value is the value at the corresponding index of the value of the process element.
    */
   def apply(i: Index): Element[Value] = {
-    Chain(element, (c: Container[Index, Value]) => c(i))
+    if (!element.active) element.activate()
+    CachingChain(element, (c: Container[Index, Value]) => c(i))
   }
 
   /**
@@ -16,13 +17,15 @@ class ContainerElement[Index, Value](val element: Element[Container[Index, Value
    * if the index is in range, None otherwise.
    */
   def get(i: Index): Element[Option[Value]] = {
-    Chain(element, (c: Container[Index, Value]) => c.get(i))
+    if (!element.active) element.activate()
+    CachingChain(element, (c: Container[Index, Value]) => c.get(i))
   }
 
   /**
    * Map the given function pointwise through the value of the container element.
    */
   def map[Value2](f: Value => Value2): ContainerElement[Index, Value2] = {
+    if (!element.active) element.activate()
     new ContainerElement(Apply(element, (c: Container[Index, Value]) => c.map(f)))
   }
 
@@ -30,6 +33,7 @@ class ContainerElement[Index, Value](val element: Element[Container[Index, Value
    * Chain the given function pointwise through the value of the container element.
    */
   def chain[Value2](f: Value => Element[Value2]): ContainerElement[Index, Value2] = {
+    if (!element.active) element.activate()
     new ContainerElement(Apply(element, (c: Container[Index, Value]) => c.chain(f)))
   }
 
@@ -37,6 +41,7 @@ class ContainerElement[Index, Value](val element: Element[Container[Index, Value
    * Produce the element over values obtained by selecting a particular container and folding through its values.
    */
   def foldLeft[Value2](start: Value2)(f: (Value2, Value) => Value2): Element[Value2] = {
+    if (!element.active) element.activate()
     CachingChain(element, (c: Container[Index, Value]) => c.foldLeft(start)(f))
   }
 
@@ -44,6 +49,7 @@ class ContainerElement[Index, Value](val element: Element[Container[Index, Value
    * Produce the element over values obtained by selecting a particular container and folding through its values.
    */
   def foldRight[Value2](start: Value2)(f: (Value, Value2) => Value2): Element[Value2] = {
+    if (!element.active) element.activate()
     CachingChain(element, (c: Container[Index, Value]) => c.foldRight(start)(f))
   }
 
@@ -51,6 +57,7 @@ class ContainerElement[Index, Value](val element: Element[Container[Index, Value
    * Produce the element over values obtained by selecting a particular container and reducing through its values.
    */
   def reduce(f: (Value, Value) => Value): Element[Value] = {
+    if (!element.active) element.activate()
     CachingChain(element, (c: Container[Index, Value]) => c.reduce(f))
   }
 
@@ -58,6 +65,7 @@ class ContainerElement[Index, Value](val element: Element[Container[Index, Value
    * Aggregate the results of applying an operator to each element.
    */
   def aggregate[Value2](start: => Value2)(seqop: (Value2, Value) => Value2, combop: (Value2, Value2) => Value2): Element[Value2] = {
+    if (!element.active) element.activate()
     foldLeft(start)((v1: Value2, v2: Value) => combop(v1, seqop(v1, v2)))
   }
 
