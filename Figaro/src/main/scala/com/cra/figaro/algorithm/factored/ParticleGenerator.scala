@@ -67,7 +67,7 @@ class ParticleGenerator(de: DensityEstimator, val numArgSamples: Int, val numTot
 
     def nextInt(i: Int) = if (random.nextBoolean) i + 1 else i - 1
     def nextDouble(d: Double) = random.nextGaussian() * proposalVariance + d
-    
+
     val sampleDensity: Double = 1.0 / beliefs.size
 
     val newSamples = elem match {
@@ -80,16 +80,16 @@ class ParticleGenerator(de: DensityEstimator, val numArgSamples: Int, val numTot
           } else oldValue
           (sampleDensity, nextValue)
         })
-      }      
-      case a: Atomic[Double] => { // The double is unchecked, bad stuff if the atomic is not double
+      }
+      case a: Atomic[_] => { // The double is unchecked, bad stuff if the atomic is not double
         beliefs.map(b => {
           val oldValue = b._2.asInstanceOf[Double]
           val newValue = nextDouble(oldValue)
-          val nextValue = if (a.density(newValue) > 0.0) {
+          val nextValue = if (a.asInstanceOf[Atomic[Double]].density(newValue) > 0.0) {
             accept(oldValue, newValue, beliefs.asInstanceOf[List[(Double, Double)]])
           } else oldValue
           (sampleDensity, nextValue)
-        })        
+        })
       }
       case _ => { // Not an atomic element, we don't know how to resample
         beliefs

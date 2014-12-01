@@ -4,7 +4,7 @@
 package com.cra.figaro.library.factors.factory
 
 import com.cra.figaro.algorithm.lazyfactored._
-import com.cra.figaro.language.{ Aggregate, ElementCollection, MultiValuedReferenceElement, SingleValuedReferenceElement }
+import com.cra.figaro.language._
 import com.cra.figaro.library.compound._
 import com.cra.figaro.library.factors._
 /**
@@ -74,7 +74,7 @@ object ComplexFactory {
                   val collections = cs.asInstanceOf[Traversable[ElementCollection]].toList.distinct // Set semantics
                   val multis: List[MultiValuedReferenceElement[T]] = collections.map(element.embeddedElements(_)).toList
                   // Create the element that takes the union of the values of the all the MVREs.
-                  // The combination and setMaker elements are encapsulated within this object and are created now, so we need to create factors for them. 
+                  // The combination and setMaker elements are encapsulated within this object and are created now, so we need to create factors for them.
                   // Finally, we create a conditional selector (see ProbFactor) to select the appropriate result value when the first
                   // name's value is these MVREs.
                   val combination = element.embeddedInject(collections)
@@ -101,11 +101,11 @@ object ComplexFactory {
     } {
       if (elementXvalue.isRegular && mvreXvalue.isRegular) factor.set(List(mvreIndex, elementIndex), if (element.aggregate(mvreXvalue.value) == elementXvalue.value) 1.0; else 0.0)
     }
-    // The MultiValuedReferenceElement for this aggregate is generated when values is called. 
+    // The MultiValuedReferenceElement for this aggregate is generated when values is called.
     // Therefore, it will be included in the expansion and have factors made for it automatically, so we do not create factors for it here.
     List(factor)
   }
-  
+
   def makeFactors[T](element: MakeList[T]): List[Factor[Double]] = {
     val parentVar = Variable(element.numItems)
     // We need to create factors for the items and the lists themselves, which are encapsulated in this MakeList
@@ -122,5 +122,77 @@ object ComplexFactory {
       parentVar.range.zipWithIndex map (pair =>
         Factory.makeConditionalSelector(element, parentVar, pair._2, Variable(indexedResultElemsAndFactors.find(_._1 == pair._1).get._2)))
     conditionalFactors ::: itemFactors.flatten ::: indexedResultElemsAndFactors.flatMap(_._3)
+  }
+
+    // adapted from Apply1
+  def makeFactors[T](element: com.cra.figaro.library.process.MakeArray[T]): List[Factor[Double]] = {
+    val arg1Var = Variable(element.numItems)
+    val resultVar = Variable(element)
+    val factor = new BasicFactor[Double](List(arg1Var), List(resultVar))
+    val arg1Indices = arg1Var.range.zipWithIndex
+    val resultIndices = resultVar.range.zipWithIndex
+    for {
+      (arg1Val, arg1Index) <- arg1Indices
+      (resultVal, resultIndex) <- resultIndices
+    } {
+      val entry =
+        if (arg1Val.isRegular && resultVal.isRegular) {
+        if (resultVal.value == element.arrays(arg1Val.value)) 1.0
+          else 0.0
+        } else if (!arg1Val.isRegular && !resultVal.isRegular) 1.0
+        else if (!arg1Val.isRegular && resultVal.isRegular) 0.0
+        else 0.0
+      factor.set(List(arg1Index, resultIndex), entry)
+    }
+    List(factor)
+  }
+
+  def makeFactors[T,U](fold: FoldLeft[T,U]): List[Factor[Double]] = {
+    def makeOneFactor(currentAccumVar: Variable[U], elemVar: Variable[T], nextAccumVar: Variable[U]): Factor[Double] = {
+      val result = new BasicFactor[Double](List(currentAccumVar, elemVar), List(nextAccumVar))
+      val currentAccumIndices = currentAccumVar.range.zipWithIndex
+      val elemIndices = elemVar.range.zipWithIndex
+      val nextAccumIndices = nextAccumVar.range.zipWithIndex
+      for {
+        (currentAccumVal, currentAccumIndex) <- currentAccumIndices
+        (elemVal, elemIndex) <- elemIndices
+        (nextAccumVal, nextAccumIndex) <- nextAccumIndices
+    } {
+      val entry =
+        if (currentAccumVal.isRegular && elemVal.isRegular && nextAccumVal.isRegular) {
+          if (nextAccumVal.value == fold.function(currentAccumVal.value, elemVal.value)) 1.0
+          else 0.0
+        } else if ((!currentAccumVal.isRegular || !elemVal.isRegular) && !nextAccumVal.isRegular) 1.0
+        else 0.0
+      result.set(List(currentAccumIndex, elemIndex, nextAccumIndex), entry)
+    }
+      result
+    }
+
+    def makeFactorSequence(currentAccumVar: Variable[U], remaining: Seq[Element[T]]): List[Factor[Double]] = {
+      if (remaining.isEmpty) List()
+      else {
+        val firstVar = Variable(remaining.head)
+        val rest = remaining.tail
+        val nextAccumVar =
+          if (rest.isEmpty) Variable(fold)
+          else {
+          val currentAccumRegular = currentAccumVar.range.filter(_.isRegular).map(_.value)
+          val firstRegular = firstVar.range.filter(_.isRegular).map(_.value)
+          val nextVals =
+            for {
+              accum <- currentAccumRegular
+              first <- firstRegular
+            } yield fold.function(accum, first)
+          val nextHasStar = currentAccumVar.range.exists(!_.isRegular) || firstVar.range.exists(!_.isRegular)
+          val nextVS = if (nextHasStar) ValueSet.withStar(nextVals.toSet) else ValueSet.withoutStar(nextVals.toSet)
+            new Variable(nextVS)
+          }
+        val nextFactor = makeOneFactor(currentAccumVar, firstVar, nextAccumVar)
+        nextFactor :: makeFactorSequence(nextAccumVar, rest)
+      }
+    }
+    val startVar = new Variable(ValueSet.withoutStar(Set(fold.start)))
+    makeFactorSequence(startVar, fold.elements)
   }
 }

@@ -1,13 +1,13 @@
 /*
  * Factory.scala
  * Factors over variables.
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -21,6 +21,7 @@ import com.cra.figaro.algorithm.factored._
 import scala.collection.mutable.ListBuffer
 import com.cra.figaro.library.factors.factory._
 import com.cra.figaro.library.compound._
+import com.cra.figaro.library.process._
 import com.cra.figaro.library.atomic.discrete._
 
 /**
@@ -43,9 +44,9 @@ object Factory {
     result.set(List(), semiring.one)
     result
   }
-  
+
   def defaultFactor[T](parents: List[Variable[_]], children: List[Variable[_]]) = new BasicFactor[T](parents, children)
-  
+
   private def makeFactors[T](const: Constant[T]): List[Factor[Double]] = {
     val factor = new BasicFactor[Double](List(), List(Variable(const)))
     factor.set(List(0), 1.0)
@@ -63,7 +64,7 @@ object Factory {
 //      factor.set(List(i), flip.prob)
 //      factor.set(List(1 - i), 1.0 - flip.prob)
 //      List(factor)
-//    } 
+//    }
 //  }
 
 //  private def makeFactors(flip: CompoundFlip): List[Factor[Double]] = {
@@ -105,8 +106,8 @@ object Factory {
 //    val probVals: List[List[Extended[Double]]] = probVars map (_.range)
 //    for { indices <- factor.allIndices } {
 //      // unnormalized is a list, one for each probability element, of the value of that element under these indices
-//      val unnormalized = 
-////     expects outcome to be first, but isn't   
+//      val unnormalized =
+////     expects outcome to be first, but isn't
 //		for { (probIndex, position) <- indices.toList.take(nVars).zipWithIndex } yield {
 //          val xprob = probVals(position)(probIndex) // The probability of the particular value of the probability element in this position
 //          if (xprob.isRegular) xprob.value; else 0.0
@@ -117,16 +118,16 @@ object Factory {
 //    }
 //    factor
 //  }
- 
+
 //  private def getProbs[U, T](select: Select[U, T]): List[U] = getProbs(select, select.clauses)
-//  
+//
 //  private def getProbs[U, T](elem: Element[T], clauses: List[(U, T)]): List[U] = {
 //    val selectVar = Variable(elem)
 //    def getProb(xvalue: Extended[T]): U = {
 //      clauses.find(_._2 == xvalue.value).get._1 // * cannot be a value of a Select
 //    }
-//    val probs = 
-//      for { xvalue <- selectVar.range } yield getProb(xvalue) 
+//    val probs =
+//      for { xvalue <- selectVar.range } yield getProb(xvalue)
 //    probs
 //  }
 
@@ -196,10 +197,10 @@ object Factory {
       // Star stands for "something". If outcomeVal is Star and overallVal is Star, we know something will match something, so the entry is (1,1).
       // If outcomeVal is Star and overallVal is a regular value, then maybe there will be a match, so the entry is (0,1).
       // If outcomeVal is regular, all the probability mass associated with that outcome should be on regular values of overallVal, so the entry is (0,0).
-      val entry = 
+      val entry =
         if (overallVal.isRegular && outcomeVal.isRegular) {
             if (overallVal.value == mapper.map(outcomeVal.value, choices)) 1.0
-            else 0.0 
+            else 0.0
         } else if (!overallVal.isRegular && !outcomeVal.isRegular) 1.0
         else 0.0
       factor.set(List(intermedIndex, j, k), entry)
@@ -225,7 +226,7 @@ object Factory {
     //val outcomeVar = Variable(outcomeElem)
     val overallValues = LazyValues(overallElem.universe).storedValues(overallElem)
     val factor = new BasicFactor[Double](List(selector, outcomeVar), List(overallVar))
-    for { i <- 0 until selector.size} { 
+    for { i <- 0 until selector.size} {
       if (i == outcomeIndex) {
         makeCares(factor, outcomeIndex, outcomeVar, overallVar, overallValues.regularValues)(mapper)
       }
@@ -233,7 +234,7 @@ object Factory {
         makeDontCares(factor, i, outcomeVar, overallVar)
       }
     }
- 
+
     factor
   }
 
@@ -303,14 +304,14 @@ object Factory {
     for (factor <- tempFactors.tail)
     {
         val commonVariables = factor.variables.toSet & nextFactor.variables.toSet
-    	
-        if (commonVariables.size > 0) 
+
+        if (commonVariables.size > 0)
         {
           val newVariables = factor.variables.toSet -- nextFactor.variables.toSet
           val potentialSize = calculateSize(nextFactor.size, newVariables)
-          if ((nextFactor.numVars + newVariables.size) < maxElementCount 
+          if ((nextFactor.numVars + newVariables.size) < maxElementCount
               && potentialSize < maxSize)
-          {  
+          {
             nextFactor = nextFactor.product(factor, semiring)
           }
           else
@@ -330,9 +331,9 @@ object Factory {
         {
           newFactors += nextFactor
           nextFactor = factor
-        } 
+        }
     }
-    
+
     if (nextFactor.numVars > 0)
     {
       if (removeTemporaries)
@@ -346,28 +347,28 @@ object Factory {
     }
     newFactors.toList
   }
- 
+
    val variableSet = scala.collection.mutable.Set[ElementVariable[_]]()
    val nextFactors = ListBuffer[Factor[Double]]()
 
   private def reduceFactor(factor: Factor[Double], semiring: Semiring[Double], maxElementCount: Int):List[Factor[Double]] = {
 	   variableSet.clear
-	   
+
 	   (variableSet /: List(factor))(_ ++= _.variables.asInstanceOf[List[ElementVariable[_]]])
        var elementCount = variableSet count (v => !isTemporary(v))
        var resultFactor = unit[Double](semiring).product(factor, semiring)
-       
+
        var tempCount = 0;
-       
+
        for {variable <- variableSet}
-       {   	
+       {
     		if (isTemporary(variable) && elementCount <= maxElementCount)
     		{
     			nextFactors.clear
     			nextFactors ++= concreteFactors(variable.asInstanceOf[ElementVariable[_]].element)
-    			(variableSet /: nextFactors)(_ ++= _.variables.asInstanceOf[List[ElementVariable[_]]]) 
+    			(variableSet /: nextFactors)(_ ++= _.variables.asInstanceOf[List[ElementVariable[_]]])
      	        elementCount = variableSet count (v => !isTemporary(v))
-    	  
+
     			for (nextFactor <- nextFactors)
     			{
     			  resultFactor = resultFactor.product(nextFactor, semiring)
@@ -375,9 +376,9 @@ object Factory {
     			tempCount += 1
     		}
     	}
-    
+
     	if (tempCount > 0 && elementCount <= maxElementCount)
-    	{   	  
+    	{
     		for {variable <- variableSet}
     		{
     			if (isTemporary(variable))
@@ -385,22 +386,22 @@ object Factory {
     				resultFactor = resultFactor.sumOver(variable, semiring)
     			}
     		}
-    		
+
     	}
     	List(resultFactor)
   }
-    
+
   private def calculateSize(currentSize: Int, variables: Set[Variable[_]]) = {
-     (currentSize /: variables)(_ * _.size) 
+     (currentSize /: variables)(_ * _.size)
   }
-  
+
   private def isTemporary[_T](variable: Variable[_]): Boolean = {
     variable match {
       case e: ElementVariable[_] => e.element.isTemporary
       case _ => false
     }
   }
-  
+
 //  private def makeFactors[T, U](apply: Apply1[T, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {
 //    val applyMap: scala.collection.mutable.Map[T, U] = LazyValues(apply.universe).getMap(apply)
 //    val arg1Var = Variable(apply.arg1)
@@ -603,7 +604,7 @@ object Factory {
   private def makeFactors[T](atomic: Atomic[T]): List[Factor[Double]] = {
     val atomicVar = Variable(atomic)
     val pbpSampler = ParticleGenerator(atomic.universe)
-    // Note, don't need number of samples because values should have already been expanded on it 
+    // Note, don't need number of samples because values should have already been expanded on it
     // (and values will initiate the sampling)
     val samples = pbpSampler(atomic)
     if (atomicVar.range.exists(!_.isRegular)) {
@@ -614,7 +615,7 @@ object Factory {
       List(SelectFactory.makeSimpleDistribution(atomicVar, probs))
     }
   }
-  
+
   def concreteFactors[T](elem: Element[T]): List[Factor[Double]] =
     elem match {
       case flip: ParameterizedFlip => DistributionFactory.makeFactors(flip)
@@ -641,9 +642,11 @@ object Factory {
       case r: MultiValuedReferenceElement[_] => ComplexFactory.makeFactors(r)
       case r: Aggregate[_, _] => ComplexFactory.makeFactors(r)
       case m: MakeList[_] => ComplexFactory.makeFactors(m)
+      case m: MakeArray[_] => ComplexFactory.makeFactors(m)
+      case f: FoldLeft[_,_] => ComplexFactory.makeFactors(f)
       //case f: ProbFactorMaker => f.makeFactors
       case a: Atomic[_] => makeFactors(a)
-      
+
       case _ => throw new UnsupportedAlgorithmException(elem)
     }
 
@@ -678,7 +681,7 @@ object Factory {
     /*
      * Don't make non-constraint factors for an element that is expanded to depth -1.
      * The element must take on the value *, so the factor is the unit.
-     * Attempting to create a factor can result in problems where the element's arguments are not star, 
+     * Attempting to create a factor can result in problems where the element's arguments are not star,
      * leading to the factor being zero everywhere.
      * For example, consider an Apply. If the Apply is expanded to depth -1, but its argument has already
      * been expanded and produced a set of values without *, the Apply factor would have probability zero
@@ -708,7 +711,7 @@ object Factory {
     }
   }
 
-  def makeUncontingentConstraintFactor[T](elem: Element[T], constraint: T => Double, upper: Boolean): Factor[Double] = {    
+  def makeUncontingentConstraintFactor[T](elem: Element[T], constraint: T => Double, upper: Boolean): Factor[Double] = {
     val elemVar = Variable(elem)
     val factor = new BasicFactor[Double](List(), List(elemVar))
     for { (elemVal, index) <- elemVar.range.zipWithIndex } {
@@ -723,7 +726,7 @@ object Factory {
     }
     factor
   }
-    
+
   private def makeContingentConstraintFactor[T](elem: Element[T], constraint: T => Double, firstConting: Element.ElemVal[_], restContinges: Element.Contingency): Factor[Double] = {
     val restFactor = makeConstraintFactor(elem, (constraint, restContinges))
     extendConstraintFactor(restFactor, firstConting)
@@ -760,32 +763,31 @@ object Factory {
         result
     }
   }
-  
-  
+
   /**
    * Create the probabilistic factors associated with an element. This method is memoized.
    */
   def make(elem: Element[_]): List[Factor[Double]] = {
     makeConditionAndConstraintFactors(elem) ::: makeNonConstraintFactors(elem)
   }
-  
+
   def simpleMake[T](variables: List[Variable[_]]) =
     new BasicFactor[T](variables, List())
-  
+
   /**
    * Create the probabilistic factors associated with a list.
    */
 //  def make[T](variables: List[Variable[_]]): Factor[T] = {
 //    new BasicFactor[T](variables, List())
 //  }
-  
+
   /**
    * Remove an element from the factor cache, ensuring that factors for the element
-   * are regenerated. This is important, for example,  if evidence on the variable has changed. 
-   * 
+   * are regenerated. This is important, for example,  if evidence on the variable has changed.
+   *
    */
   def removeFactors(elem: Element[_]) { factorCache -= elem }
-  
+
   /**
    * Clear the factor cache.
    */
@@ -795,7 +797,7 @@ object Factory {
    * Update the factor cache.
    */
   def updateFactor[T](elem: Element[_], f: List[Factor[Double]]) { factorCache.update(elem, f) }
-  
+
   /**
    * Create the probabilistic factor encoding the probability of evidence in the dependent universe as a function of the
    * values of variables in the parent universe. The third argument is the the function to use for computing

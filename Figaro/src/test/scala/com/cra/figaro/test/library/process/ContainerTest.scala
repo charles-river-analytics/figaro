@@ -8,6 +8,7 @@ import com.cra.figaro.util._
 import com.cra.figaro.algorithm.factored.VariableElimination
 import com.cra.figaro.algorithm.sampling.Importance
 import com.cra.figaro.library.compound._
+import com.cra.figaro.algorithm.sampling.MetropolisHastings
 
 class ContainerTest extends WordSpec with Matchers {
   "A Container" should {
@@ -17,21 +18,21 @@ class ContainerTest extends WordSpec with Matchers {
       proc.rangeCheck(2) should equal (true)
       proc.rangeCheck(1) should equal (false)
     }
-    
+
     "when mapping, have each point mapped according to the function" in {
       Universe.createNew()
       val proc = createContainer(List(2,3)).map(!_)
       val elem = proc(3)
       VariableElimination.probability(elem, true) should be ((2.0 / 3) +- 0.000000001)
     }
-    
+
     "when chaining, have each point flatMapped according to the function" in {
       Universe.createNew()
       val proc = createContainer(List(2,3)).chain(if (_) Flip(0.3) else Flip(0.6))
       val elem = proc(3)
       VariableElimination.probability(elem, true) should be ((1.0 / 3 * 0.3 + 2.0 / 3 * 0.6) +- 0.000000001)
     }
-    
+
     "when appending, have all the elements of both processes, with the second process replacing the first when necessary" in {
       Universe.createNew()
       val proc1 = createContainer(List(2,3))
@@ -48,7 +49,7 @@ class ContainerTest extends WordSpec with Matchers {
       alg.probability(elem4, true) should be (3.0 / 4.0 +- 0.00000001) // inverted
       alg.kill()
     }
-    
+
     "when folding or reducing, have the points folded according to the function" in {
       Universe.createNew()
       val proc = createContainer(List(2,3))
@@ -63,8 +64,10 @@ class ContainerTest extends WordSpec with Matchers {
       alg.probability(elem3, true) should be (((1.0 / 2.0) * (1.0 / 3.0)) +- 0.02)
       alg.probability(elem4, true) should be (((1.0 / 2.0) * (1.0 / 3.0)) +- 0.02)
       alg.kill()
+      VariableElimination.probability(elem1, true) should be (((1.0 / 2.0) * (1.0 / 3.0)) +- 0.02)
+      MetropolisHastings.probability(elem1, true) should  be (((1.0 / 2.0) * (1.0 / 3.0)) +- 0.02)
     }
-    
+
     "when quantifying over elements satisfying a predicate, produce the right answer" in {
       Universe.createNew()
       val proc = createContainer(List(2,3))
@@ -83,7 +86,7 @@ class ContainerTest extends WordSpec with Matchers {
       alg.probability(elem3, true) should be (p2 +- 0.02)
       alg.kill()
     }
-    
+
     "when finding the index of the first element, produce the right answer" in {
       Universe.createNew()
       val proc = createContainer(List(2,3))
@@ -98,9 +101,41 @@ class ContainerTest extends WordSpec with Matchers {
       alg.probability(elem, None) should be (pNone +- 0.02)
       alg.kill()
     }
-    
+
+    "when turning into an array, should have correct indices and entries" in {
+      val proc1 = createContainer(List(2,3))
+      val array = proc1.toArray
+      array.indices.toList should equal (List(0, 1))
+      val e0 = array(0)
+      val e1 = array(1)
+      val alg = VariableElimination(e0, e1)
+      alg.start()
+      alg.probability(e0, true) should be (0.5 +- 0.0000000001) // originally 2
+      alg.probability(e1, true) should be ((1.0 / 3.0) +- 0.0000000001) // originally 3
+      alg.kill()
+    }
+
+    "when concatenating, have all the elements of both processes, with the second process following the first" in {
+      Universe.createNew()
+      val proc1 = createContainer(List(2,3))
+      val proc2 = createContainer(List(3,4), true)
+      val proc = proc1.concat(proc2)
+      proc.indices.toList should equal (List(0, 1, 2, 3))
+      val e0 = proc(0)
+      val e1 = proc(1)
+      val e2 = proc(2)
+      val e3 = proc(3)
+      val alg = VariableElimination(e0, e1, e2, e3)
+      alg.start()
+      alg.probability(e0, true) should be (0.5 +- 0.0000000001) // originally 2
+      alg.probability(e1, true) should be ((1.0 / 3.0) +- 0.0000000001) // originally 3
+      alg.probability(e2, true) should be ((2.0 / 3.0) +- 0.0000000001) // originally 3, inverted
+      alg.probability(e3, true) should be ((3.0 / 4.0) +- 0.0000000001) // originally 4, inverted
+      alg.kill()
+    }
+
   }
-  
+
   def createContainer(is: List[Int], invert: Boolean = false): Container[Int, Boolean] = new Container[Int, Boolean] {
     val indices = is
     def generate(index: Int) = if (invert) Flip(1.0 - 1.0 / index) else Flip(1.0 / index)
@@ -109,7 +144,7 @@ class ContainerTest extends WordSpec with Matchers {
         index <- indices
       } yield (index, generate(index))
       val map = Map(unary:_*)
-      val binary = 
+      val binary =
         for {
           index1 <- indices
           index2 <- indices
@@ -121,7 +156,7 @@ class ContainerTest extends WordSpec with Matchers {
           pair.addConstraint((pair: (Boolean, Boolean)) => if (pair._1 != pair._2) 1.0 / (index1 + index2) else 1.0)
           pair
         }
-      Map(unary:_*)  
+      Map(unary:_*)
     }
   }
 }

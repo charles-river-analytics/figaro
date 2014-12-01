@@ -1,13 +1,13 @@
 /*
  * Element.scala
  * Elements of Figaro models.
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -74,7 +74,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    * The type of soft constraints on the element. A constraint is a function from a value to a Double.
    */
   type Constraint = T => Double
-  
+
   /**
    * The type of randomness content of the element.
    */
@@ -152,7 +152,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   } else myContext
 
   /* Stores the elements that were created in this element's context. Note this is not used
-   * for chains, since they maintain their own context control. 
+   * for chains, since they maintain their own context control.
    */
   private val myDirectContextContents: Set[Element[_]] = Set()
 
@@ -223,12 +223,12 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    * captured in a condition. However, for some algorithms, such as importance sampling,
    * it is useful to know that a condition is actually an observation of a specific value.
    * This is a common case, and to optimize it, we store the observation.
-   * 
+   *
    * If an element has any other condition besides this observation, we cannot use the
    * observation. However, it can have a constraint.
    */
   private[figaro] var observation: Option[T] = None
-  
+
   /*
    * Testing whether a condition is satisfied can use any type of value. The condition can only be satisfied if the value has the right type and the condition returns true.
    */
@@ -330,7 +330,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
     contingency.foreach(ev => ensureContingency(ev.elem))
     myConstraints ::= (ProbConstraintType(constraint), contingency)
   }
-  
+
     /**
    * Add a log contingent constraint to the element. By default, the contingency is empty.
    */
@@ -339,7 +339,6 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
     contingency.foreach(ev => ensureContingency(ev.elem))
     myConstraints ::= (LogConstraintType(constraint), contingency)
   }
-  
 
   /**
    * Remove all constraints associated with the given contingency. By default, the contingency is empty.
@@ -356,7 +355,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
     removeConstraints(contingency)
     addConstraint(newConstraint, contingency)
   }
-  
+
     /**
    * Set the log constraint associated with the contingency. Removes previous constraints associated with the contingency.  By default, the contingency is empty.
    */
@@ -582,5 +581,3 @@ trait Cacheable[V] extends Element[V] {
 trait IfArgsCacheable[V] extends Element[V] {
   override def isCachable = args forall (_.isCachable)
 }
-
-
