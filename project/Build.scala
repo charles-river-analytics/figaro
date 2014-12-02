@@ -81,6 +81,7 @@ object FigaroBuild extends Build {
       "org.apache.commons" % "commons-math3" % "3.3",
       "net.sf.jsci" % "jsci" % "1.2",
       "com.typesafe.akka" % "akka-actor_2.11" % "2.3.4",
+      "org.scalanlp" % "breeze_2.10" % "0.10",
       "org.scalatest" % "scalatest_2.11" % "2.2.1" % "test"
     ))
     // test settings
