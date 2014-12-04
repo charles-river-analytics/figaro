@@ -66,6 +66,24 @@ class NormalCompoundMean(name: Name[Double], val mean: Element[Double], val vari
   override def toString = "Normal(" + mean + ", " + variance + ")"
 }
 
+
+/**
+ * A normal distribution in which the mean is constant and the variance is an element
+ */
+class NormalCompoundVariance(name: Name[Double], val mean: Double, val variance: Element[Double], collection: ElementCollection)
+  extends NonCachingChain(
+    name,
+    variance,
+    (v: Double) => new AtomicNormal("", mean, v, collection),
+    collection)
+  with Normal {
+
+  def varianceValue = variance.value
+  lazy val meanValue = mean
+
+  override def toString = "Normal(" + mean + ", " + variance + ")"
+}
+
 /**
  * A normal distribution in which the mean and variance are both elements.
  */
@@ -127,8 +145,15 @@ object Normal extends Creatable {
   def apply(mean: Element[Double], variance: Double)(implicit name: Name[Double], collection: ElementCollection) =
     new NormalCompoundMean(name, mean, variance, collection)
 
+    /**
+   * Create a normal distribution in which the mean is an constant and the variance is an element
+   */
+  def apply(mean: Double, variance: Element[Double])(implicit name: Name[Double], collection: ElementCollection) =
+    new NormalCompoundVariance(name, mean, variance, collection)
+  
+  
   /**
-   * Create a normal distribution in both the mean and the variance are constants.
+   * Create a normal distribution in both the mean and the variance are elements.
    */
   def apply(mean: Element[Double], variance: Element[Double])(implicit name: Name[Double], collection: ElementCollection) =
     new CompoundNormal(name, mean, variance, collection)
