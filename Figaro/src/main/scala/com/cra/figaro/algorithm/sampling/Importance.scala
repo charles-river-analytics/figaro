@@ -158,8 +158,9 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
         // desired value and multiplying the weight by the density of the value.
         // This can dramatically reduce the number of rejections.
         val obs = fullObservation.get
-
-        element.args.foreach(sampleOne(state, _, None))
+        
+        sampleArgs(element, state: State, Set[Element[_]](element.args:_*))
+        
 
         // Subtle issue taken care of by the following line
         // A parameterized element may or may not be a chain to an atomic element
@@ -239,13 +240,21 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
         }
 
       case _ =>
-        (element.args ::: element.elementsIAmContingentOn.toList) foreach (sampleOne(state, _, None))
+        val args = (element.args ::: element.elementsIAmContingentOn.toList)
+        sampleArgs(element, state: State, Set[Element[_]](args:_*))
         element.randomness = element.generateRandomness()
         element.value = element.generateValue(element.randomness)
         element.value
     }
   }
 
+  @tailrec
+  final def sampleArgs(element: Element[_], state: State, args: Set[Element[_]]): Unit = {
+    args foreach (sampleOne(state, _, None))
+    val newArgs = Set[Element[_]](element.args:_*) -- state.assigned 
+    if (newArgs.nonEmpty) sampleArgs(element, state, newArgs) else return
+  }
+  
   def logProbEvidence: Double = {
 	logSuccessWeight - Math.log(numSamples + numRejections)
   }

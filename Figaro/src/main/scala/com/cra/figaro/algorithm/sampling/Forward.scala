@@ -74,10 +74,13 @@ object Forward {
           case _ =>
             // avoiding recursion
             var state1 = state
-            var argsRemaining = (element.args ::: element.elementsIAmContingentOn.toList)
+            var initialArgs = (element.args ::: element.elementsIAmContingentOn.toList).toSet
+            var argsRemaining = initialArgs 
             while (!argsRemaining.isEmpty) {
               state1 = sampleInState(argsRemaining.head, state1, universe)
-              argsRemaining = argsRemaining.tail
+              val newArgs = element.args.toSet -- initialArgs
+              initialArgs = initialArgs ++ newArgs
+              argsRemaining = argsRemaining.tail ++ newArgs
             }
             element.generate
             (state1, element.value)
