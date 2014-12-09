@@ -154,7 +154,7 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
    * Propagates one set of synchronous message in the graph
    */
   private def synchronousUpdate(): Unit = {
-    val updates = factorGraph.getNodes.flatMap { node1 =>
+    val updates = factorGraph.getNodes.par.flatMap { node1 =>
       factorGraph.getNeighbors(node1).map { node2 =>
         (node1, node2, newMessage(node1, node2))
       }
