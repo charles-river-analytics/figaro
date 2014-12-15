@@ -1,3 +1,16 @@
+/*
+ * VariableSizeArray.scala
+ * Class for a variable size array
+ * 
+ * Created By:      Avi Pfeffer (apfeffer@cra.com)
+ * Creation Date:   Oct 14, 2014
+ * 
+ * Copyright 2014 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * See http://www.cra.com or email figaro@cra.com for information.
+ * 
+ * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
+
 package com.cra.figaro.library.process
 
 import com.cra.figaro.language._
@@ -5,6 +18,9 @@ import com.cra.figaro.algorithm.ValuesMaker
 import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.algorithm.factored._
 
+/**
+ * Doc needed
+ */
 class MakeArray[T](name: Name[Container[Int, T]], val numItems: Element[Int], val itemMaker: Int => Element[T], collection: ElementCollection)
   extends Deterministic[Container[Int, T]](name, collection)
   with ValuesMaker[Container[Int, T]] {

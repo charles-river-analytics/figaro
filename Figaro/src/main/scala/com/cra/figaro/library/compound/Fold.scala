@@ -1,9 +1,25 @@
+/*
+ * Fold.scala
+ * Class for TBD
+ * 
+ * Created By:      Avi Pfeffer (apfeffer@cra.com)
+ * Creation Date:   Nov 27, 2014
+ * 
+ * Copyright 2014 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * See http://www.cra.com or email figaro@cra.com for information.
+ * 
+ * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
+
 package com.cra.figaro.library.compound
 
 import com.cra.figaro.language._
 import com.cra.figaro.algorithm.ValuesMaker
 import com.cra.figaro.algorithm.lazyfactored.{LazyValues, ValueSet}
 
+/**
+ * Doc needed
+ */
 class FoldLeft[T,U](name: Name[U], val start: U, val function: (U, T) => U, val elements: Seq[Element[T]], collection: ElementCollection)
 extends Deterministic[U](name, collection) with ValuesMaker[U] {
   def args = elements.toList
