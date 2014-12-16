@@ -1,5 +1,5 @@
 /*
- * Abstraction
+ * Abstraction.scala
  * Abstractions of elements to a smaller set of values.
  * 
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
