@@ -1,3 +1,16 @@
+/*
+ * ModelParameters.scala
+ * Class for TBD
+ * 
+ * Created By:      Michael Howard (mhoward@cra.com)
+ * Creation Date:   Oct 29, 2014
+ * 
+ * Copyright 2014 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * See http://www.cra.com or email figaro@cra.com for information.
+ * 
+ * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
+
 package com.cra.figaro.patterns.learning
 
 import com.cra.figaro.language.Element
@@ -9,10 +22,13 @@ import scala.collection.mutable.ListBuffer
 import com.cra.figaro.language.DoubleParameter
 import com.cra.figaro.language.ArrayParameter
 import com.cra.figaro.language.Parameter
+
 //Double, array[double], (or matrix[double]
 //Or element[double], element[array[double]]
 
-
+/**
+ * Doc needed
+ */
 abstract class ParameterType 
 case class PrimitiveDouble(val d: Double) extends ParameterType {
   override def toString = d.toString()

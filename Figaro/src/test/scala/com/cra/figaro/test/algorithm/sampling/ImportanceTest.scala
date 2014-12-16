@@ -19,6 +19,7 @@ import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
+import com.cra.figaro.library.atomic._
 import com.cra.figaro.library.atomic.discrete.Binomial
 import com.cra.figaro.library.compound._
 import com.cra.figaro.test._
@@ -26,7 +27,7 @@ import com.cra.figaro.util.logSum
 import JSci.maths.statistics._
 import com.cra.figaro.test.tags.Performance
 import com.cra.figaro.test.tags.NonDeterministic
-import scala.language.reflectiveCalls 
+import scala.language.reflectiveCalls
 
 class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
 
@@ -170,6 +171,23 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       // Expected value of flip argument is (\int_0^1 x^2 dx) / (\int_0^1 x dx) = 2/3
       sampleOneTest(f, (b: Boolean) => b, 2.0 / 3.0)
     }
+
+    "correctly resample an element's arguments when the arguments change during samples" in {
+      Universe.createNew()
+      class Test {
+        val count = discrete.Uniform(1, 2)
+        val array = MakeList(count, () => Flip(.9))
+      }
+      val test = Constant(new Test)
+      val c = Chain(test, (t: Test) => {
+        val B = Inject(t.array)
+        Apply(B, (b: List[List[Boolean]]) => b.head)
+      })
+      val alg = Importance(1, c)
+      val state = Importance.State()
+      alg.sampleOne(state, c, None)
+      c.value.asInstanceOf[List[Boolean]].head should be (true || false)
+    }
   }
 
   "Producing a weighted sample of an element in a universe" should {
@@ -229,8 +247,8 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       // Probability that d is true = 0.5 * 1 + 0.5 * 0.46 = 0.73
       weightedSampleTest(d, (b: Boolean) => b, 0.73)
     }
-    
-    "with an observation on a compound flip, terminate quickly and produce the correct result" taggedAs(NonDeterministic) in {
+
+    "with an observation on a compound flip, terminate quickly and produce the correct result" taggedAs (NonDeterministic) in {
       // Tests the likelihood weighting implementation for compound flip
       Universe.createNew()
       val b = Uniform(0.0, 1.0)
@@ -282,15 +300,15 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       // Uniform(0,1) is beta(1,1)
       // Result is beta(1 + 16,1 + 4)
       // Expectation is (alpha) / (alpha + beta) = 17/22
-      alg.expectation(b, (d: Double) => d) should be ((17.0/22.0) +- 0.02)
+      alg.expectation(b, (d: Double) => d) should be((17.0 / 22.0) +- 0.02)
       val time1 = System.currentTimeMillis()
       // If likelihood weighting is working, stopping and querying the algorithm should be almost instantaneous
       // If likelihood weighting is not working, stopping and querying the algorithm requires waiting for a non-rejected sample
       (time1 - time0) should be <= (500L)
       alg.shutdown
     }
- 
-    "with an observation on a parameterized flip, terminate quickly and produce the correct result" taggedAs(NonDeterministic) in {
+
+    "with an observation on a parameterized flip, terminate quickly and produce the correct result" taggedAs (NonDeterministic) in {
       // Tests the likelihood weighting implementation for compound flip
       Universe.createNew()
       val b = BetaParameter(2.0, 5.0)
@@ -341,14 +359,14 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       alg.stop()
       // Result is beta(2 + 16,5 + 4)
       // Expectation is (alpha) / (alpha + beta) = 18/27
-      alg.expectation(b, (d: Double) => d) should be ((18.0/27.0) +- 0.02)
+      alg.expectation(b, (d: Double) => d) should be((18.0 / 27.0) +- 0.02)
       val time1 = System.currentTimeMillis()
       // If likelihood weighting is working, stopping and querying the algorithm should be almost instantaneous
       // If likelihood weighting is not working, stopping and querying the algorithm requires waiting for a non-rejected sample
       (time1 - time0) should be <= (500L)
       alg.shutdown
     }
- 
+
     "with an observation on a parameterized binomial, terminate quickly and produce the correct result" in {
       // Tests the likelihood weighting implementation for chain
       Universe.createNew()
@@ -362,7 +380,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       alg.stop()
       // Result is beta(2 + 1600,5 + 400)
       // Expectation is (alpha) / (alpha + beta) = 1602/2007
-      alg.expectation(beta, (d: Double) => d) should be ((1602.0/2007.0) +- 0.02)
+      alg.expectation(beta, (d: Double) => d) should be((1602.0 / 2007.0) +- 0.02)
       val time1 = System.currentTimeMillis()
       // If likelihood weighting is working, stopping and querying the algorithm should be almost instantaneous
       // If likelihood weighting is not working, stopping and querying the algorithm requires waiting for a non-rejected sample
@@ -384,7 +402,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       // uniform(0,1) is beta(1,1)
       // Result is beta(1 + 1600,1 + 400)
       // Expectation is (alpha) / (alpha + beta) = 1601/2003
-      alg.expectation(beta, (d: Double) => d) should be ((1601.0/2003.0) +- 0.02)
+      alg.expectation(beta, (d: Double) => d) should be((1601.0 / 2003.0) +- 0.02)
       val time1 = System.currentTimeMillis()
       // If likelihood weighting is working, stopping and querying the algorithm should be almost instantaneous
       // If likelihood weighting is not working, stopping and querying the algorithm requires waiting for a non-rejected sample
@@ -405,7 +423,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       alg.stop()
       // Result is beta(2 + 1600,5 + 400)
       // Expectation is (alpha) / (alpha + beta) = 1602/2007
-      alg.expectation(beta, (d: Double) => d) should be ((1602.0/2007.0) +- 0.02)
+      alg.expectation(beta, (d: Double) => d) should be((1602.0 / 2007.0) +- 0.02)
       val time1 = System.currentTimeMillis()
       // If likelihood weighting is working, stopping and querying the algorithm should be almost instantaneous
       // If likelihood weighting is not working, stopping and querying the algorithm requires waiting for a non-rejected sample
@@ -413,8 +431,8 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       alg.shutdown
     }
   }
- 
-  "Running importance sampling" should { 
+
+  "Running importance sampling" should {
     "produce the correct answer each time when run twice with different conditions" in {
       Universe.createNew()
       val s = Select(0.5 -> 0.3, 0.5 -> 0.6)
@@ -439,24 +457,24 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       val b = Apply(a, (t: temp) => t.t1.value)
       val alg = Importance(10000, b)
       alg.start
-      alg.probability(b, true) should be (0.9 +- .01)
+      alg.probability(b, true) should be(0.9 +- .01)
       alg.kill
     }
 
-    "resample elements inside class defined in a chain for foward sampling" taggedAs(NonDeterministic) in {
+    "resample elements inside class defined in a chain for foward sampling" taggedAs (NonDeterministic) in {
       Universe.createNew()
       class temp {
         val t1 = Flip(0.9)
       }
       val a = CachingChain(Constant(0), (i: Int) => Constant(new temp))
       val b = Apply(a, (t: temp) => t.t1.value)
-      val prob = List.fill(5000){Forward(Universe.universe); b.value}
-      prob.count(_ == true).toDouble/5000.0 should be (0.9 +- .02)
+      val prob = List.fill(5000) { Forward(Universe.universe); b.value }
+      prob.count(_ == true).toDouble / 5000.0 should be(0.9 +- .02)
       //alg.probability(b, true) should be (0.9 +- .01)
 
     }
 
-   "not suffer from stack overflow with small probability of success" taggedAs (Performance) in {
+    "not suffer from stack overflow with small probability of success" taggedAs (Performance) in {
       Universe.createNew()
       val f = Flip(0.000001)
       f.observe(true)
@@ -593,8 +611,8 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
         (state.weight, value.asInstanceOf[T])
       } catch {
         case Importance.Reject => attempt()
-      } 
-      
+      }
+
     }
 
     var totalWeight = Double.NegativeInfinity
@@ -603,17 +621,16 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       val (weight, value) = attempt()
       if (predicate(value)) successWeight = logSum(weight, successWeight)
       totalWeight = logSum(weight, totalWeight)
-    }    
+    }
     math.exp(successWeight - totalWeight) should be(prob +- tolerance)
-    
+
     imp.shutdown
   }
-  
+
   def probEvidenceTest(prob: Double, evidence: List[NamedEvidence[_]]) {
     val alg = Importance(10000)
     alg.start()
-    alg.probabilityOfEvidence(evidence) should be (prob +- 0.01)
+    alg.probabilityOfEvidence(evidence) should be(prob +- 0.01)
   }
 
-  
 }
