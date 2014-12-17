@@ -1,13 +1,13 @@
 /*
  * VariableSizeArray.scala
  * Class for a variable size array
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Oct 14, 2014
- * 
+ *
  * Copyright 2014 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -43,7 +43,7 @@ class MakeArray[T](name: Name[Container[Int, T]], val numItems: Element[Int], va
   lazy val items = makeItems(0)
 
   def makeArrays(i: Int): Stream[Container[Int, T]] = {
-    val array: Container[Int, T] = new FixedSizeArray(i, (j: Int) => items(j), name + ".array(" + i + ")",collection)
+    val array: Container[Int, T] = new FixedSizeArray(i, (j: Int) => items(j))
     array #:: makeArrays(i + 1)
   }
   lazy val arrays = makeArrays(0)
