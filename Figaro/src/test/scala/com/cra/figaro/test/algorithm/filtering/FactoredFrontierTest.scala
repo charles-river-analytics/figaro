@@ -49,10 +49,10 @@ class FactoredFrontierTest extends WordSpec with Matchers {
         val f3 = Flip(f2)("f3", universe1)
         val f4 = If(f1 === f3, 0, 1)("f4", universe1)
         def trans(u: Universe): Universe = {
-          u.getElementByReference[Boolean]("f1") shouldBe an [AtomicSelect[Boolean]]
-          u.getElementByReference[Double]("f2") shouldBe an [AtomicSelect[Double]]
-          u.getElementByReference[Boolean]("f3") shouldBe an [AtomicSelect[Boolean]]
-          u.getElementByReference[Int]("f4") shouldBe an [AtomicSelect[Int]]
+          u.getElementByReference[Boolean]("f1") shouldBe an [AtomicSelect[ _ ]]
+          u.getElementByReference[Double]("f2") shouldBe an [AtomicSelect[ _ ]]
+          u.getElementByReference[Boolean]("f3") shouldBe an [AtomicSelect[ _ ]]
+          u.getElementByReference[Int]("f4") shouldBe an [AtomicSelect[ _ ]]
           createNew()
         }
         val ff = FactoredFrontier(universe1, trans(_), 3)
@@ -69,10 +69,10 @@ class FactoredFrontierTest extends WordSpec with Matchers {
         val f3 = Flip(f2)("f3", universe1)
         val f4 = If(f1 === f3, 0, 1)("f4", universe1)
         def trans(static: Universe, previous: Universe): Universe = {
-          static.getElementByReference[Boolean]("f1") shouldBe an [AtomicSelect[Boolean]]
-          static.getElementByReference[Double]("f2") shouldBe an [AtomicSelect[Double]]
-          previous.getElementByReference[Boolean]("f3") shouldBe an [AtomicSelect[Boolean]]
-          previous.getElementByReference[Int]("f4") shouldBe an [AtomicSelect[Int]]
+          static.getElementByReference[Boolean]("f1") shouldBe an [AtomicSelect[ _ ]]
+          static.getElementByReference[Double]("f2") shouldBe an [AtomicSelect[ _ ]]
+          previous.getElementByReference[Boolean]("f3") shouldBe an [AtomicSelect[ _ ]]
+          previous.getElementByReference[Int]("f4") shouldBe an [AtomicSelect[ _ ]]
           previous.hasRef[Boolean]("f1") should equal(false)
           previous.hasRef[Double]("f2") should equal(false)
           static.hasRef[Boolean]("f3") should equal(false)
