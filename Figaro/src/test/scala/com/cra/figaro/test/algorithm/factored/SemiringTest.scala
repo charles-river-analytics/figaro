@@ -1,5 +1,5 @@
-
-/* * SemiringTest.scala 
+/*
+ * SemiringTest.scala 
  * Semiring tests.
  * 
  * Created By:      Avi Pfeffer (apfeffer@cra.com)

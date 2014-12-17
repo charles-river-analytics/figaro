@@ -24,7 +24,7 @@ object FigaroBuild extends Build {
     organization := "com.cra.figaro",
     description := "Figaro: a language for probablistic programming",
     version := "3.0.0.0",
-    scalaVersion := "2.11.2",
+    scalaVersion := "2.11.4",
     crossPaths := true,
     publishMavenStyle := true,
     pomExtra :=
@@ -52,12 +52,12 @@ object FigaroBuild extends Build {
 
   lazy val scalaMajorMinor = "2.11"
 
-  // Read exisiting Figaro MANIFEST.MF rom file
+  // Read exisiting Figaro MANIFEST.MF from file
   lazy val figaroManifest = Using.fileInputStream(file("Figaro/META-INF/MANIFEST.MF")) { 
     in => new java.util.jar.Manifest(in)
   }
 
-  // Read exisiting FigaroExamples MANIFEST.MF rom file
+  // Read exisiting FigaroExamples MANIFEST.MF from file
   lazy val examplesManifest = Using.fileInputStream(file("FigaroExamples/META-INF/MANIFEST.MF")) {
     in => new java.util.jar.Manifest(in)
   }
@@ -80,9 +80,9 @@ object FigaroBuild extends Build {
       "asm" % "asm" % "3.3.1",
       "org.apache.commons" % "commons-math3" % "3.3",
       "net.sf.jsci" % "jsci" % "1.2",
-      "com.typesafe.akka" % "akka-actor_2.11" % "2.3.4",
-      "org.scalanlp" % "breeze_2.11" % "0.10",
-      "org.scalatest" % "scalatest_2.11" % "2.2.1" % "test"
+      "com.typesafe.akka" %% "akka-actor" % "2.3.8",
+      "org.scalanlp" %% "breeze" % "0.10",
+      "org.scalatest" %% "scalatest" % "2.2.1" % "test"
     ))
     // test settings
     .settings(parallelExecution in Test := false)

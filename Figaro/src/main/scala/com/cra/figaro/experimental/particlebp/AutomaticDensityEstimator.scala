@@ -1,3 +1,16 @@
+/*
+ * AutomaticDensityEstimator.scala
+ * Class to compute the normal kernel density estimation of a set of samples
+ * 
+ * Created By:      Brian Ruttenberg (bruttenberg@cra.com)
+ * Creation Date:   Oct 20, 2014
+ * 
+ * Copyright 2014 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * See http://www.cra.com or email figaro@cra.com for information.
+ * 
+ * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
+
 package com.cra.figaro.experimental.particlebp
 
 /**
