@@ -135,20 +135,6 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
     f
   }
 
-  /*
-   * This is intended to perform an asynchronous update of the factor graph.
-   * It is unclear if this is the correct implementation since messages
-   * are updating in the factor graph immediately
-   */
-  private def asynchronousUpdate(): Unit = {
-    factorGraph.getNodes.foreach { node1 =>
-      factorGraph.getNeighbors(node1).foreach { node2 =>
-        factorGraph.update(node1, node2, newMessage(node1, node2))
-      }
-    }
-    // Update the beliefs of each node
-    factorGraph.getNodes.foreach(n => beliefMap.update(n, belief(n)))
-  }
 
   /*
    * Propagates one set of synchronous message in the graph
