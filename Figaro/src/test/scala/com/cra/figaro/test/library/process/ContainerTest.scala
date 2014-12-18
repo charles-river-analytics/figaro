@@ -25,6 +25,55 @@ import com.cra.figaro.algorithm.sampling.MetropolisHastings
 
 class ContainerTest extends WordSpec with Matchers {
   "A Container" should {
+    "create elements in the correct universe" in {
+      val u1 = Universe.createNew()
+      val proc = createContainer(List(2,3))
+      val u2 = Universe.createNew()
+      val e1 = proc(2)
+      e1.universe should equal (u1)
+      val e2 = proc.get(2)
+      e2.universe should equal (u1)
+      val e3 = proc(List(2,3))(2)
+      e3.universe should equal (u1)
+      val e4 = proc.get(List(2,3))(2)
+      e4.universe should equal (u1)
+      val e5 = proc.map(!_)(2)
+      e5.universe should equal (u1)
+      val e6 = proc.chain(if (_) Flip(0.3) else Flip(0.6))(2)
+      e6.universe should equal (u1)
+      val proc2 = createContainer(List(4))
+      val proc3 = proc ++ proc2
+      // It is possible to have elements from different universes in the same process. Getting an element should produce an element from
+      // the correct universe
+      val e7 = proc3.get(2)
+      val e8 = proc3.get(4)
+      e7.universe should equal (u1)
+      e8.universe should equal (u2)
+      val e9 = proc3.map(!_)(2)
+      val e10 = proc3.map(!_)(4)
+      e9.universe should equal (u1)
+      e10.universe should equal (u2)
+      val e11 = proc3.chain(if (_) Flip(0.3) else Flip(0.6))(2)
+      val e12 = proc3.chain(if (_) Flip(0.3) else Flip(0.6))(4)
+      e11.universe should equal (u1)
+      e12.universe should equal (u2)
+      val proc4 = proc.concat(proc2)
+      // It is possible to have elements from different universes in the same process. Getting an element should produce an element from
+      // the correct universe
+      val e13 = proc4.get(0) // index of 2
+      val e14 = proc4.get(2) // index of 4
+      e13.universe should equal (u1)
+      e14.universe should equal (u2)
+      val e15 = proc4.map(!_)(0)
+      val e16 = proc4.map(!_)(2)
+      e15.universe should equal (u1)
+      e16.universe should equal (u2)
+      val e17 = proc4.chain(if (_) Flip(0.3) else Flip(0.6))(0)
+      val e18 = proc4.chain(if (_) Flip(0.3) else Flip(0.6))(2)
+      e17.universe should equal (u1)
+      e18.universe should equal (u2)
+    }
+
     "check range correctly" in {
       Universe.createNew()
       val proc = createContainer(List(2,3))
@@ -150,8 +199,9 @@ class ContainerTest extends WordSpec with Matchers {
   }
 
   def createContainer(is: List[Int], invert: Boolean = false): Container[Int, Boolean] = new Container[Int, Boolean] {
+    val universe = Universe.universe
     val indices = is
-    def generate(index: Int) = if (invert) Flip(1.0 - 1.0 / index) else Flip(1.0 / index)
+    def generate(index: Int) = if (invert) Flip(1.0 - 1.0 / index)("", universe) else Flip(1.0 / index)("", universe)
     def generate(indices: List[Int]) = {
       val unary = for {
         index <- indices
@@ -165,7 +215,7 @@ class ContainerTest extends WordSpec with Matchers {
         } yield {
           val elem1 = map(index1)
           val elem2 = map(index2)
-          val pair = ^^(elem1, elem2)
+          val pair = ^^(elem1, elem2)("", universe)
           pair.addConstraint((pair: (Boolean, Boolean)) => if (pair._1 != pair._2) 1.0 / (index1 + index2) else 1.0)
           pair
         }

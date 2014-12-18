@@ -24,22 +24,36 @@ import com.cra.figaro.library.compound._
 
 class ProcessElementTest extends WordSpec with Matchers {
   "A process element" should {
+    "create elements in the right universes" in {
+      val u1 = Universe.createNew()
+      val procElem = create()
+      val u2 = Universe.createNew()
+      procElem(0).universe should equal (u1)
+      procElem.get(2).universe should equal (u1)
+      procElem.map(!_)(0).universe should equal (u1)
+      procElem.chain(if (_) Flip(0.6) else Flip(0.9))(0).universe should equal (u1)
+    }
+
     "get the right element using apply" in {
+      Universe.createNew()
       val procElem = create()
       VariableElimination.probability(procElem(0), true) should be ((0.5 * 0.1 + 0.5 * 0.3) +- 0.0000000001)
     }
 
     "get the right optional element using get" in {
+      Universe.createNew()
       val procElem = create()
       VariableElimination.probability(procElem.get(2), Some(true)) should be ((0.5 * 0.5) +- 0.000000000001)
     }
 
     "map a function through all possible values correctly" in {
+      Universe.createNew()
       val procElem = create()
       VariableElimination.probability(procElem.map(!_)(0), false) should be ((0.5 * 0.1 + 0.5 * 0.3) +- 0.0000000001)
     }
 
     "chain a function through all possible values correctly" in {
+      Universe.createNew()
       val procElem = create()
       val p1 = 0.5 * 0.1 + 0.5 * 0.3
       val p2 = 1 - p1
@@ -49,7 +63,6 @@ class ProcessElementTest extends WordSpec with Matchers {
   }
 
   def create() = {
-    Universe.createNew()
     val elem1 = Flip(0.1)
     val elem2 = Flip(0.2)
     val elem3 = Flip(0.3)
