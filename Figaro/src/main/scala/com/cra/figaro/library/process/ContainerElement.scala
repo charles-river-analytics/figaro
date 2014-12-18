@@ -1,13 +1,13 @@
 /*
  * ContainerElement.scala
  * Class for a Container element
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Oct 14, 2014
- * 
+ *
  * Copyright 2014 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -16,7 +16,9 @@ package com.cra.figaro.library.process
 import com.cra.figaro.language._
 
 /**
- * Doc needed
+ * Represents an element whose value is a container.
+ *
+ * Elements that are created by operations are put in the same universe as this element.
  */
 class ContainerElement[Index, Value](val element: Element[Container[Index, Value]])
 {
@@ -25,7 +27,7 @@ class ContainerElement[Index, Value](val element: Element[Container[Index, Value
    */
   def apply(i: Index): Element[Value] = {
     if (!element.active) element.activate()
-    CachingChain(element, (c: Container[Index, Value]) => c(i))
+    CachingChain(element, (c: Container[Index, Value]) => c(i))("", element.universe)
   }
 
   /**
@@ -34,7 +36,7 @@ class ContainerElement[Index, Value](val element: Element[Container[Index, Value
    */
   def get(i: Index): Element[Option[Value]] = {
     if (!element.active) element.activate()
-    CachingChain(element, (c: Container[Index, Value]) => c.get(i))
+    CachingChain(element, (c: Container[Index, Value]) => c.get(i))("", element.universe)
   }
 
   /**
@@ -42,7 +44,7 @@ class ContainerElement[Index, Value](val element: Element[Container[Index, Value
    */
   def map[Value2](f: Value => Value2): ContainerElement[Index, Value2] = {
     if (!element.active) element.activate()
-    new ContainerElement(Apply(element, (c: Container[Index, Value]) => c.map(f)))
+    new ContainerElement(Apply(element, (c: Container[Index, Value]) => c.map(f))("", element.universe))
   }
 
   /**
@@ -50,7 +52,7 @@ class ContainerElement[Index, Value](val element: Element[Container[Index, Value
    */
   def chain[Value2](f: Value => Element[Value2]): ContainerElement[Index, Value2] = {
     if (!element.active) element.activate()
-    new ContainerElement(Apply(element, (c: Container[Index, Value]) => c.chain(f)))
+    new ContainerElement(Apply(element, (c: Container[Index, Value]) => c.chain(f))("", element.universe))
   }
 
   /**
@@ -58,7 +60,7 @@ class ContainerElement[Index, Value](val element: Element[Container[Index, Value
    */
   def foldLeft[Value2](start: Value2)(f: (Value2, Value) => Value2): Element[Value2] = {
     if (!element.active) element.activate()
-    CachingChain(element, (c: Container[Index, Value]) => c.foldLeft(start)(f))
+    CachingChain(element, (c: Container[Index, Value]) => c.foldLeft(start)(f))("", element.universe)
   }
 
   /**
@@ -66,7 +68,7 @@ class ContainerElement[Index, Value](val element: Element[Container[Index, Value
    */
   def foldRight[Value2](start: Value2)(f: (Value, Value2) => Value2): Element[Value2] = {
     if (!element.active) element.activate()
-    CachingChain(element, (c: Container[Index, Value]) => c.foldRight(start)(f))
+    CachingChain(element, (c: Container[Index, Value]) => c.foldRight(start)(f))("", element.universe)
   }
 
   /**
@@ -74,7 +76,7 @@ class ContainerElement[Index, Value](val element: Element[Container[Index, Value
    */
   def reduce(f: (Value, Value) => Value): Element[Value] = {
     if (!element.active) element.activate()
-    CachingChain(element, (c: Container[Index, Value]) => c.reduce(f))
+    CachingChain(element, (c: Container[Index, Value]) => c.reduce(f))("", element.universe)
   }
 
   /**
@@ -117,6 +119,8 @@ class ContainerElement[Index, Value](val element: Element[Container[Index, Value
    * Concatenate the value of this container element with the value of another container element.
    */
   def concat[Index2](that: ContainerElement[Index2, Value]): ContainerElement[Int, Value] = {
-    new ContainerElement(Apply(this.element, that.element, (c1: Container[Index, Value], c2: Container[Index2, Value]) => c1.concat(c2)))
+    val resultElem: Element[Container[Int, Value]] =
+      new Apply2("", this.element, that.element, (c1: Container[Index, Value], c2: Container[Index2, Value]) => c1.concat(c2), this.element.universe)
+    new ContainerElement(resultElem)
   }
 }
