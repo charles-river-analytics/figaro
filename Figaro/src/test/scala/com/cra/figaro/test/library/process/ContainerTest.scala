@@ -68,6 +68,31 @@ class ContainerTest extends WordSpec with Matchers {
       proc.rangeCheck(1) should equal (false)
     }
 
+    "generate the correct elements" in {
+      Universe.createNew()
+      val proc = createContainer(List(2,3))
+      val elems = proc.elements
+      assert(elems(0).isInstanceOf[AtomicFlip])
+      elems(0).asInstanceOf[AtomicFlip].prob should equal (0.5)
+      assert(elems(1).isInstanceOf[AtomicFlip])
+      elems(1).asInstanceOf[AtomicFlip].prob should be ((1.0/3) +- 0.0000000001)
+      elems.length should equal (2)
+    }
+
+    "generate the same elements each time" in {
+      Universe.createNew()
+      val proc = createContainer(List(2,3))
+      val elems1 = proc.elements
+      val elems2 = proc.elements
+      elems1(0) should equal (elems2(0))
+      elems1(1) should equal (elems2(1))
+    }
+
+    "generate the correct map" in {
+      Universe.createNew()
+      val proc = createContainer(List(2,3))
+    }
+
     "when mapping, have each point mapped according to the function" in {
       Universe.createNew()
       val proc = createContainer(List(2,3)).map(!_)

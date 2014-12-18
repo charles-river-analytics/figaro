@@ -55,6 +55,14 @@ class ProcessTest extends WordSpec with Matchers {
       alg.kill()
     }
 
+    "correctly cache a single element when using apply" in {
+      Universe.createNew()
+      val proc = createProcess(List(2,3))
+      val elem1 = proc(2)
+      val elem2 = proc(2)
+      elem1 should equal (elem2)
+    }
+
     "get the right elements for multiple indices in range" in {
       Universe.createNew()
       val proc = createProcess(List(2,3))

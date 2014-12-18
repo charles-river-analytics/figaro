@@ -51,13 +51,21 @@ trait Process[Index, Value] {
    */
   def generate(index: Index): Element[Value]
 
+  private val cachedElements = scala.collection.mutable.Map[Index, Element[Value]]()
+
+  private[process] def generateCached(index: Index): Element[Value] = {
+    cachedElements.getOrElseUpdate(index, generate(index))
+  }
+
   /**
    * Get an element representing the value of the process at the given index.
    * Throws IndexOutOfRangeException if the index has no value.
+   *
+   * This apply method is cached, so calling process(index) always returns the same element.
    */
   def apply(index: Index): Element[Value] = {
     if (!rangeCheck(index)) throw IndexOutOfRangeException(index)
-    generate(index)
+    generateCached(index)
   }
 
   /**
