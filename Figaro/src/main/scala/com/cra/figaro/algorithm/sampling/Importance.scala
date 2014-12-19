@@ -18,6 +18,8 @@ import com.cra.figaro.language._
 import com.cra.figaro.util._
 import scala.annotation.tailrec
 import scala.collection.mutable.{ Set, Map }
+import com.cra.figaro.experimental.particlebp.AutomaticDensityEstimator
+import com.cra.figaro.algorithm.factored.ParticleGenerator
 
 /**
  * Importance samplers.
@@ -41,6 +43,10 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
  *  Therefore, we can generate the dependencies map once before all the samples are generated.
  */
 
+  // Calling Values on a continuous element requires that a ParticleGenerator exist in the universe.
+  // For a continuous element, we don't actually want to generate any dependencies, so we have the
+  // ParticleGenerator return zero sample.
+  ParticleGenerator(universe, new AutomaticDensityEstimator, 1, 0)
   private val dependencies = scala.collection.mutable.Map[Element[_], Set[Element[_]]]()
   private def makeDependencies() = {
     for {
@@ -158,9 +164,9 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
         // desired value and multiplying the weight by the density of the value.
         // This can dramatically reduce the number of rejections.
         val obs = fullObservation.get
-        
+
         sampleArgs(element, state: State, Set[Element[_]](element.args:_*))
-        
+
 
         // Subtle issue taken care of by the following line
         // A parameterized element may or may not be a chain to an atomic element
@@ -251,10 +257,10 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
   @tailrec
   final def sampleArgs(element: Element[_], state: State, args: Set[Element[_]]): Unit = {
     args foreach (sampleOne(state, _, None))
-    val newArgs = Set[Element[_]](element.args:_*) -- state.assigned 
+    val newArgs = Set[Element[_]](element.args:_*) -- state.assigned
     if (newArgs.nonEmpty) sampleArgs(element, state, newArgs) else return
   }
-  
+
   def logProbEvidence: Double = {
 	logSuccessWeight - Math.log(numSamples + numRejections)
   }
