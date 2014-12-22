@@ -1,6 +1,5 @@
 /*
  * MultivariateNormal.scala
- * 
  * Elements representing a multivariate normal distributions
  * 
  * Created By:      Glenn Takata (gtakata@cra.com)
