@@ -29,22 +29,21 @@ object ApplyFactory {
     val applyValues = LazyValues(apply.universe).storedValues(apply)
     val factor = new BasicFactor[Double](List(arg1Var), List(resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
-    val resultIndices = resultVar.range.zipWithIndex
     for {
       (arg1Val, arg1Index) <- arg1Indices
-      (resultVal, resultIndex) <- resultIndices
+      //(resultVal, resultIndex) <- resultIndices
     } {
       // See logic in makeCares
-      val entry =
-        if (arg1Val.isRegular && resultVal.isRegular) {
+      if (arg1Val.isRegular) {
         // arg1Val.value should have been placed in applyMap at the time the values of this apply were computed.
         // By using applyMap, we can make sure that any contained elements in the result of the apply are the same now as they were when values were computed.
-        if (resultVal.value == mapper.map(applyMap(arg1Val.value), applyValues.regularValues)) 1.0
-          else 0.0
-        } else if (!arg1Val.isRegular && !resultVal.isRegular) 1.0
-        else if (!arg1Val.isRegular && resultVal.isRegular) 0.0
-        else 0.0
-      factor.set(List(arg1Index, resultIndex), entry)
+        val resultVal = mapper.map(applyMap(arg1Val.value), applyValues.regularValues)
+        val resultIndex = resultVar.range.indexWhere(_.value == resultVal)        
+        factor.set(List(arg1Index, resultIndex), 1.0)
+      } else if (!arg1Val.isRegular && resultVar.range.exists(!_.isRegular)) {
+        val resultIndex = resultVar.range.indexWhere(!_.isRegular) 
+        factor.set(List(arg1Index, resultIndex), 1.0)
+      }     
     }
     List(factor)
   }
@@ -62,18 +61,19 @@ object ApplyFactory {
     for {
       (arg1Val, arg1Index) <- arg1Indices
       (arg2Val, arg2Index) <- arg2Indices
-      (resultVal, resultIndex) <- resultIndices
+      //(resultVal, resultIndex) <- resultIndices
     } {
-      val entry =
-        if (arg1Val.isRegular && arg2Val.isRegular && resultVal.isRegular) {
-          // The argument values should have been placed in applyMap at the time the values of this apply were computed.
-          // By using applyMap, we can make sure that any contained elements in the result of the apply are the same now as they were when values were computed.
-          if (resultVal.value == mapper.map(applyMap((arg1Val.value, arg2Val.value)), applyValues.regularValues)) 1.0
-          else 0.0
-        } else if ((!arg1Val.isRegular || !arg2Val.isRegular) && !resultVal.isRegular) 1.0
-        else if ((!arg1Val.isRegular || !arg2Val.isRegular) && resultVal.isRegular) 0.0
-        else 0.0
-      factor.set(List(arg1Index, arg2Index, resultIndex), entry)
+      if (arg1Val.isRegular && arg2Val.isRegular) {
+        // arg1Val.value should have been placed in applyMap at the time the values of this apply were computed.
+        // By using applyMap, we can make sure that any contained elements in the result of the apply are the same now as they were when values were computed.
+        val resultVal = mapper.map(applyMap((arg1Val.value, arg2Val.value)), applyValues.regularValues)
+        val resultIndex = resultVar.range.indexWhere(_.value == resultVal)        
+        factor.set(List(arg1Index, arg2Index, resultIndex), 1.0)
+      } else if ((!arg1Val.isRegular || !arg2Val.isRegular) && resultVar.range.exists(!_.isRegular)) {
+        val resultIndex = resultVar.range.indexWhere(!_.isRegular) 
+        factor.set(List(arg1Index, arg2Index, resultIndex), 1.0)
+      }     
+      
     }
     List(factor)
   }

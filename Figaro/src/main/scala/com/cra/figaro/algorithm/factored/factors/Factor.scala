@@ -38,6 +38,8 @@ trait Factor[T] {
   def hasStar = (false /: variables)(_ || _.valueSet.hasStar)
 
   def isEmpty = size == 0
+  
+  def contains(index: List[Int]) = contents.contains(index)
 
     /**
    * Fold the given function through the contents of the factor, beginning with the given initial values
@@ -57,6 +59,10 @@ trait Factor[T] {
       }
     if (isEmpty) List()
     else helper(firstIndices, List())
+  }
+  
+  def nonZeroIndices: List[List[Int]] = {
+    contents.keys.toList
   }
 
   /**
