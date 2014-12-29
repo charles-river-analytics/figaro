@@ -75,7 +75,7 @@ extends Process[Index, Value] {
    */
   def foldLeft[Value2](start: Value2)(f: (Value2, Value) => Value2)(implicit name: Name[Value2], collection: ElementCollection): Element[Value2] = {
     val myArgs = indices.map(apply(_)).toList
-    myArgs.foreach { arg => if (!arg.active) arg.activate }
+//    myArgs.foreach { arg => if (!arg.active) arg.activate }
     FoldLeft(start, f)(myArgs:_*)(name, collection)
   }
 
@@ -84,7 +84,7 @@ extends Process[Index, Value] {
    */
   def foldRight[Value2](start: Value2)(f: (Value, Value2) => Value2)(implicit name: Name[Value2], collection: ElementCollection): Element[Value2] = {
     val myArgs = indices.map(apply(_)).toList
-    myArgs.foreach { arg => if (!arg.active) arg.activate }
+//    myArgs.foreach { arg => if (!arg.active) arg.activate }
     FoldRight(start, f)(myArgs:_*)(name, collection)
   }
 
@@ -93,7 +93,7 @@ extends Process[Index, Value] {
    */
   def reduce(f: (Value, Value) => Value)(implicit name: Name[Value], collection: ElementCollection): Element[Value] = {
     val myArgs = indices.map(apply(_)).toList
-    myArgs.foreach { arg => if (!arg.active) arg.activate }
+//    myArgs.foreach { arg => if (!arg.active) arg.activate }
     Reduce(f)(myArgs:_*)(name, collection)
   }
 
@@ -137,7 +137,7 @@ extends Process[Index, Value] {
       case None => if (pred(argMap(index).value)) Some(index) else None
     }
     val myArgs = argMap.values.toList
-    myArgs.foreach { arg => if (!arg.active) arg.activate }
+//    myArgs.foreach { arg => if (!arg.active) arg.activate }
   	new Deterministic[Option[Index]](name, collection) {
       def args = myArgs
       def generateValue(): Option[Index] = {
