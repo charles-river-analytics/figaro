@@ -15,7 +15,7 @@ package com.cra.figaro.library.compound
 
 import com.cra.figaro.algorithm.ValuesMaker
 import com.cra.figaro.algorithm.lazyfactored.{ValueSet, LazyValues, Regular}
-import com.cra.figaro.library.factors._
+import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.language._
 import com.cra.figaro.util._
 import scala.collection.mutable.Map

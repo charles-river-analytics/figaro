@@ -18,12 +18,12 @@ import org.scalatest.{ PrivateMethodTester, WordSpec }
 import com.cra.figaro.algorithm.learning._
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.factored._
+import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
 import com.cra.figaro.language.Universe._
 import com.cra.figaro.library.atomic.continuous._
-import com.cra.figaro.library.factors._
 import com.cra.figaro.util
 import scala.collection._
 

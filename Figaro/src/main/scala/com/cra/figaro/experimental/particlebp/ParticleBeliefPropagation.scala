@@ -15,9 +15,8 @@ package com.cra.figaro.experimental.particlebp
 
 import com.cra.figaro.language._
 import com.cra.figaro.algorithm.factored.FactoredAlgorithm
-import com.cra.figaro.library.factors.{DivideableSemiRing, Factor, LogSumProductSemiring, Variable}
+import com.cra.figaro.algorithm.factored.factors.{Factory, DivideableSemiRing, Factor, LogSumProductSemiring, Variable}
 import com.cra.figaro.algorithm.lazyfactored.LazyValues
-import com.cra.figaro.library.factors.Factory
 import com.cra.figaro.algorithm.OneTime
 import com.cra.figaro.algorithm.Anytime
 import com.cra.figaro.algorithm.ProbQueryAlgorithm

@@ -21,8 +21,8 @@ import com.cra.figaro.util._
 import annotation.tailrec
 import com.cra.figaro.algorithm.OneTimeProbQuery
 import com.cra.figaro.algorithm.ProbQueryAlgorithm
-import com.cra.figaro.library.factors._
-import com.cra.figaro.library.factors.factory._
+import com.cra.figaro.algorithm.factored.factors._
+import com.cra.figaro.algorithm.factored.factors.factory._
 import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.algorithm.sampling.ProbEvidenceSampler
 import com.cra.figaro.language.Element
