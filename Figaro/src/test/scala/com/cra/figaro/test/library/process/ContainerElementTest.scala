@@ -1,13 +1,13 @@
 /*
  * ContainerElementTest.scala
  * Container element tests.
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Nov 27, 2014
- * 
+ *
  * Copyright 2014 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -27,7 +27,9 @@ class ContainerElementTest extends WordSpec with Matchers {
     "create elements in the right universes" in {
       val u1 = Universe.createNew()
       val contElem = create()
+      val vsa1 = VariableSizeArray(Constant(1), i => Constant(true))
       val u2 = Universe.createNew()
+      val vsa2 = VariableSizeArray(Constant(1), i => Constant(false))
       contElem(0).universe should equal (u1)
       contElem.get(2).universe should equal (u1)
       contElem.map(!_)(0).universe should equal (u1)
@@ -42,7 +44,7 @@ class ContainerElementTest extends WordSpec with Matchers {
       contElem.forall((b: Boolean) => b).universe should equal (u1)
       contElem.length.universe should equal (u1)
       val contElem2 = new ContainerElement(Constant(Container(Flip(0.6))))
-      contElem.concat(contElem2).element.universe should equal (u1)
+      vsa1.concat(vsa2).element.universe should equal (u1)
     }
 
     "get the right element using apply" in {
@@ -128,27 +130,16 @@ class ContainerElementTest extends WordSpec with Matchers {
 
     "when concatenating, have all the elements of both processes, with the second process following the first" in {
       Universe.createNew()
-      val contElem1 = create()
-      val contElem2 = new ContainerElement(Constant(Container(Flip(0.6))))
-      val contElem = contElem1.concat(contElem2)
-      val all = contElem.forall((b: Boolean) => b)
-      val p1 = 0.1 * 0.2 * 0.6 // probability first choice for contElem1 are all true and contElem2 is all true
-      val p2 = 0.3 * 0.4 * 0.5 * 0.6 // probability second choice for contElem1 are all true and contElem2 is all true
-      val answer = 0.5 * p1 + 0.5 * p2
+      val vsa1 = VariableSizeArray(Select(0.2 -> 1, 0.8 -> 2), i => Flip(0.9))
+      val vsa2 = VariableSizeArray(Constant(1), i => Flip(0.3))
+      val vsa = vsa1.concat(vsa2)
+      val all = vsa.forall((b: Boolean) => b)
+      val p1 = 0.9 * 0.3 // probability first choice for contElem1 are all true and contElem2 is all true
+      val p2 = 0.9 * 0.9 * 0.3 // probability second choice for contElem1 are all true and contElem2 is all true
+      val answer = 0.2 * p1 + 0.8 * p2
       Importance.probability(all, true) should be (answer +- 0.01)
     }
 
-    "should allow concatenation with a container using implicit conversions" in {
-      Universe.createNew()
-      val contElem1 = create()
-      val cont2 = Container(Flip(0.6))
-      val contElem = contElem1.concat(cont2)
-      val all = contElem.forall((b: Boolean) => b)
-      val p1 = 0.1 * 0.2 * 0.6 // probability first choice for contElem1 are all true and contElem2 is all true
-      val p2 = 0.3 * 0.4 * 0.5 * 0.6 // probability second choice for contElem1 are all true and contElem2 is all true
-      val answer = 0.5 * p1 + 0.5 * p2
-      Importance.probability(all, true) should be (answer +- 0.01)
-    }
   }
 
   def create() = {
