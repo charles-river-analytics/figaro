@@ -27,6 +27,18 @@ extends Process[Index, Value] {
   def rangeCheck(index: Index) = indices.contains(index)
 
   /**
+   * Return all the elements in this container as an ordinary Scala Seq.
+   * This method caches the elements, like apply, so the same elements will be returned every time.
+   */
+  def elements: Seq[Element[Value]] = indices.map(generateCached(_))
+
+  /**
+   * Convert this container into an ordinary Scala map.
+   */
+  def toMap: Map[Index, Element[Value]] =
+    Map(indices.map(i => i -> apply(i)):_*)
+
+  /**
    * Apply the given function to every value in this container, returning a new container.
    */
   override def map[Value2](f: Value => Value2): Container[Index, Value2] = {
