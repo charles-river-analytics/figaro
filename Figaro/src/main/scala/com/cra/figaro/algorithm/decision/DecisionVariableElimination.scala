@@ -15,8 +15,8 @@ package com.cra.figaro.algorithm.decision
 
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.factored._
-import com.cra.figaro.library.factors._
-import com.cra.figaro.library.factors.factory._
+import com.cra.figaro.algorithm.factored.factors._
+import com.cra.figaro.algorithm.factored.factors.factory._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
 import com.cra.figaro.library.decision._

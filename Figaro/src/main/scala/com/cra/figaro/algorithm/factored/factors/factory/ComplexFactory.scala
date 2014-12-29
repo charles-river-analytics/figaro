@@ -11,12 +11,12 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
-package com.cra.figaro.library.factors.factory
+package com.cra.figaro.algorithm.factored.factors.factory
 
 import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound._
-import com.cra.figaro.library.factors._
+import com.cra.figaro.algorithm.factored.factors._
 
 /**
  * Doc needed

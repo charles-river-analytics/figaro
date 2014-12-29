@@ -16,7 +16,7 @@ package com.cra.figaro.library.compound
 import com.cra.figaro.language._
 import com.cra.figaro.util._
 import com.cra.figaro.algorithm._
-import com.cra.figaro.library.factors._
+import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.lazyfactored._
 
 /**

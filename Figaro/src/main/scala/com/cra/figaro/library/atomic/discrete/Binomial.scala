@@ -15,7 +15,7 @@ package com.cra.figaro.library.atomic.discrete
 
 import com.cra.figaro.algorithm.ValuesMaker
 import com.cra.figaro.algorithm.lazyfactored.ValueSet
-import com.cra.figaro.library.factors._
+import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
 import annotation.tailrec
