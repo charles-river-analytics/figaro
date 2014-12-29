@@ -18,11 +18,11 @@ import org.scalatest.{ WordSpec, PrivateMethodTester }
 import math.log
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.factored._
+import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound._
 import com.cra.figaro.library.atomic.continuous._
-import com.cra.figaro.library.factors._
 import com.cra.figaro.util._
 import com.cra.figaro.test._
 import scala.collection.mutable.Map

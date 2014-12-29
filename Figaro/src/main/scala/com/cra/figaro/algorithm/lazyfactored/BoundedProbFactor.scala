@@ -18,8 +18,8 @@ import com.cra.figaro.language.{Element, ProbConstraintType, Universe}
 import com.cra.figaro.util._
 import annotation.tailrec
 import scala.language.existentials
-import com.cra.figaro.library.factors._
-import com.cra.figaro.library.factors.Factory
+import com.cra.figaro.algorithm.factored.factors._
+import com.cra.figaro.algorithm.factored.factors.Factory
 
 /**
  * Methods for creating lower and upper bound probability factors.

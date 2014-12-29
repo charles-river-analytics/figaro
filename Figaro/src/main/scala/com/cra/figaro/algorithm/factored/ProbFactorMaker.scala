@@ -13,7 +13,7 @@
 
 package com.cra.figaro.algorithm.factored
 
-import com.cra.figaro.library.factors._
+import com.cra.figaro.algorithm.factored.factors._
 /**
  * Trait of elements for which probabilistic factors can be created. Elements that implement this trait must
  * implement the makeFactors method.

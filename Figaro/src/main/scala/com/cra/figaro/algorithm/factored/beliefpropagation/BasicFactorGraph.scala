@@ -15,7 +15,7 @@ package com.cra.figaro.algorithm.factored.beliefpropagation
 
 import scala.collection.Iterable
 import scala.collection.immutable.List
-import com.cra.figaro.library.factors._
+import com.cra.figaro.algorithm.factored.factors._
 
 /**
  * The basic implementation of FactorGraph for Probabilistic factors in BP

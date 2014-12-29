@@ -13,7 +13,7 @@
 
 package com.cra.figaro.algorithm.factored.beliefpropagation
 
-import com.cra.figaro.library.factors._
+import com.cra.figaro.algorithm.factored.factors._
 
 /**
  * Trait for Factor graphs used by Belief Propagation algorithms
