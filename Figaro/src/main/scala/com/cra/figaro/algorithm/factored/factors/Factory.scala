@@ -11,7 +11,7 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
-package com.cra.figaro.library.factors
+package com.cra.figaro.algorithm.factored.factors
 
 import com.cra.figaro.algorithm._
 import com.cra.figaro.language._
@@ -19,7 +19,7 @@ import com.cra.figaro.util._
 import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.algorithm.factored._
 import scala.collection.mutable.ListBuffer
-import com.cra.figaro.library.factors.factory._
+import com.cra.figaro.algorithm.factored.factors.factory._
 import com.cra.figaro.library.compound._
 import com.cra.figaro.library.process._
 import com.cra.figaro.library.atomic.discrete._

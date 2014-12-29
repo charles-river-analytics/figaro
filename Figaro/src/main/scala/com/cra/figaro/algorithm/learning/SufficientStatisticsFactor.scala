@@ -16,8 +16,8 @@ package com.cra.figaro.algorithm.learning
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.library.atomic.discrete._
-import com.cra.figaro.library.factors._
-import com.cra.figaro.library.factors.Factory
+import com.cra.figaro.algorithm.factored.factors._
+import com.cra.figaro.algorithm.factored.factors.Factory
 import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.library.decision._
 import com.cra.figaro.language._

@@ -21,7 +21,7 @@ import org.scalatest.Matchers
 import org.scalatest.PrivateMethodTester
 import org.scalatest.WordSpec
 
-import com.cra.figaro.library.factors._
+import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.language.Parameter
 import com.cra.figaro.library.atomic.continuous.BetaParameter
 import com.cra.figaro.library.atomic.continuous.DirichletParameter

@@ -14,7 +14,7 @@
 package com.cra.figaro.algorithm.factored
 
 import com.cra.figaro.algorithm._
-import com.cra.figaro.library.factors._
+import com.cra.figaro.algorithm.factored.factors._
 import scala.collection.mutable.PriorityQueue
 
 /**

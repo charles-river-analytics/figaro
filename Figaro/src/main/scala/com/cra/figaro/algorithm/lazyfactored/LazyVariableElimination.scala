@@ -16,8 +16,8 @@ package com.cra.figaro.algorithm.lazyfactored
 import com.cra.figaro.algorithm.{LazyAlgorithm, ProbQueryAlgorithm}
 import com.cra.figaro.algorithm.factored.{FactoredAlgorithm, VEGraph}
 import com.cra.figaro.language.{Element, Universe}
-import com.cra.figaro.library.factors._
-import com.cra.figaro.library.factors.Factory
+import com.cra.figaro.algorithm.factored.factors._
+import com.cra.figaro.algorithm.factored.factors.Factory
 import scala.annotation.tailrec
 import com.cra.figaro.util._
 import scala.collection.mutable.{Map, Set}
