@@ -1,13 +1,13 @@
 /*
  * ContainerTest.scala
  * Container tests.
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Nov 27, 2014
- * 
+ *
  * Copyright 2014 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -28,7 +28,9 @@ class ContainerTest extends WordSpec with Matchers {
     "create elements in the correct universe" in {
       val u1 = Universe.createNew()
       val proc = createContainer(List(2,3))
+      val fsa1 = new FixedSizeArray(1, i => Constant(true)("", u1))
       val u2 = Universe.createNew()
+      val fsa2 = new FixedSizeArray(1, i => Constant(false)("", u2))
       val e1 = proc(2)
       e1.universe should equal (u1)
       val e2 = proc.get(2)
@@ -57,19 +59,19 @@ class ContainerTest extends WordSpec with Matchers {
       val e12 = proc3.chain(if (_) Flip(0.3) else Flip(0.6))(4)
       e11.universe should equal (u1)
       e12.universe should equal (u2)
-      val proc4 = proc.concat(proc2)
+      val fsa3 = fsa1.concat(fsa2)
       // It is possible to have elements from different universes in the same process. Getting an element should produce an element from
       // the correct universe
-      val e13 = proc4.get(0) // index of 2
-      val e14 = proc4.get(2) // index of 4
+      val e13 = fsa3.get(0)
+      val e14 = fsa3.get(1)
       e13.universe should equal (u1)
       e14.universe should equal (u2)
-      val e15 = proc4.map(!_)(0)
-      val e16 = proc4.map(!_)(2)
+      val e15 = fsa3.map(!_)(0)
+      val e16 = fsa3.map(!_)(1)
       e15.universe should equal (u1)
       e16.universe should equal (u2)
-      val e17 = proc4.chain(if (_) Flip(0.3) else Flip(0.6))(0)
-      val e18 = proc4.chain(if (_) Flip(0.3) else Flip(0.6))(2)
+      val e17 = fsa3.chain(if (_) Flip(0.3) else Flip(0.6))(0)
+      val e18 = fsa3.chain(if (_) Flip(0.3) else Flip(0.6))(1)
       e17.universe should equal (u1)
       e18.universe should equal (u2)
     }
@@ -189,36 +191,20 @@ class ContainerTest extends WordSpec with Matchers {
       alg.kill()
     }
 
-    "when turning into an array, should have correct indices and entries" in {
-      val proc1 = createContainer(List(2,3))
-      val array = proc1.toArray
-      array.indices.toList should equal (List(0, 1))
-      val e0 = array(0)
-      val e1 = array(1)
-      val alg = VariableElimination(e0, e1)
-      alg.start()
-      alg.probability(e0, true) should be (0.5 +- 0.0000000001) // originally 2
-      alg.probability(e1, true) should be ((1.0 / 3.0) +- 0.0000000001) // originally 3
-      alg.kill()
-    }
-
     "when concatenating, have all the elements of both processes, with the second process following the first" in {
       Universe.createNew()
-      val proc1 = createContainer(List(2,3))
-      val proc2 = createContainer(List(3,4), true)
-      val proc = proc1.concat(proc2)
-      proc.indices.toList should equal (List(0, 1, 2, 3))
-      val e0 = proc(0)
-      val e1 = proc(1)
-      val e2 = proc(2)
-      val e3 = proc(3)
-      val alg = VariableElimination(e0, e1, e2, e3)
-      alg.start()
-      alg.probability(e0, true) should be (0.5 +- 0.0000000001) // originally 2
-      alg.probability(e1, true) should be ((1.0 / 3.0) +- 0.0000000001) // originally 3
-      alg.probability(e2, true) should be ((2.0 / 3.0) +- 0.0000000001) // originally 3, inverted
-      alg.probability(e3, true) should be ((3.0 / 4.0) +- 0.0000000001) // originally 4, inverted
-      alg.kill()
+      val fsa1 = new FixedSizeArray(2, i => Constant(i))
+      val fsa2 = new FixedSizeArray(2, i => Constant(i + 2))
+      val fsa = fsa1.concat(fsa2)
+      fsa.indices.toList should equal (List(0, 1, 2, 3))
+      val e0 = fsa(0)
+      val e1 = fsa(1)
+      val e2 = fsa(2)
+      val e3 = fsa(3)
+      assert(e0.isInstanceOf[Constant[Int]])
+      e0.asInstanceOf[Constant[Int]].constant should equal (0)
+      assert(e2.isInstanceOf[Constant[Int]])
+      e2.asInstanceOf[Constant[Int]].constant should equal (2)
     }
 
   }
