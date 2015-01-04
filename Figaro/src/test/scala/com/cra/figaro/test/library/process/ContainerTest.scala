@@ -207,6 +207,21 @@ class ContainerTest extends WordSpec with Matchers {
       e2.asInstanceOf[Constant[Int]].constant should equal (2)
     }
 
+    "when choosing a random element, choose one of the elements uniformly at random" in {
+      Universe.createNew()
+      val fsa = new FixedSizeArray(2, i => Constant(i))
+      val elem = fsa.randomElement
+      VariableElimination.probability(elem, 1) should be (0.5 +- 0.00000001)
+    }
+
+    "when choosing two random elements, have them be independent" in {
+      Universe.createNew()
+      val fsa = new FixedSizeArray(2, i => Constant(i))
+      val elem1 = fsa.randomElement()
+      val elem2 = fsa.randomElement()
+      val eq = elem1 === elem2
+      VariableElimination.probability(eq, true) should be (0.5 +- 0.000000001)
+    }
   }
 
   def createContainer(is: List[Int], invert: Boolean = false): Container[Int, Boolean] = new Container[Int, Boolean] {

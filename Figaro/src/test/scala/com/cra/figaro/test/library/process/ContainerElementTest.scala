@@ -140,6 +140,13 @@ class ContainerElementTest extends WordSpec with Matchers {
       Importance.probability(all, true) should be (answer +- 0.01)
     }
 
+    "select a random element correctly without throwing IndexOutOfRangeException" in {
+      Universe.createNew()
+      val vsa = VariableSizeArray(Select(0.2 -> 1, 0.8 -> 2), i => Constant(i))
+      val elem = vsa.randomElement
+      Importance.probability(elem, 1) should be ((0.8 * 0.5) +- 0.01)
+    }
+
   }
 
   def create() = {

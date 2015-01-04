@@ -24,7 +24,7 @@ import com.cra.figaro.library.compound._
 import com.cra.figaro.library.process._
 import com.cra.figaro.library.atomic.discrete._
 
-trait FactorMaker {
+trait FactorMaker[T] {
   def makeFactors[T]: List[Factor[Double]]
 }
 
@@ -331,7 +331,7 @@ object Factory {
       case m: MakeList[_] => ComplexFactory.makeFactors(m)
       case m: MakeArray[_] => ComplexFactory.makeFactors(m)
       case f: FoldLeft[_,_] => ComplexFactory.makeFactors(f)
-      case f: FactorMaker => f.makeFactors
+      case f: FactorMaker[_] => f.makeFactors
       case a: Atomic[_] => makeFactors(a)
 
       case _ => throw new UnsupportedAlgorithmException(elem)
