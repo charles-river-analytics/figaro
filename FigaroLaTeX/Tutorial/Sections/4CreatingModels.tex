@@ -107,6 +107,8 @@ Note that using \texttt{observe} will remove all previous conditions on an eleme
 
 A \emph{constraint} provides a way to specify a potential or weighting over an element. It is a function from a value of the element to a Double, so if the element has type \texttt{Element[T]}, the constraint is of type \texttt{T => Double}.
 
+Constraint values should always be non-negative. Also, although it is not strictly enforced, we recommend that constraint values be at most 1. Some algorithms compute upper bounds on probabilities and need to assume an upper bound on constraint values. An upper bound of 1 is assumed, so if the actual value can be higher, these algorithms will be incorrect. For algorithms that don't compute upper bounds in this way, it doesn't matter. Currently, the only algorithms that compute upper bounds like this are the lazy factored inference algorithms. If you have a constraint value greater than 1, a warning will be issued.
+
 Constraints serve multiple purposes in Figaro. One is to specify soft evidence on an element. For example, if in the above Bayesian network we think we heard John call but we're not sure, we might introduce the constraint
 
 \begin{flushleft}
@@ -270,7 +272,7 @@ We then define the \texttt{allAwards} element to be the element over lists of Bo
 
 Up to this point, all our Figaro programs have been purely functional. All elements have been defined by a \texttt{val}, and they have been immutable. In principle, all programs can be written in a purely functional style. However, this can make it quite inconvenient to represent situations in which different entities refer to each other. Scala supports both functional and non-functional styles of programming, allowing us to gain the benefits of both.
 
-For example, let's expand the actors and movies example so that actors have a skill, and the quality of a movie depends on the skill of the actors in it. In turn, the fame of an actor depends on the quality of the movies in which he or she has appeared. We have created a mutual dependence of actors on movies which is hard to represent in a purely functional style. We can capture it in Figaro using the following code:
+For example, let's expand the actors and movies example so that actors have a skill, and the quality of a movie depends on the skill of the actors in it. In turn, the fame of an actor depends on the quality of the movies in which he or she has appeared. We have created a mutual dependence of actors on movies which is hard to represent in a purely functional style. We can capture it in Figaro using the following code. This code also illustrates a use of Figaro collections.
 
 \begin{flushleft}
 \marginpar{This example can be found in MutableMovie.scala}
@@ -280,15 +282,15 @@ For example, let's expand the actors and movies example so that actors have a sk
 \newline class Actor \{
 \newline \tab var movies: List[Movie] = List()
 \newline \tab lazy val skillful = Flip(0.1)
-\newline \tab lazy val famous =
-\newline \tab Flip(Apply(Inject(movies.map(\_.quality):\_*), probFamous \_))
-\newline \tab private def probFamous(qualities: Seq[Symbol]) =
-\newline \tab if (qualities.count(\_ == 'high) >= 2) 0.8; else 0.1
+\newline \tab lazy val qualities = Container(movies.map(_.quality):_*)
+\newline \tab lazy val numGoodMovies = qualities.count(_ == 'high)
+\newline \tab lazy val famous = Chain(numGoodMovies, (n: Int) => if (n >= 2) Flip(0.8) else Flip(0.1))
 \newline \}
 \newline 
 \newline class Movie \{
 \newline \tab var actors: List[Actor] = List()
-\newline \tab lazy val actorsAllGood = Apply(Inject(actors.map(\_.skillful):\_*), (s: Seq[Boolean]) => !(s.contains(false)))
+\newline \tab lazy val skills = Container(actors.map(_.skillful):_*)
+\newline \tab lazy val actorsAllGood = skills.exists(b => b)
 \newline lazy val probLow = 
 \newline Apply(actorsAllGood, (b: Boolean) => if (b) 0.2; else 0.5)
 \newline lazy val probHigh = 
@@ -338,7 +340,7 @@ First, note that the \texttt{Actor} class has a \texttt{movies} field, whose pur
 
 The initial value of both \texttt{movies} and \texttt{actors} is an empty list. We add elements to them later. In fact, whenever we create an appearance, we make sure to add the movie to the actor's list of movies and vice versa. This is achieved by the first two lines of the \texttt{Appearance} class. The notation \texttt{actor.movies ::= movie} is short for \texttt{actor.movies = movie :: actor.movies}, which prepends movie to the current \texttt{actor.movies} list, and replaces the current list with the new list. The \texttt{::=} notation is a variant of the familiar \texttt{+=} notation common in many languages.
 
-The \texttt{Actor} class has \texttt{skillful} and \texttt{famous} fields. Rather than an ordinary \texttt{val}, each of these fields is defined to be \texttt{lazy val}, which means that their contents are not determined until they are required by some other computation. This is necessary for us because their contents can depend on the list of movies the actor appears in. For example, whether the actor is famous depends on whether at least two movies have high quality, as defined by \texttt{probFamous}. (Comment on the notation: the underscore after \texttt{probFamous} is required here to tell Scala that what is desired is the \texttt{probFamous} function itself, not its application to arguments.)   If \texttt{famous} was an ordinary \texttt{val}, its value (an \texttt{Element[Boolean]}) would be computed at the point it is defined, so it would use an empty list of movies. Because we want to use the correct list of movies in defining it, we postpone evaluating it until the movies list has been filled. For \texttt{actor3}, this will happen when we make the observation \texttt{actor3.famous.observe(true)}, which we make sure to delay until after all the appearances have been created. For other actors, the \texttt{famous} field will be evaluated even later, during inference. Care should be taken with declaring elements as lazy. Side effects and unintended consequences can occur if a lazy element declared outside a Chain is first required (i.e., created) during the execution of a Chain.
+The \texttt{Actor} class has \texttt{skillful} and \texttt{famous} fields. Rather than an ordinary \texttt{val}, each of these fields is defined to be \texttt{lazy val}, which means that their contents are not determined until they are required by some other computation. This is necessary for us because their contents can depend on the list of movies the actor appears in. For example, whether the actor is famous depends on whether at least two movies have high quality. If \texttt{famous} was an ordinary \texttt{val}, its value (an \texttt{Element[Boolean]}) would be computed at the point it is defined, so it would use an empty list of movies. Because we want to use the correct list of movies in defining it, we postpone evaluating it until the movies list has been filled. For \texttt{actor3}, this will happen when we make the observation \texttt{actor3.famous.observe(true)}, which we make sure to delay until after all the appearances have been created. For other actors, the \texttt{famous} field will be evaluated even later, during inference. Care should be taken with declaring elements as lazy. Side effects and unintended consequences can occur if a lazy element declared outside a Chain is first required (i.e., created) during the execution of a Chain.
 
 Do not hesitate to use mutation if it will help you organize your program in a logical way. In one application, we have found it convenient to use a hash table that maps concepts to their associated elements. This allowed us to create the element associated with a concept as the concept was introduced. If we later had to refer to the same concept again, we could easily access its element.
 
@@ -477,45 +479,45 @@ Multi-valued references have "set semantics". If the same element appears more t
 
 A comment on the code: The code defining \texttt{sum} might look mysterious. This code takes a list of integers and returns their sum. This is a standard Scala idiom that unfortunately is a bit obscure if you're not familiar with it. It is used to "fold" a function through a list. We begin with 0 and then repeatedly add the current result to the next element of the list until the list is exhausted. The notation \texttt{(\_ + \_)} is shorthand for the function that takes two arguments and adds them. The notation \texttt{(0 /: xs}) means that this function should be folded through \texttt{xs}, starting from 0.
 
-\section{Open Universe Models}
+% \section{Open Universe Models}
 
-We close this section by showing how Figaro can be used to represent "open universe" situations. An open universe situation is one in which we don't know what objects are there, how many there are, which objects are the same as which other objects, and so on. In our example situation, there are an unknown number of sources that is geometrically distributed. Each source is uniformly distributed between 0 and 1. There is some number of observed samples, each drawn from a single unknown source. This is the classic data association problem in which we want to determine which sample comes from which source, and in particular which two samples actually come from the same source. The Figaro code for the example is as follows:
+% We close this section by showing how Figaro can be used to represent "open universe" situations. An open universe situation is one in which we don't know what objects are there, how many there are, which objects are the same as which other objects, and so on. In our example situation, there are an unknown number of sources that is geometrically distributed. Each source is uniformly distributed between 0 and 1. There is some number of observed samples, each drawn from a single unknown source. This is the classic data association problem in which we want to determine which sample comes from which source, and in particular which two samples actually come from the same source. The Figaro code for the example is as follows:
 
-\begin{flushleft}
-\marginpar{This example can be found in OpenUniverse.scala}
-\texttt{import com.cra.figaro.language.\_
-\newline import com.cra.figaro.library.atomic.continuous.Uniform 
-\newline import com.cra.figaro.library.atomic.continuous.Normal 
-\newline import com.cra.figaro.library.atomic.discrete.Geometric 
-\newline import com.cra.figaro.library.compound.\{MakeList, IntSelector\}
-\newline 
-\newline def source(): Element[Double] = Uniform(0.0, 1.0)
-\newline 
-\newline val numSources = Geometric(0.9)
-\newline 
-\newline val sources = MakeList(numSources, source \_)
-\newline 
-\newline class Sample \{
-\newline \tab val sourceNum = IntSelector(numSources)
-\newline \tab val source =
-\newline \tab Apply(sources, sourceNum, (s: Seq[Double], i: Int) => s(i))
-\newline \tab val position =
-\newline \tab NonCachingChain(source, (x: Double) => Normal(x, 1.0))
-\newline \}
-\newline 
-\newline val sample1 = new Sample 
-\newline val sample2 = new Sample
-\newline 
-\newline val equal = sample1.source === sample2.source 
-\newline 
-\newline sample1.position.addCondition((y: Double) => y >= 0.7 \&\& y < 0.8)
-\newline sample2.position.addCondition((y: Double) => y >= 0.7 \&\& y < 0.8) 
-}
-\end{flushleft}
+% \begin{flushleft}
+% \marginpar{This example can be found in OpenUniverse.scala}
+% \texttt{import com.cra.figaro.language.\_
+% \newline import com.cra.figaro.library.atomic.continuous.Uniform 
+% \newline import com.cra.figaro.library.atomic.continuous.Normal 
+% \newline import com.cra.figaro.library.atomic.discrete.Geometric 
+% \newline import com.cra.figaro.library.compound.\{MakeList, IntSelector\}
+% \newline 
+% \newline def source(): Element[Double] = Uniform(0.0, 1.0)
+% \newline 
+% \newline val numSources = Geometric(0.9)
+% \newline 
+% \newline val sources = MakeList(numSources, source \_)
+% \newline 
+% \newline class Sample \{
+% \newline \tab val sourceNum = IntSelector(numSources)
+% \newline \tab val source =
+% \newline \tab Apply(sources, sourceNum, (s: Seq[Double], i: Int) => s(i))
+% \newline \tab val position =
+% \newline \tab NonCachingChain(source, (x: Double) => Normal(x, 1.0))
+% \newline \}
+% \newline 
+% \newline val sample1 = new Sample 
+% \newline val sample2 = new Sample
+% \newline 
+% \newline val equal = sample1.source === sample2.source 
+% \newline 
+% \newline sample1.position.addCondition((y: Double) => y >= 0.7 \&\& y < 0.8)
+% \newline sample2.position.addCondition((y: Double) => y >= 0.7 \&\& y < 0.8) 
+% }
+% \end{flushleft}
 
-Most of this should be self-explanatory at this point. There are a couple of interesting new element classes being used. \texttt{MakeList} takes an element over integers and a function that generates elements over a certain type (in this case doubles). It returns an element over lists of the appropriate type (in this case lists of doubles) whose length is distributed according to the first argument and in which each element is generated according to the second argument. In our example, \texttt{sources} is a list of sources whose length is geometrically distributed and in which each source is generated according to the source model. A notable aspect of the \texttt{MakeList} class, which is important for reasoning algorithms, is that the elements generating the values in the list are stored as an infinite lazy stream. Depending on the value of the first argument, the value of the \texttt{MakeList} is a finite prefix of the values of elements in the stream. As a result of this design, we don't create a completely fresh list each time the length of the list changes. \texttt{MakeList} could also have been used in the previous section's example to define the \texttt{components} element of the \texttt{Container} class.
+% Most of this should be self-explanatory at this point. There are a couple of interesting new element classes being used. \texttt{MakeList} takes an element over integers and a function that generates elements over a certain type (in this case doubles). It returns an element over lists of the appropriate type (in this case lists of doubles) whose length is distributed according to the first argument and in which each element is generated according to the second argument. In our example, \texttt{sources} is a list of sources whose length is geometrically distributed and in which each source is generated according to the source model. A notable aspect of the \texttt{MakeList} class, which is important for reasoning algorithms, is that the elements generating the values in the list are stored as an infinite lazy stream. Depending on the value of the first argument, the value of the \texttt{MakeList} is a finite prefix of the values of elements in the stream. As a result of this design, we don't create a completely fresh list each time the length of the list changes. \texttt{MakeList} could also have been used in the previous section's example to define the \texttt{components} element of the \texttt{Container} class.
 
-The second new element class is \texttt{IntSelector} which takes an element over integers and returns an element that produces uniformly a number between 0 and the value of its argument (exclusive). This element can be used to generate a random index into a list produced by \texttt{MakeList}. \texttt{IntSelector} also has an interesting implementation that has benefits for reasoning algorithms (especially Metropolis- Hastings). The \texttt{Randomness} is an infinite stream of uniformly distributed doubles between 0 and 1. Given a particular value of the integer argument, the selected index is the one with the highest randomness value in the finite portion of the stream defined by the argument.
+% The second new element class is \texttt{IntSelector} which takes an element over integers and returns an element that produces uniformly a number between 0 and the value of its argument (exclusive). This element can be used to generate a random index into a list produced by \texttt{MakeList}. \texttt{IntSelector} also has an interesting implementation that has benefits for reasoning algorithms (especially Metropolis- Hastings). The \texttt{Randomness} is an infinite stream of uniformly distributed doubles between 0 and 1. Given a particular value of the integer argument, the selected index is the one with the highest randomness value in the finite portion of the stream defined by the argument.
 
 
 

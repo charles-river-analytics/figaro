@@ -16,6 +16,12 @@ package com.cra.figaro.library.process
 import com.cra.figaro.language._
 import scala.language.implicitConversions
 import com.cra.figaro.library.compound.{FoldLeft, FoldRight, Reduce}
+import com.cra.figaro.algorithm.{Values, ValuesMaker}
+import com.cra.figaro.algorithm.factored.factors.FactorMaker
+import com.cra.figaro.algorithm.factored.factors.Variable
+import com.cra.figaro.algorithm.factored.factors.Factor
+import com.cra.figaro.algorithm.lazyfactored.ValueSet
+import com.cra.figaro.library.atomic.discrete.FromRange
 
 /**
  * A Container is a Process with a defined sequence of indices.
@@ -169,27 +175,12 @@ extends Process[Index, Value] {
   }
 
   /**
-   * Turn this container into one in which the indices are integers counting from 0.
+   * Choose a random element from this container.
    */
-//  def toArray: Container[Int, Value] = {
-//    new FixedSizeArray(
-//      indices.size,
-//      (i: Int) => this(indices(i))
-//    )
-//  }
-
-  /**
-   * Concatenate this container with another one. In the result, all the elements in this container will precede all
-   * the elements in the other container. The result is an array containing all the elements of both containers.
-   */
-//  def concat[Index2](that: Container[Index2, Value]) = {
-//    val thisArray = this.toArray
-//    val thatArray = that.toArray
-//    new FixedSizeArray(
-//      this.indices.size + that.indices.size,
-//      (i: Int) => if (i < indices.size) thisArray(i) else thatArray(i - indices.size)
-//    )
-//  }
+  def randomElement() = {
+    val selector = FromRange(0, indices.length)
+    Chain(selector, (i: Int) => apply(indices(i)))
+  }
 }
 object Container {
   def apply[T](elements: Element[T]*): Container[Int, T] = {

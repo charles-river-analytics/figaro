@@ -98,6 +98,12 @@ Once you are done with the results of variable elimination, you can call \texttt
 
 These methods \texttt{start, kill,  distribution, probability}, and \texttt{ex\-pectation} are a uniform interface to all reasoning algorithms that compute the conditional probability of query variables given evidence. We will see below how this interface is extended for anytime algorithms.
 
+For convenience, Figaro also provides a one-line query method using variable elimination. Just use
+
+\texttt{VariableElimination.probability(element, value)}
+
+This will take care of instantiating the algorithm and running inference and returns the probability that the element has the given value.
+
 \section{Approximate inference using belief propagation}
 
 Figaro also contains another factored inference algorithm called belief propagation (BP). BP is a message passing algorithm on a factor graph (a bipartite graph of variables and factors). On factor graphs with no loops, BP is an exact inference algorithm. On graphs with loops (loopy factor graph), BP can be used to perform approximate inference on the target variables. Note that in Figaro, the way that Chains are converted to factors always produces a loopy factor graph, even if the actual definition of the model contains no loops. Therefore, most inference with BP in Figaro is approximate.
@@ -131,7 +137,15 @@ This will create a \texttt{BeliefPropagation} object that will pass messages on 
 \texttt{bp.start()}
 \end{flushleft}
 
-When this call terminates, you can use \texttt{bp} to answer the same queries as defined in the variable elimination section.
+When this call terminates, you can use \texttt{bp} to answer the same queries as defined in the variable elimination section. You can also use a one-line shortcut like for variable elimination.
+
+Figaro also provides an experimental implementation of particle belief propagation that enables you to use belief propagation with continuous elements. This algorithm can be found in \texttt{com.cra.figaro.experimental.particlebp}.
+
+\section{Lazy Factored Inference}
+
+Ordinarily, factored inference algorithms like variable elimination and belief propagation cannot be applied to infinitely recursive models. It's easy to define such models, such as probabilistic grammars for natural language, in Figaro. Figaro provides lazy factored inference algorithms that expand the factor graph to a bounded depth and precisely quantify the effect of the unexplored part of the graph on the query. It uses this information to compute lower and upper bounds on the probability of the query. 
+
+To use lazy variable elimination, create an instance of \texttt{LazyVariableElimination}. You can use the \texttt{pump} method to increase the depth of expansion by 1. You can also use \texttt{run(depth)} to expand to the given depth. You can find an example of lazy variable elimination in action in \texttt{LazyList.scala} in the Figaro examples. You can also use lazy belief propagation.
 
 \section{Importance sampling}
 
@@ -168,6 +182,8 @@ Two additional methods are provided in the interface. \texttt{imp.stop()} stops 
 \newline imp.kill() }
 \end{flushleft}
 
+Importance sampling also provides a one-line query shortcut.
+
 \section{Markov chain Monte Carlo}
 
 Figaro provides a Metropolis-Hastings Markov chain Monte Carlo algorithm. Metropolis-Hastings uses a proposal distribution to propose a new state at each step of the algorithm, and either accepts or rejects the proposal. In Figaro, a proposal involves proposing new randomnesses for any number of elements. After proposing these new randomnesses, any element that depends on those randomnesses must have its value updated. Recall that the value of an element is a deterministic function of its randomness and the values of its arguments, so this update process is a deterministic result of the randomness proposal.
@@ -195,6 +211,8 @@ Figaro allows the user to specify which elements get proposed using a \emph{prop
 Metropolis-Hastings takes two additional optional arguments. The first represents the burn-in, which is the number of proposal steps the algorithm goes through before collecting samples, while the second is the number of proposal steps between samples. The default burn-in is 0, while the default interval is 1. These arguments appear before the query elements.
 
 To use a one-time (i.e., non-anytime) Metropolis-Hastings algorithm, simply provide the number of samples as the first argument.
+
+Metropolis-Hastings also provides a one-line query shortcut.
 
 \subsection{Defining a proposal scheme}
 

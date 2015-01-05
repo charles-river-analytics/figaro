@@ -29,7 +29,6 @@ import scala.collection.mutable.Map
  * @param numItems The element representing the number of items in the list
  * @param itemMaker A function that creates an element representing a single item in the list
  */
-@deprecated("Use Container or VariableSizeArray instead", "Figaro 3.0")
 class MakeList[T](
   name: Name[List[T]],
   val numItems: Element[Int],
