@@ -167,11 +167,9 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
 
         sampleArgs(element, state: State, Set[Element[_]](element.args:_*))
 
-
-        // Subtle issue taken care of by the following line
-        // A parameterized element may or may not be a chain to an atomic element
-        // If it's not, we have to make sure to set its value to the observation here
-        // If it is, we have to make sure to propagate the observation through the chain
+        // I'm not quite sure why we have to call sampleValue here when we're about to set the value of this element to obs.
+        // If I remove this call, the test "should correctly resample an element's arguments when the arguments change during samples"
+        // fails.
         sampleValue(state, element, Some(obs))
         val density = element.asInstanceOf[HasDensity[T]].density(obs)
         state.weight += math.log(density)
@@ -232,12 +230,8 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
 
         observation match {
           case Some(true) =>
-            //Avi: I don't understand why the tests pass only with these lines commented out.
-            //Could someone explain this mystery?
-            //state.weight += math.log(probValue)
             true
           case Some(false) =>
-            //state.weight += math.log(1 - probValue)
             false
           case _ =>
             val result = random.nextDouble() < probValue

@@ -18,12 +18,22 @@ import com.cra.figaro.algorithm.ValuesMaker
 import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.algorithm.factored._
 
+class FixedSizeArrayElement[Value](private val fsa: Element[FixedSizeArray[Value]])
+extends ContainerElement[Int, Value](fsa.asInstanceOf[Element[Container[Int, Value]]]) {
+  def concat(that: FixedSizeArrayElement[Value]): FixedSizeArrayElement[Value] = {
+    val resultElem: Element[FixedSizeArray[Value]] =
+      new Apply2("", this.fsa, that.fsa, (c1: FixedSizeArray[Value], c2: FixedSizeArray[Value]) => c1.concat(c2), this.element.universe)
+    new FixedSizeArrayElement(resultElem)
+  }
+
+}
+
 /**
  * Doc needed
  */
-class MakeArray[T](name: Name[Container[Int, T]], val numItems: Element[Int], val itemMaker: Int => Element[T], collection: ElementCollection)
-  extends Deterministic[Container[Int, T]](name, collection)
-  with ValuesMaker[Container[Int, T]] {
+class MakeArray[T](name: Name[FixedSizeArray[T]], val numItems: Element[Int], val itemMaker: Int => Element[T], collection: ElementCollection)
+  extends Deterministic[FixedSizeArray[T]](name, collection)
+  with ValuesMaker[FixedSizeArray[T]] {
   /* MakeArray is basically an Apply, with a few differences:
    * 1. We have to register the embedded elements in the containers (i.e., the items) with the MakeArray.
    * 2. When generating values, we have to go in and generate values for the items.
@@ -42,8 +52,8 @@ class MakeArray[T](name: Name[Container[Int, T]], val numItems: Element[Int], va
   }
   lazy val items = makeItems(0)
 
-  def makeArrays(i: Int): Stream[Container[Int, T]] = {
-    val array: Container[Int, T] = new FixedSizeArray(i, (j: Int) => items(j))
+  def makeArrays(i: Int): Stream[FixedSizeArray[T]] = {
+    val array: FixedSizeArray[T] = new FixedSizeArray(i, (j: Int) => items(j))
     array #:: makeArrays(i + 1)
   }
   lazy val arrays = makeArrays(0)
@@ -63,7 +73,7 @@ class MakeArray[T](name: Name[Container[Int, T]], val numItems: Element[Int], va
 
   def values = LazyValues(universe)
 
-  def makeValues(depth: Int): ValueSet[Container[Int, T]] = {
+  def makeValues(depth: Int): ValueSet[FixedSizeArray[T]] = {
     // This code is subtle.
     // If we used itemMaker here, it would create bugs, as the items that appeared in the values would be different from the ones actually used by the Makelist.
     // On the other hand, if we used Values(items(0)) as a template for the values of all items, it would create other bugs, as different indices would have the same values,
@@ -82,7 +92,7 @@ class MakeArray[T](name: Name[Container[Int, T]], val numItems: Element[Int], va
 
 object VariableSizeArray {
   def apply[Value](numItems: Element[Int], generator: Int => Element[Value])
-  (implicit name: Name[Container[Int, Value]], collection: ElementCollection): ContainerElement[Int, Value] = {
-    new ContainerElement[Int, Value](new MakeArray(name, numItems, generator, collection))
+  (implicit name: Name[FixedSizeArray[Value]], collection: ElementCollection): FixedSizeArrayElement[Value] = {
+    new FixedSizeArrayElement[Value](new MakeArray(name, numItems, generator, collection))
   }
 }

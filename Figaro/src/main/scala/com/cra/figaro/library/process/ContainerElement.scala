@@ -118,9 +118,9 @@ class ContainerElement[Index, Value](val element: Element[Container[Index, Value
   /**
    * Concatenate the value of this container element with the value of another container element.
    */
-  def concat[Index2](that: ContainerElement[Index2, Value]): ContainerElement[Int, Value] = {
-    val resultElem: Element[Container[Int, Value]] =
-      new Apply2("", this.element, that.element, (c1: Container[Index, Value], c2: Container[Index2, Value]) => c1.concat(c2), this.element.universe)
-    new ContainerElement(resultElem)
-  }
+//  def concat[Index2](that: ContainerElement[Index2, Value]): ContainerElement[Int, Value] = {
+//    val resultElem: Element[Container[Int, Value]] =
+//      new Apply2("", this.element, that.element, (c1: Container[Index, Value], c2: Container[Index2, Value]) => c1.concat(c2), this.element.universe)
+//    new ContainerElement(resultElem)
+//  }
 }

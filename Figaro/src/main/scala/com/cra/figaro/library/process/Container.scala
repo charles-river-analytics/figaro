@@ -171,32 +171,32 @@ extends Process[Index, Value] {
   /**
    * Turn this container into one in which the indices are integers counting from 0.
    */
-  def toArray: Container[Int, Value] = {
-    new FixedSizeArray(
-      indices.size,
-      (i: Int) => this(indices(i))
-    )
-  }
+//  def toArray: Container[Int, Value] = {
+//    new FixedSizeArray(
+//      indices.size,
+//      (i: Int) => this(indices(i))
+//    )
+//  }
 
   /**
    * Concatenate this container with another one. In the result, all the elements in this container will precede all
    * the elements in the other container. The result is an array containing all the elements of both containers.
    */
-  def concat[Index2](that: Container[Index2, Value]) = {
-    val thisArray = this.toArray
-    val thatArray = that.toArray
-    new FixedSizeArray(
-      this.indices.size + that.indices.size,
-      (i: Int) => if (i < indices.size) thisArray(i) else thatArray(i - indices.size)
-    )
-  }
+//  def concat[Index2](that: Container[Index2, Value]) = {
+//    val thisArray = this.toArray
+//    val thatArray = that.toArray
+//    new FixedSizeArray(
+//      this.indices.size + that.indices.size,
+//      (i: Int) => if (i < indices.size) thisArray(i) else thatArray(i - indices.size)
+//    )
+//  }
 }
 object Container {
   def apply[T](elements: Element[T]*): Container[Int, T] = {
     new FixedSizeArray(elements.size, (i: Int) => elements(i))
   }
 
-  def apply[T](numItems: Element[Int], generator: Int => Element[T])(implicit name: Name[Container[Int, T]], collection: ElementCollection): ContainerElement[Int, T] = {
+  def apply[T](numItems: Element[Int], generator: Int => Element[T])(implicit name: Name[FixedSizeArray[T]], collection: ElementCollection): FixedSizeArrayElement[T] = {
     VariableSizeArray(numItems, generator)(name, collection)
   }
 
