@@ -25,7 +25,6 @@ extends ContainerElement[Int, Value](fsa.asInstanceOf[Element[Container[Int, Val
       new Apply2("", this.fsa, that.fsa, (c1: FixedSizeArray[Value], c2: FixedSizeArray[Value]) => c1.concat(c2), this.element.universe)
     new FixedSizeArrayElement(resultElem)
   }
-
 }
 
 /**
