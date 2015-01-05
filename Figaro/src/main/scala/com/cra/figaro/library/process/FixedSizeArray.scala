@@ -31,5 +31,15 @@ class FixedSizeArray[Value](
   def generate(indices: List[Int]) = {
     Map(indices.map(index => (index, generator(index))):_*)
   }
-}
 
+  /**
+   * Concatenate this container with another one. In the result, all the elements in this container will precede all
+   * the elements in the other container. The result is an array containing all the elements of both containers.
+   */
+  def concat[Index2](that: FixedSizeArray[Value]) = {
+    new FixedSizeArray(
+      this.indices.size + that.indices.size,
+      (i: Int) => if (i < indices.size) this(i) else that(i - indices.size)
+    )
+  }
+}
