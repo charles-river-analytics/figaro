@@ -165,10 +165,14 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
       val newOutput = output.filterNot(_ == variable)
 
       val result = new BasicFactor[T](newParents, newOutput)
+
+      // Compute the indices of the remaining variables 
       val newNonZeroIndices = this.nonZeroIndices.map(index => {
         val rest = List.tabulate(numVars)(n => n).diff(indicesOfSummedVariable)
         rest.map(i => index(i))
       })
+
+      // Compute the indices of the summed out variable
       val nonZeroIndicesSummed = this.nonZeroIndices.map(index => {
         val rest = List.tabulate(numVars)(n => n).diff(indicesOfSummedVariable)
         indicesOfSummedVariable.map(i => index(i))
@@ -185,18 +189,24 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
     resultIndices: List[Int],
     summedVariable: Variable[U],
     summedVariableIndices: List[Int],
+    summedNonZeroIndices: List[Int],
     comparator: (T, T) => Boolean): U = {
-    def getEntry(i: Int) =
-      get(insertAtIndices(resultIndices, summedVariableIndices, i))
     val valuesWithEntries =
       for {
-        i <- 0 until summedVariable.size
+        //i <- 0 until summedVariable.size
+        i <- summedNonZeroIndices
         xvalue = summedVariable.range(i)
-        if xvalue.isRegular
-      } yield (summedVariable.range(i).value, getEntry(i))
+        index = insertAtIndices(resultIndices, summedVariableIndices, i)
+        if (xvalue.isRegular && contains(index))
+      } yield (summedVariable.range(i).value, get(index))
     def process(best: (U, T), next: (U, T)) =
       if (comparator(best._2, next._2)) next; else best
-    valuesWithEntries.reduceLeft(process(_, _))._1
+    if (valuesWithEntries.isEmpty) {
+      // Will this crash if there are no regular values?
+      summedVariable.range.find(_.isRegular).get.value
+    } else {
+      valuesWithEntries.reduceLeft(process(_, _))._1
+    }
   }
 
   /**
@@ -215,9 +225,22 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
     val newParents = parents.filterNot(_ == variable)
     val newOutput = output.filterNot(_ == variable)
 
+    // Compute the indices of the summed out variable
+    val nonZeroIndicesSummed = this.nonZeroIndices.map(index => {
+      val rest = List.tabulate(numVars)(n => n).diff(indicesOfSummedVariable)
+      indicesOfSummedVariable.map(i => index(i))
+    }).flatten.distinct
+
+    // Compute the indices of the remaining variables 
+    val newNonZeroIndices = this.nonZeroIndices.map(index => {
+      val rest = List.tabulate(numVars)(n => n).diff(indicesOfSummedVariable)
+      rest.map(i => index(i))
+    })
+
     val result = new BasicFactor[U](newParents, newOutput)
-    for { indices <- result.allIndices } yield {
-      result.set(indices, computeArgMax(indices, variable, indicesOfSummedVariable, comparator))
+
+    for { indices <- newNonZeroIndices } yield {
+      result.set(indices, computeArgMax(indices, variable, indicesOfSummedVariable, nonZeroIndicesSummed, comparator))
     }
     result
   }
@@ -333,7 +356,7 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
     result.append("|" + " " * resultWidth + "|\n")
     addBorderRow()
     // Data rows
-    for { indices <- allIndices } {
+    for { indices <- nonZeroIndices } {
       val values = for { (variable, index) <- variables zip indices } yield { variable.range(index) }
       for { (value, width) <- values zip valueWidths } {
         result.append("|")

@@ -89,23 +89,23 @@ object ApplyFactory {
     val arg1Indices = arg1Var.range.zipWithIndex
     val arg2Indices = arg2Var.range.zipWithIndex
     val arg3Indices = arg3Var.range.zipWithIndex
-    val resultIndices = resultVar.range.zipWithIndex
+    //val resultIndices = resultVar.range.zipWithIndex
     for {
       (arg1Val, arg1Index) <- arg1Indices
       (arg2Val, arg2Index) <- arg2Indices
       (arg3Val, arg3Index) <- arg3Indices
-      (resultVal, resultIndex) <- resultIndices
-    } {
-      val entry =
-        if (arg1Val.isRegular && arg2Val.isRegular && arg3Val.isRegular && resultVal.isRegular) {
-          // The argument values should have been placed in applyMap at the time the values of this apply were computed.
-          // By using applyMap, we can make sure that any contained elements in the result of the apply are the same now as they were when values were computed.
-          if (resultVal.value == mapper.map(applyMap((arg1Val.value, arg2Val.value, arg3Val.value)), applyValues.regularValues)) 1.0
-          else 0.0
-        } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular) && !resultVal.isRegular) 1.0
-        else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular) && resultVal.isRegular) 0.0
-        else 0.0
-      factor.set(List(arg1Index, arg2Index, arg3Index, resultIndex), entry)
+      //(resultVal, resultIndex) <- resultIndices
+    } {      
+      if (arg1Val.isRegular && arg2Val.isRegular && arg3Val.isRegular) {
+        // arg1Val.value should have been placed in applyMap at the time the values of this apply were computed.
+        // By using applyMap, we can make sure that any contained elements in the result of the apply are the same now as they were when values were computed.
+        val resultVal = mapper.map(applyMap((arg1Val.value, arg2Val.value, arg3Val.value)), applyValues.regularValues)
+        val resultIndex = resultVar.range.indexWhere(_.value == resultVal)        
+        factor.set(List(arg1Index, arg2Index, arg3Index, resultIndex), 1.0)
+      } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular) && resultVar.range.exists(!_.isRegular)) {
+        val resultIndex = resultVar.range.indexWhere(!_.isRegular) 
+        factor.set(List(arg1Index, arg2Index, arg3Index, resultIndex), 1.0)
+      }   
     }
     List(factor)
   }
@@ -123,24 +123,24 @@ object ApplyFactory {
     val arg2Indices = arg2Var.range.zipWithIndex
     val arg3Indices = arg3Var.range.zipWithIndex
     val arg4Indices = arg4Var.range.zipWithIndex
-    val resultIndices = resultVar.range.zipWithIndex
+    //val resultIndices = resultVar.range.zipWithIndex
     for {
       (arg1Val, arg1Index) <- arg1Indices
       (arg2Val, arg2Index) <- arg2Indices
       (arg3Val, arg3Index) <- arg3Indices
       (arg4Val, arg4Index) <- arg4Indices
-      (resultVal, resultIndex) <- resultIndices
+      //(resultVal, resultIndex) <- resultIndices
     } {
-      val entry =
-        if (arg1Val.isRegular && arg2Val.isRegular && arg3Val.isRegular && arg4Val.isRegular && resultVal.isRegular) {
-          // The argument values should have been placed in applyMap at the time the values of this apply were computed.
-          // By using applyMap, we can make sure that any contained elements in the result of the apply are the same now as they were when values were computed.
-          if (resultVal.value == mapper.map(applyMap((arg1Val.value, arg2Val.value, arg3Val.value, arg4Val.value)), applyValues.regularValues)) 1.0
-          else 0.0
-        } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular) && !resultVal.isRegular) 1.0
-        else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular) && resultVal.isRegular) 0.0
-        else 0.0
-      factor.set(List(arg1Index, arg2Index, arg3Index, arg4Index, resultIndex), entry)
+     if (arg1Val.isRegular && arg2Val.isRegular && arg3Val.isRegular && arg4Val.isRegular) {
+        // arg1Val.value should have been placed in applyMap at the time the values of this apply were computed.
+        // By using applyMap, we can make sure that any contained elements in the result of the apply are the same now as they were when values were computed.
+        val resultVal = mapper.map(applyMap((arg1Val.value, arg2Val.value, arg3Val.value, arg4Val.value)), applyValues.regularValues)
+        val resultIndex = resultVar.range.indexWhere(_.value == resultVal)        
+        factor.set(List(arg1Index, arg2Index, arg3Index, arg4Index, resultIndex), 1.0)
+      } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular) && resultVar.range.exists(!_.isRegular)) {
+        val resultIndex = resultVar.range.indexWhere(!_.isRegular) 
+        factor.set(List(arg1Index, arg2Index, arg3Index, arg4Index, resultIndex), 1.0)
+      }   
     }
     List(factor)
   }
@@ -169,16 +169,16 @@ object ApplyFactory {
       (arg5Val, arg5Index) <- arg5Indices
       (resultVal, resultIndex) <- resultIndices
     } {
-      val entry =
-        if (arg1Val.isRegular && arg2Val.isRegular && arg3Val.isRegular && arg4Val.isRegular && arg5Val.isRegular && resultVal.isRegular) {
-          // The argument values should have been placed in applyMap at the time the values of this apply were computed.
-          // By using applyMap, we can make sure that any contained elements in the result of the apply are the same now as they were when values were computed.
-          if (resultVal.value == mapper.map(applyMap((arg1Val.value, arg2Val.value, arg3Val.value, arg4Val.value, arg5Val.value)), applyValues.regularValues)) 1.0
-          else 0.0
-        } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular || !arg5Val.isRegular) && !resultVal.isRegular) 1.0
-        else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular || !arg5Val.isRegular) && resultVal.isRegular) 0.0
-        else 0.0
-      factor.set(List(arg1Index, arg2Index, arg3Index, arg4Index, arg5Index, resultIndex), entry)
+      if (arg1Val.isRegular && arg2Val.isRegular && arg3Val.isRegular && arg4Val.isRegular && arg5Val.isRegular) {
+        // arg1Val.value should have been placed in applyMap at the time the values of this apply were computed.
+        // By using applyMap, we can make sure that any contained elements in the result of the apply are the same now as they were when values were computed.
+        val resultVal = mapper.map(applyMap((arg1Val.value, arg2Val.value, arg3Val.value, arg4Val.value, arg5Val.value)), applyValues.regularValues)
+        val resultIndex = resultVar.range.indexWhere(_.value == resultVal)        
+        factor.set(List(arg1Index, arg2Index, arg3Index, arg4Index, arg5Index, resultIndex), 1.0)
+      } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular || !arg5Val.isRegular) && resultVar.range.exists(!_.isRegular)) {
+        val resultIndex = resultVar.range.indexWhere(!_.isRegular) 
+        factor.set(List(arg1Index, arg2Index, arg3Index, arg4Index, arg5Index, resultIndex), 1.0)
+      }   
     }
     List(factor)
   }

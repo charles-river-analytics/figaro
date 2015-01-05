@@ -33,7 +33,7 @@ trait VariableElimination[T] extends FactoredAlgorithm[T] with OneTime {
    * By default, implementations that inherit this trait have no debug information.
    * Override this if you want a debugging option.
    */
-  var debug: Boolean = false
+  var debug: Boolean = true
 
   /**
    * The universe on which this variable elimination algorithm should be applied.
