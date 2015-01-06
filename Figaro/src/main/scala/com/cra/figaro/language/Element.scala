@@ -288,11 +288,23 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    */
   def allConstraints = myConstraints
 
+  // Avoid issuing a warning every time this method is called, e.g. for every sample.
+  private var constraintWarningIssued = false
+
   /*
-   * Testing whether a condition is satisfied can use any type of value. The condition can only be satisfied if the value has the right type and the condition returns true.
+   * Computes the result of the element's constraint on a given value.
+   * A value of any type can be passed, but if the value is of an inappropriate type, the constraint result is negative infinity.
+   * This method also issues a warning if the constraint is greater than log(1) = 0.
    */
   private def checkedConstraint(constraint: Constraint, value: Any): Double =
-    try { constraint(value.asInstanceOf[Value]) } catch { case _: ClassCastException => Double.NegativeInfinity }
+    try {
+      val result = constraint(value.asInstanceOf[Value])
+      if (result > 0 && !constraintWarningIssued) {
+        println("Warning: constraint value is greater than 1. Algorithms that use an upper bound of 1 will be incorrect.")
+        constraintWarningIssued = true
+      }
+      result
+    } catch { case _: ClassCastException => Double.NegativeInfinity }
 
   /*
    * Determines the result of a contingent constraint for a given value of this element. If any of the contingent elements does not have its appropriate value, the result is 1,

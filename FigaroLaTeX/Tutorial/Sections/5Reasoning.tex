@@ -98,6 +98,12 @@ Once you are done with the results of variable elimination, you can call \texttt
 
 These methods \texttt{start, kill,  distribution, probability}, and \texttt{ex\-pectation} are a uniform interface to all reasoning algorithms that compute the conditional probability of query variables given evidence. We will see below how this interface is extended for anytime algorithms.
 
+For convenience, Figaro also provides a one-line query method using variable elimination. Just use
+
+\texttt{VariableElimination.probability(element, value)}
+
+This will take care of instantiating the algorithm and running inference and returns the probability that the element has the given value.
+
 \section{Approximate inference using belief propagation}
 
 Figaro also contains another factored inference algorithm called belief propagation (BP). BP is a message passing algorithm on a factor graph (a bipartite graph of variables and factors). On factor graphs with no loops, BP is an exact inference algorithm. On graphs with loops (loopy factor graph), BP can be used to perform approximate inference on the target variables. Note that in Figaro, the way that Chains are converted to factors always produces a loopy factor graph, even if the actual definition of the model contains no loops. Therefore, most inference with BP in Figaro is approximate.
@@ -131,7 +137,15 @@ This will create a \texttt{BeliefPropagation} object that will pass messages on 
 \texttt{bp.start()}
 \end{flushleft}
 
-When this call terminates, you can use \texttt{bp} to answer the same queries as defined in the variable elimination section.
+When this call terminates, you can use \texttt{bp} to answer the same queries as defined in the variable elimination section. You can also use a one-line shortcut like for variable elimination.
+
+Figaro also provides an experimental implementation of particle belief propagation that enables you to use belief propagation with continuous elements. This algorithm can be found in \texttt{com.cra.figaro.experimental.particlebp}.
+
+\section{Lazy Factored Inference}
+
+Ordinarily, factored inference algorithms like variable elimination and belief propagation cannot be applied to infinitely recursive models. It's easy to define such models, such as probabilistic grammars for natural language, in Figaro. Figaro provides lazy factored inference algorithms that expand the factor graph to a bounded depth and precisely quantify the effect of the unexplored part of the graph on the query. It uses this information to compute lower and upper bounds on the probability of the query. 
+
+To use lazy variable elimination, create an instance of \texttt{LazyVariableElimination}. You can use the \texttt{pump} method to increase the depth of expansion by 1. You can also use \texttt{run(depth)} to expand to the given depth. You can find an example of lazy variable elimination in action in \texttt{LazyList.scala} in the Figaro examples. You can also use lazy belief propagation.
 
 \section{Importance sampling}
 
@@ -168,6 +182,8 @@ Two additional methods are provided in the interface. \texttt{imp.stop()} stops 
 \newline imp.kill() }
 \end{flushleft}
 
+Importance sampling also provides a one-line query shortcut.
+
 \section{Markov chain Monte Carlo}
 
 Figaro provides a Metropolis-Hastings Markov chain Monte Carlo algorithm. Metropolis-Hastings uses a proposal distribution to propose a new state at each step of the algorithm, and either accepts or rejects the proposal. In Figaro, a proposal involves proposing new randomnesses for any number of elements. After proposing these new randomnesses, any element that depends on those randomnesses must have its value updated. Recall that the value of an element is a deterministic function of its randomness and the values of its arguments, so this update process is a deterministic result of the randomness proposal.
@@ -195,6 +211,8 @@ Figaro allows the user to specify which elements get proposed using a \emph{prop
 Metropolis-Hastings takes two additional optional arguments. The first represents the burn-in, which is the number of proposal steps the algorithm goes through before collecting samples, while the second is the number of proposal steps between samples. The default burn-in is 0, while the default interval is 1. These arguments appear before the query elements.
 
 To use a one-time (i.e., non-anytime) Metropolis-Hastings algorithm, simply provide the number of samples as the first argument.
+
+Metropolis-Hastings also provides a one-line query shortcut.
 
 \subsection{Defining a proposal scheme}
 
@@ -270,7 +288,7 @@ The \texttt{Metropolis-Hastings} class has a \texttt{debug} variable, which by d
 
 In addition, if you have a \texttt{Metropolis-Hastings} object \texttt{mh}, you can define an initial state by setting the values of elements. Then call \texttt{mh.test} and provide it a number of samples to generate. It will repeatedly propose a new state from the initial state and either accept or reject it, restoring to the original state each time. You can provide a sequence of predicates, and it will report how often each predicate was satisfied after one step of Metropolis-Hastings from the initial state. You can also provide a sequence of elements to track, and it will report how often each element is proposed. For example, in the movies example, you could set the initial state to be one in which exactly one appearance is awarded and test the fraction of times this condition holds after one step.
 
-\section{Probability of evidence algorithm}
+\section{Probability of evidence algorithms}
 
 The previous three algorithms all computed the conditional probability of query variables given evidence. Sometimes we just want to compute the probability of evidence. Since there is the potential for ambiguity here, Figaro is careful to define what constitutes evidence for computing probability of evidence. Conditions and constraints often constitute evidence. Sometimes, however, they can be considered to be part of the model specification. Consider, for example, the constraint on pairs of friends that they share the same smoking habits — this is part of the model definition, not evidence.
 
@@ -336,13 +354,76 @@ The major advantage of this method is that you can call \texttt{alg1.prob\-Addit
 
 In this example, a different number of samples is used for the initial denominator calculation and the subsequent probability of evidence calculation.
 
-Currently, only forward sampling probability of evidence is provided, but the framework exists to create additional probability of evidence algorithms. There is also an anytime version of the probability of evidence algorithms. To create one, use
+There is also an anytime version of the probability of evidence algorithm forward sampling algorithm. To create one, use
 
 \begin{flushleft}
 \texttt{new ProbEvidenceSampler(universe) with AnytimeProbEvidenceSampler}
 \end{flushleft}
 
 For the methods that require you to specify the number of samples \texttt{n}, replace \texttt{n} with \texttt{t}, where \texttt{t} is a long value indicating the number of milliseconds to wait while computing the denominator (and also while computing the probability of the named evidence for the \texttt{computeProbEvidence} shorthand method.)
+
+Additionally, the probability of evidence can be computed using algorithms like Importance Sampling, Belief Propagation and Particle Filtering. Examples are shown for the simple model below: 
+
+\begin{flushleft}
+    \texttt{val universe = Universe.createNew()
+    \newline val u = Uniform(0.0,0.2,0.4,0.6,0.8,1.0)("u", universe)
+    \newline val condition = (d: Double) => d < 0.4
+    \newline val evidence = List(NamedEvidence("u", Condition(condition)))
+}
+\end{flushleft}
+
+This model defines a uniform with six outcomes, and a condition having two satisfying outcomes.
+With Belief Propagation, we compute the probability of evidence with and without the condition and divide.
+
+\begin{flushleft}
+    \texttt{val bp1 = BeliefPropagation(10, u)(universe)
+    \newline bp1.start
+    \newline bp1.stop
+    \newline val withoutCondition = bp1.computeEvidence()
+    \newline bp1.kill()
+    
+    \newline universe.assertEvidence(evidence)
+    \newline val bp2 = BeliefPropagation(10, u)(universe)
+    \newline bp2.start
+    \newline bp2.stop
+    \newline val withCondition = bp2.computeEvidence()
+    \newline bp2.kill()
+    \newline val e1 = withCondition/withoutCondition
+  }
+\end{flushleft}
+
+For Importance Sampling, the evidence is provided as an argument to the \texttt{computeProbEvidence} method.
+
+\begin{flushleft}
+    \texttt{val importance = Importance(100000, u)
+    \newline importance.start()
+    \newline importance.stop()
+    \newline val e2 = importance.probabilityOfEvidence(evidence)
+  }
+\end{flushleft}
+
+In Particle Filtering, the probability of evidence at the current time step can be computed using \texttt{probEvidence()}.
+
+\begin{flushleft}
+    \texttt{val pf = ParticleFilter(universe, t, 10000)
+    \newline pf.start()
+    \newline val condition = (d: Double) => d < 0.4
+    \newline val evidence = List(NamedEvidence("u", Condition(condition)))
+    \newline pf.advanceTime(evidence)
+    \newline val e3 = pf.probEvidence()
+    \newline pf.stop()
+    \newline pf.kill()
+    \newline e3
+  }
+\end{flushleft}
+
+The result of each computation is approximately .333. \texttt{println(e1 + " " + e2 + " " + e3)} yields 
+
+\begin{flushleft}
+    \texttt{0.3333333333333333 0.3338586042039474 0.3269}
+  }
+\end{flushleft}
+
 
 \section{Computing the most likely values of elements}
 

@@ -1,13 +1,13 @@
 /*
  * ElementCollection.scala
  * Element collections.
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -17,6 +17,7 @@ import com.cra.figaro.algorithm.Values
 import com.cra.figaro.algorithm.lazyfactored.{ValueSet, LazyValues}
 import com.cra.figaro.util._
 import scala.collection.mutable.Map
+import com.cra.figaro.library.process.Container
 
 /**
  * An element collection contains elements. It can be used to find the elements in it by reference.
@@ -27,7 +28,7 @@ trait ElementCollection {
    * Override this if you want a different universe.
    */
   val universe: Universe = Universe.universe
-  
+
   /* Elements with the same name may belong to the same collection. The most recently added on is used to resolve references. (That is why a List is used to hold the elements
    * with a given name, rather than a Set, so we always know which is the most recent.) When evidence is applied to a name, all the elements with that name have the evidence
    * applied to them.
@@ -37,7 +38,7 @@ trait ElementCollection {
   /** All named elements in this collection. */
   @deprecated("Use namedElements instead", "2.3.0.0")
   def allElements: List[Element[_]] = myElementMap.values.flatten.toList
-  
+
   /** All named elements in this collection. */
   def namedElements: List[Element[_]] = myElementMap.values.flatten.toList
 
@@ -154,7 +155,7 @@ trait ElementCollection {
 
   /*
    * Evidence in the element collection needs to be asserted not only on existing elements but also on future created elements that have the right reference.
-   * Therefore, we keep track of 
+   * Therefore, we keep track of
    */
   private case class RefEv[T](ref: Reference[T], ev: Evidence[T], contingency: Element.Contingency)
   private var collectedEvidence: Map[Reference[_], RefEv[_]] = Map()
@@ -196,7 +197,7 @@ trait ElementCollection {
         else
           Set((None, List()))
       case Indirect(head, tail) =>
-        val headCheck = myElementMap.getOrElse(head, List()) // use most recent element with the name        
+        val headCheck = myElementMap.getOrElse(head, List()) // use most recent element with the name
         if (headCheck.nonEmpty) {
           val headElem = myElementMap(head).head // use most recent element with the name
           for {
@@ -269,7 +270,7 @@ trait ElementCollection {
   /*
    * Follow the single-valued reference in the current state to get the element referred to.
    * Need to clarify: This gets the element *currently* referred to by the reference. Provide example.
-   * 
+   *
    */
   def getElementByReference[T](reference: Reference[T]): Element[T] =
     reference match {
@@ -301,7 +302,7 @@ trait ElementCollection {
       case Name(name) =>
         try {
           val elems = myElementMap(name)
-          Set(elems.head.asInstanceOf[Element[T]]) // use most recent element with the name 
+          Set(elems.head.asInstanceOf[Element[T]]) // use most recent element with the name
         } catch {
           case e: ClassCastException =>
             throw new IllegalArgumentException("Reference has wrong type")
@@ -326,8 +327,8 @@ object ElementCollection {
    */
   implicit def default: ElementCollection = Universe.universe
 
-  /* 
-   * Turns either a single element collection or a traversable of element collections into an element collection set 
+  /*
+   * Turns either a single element collection or a traversable of element collections into an element collection set
    */
   private[language] def makeElementCollectionSet(value: Any): Set[ElementCollection] = {
     def makeEC[T](s: Set[T]) = s map (_.asInstanceOf[ElementCollection])
