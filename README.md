@@ -43,29 +43,6 @@ The latest stable Figaro binary release is available for download from the [Char
 
 Each binary release comes with Figaro, all required libraries, Scaladoc, examples, and source code.
 
-## How can I use Figaro in my project?
-
-If you wish to integrate Figaro's features into your own software project, Figaro is available on [Maven Central](http://search.maven.org). Shown below are a few examples of how you can add Figaro as a dependency to your existing project:
-
-Simple Build Tool (SBT) Projects
-```
-libraryDependencies += "com.cra.figaro" %%  "figaro" % "3.0.0.0"
-```
-
-Apache Maven Projects
-```
-<dependency>
-    <groupId>com.cra.figaro</groupId>
-    <artifactId>figaro_2.11</artifactId>
-    <version>3.0.0.0</version>
-</dependency>
-```
-
-Apache Ivy Projects
-```
-<dependency org="com.cra.figaro" name="figaro_2.11" rev="3.0.0.0" />
-```
-
 ## How do I run the Figaro Examples?
 
 The easiest way to run the Figaro examples is to install Scala and use the latest Figaro binary release.
@@ -110,6 +87,53 @@ com.cra.figaro.example.dosage.DosageDecision
 com.cra.figaro.example.graph.GraphDecision
 ```
 
+## How do I run my own Figaro programs?
+The simplest way to compile and run the Figaro programs you create is to use the Simple Build Tool (SBT) program and the FigaroWork project.
+
+FigaroWork is an SBT project that enables users to quickly start writing their own Figaro programs. The project is set up to automatically pull in the relevant versions of Scala and Figaro, so there is nothing else for you to install. SBT also makes sure the Scala classpath is configured correctly for your project, saving you some hassle when running your programs.
+
+To get started, download and uncompress the FigaroWork files to a directory on your machine. The FigaroWork project is hosted at the Charles River Analytics, Inc. Web site at https://www.cra.com/figaro. Then download the latest release of SBT v0.13 for your operating system at http://www.scala-sbt.org/download.html and install it following these guidelines http://www.scala-sbt.org/0.13/tutorial/Manual-Installation.html.
+
+When you have finished installing, you will have the following directories and files on your machine
+```
+	\FigaroWork
+		README.txt
+		\project
+			build.properties
+			Build.scala
+			plugins.sbt
+		\src
+			\main
+				\scala
+					Test.scala
+```
+
+Test your new build environment by running the simple Figaro test program provided with the project. Open a command prompt, navigate to your local FigaroWork directory (ex. C:\FigaroWork), and run this command
+```
+sbt "runMain Test"
+```
+
+This command tells SBT to compile the Scala files in the project and execute the main() method of the Test class. Remember to include the quotes around the runMain command. You should see output similar to this
+```
+[info] Running Test
+1.0
+```
+
+Now you can copy your existing Figaro program packages and Scala source files to
+```
+\FigaroWork\src\main\scala
+```
+
+or create new ones there. Run your Figaro program like this
+```
+sbt "runMain <class_with_main> <parameters>"
+```
+
+Replace <class_with_main> with the package and class that contains the main() method that starts your Figaro program. Replace <parameters> with the list of command line parameters (if any) your program may need to run. For example
+```
+sbt "runMain com.cra.test.FigaroTest parameter1 parameter2 parameter3"
+```
+
 ## How do I compile Figaro from source code?
 
 Figaro is maintained as open source on GitHub. The GitHub project is Probabilistic Programming Tools and Techniques (P2T2), located at [https://github.com/p2t2](https://github.com/p2t2). P2T2 currently contains the Figaro sources, but we plan to update it with more tools. If you want to see the source code and build Figaro yourself, please visit our GitHub site.
@@ -134,3 +158,26 @@ sbt test
 ```
 
 Note that some of the unit tests may not always pass because their results are non-deterministic.
+
+## How can I use Figaro in my project?
+
+If you wish to integrate Figaro's features into your own software project, Figaro is available on [Maven Central](http://search.maven.org). Shown below are a few examples of how you can add Figaro as a dependency to your existing project:
+
+Simple Build Tool (SBT) Projects
+```
+libraryDependencies += "com.cra.figaro" %%  "figaro" % "3.0.0.0"
+```
+
+Apache Maven Projects
+```
+<dependency>
+    <groupId>com.cra.figaro</groupId>
+    <artifactId>figaro_2.11</artifactId>
+    <version>3.0.0.0</version>
+</dependency>
+```
+
+Apache Ivy Projects
+```
+<dependency org="com.cra.figaro" name="figaro_2.11" rev="3.0.0.0" />
+```
