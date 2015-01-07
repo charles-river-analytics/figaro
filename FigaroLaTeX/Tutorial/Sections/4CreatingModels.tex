@@ -29,7 +29,7 @@ Recall that an element defines a process that probabilistically produces a value
 \newline val y = x === x}
 \end{flushleft}
 
-Although we don't know the value, \texttt{x} must produce the same value on both sides of the equality test. Therefore, \texttt{y} produces the value \texttt{true} with probability 1. In contrast, in
+Although we don't know the value, \texttt{x} must produce the same value on both sides of the equality test. Therefore, \texttt{y} produces the value \texttt{true} with probability 1.0. In contrast, in:
 
 \begin{flushleft}
 \texttt{val y = Flip(0.5) === Flip(0.5)}
@@ -64,16 +64,16 @@ With \texttt{CPD}, every single combination of values of the parents needs to be
 
 \begin{flushleft}
 \texttt{import com.cra.figaro.language.\_}
-\newline \texttt{import com.cra.figaro.library.compound.RichCPD}
+\newline \texttt{import com.cra.figaro.library.compound.\_}
 \newline \texttt{val x1 = Select(0.1 -> 1, 0.2 -> 2, 0.3 -> 3, 0.4 -> 4)}
 \newline \texttt{val x2 = Flip(0.6) 
-\newline val x3 = Constant (5) 
+\newline val x3 = Constant(5) 
 \newline val x4 = Flip(0.8)
 \newline val y = RichCPD(x1, x2, x3, x4,
 \newline \tab (OneOf(1, 2), *, OneOf(5), *) -> Flip(0.1), 
 \newline \tab (NoneOf(4), OneOf(false), *, *) -> Flip(0.7), 
 \newline \tab (*, *, NoneOf(6, 7), OneOf(true)) -> Flip(0.9), 
-\newline \tab (*, *, *, OneOf(false)) -> Constant (true))}
+\newline \tab (*, *, *, OneOf(false)) -> Constant(true))}
 \end{flushleft}
 
 A particular combination of values of the parents is matched against each row in turn, and the first match is chosen. For example, the combination (1, false, 5, true) matches the first three rows, so the first result (\texttt{Flip(0.1)}) is chosen. All possible values of the parent still need to be accounted for in the argument list using a combination of \texttt{OneOf}, \texttt{NoneOf} and *.
@@ -97,7 +97,7 @@ which says that \texttt{x1} must have value 1 or 4. We can add a condition on to
 \texttt{x1.addCondition((i: Int) => i \% 2 == 1)}
 \end{flushleft}
 
-The \texttt{observe} method provides an easy way to specify a condition that only allows a single value. For example, to specify that \texttt{x1} must have the value 2, we can use
+The \texttt{observe} method provides an easy way to specify a condition that only allows a single value. For example, to specify that \texttt{x1} must have the value 2, we can use:
 
 \begin{flushleft}
 \texttt{x1.observe(2)}
@@ -109,7 +109,7 @@ A \emph{constraint} provides a way to specify a potential or weighting over an e
 
 Constraint values should always be non-negative. Also, although it is not strictly enforced, we recommend that constraint values be at most 1. Some algorithms compute upper bounds on probabilities and need to assume an upper bound on constraint values. An upper bound of 1 is assumed, so if the actual value can be higher, these algorithms will be incorrect. For algorithms that don't compute upper bounds in this way, it doesn't matter. Currently, the only algorithms that compute upper bounds like this are the lazy factored inference algorithms. If you have a constraint value greater than 1, a warning will be issued.
 
-Constraints serve multiple purposes in Figaro. One is to specify soft evidence on an element. For example, if in the above Bayesian network we think we heard John call but we're not sure, we might introduce the constraint
+Constraints serve multiple purposes in Figaro. One is to specify soft evidence on an element. For example, if in the above Bayesian network we think we heard John call but we're not sure, we might introduce the constraint:
 
 \begin{flushleft}
 \texttt{johnCalls.setConstraint((b: Boolean) => 
@@ -143,7 +143,7 @@ Once we have defined the \texttt{Firm} class, we create an array named \texttt{f
  
 The next line is interesting. It allows us to identify the bid of the winning bidder as an element with a name, even though we don't know who the winner is. We can do this because even though we don't know who the winner is, we can refer to the \texttt{winner} field, and because the value of \texttt{winner}, whatever it is, is a \texttt{Firm} that has a \texttt{bid} field, which is an element that can be referred to. It is important to realize that this \texttt{Chain} does not create a new element but rather refers to the element \texttt{f.bid} that was created previously.
 
-Finally, we introduce the constraint, which says that a winning bid of d has weight \texttt{20 $-$ d}. This means that a winning bid of 5 is 15 times more likely than a winning bid of 19. The effect is to make the winning bid more likely to be low. Note that in this model, the winning bid is not necessarily the lowest bid. For various reasons, the lowest bidder might not win the contract, perhaps because they offer a poor quality service or they don't have the right connections. Using a constraint, the model is specified very simply using a discrete uniform selection and a simple constraint.
+Finally, we introduce the constraint, which says that a winning bid of \texttt{d} has weight \texttt{20 $-$ d}. This means that a winning bid of 5 is 15 times more likely than a winning bid of 19. The effect is to make the winning bid more likely to be low. Note that in this model, the winning bid is not necessarily the lowest bid. For various reasons, the lowest bidder might not win the contract, perhaps because they offer a poor quality service or they don't have the right connections. Using a constraint, the model is specified very simply using a discrete uniform selection and a simple constraint.
 
 Constraints are also useful for expressing undirected models such as relational Markov networks or Markov logic networks. To illustrate, we will use a version of the friends and smokers example. This example involves a number of people and their smoking habits. People have some propensity to smoke, and people are likely to have the same smoking habit as their friends.
 
@@ -282,21 +282,22 @@ For example, let's expand the actors and movies example so that actors have a sk
 \newline class Actor \{
 \newline \tab var movies: List[Movie] = List()
 \newline \tab lazy val skillful = Flip(0.1)
-\newline \tab lazy val qualities = Container(movies.map(_.quality):_*)
-\newline \tab lazy val numGoodMovies = qualities.count(_ == 'high)
-\newline \tab lazy val famous = Chain(numGoodMovies, (n: Int) => if (n >= 2) Flip(0.8) else Flip(0.1))
+\newline \tab lazy val qualities = Container(movies.map(\_.quality):\_*)
+\newline \tab lazy val numGoodMovies = qualities.count(\_ == 'high)
+\newline \tab lazy val famous = Chain(numGoodMovies, (n: Int) => 
+\newline \tab if (n >= 2) Flip(0.8) else Flip(0.1))
 \newline \}
 \newline 
 \newline class Movie \{
 \newline \tab var actors: List[Actor] = List()
-\newline \tab lazy val skills = Container(actors.map(_.skillful):_*)
+\newline \tab lazy val skills = Container(actors.map(\_.skillful):\_*)
 \newline \tab lazy val actorsAllGood = skills.exists(b => b)
-\newline lazy val probLow = 
-\newline Apply(actorsAllGood, (b: Boolean) => if (b) 0.2; else 0.5)
-\newline lazy val probHigh = 
-\newline Apply(actorsAllGood, (b: Boolean) => if (b) 0.5; else 0.2)
-\newline lazy val quality = 
-\newline Select(probLow -> 'low, Constant(0.3) -> 'medium, probHigh -> 'high)
+\newline \tab lazy val probLow = 
+\newline \tab Apply(actorsAllGood, (b: Boolean) => if (b) 0.2; else 0.5)
+\newline \tab lazy val probHigh = 
+\newline \tab Apply(actorsAllGood, (b: Boolean) => if (b) 0.5; else 0.2)
+\newline \tab lazy val quality = 
+\newline \tab Select(probLow -> 'low, Constant(0.3) -> 'medium, probHigh -> 'high)
 \newline \}
 \newline 
 \newline class Appearance(actor: Actor, movie: Movie) \{
@@ -340,20 +341,20 @@ First, note that the \texttt{Actor} class has a \texttt{movies} field, whose pur
 
 The initial value of both \texttt{movies} and \texttt{actors} is an empty list. We add elements to them later. In fact, whenever we create an appearance, we make sure to add the movie to the actor's list of movies and vice versa. This is achieved by the first two lines of the \texttt{Appearance} class. The notation \texttt{actor.movies ::= movie} is short for \texttt{actor.movies = movie :: actor.movies}, which prepends movie to the current \texttt{actor.movies} list, and replaces the current list with the new list. The \texttt{::=} notation is a variant of the familiar \texttt{+=} notation common in many languages.
 
-The \texttt{Actor} class has \texttt{skillful} and \texttt{famous} fields. Rather than an ordinary \texttt{val}, each of these fields is defined to be \texttt{lazy val}, which means that their contents are not determined until they are required by some other computation. This is necessary for us because their contents can depend on the list of movies the actor appears in. For example, whether the actor is famous depends on whether at least two movies have high quality. If \texttt{famous} was an ordinary \texttt{val}, its value (an \texttt{Element[Boolean]}) would be computed at the point it is defined, so it would use an empty list of movies. Because we want to use the correct list of movies in defining it, we postpone evaluating it until the movies list has been filled. For \texttt{actor3}, this will happen when we make the observation \texttt{actor3.famous.observe(true)}, which we make sure to delay until after all the appearances have been created. For other actors, the \texttt{famous} field will be evaluated even later, during inference. Care should be taken with declaring elements as lazy. Side effects and unintended consequences can occur if a lazy element declared outside a Chain is first required (i.e., created) during the execution of a Chain.
+The \texttt{Actor} class has \texttt{skillful} and \texttt{famous} fields. Rather than an ordinary \texttt{val}, each of these fields is defined to be \texttt{lazy val}, which means that their contents are not determined until they are required by some other computation. This is necessary for us because their contents can depend on the list of movies the actor appears in. For example, whether the actor is famous depends on whether at least two movies have high quality. If \texttt{famous} was an ordinary \texttt{val}, its value (an \texttt{Element[Boolean]}) would be computed at the point it is defined, so it would use an empty list of movies. Because we want to use the correct list of movies in defining it, we postpone evaluating it until the movies list has been filled. For \texttt{actor3}, this will happen when we make the observation \texttt{actor3.famous.observe(true)}, which we make sure to delay until after all the appearances have been created. For other actors, the \texttt{famous} field will be evaluated even later, during inference. Care should be taken with declaring elements as lazy. Side effects and unintended consequences can occur if a lazy element declared outside a \texttt{Chain} is first required (i.e., created) during the execution of a \texttt{Chain}.
 
 Do not hesitate to use mutation if it will help you organize your program in a logical way. In one application, we have found it convenient to use a hash table that maps concepts to their associated elements. This allowed us to create the element associated with a concept as the concept was introduced. If we later had to refer to the same concept again, we could easily access its element.
 
 \section{Universes}
 
-A central concept in Figaro is a \emph{universe}. A universe is simply a collection of elements. Reasoning algorithms operate on a universe (or, as we shall see for dependent universe reasoning, on multiple connected universes). Most of the time while using Figaro, you will not need to create a new universe and can rely on the default universe, which is just called \texttt{universe}. It can be accessed using
+A central concept in Figaro is a \emph{universe}. A universe is simply a collection of elements. Reasoning algorithms operate on a universe (or, as we shall see for dependent universe reasoning, on multiple connected universes). Most of the time while using Figaro, you will not need to create a new universe and can rely on the default universe, which is just called \texttt{universe}. It can be accessed using:
 
 \begin{flushleft}
 \texttt{import com.cra.figaro.language.\_
 \newline import com.cra.figaro.language.Universe.\_}
 \end{flushleft}
 
-If you do need a different universe, you can call \texttt{Universe.create\-New()}. This creates a new universe and sets the default universe to it. If you are going to need the old default universe, you will need a way to refer to it. You could use
+If you do need a different universe, you can call \texttt{Universe.create\-New()}. This creates a new universe and sets the default universe to it. If you are going to need the old default universe, you will need a way to refer to it. You could use:
 
 \begin{flushleft}
 \texttt{val u1 = Universe.universe
@@ -408,7 +409,7 @@ We can give the engine a name and make it belong to the car as an element collec
 }
 \end{flushleft}
 
-In the first line we make the \texttt{Car} class inherit from \texttt{ElementCollect\-ion}, so that every instance of \texttt{Car} is an element collection. In the fourth line, we assign engine the name "engine" and add it to the instance of Car being created, which is referred to by \texttt{this} within the \texttt{Car} class. We similarly make the abstract \texttt{Engine} class inherit  element collections and assign \texttt{power} the name "power" within \texttt{V*, V6, and MySuperEngine} within each subclass of  \texttt{Engine}.
+In the first line we make the \texttt{Car} class inherit from \texttt{ElementCollect\-ion}, so that every instance of \texttt{Car} is an element collection. In the last line, we assign engine the name "engine" and add it to the instance of \texttt{Car} being created, which is referred to by \texttt{this} within the \texttt{Car} class. We similarly make the abstract \texttt{Engine} class inherit  element collections and assign \texttt{power} the name "power" within \texttt{V8, V6, and MySuperEngine} within each subclass of  \texttt{Engine}.
 
 An element collection, like a universe, is simply a set of elements. The difference is that a universe is also a set of elements on which a reasoning algorithm operates. An element collection provides the ability to refer to an element by name. For example, if \texttt{car} is an instance of \texttt{Car}, we can use \texttt{car.get[Engine]("engine")} to get at the element named "engine". The \texttt{get} method takes a type parameter, which is the value type of the element being referred to. The notation \texttt{[Engine]} specifies this type parameter, and serves to make sure that the expression \texttt{car.get[Engine]("engine")} has type \texttt{Element[Engine]}.
 
@@ -417,7 +418,6 @@ The key ability of element collections that allows them to solve our puzzle is t
 So, finally, the answer to our puzzle is that in place of the question mark, we put \texttt{get[Symbol]("engine.power")}. This applies the get method to the instance of \texttt{Car} being created. Here is the full example:
 
 \begin{flushleft}
-\marginpar{This example can be found in MultiValuedReferenceUncertainty.scala}
 \texttt{import com.cra.figaro.language.\_
 \newline
 \newline abstract class Engine extends ElementCollection \{
@@ -448,6 +448,7 @@ So, finally, the answer to our puzzle is that in place of the question mark, we 
 
 The previous subsection described how to refer to elements using references that identify a single element. A feature of PRMs is the ability to define multi-valued relationships, where an entity is related to multiple entities via an attribute. In Figaro, we use multi-valued references and aggregates to capture these kinds of situations. For example:
 
+\marginpar{This example can be found in MultiValuedReferenceUncertainty.scala}
 \begin{flushleft}
 \texttt{import com.cra.figaro.language.\_
 \newline 

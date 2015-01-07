@@ -6,15 +6,15 @@
 
 %----------------------------------------------------------------------------------------
 
-Make sure Scala version 2.11.4 or later is installed on your machine. Follow the instructions to either extract the Figaro jar to some location or build the jar from the code repository. Change directory to that location and enter at the command prompt
+Make sure Scala version 2.11.4 or later is installed on your machine. Follow the instructions to either extract the Figaro jar to some location or build the jar from the code repository. Change the directory to that location and enter the line below in the command prompt:
 
 \begin{flushleft}
 \texttt{scala $-$classpath "figaro.jar;\$CLASSPATH"}
 \end{flushleft}
 
-This starts the Scala interactive console and makes sure all the Figaro classes are available. The interactive console reads one line of Scala code at a time and interprets it. It is useful for learning and trying new things. Ordinarily, you would use the compiler to compile a program into Java byte code and run it. To use the Scala compiler, use the \texttt{scalac} or  \texttt{fsc} command, again making sure \texttt{Figaro.jar} is in the class path.
+This starts the Scala interactive console and makes sure all the Figaro classes are available. The interactive console reads one line of Scala code at a time and interprets it. It is useful for learning and trying new things. Ordinarily, you would use the compiler to compile a program into Java byte code and run it. To use the Scala compiler, use the \texttt{scalac} or  \texttt{fsc} command, again making sure the \texttt{Figaro.jar} is in the class path.
 
-Once in the interactive console, at the Scala prompt, enter
+Once in the interactive console, at the Scala prompt, enter:
 
 \begin{flushleft}
 \texttt{import com.cra.figaro.language.\_}
@@ -26,7 +26,7 @@ This loads the portion of the Figaro package that allows you to create models us
 \texttt{val hw = Constant("Hello world!")}
 \end{flushleft}
 
-This line creates a field \texttt{hw} whose value is the probabilistic model that produces the string "Hello world!" with probability 1. To exercise the model, we need to create an instance of an algorithm. We'll use an importance sampling algorithm. First we need to import the algorithm's definition:
+This line creates a field \texttt{hw} whose value is the probabilistic model that produces the string "Hello world!" with probability 1.0. To exercise the model, we need to create an instance of an algorithm. We'll use an importance sampling algorithm. First we need to import the algorithm's definition:
 
 \begin{flushleft}
 \texttt{import com.cra.figaro.algorithm.sampling.\_}
@@ -43,23 +43,23 @@ The \texttt{1000} tells the sampler to take 1000 samples. Before we can query th
 \begin{flushleft}
 \texttt{alg.start()}
 \end{flushleft}
-We can now ask for the probability of various strings. Enter
+We can now ask for the probability of various strings. Enter:
 
 \begin{flushleft}
 \texttt{alg.probability(hw, "Hello world!")}
 \end{flushleft}
-Scala responds with something like
+Scala responds with something like:
 
 \begin{flushleft}
 \texttt{res3: Double = 1.0}
 \end{flushleft}
-This means that the answer is of type \texttt{Double}, has value 1.0, and is given the name \texttt{res3}. We can similarly ask
+This means that the answer is of type \texttt{Double}, has value 1.0, and is given the name \texttt{res3}. We can similarly ask:
 
 \begin{flushleft}
 \texttt{alg.probability(hw, "Goodbye!")}
 \end{flushleft}
 
-Scala responds with something like
+Scala responds with something like:
 
 \begin{flushleft}
 \texttt{res4: Double = 0.0}

@@ -75,11 +75,11 @@ A decision is similar to a chain, but unlike the chain, a decision element can c
 \texttt{def setPolicy(new\_fcn: (T => Element[U])): Unit}
 \end{flushleft}
 
-That is, setting the policy of a decision is just providing a new function from the value of a parent to an \texttt{Element[U]}. Users can also get the policy for a specific value of the parent by calling \texttt{getPolicy(p: T): Element[U]}. Various other ways to set the policy can also be found in the Decision code.
+That is, setting the policy of a decision is just providing a new function from the value of a parent to an \texttt{Element[U]}. Users can also get the policy for a specific value of the parent by calling \texttt{getPolicy(p: T): Element[U]}. Various other ways to set the policy can also be found in the \texttt{com.cra.figaro.algorithm.decision} package.
 
 \section{Single decision models and policy generation}
 
-Single decision models can be created in Figaro by simply inserting a \texttt{Decision} element into the model. Once the model has been created, the goal is usually to compute the optimal policy for the decision that maximizes the expected utility of the model. This is done as two explicit steps in Figaro;computing the expected utility of each parent and decision pair, then determining the decision that has the maximum expected utility for each parent value. The policy is then set as a function that returns the maximum expected utility decision as a \texttt{Constant}  for any parent value. This policy computation is performed using one of Figaro's built-in inference algorithms. Two alternative methods are provided. One is generally used when the support of the parent is finite, the other when it is infinite. However, there are some cases where the support is finite but very large and the infinite support method is preferable. Alternatively, for some distributions with infinite support, like Poisson or Geometric, only a small number of values are likely, and the finite support method can be used.
+Single decision models can be created in Figaro by simply inserting a \texttt{Decision} element into the model. Once the model has been created, the goal is usually to compute the optimal policy for the decision that maximizes the expected utility of the model. This is done as two explicit steps in Figaro; computing the expected utility of each parent and decision pair, then determining the decision that has the maximum expected utility for each parent value. The policy is then set as a function that returns the maximum expected utility decision as a \texttt{Constant}  for any parent value. This policy computation is performed using one of Figaro's built-in inference algorithms. Two alternative methods are provided. One is generally used when the support of the parent is finite, the other when it is infinite. However, there are some cases where the support is finite but very large and the infinite support method is preferable. Alternatively, for some distributions with infinite support, like Poisson or Geometric, only a small number of values are likely, and the finite support method can be used.
 
 \subsection{Finite parent support}
 
@@ -150,7 +150,7 @@ In this algorithm, the optimal policies are computed in reverse order on a set o
 \begin{flushleft}
 \marginpar{A multiple decision example can be found in MultiDecision.scala} 
 \texttt{val alg = MultiDecisionVariableElimination(List(utility1, utility2), decision1, decision2)
-\newline val alg = MultiDecisionImportanceSampling(10000,	List(utility1, utility2), decision1, decision2)
+\newline val alg = MultiDecisionImportance(10000,	List(utility1, utility2), decision1, decision2)
 \newline val alg = MultiDecisionMetropolisHastings(10000, maker: ProposalMakerType, 1000, List(utility1, utility2), decision1, decision2)
 }
 \end{flushleft}
@@ -161,7 +161,7 @@ Note that the interface for the \texttt{MultiDecisionMetropolisHastings} is diff
 \texttt{type ProposalMakerType = (Universe, Element[\_]) => ProposalScheme}
 \end{flushleft}
 
-Only the one-time versions of the decision algorithms can be used for multi-decision models. To compute the optimal policy for every decision in the model, the user simply does, for example,:
+Only the one-time versions of the decision algorithms can be used for multi-decision models. To compute the optimal policy for every decision in the model, the user simply does, for example:
 
 \begin{flushleft}
 \texttt{val propmaker = (mv: Universe, e: Element[\_]) => ProposalScheme.default(mv)
@@ -169,4 +169,4 @@ Only the one-time versions of the decision algorithms can be used for multi-deci
 \newline alg.start()}
 \end{flushleft}
 
-The ProposalMaker for this small example just uses the default proposal for each instantiation of \texttt{DecisionMetropolisHastings} for a decision. However, we could also change the proposal scheme for each decision. There is also no need to call \texttt{alg.setPolicy}, since the multi-decision algorithm will set the optimal policy for each decision as it is needed for backward induction. Figaro will automatically compute the partial order of the decisions that are in the parameter list.
+The \texttt{ProposalMaker} for this small example just uses the default proposal for each instantiation of \texttt{DecisionMetropolisHastings} for a decision. However, we could also change the proposal scheme for each decision. There is also no need to call \texttt{alg.setPolicy}, since the multi-decision algorithm will set the optimal policy for each decision as it is needed for backward induction. Figaro will automatically compute the partial order of the decisions that are in the parameter list.
