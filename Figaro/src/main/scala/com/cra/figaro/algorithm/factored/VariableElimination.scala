@@ -248,6 +248,9 @@ class ProbQueryVariableElimination(override val universe: Universe, targets: Ele
   def finish(factorsAfterElimination: Set[Factor[Double]], eliminationOrder: List[Variable[_]]) =
     marginalize(makeResultFactor(factorsAfterElimination))
 
+  /**
+   * Computes the normalized distribution over a single target element.  
+   */
   def computeDistribution[T](target: Element[T]): Stream[(Double, T)] = {
     val factor = targetFactors(target)
     val targetVar = Variable(target)
@@ -256,6 +259,9 @@ class ProbQueryVariableElimination(override val universe: Universe, targets: Ele
     dist.toStream
   }
 
+ /**
+   * Computes the expectation of a given function for single target element.  
+   */
   def computeExpectation[T](target: Element[T], function: T => Double): Double = {
     def get(pair: (Double, T)) = pair._1 * function(pair._2)
     (0.0 /: computeDistribution(target))(_ + get(_))
