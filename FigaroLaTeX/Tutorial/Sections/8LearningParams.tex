@@ -8,9 +8,9 @@ Figaro provides support for learning model parameters from data. In this section
 
 \section{Parameters and parameterized elements}
 
-This section discusses elements which are learnable parameters. For clarity, a distinction should be made on the meaning of the word \emph{parameter} in this context. This is different from a method parameter or Scala type parameter. In this section, we use \emph{parameter} to refer to a Figaro element which can be learned from data. There are currently two such types of parameters in Figaro - \texttt{Beta} and \texttt{Dirichlet}.
+This section discusses elements which are learnable parameters. For clarity, a distinction should be made on the meaning of the word \emph{parameter} in this context. This is different from a method parameter or Scala type parameter. In this section, we use \emph{parameter} to refer to a Figaro element which can be learned from data. There are currently two such types of parameters in Figaro: (1) \texttt{Beta}, and (2) \texttt{Dirichlet}.
 
-A customary illustration of parameter learning is to consider the outcomes of a coin flip and determine whether or not the coin is fair. In the case of a \texttt{Flip} element (which is a Bernoulli distribution), the conjugate prior distribution is a Beta distribution. If the coin is not fair, we would expect a prior distribution to have a higher value of alpha or beta (the shape variables of a Beta). First, we will create the conjugate prior distribution of a \texttt{Flip}
+A customary illustration of parameter learning is to consider the outcomes of a coin flip and determine whether or not the coin is fair. In the case of a \texttt{Flip} element (which is a Bernoulli distribution), the conjugate prior distribution is a Beta distribution. If the coin is not fair, we would expect a prior distribution to have a higher value of alpha or beta (the shape variables of a Beta). First, we will create the conjugate prior distribution of a \texttt{Flip}:
 
 \begin{flushleft}
 \texttt{val fairness = Beta(1,1)}
@@ -36,13 +36,9 @@ As a more detailed example, suppose we have seen 24 heads and 62 tails. One way 
 The following block of Scala code will iterate through each of the items in the sequence, create a Flip element using the parameter, and observe true or false based on the side of the coin:
 
 \begin{flushleft}
-\texttt{data.foreach \{ d =>
-\newline \tab val f = Flip(fairness)
-\newline \tab \tab if (d == 'H') \{
-\newline \tab \tab f.observe(true)
-\newline \tab \} else if (d == 'T') \{ 
-\newline \tab \tab f.observe(false)
-\newline \tab \}
+\texttt{data zip model.trials foreach \{
+\newline \tab (datum: (Char, Flip)) => if (datum.\_1 == 'H') 
+\newline \tab datum.\_2.observe(true) else datum.\_2.observe(false)
 \newline \}
 }
 \end{flushleft}
@@ -53,7 +49,7 @@ We have created a parameter, parameterized elements and considered a set of data
 
 A learning algorithm can be used to determine the maximum a posteriori estimate for parameter elements. Parameter elements have a \texttt{MAPValue} which is set when the parameter is used as a target in a learning algorithm. Presently, Figaro provides one learning algorithm, expectation maximization, which uses existing Figaro algorithms to estimate sufficient statistics. Recall that expectation maximization is an iterative algorithm consisting of an expectation step and a maximization step. During the expectation step, an estimate is produced for the sufficient statistics of the parameter. The estimates are then used in the maximization step to find the most likely value of the parameter. This continues for a set number of iterations and converges toward the true MAP value.
 
-From a practical standpoint, learning a parameter with expectation maximization is very simple. We need only provide the target parameter and, optionally, the number of iterations to the algorithm. The default number of iterations is 10. We can also choose an inference algorithm for estimating the sufficient statistics of the target parameters. Currently, Metropolis Hastings, Importance Sampling, Variable Elimination or Belief Propagation can be used for this purpose. Figaro's Generalized EM algorithm is used in the following way:
+From a practical standpoint, learning a parameter with expectation maximization is very simple. We need only provide the target parameter and, optionally, the number of iterations to the algorithm. The default number of iterations is 10. We can also choose an inference algorithm for estimating the sufficient statistics of the target parameters. Currently, Metropolis Hastings, importance sampling, variable elimination or belief propagation can be used for this purpose. Figaro's Generalized EM algorithm is used in the following way:
 
 \begin{flushleft}
 \texttt{val learningAlgorithm = EMwithMH(fairness)
@@ -68,7 +64,7 @@ From a practical standpoint, learning a parameter with expectation maximization 
 \end{flushleft}
 
 The line \texttt{val learningAlgorithm = EMwithMH(fairness)} creates an EM algorithm which uses Metropolis Hastings to estimate sufficient statistics. We could also have used \texttt{EMwithBP(fairness)} or 
-\texttt{EMwithImportance(fairness)}. 
+\texttt{EMwithImp\-ortance(fairness)}. 
 
 After the algorithm has finished running, we can create an element learned from the parameter by using \texttt{Flip(fairness.MAPValue)}. The element \texttt{coin} is a \texttt{Flip}, where the probability of producing true is determined from the data we observed above.
 
@@ -79,7 +75,7 @@ After running the program, we see:
 0.7159090909090909}
 \end{flushleft}
 
-We may want to make further explorations about the learned model. For instance, if we wanted to know the probability that two flips of this coin show the same side, we could use
+We may want to make further explorations about the learned model. For instance, if we wanted to know the probability that two flips of this coin show the same side, we could use:
 
 \begin{flushleft}
 \texttt{val t1 = Flip(fairness.MAPValue) 
@@ -103,9 +99,9 @@ This results in the following output:
 \texttt{The probability of two coins which exhibit this fairness showing the same side is: 0.5932334710743803}
 \end{flushleft}
 
-\section{Parameter Collections}
+\section{Parameter collections}
 
-In the previous sections, parameter learning was discussed using a Beta parameter. The Beta parameters were supplied individually to the learning algorithm, and the MAP value for each parameter was retrieved individually. For more complicated models, it is often useful to define a model structure with parameters which can be learned, and then use the values of the learned parameters in the same structure. The ModelParameters pattern is a simple way of accomplishing this. By using ParameterCollection, the model structure only needs to be defined once. Parameters are added to the collection in a similar fashion to Element collections. We specify the parameter name and add it to the collection when we create the parameters.
+In the previous sections, parameter learning was discussed using a Beta parameter. The Beta parameters were supplied individually to the learning algorithm, and the MAP value for each parameter was retrieved individually. For more complicated models, it is often useful to define a model structure with parameters which can be learned, and then use the values of the learned parameters in the same structure. The \texttt{ModelParameters} pattern is a simple way of accomplishing this. By using \texttt{ParameterCollection}, the model structure only needs to be defined once. Parameters are added to the collection in a similar fashion to \texttt{Element} collections. We specify the parameter name and add it to the collection when we create the parameters.
 
 This section will also explain the use of Dirichlet parameters. The Dirichlet distribution is a multidimensional generalization of the Beta with a variable number of concentration parameters or alpha values. These values correspond to the weight of each possible outcome in the posterior distribution. In a Dirichlet parameter with two dimensions, the alpha values might again correspond to the outcome of heads and tails, or true and false. Using a higher number of dimensions, we can model a number of different categories or outcomes.
 
@@ -152,14 +148,13 @@ This defines a class which accepts a \texttt{ParameterCollection}, a set of data
     \newline \tab Apply(die1, die2, sum)
 	\newline \}
   }
-}
 \end{flushleft}
 
 The code section above defines a Scala function which accepts two Dirichlet parameters and an integer value. \texttt{val sum = (i1: Int, i2: Int) => i1 + i2} defines a Scala function which accepts two integer values and returns their sum.  Next, two Select elements are created and parameterized by the input parameters. We retrieve the parameters by using the \texttt{get} method from the input \texttt{ParameterCollection}.
 
 Note that the arguments to \texttt{Select} are different from what has been presented previously. Instead of directly enumerating each probability and outcome, we specify a Dirichlet parameter and the list of possible outcomes. The last two lines of \texttt{trial} apply the sum function to the die and observe the result. By calling the \texttt{trial} function for each tuple in the sequence, we can create a model learned from the data.
 
-We can now create an instance of the DiceModel class, using the prior parameters from the parameter collection. 
+We can now create an instance of the \texttt{DiceModel} class, using the prior parameters from the parameter collection. 
 
 \begin{flushleft}
  \texttt{val model = new DiceModel(params.priorParameters, data, outcomes)
@@ -196,7 +191,7 @@ The code block above will create \texttt{Select} elements using to the MAP value
 }
 \end{flushleft}
 
-Note that for a Select, a list of outcomes must be supplied as an argument to along with their corresponding probabilities. This is because the number of concentration parameters is may vary, and the type of the outcomes is not fixed. Running this code results in the following output, in which we see the model has estimated the probabilities of each value for each die. If one examines the full data declaration in the example code, it is quite easy to see that there are only three observed values of the sum of the die (3, 7 and 8), so the learning algorithm has correctly inferred that the most likely values of the die are 1, 2 and 6, respectively.
+Note that for a \texttt{Select}, a list of outcomes must be supplied as an argument to along with their corresponding probabilities. This is because the number of concentration parameters is may vary, and the type of the outcomes is not fixed. Running this code results in the following output, in which we see the model has estimated the probabilities of each value for each die. If one examines the full data declaration in the example code, it is quite easy to see that there are only three observed values of the sum of the die (3, 7 and 8), so the learning algorithm has correctly inferred that the most likely values of the die are 1, 2 and 6, respectively.
 
 \begin{flushleft}
 \texttt{The probabilities of seeing each side of d\_1 are:

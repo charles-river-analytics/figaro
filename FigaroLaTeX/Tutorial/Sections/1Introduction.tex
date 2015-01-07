@@ -38,7 +38,7 @@ Figaro's library of reasoning algorithms is also extensible. Current built-in al
 \item Metropolis-Hastings, with an expressive language to define proposal distributions
 \item Support computation
 \item Most probable explanation (MPE) using variable elimination, belief propagation, or simulated annealing
-\item Probability of evidence using importance sampling, belief propagation, variable elimination and particle filtering
+\item Probability of evidence using importance sampling, belief propagation, variable elimination, and particle filtering
 \item Particle filtering
 \item Factored frontier
 \item Parameter learning using expectation maximization
@@ -47,7 +47,7 @@ Figaro's library of reasoning algorithms is also extensible. Current built-in al
 Figaro provides both regular (the algorithm is run once) and anytime (the algorithm is run until stopped) versions of some of these algorithms. In addition to the built-in algorithms, Figaro provides a number of tools for creating your own reasoning algorithms.
 
 Figaro is free and is released under an open-source license (see license file). The public code
-repository for Figaro can also be found at \url{https://github.com/p2t2}
+repository for Figaro can also be found at \url{https://github.com/p2t2}.
 
 
 %------------------------------------------------
@@ -66,12 +66,11 @@ algorithms for the library.
 
 This tutorial assumes some basic knowledge of probabilistic modeling and inference to derive the maximum benefit from it. Also, while this tutorial is not an introduction to Scala, it will explain some Scala constructs as it goes along, so that the reader can make basic use of Figaro after reading the tutorial. However, to get the full benefit of Figaro, it is recommended that the reader learn some Scala. This could prove well worth the reader's while, because Scala is a language that combines elegance and practicality in a useful way. "Programming in Scala" by Martin Odersky is available for free online.
 
-The tutorial is not a complete and comprehensive guide to all of Figaro's features. The official reference is the Scaladoc, which documents Figaro's methods. For a broader introduction to probabilistic programming and Figaro, see "Practical Probabilistic Programming" by Avi Pfeffer, published by Manning.
+The tutorial is not a complete and comprehensive guide to all of Figaro's features. The official reference is the Scaladoc, which documents Figaro's methods. For a broader introduction to probabilistic programming and Figaro, see "Practical Probabilistic Programming" by Avi Pfeffer, published by Manning (\url{http://www.manning.com/pfeffer/}).
 
 After presenting a "Hello world!" example, the tutorial will begin with a discussion of Figaro's representation, i.e. the data structures that underlie the probabilistic models. Next, it will give examples
 using Scala of creating Figaro models. It will then describe how to use the built-in reasoning algorithms, including a brief discussion of probabilistic programming for dynamic models, decision networks,
-parameter learning and hierarchical reasoning. The last two sections of the tutorial are geared towards users who want to extend Figaro, first describing how to create new modeling data structures and then describing how to create new algorithms. All of the code for the examples presented in this tutorial can be
-found with the set of examples distributed with Figaro.
+parameter learning and hierarchical reasoning. The last two sections of the tutorial are geared towards users who want to extend Figaro, first describing how to create new modeling data structures and then describing how to create new algorithms. All of the code for the examples presented in this tutorial can be found with the set of examples distributed with Figaro.
 
 \section{Installation}
 
@@ -130,8 +129,8 @@ found with the set of examples distributed with Figaro.
 % }
 % \newline
 
-This will create cross-compiled versions of Figaro for Scala 2.10 and Scala 2.11; you will find the artifacts in the "target" directory.
-Please see the Quick Start Guide for instructions on installing Figaro. There are several ways to use Figaro, including just using the binary distribution or compiling from source.
+%This will create cross-compiled versions of Figaro for Scala 2.10 and Scala 2.11; you will find the artifacts in the "target" directory.
+Please see the Quick Start Guide for instructions on installing Figaro. There are several ways to use Figaro, including just using the binary distribution or compiling from the source code.
 
-Figaro is maintained as open source on GitHub. The GitHub project is Probabilistic Programming Tools and Techniques (P2T2), located at https://github.com/p2t2. If you want to see the source code and build Figaro yourself, please visit our GitHub site. We welcome contributions from the community.
+Figaro is maintained as open source on GitHub. The GitHub project is Probabilistic Programming Tools and Techniques (P2T2), located at \url{https://github.com/p2t2}. If you want to see the source code and build Figaro yourself, please visit our GitHub site. We welcome contributions from the community.
 
