@@ -96,16 +96,16 @@ To get started, download and uncompress the FigaroWork files to a directory on y
 
 When you have finished installing, you will have the following directories and files on your machine
 ```
-	\FigaroWork
-		README.txt
-		\project
-			build.properties
-			Build.scala
-			plugins.sbt
-		\src
-			\main
-				\scala
-					Test.scala
+\FigaroWork
+	README.txt
+	\project
+		build.properties
+		Build.scala
+		plugins.sbt
+	\src
+		\main
+			\scala
+				Test.scala
 ```
 
 Test your new build environment by running the simple Figaro test program provided with the project. Open a command prompt, navigate to your local FigaroWork directory (ex. C:\FigaroWork), and run this command
@@ -133,6 +133,50 @@ Replace <class_with_main> with the package and class that contains the main() me
 ```
 sbt "runMain com.cra.test.FigaroTest parameter1 parameter2 parameter3"
 ```
+
+## How do I run my own Figaro programs without SBT?
+
+While SBT is a useful tool, you may want to manage your own workspace differently.
+
+To run Figaro, you will first need Scala. The Scala compiler can either be run from the command line or within an Integrated Development Environment (IDE). Two IDEs that support Scala development are Eclipse and IntelliJ Idea. NetBeans also has a Scala plugin but it does not appear to support recent versions of Scala (but that may have changed). This section focuses on how to obtain Scala and Figaro and run Scala programs that use Figaro from the command line. If you choose to use an IDE, please see the documentation of your IDEs and Scala plugins for details of how to include the Figaro library.
+
+To get started, download Scala from http://scala-lang.org/download/. You will need Scala version 2.11.2 or later to run the latest version of Figaro. Follow the Scala installation instructions at http://scala-lang.org/download/install.html and make sure you can run, compile, and execute the “Hello World” program provided in the documentation.
+
+The next step is to obtain Figaro. The Figaro binary distribution is hosted at the Charles River Analytics, Inc. Web site. Go to https://www.cra.com/figaro. The current version, as of January 2015, is 3.0.0.0, and is available for Scala 2.11. Always make sure the Figaro version you use matches the Scala version you’re using. Each available download link is a compressed archive containing the Figaro jar (jar is the Java/Scala format for compiled byte code), examples, documentation, Scaladoc, and source code files. Click the appropriate link and then uncompress the downloaded archive to access the Figaro jar file. In the distribution, the Figaro jar name ends with “fat”, indicating that this is a fat jar containing all the necessary libraries to run Figaro. Using a fat jar simplifies the Scala classpath needed to run Figaro programs. 
+
+Optionally, you can add the fully qualified path name of the Figaro jar to your classpath. This can be done by adding the Figaro jar to the CLASSPATH environment variable in your operating system. The process for editing the CLASSPATH varies from operating system to operating system. You can see details about using the PATH and CLASSPATH environment variables in http://docs.oracle.com/javase/tutorial/essential/environment/paths.html.
+
+If the CLASSPATH does not exist yet, create it. It is good practice to include the current working directory, so set the CLASSPATH to “.”, then proceed to add the Figaro jar, as in the next step. 
+
+By this point, the CLASSPATH already exists, so we can add the Figaro path to it. For example, on Windows 7, if figaro_2.11-3.0.0.0.jar is in the “C:\Users\apfeffer” folder and the CLASSPATH is currently equal to “.”, change the CLASSPATH to “C:\Users\apfeffer\figaro_2.11-3.0.0.0.jar;.” (replace 3.0.0.0 with the appropriate Figaro version number). 
+
+Now you can compile and run Figaro programs just like any Scala program. Put the Test program below in a file named Test.scala. First, let’s assume you followed step 4 and updated the CLASSPATH.
+
+If you run scala Test.scala from the directory containing Test.scala, the Scala compiler will first compile the program and then execute it. It should produce the output 1.0.
+
+If you run scalac Test.scala (note the c at the end of “scalac”), the Scala compiler runs and produces .class files. You can then execute the program by running scala Test from the same directory.
+
+If you did not follow step 4, you can set the CLASSPATH from the command line using the –cp option. For example, to compile and execute Test.scala, assuming figaro_2.11-3.0.0.0.jar is in the “C:\Users\apfeffer” folder, you can run
+```
+scala –cp C:\Users\apfeffer\figaro_2.11-3.0.0.0.jar Test.scala
+```
+
+Here’s the Test program:
+```
+import com.cra.figaro.language._
+import com.cra.figaro.algorithm.sampling._
+
+object Test {
+  def main(args: Array[String]) {
+    val test = Constant("Test")
+    val algorithm = Importance(1000, test)
+    algorithm.start()
+    println(algorithm.probability(test, "Test"))
+  }
+}
+```
+
+This program should output 1.0 when run.
 
 ## How do I compile Figaro from source code?
 
