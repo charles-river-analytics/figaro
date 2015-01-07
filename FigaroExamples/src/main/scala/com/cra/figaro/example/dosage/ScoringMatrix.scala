@@ -22,7 +22,7 @@ object ScoringMatrix {
 
   val blosum62 = {
     var M = Map[Char, Map[Char, Int]]()
-    val lines = for (line <- Source.fromFile("src/main/scala/com/cra/figaro/example/dosage/BLOSUM62.txt").getLines()) yield line
+    val lines = for (line <- Source.fromFile("BLOSUM62.txt").getLines()) yield line
     val (aa_line, mtx_lines) = lines.toList.splitAt(1)
     val aa = aa_line(0).split(" +").toList.tail
 
