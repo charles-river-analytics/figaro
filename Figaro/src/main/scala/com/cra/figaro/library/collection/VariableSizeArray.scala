@@ -11,7 +11,7 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
-package com.cra.figaro.library.process
+package com.cra.figaro.library.collection
 
 import com.cra.figaro.language._
 import com.cra.figaro.algorithm.ValuesMaker

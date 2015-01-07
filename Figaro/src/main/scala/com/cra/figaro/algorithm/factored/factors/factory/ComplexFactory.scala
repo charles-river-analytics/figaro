@@ -135,7 +135,7 @@ object ComplexFactory {
   }
 
     // adapted from Apply1
-  def makeFactors[T](element: com.cra.figaro.library.process.MakeArray[T]): List[Factor[Double]] = {
+  def makeFactors[T](element: com.cra.figaro.library.collection.MakeArray[T]): List[Factor[Double]] = {
     val arg1Var = Variable(element.numItems)
     val resultVar = Variable(element)
     val factor = new BasicFactor[Double](List(arg1Var), List(resultVar))
