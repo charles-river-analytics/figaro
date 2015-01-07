@@ -159,8 +159,8 @@ class ContinuousTest extends WordSpec with Matchers {
     "produce the right probability when conditioned under Metropolis-Hastings" in {
       val sampleUniverse = Universe.createNew()
       val nSamples = Normal(2.5, 2.0)("", sampleUniverse)
-      val samples = for(i <- 1 to 100)
-                    yield nSamples.generateValue(nSamples.generateRandomness())
+      val samples = for (i <- 1 to 100)
+        yield nSamples.generateValue(nSamples.generateRandomness())
 
       val samplesMean = samples.sum / samples.size
       val samplesVariance = samples.map(s => (s - samplesMean) * (s - samplesMean)).sum / samples.size
@@ -177,31 +177,54 @@ class ContinuousTest extends WordSpec with Matchers {
       alg.mean(mean) should be(samplesMean +- 0.1)
       alg.mean(variance) should be(samplesVariance +- 0.1)
     }
+
+    "produce the right probability when conditioned under Importance Sampling" in {
+      val sampleUniverse = Universe.createNew()
+      val nSamples = Normal(2.5, 2.0)("", sampleUniverse)
+      val samples = for (i <- 1 to 100)
+        yield nSamples.generateValue(nSamples.generateRandomness())
+
+      val samplesMean = samples.sum / samples.size
+      val samplesVariance = samples.map(s => (s - samplesMean) * (s - samplesMean)).sum / samples.size
+
+      val universe = Universe.createNew()
+      val mean = Uniform(-5, 5)("mean", universe)
+      val variance = Uniform(0, 5)("variance", universe)
+      for (sample <- samples) {
+        val normal = Normal(mean, variance)
+        normal.observe(sample)
+      }
+      val alg = Importance(100000, mean, variance)
+      alg.start()
+      alg.mean(mean) should be(samplesMean +- 0.1)
+      alg.mean(variance) should be(samplesVariance +- 0.1)
+    }
+
   }
 
   "An AtomicMultivariateNormal" should {
-      val means = List(1.0, 2.0)
-      val covariances = List(List(.25, .15), List(.15, .25))
+    val means = List(1.0, 2.0)
+    val covariances = List(List(.25, .15), List(.15, .25))
 
-//    "have value within a range with probability equal to the cumulative probability of the upper minus the lower" in {
-//      Universe.createNew()
-//      val elem = Normal(1.0, 2.0)
-//      val alg = Importance(20000, elem)
-//      alg.start()
-//      val dist = new NormalDistribution(1.0, 2.0)
-//      val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
-//      alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
-//    }
+    //    "have value within a range with probability equal to the cumulative probability of the upper minus the lower" in {
+    //      Universe.createNew()
+    //      val elem = Normal(1.0, 2.0)
+    //      val alg = Importance(20000, elem)
+    //      alg.start()
+    //      val dist = new NormalDistribution(1.0, 2.0)
+    //      val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
+    //      alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
+    //    }
 
-//    "compute the correct probability under Metropolis-Hastings" in {
-//      Universe.createNew()
-//      val elem = Normal(1.0, 2.0)
-//      val alg = MetropolisHastings(20000, ProposalScheme.default, elem)
-//      alg.start()
-//      val dist = new NormalDistribution(1.0, 2.0)
-//      val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
-//      alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
-//    }
+    //    "compute the correct probability under Metropolis-Hastings" in {
+    //      Universe.createNew()
+    //      val elem = Normal(1.0, 2.0)
+    //      val alg = MetropolisHastings(20000, ProposalScheme.default, elem)
+    //      alg.start()
+    //      val dist = new NormalDistribution(1.0, 2.0)
+    //      val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
+    //      alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
+    //    }
 
     "have the correct density" in {
       Universe.createNew()
@@ -222,7 +245,7 @@ class ContinuousTest extends WordSpec with Matchers {
       var ss2 = 0.0
       var sc12 = 0.0
 
-     for (i <- 0 to 10000) {
+      for (i <- 0 to 10000) {
         val rand = elem.generateRandomness()
         val values = elem.generateValue(rand)
 
@@ -243,17 +266,17 @@ class ContinuousTest extends WordSpec with Matchers {
       val var2 = (ss2 - (sumx2 * sumx2 / n)) / (n - 1)
       val cov = (sc12 - (sumx1 * sumx2 / n)) / (n - 1)
 
-      mean1 should be (means(0) +- 0.01)
-      mean2 should be (means(1) +- 0.01)
+      mean1 should be(means(0) +- 0.01)
+      mean2 should be(means(1) +- 0.01)
 
-      var1 should be (covariances(0)(0) +- 0.01)
-      var2 should be (covariances(1)(1) +- 0.01)
-      cov should be (covariances(0)(1) +- 0.01)
+      var1 should be(covariances(0)(0) +- 0.01)
+      var2 should be(covariances(1)(1) +- 0.01)
+      cov should be(covariances(0)(1) +- 0.01)
     }
 
     "convert to the correct string" in {
       Universe.createNew()
-      MultivariateNormal(means, covariances).toString should equal( "MultivariateNormal(" + means + ",\n" + covariances + ")")
+      MultivariateNormal(means, covariances).toString should equal("MultivariateNormal(" + means + ",\n" + covariances + ")")
     }
   }
 
@@ -315,8 +338,8 @@ class ContinuousTest extends WordSpec with Matchers {
     "produce the right probability when conditioned under Metropolis-Hastings" in {
       val sampleUniverse = Universe.createNew()
       val nSamples = Exponential(2)("", sampleUniverse)
-      val samples = for(i <- 1 to 100)
-                    yield nSamples.generateValue(nSamples.generateRandomness())
+      val samples = for (i <- 1 to 100)
+        yield nSamples.generateValue(nSamples.generateRandomness())
 
       val universe = Universe.createNew()
       val lambda = Uniform(0, 10)("lambda", universe)
@@ -325,6 +348,23 @@ class ContinuousTest extends WordSpec with Matchers {
         exponential.observe(sample)
       }
       val alg = MetropolisHastings(200000, ProposalScheme.default, lambda)
+      alg.start()
+      alg.mean(lambda) should be(2.0 +- 0.5)
+    }
+
+    "produce the right probability when conditioned under Importance Sampling" in {
+      val sampleUniverse = Universe.createNew()
+      val nSamples = Exponential(2)("", sampleUniverse)
+      val samples = for (i <- 1 to 100)
+        yield nSamples.generateValue(nSamples.generateRandomness())
+
+      val universe = Universe.createNew()
+      val lambda = Uniform(0, 10)("lambda", universe)
+      for (sample <- samples) {
+        val exponential = Exponential(lambda)
+        exponential.observe(sample)
+      }
+      val alg = Importance(200000, lambda)
       alg.start()
       alg.mean(lambda) should be(2.0 +- 0.5)
     }
@@ -501,8 +541,8 @@ class ContinuousTest extends WordSpec with Matchers {
     "produce the right probability when conditioned under Metropolis-Hastings" in {
       val sampleUniverse = Universe.createNew()
       val nSamples = Gamma(2, 2)("", sampleUniverse)
-      val samples = for(i <- 1 to 100)
-                    yield nSamples.generateValue(nSamples.generateRandomness())
+      val samples = for (i <- 1 to 100)
+        yield nSamples.generateValue(nSamples.generateRandomness())
 
       val universe = Universe.createNew()
       val k = Uniform(0, 10)("k", universe)
@@ -516,6 +556,26 @@ class ContinuousTest extends WordSpec with Matchers {
       alg.mean(k) should be(2.0 +- 0.5)
       alg.mean(theta) should be(2.0 +- 0.5)
     }
+
+    "produce the right probability when conditioned under Importance Sampling" in {
+      val sampleUniverse = Universe.createNew()
+      val nSamples = Gamma(2, 2)("", sampleUniverse)
+      val samples = for (i <- 1 to 100)
+        yield nSamples.generateValue(nSamples.generateRandomness())
+
+      val universe = Universe.createNew()
+      val k = Uniform(0, 10)("k", universe)
+      val theta = Uniform(0, 10)("theta", universe)
+      for (sample <- samples) {
+        val gamma = Gamma(k, theta)
+        gamma.observe(sample)
+      }
+      val alg = Importance(200000, k, theta)
+      alg.start()
+      alg.mean(k) should be(2.0 +- 0.5)
+      alg.mean(theta) should be(2.0 +- 0.5)
+    }
+
   }
 
   "A AtomicBeta" should {
@@ -584,8 +644,8 @@ class ContinuousTest extends WordSpec with Matchers {
     "produce the right probability when conditioned under Metropolis-Hastings" in {
       val sampleUniverse = Universe.createNew()
       val nSamples = Beta(2, 5)("", sampleUniverse)
-      val samples = for(i <- 1 to 100)
-                    yield nSamples.generateValue(nSamples.generateRandomness())
+      val samples = for (i <- 1 to 100)
+        yield nSamples.generateValue(nSamples.generateRandomness())
 
       val universe = Universe.createNew()
       val a = Uniform(0, 10)("a", universe)
@@ -599,6 +659,26 @@ class ContinuousTest extends WordSpec with Matchers {
       alg.mean(a) should be(2.0 +- 0.5)
       alg.mean(b) should be(5.0 +- 0.5)
     }
+
+    "produce the right probability when conditioned under Importance Sampling" in {
+      val sampleUniverse = Universe.createNew()
+      val nSamples = Beta(2, 5)("", sampleUniverse)
+      val samples = for (i <- 1 to 100)
+        yield nSamples.generateValue(nSamples.generateRandomness())
+
+      val universe = Universe.createNew()
+      val a = Uniform(0, 10)("a", universe)
+      val b = Uniform(0, 10)("b", universe)
+      for (sample <- samples) {
+        val beta = Beta(a, b)
+        beta.observe(sample)
+      }
+      val alg = Importance(200000, a, b)
+      alg.start()
+      alg.mean(a) should be(2.0 +- 0.5)
+      alg.mean(b) should be(5.0 +- 0.5)
+    }
+
   }
 
   // We can test Dirichlets using the special case where alpha.length = 2
@@ -694,8 +774,8 @@ class ContinuousTest extends WordSpec with Matchers {
     "produce the right probability when conditioned under Metropolis-Hastings" in {
       val sampleUniverse = Universe.createNew()
       val nSamples = Dirichlet(1, 2, 3)("", sampleUniverse)
-      val samples = for(i <- 1 to 100)
-                    yield nSamples.generateValue(nSamples.generateRandomness())
+      val samples = for (i <- 1 to 100)
+        yield nSamples.generateValue(nSamples.generateRandomness())
 
       val universe = Universe.createNew()
       val alpha1 = Uniform(0, 10)("a1", universe)
@@ -711,5 +791,27 @@ class ContinuousTest extends WordSpec with Matchers {
       alg.mean(alpha2) should be(2.0 +- 0.5)
       alg.mean(alpha3) should be(3.0 +- 0.5)
     }
+
+    "produce the right probability when conditioned under Importance Sampling" in {
+      val sampleUniverse = Universe.createNew()
+      val nSamples = Dirichlet(1, 2, 3)("", sampleUniverse)
+      val samples = for (i <- 1 to 100)
+        yield nSamples.generateValue(nSamples.generateRandomness())
+
+      val universe = Universe.createNew()
+      val alpha1 = Uniform(0, 10)("a1", universe)
+      val alpha2 = Uniform(0, 10)("a2", universe)
+      val alpha3 = Uniform(0, 10)("a3", universe)
+      for (sample <- samples) {
+        val dirichlet = Dirichlet(alpha1, alpha2, alpha3)
+        dirichlet.observe(sample)
+      }
+      val alg = Importance(200000, alpha1, alpha2, alpha3)
+      alg.start()
+      alg.mean(alpha1) should be(1.0 +- 0.5)
+      alg.mean(alpha2) should be(2.0 +- 0.5)
+      alg.mean(alpha3) should be(3.0 +- 0.5)
+    }
+
   }
 }
