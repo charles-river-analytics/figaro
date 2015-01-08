@@ -18,6 +18,10 @@ import com.cra.figaro.language._
 import com.cra.figaro.util._
 import scala.collection.mutable.Map
 
+/**
+ * An abstract class to generates samples from the marginal distribution of an element.
+ * @param target The element to generate samples from
+ */
 abstract class ElementSampler(target: Element[_]) extends UnweightedSampler(target.universe, target) {
 
   def sample(): (Boolean, Sample) = {
@@ -33,10 +37,7 @@ abstract class ElementSampler(target: Element[_]) extends UnweightedSampler(targ
 }
 
 /**
- * Anytime Metropolis-Hastings sampler.
- * @param burnIn The number of iterations to run before samples are collected
- * @param interval The number of iterations to perform between collecting samples
- *
+ * Anytime Element sampler.
  */
 class AnytimeElementSampler(target: Element[_])
   extends ElementSampler(target)
@@ -59,11 +60,9 @@ class AnytimeElementSampler(target: Element[_])
 }
 
 /**
- * One-time Metropolis-Hastings sampler.
+ * One-time Element sampler.
  *
- * @param burnIn The number of iterations to run before samples are collected
- * @param interval The number of iterations to perform between collecting samples
- *
+ * @param myNumSamples The number samples to take from the element
  */
 class OneTimeElementSampler(target: Element[_], myNumSamples: Int)
   extends ElementSampler(target)
@@ -85,14 +84,12 @@ class OneTimeElementSampler(target: Element[_], myNumSamples: Int)
 object ElementSampler {
 
   /**
-   * Create an anytime Metropolis-Hastings sampler using the given proposal scheme with the given target
-   * query elements.
+   * Create an anytime Element sampler with the given target element
    */
   def apply(target: Element[_]) =  new AnytimeElementSampler(target)
 
   /**
-   * Create a one-time Metropolis-Hastings sampler using the given number of samples and proposal
-   * scheme with the given target query elements.
+   * Create an one time Element sampler with the given target element using the number of samples
    */
   def apply(target: Element[_], numSamples: Int) = new OneTimeElementSampler(target, numSamples)
 }

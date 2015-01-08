@@ -258,6 +258,9 @@ package object util {
    logSumMany(List(p1, p2))
   }
   
+  /**
+   * Computes the sum of many probabilities in log space. 
+   */
   def logSumMany(xs: Traversable[Double]): Double = {
     val max = xs.foldLeft(Double.NegativeInfinity)(_ max _)
     if (max == Double.NegativeInfinity) Double.NegativeInfinity
