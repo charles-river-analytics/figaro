@@ -188,6 +188,16 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   private[figaro]type Contingency = Element.Contingency
   private[figaro]type ElemVal[T] = Element.ElemVal[T]
 
+  /**
+   * Returns the elements that this element is contingent on. These are elements that are required to have a certain value for a condition or constraint
+   * to be relevant to this element. The contingency is required because conditions and constraints can be applied to references that are
+   * uncertain. Every possible element that could be pointed to by a reference must be given the condition or constraint, but the condition
+   * or constraint only applies if the elements earlier in the reference have the required value.
+   *
+   * Figaro takes care of handling all this under the
+   * hood. However, some algorithms may need to know which elements an element is contingent on. For example, sampling algorithms may need to sample
+   * those other elements first. This method is supplied to support this use case.
+   */
   def elementsIAmContingentOn: Set[Element[_]] = {
     val conditionElements =
       for {
@@ -360,7 +370,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
     myConstraints = myConstraints.filterNot(_._2 == contingency)
     if (myConstraints.isEmpty) universe.makeUnconstrained(this)
   }
-  
+
   protected def removeConstraint(constraint: Constraint, contingency: Contingency = List()): Unit = {
     myConstraints = myConstraints.filterNot((c: (Constraint,Contingency)) => c._2 == contingency && c._1 == constraint)
     if (myConstraints.isEmpty) universe.makeUnconstrained(this)

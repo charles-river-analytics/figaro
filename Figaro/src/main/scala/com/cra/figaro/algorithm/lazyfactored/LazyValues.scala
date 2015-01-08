@@ -29,6 +29,10 @@ import com.cra.figaro.algorithm.factored.ParticleGenerator
  *
  */
 
+/**
+ * Object for lazily computing the range of values of elements in a universe. Given a universe, you can compute the values
+ * of elements in the universe to any desired depth.
+ */
 class LazyValues(universe: Universe) {
   private def values[T](element: Element[T], depth: Int, numArgSamples: Int, numTotalSamples: Int): ValueSet[T] = {
     // In some cases (e.g. CompoundFlip), we might know the value of an element without getting the values of its arguments.

@@ -1,13 +1,13 @@
 /*
  * LazyVE.scala
  * Lazy variable elimination algorithm.
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Dec 28, 2013
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -22,19 +22,33 @@ import scala.annotation.tailrec
 import com.cra.figaro.util._
 import scala.collection.mutable.{Map, Set}
 
-class LazyVariableElimination(targetElements: Element[_]*)(implicit val universe: Universe) extends FactoredAlgorithm[Double] 
+/**
+ * Algorithm that lazily performs variable elimination. This algorithm is a lazy algorithm that can be run to any depth.
+ * Given a depth, it expands the model up to that depth and creates factors for the expanded elements.
+ * It also creates factors that capture the effect of parts of the model that have not been expanded on the query targets.
+ * These factors are used to compute lower or upper bounds on the queries.
+ * Then it uses ordinary variable elimination to solve these factors.
+ */
+class LazyVariableElimination(targetElements: Element[_]*)(implicit val universe: Universe) extends FactoredAlgorithm[Double]
 with LazyAlgorithm {
   var debug = false
   var showTiming = false
-  
+
   val dependentAlgorithm = null
-  
+
   val dependentUniverses = List()
-  
+
   val semiring = SumProductSemiring
-  
+
   var currentResult: Factor[(Double, Double)] = _
 
+  /**
+   * Create the necessary factors.
+   *
+   * @param neededElements elements that have been expanded that need factors created
+   * @param targetElements query targets
+   * @param upperBounds flag indicating whether lower (false) or upper (true) bounds should be computed for unexpanded parts of the model
+   */
   def getFactors(neededElements: List[Element[_]], targetElements: List[Element[_]], upperBounds: Boolean = false): List[Factor[Double]] = {
     for {
       elem <- neededElements
@@ -66,7 +80,7 @@ with LazyAlgorithm {
     }
     marginalize(currentResult)
   }
-  
+
   protected def doElimination(allFactors: List[Factor[Double]], targetVariables: Seq[Variable[_]]): Set[Factor[Double]] = {
     val allVars = (Set[/*Extended*/Variable[_]]() /: allFactors)(_ ++ _./*extended*/variables)
     if (debug) {
@@ -74,7 +88,7 @@ with LazyAlgorithm {
       for { variable <- allVars } {
         variable match {
           case elemVar: /*Extended*/ElementVariable[_] =>
-            println(variable.id + "(" + elemVar.element.name.string + ")" + "@" + elemVar.element.hashCode + ": " + elemVar.element) 
+            println(variable.id + "(" + elemVar.element.name.string + ")" + "@" + elemVar.element.hashCode + ": " + elemVar.element)
           case _ =>
             println(variable.id + ": not an element variable")
         }
@@ -92,8 +106,8 @@ with LazyAlgorithm {
     if (debug) factorsAfterElimination foreach (f => println(f.toReadableString))
     factorsAfterElimination
   }
-  
-  /* 
+
+  /*
    * Determine if the second row can be absorbed into the first. This is true iff, for each position, either the second value is *
    * or they are equal.
    */
@@ -114,13 +128,13 @@ with LazyAlgorithm {
   private def normalizeAndAbsorbNoBounds(factor: Factor[Double]): Factor[(Double, Double)] = {
     normalizeAndAbsorbWithBounds(factor, factor)
   }
-  
+
   /*
    * The job of normalizeAndAbsorbWithBounds is to take a factor consisting of unnormalized lower bounds for regular values and *,
    * and another factor containing unnormalized upper bounds for regular values and *, and to compute normalized lower and upper
    * bounds for each of the regular values. These bounds should satisfy that the true probability of the regular values lies
    * between the bounds.
-   * 
+   *
    * The process of normalizeAndAbsorbWithBounds is as follows:
    * (1) Compute the sums of the unnormalized lower and upper bounds. These constitute lower and upper bounds on the normalizing factor,
    * respectively.
@@ -129,7 +143,7 @@ with LazyAlgorithm {
    * allocated to any other regular value. This fact will be used in calculating one of the upper bounds.
    * (3) Compute the first upper bound. This consists of all the probability mass that has not definitely been allocated to other
    * values. Since the resulting factor might have more than one variable, we need to determine which rows probability mass can definitely
-   * not be allocated to a particular row. This is determined by the consistent subroutine below. The first upper bound on the normalized 
+   * not be allocated to a particular row. This is determined by the consistent subroutine below. The first upper bound on the normalized
    * probability of a given row is equal to 1 - the sum of normalized lower bounds of rows that are not consistent with this row.
    * (4) For the second upper bound, we use the opposite approach. We add together all the unnormalized upper bounds of rows that are
    * consistent with this row, and then divide by the lower bound on the normalizing factor.
@@ -158,10 +172,10 @@ with LazyAlgorithm {
 
     /*
      * Get the definitely allocated probability mass: upperTotal is an upper bound on the normalizing factor.
-     */ 
+     */
     var lowerBounds: Array[Double] = Array.fill(allIndicesIndexed.size)(0)
     for { (indices, i) <- allIndicesIndexed } { lowerBounds(i) = lowerFactor.get(indices) / upperTotal }
-  
+
     /*
      * There are two possible upper bounds of a row.
      * The first is 1 - the definite lower bounds of incompatible rows.
@@ -179,7 +193,7 @@ with LazyAlgorithm {
       }
       upperBounds(i) = (1.0 - inconsistentLowerTotal).min(consistentUpperTotal / lowerTotal)
     }
-    
+
     /*
      * Finally, create the result factor with lower and upper bounds.
      */
@@ -190,7 +204,7 @@ with LazyAlgorithm {
   }
 
   var targetFactors: Map[Element[_], Factor[(Double, Double)]] = Map()
-  
+
   private def marginalizeToTarget(factor: Factor[(Double, Double)], target: Element[_]): Unit = {
     val targetFactor = factor.marginalizeTo(BoundsSumProductSemiring, Variable(target))
     targetFactors += target -> targetFactor
@@ -199,14 +213,21 @@ with LazyAlgorithm {
   private def marginalize(resultFactor: Factor[(Double, Double)]) = {
     targetElements foreach (marginalizeToTarget(resultFactor, _))
   }
-    
+
+  /**
+   * Returns the lower and upper bounds of the probability of the target.
+   */
   def probabilityBounds[T](target: Element[_], value: T): (Double, Double) = {
     require(targetElements contains target)
     val index = Variable(target).range.indexOf(Regular(value))
-    if (index == -1) (0, 1) 
+    if (index == -1) (0, 1)
     else targetFactors(target).get(List(index))
   }
 
+  /**
+   * Postprocess the factors produced by eliminating variables, assuming the entire model has been expanded so
+   * the lower and upper bounds are the same.
+   */
   def finishNoBounds(factorsAfterElimination: Set[Factor[Double]]): Factor[(Double, Double)] = {
     // It is possible that there are no factors (this will happen if there is no evidence).
     // Therefore, we start with the unit factor and use foldLeft, instead of simply reducing the factorsAfterElimination.
@@ -215,6 +236,12 @@ with LazyAlgorithm {
     normalized
   }
 
+  /**
+   * Postprocess the factors produced by eliminating variables, when the lower and upper bounds may be different.
+   *
+   * @param lowerFactors the factors produced with the upperBounds flag = false
+   * @param upperFactors the factors produced with the upperBounds flag = true
+   */
   def finishWithBounds(lowerFactors: Set[Factor[Double]], upperFactors: Set[Factor[Double]]): Factor[(Double, Double)] = {
     // It is possible that there are no factors (this will happen if there is no evidence).
     // Therefore, we start with the unit factor and use foldLeft, instead of simply reducing the factorsAfterElimination.
@@ -223,7 +250,7 @@ with LazyAlgorithm {
     val normalized = normalizeAndAbsorbWithBounds(lowerMultiplied, upperMultiplied)
     normalized
   }
-  
+
   /* This code is copied straight from VariableElimination. It should be refactored to avoid duplication. */
    // The first element of FactorMap is the complete set of factors.
   // The second element maps variables to the factors mentioning that variable.

@@ -44,6 +44,7 @@ trait ElementCollection {
 
   /**
    * Returns a reference element representing the single-valued reference.
+   * This method produces a new reference element every time it is called.
    */
   def get[T](reference: Reference[T]): SingleValuedReferenceElement[T] =
     new SingleValuedReferenceElement(this, reference)
@@ -269,8 +270,12 @@ trait ElementCollection {
 
   /*
    * Follow the single-valued reference in the current state to get the element referred to.
-   * Need to clarify: This gets the element *currently* referred to by the reference. Provide example.
-   *
+   * In other words, this method produces the actual element pointed to by this reference,
+   * considering the values of elements along this reference.
+   * This method should be contrasted with the get method, which produces a reference element.
+   * If there is uncertainty in the reference, the reference element produces by get captures
+   * this uncertainty, whereas getElementByReference only produces one possible element, as
+   * determined by the current values of elements in the reference.
    */
   def getElementByReference[T](reference: Reference[T]): Element[T] =
     reference match {

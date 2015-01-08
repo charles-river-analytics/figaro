@@ -16,7 +16,11 @@ package com.cra.figaro.library.collection
 import com.cra.figaro.language._
 
 /**
- * Doc needed
+ * A Figaro collection representing a fixed number of elements. The indices into the collection are the integers
+ * from 0 to the size - 1.
+ *
+ * @param size the number of elements in the collection
+ * @param generator a function to generate the elements in the collection, given the index
  */
 class FixedSizeArray[Value](
     val size: Int,
