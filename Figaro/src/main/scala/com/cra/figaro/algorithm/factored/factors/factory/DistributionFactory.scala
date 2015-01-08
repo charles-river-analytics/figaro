@@ -19,9 +19,13 @@ import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.lazyfactored._
 
 /**
- * Doc needed
+ * A Sub-Factory for simple probability distribution Elements
  */
 object DistributionFactory {
+  
+  /**
+   * Factor constructor for an AtomicFlip 
+   */
   def makeFactors(flip: AtomicFlip): List[Factor[Double]] = {
     val flipVar = Variable(flip)
     if (flipVar.range.exists(!_.isRegular)) {
@@ -36,6 +40,9 @@ object DistributionFactory {
     }
   }
 
+  /**
+   * Factor constructor for a CompoundFlip
+   */
   def makeFactors(flip: CompoundFlip): List[Factor[Double]] = {
     val flipVar = Variable(flip)
     if (flipVar.range.exists(!_.isRegular)) {
@@ -60,6 +67,9 @@ object DistributionFactory {
     }
   }
   
+  /**
+   * Factor constructor for a ParameterizedFlip
+   */
   def makeFactors(flip: ParameterizedFlip): List[Factor[Double]] = {
     val flipVar = Variable(flip)
     val factor = new BasicFactor[Double](List(),List(flipVar))
@@ -70,6 +80,9 @@ object DistributionFactory {
     List(factor)
   }
   
+  /**
+   * Factor constructor for an AtomicBinomial
+   */
   def makeFactors(binomial: AtomicBinomial): List[Factor[Double]] = {
       val binVar = Variable(binomial)
       val factor = new BasicFactor[Double](List(), List(binVar))

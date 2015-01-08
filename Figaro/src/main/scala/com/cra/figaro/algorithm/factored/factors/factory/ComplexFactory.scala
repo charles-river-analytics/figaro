@@ -19,10 +19,13 @@ import com.cra.figaro.library.compound._
 import com.cra.figaro.algorithm.factored.factors._
 
 /**
- * Doc needed
+ * A Sub-Factory for Complex Elements
  */
 object ComplexFactory {
 
+  /**
+   * Factor constructor for a SingleValuedReferenceElement
+   */
   def makeFactors[T](element: SingleValuedReferenceElement[T]): List[Factor[Double]] = {
     val (first, rest) = element.collection.getFirst(element.reference)
     rest match {
@@ -50,7 +53,10 @@ object ComplexFactory {
         selectedFactors.flatten
     }
   }
-
+  
+  /**
+   * Factor constructor for a MultiValuedReferenceElement
+   */
   def makeFactors[T](element: MultiValuedReferenceElement[T]): List[Factor[Double]] = {
     val (first, rest) = element.collection.getFirst(element.reference)
     val selectionFactors: List[List[Factor[Double]]] = {
@@ -101,6 +107,9 @@ object ComplexFactory {
     selectionFactors.flatten
   }
 
+  /**
+   * Factor constructor for an Aggregate Element
+   */
   def makeFactors[T, U](element: Aggregate[T, U]): List[Factor[Double]] = {
     val elementVar = Variable(element)
     val mvreVar = Variable(element.mvre)
@@ -116,6 +125,9 @@ object ComplexFactory {
     List(factor)
   }
 
+  /**
+   * Constructor for a MakeList Element
+   */
   def makeFactors[T](element: MakeList[T]): List[Factor[Double]] = {
     val parentVar = Variable(element.numItems)
     // We need to create factors for the items and the lists themselves, which are encapsulated in this MakeList
@@ -134,7 +146,10 @@ object ComplexFactory {
     conditionalFactors ::: itemFactors.flatten ::: indexedResultElemsAndFactors.flatMap(_._3)
   }
 
-    // adapted from Apply1
+  // adapted from Apply1
+  /**
+   * Factor constructor for a MakeArray Element
+   */
   def makeFactors[T](element: com.cra.figaro.library.collection.MakeArray[T]): List[Factor[Double]] = {
     val arg1Var = Variable(element.numItems)
     val resultVar = Variable(element)
@@ -156,7 +171,10 @@ object ComplexFactory {
     }
     List(factor)
   }
-
+  
+  /**
+   * Factor constructor for a FoldLeft Element
+   */
   def makeFactors[T,U](fold: FoldLeft[T,U]): List[Factor[Double]] = {
     def makeOneFactor(currentAccumVar: Variable[U], elemVar: Variable[T], nextAccumVar: Variable[U]): Factor[Double] = {
       val result = new BasicFactor[Double](List(currentAccumVar, elemVar), List(nextAccumVar))

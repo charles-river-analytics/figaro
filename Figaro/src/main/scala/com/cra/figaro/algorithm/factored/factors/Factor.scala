@@ -17,8 +17,14 @@ import com.cra.figaro.language.Element
 import com.cra.figaro.algorithm.lazyfactored.Extended
 
 /**
+ * Definition of Factor <p>
+ *
+ * A factor is associated with a set of variables and specifies a value for every
+ * combination of assignments to those variables. Factors are parameterized by the
+ * Variables they contain. Parent variables are distinguished from the output variable.
+ *
  * Refactored by
- * 
+ *
  * @author Glenn Takata Sep 11, 2014
  *
  */
@@ -26,26 +32,35 @@ trait Factor[T] {
   def parents: List[Variable[_]]
   def output: List[Variable[_]]
   def variables = parents ::: output
-  
+
   lazy val numVars = variables.size
 
   protected[figaro] var contents: Map[List[Int], T] = Map()
 
   val size = (1 /: variables)(_ * _.size)
 
+  /**
+   * Description that includes the variable list and conditional probabilites
+   */
   override def toString = "Factor(" + variables.map(_.id).mkString(",") + " " + contents.mkString(",") + ")"
 
+  /**
+   * Indicates if any of this Factor's variables has Star
+   */
   def hasStar = (false /: variables)(_ || _.valueSet.hasStar)
 
+  /**
+   * Indicates if this Factor has any variables
+   */
   def isEmpty = size == 0
 
-    /**
-   * Fold the given function through the contents of the factor, beginning with the given initial values.
+  /**
+   * Fold the given function through the contents of the factor, beginning with the given initial values
    */
   def foldLeft(initial: T, fn: (T, T) => T): T = {
     (initial /: contents.values)(fn(_, _))
   }
-  
+
   /**
    * Returns the indices lists corresponding to all the rows in order.
    */
@@ -96,30 +111,73 @@ trait Factor[T] {
     helper(numVars - 1)
   }
 
-  def fillByRule(rule: List[Extended[_]] => T):Factor[T]
-  
+  /**
+   * Fill the contents of this factor by applying a rule to every combination of values.
+   */
+  def fillByRule(rule: List[Extended[_]] => T): Factor[T]
+
+  /**
+   * Fill the contents of the target by applying the given function to all elements of this factor.
+   */
   def mapTo[U](fn: T => U): Factor[U]
-  
-  def product(    
+
+  /**
+   * Returns the product of this factor with another factor according to a given multiplication function.
+   * The product is associated with all variables in the two inputs, and the value associated with an assignment
+   * is the product of the values in the two inputs.
+   */
+  def product(
     that: Factor[T],
     semiring: Semiring[T]): Factor[T]
-  
+
+  /**
+   * Generic combination function for factors. By default, this is product, but other operations
+   * (such as divide that is a valid operation for some semirings) can use this
+   */
   def combination(
     that: Factor[T],
     op: (T, T) => T): Factor[T]
-  
+
+  /**
+   * Returns the summation of the factor over a variable according to an addition function.
+   * The result is associated with all the variables in the
+   * input except for the summed over variable and the value for a set of assignments is the
+   * sum of the values of the corresponding assignments in the input.
+   */
   def sumOver(variable: Variable[_], semiring: Semiring[T]): Factor[T]
-  
+
+  /**
+   * Returns a factor that maps values of the other variables to the value of the given variable that
+   * maximizes the entry associated with that value, according to some maximization function.
+   * comparator defines the maximization. It returns true iff its second argument is greater than its first.
+   *
+   * @tparam U The type of element whose value is being recorded. The resulting factor maps values of
+   * other variables in this factor to this type.
+   * @tparam T The type of entries of this factor.
+   */
   def recordArgMax[U](variable: Variable[U], comparator: (T, T) => Boolean): Factor[U]
-  
+
+  /**
+   * Returns the marginalization of the factor to a variable according to the given addition function.
+   * This involves summing out all other variables.
+   */
   def marginalizeTo(
     semiring: Semiring[T],
     targets: Variable[_]*): Factor[T]
-  
+
+  /**
+   * Returns a new Factor with duplicate variable(s) removed
+   */
   def deDuplicate(): Factor[T]
-  
+
+  /**
+   * Creates a new Factor of the same class with a different type
+   */
   def convert[U](): Factor[U]
-  
+
+  /**
+   * Produce a readable string representation of the factor
+   */
   def toReadableString: String
 
 }

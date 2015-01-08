@@ -21,20 +21,31 @@ import com.cra.figaro.util._
 import com.cra.figaro.algorithm.factored.factors.Factory
 
 /**
- * Doc needed
+ * A Sub-Factory for Select or Dist Elements
  */
 object SelectFactory {
+  
+  /**
+   * Factor constructor for an AtomicDistFlip 
+   */
   def makeFactors[T](dist: AtomicDist[T]): List[Factor[Double]] = {
     val (intermed, clauseFactors) = intermedAndClauseFactors(dist)
     val intermedFactor = makeSimpleDistribution(intermed, dist.probs)
     intermedFactor :: clauseFactors
   }
 
+  /**
+   * Factor constructor for a CompoundDist 
+   */
   def makeFactors[T](dist: CompoundDist[T]): List[Factor[Double]] = {
     val (intermed, clauseFactors) = intermedAndClauseFactors(dist)
     val intermedFactor = makeComplexDistribution(intermed, dist.probs)
     intermedFactor :: clauseFactors
   }
+  
+  /**
+   * Factor constructor for an AtomicSelect 
+   */
   def makeFactors[T](select: AtomicSelect[T]): List[Factor[Double]] = {
     val selectVar = Variable(select)
     if (selectVar.range.exists(!_.isRegular)) {
@@ -46,6 +57,9 @@ object SelectFactory {
     }
   }
 
+  /**
+   * Factor constructor for a CompoundSelect 
+   */
   def makeFactors[T](select: CompoundSelect[T]): List[Factor[Double]] = {
     val selectVar = Variable(select)
     if (selectVar.range.exists(!_.isRegular)) {
@@ -57,6 +71,9 @@ object SelectFactory {
     }
   }
 
+  /**
+   * Factor constructor for a ParameterizedSelect 
+   */
   def makeFactors[T](select: ParameterizedSelect[T]): List[Factor[Double]] = {
     val selectVar = Variable(select)
     if (selectVar.range.exists(!_.isRegular)) {
@@ -68,6 +85,9 @@ object SelectFactory {
     }
   }
 
+  /**
+   * Factor constructor for an IntSelector 
+   */
   def makeFactors[T](select: IntSelector): List[Factor[Double]] = {
     val elementVar = Variable(select)
     val counterVar = Variable(select.counter)
@@ -84,6 +104,9 @@ object SelectFactory {
 
   private def getProbs[U, T](select: Select[U, T]): List[U] = getProbs(select, select.clauses)
 
+  /**
+   * Get the potential (probability) for each value of an element, based on supplied rules
+   */
   def getProbs[U, T](elem: Element[T], clauses: List[(U, T)]): List[U] = {
     val selectVar = Variable(elem)
     def getProb(xvalue: Extended[T]): U = {
@@ -110,6 +133,10 @@ object SelectFactory {
     (intermed, clauseFactors)
   }
 
+  /**
+   * Constructs a BasicFactor from a probability distribution. It assumes that the probabilities
+   * are assigned to the Variable in the same order as it's values.
+   */
   def makeSimpleDistribution[T](target: Variable[T], probs: List[Double]): Factor[Double] = {
     val factor = new BasicFactor[Double](List(), List(target))
     for { (prob, index) <- probs.zipWithIndex } {
