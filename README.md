@@ -23,7 +23,6 @@ Figaro’s library of reasoning algorithms is also extensible. Current built-in al
 
 * Exact inference using variable elimination
 * Belief propagation
-* Particle belief propagation (experimental)
 * Lazy factored inference for infinite models
 * Importance sampling
 * Metropolis-Hastings, with an expressive language to define proposal distributions
