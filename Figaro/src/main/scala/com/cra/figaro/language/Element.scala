@@ -300,6 +300,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
     try {
       val result = constraint(value.asInstanceOf[Value])
       if (result > 0 && !constraintWarningIssued) {
+
         //println("Warning: constraint value " + result + " is greater than 1. Algorithms that use an upper bound of 1 will be incorrect.")
         constraintWarningIssued = true
       }

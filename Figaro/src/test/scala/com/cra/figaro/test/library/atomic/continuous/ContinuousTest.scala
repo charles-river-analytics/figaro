@@ -210,6 +210,7 @@ class ContinuousTest extends WordSpec with Matchers {
         val normal = Normal(mean, variance)
         normal.observe(sample)
       }
+
       val alg = Importance(20000, mean, variance)
       alg.start()
       alg.mean(mean) should be(samplesMean +- 1.0)
@@ -395,6 +396,23 @@ class ContinuousTest extends WordSpec with Matchers {
       alg.mean(lambda) should be(2.0 +- 0.5)
       alg.stop()
       alg.kill
+    }
+
+    "produce the right probability when conditioned under Importance Sampling" in {
+      val sampleUniverse = Universe.createNew()
+      val nSamples = Exponential(2)("", sampleUniverse)
+      val samples = for (i <- 1 to 100)
+        yield nSamples.generateValue(nSamples.generateRandomness())
+
+      val universe = Universe.createNew()
+      val lambda = Uniform(0, 10)("lambda", universe)
+      for (sample <- samples) {
+        val exponential = Exponential(lambda)
+        exponential.observe(sample)
+      }
+      val alg = Importance(200000, lambda)
+      alg.start()
+      alg.mean(lambda) should be(2.0 +- 0.5)
     }
   }
 
@@ -610,6 +628,7 @@ class ContinuousTest extends WordSpec with Matchers {
     "produce the right probability when conditioned under Importance Sampling" in {
       val sampleUniverse = Universe.createNew()
       val nSamples = Gamma(2, 2)("", sampleUniverse)
+
       val samples = for (i <- 1 to 25)
         yield nSamples.generateValue(nSamples.generateRandomness())
 
@@ -620,6 +639,7 @@ class ContinuousTest extends WordSpec with Matchers {
         val gamma = Gamma(k, theta)
         gamma.observe(sample)
       }
+
       val alg = Importance(20000, k, theta)
       alg.start()
       alg.mean(k) should be(2.0 +- 1.0)
@@ -739,6 +759,25 @@ class ContinuousTest extends WordSpec with Matchers {
       alg.mean(b) should be(5.0 +- 1.0)
       alg.stop()
       alg.kill
+    }
+
+    "produce the right probability when conditioned under Importance Sampling" in {
+      val sampleUniverse = Universe.createNew()
+      val nSamples = Beta(2, 5)("", sampleUniverse)
+      val samples = for (i <- 1 to 100)
+        yield nSamples.generateValue(nSamples.generateRandomness())
+
+      val universe = Universe.createNew()
+      val a = Uniform(0, 10)("a", universe)
+      val b = Uniform(0, 10)("b", universe)
+      for (sample <- samples) {
+        val beta = Beta(a, b)
+        beta.observe(sample)
+      }
+      val alg = Importance(200000, a, b)
+      alg.start()
+      alg.mean(a) should be(2.0 +- 0.5)
+      alg.mean(b) should be(5.0 +- 0.5)
     }
 
   }
@@ -883,6 +922,27 @@ class ContinuousTest extends WordSpec with Matchers {
       alg.mean(alpha3) should be(3.0 +- 1.0)
       alg.stop()
       alg.kill
+    }
+
+    "produce the right probability when conditioned under Importance Sampling" in {
+      val sampleUniverse = Universe.createNew()
+      val nSamples = Dirichlet(1, 2, 3)("", sampleUniverse)
+      val samples = for (i <- 1 to 100)
+        yield nSamples.generateValue(nSamples.generateRandomness())
+
+      val universe = Universe.createNew()
+      val alpha1 = Uniform(0, 10)("a1", universe)
+      val alpha2 = Uniform(0, 10)("a2", universe)
+      val alpha3 = Uniform(0, 10)("a3", universe)
+      for (sample <- samples) {
+        val dirichlet = Dirichlet(alpha1, alpha2, alpha3)
+        dirichlet.observe(sample)
+      }
+      val alg = Importance(200000, alpha1, alpha2, alpha3)
+      alg.start()
+      alg.mean(alpha1) should be(1.0 +- 0.5)
+      alg.mean(alpha2) should be(2.0 +- 0.5)
+      alg.mean(alpha3) should be(3.0 +- 0.5)
     }
 
   }
