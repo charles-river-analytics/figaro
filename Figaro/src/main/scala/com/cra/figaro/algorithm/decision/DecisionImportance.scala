@@ -29,7 +29,7 @@ import scala.collection.mutable.{ Set, Map }
  */
 /**
  * Importance sampling for decisions. Almost the exact same as normal importance sampling except that it keeps
- * track of utilities and probabilities (to compute expected utility) and it implements DecisionAlgorithm trait
+ * track of utilities and probabilities (to compute expected utility) and it implements DecisionAlgorithm trait.
  */
 
 abstract class DecisionImportance[T, U] private (override val universe: Universe, utilityNodes: List[Element[_]], decisionTarget: Decision[T, U],
@@ -45,7 +45,7 @@ abstract class DecisionImportance[T, U] private (override val universe: Universe
   private def utilitySum = (0.0 /: utilityNodes)((s: Double, n: Element[_]) => s + n.value.asInstanceOf[Double])
 
   /**
-   * Cleans up the temporary elements created during sampling
+   * Cleans up the temporary elements created during sampling.
    */
   def cleanup() = universe.deactivate(queryTargets)
 
@@ -86,7 +86,7 @@ abstract class DecisionImportance[T, U] private (override val universe: Universe
    *
    * For decisions, our weight is actually the weight of the sampled state times the sum of the utility nodes. This will be
    * used as the "weight" in the weighted sampler, ie, we are accumulating the expected utility of each state. Note that the weights
-   * will not be normalized, but that is ok since strategies are an optimization and everything will be divided by a constant
+   * will not be normalized, but that is ok since strategies are an optimization and everything will be divided by a constant.
    *
    */
   @tailrec final def sample(): Sample = {

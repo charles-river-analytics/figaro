@@ -18,7 +18,7 @@ import java.util.TreeMap
 /**
  * A resampler allows resampling from a set of weighted samples provided as the inputs.
  * 
- * @param inputs A sequence of pairs of proability and values.
+ * @param inputs A sequence of pairs of probability and values.
  */
 abstract class Resampler[T](inputs: Seq[(Double, T)]) {
   /**
@@ -32,7 +32,7 @@ abstract class Resampler[T](inputs: Seq[(Double, T)]) {
  * Creating the resampler takes O(N log N)
  * time, where N is the number of input samples, and selecting M samples takes O(M log N).
  * 
- * @param inputs A sequence of pairs of proability and values.
+ * @param inputs A sequence of pairs of probability and values.
  */
 class MapResampler[T](inputs: Seq[(Double, T)]) extends Resampler(inputs) {
   // In this design, we create a map that maps a uniform random number to the sample that should be chosen.

@@ -21,7 +21,7 @@ import scala.collection.immutable.Map
 import scala.collection.mutable.{ HashMap, MultiMap, Set }
 
 /**
- * Node class used in the flat index
+ * Node class used in the flat index.
  */
 private[index] class FlatNode[T, U] extends Node[T, U](null, true) with LNode[T, U]
 
@@ -63,7 +63,7 @@ class FlatIndex[T <% Distance[T], U](stratMap: Map[(T, U), DecisionSample]) exte
 
 object FlatIndex {
   /**
- * Create a flat index from a map of (parent, decision) -> Decision values
+ * Create a flat index from a map of (parent, decision) -> Decision values.
  */
   def apply[T <% Distance[T], U](strat: Map[(T, U), DecisionSample]) = {
     new FlatIndex(strat)

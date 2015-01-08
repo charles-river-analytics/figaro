@@ -40,7 +40,7 @@ class MPEVariableElimination(override val universe: Universe)(
   override val starterElements = universe.activeElements
   
   /**
-   * Empty for MPE Algorithms
+   * Empty for MPE Algorithms.
    */
   val targetElements = List[Element[_]]()
 

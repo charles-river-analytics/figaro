@@ -20,7 +20,7 @@ import com.cra.figaro.library.decision._
 import scala.collection.mutable.Map
 
 /**
- * A OneTime multi-decision algorithm that uses Importance sampling for each decision
+ * A OneTime multi-decision algorithm that uses Importance sampling for each decision.
  */
 class OneTimeMultiDecisionImportance(universe: Universe, myNumSamples: Int, utilityNodes: List[Element[_]], targets: Decision[_, _]*)
   extends MultiDecisionAlgorithm(universe, utilityNodes, targets.toList) {

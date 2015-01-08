@@ -255,6 +255,9 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
     if (newArgs.nonEmpty) sampleArgs(element, state, newArgs) else return
   }
 
+   /**
+   * The computed probability of evidence.
+   */
   def logProbEvidence: Double = {
 	logSuccessWeight - Math.log(numSamples + numRejections)
   }

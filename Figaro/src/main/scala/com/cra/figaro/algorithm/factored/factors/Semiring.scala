@@ -16,7 +16,7 @@ package com.cra.figaro.algorithm.factored.factors
 /**
  * Operations in factored algorithms are defined by a semiring algebraic structure.
  * Each semiring defines a product and sum operation, and a value for zero and one which satisfy a set of properties.
- * Different semirings are appropriate for certain algorithms and data types
+ * Different semirings are appropriate for certain algorithms and data types.
  */
 trait Semiring[T] {
   /**
@@ -68,16 +68,16 @@ object SumProductUtilitySemiring extends DivideableSemiRing[(Double, Double)] {
   def divide(x: (Double, Double), y: (Double, Double)) = if (y._1 == zero._1) (zero._1, x._2 - y._2) else (x._1 / y._1, x._2 - y._2)
 
   /**
-   * Decision joint factor marginalization
+   * Decision joint factor marginalization.
    */
   def sum(x: (Double, Double), y: (Double, Double)) = if (x._1 + y._1 != 0.0) (x._1 + y._1, (x._1 * x._2 + y._1 * y._2) / (x._1 + y._1)); else (0.0, 0.0)
 
   /**
-   * 0 probability and 0 utility
+   * 0 probability and 0 utility.
    */
   val zero = (0.0, 0.0)
   /**
-   * 1 probability and 0 utility
+   * 1 probability and 0 utility.
    */
   val one = (1.0, 0.0)
 

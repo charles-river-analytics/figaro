@@ -22,7 +22,7 @@ import scala.math.log
 import scala.annotation.tailrec
 
 /**
- * Metropolis-Hastings based Annealer
+ * Metropolis-Hastings based Annealer.
  *
  * @param annealSchedule The schedule that determines how to anneal the model
  * @param burnIn The number of iterations to run before annealing starts
@@ -50,7 +50,7 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
   universe.register(nextConstraintValues)
 
   /**
-   * Set this flag to true to obtain debugging information
+   * Set this flag to true to obtain debugging information.
    */
   var debug = false
 
@@ -218,7 +218,7 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
    * is not empty, we recursively update the intersecting elements. Once those updates are completed,
    * we update an element and move on to the next element in the set.
    */
-  def updateMany[T](state: State, toUpdate: Set[Element[_]]): State = {
+  private def updateMany[T](state: State, toUpdate: Set[Element[_]]): State = {
     var returnState = state
     var updatesLeft = toUpdate
     while (!updatesLeft.isEmpty) {
@@ -237,7 +237,7 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
   }
 
   /*
-   * A recursive function to work in conjuction with updateMany to check the order of the element
+   * A recursive function to work in conjunction with updateMany to check the order of the element
    * updates.
    */
   @tailrec

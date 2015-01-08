@@ -127,7 +127,7 @@ class Chain[T, U](name: Name[U], val parent: Element[T], fcn: T => Element[U], c
   /**
    * Get the distribution over the result corresponding to the given parent value. This call is UNCACHED,
    * meaning it will not be stored in the Chain's cache, and subsequent calls using the same parentValue
-   * could return different elements
+   * could return different elements.
    */
   def getUncached(parentValue: T): Element[U] = {
     if (lastParentValue == null || lastParentValue != parentValue) {
@@ -163,13 +163,13 @@ class Chain[T, U](name: Name[U], val parent: Element[T], fcn: T => Element[U], c
 }
 
 /**
- * A NonCachingChain is an implementation of Chain with a single element cache
+ * A NonCachingChain is an implementation of Chain with a single element cache.
  */
 class NonCachingChain[T, U](name: Name[U], parent: Element[T], cpd: T => Element[U], collection: ElementCollection)
   extends Chain(name, parent, cpd, 2, collection)
 
 /**
- * A CachingChain is an implementation of Chain with a 1000 element cache
+ * A CachingChain is an implementation of Chain with a 1000 element cache.
  */
 class CachingChain[T, U](name: Name[U], parent: Element[T], cpd: T => Element[U], collection: ElementCollection)
   extends Chain(name, parent, cpd, Int.MaxValue, collection)

@@ -16,47 +16,47 @@ package com.cra.figaro.algorithm.factored.beliefpropagation
 import com.cra.figaro.algorithm.factored.factors._
 
 /**
- * Trait for Factor graphs used by Belief Propagation algorithms
+ * Trait for Factor graphs used by Belief Propagation algorithms.
  */
 trait FactorGraph[T] {
  
   /**
-   * Returns a uniform factor 
+   * Returns a uniform factor.
    */
   def uniformFactor(v: List[Variable[_]]): Factor[T]
   
   /**
-   * Returns true if the graph contains a node for a (single) variable
+   * Returns true if the graph contains a node for a (single) variable.
    */
   def contains(v: Node): Boolean
   
   /**
-   * Returns all nodes in the factor graph
+   * Returns all nodes in the factor graph.
    */
   def getNodes(): Iterable[Node]
   
   /**
-   * Returns all neighbors of a given node
+   * Returns all neighbors of a given node.
    */
   def getNeighbors(source: Node): Iterable[Node]
 
   /**
-   * Returns all neighbors of a given node excluding the node of the second argument
+   * Returns all neighbors of a given node excluding the node of the second argument.
    */
   def getNeighbors(source: Node, excluding: Node): Iterable[Node]
     
   /**
-   * Gets the factor for a particular factor node
+   * Gets the factor for a particular factor node.
    */
   def getFactorForNode(fn: FactorNode): Factor[T]
   
   /**
-   * Get a list of messages to the node
+   * Get a list of messages to the node.
    */
   def getMessagesForNode(node: Node): Iterable[(Node, Factor[T])]
   
   /**
-   * Gets the last message to a node from another
+   * Gets the last message to a node from another.
    */
   def getLastMessage(from: Node, to: Node): Factor[T]
   

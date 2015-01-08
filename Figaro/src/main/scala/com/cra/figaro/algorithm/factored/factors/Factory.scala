@@ -34,7 +34,7 @@ trait FactorMaker[T] {
 object Factory {
 
   /**
-   * The mutliplicative identity factor.
+   * The multiplicative identity factor.
    */
   def unit[T](semiring: Semiring[T]): Factor[T] = {
     val result = new BasicFactor[T](List(), List())

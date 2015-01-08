@@ -29,7 +29,7 @@ sealed abstract class Evidence[T] {
 /**
  * Evidence representing a condition on an element.
  * 
- * @param predicate The predicate that must be satisfied by the element
+ * @param predicate The predicate that must be satisfied by the element.
  */
 case class Condition[T](predicate: T => Boolean) extends Evidence[T] {
   /** Assert this evidence on the given element. The second argument is an optional contingency. */

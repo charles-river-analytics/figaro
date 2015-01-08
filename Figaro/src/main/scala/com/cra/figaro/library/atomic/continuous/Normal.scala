@@ -68,7 +68,7 @@ class NormalCompoundMean(name: Name[Double], val mean: Element[Double], val vari
 
 
 /**
- * A normal distribution in which the mean is constant and the variance is an element
+ * A normal distribution in which the mean is constant and the variance is an element.
  */
 class NormalCompoundVariance(name: Name[Double], val mean: Double, val variance: Element[Double], collection: ElementCollection)
   extends NonCachingChain(
@@ -146,7 +146,7 @@ object Normal extends Creatable {
     new NormalCompoundMean(name, mean, variance, collection)
 
     /**
-   * Create a normal distribution in which the mean is an constant and the variance is an element
+   * Create a normal distribution in which the mean is an constant and the variance is an element.
    */
   def apply(mean: Double, variance: Element[Double])(implicit name: Name[Double], collection: ElementCollection) =
     new NormalCompoundVariance(name, mean, variance, collection)

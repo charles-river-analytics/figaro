@@ -53,7 +53,7 @@ import scala.language.implicitConversions
  * An element has a name and belongs to an element collection that is used to find the element the name.
  *
  * Elements can be cacheable or non-cacheable, which determines what type of Chain will be created for them.
- * If you create a new Element class that you want to be cached, you should declare it to implement the Cachable or IfArgsCachable traits.
+ * If you create a new Element class that you want to be cached, you should declare it to implement the Cacheable or IfArgsCacheable traits.
  *
  * @param name The name of the element
  * @param collection The element collection to which this element belongs
@@ -89,7 +89,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
 
   /**
    * The cacheability of the element. Chains create caches of their parent values, and it is useful to know when these values can be effectively cached and reused.
-   *  In general, continuous distributions are not cacheable
+   *  In general, continuous distributions are not cacheable.
    */
   def isCachable(): Boolean = false
 
@@ -101,11 +101,11 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   /**
    * Generate the next randomness given the current randomness.
    * Returns three values: The next randomness, the Metropolis-Hastings proposal probability
-   * ratio, which is
+   * ratio, which is:
    *
    * P(new -> old) / P(old -> new)
    *
-   * and the model probability ratio, which is
+   * and the model probability ratio, which is:
    *
    * P(new) / P(old)
    *
@@ -121,7 +121,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   var randomness: Randomness = _
 
   /**
-   * Generate the value of the element determinstically given its randomness and the values of
+   * Generate the value of the element deterministically given its randomness and the values of
    * its arguments.
    */
   def generateValue(rand: Randomness): Value
@@ -146,7 +146,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   /* Complete context of this element */
   private[language] var myContext: List[Element[_]] = List()
 
-  /** The elements on which the existence of this element depends */
+  /** The elements on which the existence of this element depends. */
   def context = if (!active) {
     throw new NoSuchElementException
   } else myContext
@@ -157,7 +157,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   private val myDirectContextContents: Set[Element[_]] = Set()
 
   /**
-   * Returns the set of elements directly created in the context of this element
+   * Returns the set of elements directly created in the context of this element.
    */
   def directContextContents: Set[Element[_]] = if (!active) {
     throw new NoSuchElementException
@@ -168,12 +168,12 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   private[language] def removeContextContents(e: Element[_]): Unit = myDirectContextContents -= e
 
   /**
-   * Returns true if this element is temporary, that is, was created in the context of another element
+   * Returns true if this element is temporary, that is, was created in the context of another element.
    */
   def isTemporary = !myContext.isEmpty
 
   /**
-   * Clears all the temporary elements associated with this element (all elements created in it's context)
+   * Clears all the temporary elements associated with this element (all elements created in it's context).
    */
   def clearContext() = universe.deactivate(directContextContents)
 
@@ -395,7 +395,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   }
 
   /**
-   * Removes conditions on the element and allows different values of the element to be generated
+   * Removes conditions on the element and allows different values of the element to be generated.
    */
   def unobserve(): Unit = {
     unset()
@@ -502,7 +502,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   def !==(that: Element[Value])(implicit universe: Universe) = new Neq("", this, that, universe)
 
   /**
-   * A string that is the element's name, if it has a non-empty one, otherwise the result of the element's toString
+   * A string that is the element's name, if it has a non-empty one, otherwise the result of the element's toString.
    */
   def toNameString = if (name.string != "") name.string; else toString
 
@@ -566,7 +566,7 @@ object Element {
 
   /**
    * Returns the given elements and all elements on which they are contingent, closed recursively.
-   * Only elements with condition
+   * Only elements with condition.
    */
   def closeUnderContingencies(elements: scala.collection.Set[Element[_]]): scala.collection.Set[Element[_]] = {
     def findContingent(elements: scala.collection.Set[Element[_]]): scala.collection.Set[Element[_]] = {

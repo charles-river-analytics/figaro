@@ -36,23 +36,23 @@ import scala.language.implicitConversions
  */
 trait Distance[T] {
   /**
-   * Return the distance from this value to another
+   * Return the distance from this value to another.
    */
   def distance(that: T): Double
 }
 
 /**
- * Trait to compute the L-2 Norm
+ * Trait to compute the L-2 Norm.
  */
 trait L2Norm {
   /**
-   * Reduce a variable list of doubles using the L2 norm
+   * Reduce a variable list of doubles using the L2 norm.
    */
   def reduce(v: Double*) = math.pow((0.0 /: v)((c, n) => c + math.pow(math.abs(n), 2.0)), 0.5)
 }
 
 /**
- * Abstract class to define the distance between tuples of classes that implement the Distance[T] trait
+ * Abstract class to define the distance between tuples of classes that implement the Distance[T] trait.
  */
 abstract class TupleDistance {
   /**
@@ -63,21 +63,21 @@ abstract class TupleDistance {
 }
 
 /**
- * Extension of Ints to the Distance[T] trait. Computes the L1 distance between two Ints
+ * Extension of Ints to the Distance[T] trait. Computes the L1 distance between two Ints.
  */
 private[index] case class IntDistance(value: Int) extends Distance[Int] {
   def distance(that: Int) = math.abs(value - that)
 }
 
 /**
- * Extension of Doubles to the Distance[T] trait. Computes the L1 distance between two Doubles
+ * Extension of Doubles to the Distance[T] trait. Computes the L1 distance between two Doubles.
  */
 private[index] case class DoubleDistance(value: Double) extends Distance[Double] {
   def distance(that: Double) = math.abs(value - that)
 }
 
 /**
- * Extension of Boolean to the Distance[T] trait. Returns the (this xor that)
+ * Extension of Boolean to the Distance[T] trait. Returns the (this xor that).
  */
 private[index] case class BooleanDistance(value: Boolean) extends Distance[Boolean] {
   def distance(that: Boolean) = if (value ^ that) 1.0 else 0.0
@@ -104,7 +104,7 @@ case class TupleDistance2[T1 <% Distance[T1], T2 <% Distance[T2]](value: (T1, T2
  *  Contains implicit conversions from Int, Double and Boolean to classes that extend the Distance[T] trait,
  *  as well as 2-tuples of Int, Double and Boolean.
  *  
- *  Uses L1 distance for single values and L2 distance for tuples
+ *  Uses L1 distance for single values and L2 distance for tuples.
  */
 object Distance {
   implicit def int2Dist(x: Int) = IntDistance(x)
