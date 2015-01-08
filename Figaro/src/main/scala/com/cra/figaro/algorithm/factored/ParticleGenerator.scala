@@ -111,7 +111,7 @@ class ParticleGenerator(de: DensityEstimator, val numArgSamples: Int, val numTot
     update(elem, newSamples)
   }
 
-  def accept[T](oldValue: T, newValue: T, beliefs: List[(Double, T)]): T = {
+  private def accept[T](oldValue: T, newValue: T, beliefs: List[(Double, T)]): T = {
     val oldDensity = de.getDensity(oldValue, beliefs)
     val newDensity = de.getDensity(newValue, beliefs)
     val ratio = newDensity / oldDensity

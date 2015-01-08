@@ -343,16 +343,16 @@ abstract class ProbQueryBeliefPropagation(override val universe: Universe, targe
 
 trait ProbEvidenceBeliefPropagation extends ProbabilisticBeliefPropagation {
 
-  def logFcn: (Double => Double) = semiring match {
+  private def logFcn: (Double => Double) = semiring match {
     case LogSumProductSemiring => (d: Double) => d
     case SumProductSemiring => (d: Double) => if (d == semiring.zero) Double.NegativeInfinity else math.log(d)
   }
-  def probFcn: (Double => Double) = semiring match {
+  private def probFcn: (Double => Double) = semiring match {
     case LogSumProductSemiring => (d: Double) => if (d == semiring.zero) 0 else math.exp(d)
     case SumProductSemiring => (d: Double) => d
   }
 
-  def entropy(probFactor: Factor[Double], logFactor: Factor[Double]): Double = {
+  private def entropy(probFactor: Factor[Double], logFactor: Factor[Double]): Double = {
     // Even though the variables in each factor are the same, the order of the vars might be different
     val logFactorMapping = probFactor.variables.map(v => logFactor.variables.indexOf(v))
     def remap(l: List[Int]) = l.zipWithIndex.map(s => (s._1, logFactorMapping(s._2))).sortBy(_._2).unzip._1
@@ -365,7 +365,7 @@ trait ProbEvidenceBeliefPropagation extends ProbabilisticBeliefPropagation {
   }
 
   /* Not true mutual information for > 2 factors, but standard for computing Bethe approximation */
-  def mutualInformation(joint: Factor[Double], marginals: Iterable[Factor[Double]]) = {
+  private def mutualInformation(joint: Factor[Double], marginals: Iterable[Factor[Double]]) = {
     if (debug) {
       println(joint.toReadableString)
       marginals foreach (f => println(f.toReadableString))
@@ -378,6 +378,10 @@ trait ProbEvidenceBeliefPropagation extends ProbabilisticBeliefPropagation {
     mi
   }
 
+  /**
+   * Compute the evidence of the model. Returns the probability of evidence on the model. This assumes that BP
+   * has already been run on this algorithm instance.
+   */
   def computeEvidence(): Double = {
 
     val factorNodes = factorGraph.getNodes.filter(_.isInstanceOf[FactorNode]).toList
