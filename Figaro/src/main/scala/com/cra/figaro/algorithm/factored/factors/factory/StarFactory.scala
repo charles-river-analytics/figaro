@@ -18,9 +18,15 @@ import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.lazyfactored._
 
 /**
- * Doc needed
+ * A Sub-Factory to make Star Factors from arbitrary elements
  */
 object StarFactory {
+  
+  /**
+   * Make a StarFactor from an Element <p.
+   * 
+   * This Factor has only one value whose probability is 1.0
+   */
    def makeStarFactor[T](elem: Element[T]): List[Factor[Double]] = {
     val elemVar = Variable(elem)
     require(elemVar.range.size == 1 && elemVar.range(0) == Star[T], "Trying to create a star factor from a value set that is not only star")

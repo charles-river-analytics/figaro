@@ -24,6 +24,9 @@ import com.cra.figaro.library.compound._
 import com.cra.figaro.library.collection._
 import com.cra.figaro.library.atomic.discrete._
 
+/**
+ * A trait for elements that are able to construct their own Factor.
+ */
 trait FactorMaker[T] {
   def makeFactors[T]: List[Factor[Double]]
 }
@@ -34,7 +37,7 @@ trait FactorMaker[T] {
 object Factory {
 
   /**
-   * The multiplicative identity factor.
+   * The mutliplicative identity factor.
    */
   def unit[T](semiring: Semiring[T]): Factor[T] = {
     val result = new BasicFactor[T](List(), List())
@@ -42,6 +45,9 @@ object Factory {
     result
   }
 
+  /**
+   * Create a BasicFactor from the supplied parent and children variables
+   */
   def defaultFactor[T](parents: List[Variable[_]], children: List[Variable[_]]) = new BasicFactor[T](parents, children)
 
   private def makeFactors[T](const: Constant[T]): List[Factor[Double]] = {
@@ -141,6 +147,10 @@ object Factory {
   val newFactors = ListBuffer[Factor[Double]]()
   val tempFactors = ListBuffer[Factor[Double]]()
 
+  /**
+   * Combines a set of factors into a single larger factor. This method is used when a factor has
+   * been decomposed into may dependent Factors and a single Factor is required.
+   */
   def combineFactors(oldFactors: List[Factor[Double]], semiring: Semiring[Double], removeTemporaries: Boolean): List[Factor[Double]] = {
 	newFactors.clear
 	tempFactors.clear
@@ -303,6 +313,10 @@ object Factory {
     }
   }
 
+  /**
+   * Invokes Factor constructors for a standard set of Elements. This method uses various
+   * secondary factories.
+   */
   def concreteFactors[T](elem: Element[T]): List[Factor[Double]] =
     elem match {
       case flip: ParameterizedFlip => DistributionFactory.makeFactors(flip)
@@ -398,7 +412,7 @@ object Factory {
     }
   }
 
-  def makeUncontingentConstraintFactor[T](elem: Element[T], constraint: T => Double, upper: Boolean): Factor[Double] = {
+  private def makeUncontingentConstraintFactor[T](elem: Element[T], constraint: T => Double, upper: Boolean): Factor[Double] = {
     val elemVar = Variable(elem)
     val factor = new BasicFactor[Double](List(), List(elemVar))
     for { (elemVal, index) <- elemVar.range.zipWithIndex } {
@@ -419,7 +433,7 @@ object Factory {
     extendConstraintFactor(restFactor, firstConting)
   }
 
-  def extendConstraintFactor(restFactor: Factor[Double], firstConting: Element.ElemVal[_]): Factor[Double] = {
+  private def extendConstraintFactor(restFactor: Factor[Double], firstConting: Element.ElemVal[_]): Factor[Double] = {
     // The extended factor is obtained by getting the underlying factor and expanding each row so that the row only provides its entry if the contingent variable takes
     // on the appropriate value, otherwise the entry is 1
     val Element.ElemVal(firstElem, firstValue) = firstConting
@@ -440,6 +454,9 @@ object Factory {
 
   private val factorCache = scala.collection.mutable.Map[Element[_], List[Factor[Double]]]()
 
+  /**
+   * Construct a Factor without constraints.
+   */
   def makeNonConstraintFactors(elem: Element[_]): List[Factor[Double]] = {
     factorCache.get(elem) match {
       case Some(l) => l
@@ -458,6 +475,9 @@ object Factory {
     makeConditionAndConstraintFactors(elem) ::: makeNonConstraintFactors(elem)
   }
 
+  /**
+   * Creates a BasicFactor from the supplied variables
+   */
   def simpleMake[T](variables: List[Variable[_]]) =
     new BasicFactor[T](variables, List())
 

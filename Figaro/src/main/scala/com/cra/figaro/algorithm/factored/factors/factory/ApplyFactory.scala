@@ -19,9 +19,13 @@ import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.language._
 
 /**
- * Doc needed
+ * A Sub-Factory for Apply Elements
  */
 object ApplyFactory {
+  
+  /**
+   * Factor constructor for an Apply Element that has one input
+   */
   def makeFactors[T, U](apply: Apply1[T, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {
     val applyMap: scala.collection.mutable.Map[T, U] = LazyValues(apply.universe).getMap(apply)
     val arg1Var = Variable(apply.arg1)
@@ -49,6 +53,9 @@ object ApplyFactory {
     List(factor)
   }
 
+  /**
+   * Factor constructor for an Apply Element that has two inputs
+   */
   def makeFactors[T1, T2, U](apply: Apply2[T1, T2, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {
     val applyMap: scala.collection.mutable.Map[(T1, T2), U] = LazyValues(apply.universe).getMap(apply)
     val arg1Var = Variable(apply.arg1)
@@ -78,6 +85,9 @@ object ApplyFactory {
     List(factor)
   }
 
+  /**
+   * Factor constructor for an Apply Element that has three inputs
+   */
   def makeFactors[T1, T2, T3, U](apply: Apply3[T1, T2, T3, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {
     val applyMap: scala.collection.mutable.Map[(T1, T2, T3), U] = LazyValues(apply.universe).getMap(apply)
     val arg1Var = Variable(apply.arg1)
@@ -110,6 +120,9 @@ object ApplyFactory {
     List(factor)
   }
 
+  /**
+   * Factor constructor for an Apply Element that has four inputs
+   */
   def makeFactors[T1, T2, T3, T4, U](apply: Apply4[T1, T2, T3, T4, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {
     val applyMap: scala.collection.mutable.Map[(T1, T2, T3, T4), U] = LazyValues(apply.universe).getMap(apply)
     val arg1Var = Variable(apply.arg1)
@@ -145,6 +158,9 @@ object ApplyFactory {
     List(factor)
   }
 
+  /**
+   * Factor constructor for an Apply Element that has five inputs
+   */
   def makeFactors[T1, T2, T3, T4, T5, U](apply: Apply5[T1, T2, T3, T4, T5, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {
     val applyMap: scala.collection.mutable.Map[(T1, T2, T3, T4, T5), U] = LazyValues(apply.universe).getMap(apply)
     val arg1Var = Variable(apply.arg1)
