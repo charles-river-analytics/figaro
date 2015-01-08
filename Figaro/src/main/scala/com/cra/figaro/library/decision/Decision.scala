@@ -26,7 +26,7 @@ import scala.collection.mutable.Set
  * A Decision class represents a decision that takes in a single parent element, applies a function (aka a policy)
  * on the value of the parent, and returns a decision element. A decision is essentially a chain, with the added
  * capability to change the function in the chain. If your decision has more than one parent, you can create an element
- * tuple of the parents and use the tuple as the input to the decision
+ * tuple of the parents and use the tuple as the input to the decision.
  *
  */
 /*
@@ -48,44 +48,44 @@ abstract class Decision[T, U](name: Name[U], parent: Element[T], private var fcn
   extends Chain(name, parent, fcn, cacheSize, collection) with PolicyMaker[T, U] {
 
   /**
-   * The parent type
+   * The parent type.
    */
   type PValue = this.ParentType
   
   /**
-   * The decision type
+   * The decision type.
    */
   type DValue = this.Value
 
   /**
-   * The decision function. fcn is declared as a var and can change depending on the policy
+   * The decision function. fcn is declared as a var and can change depending on the policy.
    */
   override protected def cpd = this.fcn
 
   private[figaro] var policy: DecisionPolicy[T, U] = null
 
   /**
-   * Get the decision for a specific value of the parent
+   * Get the decision for a specific value of the parent.
    */
   def getPolicy(p: T): Element[U] = { val result = get(p); result.generate(); result }
   
   /**
-   * Get the complete policy object for this decision
+   * Get the complete policy object for this decision.
    */
   def getPolicy(): DecisionPolicy[T, U] = policy
 
   /**
-   * Set the policy for this decision using the DecisionPolicy class stored in the Decision
+   * Set the policy for this decision using the DecisionPolicy class stored in the Decision.
    */
   def setPolicy(): Unit = setPolicy(policy.toFcn())
   
   /**
-   * Set the policy for this decision from an Algorithm run on this decision 
+   * Set the policy for this decision from an Algorithm run on this decision.
    */
   def setPolicy(Alg: DecisionAlgorithm[T, U]): Unit = setPolicy(Alg.getUtility())
   
   /**
-   * Set the policy for this decision using a map from parent/decision tuple values to decision samples
+   * Set the policy for this decision using a map from parent/decision tuple values to decision samples.
    */
   def setPolicy(policyMap: Map[(T, U), DecisionSample]): Unit = {
     policy = makePolicy(policyMap)
@@ -93,7 +93,7 @@ abstract class Decision[T, U](name: Name[U], parent: Element[T], private var fcn
   }
 
   /**
-   * Directly set the policy of this decision using a function from a parent value to a decision element
+   * Directly set the policy of this decision using a function from a parent value to a decision element.
    */
   def setPolicy(new_fcn: (T => Element[U])): Unit = {
     // Override the fcn variable
@@ -114,7 +114,7 @@ abstract class Decision[T, U](name: Name[U], parent: Element[T], private var fcn
 }
 
 /**
- * Abstract class for a NonCachingDecision. It is abstract because makePolicy has not been defined yet
+ * Abstract class for a NonCachingDecision. It is abstract because makePolicy has not been defined yet.
  */
 abstract class NonCachingDecision[T, U](name: Name[U], parent: Element[T], fcn: T => Element[U], collection: ElementCollection)
   extends Decision(name, parent, fcn, 1, collection) {
@@ -123,7 +123,7 @@ abstract class NonCachingDecision[T, U](name: Name[U], parent: Element[T], fcn: 
 }
 
 /**
- * Abstract class for a CachingDecision. It is abstract because makePolicy has not been defined yet
+ * Abstract class for a CachingDecision. It is abstract because makePolicy has not been defined yet.
  */
 abstract class CachingDecision[T, U](name: Name[U], parent: Element[T], fcn: T => Element[U], collection: ElementCollection)
   extends Decision(name, parent, fcn, 1000, collection) {
@@ -141,7 +141,7 @@ abstract class CachingDecision[T, U](name: Name[U], parent: Element[T], fcn: T =
 object NonCachingDecision {
 
   /**
-   * Create a NonCachingDecision with no parent that uses an approximate (kNN) PolicyMaker
+   * Create a NonCachingDecision with no parent that uses an approximate (kNN) PolicyMaker.
    */
   def apply[U](fcn: () => Element[U])(implicit name: Name[U], collection: ElementCollection, conversion: Int => Distance[Int]): Decision[Int, U] = {
     new NonCachingDecision(name, Constant(0), (i: Int) => fcn(), collection) with PolicyMaker[Int, U] {
@@ -151,7 +151,7 @@ object NonCachingDecision {
 
   /**
    * Create a NonCachingDecision with one parent and a default function from values of the parent to Element[U].
-   * Uses an approximate (kNN) PolicyMaker
+   * Uses an approximate (kNN) PolicyMaker.
    */
   def apply[T, U](arg1: Element[T], fcn: (T) => Element[U])(implicit name: Name[U], collection: ElementCollection, conversion: T => Distance[T]): Decision[T, U] = {
     new NonCachingDecision(name, arg1, fcn, collection) with PolicyMaker[T, U] {
@@ -161,7 +161,7 @@ object NonCachingDecision {
 
   /**
    * Create a NonCachingDecision with no parent and sequence of the possible actions of the decision.
-   * Uses an approximate (kNN) PolicyMaker
+   * Uses an approximate (kNN) PolicyMaker.
    */
   def apply[U](range: Seq[U])(implicit name: Name[U], collection: ElementCollection, conversion: Int => Distance[Int]): Decision[Int, U] = {
     val defElement = rangeToElement(range)
@@ -170,7 +170,7 @@ object NonCachingDecision {
 
   /**
    * Create a NonCachingDecision with one parent and sequence of the possible actions of the decision.
-   * Uses an approximate (kNN) PolicyMaker
+   * Uses an approximate (kNN) PolicyMaker.
    */
   def apply[T, U](arg1: Element[T], range: Seq[U])(implicit name: Name[U], collection: ElementCollection, conversion: T => Distance[T]): Decision[T, U] = {
     val defElement = rangeToElement(range)
@@ -195,7 +195,7 @@ object CachingDecision {
 
    /**
    * Create a CachingDecision with one parent and a default function from values of the parent to Element[U].
-   * Uses an exact PolicyMaker
+   * Uses an exact PolicyMaker.
    */
   def apply[T, U](arg1: Element[T], fcn: (T) => Element[U])(implicit name: Name[U], collection: ElementCollection): Decision[T, U] = {
     new CachingDecision(name, arg1, fcn, collection) with ExactPolicyMaker[T, U]
@@ -203,7 +203,7 @@ object CachingDecision {
 
   /**
    * Create a CachingDecision with no parent and sequence of the possible actions of the decision.
-   * Uses an exact PolicyMaker
+   * Uses an exact PolicyMaker.
    */
   def apply[U](range: Seq[U])(implicit name: Name[U], collection: ElementCollection): Decision[Int, U] = {
     apply(() => rangeToElement(range))(name, collection)
@@ -211,7 +211,7 @@ object CachingDecision {
 
    /**
    * Create a CachingDecision with one parent and sequence of the possible actions of the decision.
-   * Uses an exact PolicyMaker
+   * Uses an exact PolicyMaker.
    */
   def apply[T, U](arg1: Element[T], range: Seq[U])(implicit name: Name[U], collection: ElementCollection): Decision[T, U] = {
     apply(arg1, (d: T) => rangeToElement(range))(name, collection)
@@ -226,7 +226,7 @@ object CachingDecision {
  */
 object Decision {
    /**
-   * Create a CachingDecision with no parent that uses an exact PolicyMaker
+   * Create a CachingDecision with no parent that uses an exact PolicyMaker.
    */
   def apply[U](fcn: () => Element[U])(implicit name: Name[U], collection: ElementCollection): Decision[Int, U] = {
     new CachingDecision(name, Constant(0), (i: Int) => fcn(), collection) with ExactPolicyMaker[Int, U]
@@ -234,7 +234,7 @@ object Decision {
 
    /**
    * Create a CachingDecision with one parent and a default function from values of the parent to Element[U].
-   * Uses an exact PolicyMaker
+   * Uses an exact PolicyMaker.
    */
   def apply[T, U](arg1: Element[T], fcn: (T) => Element[U])(implicit name: Name[U], collection: ElementCollection): Decision[T, U] = {
     new CachingDecision(name, arg1, fcn, collection) with ExactPolicyMaker[T, U]
@@ -242,7 +242,7 @@ object Decision {
 
   /**
    * Create a CachingDecision with no parent and sequence of the possible actions of the decision.
-   * Uses an exact PolicyMaker
+   * Uses an exact PolicyMaker.
    */
   def apply[U](range: Seq[U])(implicit name: Name[U], collection: ElementCollection): Decision[Int, U] = {
     apply(() => rangeToElement(range))(name, collection)
@@ -250,7 +250,7 @@ object Decision {
 
   /**
    * Create a CachingDecision with one parent and sequence of the possible actions of the decision.
-   * Uses an exact PolicyMaker
+   * Uses an exact PolicyMaker.
    */
   def apply[T, U](arg1: Element[T], range: Seq[U])(implicit name: Name[U], collection: ElementCollection): Decision[T, U] = {
     apply(arg1, (d: T) => rangeToElement(range))(name, collection)

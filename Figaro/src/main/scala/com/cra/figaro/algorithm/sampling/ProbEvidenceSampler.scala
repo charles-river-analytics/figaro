@@ -86,7 +86,7 @@ object ProbEvidenceSampler {
    * It also uses an anytime sampler for computing the baseline probability of conditions and constraints in the 
    * program. 
    * 
-   * @param baselineWaitingTime The amount of time to allow the algorithm for computing the baseling probability to run.
+   * @param baselineWaitingTime The amount of time to allow the algorithm for computing the baseline probability to run.
    */
   def apply(baselineWaitingTime: Long, evidence: List[NamedEvidence[_]])(implicit universe: Universe): ProbEvidenceAlgorithm = {
     val baseline = new ProbEvidenceSampler(universe) with AnytimeProbEvidenceSampler

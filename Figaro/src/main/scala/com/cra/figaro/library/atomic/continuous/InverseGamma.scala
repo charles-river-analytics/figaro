@@ -61,6 +61,9 @@ class AtomicInverseGamma(name: Name[Double], shape: Double, scale: Double = 1.0,
 }
 
 object InverseGamma {
+    /**
+   * Create an InverseGamma element.
+   */
   def apply(shape: Double, scale: Double)(implicit name: Name[Double], collection: ElementCollection) =
     new AtomicInverseGamma(name, shape, scale, collection)
 

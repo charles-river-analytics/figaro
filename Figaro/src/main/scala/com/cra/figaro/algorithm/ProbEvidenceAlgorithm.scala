@@ -50,7 +50,7 @@ trait ProbEvidenceAlgorithm extends Algorithm {
   }
 
   /**
-   * The computed probability of evidence
+   * The computed probability of evidence.
    */
   def probEvidence: Double = {
     if (!active) throw new AlgorithmInactiveException
@@ -58,7 +58,7 @@ trait ProbEvidenceAlgorithm extends Algorithm {
   }
 
    /**
-   * The computed log probability of evidence
+   * The computed log probability of evidence.
    */
   def logProbEvidence: Double = {
     if (!active) throw new AlgorithmInactiveException

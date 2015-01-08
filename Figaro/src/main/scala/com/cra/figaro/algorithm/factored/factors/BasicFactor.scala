@@ -156,7 +156,7 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
   /**
    * Returns a factor that maps values of the other variables to the value of the given variable that
    * maximizes the entry associated with that value, according to some maximization function.
-   * comparator defines the maximization. It returns true iff its second argument is greater than its first.
+   * comparator defines the maximization. It returns true if its second argument is greater than its first.
    *
    * @tparam U The type of element whose value is being recorded. The resulting factor maps values of
    * other variables in this factor to this type.
@@ -257,7 +257,7 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
     }
 
   /**
-   * Produce a readable string representation of the factor
+   * Produce a readable string representation of the factor.
    */
   override def toReadableString: String = {
     val result = new StringBuffer

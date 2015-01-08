@@ -48,12 +48,12 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
   universe.register(currentConstraintValues)
 
   /**
-   * Get the acceptance ratio for the sampler
+   * Get the acceptance ratio for the sampler.
    */
   def acceptRejectRatio = accepts.toDouble / (accepts.toDouble + rejects.toDouble)
 
   /**
-   * Set this flag to true to obtain debugging information
+   * Set this flag to true to obtain debugging information.
    */
   var debug = false
 
@@ -217,7 +217,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
    * is not empty, we recursively update the intersecting elements. Once those updates are completed,
    * we update an element and move on to the next element in the set.
    */
-  def updateMany[T](state: State, toUpdate: Set[Element[_]]): State = {
+  private def updateMany[T](state: State, toUpdate: Set[Element[_]]): State = {
     var returnState = state
     var updatesLeft = toUpdate
     while (!updatesLeft.isEmpty) {
@@ -236,7 +236,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
   }
 
   /*
-   * A recursive function to work in conjuction with updateMany to check the order of the element
+   * A recursive function to work in conjunction with updateMany to check the order of the element
    * updates.
    */
   @tailrec

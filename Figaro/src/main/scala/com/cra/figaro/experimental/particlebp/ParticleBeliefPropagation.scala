@@ -65,7 +65,7 @@ trait ParticleBeliefPropagation extends FactoredAlgorithm[Double] with InnerBPHa
   val densityEstimator: DensityEstimator
 
   /**
-   * A particle generator to generate particles and do resampling
+   * A particle generator to generate particles and do resampling.
    */
   val pbpSampler: ParticleGenerator
 

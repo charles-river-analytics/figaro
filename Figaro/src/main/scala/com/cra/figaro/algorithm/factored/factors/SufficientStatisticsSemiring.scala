@@ -29,13 +29,13 @@ class SufficientStatisticsSemiring(parameterMap: immutable.Map[Parameter[_], Seq
   
   /**
    * 0 probability and a vector of zeros for all parameters. The vector for a parameter
-   * must be of length equal to number of possible observations of the parameter
+   * must be of length equal to number of possible observations of the parameter.
    */
   val zero = (0.0, mutable.Map(parameterMap.toSeq: _*))
   
   /**
    * 1 probability and a vector of zeros for all parameters. The vector for a parameter
-   * must be of length equal to number of possible observations of the parameter
+   * must be of length equal to number of possible observations of the parameter.
    */
   val one = (1.0, mutable.Map(parameterMap.toSeq: _*))
 

@@ -178,12 +178,12 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
 }
 
 /**
- * Trait for probabilistic BP algorithms
+ * Trait for probabilistic BP algorithms.
  */
 trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
 
   /**
-   *  Normalize a factor
+   *  Normalize a factor.
    */
   def normalize(factor: Factor[Double]): Factor[Double] = {
     val z = semiring.sumMany(factor.contents.values)
@@ -222,7 +222,7 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
   }
 
   /**
-   * Get the belief for an element
+   * Get the belief for an element.
    */
   protected[figaro] def getBeliefsForElement[T](target: Element[T]): List[(Double, T)] = {
     val finalFactor = getFinalFactorForElement(target)
@@ -237,7 +237,7 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
   }
 
   /**
-   * Get the final factor for an element
+   * Get the final factor for an element.
    */
   def getFinalFactorForElement[T](target: Element[T]): Factor[Double] = {
     val targetVar = Variable(target)
@@ -253,7 +253,7 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
 }
 
 /**
- * Trait for One Time BP algorithms
+ * Trait for One Time BP algorithms.
  */
 trait OneTimeProbabilisticBeliefPropagation extends ProbabilisticBeliefPropagation with OneTime {
   val iterations: Int
@@ -291,12 +291,12 @@ trait OneTimeProbabilisticBeliefPropagation extends ProbabilisticBeliefPropagati
 }
 
 /**
- * Trait for Anytime BP algorithms
+ * Trait for Anytime BP algorithms.
  */
 trait AnytimeProbabilisticBeliefPropagation extends ProbabilisticBeliefPropagation with Anytime
 
 /**
- * Class to implement a probability query BP algorithm
+ * Class to implement a probability query BP algorithm.
  */
 abstract class ProbQueryBeliefPropagation(override val universe: Universe, targets: Element[_]*)(
   val dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
@@ -490,7 +490,7 @@ object BeliefPropagation {
     probability(target, (t: T) => t == value)
 
   /**
-   * Lazy version of BP that operates only on bounds
+   * Lazy version of BP that operates only on bounds.
    */
   def lazyBP(myIterations: Int, depth: Int, upperBounds: Boolean, targets: Element[_]*)(implicit universe: Universe) =
     new ProbQueryBeliefPropagation(universe, targets: _*)(

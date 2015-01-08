@@ -135,7 +135,7 @@ object EMWithBP {
     BeliefPropagation(numIterations, targets: _*)(universe)
   }
   /**
-   * An expectation maximization algorithm using Belief Propagation sampling for inference
+   * An expectation maximization algorithm using Belief Propagation sampling for inference.
    *
    * @param params parameters to target with EM algorithm
    */
@@ -144,8 +144,8 @@ object EMWithBP {
     new GeneralizedEM((targets: Seq[Element[_]]) => (universe: Universe) => makeBP(10, targets)(universe), universe, parameters: _*)(EMTerminationCriteria.maxIterations(10))
   }
   /**
-   * An expectation maximization algorithm using Belief Propagation sampling for inference
-   *  @param emIterations number of iterations of the EM algorithm
+   * An expectation maximization algorithm using Belief Propagation sampling for inference.
+   * @param emIterations number of iterations of the EM algorithm
    * @param bpIterations number of iterations of the BP algorithm
    * @param params parameters to target with EM algorithm
    */
@@ -155,15 +155,15 @@ object EMWithBP {
   }
 
   /**
-   * An expectation maximization algorithm using Belief Propagation sampling for inference
+   * An expectation maximization algorithm using Belief Propagation sampling for inference.
    * @param params parameters to target with EM algorithm
    */
   def apply(params: Parameter[_]*)(implicit universe: Universe) =
     new GeneralizedEM((targets: Seq[Element[_]]) => (universe: Universe) => makeBP(10, targets)(universe), universe, params: _*)(EMTerminationCriteria.maxIterations(10))
 
   /**
-   * An expectation maximization algorithm using importance sampling for inference
-   *  @param emIterations number of iterations of the EM algorithm
+   * An expectation maximization algorithm using importance sampling for inference.
+   * @param emIterations number of iterations of the EM algorithm
    * @param bpIterations number of iterations of the BP algorithm
    * @param params parameters to target with EM algorithm
    */
@@ -171,7 +171,7 @@ object EMWithBP {
     new GeneralizedEM((targets: Seq[Element[_]]) => (universe: Universe) => makeBP(bpIterations, targets)(universe), universe, params: _*)(EMTerminationCriteria.maxIterations(emIterations))
 
   /**
-   * An expectation maximization algorithm using importance sampling for inference
+   * An expectation maximization algorithm using importance sampling for inference.
    * @param terminationCriteria criteria for stopping the EM algorithm
    * @param bpIterations number of iterations of the BP algorithm
    * @param params parameters to target with EM algorithm
@@ -186,7 +186,7 @@ object EMWithImportance {
   }
 
   /**
-   * An expectation maximization algorithm using importance sampling for inference
+   * An expectation maximization algorithm using importance sampling for inference.
    *
    * @param emIterations number of iterations of the EM algorithm
    * @param importanceParticles number of particles of the importance sampling algorithm
@@ -195,7 +195,7 @@ object EMWithImportance {
     new GeneralizedEM((targets: Seq[Element[_]]) => (universe: Universe) => makeImportance(importanceParticles, targets)(universe), universe, p: _*)(EMTerminationCriteria.maxIterations(emIterations))
 
   /**
-   * An expectation maximization algorithm using importance sampling for inference
+   * An expectation maximization algorithm using importance sampling for inference.
    *
    * @param terminationCriteria criteria for stopping the EM algorithm
    * @param importanceParticles number of particles of the importance sampling algorithm
@@ -204,7 +204,7 @@ object EMWithImportance {
     new GeneralizedEM((targets: Seq[Element[_]]) => (universe: Universe) => makeImportance(importanceParticles, targets)(universe), universe, p: _*)(terminationCriteria)
 
   /**
-   * An expectation maximization algorithm using importance sampling for inference
+   * An expectation maximization algorithm using importance sampling for inference.
    *
    * @param params parameters to target with EM algorithm
    */
@@ -214,7 +214,7 @@ object EMWithImportance {
   }
 
   /**
-   * An expectation maximization algorithm using importance sampling for inference
+   * An expectation maximization algorithm using importance sampling for inference.
    *
    * @param emIterations number of iterations of the EM algorithm
    * @param importanceParticles number of particles of the importance sampling algorithm
@@ -226,7 +226,7 @@ object EMWithImportance {
   }
 
   /**
-   * An expectation maximization algorithm using importance sampling for inference
+   * An expectation maximization algorithm using importance sampling for inference.
    *
    * @param terminationCriteria criteria for stopping the EM algorithm
    * @param importanceParticles number of particles of the importance sampling algorithm
@@ -312,29 +312,29 @@ object EMWithMH {
 
 object EMWithVE {
   /**
-   * An expectation maximization algorithm which will run for the default of 10 iterations
+   * An expectation maximization algorithm which will run for the default of 10 iterations.
    */
   def apply(p: Parameter[_]*)(implicit universe: Universe) =
     new ExpectationMaximizationWithFactors(universe, p: _*)(EMTerminationCriteria.maxIterations(10))
   /**
-   * An expectation maximization algorithm which will run for the default of 10 iterations
+   * An expectation maximization algorithm which will run for the default of 10 iterations.
    */
   def apply(p: ModelParameters)(implicit universe: Universe) =
     new ExpectationMaximizationWithFactors(universe, p.convertToParameterList: _*)(EMTerminationCriteria.maxIterations(10))
 
   /**
-   * An expectation maximization algorithm which will run for the number of iterations specified
+   * An expectation maximization algorithm which will run for the number of iterations specified.
    */
   def apply(iterations: Int, p: ModelParameters)(implicit universe: Universe) =
     new ExpectationMaximizationWithFactors(universe, p.convertToParameterList: _*)(EMTerminationCriteria.maxIterations(iterations))
   /**
-   * An expectation maximization algorithm which will run for the number of iterations specified
+   * An expectation maximization algorithm which will run for the number of iterations specified.
    */
   def apply(iterations: Int, p: Parameter[_]*)(implicit universe: Universe) =
     new ExpectationMaximizationWithFactors(universe, p: _*)(EMTerminationCriteria.maxIterations(iterations))
 
   /**
-   * An expectation maximization algorithm which will stop according to a user specified termination criteria
+   * An expectation maximization algorithm which will stop according to a user specified termination criteria.
    */
   def apply(terminationCriteria: () => EMTerminationCriteria, p: Parameter[_]*)(implicit universe: Universe) =
     new ExpectationMaximizationWithFactors(universe, p: _*)(terminationCriteria)

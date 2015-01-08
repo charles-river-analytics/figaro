@@ -31,8 +31,8 @@ import scala.language.existentials
  * 
  */
 /**
- * Trait for Decision based Variable Elimination. This implementation is hardcoded to use
- * Double utilities
+ * Trait for Decision based Variable Elimination. This implementation is hardcoded to use.
+ * Double utilities.
  */
 trait ProbabilisticVariableEliminationDecision extends VariableElimination[(Double, Double)] {
   /** Retrieve utility nodes in the model
@@ -41,13 +41,13 @@ trait ProbabilisticVariableEliminationDecision extends VariableElimination[(Doub
   def getUtilityNodes: List[Element[_]]
   
   /**
-   * Semiring for Decisions uses a sum-product-utility semiring
+   * Semiring for Decisions uses a sum-product-utility semiring.
    */
   override val semiring = SumProductUtilitySemiring
   
   /**
    * Makes a utility factor an element designated as a utility. This is factor of a tuple (Double, Double)
-   * where the first value is 1.0 and the second is a possible utility of the element 
+   * where the first value is 1.0 and the second is a possible utility of the element.
    */
   def makeUtilFactor(e: Element[_]): Factor[(Double, Double)] = {
     val f = Factory.defaultFactor[(Double, Double)](List(), List(Variable(e)))
@@ -125,7 +125,7 @@ class ProbQueryVariableEliminationDecision[T, U](override val universe: Universe
 
   /**
    *  The variable elimination eliminates all variables except on all decision nodes and their parents. 
-   *  Thus the target elements is both the decision element and the parent element
+   *  Thus the target elements is both the decision element and the parent element.
    */
   val targetElements = List(target, target.args(0)) 
 
@@ -157,7 +157,7 @@ class ProbQueryVariableEliminationDecision[T, U](override val universe: Universe
     finalFactors = makeResultFactor(factorsAfterElimination)
 
   /**
-   * Returns distribution of the target, ignoring utilities
+   * Returns distribution of the target, ignoring utilities.
    */
   def computeDistribution[T](target: Element[T]): Stream[(Double, T)] = {
     val factor = targetFactors(target)
@@ -177,7 +177,7 @@ class ProbQueryVariableEliminationDecision[T, U](override val universe: Universe
 
   /** 
    *  Returns the computed utility of all parent/decision tuple values. For VE, these are not samples
-   *  but the actual computed expected utility for all combinations of the parent and decision
+   *  but the actual computed expected utility for all combinations of the parent and decision.
    */
   def computeUtility(): scala.collection.immutable.Map[(T, U), DecisionSample] = computeStrategy(finalFactors)
 
@@ -232,7 +232,7 @@ object DecisionVariableElimination {
 
   /**
    * Create a decision variable elimination instance with the given decision variables and indicated utility
-   * nodes 
+   * nodes.
    */
   def apply[T, U](utilityNodes: List[Element[_]], target: Decision[T, U])(implicit universe: Universe) = {
     utilityNodes.foreach(_.generate()) // need initial values for the utility nodes before the usage check

@@ -94,14 +94,14 @@ trait ProbQueryAlgorithm
   }
 
   /**
-   * Return the mean of the probability density function for the given continuous element
+   * Return the mean of the probability density function for the given continuous element.
    */
   def mean(target: Element[Double]): Double = {
     expectation(target, (d: Double) => d)
   }
 
   /**
-   * Return the variance of the probability density function for the given continuous element
+   * Return the variance of the probability density function for the given continuous element.
    */
   def variance(target: Element[Double]): Double = {
     val m = mean(target)
@@ -110,7 +110,7 @@ trait ProbQueryAlgorithm
   }
   
   /**
-   * Return an element representing the posterior probability distribution of the given element
+   * Return an element representing the posterior probability distribution of the given element.
    */
   def posteriorElement[T](target: Element[T], universe: Universe = Universe.universe): Element[T] = {
     Select(distribution(target).toList:_*)("", universe)

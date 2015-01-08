@@ -20,32 +20,32 @@ package com.cra.figaro.util
  */
 trait MultiSet[T] extends Traversable[T] {
   /**
-   * Return the number of instances of the value in the Set
+   * Return the number of instances of the value in the set.
    */
   def apply(t: T): Int
 
   /**
-   * Add an instance of this value to the set
+   * Add an instance of this value to the set.
    */
   def addOne(t: T): MultiSet[T]
 
  /**
-   * Add several instances of this value to the set
+   * Add several instances of this value to the set.
    */
   def addMany(t: T, count: Int): MultiSet[T]
 
   /**
-   * Remove one instance of this value from the set
+   * Remove one instance of this value from the set.
    */
   def removeOne(t: T): MultiSet[T]
 
-  /** Remove all instances of this value from the set
+  /** Remove all instances of this value from the set.
    *  
    */
   def removeAll(t: T): MultiSet[T]
 
   /**
-   * Return the union of another set with this set
+   * Return the union of another set with this set.
    */
   def union(that: MultiSet[T]): MultiSet[T]
 
@@ -72,7 +72,7 @@ trait MultiSet[T] extends Traversable[T] {
   override def hashCode: Int = counts.hashCode
 
   /**
-   * Returns true if the counts are the same
+   * Returns true if the counts are the same.
    */
   override def equals(that: Any): Boolean = {
     try {

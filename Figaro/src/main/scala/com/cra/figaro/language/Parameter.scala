@@ -31,7 +31,7 @@ abstract trait Parameter[T] extends Atomic[T] {
    */
   def maximize(sufficientStatistics: Seq[Double])
   /**
-   * Returns a zero vector of sufficient statistics
+   * Returns a zero vector of sufficient statistics.
    */
   def zeroSufficientStatistics: Seq[Double]
   /**
@@ -50,7 +50,7 @@ abstract trait Parameter[T] extends Atomic[T] {
   def expectedValue: T
   
   /**
-   * The most likely value of the parameter (maximum a posteriori) given the evidence
+   * The most likely value of the parameter (maximum a posteriori) given the evidence.
    */
   def MAPValue: T
 }
