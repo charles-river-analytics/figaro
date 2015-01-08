@@ -17,20 +17,24 @@ package com.cra.figaro.language
   * Trait of elements which accept learnable parameters. 
   * Parameterized elements are compound elements whose outcome is determined by a learnable parameter.
   */
-
 trait Parameterized[T] extends Element[T] with HasDensity[T] {
   /**
   * The parameter for this element.
   */
   val parameters: Set[Parameter[_]]
   
+  /**
+   * Convert a distribution from this element into sufficient statistics for the specified parameter
+   */
   def distributionToStatistics(p: Parameter[_], distribution: Stream[(Double, T)]): Seq[Double]
 }
 
 trait SingleParameterized[T] extends Parameterized[T] {
   val parameter: Parameter[_]
   override val parameters: Set[Parameter[_]] = Set(parameter)
-  
+  /**
+   * Convert a distribution from this element into sufficient statistics for the specified parameter
+   */
   override def distributionToStatistics(p: Parameter[_], distribution: Stream[(Double, T)]): Seq[Double] = {
     if (p == parameter) {
       distributionToStatistics(distribution)
@@ -40,5 +44,8 @@ trait SingleParameterized[T] extends Parameterized[T] {
     }
     
   }
+    /**
+   * Convert a distribution from this element into sufficient statistics
+   */
   def distributionToStatistics(distribution: Stream[(Double, T)]): Seq[Double]
 }
