@@ -249,7 +249,7 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
   }
 
   @tailrec
-  final def sampleArgs(element: Element[_], state: State, args: Set[Element[_]]): Unit = {
+  private def sampleArgs(element: Element[_], state: State, args: Set[Element[_]]): Unit = {
     args foreach (sampleOne(state, _, None))
     val newArgs = Set[Element[_]](element.args:_*) -- state.assigned
     if (newArgs.nonEmpty) sampleArgs(element, state, newArgs) else return

@@ -146,6 +146,9 @@ trait Anytime extends Algorithm {
     shutdown
   }
 
+  /**
+   * Release all resources from this anytime algorithm.
+   */
   def shutdown {
     cleanUp()
     if (running)

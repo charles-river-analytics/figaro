@@ -1,13 +1,13 @@
 /*
  * ReferenceElement.scala
  * Elements representing references and aggregates over references.
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -140,11 +140,19 @@ class Aggregate[T, U](collection: ElementCollection, reference: Reference[T], va
 //    } {
 //      if (thisXvalue.isRegular && mvreXvalue.isRegular) factor.set(List(thisIndex, mvreIndex), if (aggregate(mvreXvalue.value) == thisXvalue.value) 1.0; else 0.0)
 //    }
-//    // The MultiValuedReferenceElement for this aggregate is generated when values is called. 
+//    // The MultiValuedReferenceElement for this aggregate is generated when values is called.
 //    // Therefore, it will be included in the expansion and have factors made for it automatically, so we do not create factors for it here.
 //    List(factor)
 //  }
 }
+
+/**
+ * Element representing the values of a reference that can have multiple values.
+ *
+ * @param collection The collection to use to resolve the reference.
+ * @param reference The reference whose value is represented by this element.
+ *
+ */
 
 class MultiValuedReferenceElement[T](coll: ElementCollection, ref: Reference[T]) extends ReferenceElement[T, MultiSet[T]](coll, ref)
   with ValuesMaker[MultiSet[T]] {
@@ -155,7 +163,7 @@ class MultiValuedReferenceElement[T](coll: ElementCollection, ref: Reference[T])
      * in a map.
      * Note that we could have achieved a similar effect by making MultiValuedReferenceElement a case class, but that would be incorrect
      * since with reference uncertainty, the same reference may exist twice in a collection with two different embedded references.
-     * 
+     *
      * Since the MVRE factor maker uses embedded Inject and Apply elements, we need to make sure they are expanded and have their
      * values computed when makeValues is called. Therefore, we store them in embeddedInject and embeddedApply. The key to these maps
      * is the list of element collections that represents a possible value of the head of the reference.
@@ -164,8 +172,8 @@ class MultiValuedReferenceElement[T](coll: ElementCollection, ref: Reference[T])
   val embeddedInject: Map[List[ElementCollection], Element[List[MultiSet[T]]]] = Map()
   val embeddedApply: Map[List[ElementCollection], Element[MultiSet[T]]] = Map()
 
-  // collection.getElements is a set of elements, because if the same element is reachable by more than one path, it is only counted once. 
-  // We convert it to a list so we get all the values of these elements, even if some of the elements have the same values. 
+  // collection.getElements is a set of elements, because if the same element is reachable by more than one path, it is only counted once.
+  // We convert it to a list so we get all the values of these elements, even if some of the elements have the same values.
   def generateValue(): MultiSet[T] = {
     val referredToElements = collection.getManyElementsByReference(reference).toList
     referredToElements.foreach(elem => elem.generateValue(elem.randomness))
@@ -184,7 +192,7 @@ class MultiValuedReferenceElement[T](coll: ElementCollection, ref: Reference[T])
      * Each of those values becomes a singleton multiset in the values of the MVRE.
      * We get a value set of multisets for each possible value of the name.
      * The final step is to take the value set union of these value sets and return it as the value set for this MVRE.
-     * 
+     *
      * If the reference is compound, the each of the first name's possible values may either be a single EC or a traversable of ECs.
      * If it's just an EC, we get the values of the rest of the reference (which are multisets)
      * and those become the possible values of the MVRE associated with this first value.
@@ -236,7 +244,7 @@ class MultiValuedReferenceElement[T](coll: ElementCollection, ref: Reference[T])
                     } yield {
                       LazyValues(universe)(multi, depth - 1)
                     }
-                  /* 
+                  /*
                      * Here, we are creating the value set of multisets in which each multiset is the multiset union of
                      * multisets in the result sets. Since we are taking the multiset union, we start with the empty
                      * multiset, which is why the start is the value set containing the single empty multiset.
@@ -289,7 +297,7 @@ class MultiValuedReferenceElement[T](coll: ElementCollection, ref: Reference[T])
   //                    val collections = cs.asInstanceOf[Traversable[ElementCollection]].toList.distinct // Set semantics
   //                    val multis: List[MultiValuedReferenceElement[T]] = collections.map(embeddedElements(_)).toList
   //                    // Create the element that takes the union of the values of the all the MVREs.
-  //                    // The combination and setMaker elements are encapsulated within this object and are created now, so we need to create factors for them. 
+  //                    // The combination and setMaker elements are encapsulated within this object and are created now, so we need to create factors for them.
   //                    // Finally, we create a conditional selector (see ProbFactor) to select the appropriate result value when the first
   //                    // name's value is these MVREs.
   //                    val combination = embeddedInject(collections)
@@ -298,7 +306,7 @@ class MultiValuedReferenceElement[T](coll: ElementCollection, ref: Reference[T])
   //                      Factory.makeConditionalSelector(this, firstVar, firstIndex, Variable(setMaker)) :: Factory.make(combination) :::
   //                        Factory.make(setMaker)
   //                    result
-  //                } 
+  //                }
   //              } else Factory.makeStarFactor(this)
   //            }
   //        }
