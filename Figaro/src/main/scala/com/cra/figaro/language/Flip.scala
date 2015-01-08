@@ -64,7 +64,9 @@ class ParameterizedFlip(name: Name[Boolean], override val parameter: AtomicBeta,
   def args: List[Element[_]] = List(parameter)
 
   protected def probValue = parameter.value
-
+/**
+   * Convert a distribution from this Flip into sufficient statistics
+   */
   def distributionToStatistics(distribution: Stream[(Double, Boolean)]): Seq[Double] = {
     val distList = distribution.toList
     val trueProb = 
