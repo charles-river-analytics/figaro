@@ -156,10 +156,16 @@ abstract class ParticleFilter(static: Universe = new Universe(), initial: Univer
 
   }
 
+  /**
+   * The computed log probability of evidence.
+   */
   def getlogProbEvidence(): Double = {
     logProbEvidence
   }
 
+   /**
+   * The computed probability of evidence.
+   */
   def probEvidence(): Double = {
     val probEvidence = scala.math.exp(logProbEvidence)
     probEvidence

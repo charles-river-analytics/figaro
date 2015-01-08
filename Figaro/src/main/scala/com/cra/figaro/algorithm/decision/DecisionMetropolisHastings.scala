@@ -232,7 +232,7 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
    * is not empty, we recursively update the intersecting elements. Once those updates are completed,
    * we update an element and move on to the next element in the set.
    */
-  def updateMany[T](state: State, toUpdate: Set[Element[_]]): State = {
+  private def updateMany[T](state: State, toUpdate: Set[Element[_]]): State = {
     var returnState = state
     var updatesLeft = toUpdate
     while (!updatesLeft.isEmpty) {

@@ -16,7 +16,7 @@ package com.cra.figaro.util
 import scala.collection.mutable.HashMap
 
 /**
- * An implementation of a MultiSet backed by a HashMap
+ * An implementation of a MultiSet backed by a HashMap.
  */
 class HashMultiSet[T] extends MultiSet[T] {
   private val map = HashMap[T, Int]()
@@ -76,7 +76,7 @@ class HashMultiSet[T] extends MultiSet[T] {
 
 object HashMultiSet {
   /**
-   * Create a new HashMultiSet and adds the given values
+   * Create a new HashMultiSet and adds the given values.
    */
   def apply[T](elems: T*): HashMultiSet[T] = {
     val result = new HashMultiSet[T]()

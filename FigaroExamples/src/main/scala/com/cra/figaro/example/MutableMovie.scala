@@ -17,7 +17,7 @@ import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound._
-import com.cra.figaro.library.process.Container
+import com.cra.figaro.library.collection.Container
 import com.cra.figaro.library.atomic.discrete._
 import com.cra.figaro.util
 

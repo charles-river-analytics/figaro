@@ -15,7 +15,7 @@ package com.cra.figaro.experimental.particlebp
 
 /**
  * Class to compute the normal kernel density estimation of a set of samples
- * using Silverman's rule of thumb to automatically compute the bandwidth
+ * using Silverman's rule of thumb to automatically compute the bandwidth.
  */
 class AutomaticDensityEstimator extends NormalKernelDensityEstimator {
 

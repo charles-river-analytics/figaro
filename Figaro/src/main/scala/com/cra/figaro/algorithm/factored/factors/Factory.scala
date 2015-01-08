@@ -21,7 +21,7 @@ import com.cra.figaro.algorithm.factored._
 import scala.collection.mutable.ListBuffer
 import com.cra.figaro.algorithm.factored.factors.factory._
 import com.cra.figaro.library.compound._
-import com.cra.figaro.library.process._
+import com.cra.figaro.library.collection._
 import com.cra.figaro.library.atomic.discrete._
 
 trait FactorMaker[T] {
@@ -34,7 +34,7 @@ trait FactorMaker[T] {
 object Factory {
 
   /**
-   * The mutliplicative identity factor.
+   * The multiplicative identity factor.
    */
   def unit[T](semiring: Semiring[T]): Factor[T] = {
     val result = new BasicFactor[T](List(), List())

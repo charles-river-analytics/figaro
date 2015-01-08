@@ -14,7 +14,7 @@
 package com.cra.figaro.algorithm
 
 /**
- * Trait of algorithms that learn parameters
+ * Trait of algorithms that learn parameters.
  */
 trait ParameterLearner {
 

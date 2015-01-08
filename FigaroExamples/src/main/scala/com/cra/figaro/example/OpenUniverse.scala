@@ -18,7 +18,7 @@ import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous.{ Uniform, Normal }
 import com.cra.figaro.library.atomic.discrete.{ Geometric, FromRange }
 import com.cra.figaro.library.compound._
-import com.cra.figaro.library.process._
+import com.cra.figaro.library.collection._
 import com.cra.figaro.language.Universe._
 import com.cra.figaro.util._
 

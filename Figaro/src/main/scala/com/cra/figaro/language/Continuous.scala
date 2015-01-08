@@ -23,12 +23,22 @@ trait Continuous[T] extends Element[T] {
    */
   def logp(value: T): Double
 
+  //This constraint is not actually applied, but we have to define it so it can be set later.
+  private var observationConstraint : T => Double = (t: T) => 1.0
+  
   override def observe(value: T) {
-    addLogConstraint { _ => logp(value) }
+    //We have to remove old observation first, or repeatedly observing will add on lots of constraints
+    //Should conditions be removed as well, as they are in regular element.observe?
+    removeConditions()
+    this.removeConstraint(observationConstraint)
+    observationConstraint = (t: T) => logp(value)
+    addLogConstraint( observationConstraint )
     set(value)
+    this.observation = Some(value)
   }
 
   override def unobserve() {
+    this.removeConstraint(observationConstraint)
     unset()
   }
 

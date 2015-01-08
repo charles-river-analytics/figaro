@@ -278,7 +278,7 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
 
   /**
    * Register the maps that this universe is used as a key.
-   * Needed to make sure Universe is garbage collected when cleared and dereferenced
+   * Needed to make sure Universe is garbage collected when cleared and dereferenced.
    */
   def registerUniverse(map: Map[Universe, _]): Unit = registeredUniverseMaps += map
 
@@ -288,7 +288,7 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
   /**
    * Register algorithms that use this universe.
    * When the Universe is cleared, all previous algorithms are no longer valid,
-   * so they must be killed (if still running)
+   * so they must be killed (if still running).
    */
   def registerAlgorithm(alg: Algorithm): Unit = registeredAlgorithms += alg
 

@@ -46,23 +46,23 @@ Extra support is provided for sampling algorithms in the form of \texttt{Unweigh
 
 \subsection{Expansion and factors}
 
-A useful operation is to expand all chains in a universe to obtain the complete set of elements in the universe. This is achieved using the syntax
+A useful operation is to expand all chains in a universe to obtain the complete set of elements in the universe. This is achieved using the syntax:
 
 \begin{flushleft}
 \texttt{Expand(universe).expand()}
 \end{flushleft}
 
-As usual, the \texttt{universe} argument can be omitted, using the current default universe. Support is provided for algorithms that are based on factors. Variable elimination is one example, but there are many other such algorithms. To create all the factors for an element, use
+As usual, the \texttt{universe} argument can be omitted, using the current default universe. Support is provided for algorithms that are based on factors. Variable elimination is one example, but there are many other such algorithms. To create all the factors for an element, use:
 
 \begin{flushleft}
 \texttt{ProbFactor.make(element)}
 \end{flushleft}
 
-The standard procedure to turn a universe into a list of factors is to
+The standard procedure to turn a universe into a list of factors is to:
 \begin{enumerate}
 \item Expand the universe.
 \item Call \texttt{universe.activeElements} to get all the elements in the universe.
-\item Make the factors for every element and collect them
+\item Make the factors for every element and collect them.
 \end{enumerate}
 
 Operations in factored algorithms are defined by a semiring algebraic structure. There are several semiring definitions in the package \texttt{com.cra.figaro.algorithm.factored}. Each semiring defines a product and sum operation, and a value for zero and one which satisfy a set of properties. Different semirings are appropriate for certain algorithms and data types; however, the most frequently used set of operations is \texttt{SumProductSemiring}.
@@ -107,12 +107,13 @@ It takes the universe to operate on as its first argument and a comma-separated 
 \newline \tab with AnytimeProbQuerySampler
 \newline 
 \newline \tab def apply(myNumSamples: Int, targets: Element[\_]*)(implicit universe: Universe) = new Importance(universe, targets:\_*) 
-\newline \tab with OneTimeProbQuerySampler \{ val numSamples = myNumSamples \}
+\newline \tab with OneTimeProbQuerySampler \{ 
+\newline \tab val numSamples = myNumSamples \}
 \newline \}
 }
 \end{flushleft}
 
-The first constructor takes has two argument lists. The first is a comma-separated sequence of query targets, and the second provides the universe. Since it implicit, it can be omitted and the default universe is used. Since the number of samples is not explicitly provided, it is assumed that the anytime version is wanted, so the constructor inherits from \texttt{AnytimeProbQuerySampler}. In the second, case, the number of samples is specified, so it inherits from \texttt{OneTimeProbQuerySampler}. One detail to note is that \texttt{OneTimeProbQuerySampler} contains an abstract field named \texttt{numSamples} that must be defined to create an instance of the trait. This is accomplished through the code
+The first constructor takes has two argument lists. The first is a comma-separated sequence of query targets, and the second provides the universe. Since it implicit, it can be omitted and the default universe is used. Since the number of samples is not explicitly provided, it is assumed that the anytime version is wanted, so the constructor inherits from \texttt{AnytimeProbQuerySampler}. In the second, case, the number of samples is specified, so it inherits from \texttt{OneTimeProbQuerySampler}. One detail to note is that \texttt{OneTimeProbQuerySampler} contains an abstract field named \texttt{numSamples} that must be defined to create an instance of the trait. This is accomplished through the code:
 \newline \texttt{OneTimeProbQuerySampler \{ val numSamples = myNumSamples \}}
 This creates an anonymous subclass of \texttt{OneTimeProbQuerySampler} in which the \texttt{numSamples} field is defined to be the value passed into the constructor.
 
@@ -128,39 +129,38 @@ We saw in the section on making a class usable by variable elimination how to ma
 
 
 \begin{flushleft}
-\texttt{private def concreteValues[T](element: Element[T]): Set[T] =
-element match \{
-\newline \tab case c: Constant [\_] => Set(c.constant)
-\newline \tab case f: Flip => Set(true, false)
+\texttt{private concreteValues[T](element: Element[T], depth: Int, numArgSamples: Int, numTotalSamples: Int): ValueSet[T] = element match \{
+\newline \tab case c: Constant [\_] => withoutStar(Set(c.constant))
+\newline \tab case f: Flip => withoutStar(Set(true, false))
 \newline \tab ...
-\newline \tab case v: ValuesMaker[\_] => v.makeValues.toSet
-\newline \tab case \_ => throw new UnsupportedAlgorithmException(element)
+\newline \tab case v: ValuesMaker[\_] => v.makeValues(depth)
+\newline \tab case \_ => withStar(Set())
 \newline \}
 }
 \end{flushleft}
 
-This function takes an element and tests to see what kind of element it is. If it is a constant, the values is a singleton set containing the constant; if it is a flip, it is a set containing true and false, and so on. If the value fails to match any of the built-in types for which this function is defined, it arrives at the second to last case. This tests if the value is an instance of \texttt{ValuesMaker}. If it is, the values \texttt{makeValues} method is used. The final case is a catchall - the notation \_ represents a pattern that catches all values. If the value has arrived at this case, its values cannot be computed, so we throw an \texttt{UnsupportedAlgorithmException}.
+This function takes an element and tests to see what kind of element it is. If it is a constant, the values is a singleton set containing the constant; if it is a flip, it is a set containing true and false, and so on. If the value fails to match any of the built-in types for which this function is defined, it arrives at the second to last case. This tests if the value is an instance of \texttt{ValuesMaker}. If it is, the values \texttt{makeValues} method is used. The final case is a catchall: the notation \_ represents a pattern that catches all values. If the value has arrived at this case, we can't compute the values and we just make them *, so the rest of the computation can proceed.
 
 \section{Creating a new category of algorithm}
 
 Suppose you want to create a new category of algorithm. For example, probability of query algorithms, probability of evidence, and most likely value algorithms are all different categories. Figaro provides some infrastructure to help with creating a new kind of algorithm. We will illustrate how this is done for most likely value algorithms, and the same pattern can be used elsewhere.
 
-All algorithms extend the \texttt{Algorithm} trait, which defines the general interface to algorithms using \texttt{start, stop,  resume}, and \texttt{kill}. To define a new category of algorithm, you extend algorithm and define methods for the different ways the algorithm can be queried. For example,
+All algorithms extend the \texttt{Algorithm} trait, which defines the general interface to algorithms using \texttt{start, stop,  resume}, and \texttt{kill}. To define a new category of algorithm, you extend algorithm and define methods for the different ways the algorithm can be queried. For example:
 
 \marginpar{The \texttt{val} in front of the universe argument indicates that universe is a field of MPEAlgorithm that can be accessed}
 
 \begin{flushleft}
-\texttt{abstract class MPEAlgorithm(val universe: Universe)
-\newline extends Algorithm \{
+\texttt{trait MPEAlgorithm extends Algorithm \{
+\newline val universe: Universe
 \newline \tab /** 
-\newline \tab * Returns the most likely value for the target element.
+\newline \tab * Particular implementations of algorithm must provide the following method.
 \newline \tab */
 \newline \tab def mostLikelyValue[T](target: Element[T]): T
 \newline \}
 }
 \end{flushleft}
 
-An \texttt{MPEAlgorithm} takes the universe on which it is defined as an argument. It provides one query method, which returns the most likely value of a target method. This method is abstract (it has no implementation) and must be implemented in a particular implementation of  \texttt{MPEAlgorithm}.
+An \texttt{MPEAlgorithm} contains the universe on which it is defined as an argument. It provides one query method, which returns the most likely value of a target method. This method is abstract (it has no implementation) and must be implemented in a particular implementation of  \texttt{MPEAlgorithm}.
 
 Next, we provide one-time and anytime traits for MPE algorithms. The one-time trait is very easy:
 
@@ -217,7 +217,7 @@ Service
 }
 \end{flushleft}
 
-Anytime algorithms run in a separate thread, and we need to be able to communicate with the thread to get the probability of evidence out of it. This is accomplished using Scala's \emph{actors} framework.  Actors communicate by sending and processing messages. The \texttt{Anytime} trait defines the \texttt{runner} field, which is the actor that runs the algorithm. A request can be sent to the runner to compute the most likely value of a target element. The syntax for sending the message to the runner is
+Anytime algorithms run in a separate thread, and we need to be able to communicate with the thread to get the probability of evidence out of it. This is accomplished using Scala's \emph{actors} framework.  Actors communicate by sending and processing messages. The \texttt{Anytime} trait defines the \texttt{runner} field, which is the actor that runs the algorithm. A request can be sent to the runner to compute the most likely value of a target element. The syntax for sending the message to the runner is:
 
 \begin{flushleft}
 \texttt{runner ! Handle(ComputeMostLikelyValue(target))}
@@ -230,17 +230,17 @@ which sends a message whose content is \texttt{Handle(ComputeMostLikely\-Value(t
 To summarize, to define an anytime version of the algorithm, you need to do the following:
 
 \begin{enumerate}
-\item Create a case class or object to represent the services provided by your algorithm. Here, it is accomplished by
+\item Create a case class or object to represent the services provided by your algorithm. Here, it is accomplished by:
 \newline \texttt{case class ComputeMostLikelyValue(target: Element[T]) 
 \newline extends Service}
 \item Create a case class or object to represent the responses provided by these
-services. Here,
+services. Here:
 \newline \texttt{case class MostLikelyValue[T](value: T)
 \newline extends Response} 
 \item Create a handler in the method \texttt{handle} that takes a service, performs some computation, and returns a response.
 \item In each method that provides an interface to querying the algorithm
 \end{enumerate}
 \begin{aenumerate}
-\item Send a message to the runner asking for the appropriate service
+\item Send a message to the runner asking for the appropriate service.
 \item Receive a message from the runner, extract the result, and return it.
 \end{aenumerate}

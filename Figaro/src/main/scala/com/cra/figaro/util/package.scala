@@ -252,7 +252,7 @@ package object util {
   
   
   /**
-   * Sums two probabilities in log space
+   * Sums two probabilities in log space.
    */
   def logSum(p1: Double, p2: Double): Double = {
    logSumMany(List(p1, p2))

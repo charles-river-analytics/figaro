@@ -104,7 +104,7 @@ class HeapPriorityMap[T, U]()(implicit ord: Ordering[U]) extends PriorityMap[T, 
     else sortHelper(extractMin() :: accum)
 
    /**
-   * Make a copy of this HeapPriorityMap, returning a new HeapPriorityMap
+   * Make a copy of this HeapPriorityMap, returning a new HeapPriorityMap.
    */
   override def clone: HeapPriorityMap[T, U] = {
     val result = new HeapPriorityMap[T, U]()

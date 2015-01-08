@@ -11,12 +11,12 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
-package com.cra.figaro.test.library.process
+package com.cra.figaro.test.library.collection
 
 import org.scalatest.WordSpec
 import org.scalatest.Matchers
 import com.cra.figaro.language._
-import com.cra.figaro.library.process._
+import com.cra.figaro.library.collection._
 import com.cra.figaro.algorithm.sampling.{Importance, MetropolisHastings, ProposalScheme}
 import com.cra.figaro.algorithm.factored.VariableElimination
 import com.cra.figaro.algorithm.factored.beliefpropagation.BeliefPropagation

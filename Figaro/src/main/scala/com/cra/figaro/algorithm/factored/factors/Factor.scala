@@ -40,7 +40,7 @@ trait Factor[T] {
   def isEmpty = size == 0
 
     /**
-   * Fold the given function through the contents of the factor, beginning with the given initial values
+   * Fold the given function through the contents of the factor, beginning with the given initial values.
    */
   def foldLeft(initial: T, fn: (T, T) => T): T = {
     (initial /: contents.values)(fn(_, _))

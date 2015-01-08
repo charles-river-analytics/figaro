@@ -29,7 +29,7 @@ import scala.language.postfixOps
  * argument is used to generate the sample concrete points from which the abstract points are selected, in
  * case the full set of concrete points cannot be generated (e.g., for continuous elements). The value of
  * this argument is multiplied by the number of abstract points to determine the total number of concrete
- * points. The default value for this argument is 10.This is indicated by attaching an Abstraction to the
+ * points. The default value for this argument is 10. This is indicated by attaching an Abstraction to the
  * element.
  */
 

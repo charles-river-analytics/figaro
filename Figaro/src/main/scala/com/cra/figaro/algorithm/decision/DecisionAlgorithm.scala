@@ -21,7 +21,7 @@ import scala.collection.immutable.Map
 
 /**
  * Trait that defines some common interface functions for decision algorithms.
- * Every decision algorithm must define the function computeUtility()
+ * Every decision algorithm must define the function computeUtility().
  */
 
 trait DecisionAlgorithm[T, U] extends Algorithm {
@@ -38,24 +38,24 @@ trait DecisionAlgorithm[T, U] extends Algorithm {
   private lazy val util = computeUtility()
   
   /** 
-   *  Get the total utility and weight for all sampled values of the parent and decision
+   *  Get the total utility and weight for all sampled values of the parent and decision.
    */
   def getUtility() = util
   
   /** 
-   *  Get the total utility and weight for a specific value of a parent and decision
+   *  Get the total utility and weight for a specific value of a parent and decision.
    */
   def getUtility(p: T, d: U) = util((p, d))
 
   /** 
    *  Sets the policy for the given decision. This will get the computed utility of the algorithm
    *  and call setPolicy on the decision. Note there is no error checking here, so the decision in
-   *  the argument must match the target decision in the algorithm
+   *  the argument must match the target decision in the algorithm.
    */
   def setPolicy(e: Decision[T, U]): Unit = e.setPolicy(getUtility())
 }
 
 /**
- * Trait for one time Decision Algorithms
+ * Trait for one time Decision Algorithms.
  */
 trait OneTimeProbQueryDecision[T, U] extends OneTimeProbQuery with DecisionAlgorithm[T, U]

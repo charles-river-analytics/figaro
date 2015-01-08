@@ -17,7 +17,7 @@ import com.cra.figaro.algorithm.Values
 import com.cra.figaro.algorithm.lazyfactored.{ValueSet, LazyValues}
 import com.cra.figaro.util._
 import scala.collection.mutable.Map
-import com.cra.figaro.library.process.Container
+import com.cra.figaro.library.collection.Container
 
 /**
  * An element collection contains elements. It can be used to find the elements in it by reference.

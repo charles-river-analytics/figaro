@@ -11,7 +11,7 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
-package com.cra.figaro.library.process
+package com.cra.figaro.library.collection
 
 import com.cra.figaro.language._
 import com.cra.figaro.util.memo
@@ -53,7 +53,7 @@ trait Process[Index, Value] {
 
   private val cachedElements = scala.collection.mutable.Map[Index, Element[Value]]()
 
-  private[process] def generateCached(index: Index): Element[Value] = {
+  private[collection] def generateCached(index: Index): Element[Value] = {
     cachedElements.getOrElseUpdate(index, generate(index))
   }
 

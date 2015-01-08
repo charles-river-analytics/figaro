@@ -16,7 +16,7 @@ package com.cra.figaro.example.dosage
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.discrete._
 import com.cra.figaro.example.dosage.Conversion._
-import com.cra.figaro.library.process._
+import com.cra.figaro.library.collection._
 
 /**
  * A protein is an Element[AminoAcidSequence].
