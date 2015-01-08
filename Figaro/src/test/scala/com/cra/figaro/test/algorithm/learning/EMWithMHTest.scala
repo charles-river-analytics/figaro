@@ -34,6 +34,33 @@ class EMWithMHTest extends WordSpec with PrivateMethodTester with Matchers {
 
   "Expectation Maximization with MetropolisHastings" when
     {
+          "when provided a termination criteria based on sufficient statistics magnitudes" should {
+        "exit before reaching the maximum iterations" in {
+            val universe = Universe.createNew
+            val b = Beta(2, 2)
+            val terminationCriteria = EMTerminationCriteria.sufficientStatisticsMagnitude(0.05)
+            for (i <- 1 to 7) {
+
+              val f = Flip(b)
+              f.observe(true)
+            }
+
+            for (i <- 1 to 3) {
+
+              val f = Flip(b)
+              f.observe(false)
+            }
+
+            val algorithm = EMWithBP(terminationCriteria, 10, b)(universe)
+            algorithm.start
+
+            val result = b.MAPValue
+            algorithm.kill
+            result should be(0.6666 +- 0.01)
+
+          }
+        }
+    
 
       "used to estimate a Beta parameter" should
         {
