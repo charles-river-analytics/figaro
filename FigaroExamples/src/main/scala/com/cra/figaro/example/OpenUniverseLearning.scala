@@ -131,7 +131,7 @@ object OpenUniverseLearning {
     for (datum <- trainingSet) observe(new LearningModel, datum)
     
     val time0 = System.currentTimeMillis()
-    val algorithm = EM.withVE(numEMIterations, betaContinue1, betaContinue2, betaObserve1, betaObserve2)
+    val algorithm = EMWithVE(numEMIterations, betaContinue1, betaContinue2, betaObserve1, betaObserve2)
     algorithm.start()
 
     val resultUniverse = new Universe

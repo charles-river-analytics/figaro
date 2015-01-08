@@ -1,6 +1,6 @@
 /*
  * EMTerminationCriteria.scala
- * Class for TBD
+ * Class for defining termination of EM algorithms.
  * 
  * Created By:      Michael Howard (mhoward@cra.com)
  * Creation Date:   Nov 7, 2014
@@ -16,37 +16,36 @@ package com.cra.figaro.algorithm.learning
 import com.cra.figaro.language.Parameter
 
 /**
- * Doc needed
+ * Termination criteria for EM algorithms. A termination criteria can be passed as an argument to the EM apply method.
  */
-abstract class EMTerminationCriteria(val alg: ExpectationMaximization) {
+abstract class EMTerminationCriteria {
   type SufficientStatistics = Map[Parameter[_], Seq[Double]]
   def apply(s: SufficientStatistics): Boolean
 }
 
-class LikelihoodTermination(val tolerance: Double, alg: ExpectationMaximization) extends EMTerminationCriteria(alg) {
-  var previousLikelihood = Double.NegativeInfinity
-  override def apply(s: SufficientStatistics): Boolean = {
-    false
-  }
-}
-
-class MaxIterations(val iterations: Int, alg: ExpectationMaximization) extends EMTerminationCriteria(alg) {
+/**
+ * Terminate when the maximum number of iterations has been reached
+ */
+class MaxIterations(val max: Int) extends EMTerminationCriteria {
   var currentIterations = 0
   override def apply(s: SufficientStatistics): Boolean = {
     currentIterations += 1
-    if (currentIterations < iterations) false else true
+    if (currentIterations < max) false else true
   }
 }
 
-class SufficientStatisticsMagnitudes(val tolerance: Double,  alg: ExpectationMaximization) extends EMTerminationCriteria(alg) {
+/**
+ * Terminate when the magnitude of sufficient statistics does not exhibit a change greater than the specified tolerance.
+ */
+class SufficientStatisticsMagnitudes(val tolerance: Double) extends EMTerminationCriteria {
   var previousSufficientStatistics = Map.empty[Parameter[_], Seq[Double]]
-  
+
   def difference(x: Seq[Double], y: Seq[Double]): Double = {
-   require(x.size == y.size)
-   val sum = (for ((a, b) <- x zip y) yield Math.abs(a - b).toDouble)
-   sum.sum/(x.size.toDouble)
+    require(x.size == y.size)
+    val sum = (for ((a, b) <- x zip y) yield Math.abs(a - b).toDouble)
+    sum.sum / (x.size.toDouble)
   }
-  
+
   override def apply(s: SufficientStatistics): Boolean = {
     if (previousSufficientStatistics.isEmpty) {
       previousSufficientStatistics = s
@@ -54,9 +53,9 @@ class SufficientStatisticsMagnitudes(val tolerance: Double,  alg: ExpectationMax
     }
 
     val delta = for (k <- s.keys) yield {
-      difference(s(k),previousSufficientStatistics(k))
+      difference(s(k), previousSufficientStatistics(k))
     }
-    val totalDelta = delta.sum/(delta.size.toDouble)
+    val totalDelta = delta.sum / (delta.size.toDouble)
     previousSufficientStatistics = s
     if (totalDelta < tolerance) {
       return true
@@ -65,8 +64,13 @@ class SufficientStatisticsMagnitudes(val tolerance: Double,  alg: ExpectationMax
   }
 }
 
-class BICTermination(val tolerance: Double, alg: ExpectationMaximization) extends EMTerminationCriteria(alg) {
-  override def apply(s: SufficientStatistics): Boolean = {
-    false
-  }
+object EMTerminationCriteria {
+  /**
+   * Terminate when the maximum number of iterations has been reached
+   */
+  def maxIterations(max: Int): () => EMTerminationCriteria = () => new MaxIterations(max)
+  /**
+   * Terminate when the magnitude of sufficient statistics does not exhibit a change greater than the specified tolerance.
+   */
+  def sufficientStatisticsMagnitude(tolerance: Double): () => EMTerminationCriteria = () => new SufficientStatisticsMagnitudes(tolerance)
 }
