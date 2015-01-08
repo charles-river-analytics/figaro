@@ -233,7 +233,9 @@ trait OneTimeParticleBeliefPropagation extends ParticleBeliefPropagation with On
 /**
  * Trait for Anytime BP algorithms
  */
-trait AnytimeParticleBeliefPropagation extends ParticleBeliefPropagation with Anytime with AnytimeInnerBPHandler
+trait AnytimeParticleBeliefPropagation extends ParticleBeliefPropagation with Anytime with AnytimeInnerBPHandler {
+  override def cleanUp() = if (bp != null) bp.kill
+}
 
 /**
  * Class to implement a probability query BP algorithm
