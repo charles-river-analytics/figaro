@@ -300,7 +300,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
     try {
       val result = constraint(value.asInstanceOf[Value])
       if (result > 0 && !constraintWarningIssued) {
-        println("Warning: constraint value is greater than 1. Algorithms that use an upper bound of 1 will be incorrect.")
+        println("Warning: constraint value " + result + " is greater than 1. Algorithms that use an upper bound of 1 will be incorrect.")
         constraintWarningIssued = true
       }
       result
@@ -359,6 +359,12 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
     myConstraints = myConstraints.filterNot(_._2 == contingency)
     if (myConstraints.isEmpty) universe.makeUnconstrained(this)
   }
+  
+  protected def removeConstraint(constraint: Constraint, contingency: Contingency = List()): Unit = {
+    myConstraints = myConstraints.filterNot((c: (Constraint,Contingency)) => c._2 == contingency && c._1 == constraint)
+    if (myConstraints.isEmpty) universe.makeUnconstrained(this)
+  }
+
 
   /**
    * Set the constraint associated with the contingency. Removes previous constraints associated with the contingency.  By default, the contingency is empty.
