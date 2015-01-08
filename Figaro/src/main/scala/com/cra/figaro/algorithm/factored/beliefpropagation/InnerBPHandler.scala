@@ -17,6 +17,7 @@ import com.cra.figaro.language._
 import com.cra.figaro.algorithm.OneTimeProbQuery
 import com.cra.figaro.algorithm.AnytimeProbQuery
 import com.cra.figaro.algorithm.sampling.ProbEvidenceSampler
+import com.cra.figaro.algorithm.Anytime
 
 /**
  * Trait for creating and running Belief Propagation within another algorithm
@@ -76,6 +77,7 @@ trait AnytimeInnerBPHandler extends InnerBPHandler {
   val myStepTimeMillis: Long
 
   protected def createBP(targets: List[Element[_]], depth: Int = Int.MaxValue, upperBounds: Boolean = false): Unit = {
+    if (bp != null) bp.kill
     bp = new ProbQueryBeliefPropagation(currentUniverse, targets: _*)(List(),
       (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u), depth, upperBounds) with AnytimeProbabilisticBeliefPropagation with AnytimeProbQuery
   }
@@ -83,6 +85,6 @@ trait AnytimeInnerBPHandler extends InnerBPHandler {
   protected def runBP() {
     bp.start()
     Thread.sleep(myStepTimeMillis)
-    bp.stop()
+    bp.stop()    
   }
 }
