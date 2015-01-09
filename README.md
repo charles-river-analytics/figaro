@@ -148,7 +148,7 @@ Optionally, you can add the fully qualified path name of the Figaro jar to your 
 
 If the CLASSPATH does not exist yet, create it. It is good practice to include the current working directory, so set the CLASSPATH to “.”, then proceed to add the Figaro jar, as in the next step. 
 
-By this point, the CLASSPATH already exists, so we can add the Figaro path to it. For example, on Windows 7, if figaro_2.11-3.0.0.0.jar is in the “C:\Users\apfeffer” folder and the CLASSPATH is currently equal to “.”, change the CLASSPATH to “C:\Users\apfeffer\figaro_2.11-3.0.0.0.jar;.” (replace 3.0.0.0 with the appropriate Figaro version number). 
+By this point, the CLASSPATH already exists, so we can add the Figaro path to it. For example, on Windows 7, if figaro_2.11-3.0.0.0-fat.jar is in the “C:\Users\apfeffer” folder and the CLASSPATH is currently equal to “.”, change the CLASSPATH to “C:\Users\apfeffer\figaro_2.11-3.0.0.0-fat.jar;.” (replace 3.0.0.0 with the appropriate Figaro version number). 
 
 Now you can compile and run Figaro programs just like any Scala program. Put the Test program below in a file named Test.scala. First, let’s assume you followed step 4 and updated the CLASSPATH.
 
@@ -156,9 +156,9 @@ If you run scala Test.scala from the directory containing Test.scala, the Scala 
 
 If you run scalac Test.scala (note the c at the end of “scalac”), the Scala compiler runs and produces .class files. You can then execute the program by running scala Test from the same directory.
 
-If you did not follow step 4, you can set the CLASSPATH from the command line using the –cp option. For example, to compile and execute Test.scala, assuming figaro_2.11-3.0.0.0.jar is in the “C:\Users\apfeffer” folder, you can run
+If you did not follow step 4, you can set the CLASSPATH from the command line using the –cp option. For example, to compile and execute Test.scala, assuming figaro_2.11-3.0.0.0-fat.jar is in the “C:\Users\apfeffer” folder, you can run
 ```
-scala –cp C:\Users\apfeffer\figaro_2.11-3.0.0.0.jar Test.scala
+scala –cp C:\Users\apfeffer\figaro_2.11-3.0.0.0-fat.jar Test.scala
 ```
 
 Here’s the Test program:
