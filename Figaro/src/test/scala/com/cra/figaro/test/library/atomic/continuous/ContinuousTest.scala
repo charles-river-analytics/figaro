@@ -397,23 +397,6 @@ class ContinuousTest extends WordSpec with Matchers {
       alg.stop()
       alg.kill
     }
-
-    "produce the right probability when conditioned under Importance Sampling" in {
-      val sampleUniverse = Universe.createNew()
-      val nSamples = Exponential(2)("", sampleUniverse)
-      val samples = for (i <- 1 to 100)
-        yield nSamples.generateValue(nSamples.generateRandomness())
-
-      val universe = Universe.createNew()
-      val lambda = Uniform(0, 10)("lambda", universe)
-      for (sample <- samples) {
-        val exponential = Exponential(lambda)
-        exponential.observe(sample)
-      }
-      val alg = Importance(200000, lambda)
-      alg.start()
-      alg.mean(lambda) should be(2.0 +- 0.5)
-    }
   }
 
   "A AtomicGamma" when {
