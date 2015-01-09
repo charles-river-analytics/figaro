@@ -18,6 +18,7 @@ import org.scalatest.{ WordSpec, PrivateMethodTester }
 import math.log
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.factored._
+import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound._
@@ -45,8 +46,8 @@ class VETest extends WordSpec with Matchers {
         val v4 = Variable(e4)
         val v5 = Variable(e5)
         val v6 = Variable(e6)
-        val f = Factory.make[Double](List(v1, v2, v3, v4))
-        val g = Factory.make[Double](List(v5, v3, v2, v6))
+        val f = Factory.simpleMake[Double](List(v1, v2, v3, v4))
+        val g = Factory.simpleMake[Double](List(v5, v3, v2, v6))
         val af = AbstractFactor(f.variables)
         val ag = AbstractFactor(g.variables)
         val graph = new VEGraph(List(f, g))
@@ -81,8 +82,8 @@ class VETest extends WordSpec with Matchers {
         val v4 = Variable(e4)
         val v5 = Variable(e5)
         val v6 = Variable(e6)
-        val f = Factory.make[Double](List(v1, v2, v3, v4))
-        val g = Factory.make[Double](List(v5, v3, v2, v6))
+        val f = Factory.simpleMake[Double](List(v1, v2, v3, v4))
+        val g = Factory.simpleMake[Double](List(v5, v3, v2, v6))
         val af = AbstractFactor(f.variables)
         val ag = AbstractFactor(g.variables)
         VEGraph.cost(List(af, ag)) should equal(18) // 2*1*3*2 + 1*3*1*2
@@ -113,9 +114,9 @@ class VETest extends WordSpec with Matchers {
         val v5 = Variable(e5)
         val v6 = Variable(e6)
         val v7 = Variable(e7)
-        val f = Factory.make[Double](List(v1, v2, v3, v4))
-        val g = Factory.make[Double](List(v5, v3, v2, v6))
-        val h = Factory.make[Double](List(v1, v7))
+        val f = Factory.simpleMake[Double](List(v1, v2, v3, v4))
+        val g = Factory.simpleMake[Double](List(v5, v3, v2, v6))
+        val h = Factory.simpleMake[Double](List(v1, v7))
         val graph1 = new VEGraph(List(f, g, h))
         val score = graph1.score(v3)
         score should equal(-10) // 2*1*2*1*2 - (2*1*3*2 + 1*3*1*2)
@@ -140,9 +141,9 @@ class VETest extends WordSpec with Matchers {
           val v5 = Variable(e5)
           val v6 = Variable(e6)
           val v7 = Variable(e7)
-          val f = Factory.make[Double](List(v1, v2, v3, v4))
-          val g = Factory.make[Double](List(v5, v3, v2, v6))
-          val h = Factory.make[Double](List(v1, v7))
+          val f = Factory.simpleMake[Double](List(v1, v2, v3, v4))
+          val g = Factory.simpleMake[Double](List(v5, v3, v2, v6))
+          val h = Factory.simpleMake[Double](List(v1, v7))
           val graph1 = new VEGraph(List(f, g, h))
           val graph2 = graph1.eliminate(v3)
           val VariableInfo(v1Factors, v1Neighbors) = graph2.info(v1)
@@ -166,9 +167,9 @@ class VETest extends WordSpec with Matchers {
         val v5 = Variable(e5)
         val v6 = Variable(e6)
         val v7 = Variable(e7)
-        val f = Factory.make[Double](List(v1, v2, v3, v4))
-        val g = Factory.make[Double](List(v5, v3, v2, v6))
-        val h = Factory.make[Double](List(v1, v7))
+        val f = Factory.simpleMake[Double](List(v1, v2, v3, v4))
+        val g = Factory.simpleMake[Double](List(v5, v3, v2, v6))
+        val h = Factory.simpleMake[Double](List(v1, v7))
         val graph1 = new VEGraph(List(f, g, h))
         val graph2 = graph1.eliminate(v3)
         val VariableInfo(v1Factors, v1Neighbors) = graph2.info(v1)
@@ -205,10 +206,10 @@ class VETest extends WordSpec with Matchers {
         val v6 = Variable(e6)
         val v7 = Variable(e7)
         val v8 = Variable(e8)
-        val f = Factory.make[Double](List(v1, v2, v3, v4))
-        val g = Factory.make[Double](List(v5, v3, v2, v6))
-        val h = Factory.make[Double](List(v1, v7))
-        val i = Factory.make[Double](List(v8, v1, v3))
+        val f = Factory.simpleMake[Double](List(v1, v2, v3, v4))
+        val g = Factory.simpleMake[Double](List(v5, v3, v2, v6))
+        val h = Factory.simpleMake[Double](List(v1, v7))
+        val i = Factory.simpleMake[Double](List(v8, v1, v3))
 	/* Old method that considered old cost of factor containing variable */
         // Initially:
         // Assume we will not eliminate v5 or v8
@@ -293,7 +294,7 @@ class VETest extends WordSpec with Matchers {
       def make(numVars: Int): Traversable[Factor[Double]] = {
         val universe = new Universe
         val a: List[Variable[_]] = List.tabulate(numVars)(i => Variable(Flip(0.3)("", universe)))
-        for { i <- 0 to numVars - 2 } yield Factory.make[Double](List(a(i), a(i + 1)))
+        for { i <- 0 to numVars - 2 } yield Factory.simpleMake[Double](List(a(i), a(i + 1)))
       }
       val factors1 = make(small)
       val factors2 = make(large)

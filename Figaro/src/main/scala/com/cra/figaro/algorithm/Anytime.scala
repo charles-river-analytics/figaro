@@ -1,13 +1,13 @@
 /*
  * Anytime.scala
  * Anytime algorithms
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -56,7 +56,7 @@ trait Anytime extends Algorithm {
   def runStep(): Unit
 
   /**
-   * Optional function to run when the algorithm is stopped (not killed). Used in samplers to update lazy values
+   * Optional function to run when the algorithm is stopped (not killed). Used in samplers to update lazy values.
    */
   def stopUpdate(): Unit = {  }
 
@@ -65,17 +65,17 @@ trait Anytime extends Algorithm {
    */
   class Runner extends Actor {
     import context._
-    
+
     def active: Receive = {
       case Handle(service) =>
         sender ! handle(service)
-      case "stop" => 
+      case "stop" =>
         stopUpdate()
         become (inactive)
-      case "next" => 
+      case "next" =>
         runStep()
         self ! "next"
-      case _ => 
+      case _ =>
         sender ! ExceptionResponse("Algorithm is still running")
     }
 
@@ -86,23 +86,23 @@ trait Anytime extends Algorithm {
         runStep()
         become(active)
         self ! "next"
-      case "resume" => 
+      case "resume" =>
         resume()
         become(active)
       	self ! "next"
-      case "kill" => 
+      case "kill" =>
          become(shuttingDown)
-      case _ => 
+      case _ =>
         sender ! ExceptionResponse("Algorithm is stopped")
     }
-    
+
     def shuttingDown: Receive = {
-      case _ => 
+      case _ =>
         sender ! ExceptionResponse("Anytime algorithm has terminated")
     }
-    
+
     def receive = inactive
-    
+
 
   }
 
@@ -116,7 +116,7 @@ trait Anytime extends Algorithm {
 
 		  }
 		  """)
-		  
+
   var system: ActorSystem = null
   var runner: ActorRef = null
   var running = false;
@@ -126,16 +126,15 @@ trait Anytime extends Algorithm {
    */
   def handle(service: Service): Response
 
-  
+
   protected def doStart() = {
     if (!running) {
     	system = ActorSystem("Anytime", ConfigFactory.load(customConf))
     	runner = system.actorOf(Props(new Runner))
     	initialize()
-//    	println("Using ANYTIME")
     	running = true
     }
-      
+
     runner ! "start"
   }
 
@@ -146,7 +145,10 @@ trait Anytime extends Algorithm {
   protected def doKill() = {
     shutdown
   }
-  
+
+  /**
+   * Release all resources from this anytime algorithm.
+   */
   def shutdown {
     cleanUp()
     if (running)
@@ -155,6 +157,5 @@ trait Anytime extends Algorithm {
     	system.stop(runner)
     	system.shutdown
     }
-//    println("Shutdown ANYTIME")
   }
 }

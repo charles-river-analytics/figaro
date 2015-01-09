@@ -7,7 +7,7 @@
 This section describes the basic building blocks of Figaro models. We present the basic definitions of different kinds of model components. In the following section, we will show how to use these components to create a rich variety of models.
 
 \section{Elements}
-All data structures that are part of a Figaro model are \emph{elements}. Elements can be combined in various ways to produce more complex elements. The simplest elements are \emph{atomic} elements that do not depend on other elements. An example of an atomic element is
+All data structures that are part of a Figaro model are \emph{elements}. Elements can be combined in various ways to produce more complex elements. The simplest elements are \emph{atomic} elements that do not depend on other elements. An example of an atomic element is:
 
 \begin{flushleft}
 \marginpar{Figaro classes are capitalized, while Scala reserved words are not}
@@ -15,12 +15,12 @@ All data structures that are part of a Figaro model are \emph{elements}. Element
 \end{flushleft}
 
 This defines the probabilistic model that produces the integer 6 with probability
-1. Another atomic element is
+1.0. Another atomic element is:
 \begin{flushleft}
 \texttt{Constant("Hello")}
 \end{flushleft}
 
-which produces the string "Hello" with probability 1. These two examples illustrate that every Figaro element has a \emph{value type}, which in the first case is \texttt{Int} and in the second case \texttt{String}. The value type is the type of values produced by the probabilistic model defined by the element.
+which produces the string "Hello" with probability 1.0. These two examples illustrate that every Figaro element has a \emph{value type}, which in the first case is \texttt{Int} and in the second case is \texttt{String}. The value type is the type of values produced by the probabilistic model defined by the element.
 
 \marginpar{Scala uses type inference, so the value type of the parameter can often be omitted at class creation (the compiler will determine the type)}
 
@@ -43,36 +43,37 @@ An \emph{atomic} element is one that does not depend on any other elements. Cons
 \item The continuous \texttt{Uniform(0.0, 2.0)} is an \texttt{Element[Double]} that represents the continuous uniform probability distribution between 0 and 2.
 \end{itemize}
 
-Elements also contain a method for generating a new value for the element. This is accomplished by called the \texttt{generate()} method of an element. Generating a new value of an element is a two step process. First, the \texttt{generate()} method generates a new \emph{randomness} for the element. Then, the value of an atomic element is \emph{deterministically} produced as a function of the randomness of the element. For example, consider the \texttt{Flip(0.7)} shown above. To determine the value of this \texttt{Flip}, a number between 0 and 1 is uniformly chosen as the randomness of the element, and if the value is less than 0.7, we assign the \texttt{Flip} a value of \texttt{true}, and \texttt{false} otherwise.
+% Elements also contain a method for generating a new value for the element. This is accomplished by called the \texttt{generate()} method of an element. Generating a new value of an element is a two step process. First, the \texttt{generate()} method generates a new \emph{randomness} for the element. Then, the value of an atomic element is \emph{deterministically} produced as a function of the randomness of the element. For example, consider the \texttt{Flip(0.7)} shown above. To determine the value of this \texttt{Flip}, a number between 0 and 1 is uniformly chosen as the randomness of the element, and if the value is less than 0.7, we assign the \texttt{Flip} a value of \texttt{true}, and \texttt{false} otherwise.
 
-While \texttt{Flip} and \texttt{Select} are in the \texttt{language} package that was imported earlier, \texttt{Uniform} is in the \texttt{library.atomic.continuous} package that needs to be imported using
+While \texttt{Flip} and \texttt{Select} are in the \texttt{language} package that was imported earlier, \texttt{Uniform} is in the \texttt{library.atomic.continuous} package that needs to be imported using:
  
 \begin{flushleft}
 \marginpar{The \_ is the Scala version of Java's * for imports} 
 \texttt{import com.cra.figaro.library.atomic.continuous.\_}
 \end{flushleft}
 
-Other built-in continuous atomic classes include \texttt{Normal, Exponent\-ial, Gamma, Beta}, and \texttt{Dirichlet}, also found in the \texttt{library.atomic.\-continuous package}, while discrete elements include discrete \texttt{Uniform, Geometric, Binomial}, and \texttt{Poisson}, to be found in the \texttt{library.atomic.\-discrete package}.
+Other built-in continuous atomic classes include \texttt{Normal, Exponent\-ial, Gamma, Beta}, and \texttt{Dirichlet}, also found in the \texttt{library.atomic.\-continuous} package, while discrete elements include discrete \texttt{Uniform, Geometric, Binomial}, and \texttt{Poisson}, to be found in the \texttt{library.atom\-ic.discrete} package.
 
 \section{Compound elements}
 
-In \texttt{Flip(0.7)}, the argument to \texttt{Flip} is a \texttt{Double}. There is another version of \texttt{Flip} in which the argument is an \texttt{Element[Double]}. For example, we might have
+In \texttt{Flip(0.7)}, the argument to \texttt{Flip} is a \texttt{Double}. There is another version of \texttt{Flip} in which the argument is an \texttt{Element[Double]}. For example, we might have:
 
 \begin{flushleft}
-\texttt{Flip(Uniform(0.0, 1.0)) }
+\texttt{Flip(Uniform(0.0, 1.0))}
 \end{flushleft}
 
 which represents the probabilistic model that produces \texttt{true} with a probability that is uniformly distributed between 0 and 1. This is a \emph{compound} element that is built from another element. Most of the atomic elements described in the previous subsection have compound versions.
 
-Another example of a compound element is a conditional. The element
+Another example of a compound element is a conditional. The element:
 
 \begin{flushleft}
 \marginpar{Note \texttt{If} is a Figaro class, not the Scala \texttt{if} reserved word }
 \texttt{If(Flip(0.7), Constant(1), Select(0.4 -> 2, 0.6 -> 3))}
 \end{flushleft}
 
-represents the \texttt{Element[Int]} in which with probability 0.7, \texttt{Constant\-(1)} is chosen, producing 1 with probability 1, while with probability 0.3, \texttt{Select(0.4
--> 2, 0.6 -> 3)} is chosen, producing 2 with probability 0.4 and 3 with probability 0.6. Overall, 1 is produced with probability 0.7 * 1 = 0.7, 2 with probability 0.3 * 0.4 = 0.12, and 3 with probability 0.3 * 0.6 = 0.18. The first argument to \texttt{If} must be an \texttt{Element[Boolean]}, while the other two arguments must have the same value type, which also becomes the value type of the \texttt{If}. \texttt{If} can be found in the \texttt{library.compound package}. Similar to the atomic elements, the value of a compound element can be generated by calling the \texttt{generate()} method of the element. In this case, however, the value of an element is a deterministic function of its randomness and the current value of the element's parents.
+represents the \texttt{Element[Int]} in which with probability 0.7, \texttt{Constant\-(1)} is chosen, producing 1 with probability 1.0, while with probability 0.3, \texttt{Select(0.4
+-> 2, 0.6 -> 3)} is chosen, producing 2 with probability 0.4 and 3 with probability 0.6. Overall, 1 is produced with probability 0.7 * 1 = 0.7, 2 with probability 0.3 * 0.4 = 0.12, and 3 with probability 0.3 * 0.6 = 0.18. The first argument to \texttt{If} must be an \texttt{Element[Boolean]}, while the other two arguments must have the same value type, which also becomes the value type of the \texttt{If}. \texttt{If} can be found in the \texttt{library.compound} package. 
+% Similar to the atomic elements, the value of a compound element can be generated by calling the \texttt{generate()} method of the element. In this case, however, the value of an element is a deterministic function of its randomness and the current value of the element's parents.
 
 \section{Chain}
 
@@ -82,25 +83,25 @@ A \texttt{Chain} has two type parameters, \texttt{T} and \texttt{U}, where \text
 \marginpar{Scala notation for the type of a function is: \texttt{inType => outType}}
 model in which first a value of type \texttt{T} is produced from the parent argument, then the function in the second argument is applied to this value to generate a particular \texttt{Element[U]}, and finally a particular value of type \texttt{U} is randomly produced from the generated \texttt{Element[U]}. Therefore, a \texttt{Chain[T,U]} is an \texttt{Element[U]}.
 
-For example,
+For example:
 \begin{flushleft}
 \texttt{Chain(Flip(0.7), (b: Boolean) =>
 \newline \tab if (b) Constant(1); else Select(0.4 -> 2, 0.6 -> 3))}
 \end{flushleft}
 
-represents exactly the same probabilistic model as
+represents exactly the same probabilistic model as:
 
 \begin{flushleft}
 \texttt{If(Flip(0.7), Constant(1), Select(0.4 -> 2, 0.6 -> 3))}
 \end{flushleft}
 
-Let's understand this example from the inside out. First,
+Let's understand this example from the inside out. First:
 
 \begin{flushleft}
 \texttt{if (b) Constant(1); else Select(0.4 -> 2, 0.6 -> 3)}
 \end{flushleft}
 
-is a Scala expression. \texttt{b} is a Boolean variable. If \texttt{b} is true, the expression produces the element \texttt{Constant(1)}, otherwise it produces the element \texttt{Select(0.4 -> 2, 0.6 -> 3)}. Note that this is a Scala expression, not Figaro's conditional data structure (all Figaro classes are capitalized). Now,
+is a Scala expression. \texttt{b} is a Boolean variable. If \texttt{b} is true, the expression produces the element \texttt{Constant(1)}, otherwise it produces the element \texttt{Select(0.4 -> 2, 0.6 -> 3)}. Note that this is a Scala expression, not Figaro's conditional data structure (all Figaro classes are capitalized). Now:
  
 \begin{flushleft}
 \texttt{(b: Boolean) =>
@@ -113,12 +114,13 @@ is Scala's way of defining an anonymous function from an argument named \texttt{
 This is exactly the same model as that represented by the conditional element in the previous subsection. It is easy to see that any conditional can be represented by a chain in a similar way. Chaining is in fact an extremely powerful concept and we will see a number of examples of it in this tutorial. It is sufficient to represent all compound elements. All the compound elements in the previous section can be
 represented using a chain, and many of them are actually implemented that way. Note that there is a version of \texttt{Chain} that utilizes two parents and requires a function from a tuple of the parent types to the output type. If more parents are required for a \texttt{Chain}, multiple \texttt{Chains} can be nested together.
 
-\section{Apply and Inject}
+% \section{Apply and Inject}
+\section{Apply}
 
-Another useful tool for building elements is \texttt{Apply.Apply} serves to lift Scala functions that operate on values to Figaro elements. For example,
+Another useful tool for building elements is \texttt{Apply. Apply} serves to lift Scala functions that operate on values to Figaro elements. For example:
 
 \begin{flushleft}
-\marginpar{Figaro \texttt{Apply} is a class, different than the Scala apply which is a method defined on many classes}
+\marginpar{Figaro \texttt{Apply} is a class, different than the Scala \texttt{apply} which is a method defined on many classes}
 \texttt{(i: Int) => i + 5}
 \end{flushleft}
 
@@ -132,44 +134,44 @@ is the Figaro element representing the probabilistic model in which first either
 
 \marginpar{Sequences in Scala are similar to Java. \texttt{Seq} is the superclass in Scala for many types of data structures, such as \texttt{List}.}
 
-Often, one needs to apply a function to a whole sequence of arguments. \texttt{Inject} is provided for this. \texttt{Inject} takes a sequence of elements with value type \texttt{T} and produces an element whose value type is sequences of values of type \texttt{T}. In Scala notation, \texttt{Inject} takes a variable number of arguments of type \texttt{Element[T]} and produces an \texttt{Element[Seq[T]]}. The name "inject" refers to the fact that the sequence of arguments is injected inside the element.
+% Often, one needs to apply a function to a whole sequence of arguments. \texttt{Inject} is provided for this. \texttt{Inject} takes a sequence of elements with value type \texttt{T} and produces an element whose value type is sequences of values of type \texttt{T}. In Scala notation, \texttt{Inject} takes a variable number of arguments of type \texttt{Element[T]} and produces an \texttt{Element[Seq[T]]}. The name "inject" refers to the fact that the sequence of arguments is injected inside the element.
 
-In Scala, a variable number of arguments are simply listed as arguments. For example, suppose we have the elements \texttt{Constant(1)} and  \texttt{Select(0.2 -> 2, 0.8 -> 3)}. Then
+% In Scala, a variable number of arguments are simply listed as arguments. For example, suppose we have the elements \texttt{Constant(1)} and  \texttt{Select(0.2 -> 2, 0.8 -> 3)}. Then
 
-\begin{flushleft}
-\marginpar{The notation: \_* will turn any Scala sequence into a variable argument list. The function receiving the variable argument list will have a * on the last argument}
-\texttt{Inject(Constant(1), Select(0.2 -> 2, 0.8 -> 3))}
-\end{flushleft}
+% \begin{flushleft}
+% \marginpar{The notation: \_* will turn any Scala sequence into a variable argument list. The function receiving the variable argument list will have a * on the last argument}
+% \texttt{Inject(Constant(1), Select(0.2 -> 2, 0.8 -> 3))}
+% \end{flushleft}
 
-represents the probabilistic model that produces the sequence (1, 2) with probability
-0.2 and (1, 3) with probability 0.8.
+% represents the probabilistic model that produces the sequence (1, 2) with probability
+% 0.2 and (1, 3) with probability 0.8.
 
-If you already have a sequence, it can be turned into a variable argument list using the notation :\_*. For example, you can use
+% If you already have a sequence, it can be turned into a variable argument list using the notation :\_*. For example, you can use
 
-\begin{flushleft}
-\texttt{Inject(List(Constant(1), Select(0.2 -> 2, 0.8 -> 3)):\_*)}
-\end{flushleft}
+% \begin{flushleft}
+% \texttt{Inject(List(Constant(1), Select(0.2 -> 2, 0.8 -> 3)):\_*)}
+% \end{flushleft}
 
-which has the same effect as listing the individual entries of the \texttt{List} in the argument list.
+% which has the same effect as listing the individual entries of the \texttt{List} in the argument list.
 
-Using \texttt{Inject} and \texttt{Apply}, we can apply a function to a sequence of arguments. First, consider the Scala function
+% Using \texttt{Inject} and \texttt{Apply}, we can apply a function to a sequence of arguments. First, consider the Scala function
 
-\begin{flushleft}
-\marginpar{Calling map on a Scala sequence will apply the same function to every value in the sequence and return a new sequence. It uses anonymous function semantics}
-\texttt{(xs: Seq[Int]) => xs.map((x: Int) => x + 5)}
-\end{flushleft}
+% \begin{flushleft}
+% \marginpar{Calling map on a Scala sequence will apply the same function to every value in the sequence and return a new sequence. It uses anonymous function semantics}
+% \texttt{(xs: Seq[Int]) => xs.map((x: Int) => x + 5)}
+% \end{flushleft}
 
-\texttt{map} is a Scala method that can be applied to sequences. It takes as argument a function on elements of the sequence, applies the function to every member of the sequence, and returns the resulting sequence. So, the above function takes a sequence of integers and adds 5 to every element in the sequence. Now we can write
+% \texttt{map} is a Scala method that can be applied to sequences. It takes as argument a function on elements of the sequence, applies the function to every member of the sequence, and returns the resulting sequence. So, the above function takes a sequence of integers and adds 5 to every element in the sequence. Now we can write
 
-\begin{flushleft}
-\texttt{Apply(Inject(Constant(1), Select(0.2 -> 2, 0.8 -> 3)), 
-\newline \tab (xs: Seq[Int]) => xs.map((x: Int) => x + 5))}
-\end{flushleft}
+% \begin{flushleft}
+% \texttt{Apply(Inject(Constant(1), Select(0.2 -> 2, 0.8 -> 3)), 
+% \newline \tab (xs: Seq[Int]) => xs.map((x: Int) => x + 5))}
+% \end{flushleft}
 
-This represents the probabilistic model that produces the sequence (6, 7) with probability 0.2 and (6, 8)with probability 0.8.
+% This represents the probabilistic model that produces the sequence (6, 7) with probability 0.2 and (6, 8)with probability 0.8.
 
 
-Finally, there are a variety of operators and functions that are defined using \texttt{Apply}. For example
+There are a variety of operators and functions that are defined using \texttt{Apply}. For example:
 \begin{itemize}
 \item \textasciicircum \textasciicircum \ creates tuples. For example, \textasciicircum \textasciicircum(x, y) where \texttt{x} and \texttt{y} are elements, creates an element of pairs. \textasciicircum \textasciicircum \ is defined for up to five arguments. The arguments can have different value types.
 \item If \texttt{x} is an element whose value type is a \texttt{tuple}, x.\_1 is an element that corresponds to extracting the first component of \texttt{x}. Similarly for \_2, \_3, \_4, and \_5.
@@ -177,6 +179,29 @@ Finally, there are a variety of operators and functions that are defined using \
 \item A standard set of Boolean and arithmetic operators is provided.
 \end{itemize}
 
+\section{Processes and containers}
 
+New to Figaro 3.0 is a collections library. The general trait of Figaro collections is \texttt{Process}, which represents a possibly infinite collection of random variables. Formally, a \texttt{Process} is a mapping from an index set to an element. A \texttt{Process} is parameterized by two types: the type of the indices and the type of the values of the elements in the collection. The \texttt{Process} is an extremely general class that can be used to represent things like Gaussian processes or continuous time Markov processes.
 
+When creating a \texttt{Process}, you need to specify how elements in the collection are generated given an index. Not only that, in some collections, the elements are dependent. Therefore, the \texttt{Process} class contains a method to generate elements for many indices simultaneously, including the dependencies between them. This method must also be provided by the user. If all the elements are independent, you can use the \texttt{IndependentProcess} trait to specify this method.
+
+There are a number of operations that are defined on every process. These include:
+\begin{itemize}
+\item Getting the element at an index. If \texttt{p} is a \texttt{Process[Int, Double]}, \texttt{p(5)} gets the \texttt{Element[Double]} at index 5. This method throws \texttt{IndexOutOfRangeException} if no element is defined at index 5.
+\item Getting elements at many indices simultaneously, for example, using \texttt{p(List(4,5,6))}. This method can also throw \texttt{IndexOutOf\-RangeException}. The method creates a Scala \texttt{Map} from indices to elements. Any elements representing dependencies between the elements at these indices are also created but they are not returned by this method.
+\item Safely getting an optional element at an index. \texttt{p.get(5)} will return an \texttt{Element[Option[Double]]}. This element will always have value \texttt{None} if no element is defined at index 5.
+\item Safely getting an optional element at many indices.
+\item Mapping the values of every element in the process through a function. For example, \texttt{p.map(\_ > 0)} will produce a \texttt{Process[Int, Boolean]}.
+\item Chaining the value of every element in the process through a function that returns an element. For example, \texttt{p.chain(Normal(\_, 1))} will produce a new collection in which every element is normally distributed with mean equal to the value of the corresponding element in the original process.
+\end{itemize}
+
+If you have a finite index set, you can use a \texttt{Container}, which takes a sequence of indices. Because they are finite, containers have many more operations defined on them, including a variety of folds and aggregates. See the Scaladoc for the available operations. 
+
+A specific kind of container is a \texttt{FixedSizeArray}, which takes the number of elements as the first argument and a function that generates an element for a given index as the second argument. For example, \texttt{new FixedSizeArray(10, (i: Int) => Flip(1.0 / (i + 1)))} creates a container of ten Boolean elements. 
+
+There is a \texttt{Container} constructor that takes any number of elements and produces a container with those elements. For example, \texttt{Container(Flip(0.2), Flip(0.4))} creates a container consisting of the two elements.
+
+You can, naturally, have elements whose values are processes or containers. Figaro provides the \texttt{ProcessElement} and \texttt{ContainerElement} classes to represent these. Similar operations are defined for \texttt{ProcessEl\-ement} and \texttt{ContainerElement} as for processes and containers.
+
+\texttt{VariableSizeArray} represents a collection of an unknown number of elements, where the number is itself defined by an element. It takes two arguments, the number element, and a function that generates an element for a given index, like a fixed size array. For example, \texttt{VariableSizeArray(Binomial(20, 0.5), (i: Int) => Flip(1.0 / (i + 1))} creates a container of between 0 and 20 Boolean elements.
 

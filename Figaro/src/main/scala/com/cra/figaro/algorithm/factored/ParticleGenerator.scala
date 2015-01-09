@@ -1,3 +1,16 @@
+/*
+ * ParticleGenerator.scala
+ * Class to handle sampling from continuous elements in PBP
+ * 
+ * Created By:      Brian Ruttenberg (bruttenberg@cra.com)
+ * Creation Date:   Oct 8, 2014
+ * 
+ * Copyright 2014 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * See http://www.cra.com or email figaro@cra.com for information.
+ * 
+ * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
+
 package com.cra.figaro.algorithm.factored
 
 import scala.collection.mutable.Map
@@ -9,7 +22,7 @@ import com.cra.figaro.language.Atomic
 import com.cra.figaro.library.atomic.discrete.OneShifter
 
 /**
- * Class to handle sampling from continuous elements in PBP
+ * Class to handle sampling from continuous elements in PBP.
  * @param argSamples Maximum number of samples to take from atomic elements
  * @param totalSamples Maximum number of samples on the output of chains
  * @param de An instance to compute the density estimate of point during resampling
@@ -20,17 +33,17 @@ class ParticleGenerator(de: DensityEstimator, val numArgSamples: Int, val numTot
   private val sampleMap = Map[Element[_], List[(Double, _)]]()
 
   /**
-   * Returns the set of sampled elements contained in this sampler
+   * Returns the set of sampled elements contained in this sampler.
    */
   def sampledElements(): Set[Element[_]] = sampleMap.keySet.toSet
 
   /**
-   * Clears all of the samples for elements in this sampler
+   * Clears all of the samples for elements in this sampler.
    */
   def clear() = sampleMap.clear
 
   /**
-   * Updates the samples for an element
+   * Updates the samples for an element.
    */
   def update(elem: Element[_], samples: List[(Double, _)]) = sampleMap.update(elem, samples)
 
@@ -40,7 +53,7 @@ class ParticleGenerator(de: DensityEstimator, val numArgSamples: Int, val numTot
   def apply[T](elem: Element[T]): List[(Double, T)] = apply(elem, numArgSamples)
 
   /**
-   * Retrieves the samples for an element using the indicated number of samples
+   * Retrieves the samples for an element using the indicated number of samples.
    */
   def apply[T](elem: Element[T], numSamples: Int): List[(Double, T)] = {
     sampleMap.get(elem) match {
@@ -60,14 +73,14 @@ class ParticleGenerator(de: DensityEstimator, val numArgSamples: Int, val numTot
   }
 
   /**
-   * Resample and update the element from the indicated beliefs
+   * Resample and update the element from the indicated beliefs.
    * beliefs = (Probability, Value)
    */
   def resample(elem: Element[_], beliefs: List[(Double, _)], proposalVariance: Double): Unit = {
 
     def nextInt(i: Int) = if (random.nextBoolean) i + 1 else i - 1
     def nextDouble(d: Double) = random.nextGaussian() * proposalVariance + d
-    
+
     val sampleDensity: Double = 1.0 / beliefs.size
 
     val newSamples = elem match {
@@ -80,16 +93,16 @@ class ParticleGenerator(de: DensityEstimator, val numArgSamples: Int, val numTot
           } else oldValue
           (sampleDensity, nextValue)
         })
-      }      
-      case a: Atomic[Double] => { // The double is unchecked, bad stuff if the atomic is not double
+      }
+      case a: Atomic[_] => { // The double is unchecked, bad stuff if the atomic is not double
         beliefs.map(b => {
           val oldValue = b._2.asInstanceOf[Double]
           val newValue = nextDouble(oldValue)
-          val nextValue = if (a.density(newValue) > 0.0) {
+          val nextValue = if (a.asInstanceOf[Atomic[Double]].density(newValue) > 0.0) {
             accept(oldValue, newValue, beliefs.asInstanceOf[List[(Double, Double)]])
           } else oldValue
           (sampleDensity, nextValue)
-        })        
+        })
       }
       case _ => { // Not an atomic element, we don't know how to resample
         beliefs
@@ -98,7 +111,7 @@ class ParticleGenerator(de: DensityEstimator, val numArgSamples: Int, val numTot
     update(elem, newSamples)
   }
 
-  def accept[T](oldValue: T, newValue: T, beliefs: List[(Double, T)]): T = {
+  private def accept[T](oldValue: T, newValue: T, beliefs: List[(Double, T)]): T = {
     val oldDensity = de.getDensity(oldValue, beliefs)
     val newDensity = de.getDensity(newValue, beliefs)
     val ratio = newDensity / oldDensity

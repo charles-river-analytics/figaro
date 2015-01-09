@@ -17,6 +17,7 @@ import scala.collection.mutable.Map
 import org.scalatest.WordSpec
 import org.scalatest.Matchers
 import com.cra.figaro.algorithm.factored._
+import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.factored.beliefpropagation._
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound.If

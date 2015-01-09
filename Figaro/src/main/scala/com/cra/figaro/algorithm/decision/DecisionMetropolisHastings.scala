@@ -88,32 +88,29 @@ abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, pro
    * We keep track of the improvement in the constraints for the new proposal compared to the original value.
    * We keep track of which elements do not have their condition satisfied by the new proposal.
    */
-private def attemptChange[T](state: State, elem: Element[T]): State = {
-val newValue = elem.generateValue(elem.randomness)
-// if an old value is already stored, don't overwrite it
-val newOldValues =
-if (state.oldValues contains elem) state.oldValues; else state.oldValues + (elem -> elem.value)
-if (elem.value != newValue) {
-//val newProb =
-// state.modelProb * elem.score(elem.value, newValue)
-val newProb = state.modelProb
-val newDissatisfied =
-if (elem.condition(newValue)) state.dissatisfied -= elem; else state.dissatisfied += elem
-elem.value = newValue
-State(newOldValues, state.oldRandomness, state.proposalProb, newProb, newDissatisfied)
-} else {
-// We need to make sure to add the element to the dissatisfied set if its condition is not satisfied,
-// even if the value has not changed, because we compare the dissatisfied set with the old dissatisfied set
-// when deciding whether to accept the proposal.
-val newDissatisfied =
-if (elem.condition(newValue)) {
-state.dissatisfied - elem
-} else {
-state.dissatisfied + elem
-}
-State(newOldValues, state.oldRandomness, state.proposalProb, state.modelProb, newDissatisfied)
-}
-}
+  private def attemptChange[T](state: State, elem: Element[T]): State = {
+    val newValue = elem.generateValue(elem.randomness)
+    // if an old value is already stored, don't overwrite it
+    val newOldValues =
+      if (state.oldValues contains elem) state.oldValues; else state.oldValues + (elem -> elem.value)
+    if (elem.value != newValue) {
+      val newDissatisfied =
+        if (elem.condition(newValue)) state.dissatisfied -= elem; else state.dissatisfied += elem
+      elem.value = newValue
+      State(newOldValues, state.oldRandomness, state.proposalProb, state.modelProb, newDissatisfied)
+    } else {
+      // We need to make sure to add the element to the dissatisfied set if its condition is not satisfied,
+      // even if the value has not changed, because we compare the dissatisfied set with the old dissatisfied set
+      // when deciding whether to accept the proposal.
+      val newDissatisfied =
+        if (elem.condition(newValue)) {
+          state.dissatisfied - elem
+        } else {
+          state.dissatisfied + elem
+        }
+      State(newOldValues, state.oldRandomness, state.proposalProb, state.modelProb, newDissatisfied)
+    }
+  }
 
   private def propose[T](state: State, elem: Element[T]): State = {
     if (debug) println("Proposing " + elem.name.string)
@@ -227,30 +224,45 @@ State(newOldValues, state.oldRandomness, state.proposalProb, state.modelProb, ne
     result
   }
 
-def updateMany[T](state: State, toUpdate: Set[Element[_]]): State = {
+  /*
+   * Update a set of elements after a proposal given the current state.
+   * Since elements must be updated in generative order, we have to ensure the arguments 
+   * of an element are updated being an element itself. To do that, we check the intersection
+   * of the an element's arguments with the elements that still need to be updated. If the intersection
+   * is not empty, we recursively update the intersecting elements. Once those updates are completed,
+   * we update an element and move on to the next element in the set.
+   */
+  private def updateMany[T](state: State, toUpdate: Set[Element[_]]): State = {
     var returnState = state
     var updatesLeft = toUpdate
-    while (!updatesLeft.isEmpty){ 
-       var argsRemaining = universe.uses(updatesLeft.head).intersect(updatesLeft)
-        while (!argsRemaining.isEmpty) { 
-        returnState = updateManyHelper(returnState, argsRemaining.toSet) 
-        argsRemaining = argsRemaining.tail 
+    while (!updatesLeft.isEmpty) {
+      // Check the intersection of an element's arguments with the updates that still need to occur
+      var argsRemaining = universe.uses(updatesLeft.head).intersect(updatesLeft)
+      while (!argsRemaining.isEmpty) {
+        // update the element's arguments first
+        returnState = updateManyHelper(returnState, argsRemaining.toSet)
+        argsRemaining = argsRemaining.tail
       }
-      returnState = updateOne(returnState, updatesLeft.head) 
+      // once the args are updated, update this element
+      returnState = updateOne(returnState, updatesLeft.head)
       updatesLeft = updatesLeft.tail
-      }
-      returnState
+    }
+    returnState
   }
-  
+
+  /*
+   * A recursive function to work in conjuction with updateMany to check the order of the element
+   * updates.
+   */
   @tailrec
   private def updateManyHelper(state: State, toUpdate: Set[Element[_]]): State = {
-	  var returnState = state
-	  var updatesLeft = toUpdate
-	  var argsRemaining = universe.uses(updatesLeft.head).intersect(updatesLeft)
-	  if (argsRemaining.isEmpty){
-	        returnState = updateOne(returnState, updatesLeft.head) 
-	        returnState } 
-	  else { updateManyHelper(returnState, argsRemaining.toSet) }
+    var returnState = state
+    var updatesLeft = toUpdate
+    var argsRemaining = universe.uses(updatesLeft.head).intersect(updatesLeft)
+    if (argsRemaining.isEmpty) {
+      returnState = updateOne(returnState, updatesLeft.head)
+      returnState
+    } else { updateManyHelper(returnState, argsRemaining.toSet) }
   }
 
   /*
@@ -352,7 +364,7 @@ def updateMany[T](state: State, toUpdate: Set[Element[_]]): State = {
   protected override def update(): Unit = {
     super.update
     sampleCount += 1
-    allUtilitiesSeen foreach (updateWeightSeenForTarget((utilitySum, Map[Element[_], Any](dummyTarget -> dummyTarget.value)), _))    
+    allUtilitiesSeen foreach (updateWeightSeenForTarget((utilitySum, Map[Element[_], Any](dummyTarget -> dummyTarget.value)), _))
     sampleCount -= 1
   }
 
@@ -454,7 +466,6 @@ object DecisionMetropolisHastings {
       u.value match {
         case d: Double => 1
         case _ => {
-          println(u.value)
           throw new IllegalArgumentException("Only double utilities are allowed")
         }
       }

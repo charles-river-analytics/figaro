@@ -1,5 +1,5 @@
-
-/* * SemiringTest.scala 
+/*
+ * SemiringTest.scala 
  * Semiring tests.
  * 
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
@@ -21,11 +21,7 @@ import org.scalatest.Matchers
 import org.scalatest.PrivateMethodTester
 import org.scalatest.WordSpec
 
-import com.cra.figaro.algorithm.factored.MaxProductSemiring
-import com.cra.figaro.algorithm.factored.Semiring
-import com.cra.figaro.algorithm.factored.SufficientStatisticsSemiring
-import com.cra.figaro.algorithm.factored.SumProductSemiring
-import com.cra.figaro.algorithm.factored.SumProductUtilitySemiring
+import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.language.Parameter
 import com.cra.figaro.library.atomic.continuous.BetaParameter
 import com.cra.figaro.library.atomic.continuous.DirichletParameter
@@ -301,7 +297,7 @@ class SemiringTest extends WordSpec with Matchers with PrivateMethodTester {
               }
 
             val semiring = new SufficientStatisticsSemiring(zeroSufficientStatisticsMap.toMap)
-            semiringProperties[(Double, Map[Parameter[_], Seq[Double]])](semiring.asInstanceOf[com.cra.figaro.algorithm.factored.Semiring[(Double, Map[Parameter[_], Seq[Double]])]], a, b, c, probPlusOrMinus, (0.001, zeroSufficientStatisticsMap.toMap))
+            semiringProperties[(Double, Map[Parameter[_], Seq[Double]])](semiring.asInstanceOf[Semiring[(Double, Map[Parameter[_], Seq[Double]])]], a, b, c, probPlusOrMinus, (0.001, zeroSufficientStatisticsMap.toMap))
             
             j += 1
           }

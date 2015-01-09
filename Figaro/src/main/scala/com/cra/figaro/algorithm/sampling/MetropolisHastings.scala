@@ -1,13 +1,13 @@
 /*
  * MetropolisHastings.scala
  * Metropolis-Hastings sampler.
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -48,12 +48,12 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
   universe.register(currentConstraintValues)
 
   /**
-   * Get the acceptance ratio for the sampler
+   * Get the acceptance ratio for the sampler.
    */
   def acceptRejectRatio = accepts.toDouble / (accepts.toDouble + rejects.toDouble)
 
   /**
-   * Set this flag to true to obtain debugging information
+   * Set this flag to true to obtain debugging information.
    */
   var debug = false
 
@@ -67,32 +67,35 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
    * We keep track of the improvement in the constraints for the new proposal compared to the original value.
    * We keep track of which elements do not have their condition satisfied by the new proposal.
    */
-private def attemptChange[T](state: State, elem: Element[T]): State = {
-val newValue = elem.generateValue(elem.randomness)
-// if an old value is already stored, don't overwrite it
-val newOldValues =
-if (state.oldValues contains elem) state.oldValues; else state.oldValues + (elem -> elem.value)
-if (elem.value != newValue) {
-//val newProb =
-// state.modelProb * elem.score(elem.value, newValue)
-val newProb = state.modelProb
-val newDissatisfied =
-if (elem.condition(newValue)) state.dissatisfied -= elem; else state.dissatisfied += elem
-elem.value = newValue
-State(newOldValues, state.oldRandomness, state.proposalProb, newProb, newDissatisfied)
-} else {
-// We need to make sure to add the element to the dissatisfied set if its condition is not satisfied,
-// even if the value has not changed, because we compare the dissatisfied set with the old dissatisfied set
-// when deciding whether to accept the proposal.
-val newDissatisfied =
-if (elem.condition(newValue)) {
-state.dissatisfied - elem
-} else {
-state.dissatisfied + elem
-}
-State(newOldValues, state.oldRandomness, state.proposalProb, state.modelProb, newDissatisfied)
-}
-}
+  private def attemptChange[T](state: State, elem: Element[T]): State = {
+    val newValue = {
+      // Don't generate a new value for an observed element because it won't agree with the observation
+      // For a compound element we can't do this because we have to condition the arguments by the
+      // probability of generating the correct value.
+      if (elem.observation.isEmpty || !elem.isInstanceOf[Atomic[_]]) elem.generateValue(elem.randomness)
+      else elem.observation.get
+    }
+    // if an old value is already stored, don't overwrite it
+    val newOldValues =
+      if (state.oldValues contains elem) state.oldValues; else state.oldValues + (elem -> elem.value)
+    if (elem.value != newValue) {
+      val newDissatisfied =
+        if (elem.condition(newValue)) state.dissatisfied -= elem; else state.dissatisfied += elem
+      elem.value = newValue
+      State(newOldValues, state.oldRandomness, state.proposalProb, state.modelProb, newDissatisfied)
+    } else {
+      // We need to make sure to add the element to the dissatisfied set if its condition is not satisfied,
+      // even if the value has not changed, because we compare the dissatisfied set with the old dissatisfied set
+      // when deciding whether to accept the proposal.
+      val newDissatisfied =
+        if (elem.condition(newValue)) {
+          state.dissatisfied - elem
+        } else {
+          state.dissatisfied + elem
+        }
+      State(newOldValues, state.oldRandomness, state.proposalProb, state.modelProb, newDissatisfied)
+    }
+  }
 
   private def propose[T](state: State, elem: Element[T]): State = {
     if (debug) println("Proposing " + elem.name.string)
@@ -206,30 +209,45 @@ State(newOldValues, state.oldRandomness, state.proposalProb, state.modelProb, ne
     result
   }
 
-def updateMany[T](state: State, toUpdate: Set[Element[_]]): State = {
+  /*
+   * Update a set of elements after a proposal given the current state.
+   * Since elements must be updated in generative order, we have to ensure the arguments 
+   * of an element are updated being an element itself. To do that, we check the intersection
+   * of the an element's arguments with the elements that still need to be updated. If the intersection
+   * is not empty, we recursively update the intersecting elements. Once those updates are completed,
+   * we update an element and move on to the next element in the set.
+   */
+  private def updateMany[T](state: State, toUpdate: Set[Element[_]]): State = {
     var returnState = state
     var updatesLeft = toUpdate
-    while (!updatesLeft.isEmpty){ 
-       var argsRemaining = universe.uses(updatesLeft.head).intersect(updatesLeft)
-        while (!argsRemaining.isEmpty) { 
-        returnState = updateManyHelper(returnState, argsRemaining.toSet) 
-        argsRemaining = argsRemaining.tail 
+    while (!updatesLeft.isEmpty) {
+      // Check the intersection of an element's arguments with the updates that still need to occur
+      var argsRemaining = universe.uses(updatesLeft.head).intersect(updatesLeft)
+      while (!argsRemaining.isEmpty) {
+        // update the element's arguments first
+        returnState = updateManyHelper(returnState, argsRemaining.toSet)
+        argsRemaining = argsRemaining.tail
       }
-      returnState = updateOne(returnState, updatesLeft.head) 
+      // once the args are updated, update this element
+      returnState = updateOne(returnState, updatesLeft.head)
       updatesLeft = updatesLeft.tail
-      }
-      returnState
+    }
+    returnState
   }
-  
+
+  /*
+   * A recursive function to work in conjunction with updateMany to check the order of the element
+   * updates.
+   */
   @tailrec
   private def updateManyHelper(state: State, toUpdate: Set[Element[_]]): State = {
-	  var returnState = state
-	  var updatesLeft = toUpdate
-	  var argsRemaining = universe.uses(updatesLeft.head).intersect(updatesLeft)
-	  if (argsRemaining.isEmpty){
-	        returnState = updateOne(returnState, updatesLeft.head) 
-	        returnState } 
-	  else { updateManyHelper(returnState, argsRemaining.toSet) }
+    var returnState = state
+    var updatesLeft = toUpdate
+    var argsRemaining = universe.uses(updatesLeft.head).intersect(updatesLeft)
+    if (argsRemaining.isEmpty) {
+      returnState = updateOne(returnState, updatesLeft.head)
+      returnState
+    } else { updateManyHelper(returnState, argsRemaining.toSet) }
   }
 
   /*
@@ -346,7 +364,7 @@ def updateMany[T](state: State, toUpdate: Set[Element[_]]): State = {
   }
 
   protected def doInitialize(): Unit = {
-    // Need to prime the universe to make sure all elements have a generated value    
+    // Need to prime the universe to make sure all elements have a generated value
     Forward(universe)
     initConstrainedValues()
     for { i <- 1 to burnIn } mhStep()
@@ -496,14 +514,14 @@ object MetropolisHastings {
 
   /**
    * Use MH to compute the probability that the given element has the given value.
-   */    
+   */
   def probability[T](target: Element[T], predicate: T => Boolean): Double = {
     val alg = MetropolisHastings(1000000, ProposalScheme.default, target)
     alg.start()
     val result = alg.probability(target, predicate)
     alg.kill()
     result
-  }    
+  }
 
   /**
    * Use MH to compute the probability that the given element has the given value.

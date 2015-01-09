@@ -16,6 +16,7 @@ package com.cra.figaro.algorithm.factored
 import com.cra.figaro.algorithm._
 import com.cra.figaro.language._
 import com.cra.figaro.library.decision._
+import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.util._
 import annotation.tailrec
 import scala.collection._

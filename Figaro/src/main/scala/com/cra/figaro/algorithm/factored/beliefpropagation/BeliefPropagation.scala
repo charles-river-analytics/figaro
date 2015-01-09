@@ -21,8 +21,9 @@ import com.cra.figaro.util._
 import annotation.tailrec
 import com.cra.figaro.algorithm.OneTimeProbQuery
 import com.cra.figaro.algorithm.ProbQueryAlgorithm
+import com.cra.figaro.algorithm.factored.factors._
+import com.cra.figaro.algorithm.factored.factors.factory._
 import com.cra.figaro.algorithm.factored._
-import com.cra.figaro.algorithm.factored.Variable
 import com.cra.figaro.algorithm.sampling.ProbEvidenceSampler
 import com.cra.figaro.language.Element
 import com.cra.figaro.language.Universe
@@ -134,26 +135,12 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
     f
   }
 
-  /*
-   * This is intended to perform an asynchronous update of the factor graph.
-   * It is unclear if this is the correct implementation since messages
-   * are updating in the factor graph immediately
-   */
-  private def asynchronousUpdate(): Unit = {
-    factorGraph.getNodes.foreach { node1 =>
-      factorGraph.getNeighbors(node1).foreach { node2 =>
-        factorGraph.update(node1, node2, newMessage(node1, node2))
-      }
-    }
-    // Update the beliefs of each node
-    factorGraph.getNodes.foreach(n => beliefMap.update(n, belief(n)))
-  }
 
   /*
    * Propagates one set of synchronous message in the graph
    */
   private def synchronousUpdate(): Unit = {
-    val updates = factorGraph.getNodes.flatMap { node1 =>
+    val updates = factorGraph.getNodes.par.flatMap { node1 =>
       factorGraph.getNeighbors(node1).map { node2 =>
         (node1, node2, newMessage(node1, node2))
       }
@@ -191,17 +178,17 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
 }
 
 /**
- * Trait for probabilistic BP algorithms
+ * Trait for probabilistic BP algorithms.
  */
 trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
 
   /**
-   *  Normalize a factor
+   *  Normalize a factor.
    */
   def normalize(factor: Factor[Double]): Factor[Double] = {
     val z = semiring.sumMany(factor.contents.values)
     // Since we're in log space, d - z = log(exp(d)/exp(z))
-    factor.mapTo((d: Double) => if (z != semiring.zero) d - z else semiring.zero, factor.variables)
+    factor.mapTo((d: Double) => if (z != semiring.zero) d - z else semiring.zero)
   }
 
   /*
@@ -227,15 +214,15 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
   }
 
   private[figaro] def makeLogarithmic(factor: Factor[Double]): Factor[Double] = {
-    factor.mapTo((d: Double) => Math.log(d), factor.variables)
+    factor.mapTo((d: Double) => Math.log(d))
   }
 
   private[figaro] def unmakeLogarithmic(factor: Factor[Double]): Factor[Double] = {
-    factor.mapTo((d: Double) => Math.exp(d), factor.variables)
+    factor.mapTo((d: Double) => Math.exp(d))
   }
 
   /**
-   * Get the belief for an element
+   * Get the belief for an element.
    */
   protected[figaro] def getBeliefsForElement[T](target: Element[T]): List[(Double, T)] = {
     val finalFactor = getFinalFactorForElement(target)
@@ -250,7 +237,7 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
   }
 
   /**
-   * Get the final factor for an element
+   * Get the final factor for an element.
    */
   def getFinalFactorForElement[T](target: Element[T]): Factor[Double] = {
     val targetVar = Variable(target)
@@ -266,7 +253,7 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
 }
 
 /**
- * Trait for One Time BP algorithms
+ * Trait for One Time BP algorithms.
  */
 trait OneTimeProbabilisticBeliefPropagation extends ProbabilisticBeliefPropagation with OneTime {
   val iterations: Int
@@ -304,12 +291,12 @@ trait OneTimeProbabilisticBeliefPropagation extends ProbabilisticBeliefPropagati
 }
 
 /**
- * Trait for Anytime BP algorithms
+ * Trait for Anytime BP algorithms.
  */
 trait AnytimeProbabilisticBeliefPropagation extends ProbabilisticBeliefPropagation with Anytime
 
 /**
- * Class to implement a probability query BP algorithm
+ * Class to implement a probability query BP algorithm.
  */
 abstract class ProbQueryBeliefPropagation(override val universe: Universe, targets: Element[_]*)(
   val dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
@@ -356,19 +343,16 @@ abstract class ProbQueryBeliefPropagation(override val universe: Universe, targe
 
 trait ProbEvidenceBeliefPropagation extends ProbabilisticBeliefPropagation {
 
-  def logFcn: (Double => Double) = semiring match {
+  private def logFcn: (Double => Double) = semiring match {
     case LogSumProductSemiring => (d: Double) => d
     case SumProductSemiring => (d: Double) => if (d == semiring.zero) Double.NegativeInfinity else math.log(d)
   }
-  def probFcn: (Double => Double) = semiring match {
+  private def probFcn: (Double => Double) = semiring match {
     case LogSumProductSemiring => (d: Double) => if (d == semiring.zero) 0 else math.exp(d)
     case SumProductSemiring => (d: Double) => d
   }
 
-  def entropy(probFactor: Factor[Double], logFactor: Factor[Double]): Double = {
-    //println("probfactor: " + probFactor.toReadableString)
-    //println("logfactor: " + logFactor.toReadableString)
-
+  private def entropy(probFactor: Factor[Double], logFactor: Factor[Double]): Double = {
     // Even though the variables in each factor are the same, the order of the vars might be different
     val logFactorMapping = probFactor.variables.map(v => logFactor.variables.indexOf(v))
     def remap(l: List[Int]) = l.zipWithIndex.map(s => (s._1, logFactorMapping(s._2))).sortBy(_._2).unzip._1
@@ -381,9 +365,11 @@ trait ProbEvidenceBeliefPropagation extends ProbabilisticBeliefPropagation {
   }
 
   /* Not true mutual information for > 2 factors, but standard for computing Bethe approximation */
-  def mutualInformation(joint: Factor[Double], marginals: Iterable[Factor[Double]]) = {
-    println(joint.toReadableString)
-    marginals foreach (f => println(f.toReadableString))
+  private def mutualInformation(joint: Factor[Double], marginals: Iterable[Factor[Double]]) = {
+    if (debug) {
+      println(joint.toReadableString)
+      marginals foreach (f => println(f.toReadableString))
+    }
     val newFactor = (joint /: marginals)((c: Factor[Double], n: Factor[Double]) => c.combination(n, semiring.divide))
     val mi = (0.0 /: newFactor.allIndices)((c: Double, i: List[Int]) => {
       val p = probFcn(joint.get(i))
@@ -392,20 +378,21 @@ trait ProbEvidenceBeliefPropagation extends ProbabilisticBeliefPropagation {
     mi
   }
 
+  /**
+   * Compute the evidence of the model. Returns the probability of evidence on the model. This assumes that BP
+   * has already been run on this algorithm instance.
+   */
   def computeEvidence(): Double = {
 
-    //println("Computing P(Evidence)")
     val factorNodes = factorGraph.getNodes.filter(_.isInstanceOf[FactorNode]).toList
     val varNodes = factorGraph.getNodes.filter(_.isInstanceOf[VariableNode]).toList
 
     val nonZeroEvidence = factorNodes.exists(p => beliefMap(p).contents.exists(_._2 != Double.NegativeInfinity))
 
     if (nonZeroEvidence) {
-      //println("Computing energy")
       val betheEnergy = -1 * factorNodes.map(f => {
         entropy(normalize(beliefMap(f)), factorGraph.getFactorForNode(f.asInstanceOf[FactorNode]))
       }).sum
-      //println("Computing entropy")
       val betheEntropy = {
         val factorEntropy = -1 * factorNodes.map(f => {
           entropy(normalize(beliefMap(f)), normalize(beliefMap(f)))
@@ -415,7 +402,6 @@ trait ProbEvidenceBeliefPropagation extends ProbabilisticBeliefPropagation {
         }).sum
         factorEntropy + varEntropy
       }
-      //println("energy: " + betheEnergy + ", entropy: " + betheEntropy)
       math.exp(-1 * (betheEnergy - betheEntropy))
     } else {
       0.0
@@ -508,7 +494,7 @@ object BeliefPropagation {
     probability(target, (t: T) => t == value)
 
   /**
-   * Lazy version of BP that operates only on bounds
+   * Lazy version of BP that operates only on bounds.
    */
   def lazyBP(myIterations: Int, depth: Int, upperBounds: Boolean, targets: Element[_]*)(implicit universe: Universe) =
     new ProbQueryBeliefPropagation(universe, targets: _*)(

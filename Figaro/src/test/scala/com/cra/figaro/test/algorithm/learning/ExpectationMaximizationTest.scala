@@ -54,7 +54,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
                 f.observe(false)
               }
 
-              val algorithm = EM.withVE(15, b)(universe)
+              val algorithm = EMWithVE(15, b)(universe)
               algorithm.start
 
               val result = b.getLearnedElement
@@ -80,7 +80,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
                 f.observe(false)
               }
               
-              val algorithm = EM.withVE(15, b)(universe)
+              val algorithm = EMWithVE(15, b)(universe)
               algorithm.start
 
               val result = b.getLearnedElement
@@ -98,7 +98,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
               val b2 = Binomial(3, b)
               b2.observe(1)
 
-              val algorithm = EM.withVE(15, b)(universe)
+              val algorithm = EMWithVE(15, b)(universe)
               algorithm.start
 
               val result = b.getLearnedElement
@@ -117,7 +117,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
               val b2 = Binomial(3, b)
               b2.observe(1)
 
-              val algorithm = EM.withVE(15, b)(universe)
+              val algorithm = EMWithVE(15, b)(universe)
               algorithm.start
 
               val result = b.getLearnedElement
@@ -149,7 +149,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
                 f.observe(false)
               }
 
-              val algorithm = EM.withVE(10, b)(universe)
+              val algorithm = EMWithVE(10, b)(universe)
               algorithm.start
 
               val result = b.getLearnedElement(List(true, false))
@@ -176,7 +176,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
                 f.observe(false)
               }
 
-              val algorithm = EM.withVE(15, b)(universe)
+              val algorithm = EMWithVE(15, b)(universe)
               algorithm.start
 
               val result = b.getLearnedElement(List(true, false))
@@ -197,7 +197,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
               val d = DirichletParameter(alphas: _*)
               val outcomes = List(2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23)
               val outcome = Select(d, outcomes: _*)
-              val algorithm = EM.withVE(5, d)
+              val algorithm = EMWithVE(5, d)
               algorithm.start
 
               val result = d.getLearnedElement(outcomes)
@@ -239,7 +239,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
                 outcome.addCondition(x => x >= 3 && x <= 6)
               }
 
-              val algorithm = EM.withVE(10, d)
+              val algorithm = EMWithVE(10, d)
               algorithm.start
               val result = d.getLearnedElement(outcomes)
               algorithm.kill
@@ -292,7 +292,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
                 f.observe(3)
               }
 
-              val algorithm = EM.withVE(10, b)(universe)
+              val algorithm = EMWithVE(10, b)(universe)
               algorithm.start
 
               val result = b.getLearnedElement(outcomes)
@@ -329,7 +329,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
                 f1.observe(3)
               }
 
-              val algorithm = EM.withVE(15, b)(universe)
+              val algorithm = EMWithVE(15, b)(universe)
               algorithm.start
 
               val result = b.getLearnedElement(outcomes)
@@ -363,7 +363,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
                 f1.observe(3)
               }
         
-              val algorithm = EM.withVE(3, b)(universe)
+              val algorithm = EMWithVE(3, b)(universe)
               algorithm.start
 
               val result = b.getLearnedElement(outcomes)
@@ -401,7 +401,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
                     f1.observe(3)
                   }
 
-                  val algorithm = EM.withVE(10, d, b)(universe)
+                  val algorithm = EMWithVE(10, d, b)(universe)
                   algorithm.start
 
                   val result = d.getLearnedElement(outcomes)
@@ -451,7 +451,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
                     f.observe(false)
                   }
 
-                  val algorithm = EM.withVE(15, b,d)(universe)
+                  val algorithm = EMWithVE(15, b,d)(universe)
                   algorithm.start
 
                   val result = d.getLearnedElement(outcomes)
@@ -674,7 +674,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
 
           def learner(parameters: Parameters): Algorithm = {
             parameters match {
-              case ps: LearnableParameters => EM.withVE(numEMIterations, ps.b1, ps.b2, ps.b3, ps.b4, ps.b5, ps.b6, ps.b7, ps.b8, ps.b9)(parameters.universe)
+              case ps: LearnableParameters => EMWithVE(numEMIterations, ps.b1, ps.b2, ps.b3, ps.b4, ps.b5, ps.b6, ps.b7, ps.b8, ps.b9)(parameters.universe)
               case _ => throw new IllegalArgumentException("Not learnable parameters")
             }
           }

@@ -17,6 +17,7 @@ import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.factored._
+import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
@@ -289,7 +290,7 @@ class AbstractionTest extends WordSpec with Matchers {
         val uniform1Variable = Variable(uniform1)
         val uniform2Variable = Variable(uniform2)
         val chainVariable = Variable(chain)
-        factor1.variables should equal(List(flipVariable, chainVariable, uniform1Variable))
+        factor1.variables should equal(List(flipVariable, uniform1Variable, chainVariable))
         factor1.allIndices.size should equal(2 * numBinsChain * numBinsUniform)
         factor2.allIndices.size should equal(2 * numBinsChain * numBinsUniform)
         val flipValues: List[Boolean] = flipVariable.range.map(_.value)
@@ -301,24 +302,24 @@ class AbstractionTest extends WordSpec with Matchers {
             (Double.MaxValue /: chainValues)((d1: Double, d2: Double) => d1 min math.abs(uniformValue - d2))
           math.abs(uniformValue - chainValue) <= minDiff
         }
-        def check1(flipValue: Boolean, chainValue: Double, uniformValue: Double): Boolean =
+        def check1(flipValue: Boolean, uniformValue: Double, chainValue: Double): Boolean =
           !flipValue || closest(chainValue, uniformValue)
-        def check2(flipValue: Boolean, chainValue: Double, uniformValue: Double): Boolean =
+        def check2(flipValue: Boolean, uniformValue: Double, chainValue: Double): Boolean =
           flipValue || closest(chainValue, uniformValue)
         for {
           i <- 0 to 1
-          j <- 0 until numBinsChain
-          k <- 0 until numBinsUniform
+          j <- 0 until numBinsUniform
+          k <- 0 until numBinsChain
         } {
-          if (check1(flipValues(i), chainValues(j), uniform1Values(k))) { factor1.get(List(i, j, k)) should equal(1.0) }
+          if (check1(flipValues(i), uniform1Values(j), chainValues(k))) { factor1.get(List(i, j, k)) should equal(1.0) }
           else { factor1.get(List(i, j, k)) should equal(0.0) }
         }
         for {
           i <- 0 to 1
-          j <- 0 until numBinsChain
-          k <- 0 until numBinsUniform
+          j <- 0 until numBinsUniform
+          k <- 0 until numBinsChain
         } {
-          if (check2(flipValues(i), chainValues(j), uniform2Values(k))) { factor2.get(List(i, j, k)) should equal(1.0) }
+          if (check2(flipValues(i), uniform2Values(j), chainValues(k))) { factor2.get(List(i, j, k)) should equal(1.0) }
           else { factor2.get(List(i, j, k)) should equal(0.0) }
         }
       }

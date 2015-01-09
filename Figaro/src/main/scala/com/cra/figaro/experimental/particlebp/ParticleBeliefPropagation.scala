@@ -1,17 +1,26 @@
+/*
+ * NormalKernelDensityEstimator.scala
+ * Trait to TBD
+ * 
+ * Created By:      Brian Ruttenberg (bruttenberg@cra.com)
+ * Creation Date:   Oct 20, 2014
+ * 
+ * Copyright 2014 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * See http://www.cra.com or email figaro@cra.com for information.
+ * 
+ * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
+
 package com.cra.figaro.experimental.particlebp
 
 import com.cra.figaro.language._
 import com.cra.figaro.algorithm.factored.FactoredAlgorithm
-import com.cra.figaro.algorithm.factored.DivideableSemiRing
+import com.cra.figaro.algorithm.factored.factors.{Factory, DivideableSemiRing, Factor, LogSumProductSemiring, Variable}
 import com.cra.figaro.algorithm.lazyfactored.LazyValues
-import com.cra.figaro.algorithm.factored.Factory
-import com.cra.figaro.algorithm.factored.Variable
 import com.cra.figaro.algorithm.OneTime
 import com.cra.figaro.algorithm.Anytime
-import com.cra.figaro.algorithm.factored.LogSumProductSemiring
 import com.cra.figaro.algorithm.ProbQueryAlgorithm
 import com.cra.figaro.algorithm.OneTimeProbQuery
-import com.cra.figaro.algorithm.factored.Factor
 import scala.collection.immutable.Set
 import scala.collection.mutable.Map
 import com.cra.figaro.algorithm.factored.beliefpropagation.InnerBPHandler
@@ -24,6 +33,9 @@ import com.cra.figaro.algorithm.factored.beliefpropagation.AnytimeInnerBPHandler
 import com.cra.figaro.algorithm.factored.beliefpropagation.FactorNode
 import com.cra.figaro.algorithm.factored.beliefpropagation.Node
 
+/**
+ * Doc needed
+ */
 trait ParticleBeliefPropagation extends FactoredAlgorithm[Double] with InnerBPHandler {
 
   /**
@@ -53,7 +65,7 @@ trait ParticleBeliefPropagation extends FactoredAlgorithm[Double] with InnerBPHa
   val densityEstimator: DensityEstimator
 
   /**
-   * A particle generator to generate particles and do resampling
+   * A particle generator to generate particles and do resampling.
    */
   val pbpSampler: ParticleGenerator
 
@@ -221,7 +233,9 @@ trait OneTimeParticleBeliefPropagation extends ParticleBeliefPropagation with On
 /**
  * Trait for Anytime BP algorithms
  */
-trait AnytimeParticleBeliefPropagation extends ParticleBeliefPropagation with Anytime with AnytimeInnerBPHandler
+trait AnytimeParticleBeliefPropagation extends ParticleBeliefPropagation with Anytime with AnytimeInnerBPHandler {
+  override def cleanUp() = if (bp != null) bp.kill
+}
 
 /**
  * Class to implement a probability query BP algorithm

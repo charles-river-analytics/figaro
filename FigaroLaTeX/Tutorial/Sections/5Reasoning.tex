@@ -14,20 +14,20 @@ To explain (1), computing the possible values of a chain requires computing the 
 
 For (2), most built in element classes have a finite number of possible values. Exceptions are the atomic continuous classes like \texttt{Uniform} and \texttt{Normal}.
 
-To compute the values of elements in universe \texttt{u}, you first create a \texttt{Values} object using
+To compute the values of elements in universe \texttt{u}, you first create a \texttt{Values} object using:
 
 \begin{flushleft}
 \texttt{import com.cra.figaro.algorithm.\_
 \newline val values = Values(u)}
 \end{flushleft}
 
-You can also create a \texttt{Values} object for the current universe simply with
+You can also create a \texttt{Values} object for the current universe simply with:
 
 \begin{flushleft}
 \texttt{val values = Values()}
 \end{flushleft}
 
-\texttt{values} can then be used to get the possible values of any object. For example,
+\texttt{values} can then be used to get the possible values of any object. For example:
 
 \begin{flushleft}
 \texttt{val e1 = Flip(0.7)
@@ -46,11 +46,11 @@ Most Figaro reasoning involves drawing conclusions from evidence. Evidence in Fi
 
 There are a variety of situations where using named evidence is beneficial. One might have a situation where the actual element referred to by a reference is uncertain, so we can't directly specify a condition or constraint on the element, but by associating the evidence with the reference, we can ensure that it is applied correctly. Names also allow us to keep track of and apply evidence to elements that correspond to the same object in different universes, as will be seen below with dynamic reasoning. Finally, associating evidence with names and references allows us to keep the evidence separate from the definition of the probabilistic model, which is not achieved by conditions and constraints.
 
-Named evidence is specified by
+Named evidence is specified by:
 \newline \texttt{NamedEvidence(reference, evidence)}
 \newline where \texttt{reference} is a reference, and \texttt{evidence} is an instance of the \texttt{Evidence} class. There are three concrete subclasses of \texttt{Evidence: Condit\-ion, Constraint, and Observation}, which behave like an element's \texttt{setCond\-ition, setConstraint}, and \texttt{observe} methods respectively.
 
-For example,
+For example:
 \newline \texttt{NamedEvidence("car.size", Condition((s: Symbol) => s != 'small\-)))}
 \newline represents the evidence that the element referred to by \texttt{"car.size"} does not have value  \texttt{'small}.
 
@@ -63,9 +63,9 @@ Figaro provides the ability to perform exact inference using variable eliminatio
 \item  Apply variable elimination to all the factors.
 \end{enumerate}
 
-Step 1, like for range computation, requires that the expansion of the universe terminate in a finite amount of time. Step 2 requires that each element be of a class that can be converted into a set of factors. Every built-in class can be converted into a set of factors except for atomic continuous classes with infinite range, although see later in the section on abstractions how to make variable elimination work for continuous classes. Also see later, in the section on creating a new element class, how to specify a way to convert a new class into a set of factors.
+Step 1, like for range computation, requires that the expansion of the universe terminate in a finite amount of time. Step 2 requires that each element be of a class that can be converted into a set of factors. Every built-in class can be converted into a set of exact factors. Atomic continuous elements with infinite range are handled in one of two ways. As discussed later in the section, abstractions can be used to make variable elimination work for continuous classes. If no abstractions are defined for continuous elements, then each continuous element is sampled and a factor is created from the samples. Figaro outputs a warning in this instance to ensure the user intends to use a continuous variable in a factored algorithm. Also see later, in the section on creating a new element class, how to specify a way to convert a new class into a set of factors.
 
-To use variable elimination, you need to specify a set of query elements whose conditional probability you want to compute given the evidence. For example,
+To use variable elimination, you need to specify a set of query elements whose conditional probability you want to compute given the evidence. For example:
 
 \begin{flushleft}
 \texttt{import com.cra.figaro.language.\_
@@ -79,7 +79,7 @@ To use variable elimination, you need to specify a set of query elements whose c
 \newline val ve = VariableElimination(e2)}
 \end{flushleft}
 
-This will create a \texttt{VariableElimination} object that will apply variable elimination to the universe containing \texttt{e1, e2, and e3}, leaving query variable \texttt{e2} uneliminated. However, it won't perform the variable elimination immediately. To tell it to perform variable elimination, you have to say
+This will create a \texttt{VariableElimination} object that will apply variable elimination to the universe containing \texttt{e1, e2, and e3}, leaving query variable \texttt{e2} uneliminated. However, it won't perform the variable elimination immediately. To tell it to perform variable elimination, you have to say:
 
 \begin{flushleft}
 \texttt{ve.start()}
@@ -98,6 +98,12 @@ Once you are done with the results of variable elimination, you can call \texttt
 
 These methods \texttt{start, kill,  distribution, probability}, and \texttt{ex\-pectation} are a uniform interface to all reasoning algorithms that compute the conditional probability of query variables given evidence. We will see below how this interface is extended for anytime algorithms.
 
+For convenience, Figaro also provides a one-line query method using variable elimination. Just use:
+
+\texttt{VariableElimination.probability(element, value)}
+
+This will take care of instantiating the algorithm and running inference and returns the probability that the element has the given value.
+
 \section{Approximate inference using belief propagation}
 
 Figaro also contains another factored inference algorithm called belief propagation (BP). BP is a message passing algorithm on a factor graph (a bipartite graph of variables and factors). On factor graphs with no loops, BP is an exact inference algorithm. On graphs with loops (loopy factor graph), BP can be used to perform approximate inference on the target variables. Note that in Figaro, the way that Chains are converted to factors always produces a loopy factor graph, even if the actual definition of the model contains no loops. Therefore, most inference with BP in Figaro is approximate.
@@ -105,12 +111,12 @@ Figaro also contains another factored inference algorithm called belief propagat
 The algorithm works in three steps:
 \begin{enumerate}
 \item Expand the universe to include all elements generated in any possible world.
-\item Convert each element into a factor and create a factor graph from the factors
-\item Pass messages between the factor nodes and variables nodes for the specified number of iterations
-\item Queries are answered on the targets using the posterior distributions computed at each variable node
+\item Convert each element into a factor and create a factor graph from the factors.
+\item Pass messages between the factor nodes and variables nodes for the specified number of iterations.
+\item Queries are answered on the targets using the posterior distributions computed at each variable node.
 \end{enumerate}
 
-Steps 1 and 2 operate in the same manner as variable elimination, and the same restrictions on factors also applies. Just like in variable elimination, you need to specify a set of query elements whose conditional probability you want to compute given the evidence. For example,
+Steps 1 and 2 operate in the same manner as variable elimination, and the same restrictions on factors also applies. Just like in variable elimination, you need to specify a set of query elements whose conditional probability you want to compute given the evidence. For example:
 
 \begin{flushleft}
 \texttt{import com.cra.figaro.language.\_
@@ -125,13 +131,21 @@ Steps 1 and 2 operate in the same manner as variable elimination, and the same r
 \newline val bp = BeliefPropagation(100, e2)}
 \end{flushleft}
 
-This will create a \texttt{BeliefPropagation} object that will pass messages on a factor graph created from the universe containing \texttt{e1, e2, and e3}. The first argument is the number of iterations to pass messages between the factor and variable nodes. However, it won't perform BP immediately. To tell it to run the algorithm, you have to say
+This will create a \texttt{BeliefPropagation} object that will pass messages on a factor graph created from the universe containing \texttt{e1, e2, and e3}. The first argument is the number of iterations to pass messages between the factor and variable nodes. However, it won't perform BP immediately. To tell it to run the algorithm, you have to say:
 
 \begin{flushleft}
 \texttt{bp.start()}
 \end{flushleft}
 
-When this call terminates, you can use \texttt{bp} to answer the same queries as defined in the variable elimination section.
+When this call terminates, you can use \texttt{bp} to answer the same queries as defined in the variable elimination section. You can also use a one-line shortcut like for variable elimination.
+
+Continuous elements are handled in BP the same was as in variable elimination (abstractions or sampled).
+
+\section{Lazy factored inference}
+
+Ordinarily, factored inference algorithms like variable elimination and belief propagation cannot be applied to infinitely recursive models. It's easy to define such models, such as probabilistic grammars for natural language, in Figaro. Figaro provides lazy factored inference algorithms that expand the factor graph to a bounded depth and precisely quantify the effect of the unexplored part of the graph on the query. It uses this information to compute lower and upper bounds on the probability of the query. 
+
+To use lazy variable elimination, create an instance of \texttt{LazyVariable\-Elimination}. You can use the \texttt{pump} method to increase the depth of expansion by 1. You can also use \texttt{run(depth)} to expand to the given depth. You can find an example of lazy variable elimination in action in \texttt{LazyList.scala} in the Figaro examples. You can also use lazy belief propagation.
 
 \section{Importance sampling}
 
@@ -139,7 +153,7 @@ Figaro's importance sampling algorithm is actually a combination of importance a
 
 Unlike variable elimination, this algorithm can be applied to models whose expansion produces an infinite number of elements, provided any particular possible world only requires a finite number of elements to be generated. Also, this algorithm works for atomic continuous models. In addition, as an approximate algorithm, it can produce reasonably accurate answers much more quickly than the exact variable elimination.
 
-The interface to importance sampling is very similar to that to variable elimination. For example,
+The interface to importance sampling is very similar to that to variable elimination. For example:
 
 \begin{flushleft}
 \texttt{import com.cra.figaro.language.\_
@@ -157,7 +171,7 @@ The first argument to \texttt{Importance} is an indication of how many samples t
 
 The importance sampling algorithm used above is an example of a "one-time" algorithm. That is, the algorithm is run for 10,000 iterations and terminates; it cannot be used again. Figaro also provides an "anytime" importance sampling algorithm that runs in a separate thread and continues to accumulate samples until it is stopped. A major benefit of an anytime algorithm is that it can be queried while it is running. Another benefit is that you can tell it how long you want it to run.
 
-Two additional methods are provided in the interface. \texttt{imp.stop()} stops it from accumulating samples, while \texttt{imp.resume()} starts it going again, carrying on from where it left off before. In addition, the kill method has the additional effect of killing the thread, so it is essential that it be called when you are finished with the \texttt{Importance} object. To create an anytime importance algorithm, simply omit the number of samples argument to \texttt{Importance}. A typical way of using anytime importance sampling, allowing it to run for one second, is as follows:
+Two additional methods are provided in the interface. \texttt{imp.stop()} stops it from accumulating samples, while \texttt{imp.resume()} starts it going again, carrying on from where it left off before. In addition, the \texttt{kill} method has the additional effect of killing the thread, so it is essential that it be called when you are finished with the \texttt{Importance} object. To create an anytime importance algorithm, simply omit the number of samples argument to \texttt{Importance}. A typical way of using anytime importance sampling, allowing it to run for one second, is as follows:
 
 \begin{flushleft}
 \texttt{val imp = Importance(e2) 
@@ -168,6 +182,8 @@ Two additional methods are provided in the interface. \texttt{imp.stop()} stops 
 \newline imp.kill() }
 \end{flushleft}
 
+Importance sampling also provides a one-line query shortcut.
+
 \section{Markov chain Monte Carlo}
 
 Figaro provides a Metropolis-Hastings Markov chain Monte Carlo algorithm. Metropolis-Hastings uses a proposal distribution to propose a new state at each step of the algorithm, and either accepts or rejects the proposal. In Figaro, a proposal involves proposing new randomnesses for any number of elements. After proposing these new randomnesses, any element that depends on those randomnesses must have its value updated. Recall that the value of an element is a deterministic function of its randomness and the values of its arguments, so this update process is a deterministic result of the randomness proposal.
@@ -177,7 +193,7 @@ Proposing the randomness of an element involves calling the \texttt{next\-Random
 Computing the acceptance probability requires computing the ratio of the element's constraint of the new value divided by the constraint of the old value. Ordinarily, this is achieved by applying the
 constraint to the new and old value separately and taking the ratio. However, sometimes we want to define a constraint on a large data structure, and applying the constraint to either the new or old value will produce overflow or underflow, so the ratio won't be well defined. It might be the case that the ratio is well defined even though the constraints are large, since only a small part of the data structure changes in a single Metropolis-Hastings situation. For example, we might want to define a constraint on an ordering, penalizing the number of items out of order. The total number of items out of order might be large, but if a single iteration consists of swapping two elements, the number that change might be small. For this reason, an element contains a \texttt{score} method that takes the old value and the new value and produces the ratio of the constraint of the new value to the old value.
 
-Figaro allows the user to specify which elements get proposed using a \emph{proposal scheme}. Figaro also provides a default proposal scheme that simply chooses a non-deterministic element in the universe uniformly at random and proposes a new randomness for it. To create an anytime Metropolis-Hastings algorithm using the default proposal scheme, use
+Figaro allows the user to specify which elements get proposed using a \emph{proposal scheme}. Figaro also provides a default proposal scheme that simply chooses a non-deterministic element in the universe uniformly at random and proposes a new randomness for it. To create an anytime Metropolis-Hastings algorithm using the default proposal scheme, use:
 
 \begin{flushleft}
 \texttt{import com.cra.figaro.language.\_
@@ -195,6 +211,8 @@ Figaro allows the user to specify which elements get proposed using a \emph{prop
 Metropolis-Hastings takes two additional optional arguments. The first represents the burn-in, which is the number of proposal steps the algorithm goes through before collecting samples, while the second is the number of proposal steps between samples. The default burn-in is 0, while the default interval is 1. These arguments appear before the query elements.
 
 To use a one-time (i.e., non-anytime) Metropolis-Hastings algorithm, simply provide the number of samples as the first argument.
+
+Metropolis-Hastings also provides a one-line query shortcut.
 
 \subsection{Defining a proposal scheme}
 
@@ -241,7 +259,7 @@ In this example, we will also sometimes want to propose the fame of actors or th
 }
 \end{flushleft}
 
-In general, the proposal scheme argument of \texttt{MetropolisHastings} is actually a function of zero arguments that returns a \texttt{ProposalScheme}. The \texttt{ProposalScheme.default} is just that. Since \texttt{chooseScheme} is the same, it can be passed directly to \texttt{MetropolisHastings}. So we can call
+In general, the proposal scheme argument of \texttt{MetropolisHastings} is actually a function of zero arguments that returns a \texttt{ProposalScheme}. The \texttt{ProposalScheme.default} is just that. Since \texttt{chooseScheme} is the same, it can be passed directly to \texttt{MetropolisHastings}. So we can call:
 
 \begin{flushleft}
 \texttt{val alg =
@@ -270,11 +288,11 @@ The \texttt{Metropolis-Hastings} class has a \texttt{debug} variable, which by d
 
 In addition, if you have a \texttt{Metropolis-Hastings} object \texttt{mh}, you can define an initial state by setting the values of elements. Then call \texttt{mh.test} and provide it a number of samples to generate. It will repeatedly propose a new state from the initial state and either accept or reject it, restoring to the original state each time. You can provide a sequence of predicates, and it will report how often each predicate was satisfied after one step of Metropolis-Hastings from the initial state. You can also provide a sequence of elements to track, and it will report how often each element is proposed. For example, in the movies example, you could set the initial state to be one in which exactly one appearance is awarded and test the fraction of times this condition holds after one step.
 
-\section{Probability of evidence algorithm}
+\section{Probability of evidence algorithms}
 
-The previous three algorithms all computed the conditional probability of query variables given evidence. Sometimes we just want to compute the probability of evidence. Since there is the potential for ambiguity here, Figaro is careful to define what constitutes evidence for computing probability of evidence. Conditions and constraints often constitute evidence. Sometimes, however, they can be considered to be part of the model specification. Consider, for example, the constraint on pairs of friends that they share the same smoking habits — this is part of the model definition, not evidence.
+The previous three algorithms all computed the conditional probability of query variables given evidence. Sometimes we just want to compute the probability of evidence. Since there is the potential for ambiguity here, Figaro is careful to define what constitutes evidence for computing probability of evidence. Conditions and constraints often constitute evidence. Sometimes, however, they can be considered to be part of the model specification. Consider, for example, the constraint on pairs of friends that they share the same smoking habits (this is part of the model definition, not evidence).
 
-For this reason, Figaro allows the probability of evidence to be computed in steps. To compute the probability of conditions and constraints that are in the Figaro program, you can use
+For this reason, Figaro allows the probability of evidence to be computed in steps. To compute the probability of conditions and constraints that are in the Figaro program, you can use:
 
 \begin{flushleft}
 \texttt{import com.cra.figaro.language.\_
@@ -297,13 +315,13 @@ If you want to compute the probability of additional evidence, in addition to th
 
 \texttt{ProbEvidenceSampler} will then compute the probability of all the evidence, both the named evidence and the existing evidence in the program. It does this by temporarily asserting the named evidence, running the probability of evidence computation, and then retracting the named evidence.
 
-If you don't want to include the existing conditions and constraints in the program in the probability of evidence calculation, there are four ways to proceed. Each method is more verbose than the previous but provides more control. The simplest is to use
+If you don't want to include the existing conditions and constraints in the program in the probability of evidence calculation, there are four ways to proceed. Each method is more verbose than the previous but provides more control. The simplest is to use:
 
 \begin{flushleft}
 \texttt{ProbEvidenceSampler.computeProbEvidence(n, namedEvidence)}
 \end{flushleft}
 
-This takes care of running the necessary algorithms and returns the probability of the named evidence, treating the existing conditions and constraints as part of the program definition. You can also use the following
+This takes care of running the necessary algorithms and returns the probability of the named evidence, treating the existing conditions and constraints as part of the program definition. You can also use the following:
 
 \begin{flushleft}
 \texttt{val alg = ProbEvidenceSampler(n, namedEvidence)
@@ -311,7 +329,7 @@ This takes care of running the necessary algorithms and returns the probability 
 }
 \end{flushleft}
 
-This method enables you to control when to run \texttt{alg}, and also to reuse \texttt{alg} for different purposes. The final two methods explicitly compute probability of the conditions and constraints in the program, which becomes the denominator for subsequent probability of evidence computations. The \texttt{ProbEvidenceSampler} class provides a method called \texttt{probAdditionalEvidence} that creates a new algorithm that uses the probability of evidence of the current algorithm as denominator. You could proceed as follows
+This method enables you to control when to run \texttt{alg}, and also to reuse \texttt{alg} for different purposes. The final two methods explicitly compute probability of the conditions and constraints in the program, which becomes the denominator for subsequent probability of evidence computations. The \texttt{ProbEvidenceSampler} class provides a method called \texttt{probAdditionalEvidence} that creates a new algorithm that uses the probability of evidence of the current algorithm as denominator. You could proceed as follows:
 
 \begin{flushleft}
 \texttt{val alg1 = new ProbEvidenceSampler(universe) with
@@ -336,17 +354,81 @@ The major advantage of this method is that you can call \texttt{alg1.prob\-Addit
 
 In this example, a different number of samples is used for the initial denominator calculation and the subsequent probability of evidence calculation.
 
-Currently, only forward sampling probability of evidence is provided, but the framework exists to create additional probability of evidence algorithms. There is also an anytime version of the probability of evidence algorithms. To create one, use
+There is also an anytime version of the probability of evidence algorithm forward sampling algorithm. To create one, use:
 
 \begin{flushleft}
 \texttt{new ProbEvidenceSampler(universe) with AnytimeProbEvidenceSampler}
 \end{flushleft}
 
-For the methods that require you to specify the number of samples \texttt{n}, replace \texttt{n} with \texttt{t}, where \texttt{t} is a long value indicating the number of milliseconds to wait while computing the denominator (and also while computing the probability of the named evidence for the \texttt{computeProbEvidence} shorthand method.)
+For the methods that require you to specify the number of samples \texttt{n}, replace \texttt{n} with \texttt{t}, where \texttt{t} is a long value indicating the number of milliseconds to wait while computing the denominator (and also while computing the probability of the named evidence for the \texttt{computeProbEvidence} shorthand method).
+
+Additionally, the probability of evidence can be computed using algorithms like importance sampling, belief propagation and particle filtering. Examples are shown for the simple model below: 
+
+\begin{flushleft}
+    \texttt{val universe = Universe.createNew()
+    \newline val u = Uniform(0.0,0.2,0.4,0.6,0.8,1.0)("u", universe)
+    \newline val condition = (d: Double) => d < 0.4
+    \newline val evidence = List(NamedEvidence("u", Condition(condition)))
+}
+\end{flushleft}
+
+This model defines a uniform with six outcomes, and a condition having two satisfying outcomes.
+
+With belief propagation, we compute the probability of evidence with and without the condition and divide.
+
+\begin{flushleft}
+\texttt{val bp1 = BeliefPropagation(10, u)(universe)
+    \newline bp1.start
+    \newline bp1.stop
+    \newline val withoutCondition = bp1.computeEvidence()
+    \newline bp1.kill()
+    \newline 
+    \newline universe.assertEvidence(evidence)
+    \newline bp2.start
+    \newline bp2.stop
+    \newline val withCondition = bp2.computeEvidence()
+    \newline bp2.kill()
+    \newline val e1 = withConditionwithoutCondition
+}
+\end{flushleft}
+
+For importance sampling, the evidence is provided as an argument to the \texttt{computeProbEvidence} method.
+
+\begin{flushleft}
+    \texttt{val importance = Importance(100000, u)
+    \newline importance.start()
+    \newline importance.stop()
+    \newline val e2 = importance.probabilityOfEvidence(evidence)
+  }
+\end{flushleft}
+
+In particle filtering, the probability of evidence at the current time step can be computed using \texttt{probEvidence()}.
+
+\begin{flushleft}
+    \texttt{val pf = ParticleFilter(universe, t, 10000)
+    \newline pf.start()
+    \newline val condition = (d: Double) => d < 0.4
+    \newline val evidence = List(NamedEvidence("u", Condition(condition)))
+    \newline pf.advanceTime(evidence)
+    \newline val e3 = pf.probEvidence()
+    \newline pf.stop()
+    \newline pf.kill()
+    \newline e3
+  }
+\end{flushleft}
+
+The result of each computation is approximately .333. 
+
+\texttt{println(e1 + " " + e2 + " " + e3)} yields:
+
+\begin{flushleft}
+    \texttt{0.3333333333333333 0.3338586042039474 0.3269}
+\end{flushleft}
+
 
 \section{Computing the most likely values of elements}
 
-Rather than computing a probability distribution over the values of elements given evidence, a natural question to ask is "What are the most likely values of all the elements given the available evidence?" This is known as computing the most probable explanation (MPE) of the evidence. There are two ways to compute MPE: Variable Elimination and Simulated Annealing. An example that shows how to compute the MPE using Variable Elimination is:
+Rather than computing a probability distribution over the values of elements given evidence, a natural question to ask is "What are the most likely values of all the elements given the available evidence?" This is known as computing the most probable explanation (MPE) of the evidence. There are two ways to compute MPE: (1) Variable elimination, and (2) Simulated annealing. An example that shows how to compute the MPE using variable elimination is:
 
 \begin{flushleft}
 \texttt{import com.cra.figaro.language.\_
@@ -449,10 +531,10 @@ Now, suppose that each sample has a set of potential sources, and at most one sa
 \texttt{val source1 = new Source("Source 1") 
 \newline val source2 = new Source("Source 2") 
 \newline val source3 = new Source("Source 3") 
+\newline 
 \newline val sample1 = new Sample("Sample 1") \{
 \newline \tab val fromSource = Select(0.5 -> source1, 0.5 -> source2)
 \newline \}
-\newline 
 \newline val sample2 = new Sample("Sample 2") \{
 \newline \tab val fromSource = Select(0.3 -> source1, 0.7 -> source3)
 \newline \}
@@ -495,7 +577,7 @@ Depending on the structure of which samples can come from which sources, we migh
 \newline \} }
 \end{flushleft}
 
-Observe that each element created in the Pair class is added to the universe of the Pair, not the universe that contains \texttt{sample.fromSource}. Now, we can use variable elimination and condition each of the source assignment on the probability of the evidence in the corresponding dependent universe. To do this, we pass a list of the dependent universes as extra arguments to variable elimination, along
+Observe that each element created in the \texttt{Pair} class is added to the universe of the \texttt{Pair}, not the universe that contains \texttt{sample.fromSource}. Now, we can use variable elimination and condition each of the source assignment on the probability of the evidence in the corresponding dependent universe. To do this, we pass a list of the dependent universes as extra arguments to variable elimination, along
 with a function that provides the algorithm to use to compute the probability of evidence in a dependent universe, as follows:
 
 \begin{flushleft}
@@ -544,8 +626,7 @@ An \texttt{Abstraction} consists of a target number of abstract points, a desire
 \newline 
 \newline val ve = VariableElimination(flip)
 \newline ve.start()
-\newline println(ve.probability(flip, true)) 
-\newline // should print about 0.4 }
+\newline println(ve.probability(flip, true)) // should print about 0.4 }
 \end{flushleft}
 
 It is up to individual algorithms to decide whether and to use a pragma such as an abstraction. For example, importance sampling, which has no difficulty with elements with many possible values, ignores abstractions. The process of computing ranges, which is a subroutine of variable elimination and can also be used in other algorithms, does use abstractions.
@@ -556,7 +637,7 @@ The process used by range computation to determine the range of an abstract elem
 
 Running inference on a model is generally a random process, and performing the same inference repeatedly on a model may produce slightly different results. This can sometimes make debugging difficult, as bugs may or may not be encountered, depending on the random values that were generated during inference. For that reason, Figaro has the ability to generate reproducible inference runs.
 
-All elements in Figaro use the same random number generator to retrieve random values. This can be accessed by importing the \texttt{util} Figaro package and using the value random, which is Figaro's random number generator. For example, the \texttt{generateRandomness()} function in the Select element is:
+All elements in Figaro use the same random number generator to retrieve random values. This can be accessed by importing the \texttt{util} Figaro package and using the value random, which is Figaro's random number generator. For example, the \texttt{generateRandomness()} function in the \texttt{Select} element is:
 
 \begin{flushleft}
 \texttt{import com.cra.figaro.util.\_

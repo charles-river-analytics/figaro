@@ -14,6 +14,7 @@
 package com.cra.figaro.algorithm.factored
 
 import com.cra.figaro.algorithm._
+import com.cra.figaro.algorithm.factored.factors._
 import scala.collection.mutable.PriorityQueue
 
 /**
@@ -25,7 +26,7 @@ case class AbstractFactor(variables: List[Variable[_]])
  * Information associated with a variable during variable elimination, including the factors to which it
  * belongs and variables with which it shares a factor.
  * 
- * @param factors The abstract factors to which this variable belongs
+ * @param factors The abstract factors to which this variable belongs.
  * @param neighbors The variables that share a factor in common with this variable.
  */
 case class VariableInfo(factors: Set[AbstractFactor], neighbors: Set[Variable[_]])

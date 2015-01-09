@@ -16,6 +16,7 @@ package com.cra.figaro.algorithm.factored
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
+import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.util
 import scala.collection.mutable.{ Set, Map }
 import com.cra.figaro.algorithm.lazyfactored._
@@ -39,7 +40,7 @@ class MPEVariableElimination(override val universe: Universe)(
   override val starterElements = universe.activeElements
   
   /**
-   * Empty for MPE Algorithms
+   * Empty for MPE Algorithms.
    */
   val targetElements = List[Element[_]]()
 
