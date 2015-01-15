@@ -10,3 +10,5 @@ pandoc -r latex -w html -s -o ..\html\FigaroGuide.html FigaroGuide.tex
 
 cd ..\Tutorial
 pandoc -r latex -w html -s -o ..\html\FigaroTutorial.html FigaroTutorial.tex
+
+cd ..
