@@ -4,7 +4,7 @@ import Keys._
 object FigaroWorkBuild extends Build {
 
   override val settings = super.settings ++ Seq(
-    scalaVersion := "2.11.2"
+    scalaVersion := "2.11.4"
   )
 
   lazy val figaroWork = Project("FigaroWork", file("."))
