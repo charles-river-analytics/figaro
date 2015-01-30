@@ -209,7 +209,7 @@ If you wish to integrate Figaro's features into your own software project, Figar
 
 Simple Build Tool (SBT) Projects
 ```
-libraryDependencies += "com.cra.figaro" %%  "figaro" % "3.0.0.0"
+libraryDependencies += "com.cra.figaro" %%  "figaro_2.11" % "3.0.0.0"
 ```
 
 Apache Maven Projects
