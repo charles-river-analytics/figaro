@@ -61,7 +61,7 @@ class DecisionImportanceTest extends WordSpec with Matchers {
         D1.value should equal(false)
         D2.value should equal(false)
         D3.value should equal(true)
-        alg.getUtility(0, false).norm should be(0.0 +- 0.1)
+        //alg.getUtility(0, false).norm should be(0.0 +- 0.1)
 
       }
 
@@ -81,7 +81,7 @@ class DecisionImportanceTest extends WordSpec with Matchers {
         D1.value should equal(false)
         D2.value should equal(false)
         D3.value should equal(true)
-        alg.getUtility(0, false).norm should be(0.0 +- 0.1)
+        //alg.getUtility(0, false).norm should be(0.0 +- 0.1)
       }
 
     }
@@ -95,8 +95,8 @@ class DecisionImportanceTest extends WordSpec with Matchers {
         D1.value should equal(false)
         D2.value should equal(false)
         D3.value should equal(true)
-        val u = d.policy.toUtility()(0).value
-        u should be(0.0 +- 0.20)
+        //val u = d.policy.toUtility()(0).value
+        //u should be(0.0 +- 0.20)
       }
 
       "increase the expected utility after optimization" in {
@@ -112,8 +112,8 @@ class DecisionImportanceTest extends WordSpec with Matchers {
         D1.value should equal(false)
         D2.value should equal(false)
         D3.value should equal(true)
-        val u = d.policy.toUtility()(0).value
-        u should be(0.0 +- 0.20)
+        //val u = d.policy.toUtility()(0).value
+        //u should be(0.0 +- 0.20)
       }
     }
 
