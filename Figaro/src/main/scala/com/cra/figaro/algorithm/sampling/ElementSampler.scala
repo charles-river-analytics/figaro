@@ -22,7 +22,7 @@ import scala.collection.mutable.Map
  * An abstract class to generates samples from the marginal distribution of an element.
  * @param target The element to generate samples from
  */
-abstract class ElementSampler(target: Element[_]) extends UnweightedSampler(target.universe, target) {
+abstract class ElementSampler(target: Element[_]) extends BaseUnweightedSampler(target.universe, target) {
 
   def sample(): (Boolean, Sample) = {
     Forward(target)
@@ -41,7 +41,7 @@ abstract class ElementSampler(target: Element[_]) extends UnweightedSampler(targ
  */
 class AnytimeElementSampler(target: Element[_])
   extends ElementSampler(target)
-  with AnytimeProbQuerySampler {
+  with UnweightedSampler with AnytimeProbQuerySampler {
   /**
    * Initialize the sampler.
    */
@@ -66,7 +66,7 @@ class AnytimeElementSampler(target: Element[_])
  */
 class OneTimeElementSampler(target: Element[_], myNumSamples: Int)
   extends ElementSampler(target)
-  with OneTimeProbQuerySampler {
+  with UnweightedSampler with OneTimeProbQuerySampler {
 
   val numSamples = myNumSamples
 

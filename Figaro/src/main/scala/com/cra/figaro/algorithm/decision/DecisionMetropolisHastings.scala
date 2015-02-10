@@ -32,7 +32,7 @@ import scala.annotation.tailrec
 
 abstract class DecisionMetropolisHastings[T, U] private (universe: Universe, proposalScheme: ProposalScheme, burnIn: Int, interval: Int,
   utilityNodes: List[Element[_]], decisionTarget: Decision[T, U], dummyTarget: Element[_])
-  extends UnweightedSampler(universe, dummyTarget) with DecisionAlgorithm[T, U] {
+  extends BaseUnweightedSampler(universe, dummyTarget) with DecisionAlgorithm[T, U] {
 
   def this(universe: Universe, proposalScheme: ProposalScheme, burnIn: Int, interval: Int,
     utilityNodes: List[Element[_]], decisionTarget: Decision[T, U]) = this(universe, proposalScheme,
@@ -414,7 +414,7 @@ class AnytimeDecisionMetropolisHastings[T, U](universe: Universe,
   scheme: ProposalScheme, burnIn: Int, interval: Int, utilityNodes: List[Element[_]],
   decisionTarget: Decision[T, U])
   extends DecisionMetropolisHastings(universe, scheme, burnIn, interval, utilityNodes, decisionTarget)
-  with AnytimeProbQuerySampler {
+  with UnweightedSampler with AnytimeProbQuerySampler {
 
   /**
    * Initialize the sampler.
@@ -440,7 +440,7 @@ class OneTimeDecisionMetropolisHastings[T, U](universe: Universe, myNumSamples: 
   burnIn: Int, interval: Int, utilityNodes: List[Element[_]],
   decisionTarget: Decision[T, U])
   extends DecisionMetropolisHastings(universe, scheme, burnIn, interval, utilityNodes, decisionTarget)
-  with OneTimeProbQuerySampler {
+  with UnweightedSampler with OneTimeProbQuerySampler {
   /**
    * Number of samples to take.
    */

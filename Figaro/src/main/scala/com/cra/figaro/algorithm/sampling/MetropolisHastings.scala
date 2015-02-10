@@ -31,7 +31,7 @@ import scala.annotation.tailrec
 // proposalScheme might evaluate to a different step each time it is called; making it by name gets the right effect.
 abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalScheme, burnIn: Int, interval: Int,
   targets: Element[_]*)
-  extends UnweightedSampler(universe, targets: _*) {
+  extends BaseUnweightedSampler(universe, targets: _*) {
   import MetropolisHastings._
 
   // Used for debugging
@@ -41,8 +41,8 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
   universe.register(elementsToTrack)
   universe.register(proposalCounts)
 
-  private var accepts = 0
-  private var rejects = 0
+  protected var accepts = 0
+  protected var rejects = 0
 
   private val currentConstraintValues: Map[Element[_], Double] = Map()
   universe.register(currentConstraintValues)
@@ -185,7 +185,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
         continue(state1, rest)
     }
 
-  private def runScheme(): State = runStep(newState, proposalScheme)
+  protected def runScheme(): State = runStep(newState, proposalScheme)
 
   /*
    * To update an element, first we update the element itself, then update all elements that directly use it.
@@ -217,7 +217,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
    * is not empty, we recursively update the intersecting elements. Once those updates are completed,
    * we update an element and move on to the next element in the set.
    */
-  private def updateMany[T](state: State, toUpdate: Set[Element[_]]): State = {
+  protected def updateMany[T](state: State, toUpdate: Set[Element[_]]): State = {
     var returnState = state
     var updatesLeft = toUpdate
     while (!updatesLeft.isEmpty) {
@@ -254,21 +254,21 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
    * A single step of MetropolisHastings consists of proposing according to the scheme and updating any elements that depend on those
    * changed.
    */
-  private def proposeAndUpdate(): State = {
+  protected def proposeAndUpdate(): State = {
     val state1 = runScheme()
     val updatesNeeded = state1.oldValues.keySet flatMap (elem => universe.usedBy(elem))
     updateMany(state1, updatesNeeded.toSet)
   }
 
-  private var dissatisfied: Set[Element[_]] = universe.conditionedElements.toSet filter (!_.conditionSatisfied)
+  protected var dissatisfied: Set[Element[_]] = universe.conditionedElements.toSet filter (!_.conditionSatisfied)
 
-  private def getDissatisfied = dissatisfied // for testing
+  protected def getDissatisfied = dissatisfied // for testing
 
   /*
    * Computes the scores of the constrained elements from caches scores. If the element
    * is not found in the cache, then it's value is 1.0.
    */
-  private def computeScores(): Double = {
+  protected def computeScores(): Double = {
     val constrainedElements = universe.constrainedElements
     val scores = constrainedElements.map { e =>
       e.constraintValue - currentConstraintValues.getOrElseUpdate(e, 0.0)
@@ -276,7 +276,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
     scores.sum
   }
 
-  private def accept(state: State): Unit = {
+  protected def accept(state: State): Unit = {
     if (debug) println("Accepting!\n")
     currentConstraintValues.keys.foreach(e => currentConstraintValues += e -> e.constraintValue)
     dissatisfied = (dissatisfied filter (!_.conditionSatisfied)) ++ state.dissatisfied
@@ -292,7 +292,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
     elem.randomness = randomness.asInstanceOf[elem.Randomness]
   }
 
-  private def undo(state: State): Unit = {
+  protected def undo(state: State): Unit = {
     if (debug) println("Rejecting!\n")
     state.oldValues foreach (setValue(_))
     state.oldRandomness foreach (setRandomness(_))
@@ -316,7 +316,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
    * - if it is a proper superset, never accept
    * - otherwise, use the acceptance probability
    */
-  private def decideToAccept(newState: State): Boolean = {
+  protected def decideToAccept(newState: State): Boolean = {
     val nothingNewDissatisfied = newState.dissatisfied subsetOf dissatisfied
     val somethingOldSatisfied = dissatisfied exists (_.conditionSatisfied)
     if (nothingNewDissatisfied && somethingOldSatisfied) true
@@ -326,11 +326,11 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
     }
   }
 
-  private def initConstrainedValues() = {
+  protected def initConstrainedValues() = {
     universe.constrainedElements.foreach(e => currentConstraintValues += (e -> e.constraintValue))
   }
 
-  protected final def mhStep(): State = {
+  protected def mhStep(): State = {
     val newStateUnconstrained = proposeAndUpdate()
     val newState = State(newStateUnconstrained.oldValues, newStateUnconstrained.oldRandomness,
       newStateUnconstrained.proposalProb, newStateUnconstrained.modelProb + computeScores, newStateUnconstrained.dissatisfied)
@@ -347,7 +347,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
   /**
    * Produce a single sample.
    */
-  final def sample(): (Boolean, Sample) = {
+  def sample(): (Boolean, Sample) = {
     val newState = mhStep()
     if (dissatisfied.isEmpty) {
       val values = newState.oldValues.keys.filter(fastTargets.contains(_)) map (target => target -> target.value)
@@ -425,7 +425,7 @@ class AnytimeMetropolisHastings(universe: Universe,
   scheme: ProposalScheme, burnIn: Int, interval: Int,
   targets: Element[_]*)
   extends MetropolisHastings(universe, scheme, burnIn, interval, targets: _*)
-  with AnytimeProbQuerySampler {
+  with UnweightedSampler with AnytimeProbQuerySampler {
   /**
    * Initialize the sampler.
    */
@@ -453,7 +453,7 @@ class AnytimeMetropolisHastings(universe: Universe,
 class OneTimeMetropolisHastings(universe: Universe, myNumSamples: Int, scheme: ProposalScheme,
   burnIn: Int, interval: Int, targets: Element[_]*)
   extends MetropolisHastings(universe, scheme, burnIn, interval, targets: _*)
-  with OneTimeProbQuerySampler {
+  with UnweightedSampler with OneTimeProbQuerySampler {
 
   val numSamples = myNumSamples
 

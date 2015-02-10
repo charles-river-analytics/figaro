@@ -22,7 +22,7 @@ import scala.language.postfixOps
 /**
  * Samplers that use samples without weights.
  */
-abstract class UnweightedSampler(override val universe: Universe, targets: Element[_]*) extends ProbQueryAlgorithm with Sampler {
+abstract class BaseUnweightedSampler(val universe: Universe, targets: Element[_]*) extends Sampler {
   lazy val queryTargets = targets.toList
   /**
    * A sample is a map from elements to their values.
@@ -73,10 +73,10 @@ abstract class UnweightedSampler(override val universe: Universe, targets: Eleme
   }
 
   protected def doSample(): Unit = {
-    val s = sample()
     if (sampleCount == 0) {
       initUpdates
     }
+    val s = sample()
     if (s._1) {
       sampleCount += 1
       s._2 foreach (t => updateTimesSeenForTarget(t._1.asInstanceOf[Element[t._1.Value]], t._2.asInstanceOf[t._1.Value]))
@@ -89,7 +89,11 @@ abstract class UnweightedSampler(override val universe: Universe, targets: Eleme
     sampleCount -= 1
   }
 
-  private def projection[T](target: Element[T]): List[(T, Double)] = {
+}
+
+trait UnweightedSampler extends BaseUnweightedSampler with ProbQueryAlgorithm {
+
+  protected def projection[T](target: Element[T]): List[(T, Double)] = {
     val timesSeen = allTimesSeen.find(_._1 == target).get._2.asInstanceOf[Map[T, Int]]
     timesSeen.mapValues(_ / sampleCount.toDouble).toList
   }
@@ -109,4 +113,5 @@ abstract class UnweightedSampler(override val universe: Universe, targets: Eleme
    */
   def computeDistribution[T](target: Element[T]): Stream[(Double, T)] =
     projection(target) map (_.swap) toStream
+
 }
