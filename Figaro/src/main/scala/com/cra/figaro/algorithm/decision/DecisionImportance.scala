@@ -33,7 +33,7 @@ import scala.collection.mutable.{ Set, Map }
  */
 
 abstract class DecisionImportance[T, U] private (override val universe: Universe, utilityNodes: List[Element[_]], decisionTarget: Decision[T, U],
-  dummyTarget: Element[_]) extends WeightedSampler(universe, dummyTarget) with DecisionAlgorithm[T, U] {
+  dummyTarget: Element[_]) extends Importance(universe, dummyTarget) with DecisionAlgorithm[T, U] {
 
   def this(universe: Universe, utilityNodes: List[Element[_]], decisionTarget: Decision[T, U]) =
     this(universe, utilityNodes, decisionTarget, createDecisionDummy(decisionTarget))
@@ -80,112 +80,9 @@ abstract class DecisionImportance[T, U] private (override val universe: Universe
     allUtilitiesSeen foreach (updateWeightSeenForTargetNoLog((math.exp(s._1) * utilitySum, s._2), _))
   }
 
-  /**
-   * Produce one weighted sample of the given element. weightedSample takes into account conditions and constraints
-   * on all elements in the Universe, including those that depend on this element.
-   *
-   * For decisions, our weight is actually the weight of the sampled state times the sum of the utility nodes. This will be
-   * used as the "weight" in the weighted sampler, ie, we are accumulating the expected utility of each state. Note that the weights
-   * will not be normalized, but that is ok since strategies are an optimization and everything will be divided by a constant.
-   *
-   */
-  @tailrec final def sample(): Sample = {
-    val resultOpt: Option[Sample] =
-      try {
-        val state = State()
-        // We must make a fresh copy of the active elements since sampling can add active elements to the Universe
-        val activeElements = universe.activeElements
-        activeElements.foreach(e => if (e.active) sampleOne(state, e))
-        val bindings = queryTargets map (elem => elem -> elem.value)
-        Some((state.weight, Map(bindings: _*)))
-      } catch {
-        case Importance.Reject => None
-      }
-
-    resultOpt match {
-      case Some(x) => x
-      case None =>
-        sample()
-    }
-  }
-
-  /*
-   * Sample the value of an element. If it has already been assigned in the state, the current assignment is
-   * used and the state is unchanged. Also, an element in a different universe is not sampled; instead its state is
-   * used directly
-   *
-   * This is made private[figaro] to allow easy testing
-   */
-  private[figaro] def sampleOne[T](state: State, element: Element[T]): T =
-    if (element.universe != universe || (state.assigned contains element)) element.value
-    else {
-      state.assigned += element
-      sampleFresh(state, element)
-    }
-
-  /*
-   * Sample a fresh value of an element, assuming it has not yet been assigned a value in the state. This sampling
-   * takes into account the condition and constraint on the element. If the condition is violated, the entire sampling
-   * process is rejected. This function returns the state including the new assignment to the element with the weight
-   * of the constraint multiplied in.
-   */
-  private def sampleFresh[T](state: State, element: Element[T]): T = {
-    val value = sampleValue(state, element)
-    if (!element.condition(value)) throw Importance.Reject
-    state.weight += element.constraint(value)
-    value
-  }
-
-  /*
-   * Sample the value of an element according to its generative model, without considering the condition or constraint.
-   * Since sampling the value of this element might also involve sampling the values of related elements, the state
-   * must be updated and returned.
-   *
-   * Most elements can simply be handled by sampling values for the arguments and generating values for this
-   * element. Dist is an exception, because not all the outcomes need to be generated, but we only know which one
-   * after we have sampled the randomness of the Dist. For this reason, we write special code to handle Dists.
-   * For Chain, we also write special code to avoid calling get twice.
-   */
-  private def sampleValue[T](state: State, element: Element[T]): T =
-    element match {
-      case d: Dist[_, _] =>
-        d match {
-          case dc: CompoundDist[_] => dc.probs foreach (sampleOne(state, _))
-          case _ => ()
-        }
-        val rand = d.generateRandomness()
-        val index = d.selectIndex(rand)
-        sampleOne(state, d.outcomeArray(index))
-        d.value = d.finishGeneration(index)
-        d.value
-      case dec: Decision[_, _] =>
-        val parentValue = if (universe.activeElements contains dec.parent) {
-          sampleOne(state, dec.parent)
-        } else {
-          dec.parent.value
-        }
-        dec.value = sampleOne(state, dec.get(parentValue))
-        dec.value
-      case c: Chain[_, _] =>
-        val parentValue = sampleOne(state, c.parent)
-        c.value = sampleOne(state, c.get(parentValue))
-        c.value
-      case _ =>
-        element.args foreach (sampleOne(state, _))
-        element.randomness = element.generateRandomness()
-        element.value = element.generateValue(element.randomness)
-        element.value
-    }
 }
 
 object DecisionImportance {
-  /*
-   * An element cannot be assigned more than once during importance sampling. If an element has been assigned, 
-   * its assigned value will be held in its value field. A state consists of the set of variables that have 
-   * been assigned, together with the accumulated weight so far. */
-  case class State(assigned: Set[Element[_]] = Set(), var weight: Double = 0.0)
-
-  object Reject extends RuntimeException
 
   /* Checks conditions of Decision Usage
    * 1. Double utilities
