@@ -358,7 +358,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
 
   }
 
-  protected override final def doSample() = {
+  protected override def doSample() = {
     for { i <- 1 to interval - 1 } { mhStep() }
     super.doSample()
   }
