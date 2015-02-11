@@ -93,7 +93,7 @@ trait ProbabilisticVariableEliminationDecision extends VariableElimination[(Doub
    */
   private def convert(f: Factor[Double], utility: Boolean): Factor[(Double, Double)] = {
     val factor = Factory.defaultFactor[(Double, Double)](f.parents, f.output)
-    val allIndices = f.allIndices
+    val allIndices = f.nonZeroIndices//f.allIndices
 
     allIndices.foreach { k: List[Int] =>
       val p = f.get(k)

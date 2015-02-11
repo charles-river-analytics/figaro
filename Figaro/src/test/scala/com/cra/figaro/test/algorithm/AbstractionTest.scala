@@ -176,7 +176,7 @@ class AbstractionTest extends WordSpec with Matchers {
           j <- 0 until numBinsApply
         } {
           if (check(uniformValues(i), applyValues(j))) { factor.get(List(i, j)) should equal(1.0) }
-          else { factor.get(List(i, j)) should equal(0.0) }
+          else { factor.contains(List(i, j)) should equal(false) }
         }
       }
     }
@@ -218,7 +218,7 @@ class AbstractionTest extends WordSpec with Matchers {
         } {
           if (check(uniform1Values(i), uniform2Values(j), applyValues(k))) {
             factor.get(List(i, j, k)) should equal(1.0)
-          } else { factor.get(List(i, j, k)) should equal(0.0) }
+          } else { factor.contains(List(i, j, k)) should equal(false) }
         }
       }
     }
@@ -265,7 +265,7 @@ class AbstractionTest extends WordSpec with Matchers {
         } {
           if (check(uniform1Values(i), uniform2Values(j), uniform3Values(k), applyValues(l))) {
             factor.get(List(i, j, k, l)) should equal(1.0)
-          } else { factor.get(List(i, j, k, l)) should equal(0.0) }
+          } else { factor.contains(List(i, j, k, l)) should equal(false) }
         }
       }
     }

@@ -52,9 +52,9 @@ abstract class BaseUnweightedSampler(val universe: Universe, targets: Element[_]
   protected def newTimesSeen[T](target: Element[T]): TimesSeen[T] = Map()
   protected def newLastUpdate[T](target: Element[T]): LastUpdate[T] = (target.value, 1)
 
-  protected var allTimesSeen: Map[Element[_], TimesSeen[_]] = _
+  protected var allTimesSeen: Map[Element[_], TimesSeen[_]] = Map()
 
-  protected var allLastUpdates: Map[Element[_], LastUpdate[_]] = _
+  protected var allLastUpdates: Map[Element[_], LastUpdate[_]] = Map()
 
   protected def initUpdates() = allLastUpdates = Map(targets.toList.map(t => (t -> newLastUpdate(t))): _*)
 
@@ -73,10 +73,10 @@ abstract class BaseUnweightedSampler(val universe: Universe, targets: Element[_]
   }
 
   protected def doSample(): Unit = {
+    val s = sample()
     if (sampleCount == 0) {
       initUpdates
-    }
-    val s = sample()
+    }    
     if (s._1) {
       sampleCount += 1
       s._2 foreach (t => updateTimesSeenForTarget(t._1.asInstanceOf[Element[t._1.Value]], t._2.asInstanceOf[t._1.Value]))

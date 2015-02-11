@@ -25,7 +25,7 @@ import com.cra.figaro.util
  * A probabilistc relational model example with multi-valued attributes.
  */
 object MutableMovie {
-  private val random = new scala.util.Random()
+  private val random = com.cra.figaro.util.random
 
   private class Actor {
     var movies: List[Movie] = List()
