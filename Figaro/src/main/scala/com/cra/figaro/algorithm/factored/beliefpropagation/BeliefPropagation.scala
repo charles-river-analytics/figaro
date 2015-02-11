@@ -232,7 +232,8 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
       val factor = normalize(finalFactor)
       val factorVariable = Variable(target)
       // Since all computations have been in log space, we get out of log space here to provide the final beliefs
-      factorVariable.range.zipWithIndex.map(pair => (Math.exp(factor.get(List(pair._2))), pair._1.value))
+      factor.nonZeroIndices.filter(f => factorVariable.range(f.head).isRegular).map(f => (Math.exp(factor.get(f)), factorVariable.range(f.head).value))
+      //factorVariable.range.zipWithIndex.map(pair => (Math.exp(factor.get(List(pair._2))), pair._1.value))
     }
   }
 
