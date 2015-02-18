@@ -75,6 +75,11 @@ extends Process[Index, Value] {
         thisContainer.generate(indices).mapValues((e: Element[Value]) => Chain(e, f)("", e.universe))
     }
   }
+  
+   /**
+   * Chain every value in this container through the given function, returning a new container.
+   */
+  override def flatMap[Value2](f: Value => Element[Value2]): Container[Index, Value2] = { chain(f) }
 
   /**
    * Fold the values in this container through the given function.
