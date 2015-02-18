@@ -147,6 +147,11 @@ trait Process[Index, Value] {
       def rangeCheck(i: Index) = thisProcess.rangeCheck(i)
     }
   }
+  
+  /**
+   * Chain every value in this process through the given function, returning a new process.
+   */
+  def flatMap[Value2](f: Value => Element[Value2]): Process[Index, Value2] = { chain(f) }
 
   /**
    * Returns a new process containing the elements of this process and the argument.
