@@ -20,6 +20,7 @@ import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.test._
 import com.cra.figaro.algorithm.factored.beliefpropagation.BeliefPropagation
+import com.cra.figaro.algorithm.factored.beliefpropagation.ProbEvidenceBeliefPropagation
 
 class ProbEvidenceTest extends WordSpec with Matchers {
 
@@ -104,11 +105,12 @@ class ProbEvidenceTest extends WordSpec with Matchers {
  
 
   def sampleTest(prob: Double, evidence: List[NamedEvidence[_]], universe: Universe) {
-    universe.assertEvidence(evidence)
-    val alg = BeliefPropagation(100, universe.activeElements.toList:_*)
-    alg.start
-    alg.computeEvidence should be(prob +- 0.01)
     
-    alg.kill
+    //universe.assertEvidence(evidence)
+    //val alg = BeliefPropagation(100, universe.activeElements.toList:_*)
+    //alg.start
+    ProbEvidenceBeliefPropagation.computeProbEvidence(100, evidence)(universe) should be(prob +- 0.01)
+    
+    //alg.kill
   }
 }

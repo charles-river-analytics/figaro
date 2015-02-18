@@ -280,7 +280,6 @@ abstract class ProbQueryParticleBeliefPropagation(numArgSamples: Int, numTotalSa
     computeDistribution(target).map((pair: (Double, T)) => pair._1 * function(pair._2)).sum
   }
 
-  def computeEvidence(): Double = bp.computeEvidence
 }
 
 object ParticleBeliefPropagation {
