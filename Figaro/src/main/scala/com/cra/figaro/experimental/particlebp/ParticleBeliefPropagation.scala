@@ -15,7 +15,7 @@ package com.cra.figaro.experimental.particlebp
 
 import com.cra.figaro.language._
 import com.cra.figaro.algorithm.factored.FactoredAlgorithm
-import com.cra.figaro.algorithm.factored.factors.{Factory, DivideableSemiRing, Factor, LogSumProductSemiring, Variable}
+import com.cra.figaro.algorithm.factored.factors.{ Factory, DivideableSemiRing, Factor, LogSumProductSemiring, Variable }
 import com.cra.figaro.algorithm.lazyfactored.LazyValues
 import com.cra.figaro.algorithm.OneTime
 import com.cra.figaro.algorithm.Anytime
@@ -32,6 +32,8 @@ import com.cra.figaro.algorithm.AnytimeProbQuery
 import com.cra.figaro.algorithm.factored.beliefpropagation.AnytimeInnerBPHandler
 import com.cra.figaro.algorithm.factored.beliefpropagation.FactorNode
 import com.cra.figaro.algorithm.factored.beliefpropagation.Node
+import breeze.linalg.normalize
+import com.cra.figaro.algorithm.UnsupportedAlgorithmException
 
 /**
  * Doc needed
@@ -167,6 +169,18 @@ trait ParticleBeliefPropagation extends FactoredAlgorithm[Double] with InnerBPHa
   }
 
   /*
+   * Finds the factor in the graph connected to an variable node (element) that is only a function
+   * of the variable itself, and returns the last message it sent
+   */
+  def findSingleFactor(elem: Element[_]): Factor[Double] = {
+    val elemNode = bp.findNodeForElement(elem)
+    val factors = bp.factorGraph.getMessagesForNode(elemNode)
+    val singleFactor = factors.find(e => e._2.variables.size == 1)
+    if (singleFactor.nonEmpty) singleFactor.get._2
+    else throw new IllegalArgumentException
+  }
+
+  /*
    * The resample function. All sampled elements are resampled. For each element that is resampled,
    * we record the dependent elements on those elemens since that portion the factor graph will
    * have to be removed (since resampling can change the structure).
@@ -174,9 +188,52 @@ trait ParticleBeliefPropagation extends FactoredAlgorithm[Double] with InnerBPHa
   private[figaro] def resample(): (Set[Element[_]], Set[Element[_]]) = {
     val needsToBeResampled = pbpSampler.sampledElements.filter(e => bp.factorGraph.contains(VariableNode(Variable(e))))
     val dependentElems = needsToBeResampled.flatMap { elem =>
+      elem match {
+        case a: Atomic[_] =>
+        case _ => throw new UnsupportedAlgorithmException(elem)
+      }
+
+      // get the beliefs for the element as computed by BP
       val oldBeliefs = bp.getBeliefsForElement(elem)
+
+      // For purposes of resampling, we want to find the belief of the element WITHOUT
+      // the original factor. That is, we will incorporate that information using the exact
+      // density of the element, we don't need to estimate it from a factor      
+      
+      /*
+      // find the node in the graph corresponding to the element
+      val elemNode = bp.findNodeForElement(elem)
+      // find the single variable factor corresponding to the node
+      val originalFactor = Factory.makeNonConstraintFactors(elem)
+      if (originalFactor.size > 1) throw new UnsupportedAlgorithmException(elem)
+      // divide out the single factor
+      val newFactor = bp.beliefMap(elemNode).combination(bp.makeLogarithmic(originalFactor(0)), bp.semiring.divide)
+      // these beliefs will be used to estimate the density of a new value (plus the original density of the element)
+      val factorBeliefs = List(bp.factorToBeliefs(newFactor))
+      * 
+      */
+      
+      // find the ndoe in the graph corresponding to the element
+      val elemNode = bp.findNodeForElement(elem)
+      val neighbors = bp.factorGraph.getNeighbors(elemNode).toList
+      // get the last messages sent to the node
+      val lastMessages = neighbors.map(n => (n, bp.factorGraph.getLastMessage(n, elemNode)))
+      // find the single variable factor for this node (
+      val singleFactorIndex = lastMessages.indexWhere(e => e._1.asInstanceOf[FactorNode].variables.size == 1)
+      val singleFactor = if (singleFactorIndex >= 0) lastMessages(singleFactorIndex)
+                         else throw new UnsupportedAlgorithmException(elem)      
+      // Get the original factor for this element
+      val originalFactor = Factory.makeNonConstraintFactors(elem)
+      if (originalFactor.size > 1) throw new UnsupportedAlgorithmException(elem)
+      // Take the single factor, and divide out the original factor. We do this since the single factor in the graph
+      // can have evidence multiplied in, so we only want to remove the original factor for it. We will use the original
+      // density instead of the factor to estimate densities during resampling
+      val factors = lastMessages.patch(singleFactorIndex, Nil, 1).map(_._2) :+ singleFactor._2.combination(bp.makeLogarithmic(originalFactor(0)), bp.semiring.divide)
+      val factorBeliefs = factors.map(bp.factorToBeliefs(_))
+      
+      
       val bw = proposalEstimator(oldBeliefs)
-      val newSamples = pbpSampler.resample(elem, oldBeliefs, bw)
+      val newSamples = pbpSampler.resample(elem, oldBeliefs, factorBeliefs, bw)
       universe.usedBy(elem)
     }
     (needsToBeResampled, dependentElems)
@@ -217,7 +274,7 @@ trait ParticleBeliefPropagation extends FactoredAlgorithm[Double] with InnerBPHa
    * one iteration of the outer loop. This means that the inner BP loop may run several iterations.
    */
   def runStep() {
-    runOuterLoop()
+    com.cra.figaro.util.timed(runOuterLoop(), "")    
   }
 
 }

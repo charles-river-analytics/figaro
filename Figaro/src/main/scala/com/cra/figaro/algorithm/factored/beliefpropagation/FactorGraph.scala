@@ -51,7 +51,7 @@ trait FactorGraph[T] {
   def getFactorForNode(fn: FactorNode): Factor[T]
   
   /**
-   * Get a list of messages to the node.
+   * Get a list of messages from the node.
    */
   def getMessagesForNode(node: Node): Iterable[(Node, Factor[T])]
   

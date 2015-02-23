@@ -135,7 +135,6 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
     f
   }
 
-
   /*
    * Propagates one set of synchronous message in the graph
    */
@@ -161,10 +160,10 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
       println()
     }
     synchronousUpdate()
-    if (debug) { 
-      beliefMap.foreach(a => println(a._1 + " => " + a._2)); println 
+    if (debug) {
+      beliefMap.foreach(a => println(a._1 + " => " + a._2)); println
       println("Factor Messages:")
-      factorGraph.getNodes.foreach{n =>
+      factorGraph.getNodes.foreach { n =>
         println(n + ": ")
         println(factorGraph.getMessagesForNode(n))
       }
@@ -229,18 +228,14 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
     if (finalFactor.isEmpty) {
       List[(Double, T)]()
     } else {
-      val factor = normalize(finalFactor)
-      val factorVariable = Variable(target)
-      // Since all computations have been in log space, we get out of log space here to provide the final beliefs
-      factor.nonZeroIndices.filter(f => factorVariable.range(f.head).isRegular).map(f => (Math.exp(factor.get(f)), factorVariable.range(f.head).value))
-      //factorVariable.range.zipWithIndex.map(pair => (Math.exp(factor.get(List(pair._2))), pair._1.value))
+      factorToBeliefs(finalFactor).asInstanceOf[List[(Double, T)]]     
     }
   }
 
-  /**
-   * Get the final factor for an element.
+  /*
+   * Find the node in the factor graph corresponding to a particular element
    */
-  def getFinalFactorForElement[T](target: Element[T]): Factor[Double] = {
+  protected[figaro] def findNodeForElement[T](target: Element[T]): Node = {
     val targetVar = Variable(target)
     val targetNode = factorGraph.getNodes.find { node =>
       node match {
@@ -248,7 +243,26 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
         case _ => false
       }
     }
-    beliefMap(targetNode.get)
+    targetNode.get
+  }
+  
+  /*
+   * Convert a factor of a single variable to beliefs
+   * Creates and exception if the factor has more than one variable
+   */
+  protected[figaro] def factorToBeliefs[T](factor: Factor[Double]): List[(Double, _)] = {
+    if (factor.numVars > 1) throw new IllegalArgumentException
+    
+    val variable = factor.variables(0)
+    val ff = normalize(factor)
+    ff.nonZeroIndices.filter(f => variable.range(f.head).isRegular).map(f => (Math.exp(ff.get(f)), variable.range(f.head).value))
+  }
+
+  /**
+   * Get the final factor for an element.
+   */
+  def getFinalFactorForElement[T](target: Element[T]): Factor[Double] = {
+    beliefMap(findNodeForElement(target))
   }
 
 }
@@ -304,7 +318,7 @@ abstract class ProbQueryBeliefPropagation(override val universe: Universe, targe
   val dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double,
   depth: Int = Int.MaxValue, upperBounds: Boolean = false)
   extends ProbQueryAlgorithm
-  with ProbabilisticBeliefPropagation  {
+  with ProbabilisticBeliefPropagation {
 
   val targetElements = targets.toList
 
@@ -327,11 +341,11 @@ abstract class ProbQueryBeliefPropagation(override val universe: Universe, targe
       getFactors(neededElements, targetElements)
     }
 
-    factorGraph = new BasicFactorGraph(factors, semiring): FactorGraph[Double]     
+    factorGraph = new BasicFactorGraph(factors, semiring): FactorGraph[Double]
   }
 
   override def initialize() = {
-    if (factorGraph == null) generateGraph() 
+    if (factorGraph == null) generateGraph()
     super.initialize
   }
 
@@ -341,8 +355,6 @@ abstract class ProbQueryBeliefPropagation(override val universe: Universe, targe
     computeDistribution(target).map((pair: (Double, T)) => pair._1 * function(pair._2)).sum
   }
 }
-
-
 
 object BeliefPropagation {
   /**

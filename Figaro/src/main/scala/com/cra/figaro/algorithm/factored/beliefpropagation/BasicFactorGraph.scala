@@ -85,7 +85,7 @@ class BasicFactorGraph(factors: List[Factor[Double]], semiring: Semiring[Double]
   def getFactorForNode(fn: FactorNode): Factor[Double] = factorsByNode(fn)
 
   /**
-   * Get a list of messages to the node.
+   * Get a list of messages from the node.
    */
   def getMessagesForNode(node: Node): Iterable[(Node, Factor[Double])] = adjacencyList(node)
 
