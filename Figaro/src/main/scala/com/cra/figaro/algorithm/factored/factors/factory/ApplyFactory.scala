@@ -31,7 +31,7 @@ object ApplyFactory {
     val arg1Var = Variable(apply.arg1)
     val resultVar = Variable(apply)
     val applyValues = LazyValues(apply.universe).storedValues(apply)
-    val factor = new BasicFactor[Double](List(arg1Var), List(resultVar))
+    val factor = new SparseFactor[Double](List(arg1Var), List(resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
     for {
       (arg1Val, arg1Index) <- arg1Indices
@@ -40,7 +40,8 @@ object ApplyFactory {
       // See logic in makeCares
       if (arg1Val.isRegular) {
         // arg1Val.value should have been placed in applyMap at the time the values of this apply were computed.
-        // By using applyMap, we can make sure that any contained elements in the result of the apply are the same now as they were when values were computed.
+        // By using applyMap, we can make sure that any contained elements in the result of the apply are the same 
+        // now as they were when values were computed.
         val resultVal = mapper.map(applyMap(arg1Val.value), applyValues.regularValues)
         val resultIndex = resultVar.range.indexWhere(_.value == resultVal)        
         factor.set(List(arg1Index, resultIndex), 1.0)
@@ -61,7 +62,7 @@ object ApplyFactory {
     val arg2Var = Variable(apply.arg2)
     val resultVar = Variable(apply)
     val applyValues = LazyValues(apply.universe).storedValues(apply)
-    val factor = new BasicFactor[Double](List(arg1Var, arg2Var), List(resultVar))
+    val factor = new SparseFactor[Double](List(arg1Var, arg2Var), List(resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
     val arg2Indices = arg2Var.range.zipWithIndex
     val resultIndices = resultVar.range.zipWithIndex
@@ -95,7 +96,7 @@ object ApplyFactory {
     val arg3Var = Variable(apply.arg3)
     val resultVar = Variable(apply)
     val applyValues = LazyValues(apply.universe).storedValues(apply)
-    val factor = new BasicFactor[Double](List(arg1Var, arg2Var, arg3Var), List(resultVar))
+    val factor = new SparseFactor[Double](List(arg1Var, arg2Var, arg3Var), List(resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
     val arg2Indices = arg2Var.range.zipWithIndex
     val arg3Indices = arg3Var.range.zipWithIndex
@@ -131,7 +132,7 @@ object ApplyFactory {
     val arg4Var = Variable(apply.arg4)
     val resultVar = Variable(apply)
     val applyValues = LazyValues(apply.universe).storedValues(apply)
-    val factor = new BasicFactor[Double](List(arg1Var, arg2Var, arg3Var, arg4Var), List(resultVar))
+    val factor = new SparseFactor[Double](List(arg1Var, arg2Var, arg3Var, arg4Var), List(resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
     val arg2Indices = arg2Var.range.zipWithIndex
     val arg3Indices = arg3Var.range.zipWithIndex
@@ -170,7 +171,7 @@ object ApplyFactory {
     val arg5Var = Variable(apply.arg5)
     val resultVar = Variable(apply)
     val applyValues = LazyValues(apply.universe).storedValues(apply)
-    val factor = new BasicFactor[Double](List(arg1Var, arg2Var, arg3Var, arg4Var, arg5Var), List(resultVar))
+    val factor = new SparseFactor[Double](List(arg1Var, arg2Var, arg3Var, arg4Var, arg5Var), List(resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
     val arg2Indices = arg2Var.range.zipWithIndex
     val arg3Indices = arg3Var.range.zipWithIndex

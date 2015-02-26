@@ -98,7 +98,7 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
   private def getNewMessageFactorToVar(fn: FactorNode, vn: VariableNode) = {
     val vnFactor = factorGraph.getLastMessage(vn, fn)
 
-    val total = beliefMap(fn).combination(vnFactor, semiring.divide)
+    val total = beliefMap(fn).combination(vnFactor, semiring.divide, semiring)
     total.marginalizeTo(semiring, vn.variable)
   }
 
@@ -110,7 +110,7 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
   private def getNewMessageVarToFactor(vn: VariableNode, fn: FactorNode) = {
     val fnFactor = factorGraph.getLastMessage(fn, vn)
 
-    val total = beliefMap(vn).combination(fnFactor, semiring.divide)
+    val total = beliefMap(vn).combination(fnFactor, semiring.divide, semiring)
     total
   }
 
@@ -255,7 +255,7 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
     
     val variable = factor.variables(0)
     val ff = normalize(factor)
-    ff.nonZeroIndices.filter(f => variable.range(f.head).isRegular).map(f => (Math.exp(ff.get(f)), variable.range(f.head).value))
+    ff.getIndices.filter(f => variable.range(f.head).isRegular).map(f => (Math.exp(ff.get(f)), variable.range(f.head).value))
   }
 
   /**

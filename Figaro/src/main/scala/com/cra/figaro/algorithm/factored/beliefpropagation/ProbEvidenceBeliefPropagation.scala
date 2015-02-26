@@ -47,7 +47,7 @@ trait ProbEvidenceBeliefPropagation extends ProbabilisticBeliefPropagation with 
     val logFactorMapping = probFactor.variables.map(v => logFactor.variables.indexOf(v))
     def remap(l: List[Int]) = l.zipWithIndex.map(s => (s._1, logFactorMapping(s._2))).sortBy(_._2).unzip._1
 
-    val e = (0.0 /: probFactor.allIndices)((c: Double, i: List[Int]) => {
+    val e = (0.0 /: probFactor.getIndices)((c: Double, i: List[Int]) => {
       val p = probFcn(probFactor.get(i))
       if (p == 0) c else c + p * logFcn(logFactor.get(remap(i)))
     })
@@ -60,9 +60,9 @@ trait ProbEvidenceBeliefPropagation extends ProbabilisticBeliefPropagation with 
       println(joint.toReadableString)
       marginals foreach (f => println(f.toReadableString))
     }
-    val newFactor = (joint /: marginals)((c: Factor[Double], n: Factor[Double]) => c.combination(n, semiring.divide))
-    val mi = (0.0 /: newFactor.allIndices)((c: Double, i: List[Int]) => {
-      val p = probFcn(joint.get(i))
+    val newFactor = (joint /: marginals)((c: Factor[Double], n: Factor[Double]) => c.combination(n, semiring.divide, semiring))
+    val mi = (0.0 /: newFactor.getIndices)((c: Double, i: List[Int]) => {
+      val p = probFcn(newFactor.get(i))
       if (p == 0) c else c + p * logFcn(newFactor.get(i))
     })
     mi
