@@ -34,7 +34,7 @@ abstract class ExpectationMaximization(universe: Universe, val terminationCriter
   protected def doExpectationStep(): Map[Parameter[_], Seq[Double]]
 
   var sufficientStatistics: Map[Parameter[_], Seq[Double]] = Map.empty[Parameter[_], Seq[Double]]
-  val debug = false
+  var debug = false
   protected def em(): Unit = {
     //Instantiate termination criteria here.
     val shouldTerminate = terminationCriteria()

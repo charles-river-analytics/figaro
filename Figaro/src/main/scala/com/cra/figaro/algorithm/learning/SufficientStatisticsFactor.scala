@@ -144,7 +144,7 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
     val probVars = probElems map (Variable(_))
     val factor = Factory.defaultFactor[(Double, Map[Parameter[_], Seq[Double]])](probVars, List(target))
     val probVals = probVars map (_.range)
-    for { indices <- factor.allIndices } {
+    for { indices <- factor.getIndices } {
       val probIndices = indices.take(probElems.size).zipWithIndex
       val unnormalized = probIndices map (pair => probVals(pair._2)(pair._1).value)
       val normalized = normalize(unnormalized).toArray
@@ -464,7 +464,7 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
 
   private def convertProbFactor(probFactor: Factor[Double]): Factor[(Double, Map[Parameter[_], Seq[Double]])] = {
     val result = Factory.defaultFactor[(Double, Map[Parameter[_], Seq[Double]])](probFactor.parents, probFactor.output)
-    for { indices <- result.allIndices } {
+    for { indices <- result.getIndices } {
       result.set(indices, (probFactor.get(indices), mutable.Map(parameterMap.toSeq: _*)))
     }
     result
@@ -569,7 +569,7 @@ class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[D
     val numFirstValues = firstValues.size
     val matchingIndex: Int = firstValues.indexOf(Regular(firstValue))
     val resultFactor = Factory.defaultFactor[(Double, Map[Parameter[_], Seq[Double]])](firstVar :: restFactor.parents, restFactor.output)
-    for { restIndices <- restFactor.allIndices } {
+    for { restIndices <- restFactor.getIndices } {
       val restEntry = restFactor.get(restIndices)._1
       for { firstIndex <- 0 until numFirstValues } {
         val rowMapping = mutable.Map(parameterMap.toSeq: _*)

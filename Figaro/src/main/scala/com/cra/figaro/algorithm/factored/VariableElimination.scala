@@ -254,7 +254,7 @@ class ProbQueryVariableElimination(override val universe: Universe, targets: Ele
   def computeDistribution[T](target: Element[T]): Stream[(Double, T)] = {
     val factor = targetFactors(target)
     val targetVar = Variable(target)
-    val dist = factor.nonZeroIndices.filter(f => targetVar.range(f.head).isRegular).map(f => (factor.get(f), targetVar.range(f.head).value))
+    val dist = factor.getIndices.filter(f => targetVar.range(f.head).isRegular).map(f => (factor.get(f), targetVar.range(f.head).value))
     // normalization is unnecessary here because it is done in marginalizeTo
     dist.toStream
   }

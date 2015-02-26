@@ -93,7 +93,7 @@ trait ProbabilisticVariableEliminationDecision extends VariableElimination[(Doub
    */
   private def convert(f: Factor[Double], utility: Boolean): Factor[(Double, Double)] = {
     val factor = Factory.defaultFactor[(Double, Double)](f.parents, f.output)
-    val allIndices = f.nonZeroIndices//f.allIndices
+    val allIndices = f.getIndices
 
     allIndices.foreach { k: List[Int] =>
       val p = f.get(k)
@@ -196,15 +196,15 @@ class ProbQueryVariableEliminationDecision[T, U](override val universe: Universe
     // index of the decision variable     
 
     val indexOfDecision = indices(factor.variables, decisionVariable)
-    val indexOParent = indices(factor.variables, parentVariable)
+    val indexOfParent = indices(factor.variables, parentVariable)
 
-    for { indices <- factor.allIndices } {
+    for { indices <- factor.generateAllIndices } {
 
       /* for each index in the list of indices, strip out the decision variable index, 
        * and retrieve the map entry for the parents. If the factor value is greater than
        * what is currently stored in the strategy map, replace the decision with the new one from the factor
        */
-      val parent = parentVariable.range(indices(indexOParent(0))).value.asInstanceOf[T]
+      val parent = parentVariable.range(indices(indexOfParent(0))).value.asInstanceOf[T]
       val decision = decisionVariable.range(indices(indexOfDecision(0))).value.asInstanceOf[U]
       val utility = factor.get(indices)._2
       strat += (parent, decision) -> DecisionSample(utility, 1.0)

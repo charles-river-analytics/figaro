@@ -70,7 +70,7 @@ object BoundedProbFactor {
     val numFirstValues = firstValues.size
     val matchingIndex: Int = firstValues.indexOf(Regular(firstValue))
     val resultFactor = Factory.defaultFactor[Double](firstVar :: baseFactor.parents, baseFactor.output)
-    for { factorIndices <- baseFactor.allIndices } {
+    for { factorIndices <- baseFactor.getIndices } {
       val factorValue = baseFactor.get(factorIndices)
       for { firstIndex <- 0 until numFirstValues } {
         // constraint doesn't apply if the index is not the required one, so we use a value of 1
