@@ -68,9 +68,9 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
                 //println(factor.toReadableString)
 
                 if (factor.variables.contains(Variable(f1)) == true) {
-                  factor.allIndices.foreach(a => factor.get(a)._2 should equal(zero._2))
+                  factor.getIndices.foreach(a => factor.get(a)._2 should equal(zero._2))
                 } else if (factor.variables.contains(Variable(f1)) == true) {
-                  factor.allIndices.foreach(a => factor.get(a)._2 should equal(zero._2))
+                  factor.getIndices.foreach(a => factor.get(a)._2 should equal(zero._2))
                 } else if (factor.variables.contains(Variable(f3)) == true) {
                   val i = Variable(f3).range.indexOf(Regular(true))
                   //println(factor.get(List(i))._2(p1))
@@ -112,12 +112,12 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               for (factor <- factors) {
 
                 if (factor.variables.contains(Variable(f1)) == true) {
-                  factor.allIndices.foreach(a => factor.get(a)._2 should equal(zero._2))
+                  factor.getIndices.foreach(a => factor.get(a)._2 should equal(zero._2))
                 } else if (factor.variables.contains(Variable(f1)) == true) {
-                  factor.allIndices.foreach(a => factor.get(a)._2 should equal(zero._2))
+                  factor.getIndices.foreach(a => factor.get(a)._2 should equal(zero._2))
                 } else if (factor.variables.contains(Variable(f3)) == true) {
 
-                  factor.allIndices.foreach(a => factor.get(a)._2.contains(p1) should equal(true))
+                  factor.getIndices.foreach(a => factor.get(a)._2.contains(p1) should equal(true))
                   val i = Variable(f3).range.indexOf(Regular(true))
                   factor.get(List(i))._2(p1) should equal(Seq(1.0, 0.0))
                   factor.get(List(i + 1))._2(p1) should equal(Seq(0.0, 1.0))
@@ -157,12 +157,12 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               for (factor <- factors) {
 
                 if (factor.variables.contains(Variable(f1)) == true) {
-                  factor.allIndices.foreach(a => factor.get(a)._2 should equal(zero._2))
+                  factor.getIndices.foreach(a => factor.get(a)._2 should equal(zero._2))
                 } else if (factor.variables.contains(Variable(f1)) == true) {
-                  factor.allIndices.foreach(a => factor.get(a)._2 should equal(zero._2))
+                  factor.getIndices.foreach(a => factor.get(a)._2 should equal(zero._2))
                 } else if (factor.variables.contains(Variable(f3)) == true) {
 
-                  factor.allIndices.foreach(a => factor.get(a)._2.contains(p1) should equal(true))
+                  factor.getIndices.foreach(a => factor.get(a)._2.contains(p1) should equal(true))
                   val i = Variable(f3).range.indexOf(Regular(1))
                   factor.get(List(i))._2(p1) should equal(Seq(1.0, 0.0, 0.0))
                   factor.get(List(i + 1))._2(p1) should equal(Seq(0.0, 1.0, 0.0))

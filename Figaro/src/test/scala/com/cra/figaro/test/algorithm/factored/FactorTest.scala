@@ -303,7 +303,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         f.set(List(2, 0), 0.4)
         val g = f.sumOver(v3, SumProductSemiring)
         g.variables should equal(f.variables)
-        for { indices <- f.allIndices } {
+        for { indices <- f.getIndices } {
           g.get(indices) should equal(f.get(indices))
         }
       }
@@ -352,7 +352,8 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         f.set(List(0, 0, 1), 0.3)
         f.set(List(1, 0, 1), 0.4)
         f.set(List(2, 0, 1), 0.5)
-        val g = f.recordArgMax(v3, (x: Double, y: Double) => x < y)
+        val g = f.recordArgMax(v3.asInstanceOf[Variable[Any]], 
+            (x: Double, y: Double) => x < y)
         g.variables should equal(List(v1, v2))
         g.get(List(0, 0)) should equal(true)
         g.get(List(1, 0)) should equal(false)
@@ -1026,7 +1027,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
     }
 
     "given an Inject" should {
-      "produces a factor that matches its inputs to the correct sequence" in {
+      "produce a factor that matches its inputs to the correct sequence" in {
         Universe.createNew()
         val v1 = Select(0.3 -> 1, 0.2 -> 2, 0.5 -> 3)
         val v2 = Select(0.5 -> 4, 0.5 -> 5)

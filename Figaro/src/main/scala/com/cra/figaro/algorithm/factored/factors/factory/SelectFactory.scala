@@ -91,7 +91,7 @@ object SelectFactory {
   def makeFactors[T](select: IntSelector): List[Factor[Double]] = {
     val elementVar = Variable(select)
     val counterVar = Variable(select.counter)
-    val comb = new BasicFactor[Double](List(counterVar), List(elementVar))
+    val comb = new BasicFactor[Double](List(counterVar), List(elementVar)).setBasicMap
     comb.fillByRule((l: List[Any]) => {
       val counterValue :: elementValue :: _ = l.asInstanceOf[List[Extended[Int]]]
       if (counterValue.isRegular && elementValue.isRegular) {
@@ -138,7 +138,7 @@ object SelectFactory {
    * are assigned to the Variable in the same order as it's values.
    */
   def makeSimpleDistribution[T](target: Variable[T], probs: List[Double]): Factor[Double] = {
-    val factor = new BasicFactor[Double](List(), List(target))
+    val factor = new BasicFactor[Double](List(), List(target)).setBasicMap
     for { (prob, index) <- probs.zipWithIndex } {
       factor.set(List(index), prob)
     }
@@ -148,9 +148,9 @@ object SelectFactory {
   private def makeComplexDistribution[T](target: Variable[T], probElems: List[Element[Double]]): Factor[Double] = {
     val probVars: List[Variable[Double]] = probElems map (Variable(_))
     val nVars = probVars.size
-    val factor = new BasicFactor[Double](probVars, List(target))
+    val factor = new BasicFactor[Double](probVars, List(target)).setBasicMap
     val probVals: List[List[Extended[Double]]] = probVars map (_.range)
-    for { indices <- factor.allIndices } {
+    for { indices <- factor.getIndices } {
       // unnormalized is a list, one for each probability element, of the value of that element under these indices
       val unnormalized =
         //     expects outcome to be first, but isn't   

@@ -162,7 +162,7 @@ with LazyAlgorithm {
     var lowerTotal = 0.0
     var upperTotal = 0.0
     var starTotal = 0.0
-    val allIndicesIndexed = lowerFactor.allIndices.zipWithIndex
+    val allIndicesIndexed = lowerFactor.getIndices.zipWithIndex
     for { (indices, i) <- allIndicesIndexed } {
       val lower = lowerFactor.get(indices)
       val upper = upperFactor.get(indices)
