@@ -32,7 +32,7 @@ object ComplexFactory {
       case None =>
         val elementVar = Variable(element)
         val firstVar = Variable(first)
-        val factor = new BasicFactor[Double](List(firstVar), List(elementVar))
+        val factor = new BasicFactor[Double](List(firstVar), List(elementVar)).setBasicMap
         for {
           i <- 0 until firstVar.range.size
           j <- 0 until elementVar.range.size
@@ -113,7 +113,7 @@ object ComplexFactory {
   def makeFactors[T, U](element: Aggregate[T, U]): List[Factor[Double]] = {
     val elementVar = Variable(element)
     val mvreVar = Variable(element.mvre)
-    val factor = new BasicFactor[Double](List(mvreVar), List(elementVar))
+    val factor = new BasicFactor[Double](List(mvreVar), List(elementVar)).setBasicMap
     for {
       (mvreXvalue, mvreIndex) <- mvreVar.range.zipWithIndex
       (elementXvalue, elementIndex) <- elementVar.range.zipWithIndex
@@ -153,7 +153,7 @@ object ComplexFactory {
   def makeFactors[T](element: com.cra.figaro.library.collection.MakeArray[T]): List[Factor[Double]] = {
     val arg1Var = Variable(element.numItems)
     val resultVar = Variable(element)
-    val factor = new BasicFactor[Double](List(arg1Var), List(resultVar))
+    val factor = new BasicFactor[Double](List(arg1Var), List(resultVar)).setBasicMap
     val arg1Indices = arg1Var.range.zipWithIndex
     val resultIndices = resultVar.range.zipWithIndex
     for {

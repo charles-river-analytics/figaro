@@ -13,9 +13,10 @@
 package com.cra.figaro.algorithm.factored.factors
 
 import scala.annotation.tailrec
+import scala.collection.mutable.ListBuffer
 import com.cra.figaro.language.Element
 import com.cra.figaro.algorithm.lazyfactored.Extended
-
+import scala.reflect.runtime.universe._
 /**
  * Definition of Factor <p>
  *
@@ -29,6 +30,7 @@ import com.cra.figaro.algorithm.lazyfactored.Extended
  *
  */
 trait Factor[T] {
+
   def parents: List[Variable[_]]
   def output: List[Variable[_]]
   def variables = parents ::: output
@@ -40,7 +42,17 @@ trait Factor[T] {
   val size = (1 /: variables)(_ * _.size)
 
   /**
-   * Description that includes the variable list and conditional probabilites
+   * Creates a new factor of the same type
+   */
+  def createFactor[T: TypeTag](parents: List[Variable[_]], output: List[Variable[_]]): Factor[T]
+
+  /**
+   * Set the default value for this factor
+   */
+  def setDefault[T](value: T)
+  
+  /**
+   * Description that includes the variable list and conditional probabilities
    */
   override def toString = "Factor(" + variables.map(_.id).mkString(",") + " " + contents.mkString(",") + ")"
 
@@ -54,6 +66,11 @@ trait Factor[T] {
    */
   def isEmpty = size == 0
   
+  /**
+   * Indicates if this Factor is condition/constrained
+   */
+  val isConstraint: Boolean = false
+
   def contains(index: List[Int]) = contents.contains(index)
 
   /**
@@ -64,9 +81,14 @@ trait Factor[T] {
   }
 
   /**
+   * Returns the list of indices into the variable ranges associated with the first row in the factor.
+   */
+  def firstIndices: List[Int] = List.fill(numVars)(0)
+
+  /**
    * Returns the indices lists corresponding to all the rows in order.
    */
-  def allIndices: List[List[Int]] = {
+  def generateAllIndices: List[List[Int]] = {
     @tailrec def helper(current: List[Int], accum: List[List[Int]]): List[List[Int]] =
       nextIndices(current) match {
         case Some(next) => helper(next, current :: accum)
@@ -75,15 +97,13 @@ trait Factor[T] {
     if (isEmpty) List()
     else helper(firstIndices, List())
   }
-  
-  def nonZeroIndices: List[List[Int]] = {
-    contents.keys.toList
-  }
 
-  /**
-   * Returns the list of indices into the variable ranges associated with the first row in the factor.
-   */
-  def firstIndices: List[Int] = List.fill(numVars)(0)
+  def getIndices: List[List[Int]]
+  
+  def convertIndicesToValues(indices: List[Int]): List[Extended[_]] = {
+    val values = for {i <- 0 until indices.size} yield variables(i).range(indices(i)) 
+    values.toList
+  }
 
   /**
    * Set the value associated with a row. The row is identified by an list of indices
@@ -98,7 +118,7 @@ trait Factor[T] {
    * Get the value associated with a row. The row is identified by an list of indices
    * into the ranges of the variables over which the factor is defined.
    */
-  def get(indices: List[Int]): T = contents(indices)
+  def get(indices: List[Int]): T
 
   /**
    * Given a list of indices corresponding to a row in the factor, returns the list of indices
@@ -106,10 +126,17 @@ trait Factor[T] {
    * Returns None if the last index list has been reached.
    */
   def nextIndices(indices: List[Int]): Option[List[Int]] = {
-    def makeNext(position: Int) =
-      for { i <- 0 until numVars } yield if (i < position) indices(i)
+    // Copies all values prior to the position
+    // Increments the position value by 1
+    // Sets all values after the position to 0
+    def makeNext(position: Int) = for { i <- 0 until numVars } yield {
+      if (i < position) indices(i)
       else if (i > position) 0
       else indices(position) + 1
+    }
+
+    // Checks to see if variable at position is exhausted
+    // If so recurses to next position
     def helper(position: Int): Option[List[Int]] =
       if (position < 0) None
       else if (indices(position) < variables(position).size - 1) Some(makeNext(position).toList)
@@ -125,7 +152,7 @@ trait Factor[T] {
   /**
    * Fill the contents of the target by applying the given function to all elements of this factor.
    */
-  def mapTo[U](fn: T => U): Factor[U]
+  def mapTo[U: TypeTag](fn: T => U): Factor[U]
 
   /**
    * Returns the product of this factor with another factor according to a given multiplication function.
@@ -142,7 +169,8 @@ trait Factor[T] {
    */
   def combination(
     that: Factor[T],
-    op: (T, T) => T): Factor[T]
+    op: (T, T) => T,
+    semiring: Semiring[T]): Factor[T]
 
   /**
    * Returns the summation of the factor over a variable according to an addition function.
@@ -161,7 +189,7 @@ trait Factor[T] {
    * other variables in this factor to this type.
    * @tparam T The type of entries of this factor.
    */
-  def recordArgMax[U](variable: Variable[U], comparator: (T, T) => Boolean): Factor[U]
+  def recordArgMax[U: TypeTag](variable: Variable[U], comparator: (T, T) => Boolean): Factor[U]
 
   /**
    * Returns the marginalization of the factor to a variable according to the given addition function.
@@ -179,11 +207,39 @@ trait Factor[T] {
   /**
    * Creates a new Factor of the same class with a different type
    */
-  def convert[U](): Factor[U]
+  def convert[U: TypeTag](semiring: Semiring[U]): Factor[U]
 
   /**
    * Produce a readable string representation of the factor
    */
   def toReadableString: String
 
+}
+
+object Factor {
+  def combineIndices(thisIndices: List[Int], thisIndexMap: List[Int], thatIndices: List[Int], thatIndexMap: List[Int], numVars: Int): Option[List[Int]] = {
+    var newIndices = new ListBuffer[Int]()
+    var good = true;
+
+    for (i <- 0 until numVars) {
+      val inThis = thisIndexMap.indexOf(i)
+      val inThat = thatIndexMap.indexOf(i)
+
+      (inThis >= 0, inThat >= 0) match {
+        case (true, false) => newIndices.append(thisIndices(inThis))
+        case (false, true) => newIndices.append(thatIndices(inThat))
+        case (true, true) =>
+          if (thisIndices(inThis) == thatIndices(inThat))
+            newIndices.append(thisIndices(inThis))
+          else
+            good = false
+        case _ => good = false
+      }
+    }
+
+    if (good)
+      Some(newIndices.toList)
+    else
+      None
+  }
 }
