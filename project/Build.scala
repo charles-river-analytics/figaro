@@ -1,3 +1,16 @@
+/*
+ * Build.scala 
+ * The Figaro project SBT build program.
+ * 
+ * Created By:      Michael Reposa (mreposa@cra.com)
+ * Creation Date:   Feb 17, 2014
+ * 
+ * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * See http://www.cra.com or email figaro@cra.com for information.
+ * 
+ * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
+
 import sbt._
 import Keys._
 import sbtassembly.Plugin._
