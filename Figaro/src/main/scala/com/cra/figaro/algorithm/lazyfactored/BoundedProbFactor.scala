@@ -14,11 +14,12 @@
 package com.cra.figaro.algorithm.lazyfactored
 
 import com.cra.figaro.algorithm._
-import com.cra.figaro.language._
+import com.cra.figaro.language.{Element, ProbConstraintType, Universe}
 import com.cra.figaro.util._
 import annotation.tailrec
 import scala.language.existentials
-import com.cra.figaro.algorithm.factored._
+import com.cra.figaro.algorithm.factored.factors._
+import com.cra.figaro.algorithm.factored.factors.Factory
 
 /**
  * Methods for creating lower and upper bound probability factors.
@@ -40,7 +41,7 @@ object BoundedProbFactor {
 
   private def makeUncontingentConstraintFactor[T](elem: Element[T], constraint: T => Double, upper: Boolean): Factor[Double] = {
     val elemVar = Variable(elem)
-    val factor = Factory.make[Double](List(elemVar))
+    val factor = Factory.make(elem)(0)
     for { (elemVal, index) <- elemVar.range.zipWithIndex } {
       val entry = if (elemVal.isRegular) {
         val c = math.exp(constraint(elemVal.value))
@@ -60,7 +61,7 @@ object BoundedProbFactor {
     extendConstraintFactor(restFactor, firstConting)
   }
 
-  private def extendConstraintFactor(restFactor: Factor[Double], firstConting: Element.ElemVal[_]): Factor[Double] = {
+  private def extendConstraintFactor(baseFactor: Factor[Double], firstConting: Element.ElemVal[_]): Factor[Double] = {
     // The extended factor is obtained by getting the underlying factor and expanding each row so that the row only provides its entry if the contingent variable takes
     // on the appropriate value, otherwise the entry is 1
     val Element.ElemVal(firstElem, firstValue) = firstConting
@@ -68,13 +69,13 @@ object BoundedProbFactor {
     val firstValues = firstVar.range
     val numFirstValues = firstValues.size
     val matchingIndex: Int = firstValues.indexOf(Regular(firstValue))
-    val resultFactor = Factory.make[Double](firstVar :: restFactor.variables)
-    for { restIndices <- restFactor.allIndices } {
-      val restEntry = restFactor.get(restIndices)
+    val resultFactor = Factory.defaultFactor[Double](firstVar :: baseFactor.parents, baseFactor.output)
+    for { factorIndices <- baseFactor.getIndices } {
+      val factorValue = baseFactor.get(factorIndices)
       for { firstIndex <- 0 until numFirstValues } {
         // constraint doesn't apply if the index is not the required one, so we use a value of 1
-        val resultEntry = if (firstIndex == matchingIndex) restEntry; else 1.0
-        resultFactor.set(firstIndex :: restIndices, resultEntry)
+        val resultEntry = if (firstIndex == matchingIndex) factorValue; else 1.0
+        resultFactor.set(firstIndex :: factorIndices, resultEntry)
       }
     }
     resultFactor
@@ -107,9 +108,9 @@ object BoundedProbFactor {
       }
     }
     val variables = uses map (Variable(_))
-    val lb = Factory.make[Double](variables)
+    val lb = Factory.defaultFactor[Double](variables, List())
     lb.fillByRule(rule(false))
-    val ub = Factory.make[Double](variables)
+    val ub = Factory.defaultFactor[Double](variables, List())
     ub.fillByRule(rule(true))
     (lb, ub)
   }

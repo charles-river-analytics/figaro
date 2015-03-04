@@ -32,26 +32,26 @@ class IllegalDecisionNetwork(S: String) extends DecisionIllegalArgumentException
 object DecisionUtil {
 
   /**
-   * Computes the partial order of dependent decisions
+   * Computes the partial order of dependent decisions.
    */
   def getDecisionOrder(Decisions: Traversable[Element[_]], universe: Universe): List[List[Element[_]]] =
     universe.layers(Decisions)
 
   /**
-   * Returns the utilities in a list of elements from a reference list of utilities
+   * Returns the utilities in a list of elements from a reference list of utilities.
    */
   def utilitiesInElems(Elems: List[Element[_]], U: List[Element[_]]): List[Element[_]] =
     Elems.intersect(U)
 
   /**
-   * Computes the set of elements that the given list of utilites depends upon for computation
+   * Computes the set of elements that the given list of utilities depends upon for computation.
    */
   def utilitiesUse(U: Traversable[Element[_]], universe: Universe): Set[Element[_]] =
     U.foldLeft(Set[Element[_]]())((s, u) => s union universe.uses(u)).toSet
 
   /**
-   * Computes all the relevant decisions that come before a decision in the decision order
-   * It does not return decisions that are partially ordered with D
+   * Computes all the relevant decisions that come before a decision in the decision order.
+   * It does not return decisions that are partially ordered with D.
    *  */
   def getPredDecisions(D: Element[_], Order: List[List[Element[_]]], universe: Universe) = {
     val contain = Order.map(s => s.contains(D)).indexOf(true)
@@ -79,7 +79,7 @@ object DecisionUtil {
   }
 
   /**
-   * Computes all the elements that need to be simulated in order to compute a strategy for a decision
+   * Computes all the elements that need to be simulated in order to compute a strategy for a decision.
    */
   def getElemsForDecision(D: Element[_], utilities: List[Element[_]], Order: List[List[Element[_]]], universe: Universe) = {
     val utilUses = getReleventUtil(D, utilities, Order, universe).foldLeft(Set[Element[_]]()) { (s, u) =>
@@ -105,7 +105,7 @@ object DecisionUtil {
   }
 
   /**
-   * Creates a dummy element pair of (parent, decision) used for inference algorithms
+   * Creates a dummy element pair of (parent, decision) used for inference algorithms.
    */
   def createDecisionDummy[T, U](target: Decision[T, U]) = ^^(target.args(0).asInstanceOf[Element[T]], target)
 

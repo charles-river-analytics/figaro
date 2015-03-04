@@ -16,6 +16,7 @@ package com.cra.figaro.algorithm.factored
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
+import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.util._
 import annotation.tailrec
 import scala.collection.mutable.{ Map, Set }
@@ -231,7 +232,7 @@ class ProbQueryVariableElimination(override val universe: Universe, targets: Ele
     val unnormalizedTargetFactor = factor.marginalizeTo(semiring, Variable(target))
     val z = unnormalizedTargetFactor.foldLeft(semiring.zero, _ + _)
     //val targetFactor = Factory.make[Double](unnormalizedTargetFactor.variables)
-    val targetFactor = unnormalizedTargetFactor.mapTo((d: Double) => d / z, unnormalizedTargetFactor.variables)
+    val targetFactor = unnormalizedTargetFactor.mapTo((d: Double) => d / z)
     targetFactors += target -> targetFactor
   }
 
@@ -241,20 +242,26 @@ class ProbQueryVariableElimination(override val universe: Universe, targets: Ele
   private def makeResultFactor(factorsAfterElimination: Set[Factor[Double]]): Factor[Double] = {
     // It is possible that there are no factors (this will happen if there are  no queries or evidence).
     // Therefore, we start with the unit factor and use foldLeft, instead of simply reducing the factorsAfterElimination.
-    factorsAfterElimination.foldLeft(Factor.unit(semiring))(_.product(_, semiring))
+    factorsAfterElimination.foldLeft(Factory.unit(semiring))(_.product(_, semiring))
   }
 
   def finish(factorsAfterElimination: Set[Factor[Double]], eliminationOrder: List[Variable[_]]) =
     marginalize(makeResultFactor(factorsAfterElimination))
 
+  /**
+   * Computes the normalized distribution over a single target element.  
+   */
   def computeDistribution[T](target: Element[T]): Stream[(Double, T)] = {
     val factor = targetFactors(target)
     val targetVar = Variable(target)
-    val dist = targetVar.range.filter(_.isRegular).map(_.value).zipWithIndex map (pair => (factor.get(List(pair._2)), pair._1))
+    val dist = factor.getIndices.filter(f => targetVar.range(f.head).isRegular).map(f => (factor.get(f), targetVar.range(f.head).value))
     // normalization is unnecessary here because it is done in marginalizeTo
     dist.toStream
   }
 
+ /**
+   * Computes the expectation of a given function for single target element.  
+   */
   def computeExpectation[T](target: Element[T], function: T => Double): Double = {
     def get(pair: (Double, T)) = pair._1 * function(pair._2)
     (0.0 /: computeDistribution(target))(_ + get(_))

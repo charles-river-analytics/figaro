@@ -28,13 +28,13 @@ import scala.language.existentials
  * by 1) determining the order in which decisions can be computed 2) Implementing a single decision algorithm on
  * each decision (in the proper order). 
  *
- * Note: Only OneTime algorithms are supported in multi-decision algorithms
+ * Note: Only OneTime algorithms are supported in multi-decision algorithms.
  */
 abstract class MultiDecisionAlgorithm(universe: Universe, utilityNodes: List[Element[_]], targets: List[Element[_]])
   extends OneTime {
 
   /**
-   * List of the single decision algorithms implemented in the multi-decision algorithm
+   * List of the single decision algorithms implemented in the multi-decision algorithm.
    */
   var algList: Map[Decision[_, _], OneTimeProbQueryDecision[_, _]] = Map()
 
@@ -48,7 +48,7 @@ abstract class MultiDecisionAlgorithm(universe: Universe, utilityNodes: List[Ele
     }
   }
   /**
-   * Get the utility for a specific parent and decision in the multi-decision algorithm
+   * Get the utility for a specific parent and decision in the multi-decision algorithm.
    */
   def getUtility[T, U](D: Decision[T, U], p: T, d: U) = {
     algList.get(D) match {
@@ -58,7 +58,7 @@ abstract class MultiDecisionAlgorithm(universe: Universe, utilityNodes: List[Ele
   }
 
   /**
-   * Computes the order in which decisions should be computed. Decision order goes from independent->dependent
+   * Computes the order in which decisions should be computed. Decision order goes from independent->dependent.
    * 
    */
   val decisionOrder = getDecisionOrder(targets, universe)
@@ -116,7 +116,7 @@ abstract class MultiDecisionAlgorithm(universe: Universe, utilityNodes: List[Ele
   override def cleanUp() = algList.foreach(_._2.kill)
 
   /**
-   * Run in a debug mode where only a single decision is run each time
+   * Run in a debug mode where only a single decision is run each time.
    *
    */
   def run(oneStep: Boolean): Unit = runMulti(decisionOrder, oneStep)

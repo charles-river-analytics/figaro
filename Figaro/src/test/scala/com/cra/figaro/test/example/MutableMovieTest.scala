@@ -36,10 +36,11 @@ class MutableMovieTest extends WordSpec with Matchers {
 
     "produce the correct probability under Metropolis-Hastings" taggedAs (Example, NonDeterministic) in {
       test((e: Element[Boolean]) => MetropolisHastings(200000, chooseScheme, e))
+      println(com.cra.figaro.util.seed)
     }
   }
 
-  val random = new scala.util.Random()
+  val random = com.cra.figaro.util.random
 
   val numActors = 2
   val numMovies = 2

@@ -1,13 +1,13 @@
 /*
  * Universe.scala
  * Universes of elements.
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -27,7 +27,7 @@ import scala.collection.generic.Shrinkable
  *
  * Ordinarily, the arguments of elements in a universe must also belong to the universe. You can
  * optionally supply a list of parent elements that contains other elements that can be arguments.
- * 
+ *
  * @param parentElements The parent elements on which this universe depends.
  */
 class Universe(val parentElements: List[Element[_]] = List()) extends ElementCollection {
@@ -46,7 +46,7 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
   /** Elements in the universe that are not defined in the context of another element. */
   def permanentElements: List[Element[_]] = myActiveElements.toList filterNot (_.isTemporary)
 
-  private val myConditionedElements: Set[Element[_]] = Set()  
+  private val myConditionedElements: Set[Element[_]] = Set()
 
   /** Elements in the universe that have had a condition applied to them. */
   def conditionedElements: List[Element[_]] = myConditionedElements.toList
@@ -141,7 +141,7 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
     elemGraphBuilder(List[(Element[_], Set[Element[_]])]() :+ (elem, Set[Element[_]]()), myUsedBy, myRecursiveUsedBy)
     myRecursiveUsedBy.getOrElse(elem, Set())
   }
-  
+
   /**
    * Returns the set of elements that are directly used by the given element, without recursing.
    */
@@ -170,8 +170,9 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
   private[language] def activate(element: Element[_]): Unit = {
     if (element.active)
       throw new IllegalArgumentException("Activating active element")
-    if (element.args exists (!_.active)) 
-      throw new IllegalArgumentException("Attempting to activate element with inactive argument")
+//    if (element.args exists (!_.active))
+//      throw new IllegalArgumentException("Attempting to activate element with inactive argument")
+    element.args.filter(!_.active).foreach(activate(_))
     myActiveElements.add(element)
     if (!element.isInstanceOf[Deterministic[_]]) myStochasticElements.add(element)
 
@@ -181,6 +182,8 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
     }
     element.args foreach (registerUses(element, _))
     element.active = true
+//    myRecursiveUsedBy.clear
+//    myRecursiveUses.clear
   }
 
   private[language] def deactivate(element: Element[_]): Unit = {
@@ -198,7 +201,7 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
     element.active = false
     element.args foreach (deregisterUses(element, _))
 
-    //Make sure that if another element uses this element, that we remove it from the UsedBy     
+    //Make sure that if another element uses this element, that we remove it from the UsedBy
     if (myUsedBy.contains(element) && !myUsedBy(element).isEmpty) {
       myUsedBy(element) foreach (deregisterUses(_, element))
     }
@@ -265,27 +268,27 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
    * This avoids memory management problems.
    */
   def register(collection: Shrinkable[Element[_]]): Unit = registeredMaps += collection
-  
+
   /** Deregister a map of elements. */
   def deregister(collection: Shrinkable[Element[_]]): Unit = registeredMaps -= collection
 
   // Immediately register the constrained and conditioned elements
   register(myConditionedElements)
   register(myConstrainedElements)
-  
+
   /**
    * Register the maps that this universe is used as a key.
-   * Needed to make sure Universe is garbage collected when cleared and dereferenced
+   * Needed to make sure Universe is garbage collected when cleared and dereferenced.
    */
   def registerUniverse(map: Map[Universe, _]): Unit = registeredUniverseMaps += map
 
   /** Deregister a map that uses this universe as a key. */
   def deregisterUniverse(map: Map[Universe, _]): Unit = registeredUniverseMaps -= map
-  
+
   /**
    * Register algorithms that use this universe.
    * When the Universe is cleared, all previous algorithms are no longer valid,
-   * so they must be killed (if still running)
+   * so they must be killed (if still running).
    */
   def registerAlgorithm(alg: Algorithm): Unit = registeredAlgorithms += alg
 
@@ -322,7 +325,7 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
 
   /*
    * Recursively (depth-first) builds a usedBy/uses graph and will re-use previously cached paths
-   * base is a data structure that just contains the direct edges. existing contains 
+   * base is a data structure that just contains the direct edges. existing contains
    * any previous recursive paths that have already been cached.
    */
   @tailrec
@@ -361,10 +364,9 @@ object Universe {
   }
 }
 
-
 //This could go in Evidence instead of here.
 object AssertEvidence {
-  
+
     /**
    * Assert the given evidence associated with references to elements in the collection.
    */
@@ -375,7 +377,7 @@ object AssertEvidence {
   def apply[T](evidence: NamedEvidence[T]): Unit = {
     apply(evidence.reference, evidence.evidence)
   }
-  
+
   /**
    *   Assert the given evidence on the given reference. The third argument is an optional contingency.
    *   This method makes sure to assert the evidence on all possible resolutions of the reference.

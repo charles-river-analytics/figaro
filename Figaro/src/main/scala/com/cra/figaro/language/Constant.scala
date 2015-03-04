@@ -1,13 +1,13 @@
 /*
  * Constant.scala
  * Constant elements.
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -18,10 +18,15 @@ package com.cra.figaro.language
  */
 
 class Constant[T](name: Name[T], val constant: T, collection: ElementCollection)
-  extends Deterministic[T](name, collection) with Atomic[T] with Cacheable[T] {
+  /* Avi: We don't handle point mass (infinite) densities properly, so I'm removing density. */
+  /* Stuart and his students have a paper on propertly handling point masses - we should look at it. */
+  //extends Deterministic[T](name, collection) with Atomic[T] with Cacheable[T] {
+  extends Deterministic[T](name, collection) with Cacheable[T] {
+  def args = List()
+
   def generateValue() = constant
 
-  def density(t: T) = if (t == constant) Double.PositiveInfinity; else 0.0
+  //def density(t: T) = if (t == constant) Double.PositiveInfinity; else 0.0
 
   override def toString = "Constant(" + constant.toString + ")"
 }

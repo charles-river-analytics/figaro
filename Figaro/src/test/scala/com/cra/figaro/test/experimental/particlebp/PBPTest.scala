@@ -62,12 +62,12 @@ class PBPTest extends WordSpec with Matchers {
         Inject(f:_*)
       })
       val pbpSampler = ParticleGenerator(Universe.universe ) 
-      pbpSampler.update(n, List[(Double, _)]((1.0, 2.0)))
+      pbpSampler.update(n, pbpSampler.numArgSamples, List[(Double, _)]((1.0, 2.0)))
       val bpb = ParticleBeliefPropagation(1, 1, items)
       bpb.runOuterLoop
       val fg_2 = bpb.bp.factorGraph.getNodes.filter(p => p.isInstanceOf[VariableNode]).toSet
       
-      pbpSampler.update(n, List[(Double, _)]((1.0, 3.0)))
+      pbpSampler.update(n, pbpSampler.numArgSamples, List[(Double, _)]((1.0, 3.0)))
       val dependentElems = Set[Element[_]](n, number, items)
       bpb.runInnerLoop(dependentElems, Set())
       // Currently have to subtract 3 since the old factors for n = 2 also get created since they exist in the chain cache
@@ -97,9 +97,9 @@ class PBPTest extends WordSpec with Matchers {
 
       val tol = 0.025
       val a = bp.distribution(e1).toList
-      println(a)
+      
       val b = bp.distribution(ep).toList
-      println(b)
+      
       bp.probability(e2, (i: Int) => i == 0) should be(e2_0 +- tol)
       bp.probability(e2, (i: Int) => i == 1) should be(e2_1 +- tol)
       bp.probability(e2, (i: Int) => i == 2) should be(e2_2 +- tol)

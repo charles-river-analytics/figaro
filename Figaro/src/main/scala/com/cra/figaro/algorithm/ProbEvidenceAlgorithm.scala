@@ -50,7 +50,7 @@ trait ProbEvidenceAlgorithm extends Algorithm {
   }
 
   /**
-   * The computed probability of evidence
+   * The computed probability of evidence.
    */
   def probEvidence: Double = {
     if (!active) throw new AlgorithmInactiveException
@@ -58,7 +58,7 @@ trait ProbEvidenceAlgorithm extends Algorithm {
   }
 
    /**
-   * The computed log probability of evidence
+   * The computed log probability of evidence.
    */
   def logProbEvidence: Double = {
     if (!active) throw new AlgorithmInactiveException
@@ -74,10 +74,11 @@ trait ProbEvidenceAlgorithm extends Algorithm {
    * with the initialize method, called when the algorithm starts, and the cleanUp method, called when the algorithm is killed.
    */
   override def initialize(): Unit = {
-    super.initialize()
+    
     savedConditions = for { NamedEvidence(ref, _, _) <- evidence } yield universe.get(ref).allConditions
     savedConstraints = for { NamedEvidence(ref, _, _) <- evidence } yield universe.get(ref).allConstraints
     universe.assertEvidence(evidence)
+    super.initialize()
   }
 
   /**

@@ -20,7 +20,6 @@ import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.decision._
 import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.algorithm.lazyfactored._
-import Factory._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.test.tags.Performance
 import com.cra.figaro.library.decision._
@@ -69,7 +68,7 @@ class DecisionVETest extends WordSpec with Matchers {
 
       "replace the old strategy" in {
         val (d, alg) = DecisionDiscrete((e1: List[Element[Double]], e2: Decision[Int, Boolean]) => DecisionVariableElimination(e1, e2))
-        val v = VariableElimination.debugged(d)
+        val v = VariableElimination(d)
         v.start()
         v.probability(d, true) should equal(.75 * .5)
         v.probability(d, false) should equal(1 - .75 * .5)

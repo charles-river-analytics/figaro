@@ -1,13 +1,13 @@
 /*
  * MutableMovie.scala
  * A probabilistic relational model example with multi-valued attributes.
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -17,6 +17,7 @@ import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound._
+import com.cra.figaro.library.collection.Container
 import com.cra.figaro.library.atomic.discrete._
 import com.cra.figaro.util
 
@@ -24,22 +25,26 @@ import com.cra.figaro.util
  * A probabilistc relational model example with multi-valued attributes.
  */
 object MutableMovie {
-  private val random = new scala.util.Random()
+  private val random = com.cra.figaro.util.random
 
   private class Actor {
     var movies: List[Movie] = List()
 
     lazy val skillful = Flip(0.1)
 
-    lazy val famous = Flip(Apply(Inject(movies.map(_.quality): _*), probFamous _))
+    lazy val qualities = Container(movies.map(_.quality):_*)
 
-    private def probFamous(qualities: Seq[Symbol]) = if (qualities.count(_ == 'high) >= 2) 0.8; else 0.1
+    lazy val numGoodMovies = qualities.count(_ == 'high)
+
+    lazy val famous = Chain(numGoodMovies, (n: Int) => if (n >= 2) Flip(0.8) else Flip(0.1))
   }
 
   private class Movie {
     var actors: List[Actor] = List()
 
-    lazy val actorsAllGood = Apply(Inject(actors.map(_.skillful): _*), (s: Seq[Boolean]) => !(s.contains(false)))
+    lazy val skills = Container(actors.map(_.skillful):_*)
+
+    lazy val actorsAllGood = skills.exists(b => b)
 
     lazy val probLow = Apply(actorsAllGood, (b: Boolean) => if (b) 0.2; else 0.5)
 
