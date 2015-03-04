@@ -1,6 +1,6 @@
 /*
  * DecisionTestCases.scala 
- * Needs description
+ * 
  * 
  * Created By:      Brian Ruttenberg (bruttenberg@cra.com)
  * Creation Date:   Jan 1, 2009

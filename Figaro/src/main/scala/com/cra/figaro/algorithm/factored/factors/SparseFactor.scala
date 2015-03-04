@@ -56,7 +56,7 @@ class SparseFactor[T](parents: List[Variable[_]], output: List[Variable[_]])(imp
   /**
    * List the indices with non-default values
    */
-  override def getIndices = contents.keys.toList
+ override def getIndices: Indices = new SparseIndices(variables)
 
   /**
    * Generic combination function for factors. By default, this is product, but other operations
@@ -70,7 +70,7 @@ class SparseFactor[T](parents: List[Variable[_]], output: List[Variable[_]])(imp
     val result = createFactor[T](allParents, allChildren)
 
     for {
-      thisIndices <- getIndices
+      thisIndices <- this.getIndices
       thatIndices <- that.getIndices
     } {
       Factor.combineIndices(thisIndices, thisIndexMap, thatIndices, thatIndexMap, result.numVars) match {
@@ -180,4 +180,41 @@ class SparseFactor[T](parents: List[Variable[_]], output: List[Variable[_]])(imp
     result
   }
 
+  class SparseIndices(variables: List[Variable[_]]) extends Indices(variables) {
+    override def iterator = contents.keys.iterator
+ 
+    /**
+     * Given a list of indices corresponding to a row in the factor, returns the list of indices
+     * corresponding to the next row.
+     * Returns None if the last index list has been reached.
+    */
+    override def nextIndices(indices: List[Int]): Option[List[Int]] = {
+      var current = indices
+      // Copies all values prior to the position
+      // Increments the position value by 1
+      // Sets all values after the position to 0
+      def makeNext(position: Int) = for { i <- 0 until numVars } yield {
+        if (i < position) current(i)
+        else if (i > position) 0
+        else current(position) + 1
+      }
+
+      // Checks to see if variable at position is exhausted
+      // If so recurses to next position
+      def helper(position: Int): Option[List[Int]] =
+        if (position < 0) None
+        else if (current(position) < limits(position)) { 
+          val nextIndices = makeNext(position).toList
+          if (contents.contains(nextIndices)) {
+            Some(nextIndices)
+          }
+          else {
+            current = nextIndices
+            helper(position)
+          }
+        }
+        else helper(position - 1)
+      helper(numVars - 1)
+    }
+  }
 }

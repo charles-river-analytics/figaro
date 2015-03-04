@@ -13,6 +13,7 @@
 package com.cra.figaro.algorithm.factored.factors
 
 import scala.annotation.tailrec
+import scala.collection.Iterable
 import scala.collection.mutable.ListBuffer
 import com.cra.figaro.language.Element
 import com.cra.figaro.algorithm.lazyfactored.Extended
@@ -80,26 +81,8 @@ trait Factor[T] {
     (initial /: contents.values)(fn(_, _))
   }
 
-  /**
-   * Returns the list of indices into the variable ranges associated with the first row in the factor.
-   */
-  def firstIndices: List[Int] = List.fill(numVars)(0)
+  def getIndices: Indices = new Indices(variables)
 
-  /**
-   * Returns the indices lists corresponding to all the rows in order.
-   */
-  def generateAllIndices: List[List[Int]] = {
-    @tailrec def helper(current: List[Int], accum: List[List[Int]]): List[List[Int]] =
-      nextIndices(current) match {
-        case Some(next) => helper(next, current :: accum)
-        case None => (current :: accum).reverse
-      }
-    if (isEmpty) List()
-    else helper(firstIndices, List())
-  }
-
-  def getIndices: List[List[Int]]
-  
   def convertIndicesToValues(indices: List[Int]): List[Extended[_]] = {
     val values = for {i <- 0 until indices.size} yield variables(i).range(indices(i)) 
     values.toList
@@ -119,30 +102,6 @@ trait Factor[T] {
    * into the ranges of the variables over which the factor is defined.
    */
   def get(indices: List[Int]): T
-
-  /**
-   * Given a list of indices corresponding to a row in the factor, returns the list of indices
-   * corresponding to the next row.
-   * Returns None if the last index list has been reached.
-   */
-  def nextIndices(indices: List[Int]): Option[List[Int]] = {
-    // Copies all values prior to the position
-    // Increments the position value by 1
-    // Sets all values after the position to 0
-    def makeNext(position: Int) = for { i <- 0 until numVars } yield {
-      if (i < position) indices(i)
-      else if (i > position) 0
-      else indices(position) + 1
-    }
-
-    // Checks to see if variable at position is exhausted
-    // If so recurses to next position
-    def helper(position: Int): Option[List[Int]] =
-      if (position < 0) None
-      else if (indices(position) < variables(position).size - 1) Some(makeNext(position).toList)
-      else helper(position - 1)
-    helper(numVars - 1)
-  }
 
   /**
    * Fill the contents of this factor by applying a rule to every combination of values.
@@ -214,6 +173,56 @@ trait Factor[T] {
    */
   def toReadableString: String
 
+}
+
+class Indices(variables: List[Variable[_]]) extends Iterable[List[Int]] {
+  val limits = variables.map(_.size.asInstanceOf[Int] - 1)
+  val numVars = limits.length
+
+  def iterator = new Iterator[List[Int]] {
+    var current: List[Int] = List(-1)
+    def hasNext = {
+      current match {
+        case List(-1) =>
+          current = List.fill(numVars)(0)
+          true
+        case l: List[Int] =>
+          nextIndices(l) match {
+            case Some(i) =>
+              current = i
+              true
+            case None => false
+          }
+        case _ => false
+      }
+    }
+
+    def next: List[Int] = current
+  }
+
+  /**
+   * Given a list of indices corresponding to a row in the factor, returns the list of indices
+   * corresponding to the next row.
+   * Returns None if the last index list has been reached.
+   */
+  def nextIndices(indices: List[Int]): Option[List[Int]] = {
+    // Copies all values prior to the position
+    // Increments the position value by 1
+    // Sets all values after the position to 0
+    def makeNext(position: Int) = for { i <- 0 until numVars } yield {
+      if (i < position) indices(i)
+      else if (i > position) 0
+      else indices(position) + 1
+    }
+
+    // Checks to see if variable at position is exhausted
+    // If so recurses to next position
+    def helper(position: Int): Option[List[Int]] =
+      if (position < 0) None
+      else if (indices(position) < limits(position)) Some(makeNext(position).toList)
+      else helper(position - 1)
+    helper(numVars - 1)
+  }
 }
 
 object Factor {
