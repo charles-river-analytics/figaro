@@ -66,11 +66,7 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
   def get(indices: List[Int]): T = {
     contents(indices)
   }
-  
-  override def getIndices = {
-    generateAllIndices
-  }
-  
+    
   /**
    * Convert the contents of the target by applying the given function to all elements of this factor.
    */

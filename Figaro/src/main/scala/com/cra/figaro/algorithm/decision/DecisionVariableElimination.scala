@@ -198,7 +198,7 @@ class ProbQueryVariableEliminationDecision[T, U](override val universe: Universe
     val indexOfDecision = indices(factor.variables, decisionVariable)
     val indexOfParent = indices(factor.variables, parentVariable)
 
-    for { indices <- factor.generateAllIndices } {
+    for { indices <- factor.getIndices} {
 
       /* for each index in the list of indices, strip out the decision variable index, 
        * and retrieve the map entry for the parents. If the factor value is greater than
