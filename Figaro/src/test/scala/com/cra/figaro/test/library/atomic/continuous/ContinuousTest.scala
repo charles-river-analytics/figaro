@@ -717,8 +717,8 @@ class ContinuousTest extends WordSpec with Matchers {
       }
       val alg = MetropolisHastings(200000, ProposalScheme.default, a, b)
       alg.start()
-      alg.mean(a) should be(2.0 +- 1.0)
-      alg.mean(b) should be(5.0 +- 1.0)
+      alg.mean(a) should be(2.0 +- 1.5)
+      alg.mean(b) should be(5.0 +- 1.5)
       alg.stop()
       alg.kill
     }
@@ -736,10 +736,10 @@ class ContinuousTest extends WordSpec with Matchers {
         val beta = Beta(a, b)
         beta.observe(sample)
       }
-      val alg = Importance(20000, a, b)
+      val alg = Importance(40000, a, b)
       alg.start()
-      alg.mean(a) should be(2.0 +- 1.0)
-      alg.mean(b) should be(5.0 +- 1.0)
+      alg.mean(a) should be(2.0 +- 1.5)
+      alg.mean(b) should be(5.0 +- 1.5)
       alg.stop()
       alg.kill
     }
