@@ -110,9 +110,6 @@ object FigaroBuild extends Build {
     .settings(test in assembly := {})
     .settings(jarName in assembly := "figaro_" + scalaMajorMinor + "-" + version.value + "-fat.jar")
     .settings(assemblyOption in assembly ~= { _.copy(includeScala = false) })
-    // sbt-scoverage settings
-    .settings(instrumentSettings: _*)
-    .settings(parallelExecution in ScoverageTest := false)
     // Copy dependency JARs
     .settings(copyDepTask)
       
