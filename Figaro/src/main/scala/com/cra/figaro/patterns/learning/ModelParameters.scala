@@ -22,7 +22,9 @@ import scala.collection.mutable.ListBuffer
 import com.cra.figaro.language.DoubleParameter
 import com.cra.figaro.language.ArrayParameter
 import com.cra.figaro.language.Parameter
-
+import argonaut._, Argonaut._
+import com.cra.figaro.library.atomic.continuous.Dirichlet
+import com.cra.figaro.library.atomic.continuous.Beta
 /**
  * Case classes defining type parameters of parameter elements.
  * These are used for matching on return types of parameter collections, and for
@@ -176,8 +178,38 @@ class ModelParameters extends ElementCollection {
 }
 
 object ModelParameters {
+
+  implicit val decodeJson: DecodeJson[Parameter[_]] = DecodeJson { c =>
+    c.downField("Beta").as[AtomicBeta] |||
+    c.downField("Dirichlet").as[AtomicDirichlet]
+  }
+
+  implicit def ModelParametersEncodeJson: EncodeJson[ModelParameters] = {
+    EncodeJson((params: ModelParameters) => {
+      val encodedParameters = for (p <- params.convertToParameterList) yield {
+        p match {
+          case b: Beta => ("Beta" := Beta.BetaEncodeJson(b)) ->: jEmptyObject
+          case d: Dirichlet => ("Dirichlet" := Dirichlet.DirichletEncodeJson(d)) ->: jEmptyObject
+          case default => throw new IllegalArgumentException("Unserializable parameter type.")
+        }
+      }
+      ("allParameters" := jArray(encodedParameters)) ->: jEmptyObject
+    })
+  }
+
+  
+  implicit def ModelParametersDecodeJson(implicit collection: ElementCollection): DecodeJson[ModelParameters] =
+    DecodeJson(c => for {
+      jsonParameters <- (c --\ "allParameters").as[List[Parameter[_]]]
+    } yield ModelParameters(jsonParameters))
+
   /**
    * Create a new set of model parameters.
    */
   def apply() = new ModelParameters()
+  def apply(l: List[Parameter[_]]) = {
+    val m = new ModelParameters()
+    l.foreach(m.add(_))
+    m
+  }
 }

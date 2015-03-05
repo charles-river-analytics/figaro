@@ -95,6 +95,7 @@ object FigaroBuild extends Build {
       "net.sf.jsci" % "jsci" % "1.2",
       "com.typesafe.akka" %% "akka-actor" % "2.3.8",
       "org.scalanlp" %% "breeze" % "0.10",
+	  "io.argonaut" %% "argonaut" % "6.0.4",
       "org.scalatest" %% "scalatest" % "2.2.1" % "test"
     ))
     // test settings
