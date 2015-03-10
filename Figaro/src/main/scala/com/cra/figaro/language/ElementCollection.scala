@@ -335,7 +335,7 @@ object ElementCollection {
   /*
    * Turns either a single element collection or a traversable of element collections into an element collection set
    */
-  private[language] def makeElementCollectionSet(value: Any): Set[ElementCollection] = {
+  private[figaro] def makeElementCollectionSet(value: Any): Set[ElementCollection] = {
     def makeEC[T](s: Set[T]) = s map (_.asInstanceOf[ElementCollection])
     value match {
       case ec: ElementCollection => Set(ec)
