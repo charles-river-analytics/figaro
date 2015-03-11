@@ -1,12 +1,122 @@
 package com.cra.figaro.experimental.structured
 
-import com.cra.figaro.language._
 import com.cra.figaro.algorithm.lazyfactored.ValueSet
-import ValueSet._
-import com.cra.figaro.util.homogeneousCartesianProduct
-import com.cra.figaro.algorithm.factored.ParticleGenerator
+import com.cra.figaro.algorithm.lazyfactored.ValueSet._
+import com.cra.figaro.language._
+import com.cra.figaro.library.compound.FastIf
+import com.cra.figaro.util.{MultiSet, homogeneousCartesianProduct}
+import com.cra.figaro.util.HashMultiSet
+
+
 
 object Range {
+  private def getRange[U](collection: ComponentCollection, otherElement: Element[U]): ValueSet[U] = {
+    if (collection.contains(otherElement)) collection(otherElement).range
+    else withStar(Set())
+  }
+
+  // Get the range of the reference by taking the union of the current ranges of all the current possible targets.
+  // Do not add any elements or expand any other ranges in the process in the process.
+  private def getRangeOfSingleValuedReference[V](cc: ComponentCollection, ec: ElementCollection, ref: Reference[V]): ValueSet[V] = {
+    val (firstElem, restRefOpt) = ec.getFirst(ref)
+    restRefOpt match {
+      case None => getRange(cc, firstElem.asInstanceOf[Element[V]])
+      case Some(restRef) =>
+        try {
+          val firstRange = getRange(cc, firstElem.asInstanceOf[Element[ElementCollection]])
+          val vss: scala.collection.immutable.Set[ValueSet[V]] =
+            for {
+              firstEC <- firstRange.regularValues
+            } yield {
+              getRangeOfSingleValuedReference(cc, firstEC, restRef)
+            }
+          val starter: ValueSet[V] = if (firstRange.hasStar) withStar(Set()) else withoutStar(Set())
+          vss.foldLeft(starter)(_ ++ _)
+        } catch {
+          case _: ClassCastException =>
+            println("Warning: head of indirect reference does not refer to an element collection; setting range to empty with *")
+            withStar(Set())
+        }
+    }
+  }
+
+  private def getRangeOfMultiValuedReference[V](cc: ComponentCollection, ec: ElementCollection, ref: Reference[V]): ValueSet[MultiSet[V]] = {
+
+    // This function gets all the lists of elements that could be joint targets of the given reference, starting in the given element collection.
+    // The first return value of this function is a set of all the possible lists of targets referred to by this reference.
+    // The second return value is a flag indicating whether any internal element in the path has *.
+    def getTargetSets(currentEC: ElementCollection, currentRef: Reference[V]): (Set[List[Element[V]]], Boolean) = {
+      val (firstElem, restRefOpt) = currentEC.getFirst(currentRef)
+      restRefOpt match {
+        case None => (Set(List(firstElem.asInstanceOf[Element[V]])), false)
+        case Some(restRef) =>
+          try {
+            var hasStar = false
+            val firstRange = getRange(cc, firstElem)
+            val targetSetSet: Set[Set[List[Element[V]]]] =
+              for {
+                value <- firstRange.regularValues
+              } yield {
+                val (targetSets, hs) = getTargetSetsHelper(value, restRef)
+                if (hs) hasStar = true
+                targetSets
+              }
+            (targetSetSet.flatten, hasStar || firstRange.hasStar)
+          } catch {
+            case _: IllegalArgumentException =>
+              println("Warning: head of indirect reference does not refer to an element collection; setting range to empty with *")
+              (Set(), true)
+          }
+      }
+    }
+
+    // This function gets all the lists of elements that could be joint targets of a set of element collections.
+    // The first argument is a value that can be used to create a set of element collections.
+    // The second argument is the remaining reference that starts from each of these element collections.
+    // For each element collection in the set, we get the possible lists of targets resulting from that element collection.
+    // Then we get all possible lists that contain a list for each element collection. 
+    // Each one of these lists, when flattened, contains a list of elements that is one possible joint target,
+    // so it is returned in the result.
+    // This function also keeps track of whether any element involved has * in its range. 
+    def getTargetSetsHelper[T](ecMaker: T, restRef: Reference[V]): (Set[List[Element[V]]], Boolean) = {
+      val ecs: List[ElementCollection] = ElementCollection.makeElementCollectionSet(ecMaker).toList
+      var hasStar = false
+      val subTargetSets: List[List[List[Element[V]]]] =
+        for { ec <- ecs.toList } yield {
+          val (subTargetSet, hs) = getTargetSets(ec, restRef)
+          if (hs) hasStar = true
+          subTargetSet.toList
+        }
+      val combinations: List[List[List[Element[V]]]] = homogeneousCartesianProduct(subTargetSets:_*)
+      val targetSets = combinations.map(_.flatten).toSet
+      (targetSets, hasStar)
+    }
+    
+    def getMultiSetPossibilities(targetSet: List[Element[V]]): ValueSet[MultiSet[V]] = {
+      val ranges: List[ValueSet[V]] = targetSet.map(getRange(cc, _))
+      val regularRanges: List[List[V]] = ranges.map(_.regularValues.toList)
+      val possibilities: List[List[V]] = homogeneousCartesianProduct(regularRanges:_*)
+      val multiSets: List[MultiSet[V]] =
+        for {
+          possibility <- possibilities
+        } yield {
+          val multiSet = new HashMultiSet[V]
+          possibility.foreach(multiSet.addOne(_))
+          multiSet
+        }
+      if (ranges.exists(_.hasStar)) withStar(multiSets.toSet) else withoutStar(multiSets.toSet)
+    }
+
+    // First step is to get the current possible target sets.
+    // Then, for each target set, we get all the possible multisets of their values.
+    // Then, we take the union of these multisets.
+    // Does not add any elements or expand any other ranges.
+    val (targetSets, hasStar) = getTargetSets(ec, ref)
+    val multiSetPossibilities = targetSets.map(getMultiSetPossibilities(_))
+    val starter: ValueSet[MultiSet[V]] = if (hasStar) withStar(Set()) else withoutStar(Set())
+    multiSetPossibilities.foldLeft(starter)(_ ++ _)
+  }
+
   def apply[V](component: ProblemComponent[V]): ValueSet[V] = {
     component match {
       case cc: ChainComponent[_,V] => chainRange(cc)
@@ -15,30 +125,20 @@ object Range {
   }
 
   private def chainRange[P, V](component: ChainComponent[P, V]): ValueSet[V] = {
-    def getRange[U](otherElement: Element[U]): ValueSet[U] = {
-      val collection = component.problem.collection
-      if (collection.contains(otherElement)) collection(otherElement).range
-      else withStar(Set())
-    }
-
-    val parentVs = getRange(component.chain.parent)
+    val collection = component.problem.collection
+    val parentVs = getRange(collection, component.chain.parent)
     val resultVs =
       for {
         parentV <- parentVs.regularValues
         subproblem <- component.subproblems.get(parentV)
-      } yield getRange(subproblem.target)
+      } yield getRange(collection, subproblem.target)
     val fullyExpanded = parentVs.regularValues.forall(component.subproblems.contains(_))
     val starter: ValueSet[V] = if (parentVs.hasStar || !fullyExpanded) withStar(Set()) else withoutStar(Set())
     resultVs.foldLeft(starter)(_ ++ _)
   }
 
   private def nonChainRange[V](component: ProblemComponent[V]): ValueSet[V] = {
-    def getRange[U](otherElement: Element[U]): ValueSet[U] = {
-      val collection = component.problem.collection
-      if (collection.contains(otherElement)) collection(otherElement).range
-      else withStar(Set())
-    }
-
+    val collection = component.problem.collection
     component.element match {
       case c: Constant[_] => withoutStar(Set(c.constant))
 
@@ -47,13 +147,13 @@ object Range {
       case s: Select[_, _] => withoutStar(Set(s.outcomes: _*))
 
       case d: Dist[_, _] =>
-        val componentSets = d.outcomes.map(getRange(_))
+        val componentSets = d.outcomes.map(getRange(collection, _))
         componentSets.reduce(_ ++ _)
 
-      //case i: FastIf[_] => withoutStar(Set(i.thn, i.els))
+      case i: FastIf[_] => withoutStar(Set(i.thn, i.els))
 
       case a: Apply1[_, _] =>
-        val vs1 = getRange(a.arg1)
+        val vs1 = getRange(collection, a.arg1)
         vs1.map(a.fn)
 //        val applyMap = getMap(a)
 //        val vs1 = LazyValues(a.arg1.universe).storedValues(a.arg1)
@@ -66,8 +166,8 @@ object Range {
 //        if (vs1.hasStar) withStar(resultsSet); else withoutStar(resultsSet)
 
       case a: Apply2[_, _, _] =>
-        val vs1 = getRange(a.arg1)
-        val vs2 = getRange(a.arg2)
+        val vs1 = getRange(collection, a.arg1)
+        val vs2 = getRange(collection, a.arg2)
         val resultSet =
           for {
             v1 <- vs1.regularValues
@@ -90,9 +190,9 @@ object Range {
 //        if (vs1.hasStar || vs2.hasStar) withStar(resultsList.toSet); else withoutStar(resultsList.toSet)
 
       case a: Apply3[_, _, _, _] =>
-        val vs1 = getRange(a.arg1)
-        val vs2 = getRange(a.arg2)
-        val vs3 = getRange(a.arg3)
+        val vs1 = getRange(collection, a.arg1)
+        val vs2 = getRange(collection, a.arg2)
+        val vs3 = getRange(collection, a.arg3)
         val resultSet =
           for {
             v1 <- vs1.regularValues
@@ -118,10 +218,10 @@ object Range {
 //        if (vs1.hasStar || vs2.hasStar || vs3.hasStar) withStar(resultsList.toSet); else withoutStar(resultsList.toSet)
 
       case a: Apply4[_, _, _, _, _] =>
-        val vs1 = getRange(a.arg1)
-        val vs2 = getRange(a.arg2)
-        val vs3 = getRange(a.arg3)
-        val vs4 = getRange(a.arg4)
+        val vs1 = getRange(collection, a.arg1)
+        val vs2 = getRange(collection, a.arg2)
+        val vs3 = getRange(collection, a.arg3)
+        val vs4 = getRange(collection, a.arg4)
         val resultSet =
           for {
             v1 <- vs1.regularValues
@@ -150,11 +250,11 @@ object Range {
 //        if (vs1.hasStar || vs2.hasStar || vs3.hasStar || vs4.hasStar) withStar(resultsList.toSet); else withoutStar(resultsList.toSet)
 
       case a: Apply5[_, _, _, _, _, _] =>
-        val vs1 = getRange(a.arg1)
-        val vs2 = getRange(a.arg2)
-        val vs3 = getRange(a.arg3)
-        val vs4 = getRange(a.arg4)
-        val vs5 = getRange(a.arg5)
+        val vs1 = getRange(collection, a.arg1)
+        val vs2 = getRange(collection, a.arg2)
+        val vs3 = getRange(collection, a.arg3)
+        val vs4 = getRange(collection, a.arg4)
+        val vs5 = getRange(collection, a.arg5)
         val resultSet =
           for {
             v1 <- vs1.regularValues
@@ -213,7 +313,7 @@ object Range {
 //        resultVSs.foldLeft(startVS)(_ ++ _)
 
       case i: Inject[_] =>
-        val argVSs = i.args.map(getRange(_))
+        val argVSs = i.args.map(getRange(collection, _))
 //        val elementVSs = i.args.map(arg => LazyValues(arg.universe).storedValues(arg))
         val incomplete = argVSs.exists(_.hasStar)
         val elementValues = argVSs.toList.map(_.regularValues.toList)
@@ -232,6 +332,15 @@ object Range {
 //        val samples = thisSampler(a, thisSampler.numArgSamples)
 //        withoutStar(samples.unzip._2.toSet)
 //      }
+
+      case r: SingleValuedReferenceElement[_] => getRangeOfSingleValuedReference(collection, r.collection, r.reference)
+
+      case r: MultiValuedReferenceElement[_] => getRangeOfMultiValuedReference(collection, r.collection, r.reference)
+
+      case a: Aggregate[_,_] =>
+        val inputs = getRange(collection, a.mvre)
+        val resultValues = inputs.regularValues.map(a.aggregate(_))
+        if (inputs.hasStar) withStar(resultValues); else withoutStar(resultValues)
 
       case _ =>
         /* A new improvement - if we can't compute the values, we just make them *, so the rest of the computation can proceed */
