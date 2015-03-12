@@ -129,23 +129,23 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
       Factory.make(v1)(0).get(List(0)) should equal(f1mod.get(List(0)))
     } 
 
-    "have the first index List be all zeros" in {
-      Universe.createNew()
-      val e1 = Flip(0.1)
-      val e2 = Constant(8)
-      val e3 = Select(0.2 -> "a", 0.3 -> "b", 0.5 -> "c")
-      val e4 = Flip(0.7)
-      Values()(e1)
-      Values()(e2)
-      Values()(e3)
-      Values()(e4)
-      val v1 = Variable(e1)
-      val v2 = Variable(e2)
-      val v3 = Variable(e3)
-      val v4 = Variable(e4)
-      val f = Factory.simpleMake[Double](List(v1, v2, v3, v4))
-      f.firstIndices should equal(List(0, 0, 0, 0))
-    }
+//    "have the first index List be all zeros" in {
+//      Universe.createNew()
+//      val e1 = Flip(0.1)
+//      val e2 = Constant(8)
+//      val e3 = Select(0.2 -> "a", 0.3 -> "b", 0.5 -> "c")
+//      val e4 = Flip(0.7)
+//      Values()(e1)
+//      Values()(e2)
+//      Values()(e3)
+//      Values()(e4)
+//      val v1 = Variable(e1)
+//      val v2 = Variable(e2)
+//      val v3 = Variable(e3)
+//      val v4 = Variable(e4)
+//      val f = Factory.simpleMake[Double](List(v1, v2, v3, v4))
+//      f.firstIndices should equal(List(0, 0, 0, 0))
+//    }
 
     "have the next index List carry and add correctly" in {
       Universe.createNew()
@@ -163,7 +163,8 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
       val v4 = Variable(e4)
       val f = Factory.simpleMake[Double](List(v1, v2, v3, v4))
       val ia = List(1, 0, 1, 1)
-      val ar = f.nextIndices(ia).get
+      val indices = f.getIndices
+      val ar = indices.nextIndices(ia).get
       ar should equal(List(1, 0, 2, 0))
     }
 
@@ -183,7 +184,8 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
       val v4 = Variable(e4)
       val f = Factory.simpleMake[Double](List(v1, v2, v3, v4))
       val ia = List(1, 0, 2, 1)
-      f.nextIndices(ia) should equal(None)
+      val indices = f.getIndices
+      indices.nextIndices(ia) should equal(None)
     }
 
     "compute the union of variables in two factors and the correct index maps when calling unionVars" in {

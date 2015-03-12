@@ -255,7 +255,7 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
     
     val variable = factor.variables(0)
     val ff = normalize(factor)
-    ff.getIndices.filter(f => variable.range(f.head).isRegular).map(f => (Math.exp(ff.get(f)), variable.range(f.head).value))
+    ff.getIndices.filter(f => variable.range(f.head).isRegular).map(f => (Math.exp(ff.get(f)), variable.range(f.head).value)).toList
   }
 
   /**

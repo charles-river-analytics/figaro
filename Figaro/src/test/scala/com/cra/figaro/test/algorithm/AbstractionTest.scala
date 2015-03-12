@@ -137,9 +137,9 @@ class AbstractionTest extends WordSpec with Matchers {
         val factor = factors(0)
         val variable = Variable(uniform)
         factor.variables should equal(List(variable))
-        val allIndices = factor.getIndices
-        allIndices.size should equal(numBins)
-        for { indices <- allIndices } {
+ 
+        factor.getIndices.foldLeft(0)((sum, _) => sum + 1) should equal(numBins)
+        for { indices <- factor.getIndices} {
           factor.get(indices) should be(1.0 / max +- 0.000001) // constant density of Uniform(0, max)
         }
       }
@@ -162,7 +162,8 @@ class AbstractionTest extends WordSpec with Matchers {
         val uniformVariable = Variable(uniform)
         val applyVariable = Variable(apply)
         factor.variables should equal(List(uniformVariable, applyVariable))
-        factor.generateAllIndices.size should equal(numBinsUniform * numBinsApply)
+        // No longer true for sparse factors
+        // factor.getIndices.foldLeft(0)((sum, _) => sum + 1) should equal(numBinsUniform * numBinsApply)
         val uniformValues: List[Double] = uniformVariable.range.map(_.value)
         val applyValues: List[Double] = applyVariable.range.map(_.value)
         def check(uniformValue: Double, applyValue: Double): Boolean = {
@@ -201,7 +202,8 @@ class AbstractionTest extends WordSpec with Matchers {
         val uniform2Variable = Variable(uniform2)
         val applyVariable = Variable(apply)
         factor.variables should equal(List(uniform1Variable, uniform2Variable, applyVariable))
-        factor.generateAllIndices.size should equal(numBinsUniform * numBinsUniform * numBinsApply)
+        // No longer true for sparse factors
+        // factor.getIndices.foldLeft(0)((sum, _) => sum + 1) should equal(numBinsUniform * numBinsUniform * numBinsApply)
         val uniform1Values: List[Double] = uniform1Variable.range.map(_.value)
         val uniform2Values: List[Double] = uniform2Variable.range.map(_.value)
         val applyValues: List[Double] = applyVariable.range.map(_.value)
@@ -246,7 +248,8 @@ class AbstractionTest extends WordSpec with Matchers {
         val uniform3Variable = Variable(uniform3)
         val applyVariable = Variable(apply)
         factor.variables should equal(List(uniform1Variable, uniform2Variable, uniform3Variable, applyVariable))
-        factor.generateAllIndices.size should equal(numBinsUniform * numBinsUniform * numBinsUniform * numBinsApply)
+        // No longer true for sparse factors
+        // factor.getIndices.foldLeft(0)((sum, _) => sum + 1) should equal(numBinsUniform * numBinsUniform * numBinsUniform * numBinsApply)
         val uniform1Values: List[Double] = uniform1Variable.range.map(_.value)
         val uniform2Values: List[Double] = uniform2Variable.range.map(_.value)
         val uniform3Values: List[Double] = uniform3Variable.range.map(_.value)
@@ -291,8 +294,8 @@ class AbstractionTest extends WordSpec with Matchers {
         val uniform2Variable = Variable(uniform2)
         val chainVariable = Variable(chain)
         factor1.variables should equal(List(flipVariable, uniform1Variable, chainVariable))
-        factor1.getIndices.size should equal(2 * numBinsChain * numBinsUniform)
-        factor2.getIndices.size should equal(2 * numBinsChain * numBinsUniform)
+        factor1.getIndices.foldLeft(0)((sum, _) => sum + 1) should equal(2 * numBinsChain * numBinsUniform)
+        factor2.getIndices.foldLeft(0)((sum, _) => sum + 1) should equal(2 * numBinsChain * numBinsUniform)
         val flipValues: List[Boolean] = flipVariable.range.map(_.value)
         val uniform1Values: List[Double] = uniform1Variable.range.map(_.value)
         val uniform2Values: List[Double] = uniform2Variable.range.map(_.value)

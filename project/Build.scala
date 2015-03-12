@@ -1,3 +1,16 @@
+/*
+ * Build.scala 
+ * The Figaro project SBT build program.
+ * 
+ * Created By:      Michael Reposa (mreposa@cra.com)
+ * Creation Date:   Feb 17, 2014
+ * 
+ * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * See http://www.cra.com or email figaro@cra.com for information.
+ * 
+ * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
+
 import sbt._
 import Keys._
 import sbtassembly.Plugin._
@@ -82,6 +95,7 @@ object FigaroBuild extends Build {
       "net.sf.jsci" % "jsci" % "1.2",
       "com.typesafe.akka" %% "akka-actor" % "2.3.8",
       "org.scalanlp" %% "breeze" % "0.10",
+      "io.argonaut" %% "argonaut" % "6.0.4",
       "org.scalatest" %% "scalatest" % "2.2.1" % "test"
     ))
     // test settings
@@ -97,9 +111,6 @@ object FigaroBuild extends Build {
     .settings(test in assembly := {})
     .settings(jarName in assembly := "figaro_" + scalaMajorMinor + "-" + version.value + "-fat.jar")
     .settings(assemblyOption in assembly ~= { _.copy(includeScala = false) })
-    // sbt-scoverage settings
-    .settings(instrumentSettings: _*)
-    .settings(parallelExecution in ScoverageTest := false)
     // Copy dependency JARs
     .settings(copyDepTask)
       
