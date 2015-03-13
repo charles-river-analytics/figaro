@@ -117,6 +117,7 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
   override def doInitialize(): Unit = {
     Forward(universe)
     initConstrainedValues()
+    dissatisfied = universe.conditionedElements.toSet filter (!_.conditionSatisfied)
     currentEnergy = universe.constrainedElements.map(_.constraintValue).sum
     for { i <- 1 to burnIn } {
       val nextState = mhStep()
