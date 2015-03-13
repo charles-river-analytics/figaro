@@ -60,7 +60,6 @@ class ParticleGenerator(de: DensityEstimator, val numArgSamples: Int, val numTot
   def apply[T](elem: Element[T], numSamples: Int): List[(Double, T)] = {
     sampleMap.get(elem) match {
       case Some(e) => {
-        println(e.asInstanceOf[(List[(Double, T)], Int)]._1)
         e.asInstanceOf[(List[(Double, T)], Int)]._1
       }
       case None => {
@@ -70,7 +69,6 @@ class ParticleGenerator(de: DensityEstimator, val numArgSamples: Int, val numTot
         sampleMap += elem -> (result, numSamples)
         elem.universe.register(sampleMap)
         sampler.kill
-        println(result)
         result
       }
     }
