@@ -35,7 +35,7 @@ class MutableMovieTest extends WordSpec with Matchers {
     }
 
     "produce the correct probability under Metropolis-Hastings" taggedAs (Example, NonDeterministic) in {
-      test((e: Element[Boolean]) => MetropolisHastings(200000, chooseScheme, e))
+      test((e: Element[Boolean]) => MetropolisHastings(200000, chooseScheme, 10000, e))
       println(com.cra.figaro.util.seed)
     }
   }

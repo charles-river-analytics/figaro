@@ -260,7 +260,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
     updateMany(state1, updatesNeeded.toSet)
   }
 
-  protected var dissatisfied: Set[Element[_]] = universe.conditionedElements.toSet filter (!_.conditionSatisfied)
+  protected var dissatisfied: Set[Element[_]] = _
 
   protected def getDissatisfied = dissatisfied // for testing
 
@@ -365,8 +365,9 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
 
   protected def doInitialize(): Unit = {
     // Need to prime the universe to make sure all elements have a generated value
-    Forward(universe)
+    Forward(true)(universe)
     initConstrainedValues()
+    dissatisfied = universe.conditionedElements.toSet filter (!_.conditionSatisfied)
     for { i <- 1 to burnIn } mhStep()
   }
   /**
@@ -384,6 +385,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
     proposalCounts = Map((elementsToTrack map (_ -> 0)): _*)
     val successes: Map[Predicate[_], Int] = Map((predicates map (_ -> 0)): _*)
     this.elementsToTrack = Map((elementsToTrack map (_ -> null): _*))
+    dissatisfied = universe.conditionedElements.toSet filter (!_.conditionSatisfied)
     def collectResults() =
       for { predicate <- predicates } {
         if (predicate.test) successes += predicate -> (successes(predicate) + 1)

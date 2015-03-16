@@ -19,16 +19,16 @@ import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.algorithm.factored.beliefpropagation._
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound.If
-import com.cra.figaro.library.atomic.discrete.{Uniform => DUniform}
-import com.cra.figaro.library.atomic.continuous.{Uniform => CUniform}
+import com.cra.figaro.library.atomic.discrete.{ Uniform => DUniform }
+import com.cra.figaro.library.atomic.continuous.{ Uniform => CUniform }
 import com.cra.figaro.library.compound.IntSelector
 import com.cra.figaro.algorithm.UnsupportedAlgorithmException
 import com.cra.figaro.library.atomic.continuous.Normal
 import com.cra.figaro.experimental.particlebp.ParticleBeliefPropagation
 import com.cra.figaro.algorithm.factored.ParticleGenerator
 import com.cra.figaro.language.Name.stringToName
-import com.cra.figaro.library.atomic.continuous.{Uniform => CUniform}
-import com.cra.figaro.library.atomic.discrete.{Uniform => DUniform}
+import com.cra.figaro.library.atomic.continuous.{ Uniform => CUniform }
+import com.cra.figaro.library.atomic.discrete.{ Uniform => DUniform }
 import com.cra.figaro.library.atomic.discrete.Geometric
 import com.cra.figaro.library.atomic.continuous.Beta
 import com.cra.figaro.algorithm.sampling.Importance
@@ -41,7 +41,7 @@ class PBPTest extends WordSpec with Matchers {
   // all infinite elements are enabled
 
   "Running ParticleBeliefPropagation" should {
-    
+
     "resample after the inner loop" in {
       Universe.createNew()
       val n = Normal(0.0, 1.0)
@@ -52,28 +52,28 @@ class PBPTest extends WordSpec with Matchers {
       bpb.resample
       samples should not be pbpSampler(n)
     }
-    
+
     "change the factor structure with new samples on the outer loop" in {
       Universe.createNew()
       val n = Normal(2.0, 2.0)
       val number = Apply(n, (d: Double) => d.round.toInt)
       val items = Chain(number, (num: Int) => {
-        val f = for {i <- 0 until num} yield Flip(0.5)
-        Inject(f:_*)
+        val f = for { i <- 0 until num } yield Flip(0.5)
+        Inject(f: _*)
       })
-      val pbpSampler = ParticleGenerator(Universe.universe ) 
+      val pbpSampler = ParticleGenerator(Universe.universe)
       pbpSampler.update(n, pbpSampler.numArgSamples, List[(Double, _)]((1.0, 2.0)))
       val bpb = ParticleBeliefPropagation(1, 1, items)
       bpb.runOuterLoop
       val fg_2 = bpb.bp.factorGraph.getNodes.filter(p => p.isInstanceOf[VariableNode]).toSet
-      
+
       pbpSampler.update(n, pbpSampler.numArgSamples, List[(Double, _)]((1.0, 3.0)))
       val dependentElems = Set[Element[_]](n, number, items)
       bpb.runInnerLoop(dependentElems, Set())
       // Currently have to subtract 3 since the old factors for n = 2 also get created since they exist in the chain cache
       val fg_3 = bpb.bp.factorGraph.getNodes.filter(p => p.isInstanceOf[VariableNode]).toSet
-      val diff = fg_3 -- fg_2 
-      diff.nonEmpty should equal(true) 
+      val diff = fg_3 -- fg_2
+      diff.nonEmpty should equal(true)
     }
 
     /* Due to the way that factors are implemented for Chain, all 
@@ -87,9 +87,9 @@ class PBPTest extends WordSpec with Matchers {
       val ep = Apply(e1, (d: Double) => d.round.toInt)
       val e2 = IntSelector(ep)
 
-      val bp = ParticleBeliefPropagation(10, 30, e2, e1, ep)
+      val bp = ParticleBeliefPropagation(5, 30, 100, 100, e2, e1, ep)
       bp.start
-      
+
       val e2_0 = 0.33333333 * (0.5 + 0.3333333 + 0.25)
       val e2_1 = 0.33333333 * (0.5 + 0.3333333 + 0.25)
       val e2_2 = 0.33333333 * (0 + 0.3333333 + 0.25)
@@ -97,13 +97,29 @@ class PBPTest extends WordSpec with Matchers {
 
       val tol = 0.025
       val a = bp.distribution(e1).toList
-      
+
       val b = bp.distribution(ep).toList
-      
       bp.probability(e2, (i: Int) => i == 0) should be(e2_0 +- tol)
       bp.probability(e2, (i: Int) => i == 1) should be(e2_1 +- tol)
       bp.probability(e2, (i: Int) => i == 2) should be(e2_2 +- tol)
       bp.probability(e2, (i: Int) => i == 3) should be(e2_3 +- tol)
+    }
+
+    "correctly retrieve the last messages to recompute sample densities" in {
+      Universe.createNew()
+      val n = Normal(2.0, 2.0)
+      val number = Apply(n, (d: Double) => d.round.toInt)
+      val items = Chain(number, (num: Int) => {
+        val f = for { i <- 0 until num } yield Flip(0.5)
+        Inject(f: _*)
+      })
+      val bpb = ParticleBeliefPropagation(1, 1, items)
+      bpb.runInnerLoop(Set(), Set())
+      val msgs = bpb.getLastMessagesToNode(n)
+      msgs.size should be > 1
+      msgs(1).numVars should be(1)
+      msgs(1).contents.map(_._2).sum should be(0.0 +- .01)
+
     }
 
     "with no conditions or constraints produce the correct result" in {
@@ -112,7 +128,7 @@ class PBPTest extends WordSpec with Matchers {
       //val u = Select(0.25 -> 0.3, 0.25 -> 0.5, 0.25 -> 0.7, 0.25 -> 0.9)
       val f = Flip(u)
       val a = If(f, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
-      test(f, (b: Boolean) => b, 0.6, globalTol)
+      test(f, 1, 30, 100, 100, (b: Boolean) => b, 0.6, globalTol)
     }
 
     "with a condition on a dependent element produce the result with the correct probability" in {
@@ -125,7 +141,7 @@ class PBPTest extends WordSpec with Matchers {
       // U(false) = \int_{0.2}^{1.0) (1-p)
       val u1 = 0.35 * 0.96
       val u2 = 0.32
-      test(f, (b: Boolean) => b, u1 / (u1 + u2), globalTol)
+      test(f, 10, 30, 100, 100, (b: Boolean) => b, u1 / (u1 + u2), globalTol)
     }
 
     "with a constraint on a dependent element produce the result with the correct probability" in {
@@ -138,7 +154,7 @@ class PBPTest extends WordSpec with Matchers {
       // U(false) = \int_{0.2}^(1.0) (2 * (1-p)) = 0.64
       val u1 = 0.85 * 0.96
       val u2 = 0.64
-      test(f, (b: Boolean) => b, u1 / (u1 + u2), globalTol)
+      test(f, 10, 30, 100, 100, (b: Boolean) => b, u1 / (u1 + u2), globalTol)
     }
 
     "with an element that uses another element multiple times, " +
@@ -146,7 +162,7 @@ class PBPTest extends WordSpec with Matchers {
         Universe.createNew()
         val f = CUniform(0.3, 0.9)
         val e = f === f
-        test(e, (b: Boolean) => b, 1.0, globalTol)
+        test(e, 1, 30, 100, 100, (b: Boolean) => b, 1.0, globalTol)
       }
 
     "with a constraint on an element that is used multiple times, only factor in the constraint once" in {
@@ -161,7 +177,7 @@ class PBPTest extends WordSpec with Matchers {
       // Probability that e1 is true = 1.0
       // Probability that e2 is true = 0.6 * 0.3 + 0.4 * 0.7 = 0.46
       // Probability that d is true = 0.5 * 1 + 0.5 * 0.46 = 0.73
-      test(d, (b: Boolean) => b, 0.73, globalTol)
+      test(d, 1, 30, 100, 100, (b: Boolean) => b, 0.73, globalTol)
     }
 
     /*
@@ -180,36 +196,36 @@ class PBPTest extends WordSpec with Matchers {
     * 
     */
 
-    "with a posterior different than the prior, converge upon the correct answer on a continuous variable" in {
+    /*
+    "with a posterior different than the prior, converge upon the correct answer on a discrete variable" in {
+      Universe.createNew()
+      val fp = Geometric(0.9)
+      val f = Flip(Apply(fp, (i: Int) => 1.0/(1.0+math.exp(-1*i.toDouble/10))))
+      val s1 = Select(0.1 -> 1, 0.9 -> 2)
+      val s2 = Select(0.7 -> 1, 0.2 -> 2, 0.1 -> 3)
+      val c = Chain(f, (b: Boolean) => if (b) s1; else s2)
+      c.observe(1)
+      // ans obtained by importance sampling = 7.49
+      val algorithm = ParticleBeliefPropagation(10, 40, 50, 50, fp)
+      algorithm.start()
+      algorithm.expectation(fp, (i: Int) => i.toDouble) should be(7.49 +- globalTol)
+    }
+    * 
+    */
+
+    "with a posterior different than the prior, converge upon the correct posterior distribution of a continuous variable" in {
       Universe.createNew()
       val fp = CUniform(0.0, 1.0)
-      val f = new CompoundFlip("", fp, Universe.universe )
+      val f = Flip(fp)
       val s1 = Select(0.1 -> 1, 0.9 -> 2)
       val s2 = Select(0.7 -> 1, 0.2 -> 2, 0.1 -> 3)
       val c = Chain(f, (b: Boolean) => if (b) s1; else s2)
       c.observe(1)
-      test(f, (b: Boolean) => b == true, .1/.8, globalTol)
+      // ans = \int_0_1 [-.6*x + .7 dx]*x / \int_0_1 [-.6*x + .7 dx] = .15/.4 = .375
+      val algorithm = ParticleBeliefPropagation(10, 40, 50, 50, fp)
+      algorithm.start()
+      algorithm.expectation(fp, (i: Double) => i) should be(.375 +- globalTol)
     }
-    
-    "with a model using chain and no conditions or constraints, produce the correct answer" in {
-      Universe.createNew()
-      val f = Flip(0.3)
-      val s1 = Select(0.1 -> 1, 0.9 -> 2)
-      val s2 = Select(0.7 -> 1, 0.2 -> 2, 0.1 -> 3)
-      val c = Chain(f, (b: Boolean) => if (b) s1; else s2)
-      test(c, (i: Int) => i == 1, 0.3 * 0.1 + 0.7 * 0.7, globalTol)
-    }
-
-    "with a model using chain and a condition on the result, correctly condition the parent" in {
-      Universe.createNew()
-      val f = Flip(0.3)
-      val s1 = Select(0.1 -> 1, 0.9 -> 2)
-      val s2 = Select(0.7 -> 1, 0.2 -> 2, 0.1 -> 3)
-      val c = Chain(f, (b: Boolean) => if (b) s1; else s2)
-      c.observe(1)
-      test(f, (b: Boolean) => b, 0.3 * 0.1 / (0.3 * 0.1 + 0.7 * 0.7), globalTol)
-    }
-
 
     /*
     "with a dependent universe, correctly take into account probability of evidence in the dependent universe" in {
@@ -249,7 +265,7 @@ class PBPTest extends WordSpec with Matchers {
       ve.start()
       ve.probability(y, true) should be(((0.1 * 0.2 + 0.9 * 0.2) / (0.1 * 0.2 + 0.9 * 0.2 + 0.9 * 0.8)) +- globalTol)
     }
-    
+
   }
 
   /*
@@ -279,11 +295,8 @@ class PBPTest extends WordSpec with Matchers {
   * 
   */
 
-
-
-
-  def test[T](target: Element[T], predicate: T => Boolean, prob: Double, tol: Double) {
-    val algorithm = ParticleBeliefPropagation(10, 50, target)
+  def test[T](target: Element[T], outer: Int, inner: Int, argSamples: Int, totalSamples: Int, predicate: T => Boolean, prob: Double, tol: Double) {
+    val algorithm = ParticleBeliefPropagation(outer, inner, argSamples, totalSamples, target)
     algorithm.start()
     algorithm.probability(target, predicate) should be(prob +- tol)
   }
