@@ -365,7 +365,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
 
   protected def doInitialize(): Unit = {
     // Need to prime the universe to make sure all elements have a generated value
-    Forward(universe)
+    Forward(true)(universe)
     initConstrainedValues()
     dissatisfied = universe.conditionedElements.toSet filter (!_.conditionSatisfied)
     for { i <- 1 to burnIn } mhStep()

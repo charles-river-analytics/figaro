@@ -115,7 +115,7 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
   }
 
   override def doInitialize(): Unit = {
-    Forward(universe)
+    Forward(true)(universe)
     initConstrainedValues()
     dissatisfied = universe.conditionedElements.toSet filter (!_.conditionSatisfied)
     currentEnergy = universe.constrainedElements.map(_.constraintValue).sum
