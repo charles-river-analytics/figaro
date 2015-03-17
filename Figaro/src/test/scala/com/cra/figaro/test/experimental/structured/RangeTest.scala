@@ -7,6 +7,15 @@ import com.cra.figaro.library.compound.If
 import com.cra.figaro.experimental.structured._
 import com.cra.figaro.algorithm.lazyfactored.ValueSet._
 import com.cra.figaro.util.MultiSet
+import com.cra.figaro.algorithm.factored.ParticleGenerator
+import com.cra.figaro.library.atomic.continuous.Normal
+import com.cra.figaro.library.collection.MakeArray
+import com.cra.figaro.library.collection.FixedSizeArray
+import com.cra.figaro.library.atomic.continuous.Beta
+import com.cra.figaro.library.atomic.continuous.Dirichlet
+import com.cra.figaro.library.atomic.discrete.Binomial
+import com.cra.figaro.library.compound.FoldLeft
+import com.cra.figaro.library.compound.IntSelector
 
 class RangeTest extends WordSpec with Matchers {
   "Setting the range of a component" should {
@@ -23,7 +32,7 @@ class RangeTest extends WordSpec with Matchers {
       c1.range.regularValues should equal (Set(5))
     }
 
-    "for a flip, set the range to only true and false" in {
+    "for an atomic flip, set the range to only true and false" in {
       Universe.createNew()
       val cc = new ComponentCollection
       val pr = new Problem(cc)
@@ -36,7 +45,85 @@ class RangeTest extends WordSpec with Matchers {
       c1.range.regularValues should equal (Set(true, false))
     }
 
-    "for a select, set the range to only the possible outcomes" in {
+    "for a compound flip with an added parent without *, set the range to only true and false" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Select(0.1 -> 0.1, 0.9 -> 0.9)
+      val e2 = Flip(e1)
+      pr.add(e1)
+      pr.add(e2)
+      val c1 = cc(e1)
+      val c2 = cc(e2)
+      c1.generateRange()
+      c2.generateRange()
+
+      c2.range.hasStar should equal (false)
+      c2.range.regularValues should equal (Set(true, false))
+    }
+
+    "for a compound flip with an added parent with *, set the range to { true, false, * }" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Constant(0.1)
+      val e2 = Constant(0.9)
+      val e3 = Dist(0.1 -> e1, 0.9 -> e2)
+      val e4 = Flip(e3)
+      pr.add(e2)
+      pr.add(e3)
+      pr.add(e4)
+      val c2 = cc(e2)
+      val c3 = cc(e3)
+      val c4 = cc(e4)
+      c2.generateRange()
+      c3.generateRange()
+      c4.generateRange()
+
+      c4.range.hasStar should equal (true)
+      c4.range.regularValues should equal (Set(true, false))
+    }
+
+    "for a compound flip with an unadded parent, set the range to { true, false, * } and not add the parent" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Select(0.1 -> 0.1, 0.9 -> 0.9)
+      val e2 = Flip(e1)
+      pr.add(e2)
+      val c2 = cc(e2)
+      c2.generateRange()
+
+      c2.range.hasStar should equal (true)
+      c2.range.regularValues should equal (Set(true, false))
+      cc.contains(e1) should equal (false)
+    }
+
+    "for a parameterized flip, treat like a compound flip, setting the range to { true, false }, plus * if the parent is unadded" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Beta(1, 1)
+      val e2 = Beta(2, 2)
+      val e3 = Flip(e1)
+      val e4 = Flip(e2)
+      pr.add(e2)
+      pr.add(e3)
+      pr.add(e4)
+      val c2 = cc(e2)
+      val c3 = cc(e3)
+      val c4 = cc(e4)
+      c2.generateRange()
+      c3.generateRange()
+      c4.generateRange()
+
+      c3.range.hasStar should equal (true)
+      c3.range.regularValues should equal (Set(true, false))
+      c4.range.hasStar should equal (false)
+      c4.range.regularValues should equal (Set(true, false))
+    }
+
+    "for an atomic select, set the range to only the possible outcomes" in {
       Universe.createNew()
       val cc = new ComponentCollection
       val pr = new Problem(cc)
@@ -47,6 +134,109 @@ class RangeTest extends WordSpec with Matchers {
 
       c1.range.hasStar should equal (false)
       c1.range.regularValues should equal (Set('a, 'b, 'c))
+    }
+
+    "for a compound select with all parents added and without *, set the range to only the outcomes" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Select(0.1 -> 0.1, 0.9 -> 0.9)
+      val e2 = Constant(0.5)
+      val e3 = Select(e1 -> 1, e2 -> 2)
+      pr.add(e1)
+      pr.add(e2)
+      pr.add(e3)
+      val c1 = cc(e1)
+      val c2 = cc(e2)
+      val c3 = cc(e3)
+      c1.generateRange()
+      c2.generateRange()
+      c3.generateRange()
+
+      c3.range.hasStar should equal (false)
+      c3.range.regularValues should equal (Set(1, 2))
+    }
+
+    "for a compound select with an added parent with *, set the range to the outcomes plus *" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Constant(0.1)
+      val e2 = Constant(0.9)
+      val e3 = Select(e1 -> 0.1, e2 -> 0.9)
+      val e4 = Constant(0.5)
+      val e5 = Select(e3 -> 1, e4 -> 2)
+      pr.add(e2)
+      pr.add(e3)
+      pr.add(e4)
+      pr.add(e5)
+      val c2 = cc(e2)
+      val c3 = cc(e3)
+      val c4 = cc(e4)
+      val c5 = cc(e5)
+      c2.generateRange()
+      c3.generateRange()
+      c4.generateRange()
+      c5.generateRange()
+
+      c5.range.hasStar should equal (true)
+      c5.range.regularValues should equal (Set(1, 2))
+    }
+
+    "for a compound select with an unadded parent, set the range to the outcomes plus * and not add the parent" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Select(0.1 -> 0.1, 0.9 -> 0.9)
+      val e2 = Constant(0.5)
+      val e3 = Select(e1 -> 1, e2 -> 2)
+      pr.add(e2)
+      pr.add(e3)
+      val c2 = cc(e2)
+      val c3 = cc(e3)
+      c2.generateRange()
+      c3.generateRange()
+
+      c3.range.hasStar should equal (true)
+      c3.range.regularValues should equal (Set(1, 2))
+      cc.contains(e1) should equal (false)
+    }
+
+    "for a parameterized select, treat like a compound select, setting the range to the outcomes, plus * if the parent has been added" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Dirichlet(1, 1)
+      val e2 = Dirichlet(2, 2)
+      val e3 = Select(e1, false, true)
+      val e4 = Select(e2, false, true)
+      pr.add(e2)
+      pr.add(e3)
+      pr.add(e4)
+      val c2 = cc(e2)
+      val c3 = cc(e3)
+      val c4 = cc(e4)
+      c2.generateRange()
+      c3.generateRange()
+      c4.generateRange()
+
+      c3.range.hasStar should equal (true)
+      c3.range.regularValues should equal (Set(true, false))
+      c4.range.hasStar should equal (false)
+      c4.range.regularValues should equal (Set(true, false))
+    }
+
+    "for an atomic binomial, set the range to 0 to the number of trials" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Binomial(3, 0.5)
+      pr.add(e1)
+      val c1 = cc(e1)
+      c1.generateRange()
+
+      c1.range.hasStar should equal (false)
+      c1.range.regularValues should equal (Set(0, 1, 2, 3))
     }
 
     "for an if with values as the consequents, set the range to the two possible consequents, even if the test has not been added" in {
@@ -64,7 +254,7 @@ class RangeTest extends WordSpec with Matchers {
 
     }
 
-    "for a dist, set the range to the union of the precomputed ranges of the outcomes, including * if necessary" in {
+    "for an atomic dist, set the range to the union of the precomputed ranges of the outcomes, including * if necessary" in {
       Universe.createNew()
       val cc = new ComponentCollection
       val pr = new Problem(cc)
@@ -90,6 +280,96 @@ class RangeTest extends WordSpec with Matchers {
       c5.range.hasStar should equal (true)
       c5.range.regularValues should equal (Set(5, 2, 3))
       cc.contains(e3) should equal (false)
+    }
+
+    "for a compound dist with all parents added and without *, set the range to only the outcomes" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Select(0.1 -> 0.1, 0.9 -> 0.9)
+      val e2 = Constant(0.5)
+      val e3 = Constant(1)
+      val e4 = Constant(2)
+      val e5 = Dist(e1 -> e3, e2 -> e4)
+      pr.add(e1)
+      pr.add(e2)
+      pr.add(e3)
+      pr.add(e4)
+      pr.add(e5)
+      val c1 = cc(e1)
+      val c2 = cc(e2)
+      val c3 = cc(e3)
+      val c4 = cc(e4)
+      val c5 = cc(e5)
+      c1.generateRange()
+      c2.generateRange()
+      c3.generateRange()
+      c4.generateRange()
+      c5.generateRange()
+
+      c5.range.hasStar should equal (false)
+      c5.range.regularValues should equal (Set(1, 2))
+    }
+
+    "for a compound dist with an added parent with *, set the range to the outcomes plus *" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Constant(0.1)
+      val e2 = Constant(0.9)
+      val e3 = Select(e1 -> 0.1, e2 -> 0.9)
+      val e4 = Constant(0.5)
+      val e5 = Constant(1)
+      val e6 = Constant(2)
+      val e7 = Dist(e3 -> e5, e4 -> e6)
+      pr.add(e2)
+      pr.add(e3)
+      pr.add(e4)
+      pr.add(e5)
+      pr.add(e6)
+      pr.add(e7)
+      val c2 = cc(e2)
+      val c3 = cc(e3)
+      val c4 = cc(e4)
+      val c5 = cc(e5)
+      val c6 = cc(e6)
+      val c7 = cc(e7)
+      c2.generateRange()
+      c3.generateRange()
+      c4.generateRange()
+      c5.generateRange()
+      c6.generateRange()
+      c7.generateRange()
+
+      c7.range.hasStar should equal (true)
+      c7.range.regularValues should equal (Set(1, 2))
+    }
+
+    "for a compound dist with an unadded parent, set the range to the outcomes plus * and not add the parent" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Select(0.1 -> 0.1, 0.9 -> 0.9)
+      val e2 = Constant(0.5)
+      val e3 = Constant(1)
+      val e4 = Constant(2)
+      val e5 = Dist(e1 -> e3, e2 -> e4)
+      pr.add(e2)
+      pr.add(e3)
+      pr.add(e4)
+      pr.add(e5)
+      val c2 = cc(e2)
+      val c3 = cc(e3)
+      val c4 = cc(e4)
+      val c5 = cc(e5)
+      c2.generateRange()
+      c3.generateRange()
+      c4.generateRange()
+      c5.generateRange()
+
+      c5.range.hasStar should equal (true)
+      c5.range.regularValues should equal (Set(1, 2))
+      cc.contains(e1) should equal (false)
     }
 
     "for an Apply1 with an added argument without *, set the range to the image of the function on the argument values" in {
@@ -1028,6 +1308,231 @@ class RangeTest extends WordSpec with Matchers {
 
       c4.range.hasStar should equal (true)
       c4.range.regularValues should equal (Set())
+    }
+
+    "for a MakeArray with an added parent without *, set the range to the set of fixed size arrays corresponding to the values of the parent" in {
+      val universe = Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      def generate(i: Int) = Constant(i)
+      val e1 = Uniform(2, 4)
+      val e2 = new MakeArray("", e1, generate, universe)
+      pr.add(e1)
+      pr.add(e2)
+      val c1 = cc(e1)
+      val c2 = cc(e2)
+      c1.generateRange()
+      c2.generateRange()
+
+      c2.range.hasStar should equal (false)
+      val values = c2.range.regularValues.toList
+      values.size should equal (2)
+      values(0).isInstanceOf[FixedSizeArray[_]] should equal (true)
+      values(1).isInstanceOf[FixedSizeArray[_]] should equal (true)
+      val len0 = values(0).asInstanceOf[FixedSizeArray[_]].size
+      val len1 = values(1).asInstanceOf[FixedSizeArray[_]].size
+      (len0 == 2 || len1 == 2) should equal (true)
+      (len0 == 4 || len1 == 4) should equal (true)
+    }
+
+    "for a MakeArray with an added parent with *, set the range to the set of fixed size arrays corresponding to the values of the parent plus *" in {
+      val universe = Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      def generate(i: Int) = Constant(i)
+      val e1 = Constant(2)
+      val e2 = Constant(4)
+      val e3 = Dist(0.5 -> e1, 0.5 -> e2)
+      val e4 = new MakeArray("", e3, generate, universe)
+      pr.add(e2)
+      pr.add(e3)
+      pr.add(e4)
+      val c2 = cc(e2)
+      val c3 = cc(e3)
+      val c4 = cc(e4)
+      c2.generateRange()
+      c3.generateRange()
+      c4.generateRange()
+
+      c4.range.hasStar should equal (true)
+      val vs = c4.range.regularValues.toList
+      vs.size should equal (1)
+      vs(0).isInstanceOf[FixedSizeArray[_]] should equal (true)
+      vs(0).asInstanceOf[FixedSizeArray[_]].size should equal (4)
+    }
+
+    "for a MakeArray with an unadded parent, set the range to * and not add the parent" in {
+      val universe = Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      def generate(i: Int) = Constant(i)
+      val e1 = Uniform(2, 4)
+      val e2 = new MakeArray("", e1, generate, universe)
+      pr.add(e2)
+      val c2 = cc(e2)
+      c2.generateRange()
+
+      c2.range.hasStar should equal (true)
+      c2.range.regularValues should equal (Set())
+    }
+
+    "for a MakeArray, not add any items" in {
+      val universe = Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      def generate(i: Int) = Constant(i)
+      val e1 = Uniform(2, 4)
+      val e2 = new MakeArray("", e1, generate, universe)
+      pr.add(e1)
+      pr.add(e2)
+      val c1 = cc(e1)
+      val c2 = cc(e2)
+      c1.generateRange()
+      c2.generateRange()
+
+      cc.components.size should equal (2)
+    }
+
+    "for a fold with all elements added and without *, set the range to all possible results of the fold operation" in {
+      val universe = Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Uniform(1, 2)
+      val e2 = Uniform(3, 4, 5)
+      val e3 = FoldLeft(0, (i1: Int, i2: Int) => i1 + i2)(e1, e2)
+      pr.add(e1)
+      pr.add(e2)
+      pr.add(e3)
+      val c1 = cc(e1)
+      val c2 = cc(e2)
+      val c3 = cc(e3)
+      c1.generateRange()
+      c2.generateRange()
+      c3.generateRange()
+
+      c3.range.hasStar should equal (false)
+      c3.range.regularValues should equal (Set(4, 5, 6, 7))
+    }
+
+    "for a fold with all elements added but with *, set the range to all possible results of the fold operation plus *" in {
+      val universe = Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Constant(-1)
+      val e2 = Constant(1)
+      val e3 = Constant(2)
+      val e4 = Dist(0.3 -> e1, 0.3 -> e2, 0.4 -> e3)
+      val e5 = Uniform(3, 4, 5)
+      val e6 = FoldLeft(0, (i1: Int, i2: Int) => i1 + i2)(e4, e5)
+      pr.add(e2)
+      pr.add(e3)
+      pr.add(e4)
+      pr.add(e5)
+      pr.add(e6)
+      val c2 = cc(e2)
+      val c3 = cc(e3)
+      val c4 = cc(e4)
+      val c5 = cc(e5)
+      val c6 = cc(e6)
+      c2.generateRange()
+      c3.generateRange()
+      c4.generateRange()
+      c5.generateRange()
+      c6.generateRange()
+
+      c6.range.hasStar should equal (true)
+      c6.range.regularValues should equal (Set(4, 5, 6, 7))
+    }
+
+    "for a fold with an unadded element, set the range to * and don't add the element" in {
+      val universe = Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Uniform(1, 2)
+      val e2 = Uniform(3, 4, 5)
+      val e3 = FoldLeft(0, (i1: Int, i2: Int) => i1 + i2)(e1, e2)
+      pr.add(e2)
+      pr.add(e3)
+      val c2 = cc(e2)
+      val c3 = cc(e3)
+      c2.generateRange()
+      c3.generateRange()
+
+      c3.range.hasStar should equal (true)
+      c3.range.regularValues should equal (Set())
+      cc.contains(e1) should equal (false)
+    }
+
+    "for an IntSelector with an added counter without *, set the range to 0 until the max of the counter" in {
+      val universe = Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Uniform(1, 2)
+      val e2 = IntSelector(e1)
+      pr.add(e1)
+      pr.add(e2)
+      val c1 = cc(e1)
+      val c2 = cc(e2)
+      c1.generateRange()
+      c2.generateRange()
+
+      c2.range.hasStar should equal (false)
+      c2.range.regularValues should equal (Set(0, 1))
+    }
+
+    "for an IntSelector with an added counter with *, set the range to 0 until the max of the counter plus *" in {
+      val universe = Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Constant(1)
+      val e2 = Constant(2)
+      val e3 = Constant(3)
+      val e4 = Dist(1.0 -> e1, 1.0 -> e2, 1.0 -> e3)
+      val e5 = IntSelector(e4)
+      pr.add(e2)
+      pr.add(e3)
+      pr.add(e4)
+      pr.add(e5)
+      val c2 = cc(e2)
+      val c3 = cc(e3)
+      val c4 = cc(e4)
+      val c5 = cc(e5)
+      c2.generateRange()
+      c3.generateRange()
+      c4.generateRange()
+      c5.generateRange()
+
+      c5.range.hasStar should equal (true)
+      c5.range.regularValues should equal (Set(0, 1, 2))
+    }
+
+    "for an IntSelector with an unadded counter, set the range to * and don't add the counter" in {
+      val universe = Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Uniform(1, 2)
+      val e2 = IntSelector(e1)
+      pr.add(e2)
+      val c2 = cc(e2)
+      c2.generateRange()
+
+      c2.range.hasStar should equal (true)
+      c2.range.regularValues should equal (Set())
+      cc.contains(e1) should equal (false)
+    }
+
+    "for an atomic element, set the range to contain the right number of particles" in {
+      val universe = Universe.createNew()
+      val pg = ParticleGenerator(universe)
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Normal(0, 1)
+      pr.add(e1)
+      val c1 = cc(e1)
+      c1.generateRange(5)
+
+      c1.range.hasStar should equal (false)
+      c1.range.regularValues.size should equal (5)
     }
   }
 

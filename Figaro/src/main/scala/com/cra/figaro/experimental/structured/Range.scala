@@ -1,13 +1,17 @@
 package com.cra.figaro.experimental.structured
 
-import com.cra.figaro.algorithm.lazyfactored.ValueSet
+import com.cra.figaro.algorithm.lazyfactored.{ValueSet, Star}
 import com.cra.figaro.algorithm.lazyfactored.ValueSet._
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound.FastIf
 import com.cra.figaro.util.{MultiSet, homogeneousCartesianProduct}
 import com.cra.figaro.util.HashMultiSet
-
-
+import com.cra.figaro.algorithm.factored.ParticleGenerator
+import com.cra.figaro.library.collection.MakeArray
+import com.cra.figaro.library.collection.FixedSizeArray
+import com.cra.figaro.library.atomic.discrete.AtomicBinomial
+import com.cra.figaro.library.compound.FoldLeft
+import com.cra.figaro.library.compound.IntSelector
 
 object Range {
   private def getRange[U](collection: ComponentCollection, otherElement: Element[U]): ValueSet[U] = {
@@ -17,7 +21,7 @@ object Range {
 
   // Get the range of the reference by taking the union of the current ranges of all the current possible targets.
   // Do not add any elements or expand any other ranges in the process in the process.
-  private def getRangeOfSingleValuedReference[V](cc: ComponentCollection, ec: ElementCollection, ref: Reference[V]): ValueSet[V] = {
+  private[structured] def getRangeOfSingleValuedReference[V](cc: ComponentCollection, ec: ElementCollection, ref: Reference[V]): ValueSet[V] = {
     val (firstElem, restRefOpt) = ec.getFirst(ref)
     restRefOpt match {
       case None => getRange(cc, firstElem.asInstanceOf[Element[V]])
@@ -40,7 +44,7 @@ object Range {
     }
   }
 
-  private def getRangeOfMultiValuedReference[V](cc: ComponentCollection, ec: ElementCollection, ref: Reference[V]): ValueSet[MultiSet[V]] = {
+  private[structured] def getRangeOfMultiValuedReference[V](cc: ComponentCollection, ec: ElementCollection, ref: Reference[V]): ValueSet[MultiSet[V]] = {
 
     // This function gets all the lists of elements that could be joint targets of the given reference, starting in the given element collection.
     // The first return value of this function is a set of all the possible lists of targets referred to by this reference.
@@ -74,10 +78,10 @@ object Range {
     // The first argument is a value that can be used to create a set of element collections.
     // The second argument is the remaining reference that starts from each of these element collections.
     // For each element collection in the set, we get the possible lists of targets resulting from that element collection.
-    // Then we get all possible lists that contain a list for each element collection. 
+    // Then we get all possible lists that contain a list for each element collection.
     // Each one of these lists, when flattened, contains a list of elements that is one possible joint target,
     // so it is returned in the result.
-    // This function also keeps track of whether any element involved has * in its range. 
+    // This function also keeps track of whether any element involved has * in its range.
     def getTargetSetsHelper[T](ecMaker: T, restRef: Reference[V]): (Set[List[Element[V]]], Boolean) = {
       val ecs: List[ElementCollection] = ElementCollection.makeElementCollectionSet(ecMaker).toList
       var hasStar = false
@@ -91,7 +95,7 @@ object Range {
       val targetSets = combinations.map(_.flatten).toSet
       (targetSets, hasStar)
     }
-    
+
     def getMultiSetPossibilities(targetSet: List[Element[V]]): ValueSet[MultiSet[V]] = {
       val ranges: List[ValueSet[V]] = targetSet.map(getRange(cc, _))
       val regularRanges: List[List[V]] = ranges.map(_.regularValues.toList)
@@ -117,10 +121,30 @@ object Range {
     multiSetPossibilities.foldLeft(starter)(_ ++ _)
   }
 
-  def apply[V](component: ProblemComponent[V]): ValueSet[V] = {
+  def getRangeOfFold[T,U](cc: ComponentCollection, fold: FoldLeft[T,U]): ValueSet[U] = {
+    def helper(currentAccum: ValueSet[U], remainingElements: Seq[Element[T]]): ValueSet[U] = {
+      if (remainingElements.isEmpty) currentAccum
+      else {
+        val firstVS = getRange(cc, remainingElements.head)
+        val nextRegular =
+          for {
+            currentAccumVal <- currentAccum.regularValues
+            firstVal <- firstVS.regularValues
+          } yield fold.function(currentAccumVal, firstVal)
+        val nextHasStar = currentAccum.hasStar || firstVS.hasStar
+        val nextAccum = if (nextHasStar) ValueSet.withStar(nextRegular) else ValueSet.withoutStar(nextRegular)
+        helper(nextAccum, remainingElements.tail)
+      }
+    }
+
+    helper(ValueSet.withoutStar(Set(fold.start)), fold.elements)
+  }
+
+  def apply[V](component: ProblemComponent[V], numValues: Int): ValueSet[V] = {
     component match {
       case cc: ChainComponent[_,V] => chainRange(cc)
-      case _ => nonChainRange(component)
+      case mc: MakeArrayComponent[V] => makeArrayRange(mc)
+      case _ => otherRange(component, numValues)
     }
   }
 
@@ -137,18 +161,46 @@ object Range {
     resultVs.foldLeft(starter)(_ ++ _)
   }
 
-  private def nonChainRange[V](component: ProblemComponent[V]): ValueSet[V] = {
+  private def makeArrayRange[V](component: MakeArrayComponent[V]): ValueSet[FixedSizeArray[V]] = {
+    val collection = component.problem.collection
+    val numItemsRange = getRange(collection, component.makeArray.numItems)
+    val resultVs = numItemsRange.regularValues.map(component.makeArray.arrays(_))
+    if (numItemsRange.hasStar) withStar(resultVs) else withoutStar(resultVs)
+  }
+
+  private def otherRange[V](component: ProblemComponent[V], numValues: Int): ValueSet[V] = {
     val collection = component.problem.collection
     component.element match {
       case c: Constant[_] => withoutStar(Set(c.constant))
 
-      case f: Flip => withoutStar(Set(true, false))
+      case f: AtomicFlip => withoutStar(Set(true, false))
 
-      case s: Select[_, _] => withoutStar(Set(s.outcomes: _*))
+      case f: ParameterizedFlip =>
+        if (getRange(collection, f.parameter).hasStar) withStar(Set(true, false)) else withoutStar(Set(true, false))
+        
+      case f: CompoundFlip =>
+        if (getRange(collection, f.prob).hasStar) withStar(Set(true, false)) else withoutStar(Set(true, false))
 
-      case d: Dist[_, _] =>
+      case s: AtomicSelect[_] => withoutStar(Set(s.outcomes: _*))
+
+      case s: ParameterizedSelect[_] => 
+        val values = Set(s.outcomes: _*)
+        if (getRange(collection, s.parameter).hasStar) withStar(values) else withoutStar(values)
+
+      case s: CompoundSelect[_] =>
+        val values = Set(s.outcomes: _*)
+        if (s.probs.map(getRange(collection, _)).exists(_.hasStar)) withStar(values) else withoutStar(values)
+
+      case b: AtomicBinomial => ValueSet.withoutStar((0 to b.numTrials).toSet)
+
+      case d: AtomicDist[_] =>
         val componentSets = d.outcomes.map(getRange(collection, _))
         componentSets.reduce(_ ++ _)
+
+      case d: CompoundDist[_] =>
+        val componentSets = d.outcomes.map(getRange(collection, _))
+        val values = componentSets.reduce(_ ++ _)
+        if (d.probs.map(getRange(collection, _)).exists(_.hasStar)) values ++ withStar(Set()) else values
 
       case i: FastIf[_] => withoutStar(Set(i.thn, i.els))
 
@@ -320,18 +372,14 @@ object Range {
         val resultValues = homogeneousCartesianProduct(elementValues: _*).toSet.asInstanceOf[Set[i.Value]]
         if (incomplete) withStar(resultValues); else withoutStar(resultValues)
 
-//      case v: ValuesMaker[_] => {
-//        v.makeValues(depth)
-//      }
-
-//      case a: Atomic[_] => {
-//        if (!ParticleGenerator.exists(element.universe)) {
-//          println("Warning: Sampling element " + a + " even though no sampler defined for this universe")
-//        }
-//        val thisSampler = ParticleGenerator(element.universe)
-//        val samples = thisSampler(a, thisSampler.numArgSamples)
-//        withoutStar(samples.unzip._2.toSet)
-//      }
+      case a: Atomic[_] => {
+        if (!ParticleGenerator.exists(a.universe)) {
+          println("Warning: Sampling element " + a + " even though no sampler defined for this universe")
+        }
+        val thisSampler = ParticleGenerator(a.universe)
+        val samples = thisSampler(a, numValues)
+        withoutStar(samples.unzip._2.toSet)
+      }
 
       case r: SingleValuedReferenceElement[_] => getRangeOfSingleValuedReference(collection, r.collection, r.reference)
 
@@ -341,6 +389,18 @@ object Range {
         val inputs = getRange(collection, a.mvre)
         val resultValues = inputs.regularValues.map(a.aggregate(_))
         if (inputs.hasStar) withStar(resultValues); else withoutStar(resultValues)
+
+      case f: FoldLeft[_,_] => getRangeOfFold(collection, f)
+
+      case i: IntSelector =>
+        val counterValues = getRange(collection, i.counter)
+        if (counterValues.regularValues.nonEmpty) {
+          val maxCounter = counterValues.regularValues.max
+//          val all = List.tabulate(maxCounter)(i => i).toSet
+          val all = Set((0 until maxCounter):_*)
+          if (counterValues.hasStar) ValueSet.withStar(all); else ValueSet.withoutStar(all)
+        } else { ValueSet.withStar(Set()) }
+
 
       case _ =>
         /* A new improvement - if we can't compute the values, we just make them *, so the rest of the computation can proceed */
