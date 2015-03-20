@@ -13,9 +13,7 @@
 
 package com.cra.figaro.ndtest
 
-trait NDTestResult
-{
-  def update(value: Double)
-  
+trait NDTestResult[T] {
+  def update(value: T)
   def check: Boolean
 }
