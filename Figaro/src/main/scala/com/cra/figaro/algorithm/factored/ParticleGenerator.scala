@@ -83,9 +83,10 @@ class ParticleGenerator(de: DensityEstimator, val numArgSamples: Int, val numTot
     def nextInt(i: Int) = if (random.nextBoolean) i + 1 else i - 1
     def nextDouble(d: Double) = random.nextGaussian() * proposalVariance + d
 
-    val sampleDensity: Double = 1.0 / beliefs.size
-    
     val numSamples = sampleMap(elem)._2
+    
+    val sampleDensity: Double = 1.0 / numSamples
+        
 
     val newSamples = elem match {
       case o: OneShifter => {
@@ -95,7 +96,7 @@ class ParticleGenerator(de: DensityEstimator, val numArgSamples: Int, val numTot
         } else {
           beliefs
         }
-        toResample.map(b => {
+        val samples = toResample.map(b => {
           val oldValue = b._2.asInstanceOf[Int]
           val newValue = o.shiftOne(oldValue)
           val nextValue = if (o.density(newValue._1) > 0.0) {
@@ -103,6 +104,7 @@ class ParticleGenerator(de: DensityEstimator, val numArgSamples: Int, val numTot
           } else oldValue
           (sampleDensity, nextValue)
         })
+        samples.groupBy(_._2).toList.map(s => (s._2.unzip._1.sum, s._2.head._2))
       }
       case a: Atomic[_] => { // The double is unchecked, bad stuff if the atomic is not double
         beliefs.map(b => {
@@ -142,7 +144,7 @@ class ParticleGenerator(de: DensityEstimator, val numArgSamples: Int, val numTot
 }
 
 object ParticleGenerator {
-  var defaultArgSamples = 20
+  var defaultArgSamples = 50
   var defaultTotalSamples = 50
 
   private val samplerMap: Map[Universe, ParticleGenerator] = Map()

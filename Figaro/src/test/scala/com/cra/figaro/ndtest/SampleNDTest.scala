@@ -1,9 +1,9 @@
 /*
- * MutableMovieTest.scala  
- * Movie with inverse attributes test.
+ * SampleNDTest.scala 
+ * A sample test for evaluation of our ND testing approach
  * 
- * Created By:      Avi Pfeffer (apfeffer@cra.com)
- * Creation Date:   Jan 1, 2009
+ * Created By:      Michael Reposa (mreposa@cra.com)
+ * Creation Date:   Feb 25, 2015
  * 
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
@@ -11,10 +11,8 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
-package com.cra.figaro.test.example
+package com.cra.figaro.ndtest
 
-import org.scalatest.Matchers
-import org.scalatest.WordSpec
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.algorithm.sampling._
@@ -24,20 +22,50 @@ import com.cra.figaro.test._
 import com.cra.figaro.test.tags.Example
 import com.cra.figaro.test.tags.NonDeterministic
 
-class MutableMovieTest extends WordSpec with Matchers {
-  "A PRM with a global constraint with mutation" should {
-    "produce the correct probability under variable elimination" taggedAs (Example, NonDeterministic) in {
-      test((e: Element[Boolean]) => VariableElimination(e))
+class SampleNDTest extends NDTest
+{
+  val alpha : Double = 0.05
+
+  "A PRM with a global constraint with mutation" should
+  {
+    "produce the correct probability under variable elimination" taggedAs (Example, NonDeterministic) in
+    {
+      val ndtest = new NDTest {
+        override def oneTest = {
+          val (target, result) = test((e: Element[Boolean]) => VariableElimination(e))
+          val testResult = results.getOrElse("VETestResult", new TTestResult("VETestResult", target, alpha))
+          testResult.update(result)
+        }
+      }
+
+      ndtest.run(10)
     }
 
-    "produce the correct probability under importance sampling" taggedAs (Example, NonDeterministic) in {
-      test((e: Element[Boolean]) => Importance(12000, e))
-    }
+    "produce the correct probability under importance sampling" taggedAs (Example, NonDeterministic) in
+    {
+      val ndtest = new NDTest {
+        override def oneTest = {
+          val (target, result) = test((e: Element[Boolean]) => Importance(12000, e))
+          val testResult = results.getOrElse("ImportanceResult", new TTestResult("ImportanceResult", target, alpha))
+          testResult.update(result)
+        }
+      }
 
-    "produce the correct probability under Metropolis-Hastings" taggedAs (Example, NonDeterministic) in {
-      test((e: Element[Boolean]) => MetropolisHastings(200000, chooseScheme, 10000, e))
-      println(com.cra.figaro.util.seed)
-    }
+      ndtest.run(10)
+    }    
+
+    "produce the correct probability under Metropolis-Hastings" taggedAs (Example, NonDeterministic) in
+    {
+      val ndtest = new NDTest {
+        override def oneTest = {
+          val (target, result) = test((e: Element[Boolean]) => MetropolisHastings(200000, chooseScheme, e))
+          val testResult = results.getOrElse("MetropolisHastingsResult", new TTestResult("MetropolisHastingsResult", target, alpha))
+          testResult.update(result)
+        }
+      }
+
+      ndtest.run(10)
+    }     
   }
 
   val random = com.cra.figaro.util.random
@@ -49,7 +77,7 @@ class MutableMovieTest extends WordSpec with Matchers {
   var movies: Array[Movie] = _
   var appearances: Array[Appearance] = _
 
-  def test(algorithmCreator: Element[Boolean] => ProbQueryAlgorithm): Unit = {
+  def test(algorithmCreator: Element[Boolean] => ProbQueryAlgorithm): (Double, Double) = {
     Universe.createNew()
     val actor1 = new Actor
     val actor2 = new Actor
@@ -164,12 +192,15 @@ class MutableMovieTest extends WordSpec with Matchers {
 
     val pAppearance2AwardOnly =
       qAppearance2AwardOnly / (qAppearance1AwardOnly + qAppearance2AwardOnly + qAppearance3AwardOnly)
-
+    
     val alg = algorithmCreator(appearance2.award)
     alg.start()
     alg.stop()
-    alg.probability(appearance2.award, true) should be(pAppearance2AwardOnly +- 0.01)
+    // alg.probability(appearance2.award, true) should be(pAppearance2AwardOnly +- 0.01)
+    val prob : Double = alg.probability(appearance2.award, true)
     alg.kill()
+    
+    return (pAppearance2AwardOnly, prob)
   }
 
   class Actor {

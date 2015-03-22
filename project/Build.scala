@@ -95,6 +95,7 @@ object FigaroBuild extends Build {
       "net.sf.jsci" % "jsci" % "1.2",
       "com.typesafe.akka" %% "akka-actor" % "2.3.8",
       "org.scalanlp" %% "breeze" % "0.10",
+      "io.argonaut" %% "argonaut" % "6.0.4",
       "org.scalatest" %% "scalatest" % "2.2.1" % "test"
     ))
     // test settings
@@ -110,9 +111,6 @@ object FigaroBuild extends Build {
     .settings(test in assembly := {})
     .settings(jarName in assembly := "figaro_" + scalaMajorMinor + "-" + version.value + "-fat.jar")
     .settings(assemblyOption in assembly ~= { _.copy(includeScala = false) })
-    // sbt-scoverage settings
-    .settings(instrumentSettings: _*)
-    .settings(parallelExecution in ScoverageTest := false)
     // Copy dependency JARs
     .settings(copyDepTask)
       
