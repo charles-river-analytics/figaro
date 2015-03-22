@@ -96,7 +96,7 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
    * It produces a mapping from each original variable to its new location.
    * Similarly it produces a mapping from each new variable to its new location.
    */
-  protected def unionVars[U](that: Factor[U]): (List[Variable[_]], List[Variable[_]], List[Int], List[Int]) = {
+  def unionVars[U](that: Factor[U]): (List[Variable[_]], List[Variable[_]], List[Int], List[Int]) = {
     val allParents = parents.union(that.parents).distinct
     val allOutputs = output.union(that.output).distinct diff (allParents)
 
@@ -114,7 +114,9 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
   override def product(
     that: Factor[T],
     semiring: Semiring[T]): Factor[T] = {
-    combination(that, semiring.product, semiring)
+    val dThis = this.deDuplicate()
+    val dThat = that.deDuplicate()
+    dThis.combination(dThat, semiring.product, semiring)
   }
 
   override def combination(
