@@ -46,7 +46,7 @@ object ApplyFactory {
         // now as they were when values were computed.
 //        val resultVal = mapper.map(applyMap(arg1Val.value), applyValues.regularValues)
         val resultVal = mapper.map(apply.fn(arg1Val.value), applyValues.regularValues)
-        val resultIndex = resultVar.range.indexWhere(_.value == resultVal)
+        val resultIndex = resultVar.range.indexWhere(xval => xval.isRegular && xval.value == resultVal)
         factor.set(List(arg1Index, resultIndex), 1.0)
       } else if (!arg1Val.isRegular && resultVar.range.exists(!_.isRegular)) {
         val resultIndex = resultVar.range.indexWhere(!_.isRegular)
@@ -80,7 +80,7 @@ object ApplyFactory {
         // By using applyMap, we can make sure that any contained elements in the result of the apply are the same now as they were when values were computed.
 //        val resultVal = mapper.map(applyMap((arg1Val.value, arg2Val.value)), applyValues.regularValues)
         val resultVal = mapper.map(apply.fn(arg1Val.value, arg2Val.value), applyValues.regularValues)
-        val resultIndex = resultVar.range.indexWhere(_.value == resultVal)
+        val resultIndex = resultVar.range.indexWhere(xval => xval.isRegular && xval.value == resultVal)
         factor.set(List(arg1Index, arg2Index, resultIndex), 1.0)
       } else if ((!arg1Val.isRegular || !arg2Val.isRegular) && resultVar.range.exists(!_.isRegular)) {
         val resultIndex = resultVar.range.indexWhere(!_.isRegular)
@@ -99,7 +99,7 @@ object ApplyFactory {
     val arg1Var = Factory.getVariable(cc, apply.arg1)
     val arg2Var = Factory.getVariable(cc, apply.arg2)
     val arg3Var = Factory.getVariable(cc, apply.arg3)
-    val resultVar = Variable(apply)
+    val resultVar = Factory.getVariable(cc, apply)
 //    val applyValues = LazyValues(apply.universe).storedValues(apply)
     val applyValues = cc(apply).range
     val factor = new SparseFactor[Double](List(arg1Var, arg2Var, arg3Var), List(resultVar))
@@ -118,7 +118,7 @@ object ApplyFactory {
         // By using applyMap, we can make sure that any contained elements in the result of the apply are the same now as they were when values were computed.
 //        val resultVal = mapper.map(applyMap((arg1Val.value, arg2Val.value, arg3Val.value)), applyValues.regularValues)
         val resultVal = mapper.map(apply.fn(arg1Val.value, arg2Val.value, arg3Val.value), applyValues.regularValues)
-        val resultIndex = resultVar.range.indexWhere(_.value == resultVal)
+        val resultIndex = resultVar.range.indexWhere(xval => xval.isRegular && xval.value == resultVal)
         factor.set(List(arg1Index, arg2Index, arg3Index, resultIndex), 1.0)
       } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular) && resultVar.range.exists(!_.isRegular)) {
         val resultIndex = resultVar.range.indexWhere(!_.isRegular)
@@ -158,7 +158,7 @@ object ApplyFactory {
         // By using applyMap, we can make sure that any contained elements in the result of the apply are the same now as they were when values were computed.
 //        val resultVal = mapper.map(applyMap((arg1Val.value, arg2Val.value, arg3Val.value, arg4Val.value)), applyValues.regularValues)
        val resultVal = mapper.map(apply.fn(arg1Val.value, arg2Val.value, arg3Val.value, arg4Val.value), applyValues.regularValues)
-        val resultIndex = resultVar.range.indexWhere(_.value == resultVal)
+        val resultIndex = resultVar.range.indexWhere(xval => xval.isRegular && xval.value == resultVal)
         factor.set(List(arg1Index, arg2Index, arg3Index, arg4Index, resultIndex), 1.0)
       } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular) && resultVar.range.exists(!_.isRegular)) {
         val resultIndex = resultVar.range.indexWhere(!_.isRegular)
@@ -178,7 +178,7 @@ object ApplyFactory {
     val arg3Var = Factory.getVariable(cc, apply.arg3)
     val arg4Var = Factory.getVariable(cc, apply.arg4)
     val arg5Var = Factory.getVariable(cc, apply.arg5)
-    val resultVar = Variable(apply)
+    val resultVar = Factory.getVariable(cc, apply)
 //    val applyValues = LazyValues(apply.universe).storedValues(apply)
     val applyValues = cc(apply).range
     val factor = new SparseFactor[Double](List(arg1Var, arg2Var, arg3Var, arg4Var, arg5Var), List(resultVar))
@@ -201,7 +201,7 @@ object ApplyFactory {
         // By using applyMap, we can make sure that any contained elements in the result of the apply are the same now as they were when values were computed.
 //        val resultVal = mapper.map(applyMap((arg1Val.value, arg2Val.value, arg3Val.value, arg4Val.value, arg5Val.value)), applyValues.regularValues)
         val resultVal = mapper.map(apply.fn(arg1Val.value, arg2Val.value, arg3Val.value, arg4Val.value, arg5Val.value), applyValues.regularValues)
-        val resultIndex = resultVar.range.indexWhere(_.value == resultVal)
+        val resultIndex = resultVar.range.indexWhere(xval => xval.isRegular && xval.value == resultVal)
         factor.set(List(arg1Index, arg2Index, arg3Index, arg4Index, arg5Index, resultIndex), 1.0)
       } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular || !arg5Val.isRegular) && resultVar.range.exists(!_.isRegular)) {
         val resultIndex = resultVar.range.indexWhere(!_.isRegular)

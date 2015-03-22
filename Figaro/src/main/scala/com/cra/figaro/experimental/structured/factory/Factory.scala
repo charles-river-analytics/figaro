@@ -28,12 +28,12 @@ import scala.reflect.runtime.universe.{typeTag, TypeTag}
 import com.cra.figaro.experimental.structured.ComponentCollection
 import com.cra.figaro.experimental.structured.ProblemComponent
 
-/**
- * A trait for elements that are able to construct their own Factor.
- */
-trait FactorMaker[T] {
-  def makeFactors[T]: List[Factor[Double]]
-}
+///**
+// * A trait for elements that are able to construct their own Factor.
+// */
+//trait FactorMaker[T] {
+//  def makeFactors[T]: List[Factor[Double]]
+//}
 
 /**
  * Methods for creating probabilistic factors associated with elements.
@@ -113,9 +113,9 @@ object Factory {
    * This is solved by decomposing the chain factor into a product of factors, each of which contains the
    * parent element, one of the result elements, and the overall chain element.
    */
-  def makeConditionalSelector[T, U](cc: ComponentCollection, overallElem: Element[U], selector: Variable[T],
+  def makeConditionalSelector[T, U](cc: ComponentCollection, overallVar: Variable[U], selector: Variable[T],
     outcomeIndex: Int, outcomeVar: Variable[U])(implicit mapper: PointMapper[U]): Factor[Double] = {
-    val overallVar = getVariable(cc, overallElem)
+//    val overallVar = getVariable(cc, overallElem)
     val overallValues = overallVar.valueSet
     val factor = new ConditionalSelector[Double](List(selector, outcomeVar), List(overallVar))
     for { i <- 0 until selector.size } {
@@ -301,10 +301,11 @@ object Factory {
    * Invokes Factor constructors for a standard set of Elements. This method uses various
    * secondary factories.
    */
-  def concreteFactors[T](cc: ComponentCollection, elem: Element[T]): List[Factor[Double]] =
+  def concreteFactors[T](cc: ComponentCollection, elem: Element[T], parameterized: Boolean): List[Factor[Double]] = {
     elem match {
-      case flip: ParameterizedFlip => DistributionFactory.makeFactors(cc, flip)
-      case pSelect: ParameterizedSelect[_] => SelectFactory.makeFactors(cc, pSelect)
+      case flip: ParameterizedFlip => DistributionFactory.makeFactors(cc, flip, parameterized)
+      case pSelect: ParameterizedSelect[_] => SelectFactory.makeFactors(cc, pSelect, parameterized)
+      case pBin: ParameterizedBinomialFixedNumTrials => DistributionFactory.makeFactors(cc, pBin, parameterized)
       case parameter: DoubleParameter => makeParameterFactors(cc, parameter)
       case array: ArrayParameter => makeParameterFactors(cc, array)
       case constant: Constant[_] => makeFactors(cc, constant)
@@ -334,6 +335,7 @@ object Factory {
 
       case _ => throw new UnsupportedAlgorithmException(elem)
     }
+  }
 
   private def makeAbstract[T](cc: ComponentCollection, atomic: Atomic[T], abstraction: Abstraction[T]): List[Factor[Double]] = {
     val variable = getVariable(cc, atomic)
@@ -362,12 +364,12 @@ object Factory {
       case _ => throw new UnsupportedAlgorithmException(elem)
     }
 
-  def makeFactors[T](cc: ComponentCollection, elem: Element[T]): List[Factor[Double]] = {
+  def makeFactors[T](cc: ComponentCollection, elem: Element[T], parameterized: Boolean): List[Factor[Double]] = {
     val component = cc(elem)
-    if (component.range.hasStar && component.range.regularValues.isEmpty) StarFactory.makeStarFactor(cc, elem)
+    if (component.range.hasStar && component.range.regularValues.isEmpty) List()
     else {
       Abstraction.fromPragmas(elem.pragmas) match {
-        case None => concreteFactors(cc, elem)
+        case None => concreteFactors(cc, elem, parameterized)
         case Some(abstraction) => makeAbstract(cc, elem, abstraction)
       }
     }

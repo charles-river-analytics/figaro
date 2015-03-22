@@ -18,6 +18,7 @@ import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.library.compound._
 import com.cra.figaro.util._
 import com.cra.figaro.algorithm.lazyfactored.{Extended, ValueSet}
+import ValueSet.withStar
 import com.cra.figaro.experimental.structured.ComponentCollection
 import com.cra.figaro.algorithm.lazyfactored.Star
 
@@ -40,7 +41,8 @@ object SelectFactory {
    */
   def makeFactors[T](cc: ComponentCollection, dist: CompoundDist[T]): List[Factor[Double]] = {
     val (intermed, clauseFactors) = intermedAndClauseFactors(cc, dist)
-    val intermedFactor = makeComplexDistribution(cc, intermed, dist.probs)
+    val probVars = dist.probs map (Factory.getVariable(cc, _))
+    val intermedFactor = makeComplexDistribution(cc, intermed, probVars)
     intermedFactor :: clauseFactors
   }
 
@@ -62,27 +64,47 @@ object SelectFactory {
    * Factor constructor for a CompoundSelect
    */
   def makeFactors[T](cc: ComponentCollection, select: CompoundSelect[T]): List[Factor[Double]] = {
-    val selectVar = Factory.getVariable(cc, select)
-//    if (selectVar.range.exists(!_.isRegular)) {
-//      assert(selectVar.range.size == 1) // Select's range must either be a list of regular values or {*}
-//      StarFactory.makeStarFactor(cc, select)
-//    } else {
+      val selectVar = Factory.getVariable(cc, select)
       val probs = getProbs(cc, select)
-      List(makeComplexDistribution(cc, selectVar, probs))
-//    }
+      val probVars = probs map (Factory.getVariable(cc, _))
+      List(makeComplexDistribution(cc, selectVar, probVars))
   }
 
   /**
    * Factor constructor for a ParameterizedSelect
    */
-  def makeFactors[T](cc: ComponentCollection, select: ParameterizedSelect[T]): List[Factor[Double]] = {
-    val selectVar = Factory.getVariable(cc, select)
-    if (selectVar.range.exists(!_.isRegular)) {
-      assert(selectVar.range.size == 1) // Select's range must either be a list of regular values or {*}
-      StarFactory.makeStarFactor(cc, select)
-    } else {
+  def makeFactors[T](cc: ComponentCollection, select: ParameterizedSelect[T], parameterized: Boolean): List[Factor[Double]] = {
+    if (parameterized) {
+//    val selectVar = Factory.getVariable(cc, select)
+//    if (selectVar.range.exists(!_.isRegular)) {
+//      assert(selectVar.range.size == 1) // Select's range must either be a list of regular values or {*}
+//      StarFactory.makeStarFactor(cc, select)
+//    } else {
+      val selectVar = Factory.getVariable(cc, select)
       val probs = parameterizedGetProbs(cc, select)
       List(makeSimpleDistribution(selectVar, probs))
+    } else {
+      val selectVar: Variable[T] = Factory.getVariable(cc, select)
+      if (selectVar.range.exists(!_.isRegular)) {
+        // If the select has * in its range, the parameter must not have been added (because the parameter is an atomic beta)
+        val factor = new BasicFactor[Double](List(), List(selectVar))
+        for { (selectXval, i) <- selectVar.range.zipWithIndex } {
+          val entry = if (selectXval.isRegular) 0.0 else 1.0
+          factor.set(List(i), entry)
+        }
+        List(factor)
+      } else {
+        val paramVar: Variable[Array[Double]] = Factory.getVariable(cc, select.parameter)
+        val factor = new BasicFactor[Double](List(paramVar), List(selectVar))
+        for {
+          (paramVal, paramIndex) <- paramVar.range.zipWithIndex
+          (selectVal, selectIndex) <- selectVar.range.zipWithIndex
+        } {
+          val entry = paramVal.value(selectIndex)
+          factor.set(List(paramIndex, selectIndex), entry)
+        }
+        List(factor)
+      }
     }
   }
 
@@ -123,14 +145,16 @@ object SelectFactory {
     val map = select.parameter.MAPValue
     for {
       xvalue <- Factory.getVariable(cc, select).range
-      index = outcomes.indexOf(xvalue.value)
-    } yield map(index)
+    } yield {
+      if (xvalue.isRegular) map(outcomes.indexOf(xvalue.value)) else 0.0
+    }
   }
 
   private def intermedAndClauseFactors[U, T](cc: ComponentCollection, dist: Dist[U, T]): (Variable[Int], List[Factor[Double]]) = {
     val intermed = new Variable(ValueSet.withoutStar((0 until dist.clauses.size).toSet))
+    val distVar = Factory.getVariable(cc, dist)
     val clauseFactors = dist.outcomes.zipWithIndex map (pair =>
-      Factory.makeConditionalSelector(cc, dist, intermed, pair._2, Variable(pair._1)))
+      Factory.makeConditionalSelector(cc, distVar, intermed, pair._2, Factory.getVariable(cc, pair._1)))
     (intermed, clauseFactors)
   }
 
@@ -152,12 +176,10 @@ object SelectFactory {
    *  so we cannot assign a specific probability to any of the regular values. Instead, we assign probability 1 to *.
    *  The code in the method below is designed to take into account this case correctly.
    */
-  private def makeComplexDistribution[T](cc: ComponentCollection, target: Variable[T], probElems: List[Element[Double]]): Factor[Double] = {
-    val probVars: List[Variable[Double]] = probElems map (Factory.getVariable(cc, _))
+  private def makeComplexDistribution[T](cc: ComponentCollection, target: Variable[T], probVars: List[Variable[Double]]): Factor[Double] = {
     val nVars = probVars.size
     val factor = new BasicFactor[Double](probVars, List(target)).setBasicMap
     val probVals: List[List[Extended[Double]]] = probVars map (_.range)
-
     if (target.range.forall(_.isRegular)) {
       /*
        * This is the easy case. For each list of indices to the factor, the first nVars indices will be indices into the range of the

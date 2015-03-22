@@ -1,13 +1,13 @@
 /*
  * BasicFactor.scala
  * Default implementation of factors over values.
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 package com.cra.figaro.algorithm.factored.factors
@@ -27,7 +27,7 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
   extends Factor[T] {
 
   val tpe = tag.tpe
-  
+
   /*
    * Initialize the map to all defaults
    */
@@ -37,7 +37,7 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
     }
     this
   }
-  
+
   var defaultValue = tpe match {
     case t if t =:= typeOf[Double] => 0.0
     case t if t =:= typeOf[Int] => 0
@@ -47,7 +47,7 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
     case _ => /*println("unknown type " + tpe)*/
       0.0
   }
-  
+
   override def createFactor[T: TypeTag](parents: List[Variable[_]], output: List[Variable[_]]) =
     new BasicFactor[T](parents, output).setBasicMap
 
@@ -58,7 +58,7 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
   override def setDefault[T](value: T) {
     defaultValue = value
   }
-  
+
   /**
    * Get the value associated with a row. The row is identified by an list of indices
    * into the ranges of the variables over which the factor is defined.
@@ -66,14 +66,14 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
   def get(indices: List[Int]): T = {
     contents(indices)
   }
-    
+
   /**
    * Convert the contents of the target by applying the given function to all elements of this factor.
    */
   override def mapTo[U: TypeTag](fn: T => U): Factor[U] = {
     val newFactor = createFactor[U](parents, output)
     newFactor.setDefault(fn(defaultValue.asInstanceOf[T]))
-    
+
     for { (key, value) <- contents } {
       newFactor.set(key, fn(value))
     }
@@ -92,8 +92,8 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
   }
 
   /* unionVars takes the variables in two factors and produces their union.
-   * 
-   * It produces a mapping from each original variable to its new location. 
+   *
+   * It produces a mapping from each original variable to its new location.
    * Similarly it produces a mapping from each new variable to its new location.
    */
   protected def unionVars[U](that: Factor[U]): (List[Variable[_]], List[Variable[_]], List[Int], List[Int]) = {
@@ -293,7 +293,7 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
     val resultWidth = contents.values.map(_.toString.length).foldLeft(4)(_ max _) + 2
     def addBorderRow() {
       for { width <- valueWidths } { result.append("|" + "-" * width) }
-      result.append("|" + "-" * resultWidth + "|\n") //   
+      result.append("|" + "-" * resultWidth + "|\n") //
     }
     def addCentered(string: String, width: Int) {
       val buffer = (width - string.length) / 2

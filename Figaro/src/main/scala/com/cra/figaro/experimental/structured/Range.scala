@@ -9,7 +9,7 @@ import com.cra.figaro.util.HashMultiSet
 import com.cra.figaro.algorithm.factored.ParticleGenerator
 import com.cra.figaro.library.collection.MakeArray
 import com.cra.figaro.library.collection.FixedSizeArray
-import com.cra.figaro.library.atomic.discrete.AtomicBinomial
+import com.cra.figaro.library.atomic.discrete.{AtomicBinomial, ParameterizedBinomialFixedNumTrials}
 import com.cra.figaro.library.compound.FoldLeft
 import com.cra.figaro.library.compound.IntSelector
 
@@ -150,22 +150,37 @@ object Range {
 
   private def chainRange[P, V](component: ChainComponent[P, V]): ValueSet[V] = {
     val collection = component.problem.collection
-    val parentVs = getRange(collection, component.chain.parent)
-    val resultVs =
-      for {
-        parentV <- parentVs.regularValues
-        subproblem <- component.subproblems.get(parentV)
-      } yield getRange(collection, subproblem.target)
-    val fullyExpanded = parentVs.regularValues.forall(component.subproblems.contains(_))
-    val starter: ValueSet[V] = if (parentVs.hasStar || !fullyExpanded) withStar(Set()) else withoutStar(Set())
-    resultVs.foldLeft(starter)(_ ++ _)
+    component.chain match {
+      // Parameterized binomial needs to be handled specially, because creating the factors for a parameterized element,
+      // when the parameterized flag is true, creates a simple factor over the element.
+      case b: ParameterizedBinomialFixedNumTrials =>
+        val values = (0 to b.numTrials).toSet
+        if (getRange(collection, b.parameter).hasStar) withStar(values) else withoutStar(values)
+
+      case _ =>
+        val parentVs = getRange(collection, component.chain.parent)
+        val resultVs =
+          for {
+            parentV <- parentVs.regularValues
+            subproblem <- component.subproblems.get(parentV)
+          } yield getRange(collection, subproblem.target)
+        val fullyExpanded = parentVs.regularValues.forall(component.subproblems.contains(_))
+        val starter: ValueSet[V] = if (parentVs.hasStar || !fullyExpanded) withStar(Set()) else withoutStar(Set())
+        resultVs.foldLeft(starter)(_ ++ _)
+    }
   }
 
   private def makeArrayRange[V](component: MakeArrayComponent[V]): ValueSet[FixedSizeArray[V]] = {
     val collection = component.problem.collection
     val numItemsRange = getRange(collection, component.makeArray.numItems)
-    val resultVs = numItemsRange.regularValues.map(component.makeArray.arrays(_))
-    if (numItemsRange.hasStar) withStar(resultVs) else withoutStar(resultVs)
+    val numItemsMax = numItemsRange.regularValues.foldLeft(0)(_ max _)
+    if (numItemsMax <= component.maxExpanded) {
+      val resultVs = numItemsRange.regularValues.map(component.makeArray.arrays(_))
+      if (numItemsRange.hasStar) withStar(resultVs) else withoutStar(resultVs)
+    } else {
+      val resultVs = numItemsRange.regularValues.filter(_ <= component.maxExpanded).map(component.makeArray.arrays(_))
+      withStar(resultVs)
+    }
   }
 
   private def otherRange[V](component: ProblemComponent[V], numValues: Int): ValueSet[V] = {
@@ -177,13 +192,13 @@ object Range {
 
       case f: ParameterizedFlip =>
         if (getRange(collection, f.parameter).hasStar) withStar(Set(true, false)) else withoutStar(Set(true, false))
-        
+
       case f: CompoundFlip =>
         if (getRange(collection, f.prob).hasStar) withStar(Set(true, false)) else withoutStar(Set(true, false))
 
       case s: AtomicSelect[_] => withoutStar(Set(s.outcomes: _*))
 
-      case s: ParameterizedSelect[_] => 
+      case s: ParameterizedSelect[_] =>
         val values = Set(s.outcomes: _*)
         if (getRange(collection, s.parameter).hasStar) withStar(values) else withoutStar(values)
 
@@ -202,7 +217,8 @@ object Range {
         val values = componentSets.reduce(_ ++ _)
         if (d.probs.map(getRange(collection, _)).exists(_.hasStar)) values ++ withStar(Set()) else values
 
-      case i: FastIf[_] => withoutStar(Set(i.thn, i.els))
+      case i: FastIf[_] =>
+        if (getRange(collection, i.test).hasStar) withStar(Set(i.thn, i.els)) else withoutStar(Set(i.thn, i.els))
 
       case a: Apply1[_, _] =>
         val vs1 = getRange(collection, a.arg1)
@@ -400,7 +416,6 @@ object Range {
           val all = Set((0 until maxCounter):_*)
           if (counterValues.hasStar) ValueSet.withStar(all); else ValueSet.withoutStar(all)
         } else { ValueSet.withStar(Set()) }
-
 
       case _ =>
         /* A new improvement - if we can't compute the values, we just make them *, so the rest of the computation can proceed */

@@ -100,7 +100,8 @@ class RangeTest extends WordSpec with Matchers {
     }
 
     "for a parameterized flip, treat like a compound flip, setting the range to { true, false }, plus * if the parent is unadded" in {
-      Universe.createNew()
+      val universe = Universe.createNew()
+      val pg = ParticleGenerator(universe)
       val cc = new ComponentCollection
       val pr = new Problem(cc)
       val e1 = Beta(1, 1)
@@ -202,8 +203,10 @@ class RangeTest extends WordSpec with Matchers {
       cc.contains(e1) should equal (false)
     }
 
-    "for a parameterized select, treat like a compound select, setting the range to the outcomes, plus * if the parent has been added" in {
-      Universe.createNew()
+    "for a parameterized select, treat like a compound select, setting the range to the outcomes, plus * if the parent has not been added" +
+    " (and not adding the parent in that case)" in {
+      val universe = Universe.createNew()
+      val pg = ParticleGenerator(universe)
       val cc = new ComponentCollection
       val pr = new Problem(cc)
       val e1 = Dirichlet(1, 1)
@@ -224,6 +227,7 @@ class RangeTest extends WordSpec with Matchers {
       c3.range.regularValues should equal (Set(true, false))
       c4.range.hasStar should equal (false)
       c4.range.regularValues should equal (Set(true, false))
+      cc.contains(e1) should equal (false)
     }
 
     "for an atomic binomial, set the range to 0 to the number of trials" in {
@@ -239,19 +243,56 @@ class RangeTest extends WordSpec with Matchers {
       c1.range.regularValues should equal (Set(0, 1, 2, 3))
     }
 
-    "for an if with values as the consequents, set the range to the two possible consequents, even if the test has not been added" in {
+    "for a parameterized binomial, treat like a compound binomial, setting the range to 0 to the number of trials, plus * if the parent has been added" in {
+      val universe = Universe.createNew()
+      val pg = ParticleGenerator(universe)
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Beta(1, 1)
+      val e2 = Beta(2, 2)
+      val e3 = Binomial(3, e1)
+      val e4 = Binomial(3, e2)
+      pr.add(e2)
+      pr.add(e3)
+      pr.add(e4)
+      val c2 = cc(e2)
+      val c3 = cc(e3)
+      val c4 = cc(e4)
+      c2.generateRange()
+      c3.generateRange()
+      c4.generateRange()
+
+      c3.range.hasStar should equal (true)
+      c3.range.regularValues should equal (Set(0, 1, 2, 3))
+      c4.range.hasStar should equal (false)
+      c4.range.regularValues should equal (Set(0, 1, 2, 3))
+      cc.contains(e1) should equal (false)
+    }
+
+    "for an if with values as the consequents, set the range to the two possible consequents, " +
+    "but add * if the parent's range contains * or has not been added (and don't add the parent)" in {
       Universe.createNew()
       val cc = new ComponentCollection
       val pr = new Problem(cc)
       val e1 = Flip(0.1)
-      val e2 = If(e1, 1, 2)
+      val e2 = Flip(0.2)
+      val e3 = If(e1, 1, 2)
+      val e4 = If(e2, 3, 4)
       pr.add(e2)
+      pr.add(e3)
+      pr.add(e4)
       val c2 = cc(e2)
+      val c3 = cc(e3)
+      val c4 = cc(e4)
       c2.generateRange()
+      c3.generateRange()
+      c4.generateRange()
 
-      c2.range.hasStar should equal (false)
-      c2.range.regularValues should equal (Set(1,2))
-
+      c3.range.hasStar should equal (true)
+      c3.range.regularValues should equal (Set(1,2))
+      c4.range.hasStar should equal (false)
+      c4.range.regularValues should equal (Set(3,4))
+      cc.contains(e1) should equal (false)
     }
 
     "for an atomic dist, set the range to the union of the precomputed ranges of the outcomes, including * if necessary" in {
@@ -861,7 +902,7 @@ class RangeTest extends WordSpec with Matchers {
       c2.asInstanceOf[ChainComponent[_,_]].subproblems should be (empty)
     }
 
-    "for an expanded chain with an added parent, set the range to the union of the ranges of the outcome elements" in {
+    "for an expanded chain with an added parent without *, set the range to the union of the ranges of the outcome elements" in {
       Universe.createNew()
       val cc = new ComponentCollection
       val pr = new Problem(cc)
@@ -883,6 +924,33 @@ class RangeTest extends WordSpec with Matchers {
 
       c4.range.hasStar should equal (false)
       c4.range.regularValues should equal (Set(1, 2))
+    }
+
+    "for an expanded chain with an added parent with *, set the range to the union of the ranges of the outcome elements plus *" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Constant(true)
+      val e2 = Constant(false)
+      val e3 = Dist(0.1 -> e1, 0.9 -> e2)
+      val e4 = Constant(1)
+      val e5 = Constant(2)
+      val e6 = Chain(e3, (b: Boolean) => if (b) e4 else e5)
+      pr.add(e2)
+      pr.add(e3)
+      pr.add(e6)
+      val c2 = cc(e2)
+      val c3 = cc(e3)
+      val c6 = cc(e6)
+      c2.generateRange()
+      c3.generateRange()
+      c6.expand()
+      val c5 = cc(c6.subproblems(false).target)
+      c5.generateRange()
+      c6.generateRange()
+
+      c6.range.hasStar should equal (true)
+      c6.range.regularValues should equal (Set(2))
     }
 
     "for a non-enumerable element, set the range to {*}" in {
@@ -952,6 +1020,34 @@ class RangeTest extends WordSpec with Matchers {
       val c2 = cc(e2)
       val c3 = cc(e3)
       c1.generateRange()
+      c2.generateRange()
+      c3.generateRange()
+
+      c3.range.hasStar should equal (false)
+      c3.range.regularValues should equal (Set(true, false))
+    }
+
+    "for an indirect single-valued reference with all required elements added and reference uncertainty, " +
+    "set the range to the union of the ranges of the target" in {
+      val universe = Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val ec1 = new EC1(universe)
+      val ec2 = new EC1(universe)
+      val e11 = Constant(true)("e1", ec1)
+      val e12 = Constant(false)("e1", ec2)
+      val e2 = Uniform(ec1, ec2)("e2", universe)
+      val e3 = universe.get[Boolean]("e2.e1")
+      pr.add(e11)
+      pr.add(e12)
+      pr.add(e2)
+      pr.add(e3)
+      val c11 = cc(e11)
+      val c12 = cc(e12)
+      val c2 = cc(e2)
+      val c3 = cc(e3)
+      c11.generateRange()
+      c12.generateRange()
       c2.generateRange()
       c3.generateRange()
 
@@ -1310,7 +1406,8 @@ class RangeTest extends WordSpec with Matchers {
       c4.range.regularValues should equal (Set())
     }
 
-    "for a MakeArray with an added parent without *, set the range to the set of fixed size arrays corresponding to the values of the parent" in {
+    "for a fully expanded MakeArray with an added parent without *, " +
+    "set the range to the set of fixed size arrays corresponding to the values of the parent" in {
       val universe = Universe.createNew()
       val cc = new ComponentCollection
       val pr = new Problem(cc)
@@ -1322,6 +1419,7 @@ class RangeTest extends WordSpec with Matchers {
       val c1 = cc(e1)
       val c2 = cc(e2)
       c1.generateRange()
+      c2.expand()
       c2.generateRange()
 
       c2.range.hasStar should equal (false)
@@ -1333,6 +1431,29 @@ class RangeTest extends WordSpec with Matchers {
       val len1 = values(1).asInstanceOf[FixedSizeArray[_]].size
       (len0 == 2 || len1 == 2) should equal (true)
       (len0 == 4 || len1 == 4) should equal (true)
+    }
+
+    "for a partially expanded MakeArray without *, " +
+    "set the range to the fixed size arrays for the expanded parent values plues *" in {
+      val universe = Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      def generate(i: Int) = Constant(i)
+      val e1 = Uniform(2, 4)
+      val e2 = new MakeArray("", e1, generate, universe)
+      pr.add(e1)
+      pr.add(e2)
+      val c1 = cc(e1)
+      val c2 = cc(e2)
+      c1.generateRange()
+      c2.expand(2)
+      c2.generateRange()
+
+      c2.range.hasStar should equal (true)
+      val values = c2.range.regularValues.toList
+      values.size should equal (1)
+      values(0).isInstanceOf[FixedSizeArray[_]] should equal (true)
+      values(0).asInstanceOf[FixedSizeArray[_]].size should equal (2)
     }
 
     "for a MakeArray with an added parent with *, set the range to the set of fixed size arrays corresponding to the values of the parent plus *" in {
@@ -1352,6 +1473,7 @@ class RangeTest extends WordSpec with Matchers {
       val c4 = cc(e4)
       c2.generateRange()
       c3.generateRange()
+      c4.expand()
       c4.generateRange()
 
       c4.range.hasStar should equal (true)

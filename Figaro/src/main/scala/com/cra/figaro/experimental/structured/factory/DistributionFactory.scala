@@ -48,6 +48,10 @@ object DistributionFactory {
   def makeFactors(cc: ComponentCollection, flip: CompoundFlip): List[Factor[Double]] = {
     val flipVar = Factory.getVariable(cc, flip)
     val probVar = Factory.getVariable(cc, flip.prob)
+    makeCompoundFlip(flipVar, probVar)
+  }
+
+  private def makeCompoundFlip(flipVar: Variable[Boolean], probVar: Variable[Double]): List[Factor[Double]] = {
     val factor = new BasicFactor[Double](List(probVar), List(flipVar))
     val parentVals = probVar.range
     if (flipVar.range.exists(!_.isRegular)) {
@@ -82,14 +86,29 @@ object DistributionFactory {
   /**
    * Factor constructor for a ParameterizedFlip
    */
-  def makeFactors(cc: ComponentCollection, flip: ParameterizedFlip): List[Factor[Double]] = {
-    val flipVar = Factory.getVariable(cc, flip)
-    val factor = new BasicFactor[Double](List(),List(flipVar))
-    val prob = flip.parameter.MAPValue
-    val i = flipVar.range.indexOf(Regular(true))
-    factor.set(List(i), prob)
-    factor.set(List(1 - i), 1.0 - prob)
-    List(factor)
+  def makeFactors(cc: ComponentCollection, flip: ParameterizedFlip, parameterized: Boolean): List[Factor[Double]] = {
+    if (parameterized) {
+      val flipVar = Factory.getVariable(cc, flip)
+      val factor = new BasicFactor[Double](List(),List(flipVar))
+      val prob = flip.parameter.MAPValue
+      if (flipVar.range.forall(_.isRegular)) {
+        val i = flipVar.range.indexOf(Regular(true))
+        factor.set(List(i), prob)
+        factor.set(List(1 - i), 1.0 - prob)
+      } else {
+        val trueIndex = flipVar.range.indexOf(Regular(true))
+        val falseIndex = flipVar.range.indexOf(Regular(false))
+        val starIndex = flipVar.range.indexWhere(!_.isRegular)
+        factor.set(List(trueIndex), prob)
+        factor.set(List(falseIndex), 1.0 - prob)
+        factor.set(List(starIndex), 0.0)
+      }
+      List(factor)
+    } else {
+      val flipVar = Factory.getVariable(cc, flip)
+      val probVar = Factory.getVariable(cc, flip.parameter)
+      makeCompoundFlip(flipVar, probVar)
+    }
   }
 
   /**
@@ -102,6 +121,37 @@ object DistributionFactory {
         factor.set(List(index), binomial.density(xvalue.value))
       }
     List(factor)
+  }
+
+  def makeFactors(cc: ComponentCollection, binomial: ParameterizedBinomialFixedNumTrials, parameterized: Boolean): List[Factor[Double]] = {
+    if (parameterized) {
+      val binVar = Factory.getVariable(cc, binomial)
+      val factor = new BasicFactor[Double](List(),List(binVar))
+      if (binVar.range.exists(!_.isRegular)) { // parameter must not have been added since it's an atomic beta
+        for { (xvalue, index) <- binVar.range.zipWithIndex } {
+          val entry = if (xvalue.isRegular) 0.0 else 1.0
+          factor.set(List(index), entry)
+        }
+      } else {
+        val probSuccess = binomial.parameter.MAPValue
+        for { (xvalue, index) <- binVar.range.zipWithIndex } {
+          factor.set(List(index), Util.binomialDensity(binomial.numTrials, probSuccess, xvalue.value))
+        }
+      }
+      List(factor)
+    } else {
+      val binVar = Factory.getVariable(cc, binomial)
+      if (binVar.range.exists(!_.isRegular)) { // parameter must not have been added since it's an atomic beta
+        val factor = new BasicFactor[Double](List(),List(binVar))
+        for { (xvalue, index) <- binVar.range.zipWithIndex } {
+          val entry = if (xvalue.isRegular) 0.0 else 1.0
+          factor.set(List(index), entry)
+        }
+        List(factor)
+      } else {
+        ChainFactory.makeFactors(cc, binomial)
+      }
+    }
   }
 
 }

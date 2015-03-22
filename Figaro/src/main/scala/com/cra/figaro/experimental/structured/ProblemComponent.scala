@@ -7,6 +7,8 @@ import com.cra.figaro.algorithm.factored.factors.factory.StarFactory
 import com.cra.figaro.algorithm.factored.factors.Variable
 import com.cra.figaro.library.collection.MakeArray
 import com.cra.figaro.library.collection.FixedSizeArray
+import com.cra.figaro.algorithm.factored.ParticleGenerator
+import com.cra.figaro.experimental.structured.factory.ConstraintFactory
 
 /*
  * A component of a problem, created for a specific element.
@@ -23,6 +25,8 @@ class ProblemComponent[Value](val problem: Problem, val element: Element[Value])
   // These should be updated when the range changes but otherwise should be left alone.
   var constraintLower: List[Factor[Double]] = List()
   var constraintUpper: List[Factor[Double]] = List()
+
+  def constraintFactors(bounds: Bounds = Lower) = if (bounds == Upper) constraintUpper else constraintLower
 
   // All other factors resulting from the definition of this element. For many element classes,
   // these factors will be generated directly in the usual way.
@@ -47,21 +51,23 @@ class ProblemComponent[Value](val problem: Problem, val element: Element[Value])
   // If an argument is not in the component collection, we do not generate the argument, but instead assume its only value is *.
   // This doesn't change the range of any other element or expand any subproblems.
   // The range will include * based on argument ranges including * or any subproblem not being expanded.
-  def generateRange(numValues: Int = 10) {
+  def generateRange(numValues: Int = ParticleGenerator.defaultTotalSamples) {
     range = Range(this, numValues)
     variable = new Variable(range)
   }
 
   // Generate the constraint factors based on the current range.
   // Bounds specifies whether these should be created for computing lower or upper bounds
-  def makeConstraintFactors(bounds: Bounds) {
-
+  def makeConstraintFactors(bounds: Bounds = Lower) {
+    if (bounds == Upper) constraintUpper = ConstraintFactory.makeFactors(problem.collection, element, true)
+    else constraintLower = ConstraintFactory.makeFactors(problem.collection, element, false)
   }
 
   // For most elements, this just generates the factors in the usual way.
   // For a chain, this takes the current solution to the subproblems, which are lists of factors over this and other components.
-  def makeNonConstraintFactors() {
-    nonConstraintFactors = factory.Factory.makeFactors(problem.collection, element)
+  // The parameterized flag indicates whether parameterized elements should have special factors created that use the MAP values of their arguments.
+  def makeNonConstraintFactors(parameterized: Boolean = false) {
+    nonConstraintFactors = factory.Factory.makeFactors(problem.collection, element, parameterized)
   }
 
   // Compute current beliefs about this component based on the queued messages and factors of this component.
