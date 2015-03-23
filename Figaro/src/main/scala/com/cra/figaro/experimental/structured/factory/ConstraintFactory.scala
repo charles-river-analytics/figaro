@@ -40,10 +40,10 @@ object ConstraintFactory {
   private def makeContingentConstraintFactor[T](cc: ComponentCollection, elem: Element[T], constraint: T => Double,
       firstConting: Element.ElemVal[_], restContinges: Element.Contingency, upper: Boolean): Factor[Double] = {
     val restFactor = makeConstraintFactor(cc, elem, (constraint, restContinges), upper)
-    extendConstraintFactor(cc, restFactor, firstConting)
+    extendConstraintFactor(cc, restFactor, firstConting, upper)
   }
 
-  private def extendConstraintFactor(cc: ComponentCollection, restFactor: Factor[Double], firstConting: Element.ElemVal[_]): Factor[Double] = {
+  private def extendConstraintFactor(cc: ComponentCollection, restFactor: Factor[Double], firstConting: Element.ElemVal[_], upper: Boolean): Factor[Double] = {
     // The extended factor is obtained by getting the underlying factor and expanding each row so that the row only provides its entry if the contingent variable takes
     // on the appropriate value, otherwise the entry is 1
     val Element.ElemVal(firstElem, firstValue) = firstConting
@@ -54,9 +54,18 @@ object ConstraintFactory {
     val resultFactor = new ConstraintFactor[Double](firstVar :: restFactor.parents, restFactor.output)
     for { restIndices <- restFactor.getIndices } {
       val restEntry = restFactor.get(restIndices)
-      for { firstIndex <- 0 until numFirstValues } {
-        val resultEntry = if (firstIndex == matchingIndex) restEntry; else 1.0
-        resultFactor.set(firstIndex :: restIndices, resultEntry)
+      for { (firstValue, firstIndex) <- firstValues.zipWithIndex } {
+        if (firstValue.isRegular) {
+          val resultEntry = if (firstIndex == matchingIndex) restEntry; else 1.0
+          resultFactor.set(firstIndex :: restIndices, resultEntry)
+        } else {
+          // Here's the logic for the lower and upper bounds:
+          // The current firstValue is *. Let the value it will eventually resolve to be X.
+          // If X is matching, the row's entry will be restEntry, otherwise 1.0.
+          // So, the lower bound is restEntry while the upper is 1.0.
+          val entry = if (upper) 1.0 else restEntry
+          resultFactor.set(firstIndex :: restIndices, entry)
+        }
       }
     }
     resultFactor

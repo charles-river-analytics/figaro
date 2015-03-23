@@ -1,13 +1,13 @@
 /*
  * Binomial.scala
  * Elements representing binomial distributions.
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Feb 25, 2011
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -92,8 +92,6 @@ class BinomialFixedNumTrials(name: Name[Int], val numTrials: Int, val probSucces
 class ParameterizedBinomialFixedNumTrials(name: Name[Int], val numTrials: Int, override val parameter: AtomicBeta, collection: ElementCollection)
   extends CachingChain[Double, Int](name, parameter, (p: Double) => new AtomicBinomial("", numTrials, p, collection), collection)
   with SingleParameterized[Int] {
-  
-  
   override def distributionToStatistics(distribution: Stream[(Double, Int)]): Seq[Double] = {
     val distList = distribution.toList
     var totalPos = 0.0
@@ -108,7 +106,7 @@ class ParameterizedBinomialFixedNumTrials(name: Name[Int], val numTrials: Int, o
     }
     List(totalPos, totalNeg)
   }
-  
+
   def density(value: Int): Double = {
     val probSuccess = parameter.value
     if (value < 0 || value > numTrials) 0.0
@@ -116,7 +114,7 @@ class ParameterizedBinomialFixedNumTrials(name: Name[Int], val numTrials: Int, o
   }
 
  override def toString = "ParameterizedBinomial(" + numTrials + ", " + parameter + ")"
-} 
+}
 
 /**
  * A binomial distribution in which the parameters are elements.
@@ -152,7 +150,7 @@ object Binomial extends Creatable {
     new ParameterizedBinomialFixedNumTrials(name, n, p.asInstanceOf[AtomicBeta], collection)
     else new BinomialFixedNumTrials(name, n, p, collection)
   }
-  
+
   /**
    * Create a binomial distribution in which the parameters are elements.
    */

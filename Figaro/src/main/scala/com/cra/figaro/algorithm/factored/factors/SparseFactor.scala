@@ -1,13 +1,13 @@
 /*
  * SparseFactor.scala
  * Sparse implementation of factors over values.
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 package com.cra.figaro.algorithm.factored.factors
@@ -27,13 +27,13 @@ import scala.reflect.runtime.universe._
  */
 class SparseFactor[T](parents: List[Variable[_]], output: List[Variable[_]])(implicit tag: TypeTag[T])
   extends BasicFactor[T](parents, output) {
-  
+
   override def createFactor[T: TypeTag](parents: List[Variable[_]], output: List[Variable[_]]) =
     new SparseFactor[T](parents, output)
-    
+
  /**
    * Get the value associated with a row. The row is identified by an list of indices
-   * into the ranges of the variables over which the factor is defined. Rows with 
+   * into the ranges of the variables over which the factor is defined. Rows with
    * default values will be missing, so supply the missing value for these rows
    */
   override def get(indices: List[Int]): T = {
@@ -52,7 +52,7 @@ class SparseFactor[T](parents: List[Variable[_]], output: List[Variable[_]])(imp
       contents += indices -> value
     this
   }
-  
+
   /**
    * List the indices with non-default values
    */
@@ -110,7 +110,7 @@ class SparseFactor[T](parents: List[Variable[_]], output: List[Variable[_]])(imp
 
       val result = createFactor[T](newParents, newOutput)
 
-      // Compute the indices of the remaining variables 
+      // Compute the indices of the remaining variables
       val newIndices = this.contents.keys.map(index => {
         val rest = List.tabulate(numVars)(n => n).diff(indicesOfSummedVariable)
         rest.map(i => index(i))
@@ -166,7 +166,7 @@ class SparseFactor[T](parents: List[Variable[_]], output: List[Variable[_]])(imp
       indicesOfSummedVariable.map(i => index(i))
     }).toList.flatten.distinct
 
-    // Compute the indices of the remaining variables 
+    // Compute the indices of the remaining variables
     val newIndices = this.contents.keys.map(index => {
       val rest = List.tabulate(numVars)(n => n).diff(indicesOfSummedVariable)
       rest.map(i => index(i))
@@ -182,7 +182,7 @@ class SparseFactor[T](parents: List[Variable[_]], output: List[Variable[_]])(imp
 
   class SparseIndices(variables: List[Variable[_]]) extends Indices(variables) {
     override def iterator = contents.keys.iterator
- 
+
     /**
      * Given a list of indices corresponding to a row in the factor, returns the list of indices
      * corresponding to the next row.
@@ -203,7 +203,7 @@ class SparseFactor[T](parents: List[Variable[_]], output: List[Variable[_]])(imp
       // If so recurses to next position
       def helper(position: Int): Option[List[Int]] =
         if (position < 0) None
-        else if (current(position) < limits(position)) { 
+        else if (current(position) < limits(position)) {
           val nextIndices = makeNext(position).toList
           if (contents.contains(nextIndices)) {
             Some(nextIndices)

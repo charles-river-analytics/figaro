@@ -4,15 +4,17 @@ import com.cra.figaro.language.{Element, Chain}
 import com.cra.figaro.util.memo
 import com.cra.figaro.library.collection.MakeArray
 import com.cra.figaro.library.collection.FixedSizeArray
+import scala.collection.mutable.Map
+import com.cra.figaro.algorithm.factored.factors.Variable
 
 /*
  * Every element exists in at most one component.
  * To create a new component for an element, you need to say what problem it belongs to.
  */
 class ComponentCollection {
-  var components: Map[Element[_], ProblemComponent[_]] = Map()
+  val components: Map[Element[_], ProblemComponent[_]] = Map()
 
-  var expansions: Map[(Function1[_, Element[_]], _), NestedProblem[_]] = Map()
+  val expansions: Map[(Function1[_, Element[_]], _), NestedProblem[_]] = Map()
 
   // Checks in the cache if an expansion exists and creates one if necessary
   private[structured] def expansion[P,V](function: Function1[P, Element[V]], parentValue: P): NestedProblem[V] = {
@@ -24,6 +26,9 @@ class ComponentCollection {
         result
     }
   }
+
+  // We need to be able to identify the components associated with variables
+  val variableToComponent: Map[Variable[_], ProblemComponent[_]] = Map()
 
   // Does the element have a component in this collection?
   def contains[T](element: Element[T]): Boolean =
