@@ -10,7 +10,6 @@
  * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
-
 package com.cra.figaro.ndtest
 
 import org.scalatest.WordSpec
@@ -18,20 +17,17 @@ import org.scalatest.Matchers
 import org.scalatest.exceptions.TestFailedException
 import com.cra.figaro.language._
 import com.cra.figaro.algorithm._
+import scala.collection.mutable.Map
 
-class NDTest extends WordSpec with Matchers
-{
-  var results: Map[String, NDTestResult] = Map()
+abstract class NDTest extends WordSpec with Matchers {
+  val results: Map[String, NDTestResult[_]] = Map()
 
-  final def run(n: Int)
-  {
-    (0 until n).foreach(_ => oneTest)
-
-    for (result <- results.values)
-    {
-      result.check should be (true)
-    }
-  }
+  def update[T](name: String, value: T) =  results(name).asInstanceOf[NDTestResult[T]].update(value)
   
-  def oneTest {}
+  final def run(n: Int) {
+    (0 until n).foreach(_ => oneTest)
+    results.values.foreach(_.check should be(true))
+  }
+
+  def oneTest: Unit
 }

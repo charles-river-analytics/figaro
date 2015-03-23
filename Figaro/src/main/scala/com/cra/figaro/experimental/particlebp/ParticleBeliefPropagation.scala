@@ -34,6 +34,7 @@ import com.cra.figaro.algorithm.factored.beliefpropagation.FactorNode
 import com.cra.figaro.algorithm.factored.beliefpropagation.Node
 import breeze.linalg.normalize
 import com.cra.figaro.algorithm.UnsupportedAlgorithmException
+import com.cra.figaro.algorithm.sampling.ProbEvidenceSampler
 
 /**
  * Doc needed
@@ -72,61 +73,20 @@ trait ParticleBeliefPropagation extends FactoredAlgorithm[Double] with InnerBPHa
   val pbpSampler: ParticleGenerator
 
   /**
-   * Variable that if set to true, will preserve parts of the factor graph that cannot
-   * change during resampling. This will preserve the messages in those parts of the factor graph.
-   * This feature is experimental and not guaranteed to work currently. Default is false.
-   */
-  val preserveUnchangedGraph: Boolean = false
-
-  /**
    * Elements towards which queries are directed. By default, these are the target elements.
    */
   def starterElements: List[Element[_]] = targetElements
-
-  /*
-   * Saves the posterior messages from a factor graph into a map 
-   */
-  private[figaro] def savePosteriorMessages(elems: Set[Element[_]]): Map[Node, Map[Node, Factor[Double]]] = {
-    val oldMsgs = Map[Node, Map[Node, Factor[Double]]]()
-
-    elems.foreach { elem =>
-      val priorFactors = Factory.make(elem).toSet
-
-      priorFactors.foreach { pf =>
-        val fn: Node = FactorNode(pf.variables.toSet)
-        bp.factorGraph.getNeighbors(fn).map(n => {
-          val msg = bp.factorGraph.getLastMessage(n, fn)
-          oldMsgs.getOrElseUpdate(n, Map[Node, Factor[Double]]()) += fn -> msg
-        })
-      }
-      val vn: Node = VariableNode(Variable(elem))
-      bp.factorGraph.getNeighbors(vn).map(n => {
-        val msg = bp.factorGraph.getLastMessage(n, vn)
-        oldMsgs.getOrElseUpdate(n, Map[Node, Factor[Double]]()) += vn -> msg
-      })
-    }
-    oldMsgs
-  }
-
-  /*
-   * Updates the messages in the bp factor graph with oldMsgs saved in a map
-   */
-  private[figaro] def updatePosteriorMessages(oldMsgs: Map[Node, Map[Node, Factor[Double]]]) = {
-    oldMsgs.foreach { node =>
-      node._2.foreach(to =>
-        if (bp.factorGraph.contains(node._1) && bp.factorGraph.contains(to._1)) bp.factorGraph.update(node._1, to._1, to._2))
-    }
-  }
-
+  
+  val dependentUniverses: List[(Universe, List[NamedEvidence[_]])]
+  
+  val dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double
+  
   /*
    * Runs the inner loop of PBP. 
    * 
    */
   private[figaro] def runInnerLoop(elemsWithPosteriors: Set[Element[_]], dependentElems: Set[Element[_]]) = {
     currentUniverse = universe
-
-    // Save old messages if we are preserving the factor graph
-    val oldMsgs: Map[Node, Map[Node, Factor[Double]]] = if (preserveUnchangedGraph) savePosteriorMessages(elemsWithPosteriors) else Map()
 
     // Remove factors on all elements that can possibly change during resamples
     dependentElems.foreach(Factory.removeFactors(_))
@@ -136,13 +96,7 @@ trait ParticleBeliefPropagation extends FactoredAlgorithm[Double] with InnerBPHa
     LazyValues.clear(universe)
 
     // Create BP.
-    createBP(targetElements)
-
-    // If we are updating old messages, do it now
-    if (oldMsgs.nonEmpty) {
-      bp.generateGraph()
-      updatePosteriorMessages(oldMsgs)
-    }
+    createBP(targetElements, dependentUniverses, dependentAlgorithm)
 
     // run BP
     runBP()
@@ -174,17 +128,16 @@ trait ParticleBeliefPropagation extends FactoredAlgorithm[Double] with InnerBPHa
     (needsToBeResampled, dependentElems)
   }
 
-  
-   /* For purposes of resampling, we want to find the belief of the element WITHOUT
+  /* For purposes of resampling, we want to find the belief of the element WITHOUT
     * the original factor. That is, we will incorporate that information using the exact
     * density of the element, we don't need to estimate it from a factor. 
     * 
     * So this function will return all of the last messages to the element node and divie out
     * the original factor 
     * 
-    */      
+    */
   private[figaro] def getLastMessagesToNode(elem: Element[_]): List[Factor[Double]] = {
-  
+
     // find the node in the graph corresponding to the element
     val elemNode = bp.findNodeForElement(elem)
     val neighbors = bp.factorGraph.getNeighbors(elemNode).toList
@@ -201,7 +154,7 @@ trait ParticleBeliefPropagation extends FactoredAlgorithm[Double] with InnerBPHa
     // can have evidence multiplied in, so we only want to remove the original factor for it. We will use the original
     // density instead of the factor to estimate densities during resampling
     val factors = lastMessages.patch(singleFactorIndex, Nil, 1).map(_._2) :+ singleFactor._2.combination(bp.makeLogarithmic(originalFactor(0)), bp.semiring.divide, bp.semiring)
-    factors    
+    factors
   }
 
   /*
@@ -213,7 +166,6 @@ trait ParticleBeliefPropagation extends FactoredAlgorithm[Double] with InnerBPHa
     val elemsWithPosteriors: Set[Element[_]] = if (bp != null) bp.neededElements.toSet -- dependentElems -- needsToBeResampled else Set()
 
     runInnerLoop(elemsWithPosteriors, dependentElems)
-    //println("Inner loop complete")
   }
 
   /*
@@ -264,8 +216,8 @@ trait AnytimeParticleBeliefPropagation extends ParticleBeliefPropagation with An
  */
 abstract class ProbQueryParticleBeliefPropagation(numArgSamples: Int, numTotalSamples: Int,
   override val universe: Universe, targets: Element[_]*)(
-    //val dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
-    //val dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double,
+    val dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
+    val dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double,
     depth: Int = Int.MaxValue, upperBounds: Boolean = false)
   extends ProbQueryAlgorithm
   with ParticleBeliefPropagation { //with ProbEvidenceBeliefPropagation {
@@ -275,14 +227,7 @@ abstract class ProbQueryParticleBeliefPropagation(numArgSamples: Int, numTotalSa
   val queryTargets = targetElements
 
   val semiring = LogSumProductSemiring
-
-  // Dependent stuff not currently implemented
-  val dependentUniverses: List[(Universe, List[NamedEvidence[_]])] = List()
-
-  val dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double = {
-    (u: Universe, e: List[NamedEvidence[_]]) => () => 1.0
-  }
-
+  
   val densityEstimator = new AutomaticDensityEstimator
 
   val pbpSampler = ParticleGenerator(universe, densityEstimator, numArgSamples, numTotalSamples)
@@ -292,9 +237,7 @@ abstract class ProbQueryParticleBeliefPropagation(numArgSamples: Int, numTotalSa
    * the BP instances
    */
   def getFactors(neededElements: List[Element[_]],
-    targetElements: List[Element[_]], upperBounds: Boolean = false): List[Factor[Double]] = List()
-
-  def createBP(targets: List[Element[_]]): Unit = createBP(targets, depth, upperBounds)
+    targetElements: List[Element[_]], upperBounds: Boolean = false): List[Factor[Double]] = List()  
 
   def computeDistribution[T](target: Element[T]): Stream[(Double, T)] = bp.getBeliefsForElement(target).toStream
 
@@ -311,26 +254,82 @@ object ParticleBeliefPropagation {
    */
   def apply(myOuterIterations: Int, myInnerIterations: Int, targets: Element[_]*)(implicit universe: Universe) =
     new ProbQueryParticleBeliefPropagation(ParticleGenerator.defaultArgSamples, ParticleGenerator.defaultTotalSamples,
-      universe, targets: _*)() with OneTimeParticleBeliefPropagation with OneTimeProbQuery {
+      universe, targets: _*)(List(),
+      (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u)) with OneTimeParticleBeliefPropagation with OneTimeProbQuery {
       val outerIterations = myOuterIterations
       val innerIterations = myInnerIterations
     }
 
+  /**
+   * Creates a One Time belief propagation computer in the current default universe. Use the dependent universe and algorithm to compute prob of evidence in dependent universe
+   */
+  def apply(dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
+    dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double, myOuterIterations: Int, myInnerIterations: Int, targets: Element[_]*)(implicit universe: Universe) =
+    new ProbQueryParticleBeliefPropagation(ParticleGenerator.defaultArgSamples, ParticleGenerator.defaultTotalSamples,
+      universe, targets: _*)(dependentUniverses, dependentAlgorithm) with OneTimeParticleBeliefPropagation with OneTimeProbQuery {
+      val outerIterations = myOuterIterations
+      val innerIterations = myInnerIterations
+    }
+
+  /**
+   * Creates a One Time belief propagation computer in the current default universe that specifies the number of samples to take for each element.
+   */
   def apply(myOuterIterations: Int, myInnerIterations: Int, argSamples: Int, totalSamples: Int,
     targets: Element[_]*)(implicit universe: Universe) =
-    new ProbQueryParticleBeliefPropagation(argSamples, totalSamples, universe, targets: _*)() with OneTimeParticleBeliefPropagation with OneTimeProbQuery {
+    new ProbQueryParticleBeliefPropagation(argSamples, totalSamples, universe, targets: _*)(List(),
+      (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u)) with OneTimeParticleBeliefPropagation with OneTimeProbQuery {
       val outerIterations = myOuterIterations
       val innerIterations = myInnerIterations
     }
 
+  /**
+   * Creates a One Time belief propagation computer in the current default universe that specifies the number of samples to take for each element.
+   * Use the dependent universe and algorithm to compute prob of evidence in dependent universe
+   */
+  def apply(dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
+    dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double, myOuterIterations: Int, myInnerIterations: Int, argSamples: Int, totalSamples: Int,
+    targets: Element[_]*)(implicit universe: Universe) =
+    new ProbQueryParticleBeliefPropagation(argSamples, totalSamples, universe, targets: _*)(dependentUniverses, dependentAlgorithm) with OneTimeParticleBeliefPropagation with OneTimeProbQuery {
+      val outerIterations = myOuterIterations
+      val innerIterations = myInnerIterations
+    }
+
+  /**
+   * Creates a Anytime belief propagation computer in the current default universe.
+   */
   def apply(stepTimeMillis: Long, targets: Element[_]*)(implicit universe: Universe) =
     new ProbQueryParticleBeliefPropagation(ParticleGenerator.defaultArgSamples, ParticleGenerator.defaultTotalSamples,
-      universe, targets: _*)() with AnytimeParticleBeliefPropagation with AnytimeProbQuery {
+      universe, targets: _*)(List(),
+      (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u)) with AnytimeParticleBeliefPropagation with AnytimeProbQuery {
       val myStepTimeMillis = stepTimeMillis
     }
 
+  /**
+   * Creates a Anytime belief propagation computer in the current default universe. Use the dependent universe and algorithm to compute prob of evidence in dependent universe
+   */
+  def apply(dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
+    dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double, stepTimeMillis: Long, targets: Element[_]*)(implicit universe: Universe) =
+    new ProbQueryParticleBeliefPropagation(ParticleGenerator.defaultArgSamples, ParticleGenerator.defaultTotalSamples,
+      universe, targets: _*)(dependentUniverses, dependentAlgorithm) with AnytimeParticleBeliefPropagation with AnytimeProbQuery {
+      val myStepTimeMillis = stepTimeMillis
+    }
+
+  /**
+   * Creates a Anytime belief propagation computer in the current default universe that specifies the number of samples to take for each element.
+   */
   def apply(stepTimeMillis: Long, argSamples: Int, totalSamples: Int, targets: Element[_]*)(implicit universe: Universe) =
-    new ProbQueryParticleBeliefPropagation(argSamples, totalSamples, universe, targets: _*)() with AnytimeParticleBeliefPropagation with AnytimeProbQuery {
+    new ProbQueryParticleBeliefPropagation(argSamples, totalSamples, universe, targets: _*)(List(),
+      (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u)) with AnytimeParticleBeliefPropagation with AnytimeProbQuery {
+      val myStepTimeMillis = stepTimeMillis
+    }
+
+  /**
+   * Creates a Anytime belief propagation computer in the current default universe that specifies the number of samples to take for each element.
+   *  Use the dependent universe and algorithm to compute prob of evidence in dependent universe
+   */
+  def apply(dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
+    dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double, stepTimeMillis: Long, argSamples: Int, totalSamples: Int, targets: Element[_]*)(implicit universe: Universe) =
+    new ProbQueryParticleBeliefPropagation(argSamples, totalSamples, universe, targets: _*)(dependentUniverses, dependentAlgorithm) with AnytimeParticleBeliefPropagation with AnytimeProbQuery {
       val myStepTimeMillis = stepTimeMillis
     }
 }

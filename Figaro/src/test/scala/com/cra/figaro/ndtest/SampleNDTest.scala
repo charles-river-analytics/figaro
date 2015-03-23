@@ -21,8 +21,10 @@ import com.cra.figaro.library.atomic.discrete._
 import com.cra.figaro.test._
 import com.cra.figaro.test.tags.Example
 import com.cra.figaro.test.tags.NonDeterministic
+import org.scalatest.Matchers
+import org.scalatest.WordSpec
 
-class SampleNDTest extends NDTest
+class SampleNDTest extends WordSpec with Matchers
 {
   val alpha : Double = 0.05
 
@@ -31,10 +33,10 @@ class SampleNDTest extends NDTest
     "produce the correct probability under variable elimination" taggedAs (Example, NonDeterministic) in
     {
       val ndtest = new NDTest {
-        override def oneTest = {
+        def oneTest = {
           val (target, result) = test((e: Element[Boolean]) => VariableElimination(e))
-          val testResult = results.getOrElse("VETestResult", new TTestResult("VETestResult", target, alpha))
-          testResult.update(result)
+          results.getOrElseUpdate("VETestResult", new TTestResult("VETestResult", target, alpha))
+          update("VETestResult", result)
         }
       }
 
@@ -44,10 +46,10 @@ class SampleNDTest extends NDTest
     "produce the correct probability under importance sampling" taggedAs (Example, NonDeterministic) in
     {
       val ndtest = new NDTest {
-        override def oneTest = {
-          val (target, result) = test((e: Element[Boolean]) => Importance(12000, e))
-          val testResult = results.getOrElse("ImportanceResult", new TTestResult("ImportanceResult", target, alpha))
-          testResult.update(result)
+        def oneTest = {
+          val (target, result) = test((e: Element[Boolean]) => Importance(1200, e))
+          results.getOrElseUpdate("VETestResult", new TTestResult("VETestResult", target, alpha))
+          update("VETestResult", result)
         }
       }
 
@@ -57,10 +59,10 @@ class SampleNDTest extends NDTest
     "produce the correct probability under Metropolis-Hastings" taggedAs (Example, NonDeterministic) in
     {
       val ndtest = new NDTest {
-        override def oneTest = {
-          val (target, result) = test((e: Element[Boolean]) => MetropolisHastings(200000, chooseScheme, e))
-          val testResult = results.getOrElse("MetropolisHastingsResult", new TTestResult("MetropolisHastingsResult", target, alpha))
-          testResult.update(result)
+        def oneTest = {
+          val (target, result) = test((e: Element[Boolean]) => MetropolisHastings(20000, chooseScheme, e))
+          results.getOrElseUpdate("VETestResult", new TTestResult("VETestResult", target, alpha))
+          update("VETestResult", result)
         }
       }
 
