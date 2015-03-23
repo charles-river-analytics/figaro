@@ -224,12 +224,11 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
       val repeats = findRepeats(factor.variables)
       val hasRepeats = (false /: repeats.values)(_ || _.size > 1)
       if (hasRepeats) {
-        val reducedVariables = repeats.keySet.toList
+        val reducedVariables = factor.variables.distinct
         val reducedParents = reducedVariables.intersect(parents)
         val reducedChildren = reducedVariables.diff(reducedParents)
         val reduced = createFactor[T](reducedParents, reducedChildren)
-        val newVariableLocations = repeats.values.map(_(0))
-
+        val newVariableLocations = factor.variables.distinct.map((v: Variable[_]) => repeats(v)(0))
         val repeatedVariables = repeats.values.filter(_.size > 1)
         for (row <- factor.getIndices) {
           contents.get(row) match {

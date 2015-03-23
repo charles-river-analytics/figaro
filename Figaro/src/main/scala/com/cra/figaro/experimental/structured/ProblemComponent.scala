@@ -19,7 +19,16 @@ class ProblemComponent[Value](val problem: Problem, val element: Element[Value])
 
   // The current variable representing this component in factors.
   // This is set automatically when the range is updated.
-  var variable: Variable[Value] = new Variable(range)
+  private var _variable: Variable[Value] = _
+
+  def variable = _variable
+
+  def setVariable(v: Variable[Value]) {
+    _variable = v
+    problem.collection.variableToComponent += v -> this
+  }
+
+  setVariable(new Variable(range))
 
   // Factors resulting from conditions and constraints on this element.
   // These should be updated when the range changes but otherwise should be left alone.
@@ -53,7 +62,7 @@ class ProblemComponent[Value](val problem: Problem, val element: Element[Value])
   // The range will include * based on argument ranges including * or any subproblem not being expanded.
   def generateRange(numValues: Int = ParticleGenerator.defaultTotalSamples) {
     range = Range(this, numValues)
-    variable = new Variable(range)
+    setVariable(new Variable(range))
   }
 
   // Generate the constraint factors based on the current range.
@@ -67,7 +76,7 @@ class ProblemComponent[Value](val problem: Problem, val element: Element[Value])
   // For a chain, this takes the current solution to the subproblems, which are lists of factors over this and other components.
   // The parameterized flag indicates whether parameterized elements should have special factors created that use the MAP values of their arguments.
   def makeNonConstraintFactors(parameterized: Boolean = false) {
-    nonConstraintFactors = factory.Factory.makeFactors(problem.collection, element, parameterized)
+    nonConstraintFactors = factory.Factory.makeFactors(problem.collection, element, parameterized).map(_.deDuplicate)
   }
 
   // Compute current beliefs about this component based on the queued messages and factors of this component.

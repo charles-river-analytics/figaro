@@ -1,13 +1,13 @@
 /*
- * BPTest.scala  
+ * BPTest.scala
  * Belief Propagation tests.
- * 
+ *
  * Created By:      Brian Ruttenberg (bruttenberg@cra.com)
  * Creation Date:   Jan 15, 2014
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -97,7 +97,7 @@ class BPTest extends WordSpec with Matchers {
       }
     }
 
-    /* Due to the way that factors are implemented for Chain, all 
+    /* Due to the way that factors are implemented for Chain, all
      * models that use chain will result in loops. To test a non-loopy
      * graph we have to not use chain, which IntSelector does not.
      */
@@ -227,9 +227,9 @@ class BPTest extends WordSpec with Matchers {
          * The same is done with 'f' (set as an increased tolerance below),
          *  although this test is not doing much since the while point it to show
          * that f does not change, at least it does not change significantly
-         * 
+         *
          * The factor model is no longer loopy so the exact result .79 applies (Glenn)
-         * 
+         *
          * UPDATE: We're going back to loopy since factor combining in ProbFactor is not default in BP.
          */
         test(c, (i: Int) => i == 1, c_actual, globalTol)
@@ -271,7 +271,7 @@ class BPTest extends WordSpec with Matchers {
       ve.start()
       ve.probability(y, true) should be(((0.1 * 0.2 + 0.9 * 0.2) / (0.1 * 0.2 + 0.9 * 0.2 + 0.9 * 0.8)) +- globalTol)
     }
-    
+
     "should not underflow" in {
       Universe.createNew()
       val x = Flip(0.99)
@@ -282,7 +282,7 @@ class BPTest extends WordSpec with Matchers {
       bp.start()
       bp.probability(x, true) should be (1.0)
     }
-        
+
     // Removed, we now support non-caching chains
     /*
     "should not support non-caching chains" in {
@@ -290,9 +290,9 @@ class BPTest extends WordSpec with Matchers {
       val f = Flip(0.5)
       val x = NonCachingChain(f, (b: Boolean) => if (b) Constant(0) else Constant(1))
       val ve = BeliefPropagation(50)
-      an [UnsupportedAlgorithmException] should be thrownBy { ve.getNeededElements(List(x), Int.MaxValue) } 
+      an [UnsupportedAlgorithmException] should be thrownBy { ve.getNeededElements(List(x), Int.MaxValue) }
     }
-    * 
+    *
     */
   }
 
@@ -317,7 +317,6 @@ class BPTest extends WordSpec with Matchers {
       alg.mostLikelyValue(e3) should equal(false)
       alg.mostLikelyValue(e4) should equal(true)
     }
-
   }
 
   def test[T](target: Element[T], predicate: T => Boolean, prob: Double, tol: Double) {
