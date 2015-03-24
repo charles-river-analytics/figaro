@@ -58,7 +58,7 @@ object Factory {
    * The mutliplicative identity factor.
    */
   def unit[T: TypeTag](semiring: Semiring[T]): Factor[T] = {
-    val result = new BasicFactor[T](List(), List()).setBasicMap
+    val result = new BasicFactor[T](List(), List())
     result.set(List(), semiring.one)
     result
   }
@@ -67,7 +67,7 @@ object Factory {
    * Create a BasicFactor from the supplied parent and children variables
    */
   def defaultFactor[T: TypeTag](parents: List[Variable[_]], children: List[Variable[_]]) =
-      new BasicFactor[T](parents, children).setBasicMap
+      new BasicFactor[T](parents, children)
 
   private def makeFactors[T](cc: ComponentCollection, const: Constant[T]): List[Factor[Double]] = {
     val factor = new BasicFactor[Double](List(), List(getVariable(cc, const)))

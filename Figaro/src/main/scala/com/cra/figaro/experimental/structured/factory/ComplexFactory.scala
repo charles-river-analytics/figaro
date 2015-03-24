@@ -209,7 +209,7 @@ object ComplexFactory {
   def makeFactors[T, U](cc: ComponentCollection, element: Aggregate[T, U]): List[Factor[Double]] = {
     val elementVar = Factory.getVariable(cc, element)
     val mvreVar = Factory.getVariable(cc, element.mvre)
-    val factor = new SparseFactor[Double](List(mvreVar), List(elementVar)).setBasicMap
+    val factor = new SparseFactor[Double](List(mvreVar), List(elementVar))
     for {
       (mvreXvalue, mvreIndex) <- mvreVar.range.zipWithIndex
     } {
@@ -255,7 +255,7 @@ object ComplexFactory {
     val arg1Var = Factory.getVariable(cc, element.numItems)
     val resultVar = Factory.getVariable(cc, element)
     val makeArrayComponent = cc(element)
-    val factor = new SparseFactor[Double](List(arg1Var), List(resultVar)).setBasicMap
+    val factor = new SparseFactor[Double](List(arg1Var), List(resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
     val resultIndices = resultVar.range.zipWithIndex
     for {
