@@ -1,26 +1,21 @@
 package com.cra.figaro.experimental.structured.solver
 
-import com.cra.figaro.algorithm.factored.factors.Factor
-import com.cra.figaro.algorithm.factored.factors.Variable
-import com.cra.figaro.algorithm.factored.factors.SumProductSemiring
-import scala.collection.mutable.Set
+import com.cra.figaro.algorithm.factored.factors._
+import com.cra.figaro.experimental.structured.Problem
 
-class VESolver(toEliminate: List[Variable[_]], factors: List[Factor[Double]])
+class VESolver(toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]])
 extends com.cra.figaro.algorithm.factored.VariableElimination[Double] {
   val semiring: com.cra.figaro.algorithm.factored.factors.Semiring[Double] = SumProductSemiring
 
-  var globals: List[Variable[_]] = _
+  private var result: List[Factor[Double]] = _
 
-  var result: List[Factor[Double]] = _
-
-  def finish(factorsAfterElimination: Set[Factor[Double]], eliminationOrder: List[Variable[_]]): Unit = {
+  def finish(factorsAfterElimination: scala.collection.mutable.Set[Factor[Double]], eliminationOrder: List[Variable[_]]): Unit = {
     result = factorsAfterElimination.toList
   }
 
-  def go() {
-    val toPreserve = (Set[Variable[_]]() /: factors)(_ ++ _.variables) -- toEliminate.toSet
-    globals = toPreserve.toList
-    doElimination(factors, globals)
+  def go(): List[Factor[Double]] = {
+    doElimination(factors, toPreserve.toList)
+    result
   }
 
   val dependentAlgorithm: (com.cra.figaro.language.Universe, List[com.cra.figaro.language.NamedEvidence[_]]) => () => Double = null

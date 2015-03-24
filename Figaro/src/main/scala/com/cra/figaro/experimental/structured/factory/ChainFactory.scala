@@ -39,10 +39,7 @@ object ChainFactory {
         // We create a dummy variable for the outcome variable whose value is always star.
         // We create a dummy factor for that variable.
         // Then we use makeConditionalSelector with the dummy variable
-        val dummy = new Variable(ValueSet.withStar[U](Set()))
-//        val dummyFactor = new BasicFactor[Double](List(), List(dummy))
-//        dummyFactor.set(List(0), 1.0)
-//        List(Factory.makeConditionalSelector(cc, chain, parentVar, pair._2, dummy), dummyFactor)
+        val dummy = Factory.makeVariable(cc, ValueSet.withStar[U](Set()))
         List(Factory.makeConditionalSelector(cc, chainVar, parentVar, pair._2, dummy))
       }
     })

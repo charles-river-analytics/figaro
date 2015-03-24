@@ -96,6 +96,30 @@ class ExpandTest extends WordSpec with Matchers {
       c4.subproblems.size should equal (0)
       cc.contains(e1) should equal (false)
     }
+
+    "if the result elements are already in the collection, not create a new component but point to the existing one in the subproblem" in {
+      val e1 = Flip(0.3)
+      val e2 = Select(0.1 -> 1, 0.9 -> 2)
+      val e3 = Select(0.7 -> 1, 0.2 -> 2, 0.1 -> 3)
+      val e4 = Chain(e1, (b: Boolean) => if (b) e2; else e3)
+      val cc = new ComponentCollection
+      val pr = new Problem(cc, List(e4))
+      pr.add(e1)
+      pr.add(e2)
+      pr.add(e3)
+      val c1 = cc(e1)
+      val c2 = cc(e2)
+      val c3 = cc(e3)
+      val c4 = cc(e4)
+      c1.generateRange()
+      c2.generateRange()
+      c3.generateRange()
+      c4.expand()
+      c4.generateRange()
+
+      c4.range.hasStar should equal (false)
+      c4.range.regularValues should equal (Set(1, 2, 3))
+    }
   }
 
   "Expanding a MakeArray" should {

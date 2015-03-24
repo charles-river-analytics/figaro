@@ -118,6 +118,12 @@ extends ExpandableComponent[ParentValue, Value](problem, chain.parent, chain) {
     subproblems += parentValue -> subproblem
   }
 
+  override def makeNonConstraintFactors(parameterized: Boolean = false) {
+    super.makeNonConstraintFactors(parameterized)
+    nonConstraintFactors = subproblems.values.toList.flatMap(_.solution) ::: nonConstraintFactors
+  }
+
+
   // Raise the given subproblem into this problem
   def raise(subproblem: NestedProblem[Value]) {
 
