@@ -61,11 +61,11 @@ object ComplexFactory {
               if (firstXValue.isRegular) {
                 val firstCollection = firstXValue.value.asInstanceOf[ElementCollection]
                 val restRange = Range.getRangeOfSingleValuedReference(cc, firstCollection, restRef)
-                val restVar: Variable[T] = new Variable(restRange)
+                val restVar: Variable[T] = Factory.makeVariable(cc, restRange)
                 val restFactors = make(firstCollection, restVar, restRef)
                 Factory.makeConditionalSelector(cc, startVar, firstVar, firstIndex, restVar) :: restFactors
               } else {
-                val dummy = new Variable(ValueSet.withStar[T](Set()))
+                val dummy = Factory.makeVariable(cc, ValueSet.withStar[T](Set()))
                 List(Factory.makeConditionalSelector(cc, startVar, firstVar, firstIndex, dummy))
               }
             }
@@ -96,7 +96,7 @@ object ComplexFactory {
       val resultValues: Set[List[MultiSet[T]]] = homogeneousCartesianProduct(argChoices: _*).toSet
       val injectRange = if (incomplete) withStar(resultValues); else withoutStar(resultValues)
 
-      val resultVariable = new Variable(injectRange)
+      val resultVariable = Factory.makeVariable(cc, injectRange)
       val factor = new BasicFactor[Double](inputVariables, List(resultVariable))
       factor.fillByRule(rule _)
       (resultVariable, factor)
@@ -108,7 +108,7 @@ object ComplexFactory {
         sets.foldLeft(starter)(_ union _)
       }
       val applyVS: ValueSet[MultiSet[T]] = injectVar.valueSet.map(rule(_))
-      val applyVar = new Variable(applyVS)
+      val applyVar = Factory.makeVariable(cc, applyVS)
       val factor = new SparseFactor[Double](List(injectVar), List(applyVar))
       for { (injectVal, injectIndex) <- injectVar.range.zipWithIndex } {
         if (injectVal.isRegular) {
@@ -156,14 +156,14 @@ object ComplexFactory {
                 (firstXvalue, firstIndex) <- firstVar.range.zipWithIndex
               } yield {
                 if (!firstXvalue.isRegular) {
-                  val dummy = new Variable(ValueSet.withStar[MultiSet[T]](Set()))
+                  val dummy = Factory.makeVariable(cc, ValueSet.withStar[MultiSet[T]](Set()))
                   List(Factory.makeConditionalSelector(cc, startVar, firstVar, firstIndex, dummy))
                 }
                 else {
                   firstXvalue.value match {
                     case firstCollection: ElementCollection =>
                       val restRange = Range.getRangeOfMultiValuedReference(cc, firstCollection, restRef)
-                      val restVar: Variable[MultiSet[T]] = new Variable(restRange)
+                      val restVar: Variable[MultiSet[T]] = Factory.makeVariable(cc, restRange)
                       val restFactors = make(firstCollection, restVar, restRef)
                       Factory.makeConditionalSelector(cc, startVar, firstVar, firstIndex, restVar) :: restFactors
                     case cs: Traversable[_] =>
@@ -182,7 +182,7 @@ object ComplexFactory {
                       val factorsForCollections =
                         for { firstCollection <- collections } yield {
                           val restRange = Range.getRangeOfMultiValuedReference(cc, firstCollection, restRef)
-                          val restVar: Variable[MultiSet[T]] = new Variable(restRange)
+                          val restVar: Variable[MultiSet[T]] = Factory.makeVariable(cc, restRange)
                           val restFactors = make(firstCollection, restVar, restRef)
                           (restVar, restFactors)
                         }
@@ -313,13 +313,13 @@ object ComplexFactory {
               } yield fold.function(accum, first)
             val nextHasStar = currentAccumVar.range.exists(!_.isRegular) || firstVar.range.exists(!_.isRegular)
             val nextVS = if (nextHasStar) ValueSet.withStar(nextVals.toSet) else ValueSet.withoutStar(nextVals.toSet)
-            new Variable(nextVS)
+            Factory.makeVariable(cc, nextVS)
           }
         val nextFactor = makeOneFactor(currentAccumVar, firstVar, nextAccumVar)
         nextFactor :: makeFactorSequence(nextAccumVar, rest)
       }
     }
-    val startVar = new Variable(ValueSet.withoutStar(Set(fold.start)))
+    val startVar = Factory.makeVariable(cc, ValueSet.withoutStar(Set(fold.start)))
     makeFactorSequence(startVar, fold.elements)
   }
 }

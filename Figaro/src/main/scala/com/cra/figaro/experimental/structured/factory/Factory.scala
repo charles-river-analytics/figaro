@@ -43,7 +43,15 @@ object Factory {
     if (cc.contains(element)) {
       val component = cc(element)
       component.variable
-    } else new Variable(withStar(Set()))
+    } else {
+      makeVariable(cc, withStar(Set[T]()))
+    }
+  }
+
+  def makeVariable[T](cc: ComponentCollection, vs: ValueSet[T]): Variable[T] = {
+    val v = new Variable(vs)
+    cc.intermediates += v
+    v
   }
 
   /**

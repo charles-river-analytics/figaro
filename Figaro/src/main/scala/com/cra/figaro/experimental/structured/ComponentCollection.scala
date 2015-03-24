@@ -14,6 +14,10 @@ import com.cra.figaro.algorithm.factored.factors.Variable
 class ComponentCollection {
   val components: Map[Element[_], ProblemComponent[_]] = Map()
 
+  // Intermediate variables defined during the construction of factors.
+  // These are not associated with any element or component and are to be eliminated wherever they appear.
+  var intermediates: Set[Variable[_]] = Set()
+
   val expansions: Map[(Function1[_, Element[_]], _), NestedProblem[_]] = Map()
 
   // Checks in the cache if an expansion exists and creates one if necessary
