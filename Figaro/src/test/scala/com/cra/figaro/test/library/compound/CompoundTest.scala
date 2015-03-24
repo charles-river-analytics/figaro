@@ -65,6 +65,20 @@ class CompoundTest extends WordSpec with Matchers {
       val s = If(Flip(0.3), Uniform(0.0, 1.0), Constant(0.8)).toString
       s should equal("If(Flip(0.3), Uniform(0.0, 1.0), Constant(0.8))")
     }
+
+    "not generate a consequent that's not needed when sampling" in {
+      Universe.createNew()
+      var count = 0
+      def makeElem() = {
+        count += 1
+        Constant(1)
+      }
+      val e = If(Constant(true), makeElem(), makeElem())
+      val alg = Importance(100, e)
+      alg.start()
+      count should equal (1)
+      alg.kill()
+    }
   }
 
   "A pair" should {
