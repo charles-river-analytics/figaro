@@ -26,37 +26,11 @@ import scala.reflect.runtime.universe._
 class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_]])(implicit tag: TypeTag[T])
   extends Factor[T] {
 
-  val tpe = tag.tpe
-
-  /*
-   * Initialize the map to all defaults
-   */
-  def setBasicMap: Factor[T] = {
-    for (indices <- getIndices) {
-      set(indices, defaultValue.asInstanceOf[T])
-    }
-    this
-  }
-
-  var defaultValue = tpe match {
-    case t if t =:= typeOf[Double] => 0.0
-    case t if t =:= typeOf[Int] => 0
-    case t if t =:= typeOf[Boolean] => true
-    case t if t =:= typeOf[(Double, Double)] => (0.0, 0.0)
-    case t if t =:= typeOf[(Double, Map[Parameter[_], Seq[Double]])] => (0.0, Map())
-    case _ => /*println("unknown type " + tpe)*/
-      0.0
-  }
-
   override def createFactor[T: TypeTag](parents: List[Variable[_]], output: List[Variable[_]]) =
-    new BasicFactor[T](parents, output).setBasicMap
+    new BasicFactor[T](parents, output)
 
   override def convert[U: TypeTag](semiring: Semiring[U]): Factor[U] = {
     createFactor[U](parents, output)
-  }
-
-  override def setDefault[T](value: T) {
-    defaultValue = value
   }
 
   /**
@@ -72,8 +46,6 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
    */
   override def mapTo[U: TypeTag](fn: T => U): Factor[U] = {
     val newFactor = createFactor[U](parents, output)
-    newFactor.setDefault(fn(defaultValue.asInstanceOf[T]))
-
     for { (key, value) <- contents } {
       newFactor.set(key, fn(value))
     }
@@ -126,7 +98,8 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
     val (allParents, allChildren, indexMap1, indexMap2) = unionVars(that)
     val result = createFactor[T](allParents, allChildren)
 
-    for { indices <- result.getIndices } {
+  for { indices <- result.getIndices } {
+  //  result.getIndices.foreach{indices =>
       val indexIntoThis = indexMap1 map (indices(_))
       val indexIntoThat = indexMap2 map (indices(_))
       val value = op(get(indexIntoThis), that.get(indexIntoThat))
@@ -214,16 +187,14 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
     deDuplicate(marginalized)
   }
 
-  override def deDuplicate(): Factor[T] =
-    {
+  override def deDuplicate(): Factor[T] = {
       deDuplicate(this)
     }
 
-  private def deDuplicate(factor: Factor[T]): Factor[T] =
-    {
-      val repeats = findRepeats(factor.variables)
-      val hasRepeats = (false /: repeats.values)(_ || _.size > 1)
-      if (hasRepeats) {
+  private def deDuplicate(factor: Factor[T]): Factor[T] = {     
+      //val hasRepeats = (false /: repeats.values)(_ || _.size > 1)
+      if (factor.variables.distinct.size != factor.variables.size) {
+        val repeats = findRepeats(factor.variables)
         val reducedVariables = factor.variables.distinct
         val reducedParents = reducedVariables.intersect(parents)
         val reducedChildren = reducedVariables.diff(reducedParents)
@@ -234,11 +205,7 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
           contents.get(row) match {
             case Some(value) => {
               if (checkRow(row, repeatedVariables)) {
-                var newRow = List[Int]()
-                for (pos <- newVariableLocations) {
-                  newRow = newRow :+ row(pos)
-                }
-                reduced.set(newRow, value)
+                reduced.set(newVariableLocations.map(row(_)), value)
               }
             }
             case _ =>
@@ -250,37 +217,15 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
       }
     }
 
-  private def checkRow(row: List[Int], repeatedVariables: Iterable[List[Int]]): Boolean = {
-    var ok = true
-
-    for (repeats <- repeatedVariables) {
-      val checkVal = row(repeats(0))
-      for (pos <- repeats) {
-        if (checkVal != row(pos)) {
-          ok = false
-        }
-      }
-    }
-    ok
+  private def checkRow(row: List[Int], repeatedVariables: Iterable[List[Int]]): Boolean = {    
+    val noConflict = repeatedVariables.forall(v => v.tail.forall(p => row(v.head) == row(p)))
+    noConflict   
   }
 
-  private def findRepeats(varList: List[Variable[_]]): Map[Variable[_], List[Int]] =
-    {
-      var repeats = Map[Variable[_], List[Int]]()
-
-      for (variable <- varList) {
-        if (!repeats.keySet.contains(variable)) {
-          var indices = List[Int]()
-          var start = varList.indexOf(variable)
-          while (start > -1) {
-            indices = indices :+ start
-            start = varList.indexOf(variable, start + 1)
-          }
-          repeats = repeats + (variable -> indices)
-        }
-      }
-      repeats
-    }
+  private def findRepeats(varList: List[Variable[_]]): Map[Variable[_], List[Int]] = {
+    val repeats: Map[Variable[_], List[Int]] = Map() ++ varList.zipWithIndex.groupBy(_._1).map(e => e._1 -> e._2.unzip._2)
+    repeats
+  }
 
   override def toReadableString: String = {
     val result = new StringBuffer

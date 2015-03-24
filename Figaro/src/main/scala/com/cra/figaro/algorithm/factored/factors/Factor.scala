@@ -48,11 +48,6 @@ trait Factor[T] {
   def createFactor[T: TypeTag](parents: List[Variable[_]], output: List[Variable[_]]): Factor[T]
 
   /**
-   * Set the default value for this factor
-   */
-  def setDefault[T](value: T)
-  
-  /**
    * Description that includes the variable list and conditional probabilities
    */
   override def toString = "Factor(" + variables.map(_.id).mkString(",") + " " + contents.mkString(",") + ")"
@@ -66,7 +61,7 @@ trait Factor[T] {
    * Indicates if this Factor has any variables
    */
   def isEmpty = size == 0
-  
+
   /**
    * Indicates if this Factor is condition/constrained
    */
@@ -84,7 +79,7 @@ trait Factor[T] {
   def getIndices: Indices = new Indices(variables)
 
   def convertIndicesToValues(indices: List[Int]): List[Extended[_]] = {
-    val values = for {i <- 0 until indices.size} yield variables(i).range(indices(i)) 
+    val values = for { i <- 0 until indices.size } yield variables(i).range(indices(i))
     values.toList
   }
 
@@ -178,7 +173,9 @@ trait Factor[T] {
 class Indices(variables: List[Variable[_]]) extends Iterable[List[Int]] {
   val limits = variables.map(_.size.asInstanceOf[Int] - 1)
   val numVars = limits.length
-
+  val factorSize = (1 /: variables)(_ * _.size)
+  
+  
   def iterator = new Iterator[List[Int]] {
     var current: List[Int] = List(-1)
     def hasNext = {
@@ -199,6 +196,30 @@ class Indices(variables: List[Variable[_]]) extends Iterable[List[Int]] {
 
     def next: List[Int] = current
   }
+    
+ /* 
+  def iterator = new Iterator[List[Int]] {
+    val indices = allIndices
+    var current = 0
+    def hasNext = current < indices.size
+    def next = {
+      val n = indices(current)
+      current = current + 1
+      n
+    }
+  }
+  * 
+  */
+  
+  def allIndices: List[List[Int]] = {
+    @tailrec def helper(current: List[Int], accum: List[List[Int]]): List[List[Int]] =
+      nextIndices(current) match {
+        case Some(next) => helper(next, current :: accum)
+        case None => (current :: accum).reverse
+      }
+    if (factorSize == 0) List()
+    else helper(List.fill(numVars)(0), List())
+  }
 
   /**
    * Given a list of indices corresponding to a row in the factor, returns the list of indices
@@ -217,10 +238,11 @@ class Indices(variables: List[Variable[_]]) extends Iterable[List[Int]] {
 
     // Checks to see if variable at position is exhausted
     // If so recurses to next position
-    def helper(position: Int): Option[List[Int]] =
+    @tailrec def helper(position: Int): Option[List[Int]] =
       if (position < 0) None
       else if (indices(position) < limits(position)) Some(makeNext(position).toList)
       else helper(position - 1)
+      
     helper(numVars - 1)
   }
 }

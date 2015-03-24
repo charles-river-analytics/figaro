@@ -27,7 +27,7 @@ import scala.reflect.runtime.universe
 class FactorPerformanceTest extends WordSpec with Matchers with PrivateMethodTester {
 
   val factorSize = 75
-  
+
   "A sparse factor" should {
     "multiply O(n^k) faster than basic factors" in {
       Universe.createNew()
@@ -42,8 +42,18 @@ class FactorPerformanceTest extends WordSpec with Matchers with PrivateMethodTes
       val p1Factor = Factory.make(p1).head
       val p2Factor = Factory.make(p2).head
       val sumSparseFactor = Factory.make(sum).head.asInstanceOf[SparseFactor[Double]]
+      
       val sumBasicFactor = new BasicFactor[Double](sumSparseFactor.parents, sumSparseFactor.output)
-      sumBasicFactor.setBasicMap
+      val arg1Indices = sumSparseFactor.parents(0).range.zipWithIndex
+      val arg2Indices = sumSparseFactor.parents(1).range.zipWithIndex
+      val resultIndices = sumv.range.zipWithIndex
+      for {
+        (arg1Val, arg1Index) <- arg1Indices
+        (arg2Val, arg2Index) <- arg2Indices
+        (resultVal, resultIndex) <- resultIndices
+      } {
+        sumBasicFactor.set(List(arg1Index, arg2Index, resultIndex), 0.0)
+      }
       sumSparseFactor.getIndices.foreach(f => sumBasicFactor.set(f, sumSparseFactor.get(f)))
 
       val sparseTime = measureTime(() => sumSparseFactor.product(p1Factor, SumProductSemiring), 3, 5)
@@ -63,7 +73,16 @@ class FactorPerformanceTest extends WordSpec with Matchers with PrivateMethodTes
 
       val sumSparseFactor = Factory.make(sum).head.asInstanceOf[SparseFactor[Double]]
       val sumBasicFactor = new BasicFactor[Double](sumSparseFactor.parents, sumSparseFactor.output)
-      sumBasicFactor.setBasicMap
+      val arg1Indices = sumSparseFactor.parents(0).range.zipWithIndex
+      val arg2Indices = sumSparseFactor.parents(1).range.zipWithIndex
+      val resultIndices = sumv.range.zipWithIndex
+      for {
+        (arg1Val, arg1Index) <- arg1Indices
+        (arg2Val, arg2Index) <- arg2Indices
+        (resultVal, resultIndex) <- resultIndices
+      } {
+        sumBasicFactor.set(List(arg1Index, arg2Index, resultIndex), 0.0)
+      }
       sumSparseFactor.getIndices.foreach(f => sumBasicFactor.set(f, sumSparseFactor.get(f)))
 
       val sparseTime = measureTime(() => sumSparseFactor.sumOver(p1v, SumProductSemiring), 3, 5)

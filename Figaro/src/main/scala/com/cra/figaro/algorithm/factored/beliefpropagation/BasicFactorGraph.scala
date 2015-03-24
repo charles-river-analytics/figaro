@@ -24,7 +24,7 @@ class BasicFactorGraph(factors: List[Factor[Double]], semiring: Semiring[Double]
   extends FactorGraph[Double] {
 
   def uniformFactor(v: List[Variable[_]]): Factor[Double] = {
-    val f = new BasicFactor[Double](List(), v).setBasicMap
+    val f = new BasicFactor[Double](List(), v)
     f.fillByRule((l: List[Any]) => semiring.one)
     f
   }

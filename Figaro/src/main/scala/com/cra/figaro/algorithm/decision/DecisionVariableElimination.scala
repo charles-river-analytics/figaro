@@ -95,17 +95,18 @@ trait ProbabilisticVariableEliminationDecision extends VariableElimination[(Doub
     val factor = Factory.defaultFactor[(Double, Double)](f.parents, f.output)
     val allIndices = f.getIndices
 
-    allIndices.foreach { k: List[Int] =>
-      val p = f.get(k)
-      val v = if (utility) {
-        if (f.variables.length > 1) throw new IllegalUtilityNodeException
-        f.variables(0).range(k(0)).asInstanceOf[Double]
-      } else {
-        0.0
+    if (!utility) {
+      f.mapTo((d: Double) => (d, 0.0))
+    } else {
+      if (f.variables.length > 1) throw new IllegalUtilityNodeException
+      
+      val newF = f.mapTo((d: Double) => (d, 0.0))
+      for {i <- 0 until f.variables(0).range.size} {
+        newF.set(List(i), (newF.get(List(i))._1, f.variables(0).range(i).asInstanceOf[Double]))
       }
-      factor.set(k, (p, v))
+      newF
     }
-    factor
+
   }
 
 }
