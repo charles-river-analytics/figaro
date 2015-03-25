@@ -49,7 +49,7 @@ class SampleNDTest extends WordSpec with Matchers
         def oneTest = {
           val (target, result) = test((e: Element[Boolean]) => Importance(1200, e))
           results.getOrElseUpdate("ImportanceSamplingTestResult", new TTestResult("ImportanceSamplingTestResult", target, alpha))
-          update("VETestResult", result)
+          update("ImportanceSamplingTestResult", result)
         }
       }
 
@@ -62,7 +62,7 @@ class SampleNDTest extends WordSpec with Matchers
         def oneTest = {
           val (target, result) = test((e: Element[Boolean]) => MetropolisHastings(20000, chooseScheme, e))
           results.getOrElseUpdate("MetropolisHastingsTestResult", new TTestResult("MetropolisHastingsTestResult", target, alpha))
-          update("VETestResult", result)
+          update("MetropolisHastingsTestResult", result)
         }
       }
 
