@@ -76,8 +76,10 @@ trait Factor[T] {
     (initial /: contents.values)(fn(_, _))
   }
 
-  def getIndices: Indices = new Indices(variables)
+  def getIndices: Indices = generateIndices
 
+  def generateIndices: Indices = new Indices(variables)
+  
   def convertIndicesToValues(indices: List[Int]): List[Extended[_]] = {
     val values = for { i <- 0 until indices.size } yield variables(i).range(indices(i))
     values.toList
