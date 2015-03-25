@@ -2,7 +2,7 @@
  * SampleNDTest.scala 
  * A sample test for evaluation of our ND testing approach
  * 
- * Created By:      Michael Reposa (mreposa@cra.com)
+ * Created By:      Michael Reposa (mreposa@cra.com), Glenn Takata (gtakata@cra.com), Brian Ruttenberg (bruttenberg@cra.com)
  * Creation Date:   Feb 25, 2015
  * 
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
@@ -30,26 +30,18 @@ class SampleNDTest extends WordSpec with Matchers
 
   "A PRM with a global constraint with mutation" should
   {
-    "produce the correct probability under variable elimination" taggedAs (Example, NonDeterministic) in
+    "produce the correct probability under variable elimination" taggedAs (Example) in
     {
-      val ndtest = new NDTest {
-        def oneTest = {
-          val (target, result) = test((e: Element[Boolean]) => VariableElimination(e))
-          results.getOrElseUpdate("VETestResult", new TTestResult("VETestResult", target, alpha))
-          update("VETestResult", result)
-        }
-      }
-
-      ndtest.run(10)
+      val (target, result) = test((e: Element[Boolean]) => VariableElimination(e))
+      result should be(target +- 0.01)
     }
 
     "produce the correct probability under importance sampling" taggedAs (Example, NonDeterministic) in
     {
       val ndtest = new NDTest {
-        def oneTest = {
+        override def oneTest = {
           val (target, result) = test((e: Element[Boolean]) => Importance(1200, e))
-          results.getOrElseUpdate("ImportanceSamplingTestResult", new TTestResult("ImportanceSamplingTestResult", target, alpha))
-          update("ImportanceSamplingTestResult", result)
+          update(result, new TTestResult("ImportanceSamplingTestResults", target, alpha))
         }
       }
 
@@ -59,10 +51,9 @@ class SampleNDTest extends WordSpec with Matchers
     "produce the correct probability under Metropolis-Hastings" taggedAs (Example, NonDeterministic) in
     {
       val ndtest = new NDTest {
-        def oneTest = {
+        override def oneTest = {
           val (target, result) = test((e: Element[Boolean]) => MetropolisHastings(20000, chooseScheme, e))
-          results.getOrElseUpdate("MetropolisHastingsTestResult", new TTestResult("MetropolisHastingsTestResult", target, alpha))
-          update("MetropolisHastingsTestResult", result)
+          update(result, new TTestResult("MetropolisHastingsTestResults", target, alpha))
         }
       }
 
