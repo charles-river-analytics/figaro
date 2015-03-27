@@ -19,6 +19,7 @@ import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.algorithm.factored.beliefpropagation._
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound.If
+import com.cra.figaro.library.compound.^^
 import com.cra.figaro.library.atomic.discrete.{ Uniform => DUniform }
 import com.cra.figaro.library.atomic.continuous.{ Uniform => CUniform }
 import com.cra.figaro.library.compound.IntSelector
@@ -34,6 +35,7 @@ import com.cra.figaro.library.atomic.continuous.Beta
 import com.cra.figaro.algorithm.sampling.Importance
 import com.cra.figaro.experimental.particlebp.AutomaticDensityEstimator
 import com.cra.figaro.algorithm.sampling.ProbEvidenceSampler
+import org.apache.commons.math3.distribution.MultivariateNormalDistribution
 
 class PBPTest extends WordSpec with Matchers {
 
@@ -51,16 +53,16 @@ class PBPTest extends WordSpec with Matchers {
       bpb.resample
       samples should not be pbpSampler(n)
     }
-    
+
     "resample according to the resampler values " in {
-      def mean(p: List[(Double, Double)]) = (0.0 /: p)((c: Double, n: (Double, Double)) => c + n._1*n._2) 
+      def mean(p: List[(Double, Double)]) = (0.0 /: p)((c: Double, n: (Double, Double)) => c + n._1 * n._2)
       Universe.createNew()
       val n = Normal(0.0, 1.0)
       val pbpSampler = ParticleGenerator(Universe.universe, new AutomaticDensityEstimator, 100, 100)
       val samples = pbpSampler(n)
       pbpSampler.resample(n, samples, List(samples), 0.05)
       val newSamples = pbpSampler(n)
-      mean(newSamples) should be (mean(samples) +- 0.1)
+      mean(newSamples) should be(mean(samples) +- 0.1)
     }
 
     "change the factor structure with new samples on the outer loop" in {
@@ -198,7 +200,7 @@ class PBPTest extends WordSpec with Matchers {
       val u2 = 0.64
       test(f, 5000, 250, 100, 100, (b: Boolean) => b, u1 / (u1 + u2), globalTol, false)
     }
-    
+
     "with an element that uses another element multiple times, " +
       "always produce the same value for the different uses" in {
         Universe.createNew()
@@ -222,7 +224,6 @@ class PBPTest extends WordSpec with Matchers {
       test(d, 1, 30, 100, 100, (b: Boolean) => b, 0.73, globalTol)
     }
 
-    
     "on a different universe from the current universe, produce the correct result" in {
       val u1 = Universe.createNew()
       val u = CUniform(0.3, 0.9)
@@ -234,7 +235,7 @@ class PBPTest extends WordSpec with Matchers {
       algorithm.probability(f, (b: Boolean) => b) should be(0.6 +- .025)
       algorithm.kill()
     }
-    
+
     /*
     "with a posterior different than the prior, converge upon the correct answer on a discrete variable" in {
       Universe.createNew()
@@ -261,12 +262,35 @@ class PBPTest extends WordSpec with Matchers {
       val c = Chain(f, (b: Boolean) => if (b) s1; else s2)
       c.observe(1)
       // ans = \int_0_1 [-.6*x + .7 dx]*x / \int_0_1 [-.6*x + .7 dx] = .15/.4 = .375
-      val algorithm = ParticleBeliefPropagation(10, 40, 50, 50, fp)
+      val algorithm = ParticleBeliefPropagation(10, 40, 100, 100, fp)
       algorithm.start()
       algorithm.expectation(fp, (i: Double) => i) should be(.375 +- globalTol)
     }
 
-    
+    "with a posterior different than the prior, reduce the variance of the posterior as compared to BP" in {
+      val origCov = 8.0
+      val mvn = new MultivariateNormalDistribution(Array(0.0, 0.0), Array(Array(8.0, origCov), Array(origCov, 16.0)))
+      Universe.createNew()
+      val locX = CUniform(20, 80)("X", Universe.universe)
+      val locY = CUniform(20, 80)("Y", Universe.universe)
+      val loc = ^^(locX, locY)
+      loc.addConstraint((l: (Double, Double)) => {
+        mvn.density(Array((l._1 - 40.0), (l._2 - 40.0)))
+      })
+      val algorithm = ParticleBeliefPropagation(10, 4, 15, 15, loc, locX, locY)
+      algorithm.start()
+      val locE = algorithm.expectation(loc, (d: (Double, Double)) => d._1*d._2)
+      val cov = locE - algorithm.mean(locX)*algorithm.mean(locY)
+      
+      ParticleGenerator.clear
+      val algorithm2 = ParticleBeliefPropagation(1, 20, 15, 15, loc, locX, locY)
+      algorithm2.start()
+      val locE2 = algorithm2.expectation(loc, (d: (Double, Double)) => d._1*d._2)
+      val cov2 = locE - algorithm2.mean(locX)*algorithm2.mean(locY)
+      (math.abs(cov-origCov) < math.abs(origCov-cov2)) should be (true)
+      
+    }
+
     "with a dependent universe, correctly take into account probability of evidence in the dependent universe" in {
       Universe.createNew()
       val x = IntSelector(Constant(10))
@@ -279,9 +303,9 @@ class PBPTest extends WordSpec with Matchers {
 
       val a = CachingChain(x1, y1, (x: Boolean, y: Boolean) => if (x || y) u1; else u2)("a", dependentUniverse)
       val condition = (d: Double) => d < 0.5
-      val ve = ParticleBeliefPropagation(List((dependentUniverse, List(NamedEvidence("a", Condition(condition))))), 
-          (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u),
-          1, 40, x1)
+      val ve = ParticleBeliefPropagation(List((dependentUniverse, List(NamedEvidence("a", Condition(condition))))),
+        (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u),
+        1, 40, x1)
       ve.start()
       val peGivenXTrue = 0.5
       val peGivenXFalse = 0.2 * 0.5 + 0.8 * 0.25
@@ -291,7 +315,7 @@ class PBPTest extends WordSpec with Matchers {
       ve.probability(x1, true) should be(pXTrue +- globalTol)
       ve.kill()
     }
-   
+
     "with a contingent condition, correctly take into account the contingency" in {
       Universe.createNew()
       val x = Flip(0.1)
