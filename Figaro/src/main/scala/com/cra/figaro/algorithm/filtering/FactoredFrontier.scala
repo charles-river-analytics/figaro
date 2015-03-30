@@ -37,10 +37,12 @@ abstract class FactoredFrontier(static: Universe, initial: Universe, transition:
   protected var currentStatic = static
   currentUniverse = initial
   
+  val dependentUniverse = List()
+  val dependentAlgorithm = (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u)
 
   override def initialize() {
     LazyValues.clear(static)
-    createBP(getNamedElements(currentUniverse) ::: getNamedElements(currentStatic))
+    createBP(getNamedElements(currentUniverse) ::: getNamedElements(currentStatic), dependentUniverse, dependentAlgorithm)
   }
 
   def run() {
@@ -92,7 +94,7 @@ abstract class FactoredFrontier(static: Universe, initial: Universe, transition:
      * This is to ensure that they are correctly expanded and included for factor creation.
      */
     Factory.removeFactors
-    createBP(getNamedElements(currentUniverse) ::: getNamedElements(currentStatic) ::: getNamedElements(dummyUniverse))
+    createBP(getNamedElements(currentUniverse) ::: getNamedElements(currentStatic) ::: getNamedElements(dummyUniverse), dependentUniverse, dependentAlgorithm)
     runBP()
 
     dummyUniverse.clear()

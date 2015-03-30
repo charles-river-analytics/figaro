@@ -11,13 +11,14 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
-package com.cra.figaro.algorithm.factored.factors
+package com.cra.figaro.experimental.factored.factors
 
 import com.cra.figaro.algorithm._
 import com.cra.figaro.language._
 import com.cra.figaro.util._
 import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.algorithm.factored._
+import factors._
 import scala.collection.mutable.ListBuffer
 import com.cra.figaro.algorithm.factored.factors.factory._
 import com.cra.figaro.library.compound._
@@ -172,7 +173,7 @@ object Factory {
         val potentialSize = calculateSize(nextFactor.size, newVariables)
         if ((nextFactor.numVars + newVariables.size) < maxElementCount
           && potentialSize < maxSize) {
-          nextFactor = nextFactor.product(factor, semiring)
+          nextFactor = factor.product(nextFactor, semiring)
         } else {
           if (removeTemporaries) {
             newFactors ++= reduceFactor(nextFactor, semiring, maxElementCount)
@@ -197,15 +198,23 @@ object Factory {
     newFactors.toList
   }
 
-  val variableSet = scala.collection.mutable.Set[ElementVariable[_]]()
+//  val variableSet = scala.collection.mutable.Set[ElementVariable[_]]()
+  val variableSet = scala.collection.mutable.Set[Variable[_]]()
   val nextFactors = ListBuffer[Factor[Double]]()
 
   private def reduceFactor(factor: Factor[Double], semiring: Semiring[Double], maxElementCount: Int): List[Factor[Double]] = {
     variableSet.clear
 
-    (variableSet /: List(factor))(_ ++= _.variables.asInstanceOf[List[ElementVariable[_]]])
-    var elementCount = variableSet count (v => !isTemporary(v))
     var resultFactor = unit[Double](semiring).product(factor, semiring)
+
+//    (variableSet /: List(factor))(_ ++= _.variables.asInstanceOf[List[ElementVariable[_]]])
+    (variableSet /: List(factor))(_ ++= _.variables.asInstanceOf[List[Variable[_]]])
+    for (variable <- variableSet.filter { _.isInstanceOf[InternalVariable[_]]}) {
+      resultFactor = resultFactor.sumOver(variable, semiring)
+      variableSet.remove(variable)
+    }
+    
+    var elementCount = variableSet count (v => !isTemporary(v))
 
     var tempCount = 0;
 
@@ -241,6 +250,7 @@ object Factory {
   private def isTemporary[_T](variable: Variable[_]): Boolean = {
     variable match {
       case e: ElementVariable[_] => e.element.isTemporary
+      case i: InternalVariable[_] => true
       case _ => false
     }
   }
@@ -306,7 +316,7 @@ object Factory {
       case d: AtomicDist[_] => SelectFactory.makeFactors(d)
       case d: CompoundDist[_] => SelectFactory.makeFactors(d)
       case s: IntSelector => SelectFactory.makeFactors(s)
-      case c: Chain[_, _] => ChainFactory.makeFactors(c)
+      case c: Chain[_, _] => com.cra.figaro.experimental.factored.factors.factory.ChainFactory.makeFactors(c)
       case a: Apply1[_, _] => ApplyFactory.makeFactors(a)
       case a: Apply2[_, _, _] => ApplyFactory.makeFactors(a)
       case a: Apply3[_, _, _, _] => ApplyFactory.makeFactors(a)

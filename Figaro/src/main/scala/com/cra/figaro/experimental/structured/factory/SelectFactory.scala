@@ -114,7 +114,7 @@ object SelectFactory {
   def makeFactors[T](cc: ComponentCollection, select: IntSelector): List[Factor[Double]] = {
     val elementVar = Factory.getVariable(cc, select)
     val counterVar = Factory.getVariable(cc, select.counter)
-    val comb = new BasicFactor[Double](List(counterVar), List(elementVar)).setBasicMap
+    val comb = new BasicFactor[Double](List(counterVar), List(elementVar))
     comb.fillByRule((l: List[Any]) => {
       val counterValue :: elementValue :: _ = l.asInstanceOf[List[Extended[Int]]]
       if (counterValue.isRegular && elementValue.isRegular) {
@@ -163,7 +163,7 @@ object SelectFactory {
    * are assigned to the Variable in the same order as it's values.
    */
   def makeSimpleDistribution[T](target: Variable[T], probs: List[Double]): Factor[Double] = {
-    val factor = new BasicFactor[Double](List(), List(target)).setBasicMap
+    val factor = new BasicFactor[Double](List(), List(target))
     for { (prob, index) <- probs.zipWithIndex } {
       factor.set(List(index), prob)
     }
@@ -178,7 +178,7 @@ object SelectFactory {
    */
   private def makeComplexDistribution[T](cc: ComponentCollection, target: Variable[T], probVars: List[Variable[Double]]): Factor[Double] = {
     val nVars = probVars.size
-    val factor = new BasicFactor[Double](probVars, List(target)).setBasicMap
+    val factor = new BasicFactor[Double](probVars, List(target))
     val probVals: List[List[Extended[Double]]] = probVars map (_.range)
     if (target.range.forall(_.isRegular)) {
       /*

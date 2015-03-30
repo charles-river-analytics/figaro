@@ -31,7 +31,7 @@ object StarFactory {
    def makeStarFactor[T](cc: ComponentCollection, elem: Element[T]): List[Factor[Double]] = {
     val elemVar = Factory.getVariable(cc, elem)
     require(elemVar.range.size == 1 && elemVar.range(0) == Star[T], "Trying to create a star factor from a value set that is not only star")
-    val factor = new BasicFactor[Double](List(), List(elemVar)).setBasicMap
+    val factor = new BasicFactor[Double](List(), List(elemVar))
     factor.set(List(0), 1.0)
     List(factor)
   }

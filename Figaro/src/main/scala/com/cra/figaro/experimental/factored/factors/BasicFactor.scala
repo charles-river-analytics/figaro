@@ -10,11 +10,12 @@
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
-package com.cra.figaro.algorithm.factored.factors
+package com.cra.figaro.experimental.factored.factors
 
 import com.cra.figaro.util._
 import scala.annotation.tailrec
 import scala.collection.mutable.Map
+import com.cra.figaro.algorithm.factored.factors.{Factor, Semiring, SparseFactor, Variable}
 import com.cra.figaro.language._
 import com.cra.figaro.algorithm.lazyfactored.Extended
 import scala.reflect.runtime.universe._
@@ -96,10 +97,17 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
     op: (T, T) => T,
     semiring: Semiring[T]): Factor[T] = {
     val (allParents, allChildren, indexMap1, indexMap2) = unionVars(that)
-    val result = createFactor[T](allParents, allChildren)
-
-  for { indices <- result.getIndices } {
-  //  result.getIndices.foreach{indices =>
+    val result: Factor[T] = {
+      if(this.isInstanceOf[SparseFactor[T]]) {
+        createFactor[T](allParents, allChildren)
+      }
+      else {
+        that.createFactor(allParents, allChildren)
+      }
+    }
+    
+    for { indices <- result.generateIndices } {
+      //  result.getIndices.foreach{indices =>
       val indexIntoThis = indexMap1 map (indices(_))
       val indexIntoThat = indexMap2 map (indices(_))
       val value = op(get(indexIntoThis), that.get(indexIntoThat))
@@ -188,38 +196,38 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
   }
 
   override def deDuplicate(): Factor[T] = {
-      deDuplicate(this)
-    }
+    deDuplicate(this)
+  }
 
-  private def deDuplicate(factor: Factor[T]): Factor[T] = {     
-      //val hasRepeats = (false /: repeats.values)(_ || _.size > 1)
-      if (factor.variables.distinct.size != factor.variables.size) {
-        val repeats = findRepeats(factor.variables)
-        val reducedVariables = factor.variables.distinct
-        val reducedParents = reducedVariables.intersect(parents)
-        val reducedChildren = reducedVariables.diff(reducedParents)
-        val reduced = createFactor[T](reducedParents, reducedChildren)
-        val newVariableLocations = factor.variables.distinct.map((v: Variable[_]) => repeats(v)(0))
-        val repeatedVariables = repeats.values.filter(_.size > 1)
-        for (row <- factor.getIndices) {
-          contents.get(row) match {
-            case Some(value) => {
-              if (checkRow(row, repeatedVariables)) {
-                reduced.set(newVariableLocations.map(row(_)), value)
-              }
+  private def deDuplicate(factor: Factor[T]): Factor[T] = {
+    //val hasRepeats = (false /: repeats.values)(_ || _.size > 1)
+    if (factor.variables.distinct.size != factor.variables.size) {
+      val repeats = findRepeats(factor.variables)
+      val reducedVariables = factor.variables.distinct
+      val reducedParents = reducedVariables.intersect(parents)
+      val reducedChildren = reducedVariables.diff(reducedParents)
+      val reduced = createFactor[T](reducedParents, reducedChildren)
+      val newVariableLocations = factor.variables.distinct.map((v: Variable[_]) => repeats(v)(0))
+      val repeatedVariables = repeats.values.filter(_.size > 1)
+      for (row <- factor.getIndices) {
+        contents.get(row) match {
+          case Some(value) => {
+            if (checkRow(row, repeatedVariables)) {
+              reduced.set(newVariableLocations.map(row(_)), value)
             }
-            case _ =>
           }
+          case _ =>
         }
-        reduced
-      } else {
-        factor
       }
+      reduced
+    } else {
+      factor
     }
+  }
 
-  private def checkRow(row: List[Int], repeatedVariables: Iterable[List[Int]]): Boolean = {    
+  private def checkRow(row: List[Int], repeatedVariables: Iterable[List[Int]]): Boolean = {
     val noConflict = repeatedVariables.forall(v => v.tail.forall(p => row(v.head) == row(p)))
-    noConflict   
+    noConflict
   }
 
   private def findRepeats(varList: List[Variable[_]]): Map[Variable[_], List[Int]] = {

@@ -2,7 +2,7 @@
  * SampleNDTest.scala 
  * A sample test for evaluation of our ND testing approach
  * 
- * Created By:      Michael Reposa (mreposa@cra.com)
+ * Created By:      Michael Reposa (mreposa@cra.com), Glenn Takata (gtakata@cra.com), Brian Ruttenberg (bruttenberg@cra.com)
  * Creation Date:   Feb 25, 2015
  * 
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
@@ -21,33 +21,27 @@ import com.cra.figaro.library.atomic.discrete._
 import com.cra.figaro.test._
 import com.cra.figaro.test.tags.Example
 import com.cra.figaro.test.tags.NonDeterministic
+import org.scalatest.Matchers
+import org.scalatest.WordSpec
 
-class SampleNDTest extends NDTest
+class SampleNDTest extends WordSpec with Matchers
 {
   val alpha : Double = 0.05
 
   "A PRM with a global constraint with mutation" should
   {
-    "produce the correct probability under variable elimination" taggedAs (Example, NonDeterministic) in
+    "produce the correct probability under variable elimination" taggedAs (Example) in
     {
-      val ndtest = new NDTest {
-        override def oneTest = {
-          val (target, result) = test((e: Element[Boolean]) => VariableElimination(e))
-          val testResult = results.getOrElse("VETestResult", new TTestResult("VETestResult", target, alpha))
-          testResult.update(result)
-        }
-      }
-
-      ndtest.run(10)
+      val (target, result) = test((e: Element[Boolean]) => VariableElimination(e))
+      result should be(target +- 0.01)
     }
 
     "produce the correct probability under importance sampling" taggedAs (Example, NonDeterministic) in
     {
       val ndtest = new NDTest {
         override def oneTest = {
-          val (target, result) = test((e: Element[Boolean]) => Importance(12000, e))
-          val testResult = results.getOrElse("ImportanceResult", new TTestResult("ImportanceResult", target, alpha))
-          testResult.update(result)
+          val (target, result) = test((e: Element[Boolean]) => Importance(1200, e))
+          update(result, new TTestResult("ImportanceSamplingTestResults", target, alpha))
         }
       }
 
@@ -58,9 +52,8 @@ class SampleNDTest extends NDTest
     {
       val ndtest = new NDTest {
         override def oneTest = {
-          val (target, result) = test((e: Element[Boolean]) => MetropolisHastings(200000, chooseScheme, e))
-          val testResult = results.getOrElse("MetropolisHastingsResult", new TTestResult("MetropolisHastingsResult", target, alpha))
-          testResult.update(result)
+          val (target, result) = test((e: Element[Boolean]) => MetropolisHastings(20000, chooseScheme, e))
+          update(result, new TTestResult("MetropolisHastingsTestResults", target, alpha))
         }
       }
 

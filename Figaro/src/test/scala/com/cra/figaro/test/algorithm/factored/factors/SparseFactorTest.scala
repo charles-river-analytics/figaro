@@ -231,29 +231,22 @@ class SparseFactorTest extends WordSpec with Matchers with PrivateMethodTester {
       "return the same product when multiplied in either order" in {
         Universe.createNew()
 
-//        val f = Flip(0.5)
-//        val e = f === f
-        val e = new Variable(ValueSet.withoutStar(Set(true, false)))
-        val f = new Variable(ValueSet.withoutStar(Set(true, false)))
+        val f = Flip(0.5)
+        val e = f === f
 
-        val f1 = new BasicFactor[Double](List(), List(f))
-        f1.set(List(0), 0.5)
-        f1.set(List(1), 0.5)
+        Values()(f)
+        Values()(e)
+        val vf = Variable(f)
+        val f1 = Factory.make(f)
+        val f2 = Factory.make(e)
+        val result21 = f2(0).product(f1(0), SumProductSemiring)
+        val sum21 = result21.sumOver(vf, SumProductSemiring)
 
-        val f2 = new SparseFactor[Double](List(f, f), List(e))
-        f2.set(List(0, 0, 0), 1.0)
-        f2.set(List(0, 1, 1), 1.0)
-        f2.set(List(1, 0, 1), 1.0)
-        f2.set(List(1, 1, 0), 1.0)
+        val result12 = f1(0).product(f2(0), SumProductSemiring)
+        val sum12 = result12.sumOver(vf, SumProductSemiring)
 
-        val result21 = f2.product(f1, SumProductSemiring)
-        val sum21 = result21.sumOver(f, SumProductSemiring)
-
-        val result12 = f1.product(f2, SumProductSemiring)
-        val sum12 = result12.sumOver(f, SumProductSemiring)
-        
-        sum21.get(List(0)) should be (sum12.get(List(0)))
-        sum21.get(List(1)) should be (sum12.get(List(1)))
+        sum21.get(List(0)) should be(sum12.get(List(0)))
+        sum21.get(List(1)) should be(sum12.get(List(1)))
       }
     }
 
@@ -261,8 +254,8 @@ class SparseFactorTest extends WordSpec with Matchers with PrivateMethodTester {
       "return the same product when multiplied in either order" in {
         Universe.createNew()
 
-//        val f = Flip(0.5)
-//        val e = f === f
+        //        val f = Flip(0.5)
+        //        val e = f === f
         val e = new Variable(ValueSet.withoutStar(Set(true, false)))
         val f = new Variable(ValueSet.withoutStar(Set(true, false)))
 
@@ -285,12 +278,12 @@ class SparseFactorTest extends WordSpec with Matchers with PrivateMethodTester {
 
         val result12 = f1.product(f2, SumProductSemiring)
         val sum12 = result12.sumOver(f, SumProductSemiring)
-        
-        sum21.get(List(0)) should be (sum12.get(List(0)))
-        sum21.get(List(1)) should be (sum12.get(List(1)))
+
+        sum21.get(List(0)) should be(sum12.get(List(0)))
+        sum21.get(List(1)) should be(sum12.get(List(1)))
       }
     }
-        
+
     "calling sumOver on a variable" should {
       "return the sum over the variable of the factor" in {
         Universe.createNew()

@@ -2,7 +2,7 @@
  * NDTest.scala 
  * Runs non-deterministic tests
  * 
- * Created By:      Michael Reposa (mreposa@cra.com) and Glenn Takata (gtakata@cra.com)
+ * Created By:      Michael Reposa (mreposa@cra.com), Glenn Takata (gtakata@cra.com), Brian Ruttenberg (bruttenberg@cra.com)
  * Creation Date:   Mar 17, 2015
  * 
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
@@ -15,23 +15,25 @@ package com.cra.figaro.ndtest
 
 import org.scalatest.WordSpec
 import org.scalatest.Matchers
-import org.scalatest.exceptions.TestFailedException
-import com.cra.figaro.language._
-import com.cra.figaro.algorithm._
+import scala.collection.mutable.Map
 
-class NDTest extends WordSpec with Matchers
-{
-  var results: Map[String, NDTestResult] = Map()
+abstract class NDTest extends WordSpec with Matchers {
+  val results: Map[String, NDTestResult[_]] = Map()
 
+  def update[T](value: T, result: NDTestResult[T]) =
+  {
+    if (results.contains(result.name) == false)
+    {
+      results.put(result.name, result)
+    }
+    results(result.name).asInstanceOf[NDTestResult[T]].update(value)
+  }
+  
   final def run(n: Int)
   {
     (0 until n).foreach(_ => oneTest)
-
-    for (result <- results.values)
-    {
-      result.check should be (true)
-    }
+    results.values.foreach(_.check should be(true))
   }
-  
-  def oneTest {}
+
+  def oneTest: Unit
 }

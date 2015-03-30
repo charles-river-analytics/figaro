@@ -2,7 +2,7 @@
  * NDTestResult.scala 
  * Accumulates the results of a non-deterministic test run
  * 
- * Created By:      Michael Reposa (mreposa@cra.com) and Glenn Takata (gtakata@cra.com)
+ * Created By:      Michael Reposa (mreposa@cra.com), Glenn Takata (gtakata@cra.com), Brian Ruttenberg (bruttenberg@cra.com)
  * Creation Date:   Mar 17, 2015
  * 
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
@@ -13,9 +13,8 @@
 
 package com.cra.figaro.ndtest
 
-trait NDTestResult
-{
-  def update(value: Double)
-  
+trait NDTestResult[T] {
+  var name : String = null
+  def update(value: T)
   def check: Boolean
 }

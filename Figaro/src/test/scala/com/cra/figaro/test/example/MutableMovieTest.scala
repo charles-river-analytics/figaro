@@ -26,7 +26,7 @@ import com.cra.figaro.test.tags.NonDeterministic
 
 class MutableMovieTest extends WordSpec with Matchers {
   "A PRM with a global constraint with mutation" should {
-    "produce the correct probability under variable elimination" taggedAs (Example, NonDeterministic) in {
+    "produce the correct probability under variable elimination" taggedAs (Example) in {
       test((e: Element[Boolean]) => VariableElimination(e))
     }
 

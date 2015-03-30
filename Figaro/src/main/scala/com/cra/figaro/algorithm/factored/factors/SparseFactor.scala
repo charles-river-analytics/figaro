@@ -20,6 +20,7 @@ import scala.util.control.Breaks._
 import com.cra.figaro.language.Element
 import com.cra.figaro.algorithm.lazyfactored.Extended
 import scala.reflect.runtime.universe._
+import com.cra.figaro.language.Parameter
 
 /**
  * Sparse implementation of Factor. A factor is associated with a set of variables and specifies a value for every
@@ -28,10 +29,25 @@ import scala.reflect.runtime.universe._
 class SparseFactor[T](parents: List[Variable[_]], output: List[Variable[_]])(implicit tag: TypeTag[T])
   extends BasicFactor[T](parents, output) {
 
-  override def createFactor[T: TypeTag](parents: List[Variable[_]], output: List[Variable[_]]) =
-    new SparseFactor[T](parents, output)
+  val tpe = tag.tpe
+  
+  override def createFactor[T: TypeTag](parents: List[Variable[_]], output: List[Variable[_]]) = {
+    val nf = new SparseFactor[T](parents, output)
+    nf.defaultValue = this.defaultValue 
+    nf
+  }
 
- /**
+  var defaultValue = tag.tpe match {
+    case t if t =:= typeOf[Double] => 0.0
+    case t if t =:= typeOf[Int] => 0
+    case t if t =:= typeOf[Boolean] => true
+    case t if t =:= typeOf[(Double, Double)] => (0.0, 0.0)
+    case t if t =:= typeOf[(Double, Map[Parameter[_], Seq[Double]])] => (0.0, Map())
+    case _ => /*println("unknown type " + tpe)*/
+      0.0
+  }
+
+  /**
    * Get the value associated with a row. The row is identified by an list of indices
    * into the ranges of the variables over which the factor is defined. Rows with
    * default values will be missing, so supply the missing value for these rows
@@ -44,19 +60,21 @@ class SparseFactor[T](parents: List[Variable[_]], output: List[Variable[_]])(imp
   }
 
   /**
-   * Set the value associated with a row. The row is identified by an list of indices
-   * into the ranges of the variables over which the factor is defined.
-   */
-  override def set(indices: List[Int], value: T): Factor[T] = {
-    if (!(value == defaultValue))
-      contents += indices -> value
-    this
-  }
-
-  /**
    * List the indices with non-default values
    */
- override def getIndices: Indices = new SparseIndices(variables)
+  override def getIndices: Indices = new SparseIndices(variables)
+
+    /**
+   * Convert the contents of the target by applying the given function to all elements of this factor.
+   */
+  override def mapTo[U: TypeTag](fn: T => U): Factor[U] = {
+    val newFactor = createFactor[U](parents, output)
+    newFactor.defaultValue = fn(this.defaultValue.asInstanceOf[T])
+    for { (key, value) <- contents } {
+      newFactor.set(key, fn(value))
+    }
+    newFactor
+  }
 
   /**
    * Generic combination function for factors. By default, this is product, but other operations
@@ -187,7 +205,7 @@ class SparseFactor[T](parents: List[Variable[_]], output: List[Variable[_]])(imp
      * Given a list of indices corresponding to a row in the factor, returns the list of indices
      * corresponding to the next row.
      * Returns None if the last index list has been reached.
-    */
+     */
     override def nextIndices(indices: List[Int]): Option[List[Int]] = {
       var current = indices
       // Copies all values prior to the position
@@ -207,13 +225,11 @@ class SparseFactor[T](parents: List[Variable[_]], output: List[Variable[_]])(imp
           val nextIndices = makeNext(position).toList
           if (contents.contains(nextIndices)) {
             Some(nextIndices)
-          }
-          else {
+          } else {
             current = nextIndices
             helper(position)
           }
-        }
-        else helper(position - 1)
+        } else helper(position - 1)
       helper(numVars - 1)
     }
   }
