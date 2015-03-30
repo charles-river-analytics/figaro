@@ -236,10 +236,14 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
    * Find the node in the factor graph corresponding to a particular element
    */
   protected[figaro] def findNodeForElement[T](target: Element[T]): Node = {
-    val targetVar = Variable(target)
     val targetNode = factorGraph.getNodes.find { node =>
       node match {
-        case vn: VariableNode => vn.variable == targetVar
+        case vn: VariableNode => {
+          vn.variable match {
+            case elemVar: ElementVariable[_] => elemVar.element  == target
+            case _ => false
+          }
+        }
         case _ => false
       }
     }
