@@ -38,7 +38,7 @@ with LazyAlgorithm {
 
   val dependentUniverses = List()
 
-  val semiring = SumProductSemiring
+  val semiring = SumProductSemiring()
 
   var currentResult: Factor[(Double, Double)] = _
 
@@ -206,7 +206,7 @@ with LazyAlgorithm {
   var targetFactors: Map[Element[_], Factor[(Double, Double)]] = Map()
 
   private def marginalizeToTarget(factor: Factor[(Double, Double)], target: Element[_]): Unit = {
-    val targetFactor = factor.marginalizeTo(BoundsSumProductSemiring, Variable(target))
+    val targetFactor = factor.marginalizeTo(BoundsSumProductSemiring(), Variable(target))
     targetFactors += target -> targetFactor
   }
 
@@ -231,7 +231,7 @@ with LazyAlgorithm {
   def finishNoBounds(factorsAfterElimination: Set[Factor[Double]]): Factor[(Double, Double)] = {
     // It is possible that there are no factors (this will happen if there is no evidence).
     // Therefore, we start with the unit factor and use foldLeft, instead of simply reducing the factorsAfterElimination.
-    val multiplied = factorsAfterElimination.foldLeft(Factory.unit(semiring))(_.product(_, semiring))
+    val multiplied = factorsAfterElimination.foldLeft(Factory.unit[Double](semiring.asInstanceOf[Semiring[Double]]))(_.product(_))
     val normalized = normalizeAndAbsorbNoBounds(multiplied)
     normalized
   }
@@ -245,8 +245,8 @@ with LazyAlgorithm {
   def finishWithBounds(lowerFactors: Set[Factor[Double]], upperFactors: Set[Factor[Double]]): Factor[(Double, Double)] = {
     // It is possible that there are no factors (this will happen if there is no evidence).
     // Therefore, we start with the unit factor and use foldLeft, instead of simply reducing the factorsAfterElimination.
-    val lowerMultiplied = lowerFactors.foldLeft(Factory.unit(semiring))(_.product(_, semiring))
-    val upperMultiplied = upperFactors.foldLeft(Factory.unit(semiring))(_.product(_, semiring))
+    val lowerMultiplied = lowerFactors.foldLeft(Factory.unit[Double](semiring.asInstanceOf[Semiring[Double]]))(_.product(_))
+    val upperMultiplied = upperFactors.foldLeft(Factory.unit[Double](semiring.asInstanceOf[Semiring[Double]]))(_.product(_))
     val normalized = normalizeAndAbsorbWithBounds(lowerMultiplied, upperMultiplied)
     normalized
   }
@@ -292,9 +292,9 @@ with LazyAlgorithm {
       for { factor <- varFactors } { println(factor.toReadableString) }
     }
     if (varFactors.nonEmpty) {
-      def multiply(f1: Factor[Double], f2: Factor[Double]): Factor[Double] = f1.product(f2, semiring)
-      val productFactor: Factor[Double] = varFactors.reduceLeft(_.product(_, semiring))
-      val resultFactor: Factor[Double] = productFactor.sumOver(variable, semiring)
+      def multiply(f1: Factor[Double], f2: Factor[Double]): Factor[Double] = f1.product(f2)
+      val productFactor: Factor[Double] = varFactors.reduceLeft(_.product(_))
+      val resultFactor: Factor[Double] = productFactor.sumOver(variable)
       varFactors foreach (removeFactor(_, map))
       addFactor(resultFactor, map)
       comparator match {

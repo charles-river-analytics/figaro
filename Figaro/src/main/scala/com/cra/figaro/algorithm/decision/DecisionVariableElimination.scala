@@ -43,14 +43,14 @@ trait ProbabilisticVariableEliminationDecision extends VariableElimination[(Doub
   /**
    * Semiring for Decisions uses a sum-product-utility semiring.
    */
-  override val semiring = SumProductUtilitySemiring
+  override val semiring = SumProductUtilitySemiring()
   
   /**
    * Makes a utility factor an element designated as a utility. This is factor of a tuple (Double, Double)
    * where the first value is 1.0 and the second is a possible utility of the element.
    */
   def makeUtilFactor(e: Element[_]): Factor[(Double, Double)] = {
-    val f = Factory.defaultFactor[(Double, Double)](List(), List(Variable(e)))
+    val f = Factory.defaultFactor[(Double, Double)](List(), List(Variable(e)), semiring)
     f.fillByRule((l: List[Any]) => (1.0, l.asInstanceOf[List[Extended[Double]]](0).value))
     f
   }
@@ -92,15 +92,15 @@ trait ProbabilisticVariableEliminationDecision extends VariableElimination[(Doub
    * all non-utility nodes, and Prob is 1 for all utility nodes
    */
   private def convert(f: Factor[Double], utility: Boolean): Factor[(Double, Double)] = {
-    val factor = Factory.defaultFactor[(Double, Double)](f.parents, f.output)
+    val factor = Factory.defaultFactor[(Double, Double)](f.parents, f.output, semiring)
     val allIndices = f.getIndices
 
     if (!utility) {
-      f.mapTo((d: Double) => (d, 0.0))
+      f.mapTo[(Double, Double)]((d: Double) => (d, 0.0), semiring.asInstanceOf[Semiring[(Double, Double)]])
     } else {
       if (f.variables.length > 1) throw new IllegalUtilityNodeException
       
-      val newF = f.mapTo((d: Double) => (d, 0.0))
+      val newF = f.mapTo[(Double, Double)]((d: Double) => (d, 0.0), semiring.asInstanceOf[Semiring[(Double, Double)]])
       for {i <- 0 until f.variables(0).range.size} {
         newF.set(List(i), (newF.get(List(i))._1, f.variables(0).range(i).asInstanceOf[Double]))
       }
@@ -132,7 +132,7 @@ class ProbQueryVariableEliminationDecision[T, U](override val universe: Universe
 
   def getUtilityNodes = utilityNodes
 
-  private var finalFactors: Factor[(Double, Double)] = Factory.defaultFactor[(Double, Double)](List(), List())
+  private var finalFactors: Factor[(Double, Double)] = Factory.defaultFactor[(Double, Double)](List(), List(), semiring)
 
   /* Marginalizes the final factor using the semiring for decisions
    * 
@@ -151,7 +151,7 @@ class ProbQueryVariableEliminationDecision[T, U](override val universe: Universe
   private def makeResultFactor(factorsAfterElimination: Set[Factor[(Double, Double)]]): Factor[(Double, Double)] = {
     // It is possible that there are no factors (this will happen if there are no decisions or utilities).
     // Therefore, we start with the unit factor and use foldLeft, instead of simply reducing the factorsAfterElimination.
-    factorsAfterElimination.foldLeft(Factory.unit(semiring))(_.product(_, semiring))
+    factorsAfterElimination.foldLeft(Factory.unit(semiring))(_.product(_))
   }
 
   def finish(factorsAfterElimination: Set[Factor[(Double, Double)]], eliminationOrder: List[Variable[_]]) =
