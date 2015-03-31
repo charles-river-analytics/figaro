@@ -23,215 +23,407 @@ import com.cra.figaro.util._
 import com.cra.figaro.library.compound._
 import com.cra.figaro.test.tags.Performance
 import com.cra.figaro.test.tags.NonDeterministic
+import com.cra.figaro.ndtest._
 
 class ProbEvidenceTest extends WordSpec with Matchers {
+  
+  val alpha: Double = 0.05
 
   "Computing probability of evidence" when {
 
     "given a vanilla model with one condition" should {
-      "return the probability the condition is satisfied" in {
-        val universe = Universe.createNew()
-        val f = Flip(0.7)("f", universe)
-        sampleTest(0.7, List(NamedEvidence("f", Observation(true))))
+      "return the probability the condition is satisfied" taggedAs (NonDeterministic) in {
+         val ndtest = new NDTest {
+            override def oneTest = {
+              val target = 0.7
+              val universe = Universe.createNew()
+              val f = Flip(target)("f", universe)
+              val result = sampleTest(target, List(NamedEvidence("f", Observation(true))))
+              update(result, new TTestResult("SampleTestResults", target, alpha))
+            }
+          }
+
+        ndtest.run(10)
       }
 
-      "return the log probability the condition is satisfied" in {
-        val universe = Universe.createNew()
-        val f = Flip(0.7)("f", universe)
-        logProbabilitySampleTest(Math.log(0.7), List(NamedEvidence("f", Observation(true))))
+      "return the log probability the condition is satisfied" taggedAs (NonDeterministic) in {
+        val ndtest = new NDTest {
+          override def oneTest = {
+            val value = 0.7
+            val target = Math.log(value)
+            val universe = Universe.createNew()
+            val f = Flip(value)("f", universe)
+            val result = logProbabilitySampleTest(target, List(NamedEvidence("f", Observation(true))))
+            update(result, new TTestResult("LogProbabilitySampleTestResults", target, alpha))
+          }
+        }
+
+        ndtest.run(10)
       }
 
     }
 
     "given a vanilla model with two independent conditions" should {
-      "return the probability both conditions are satisfied" in {
-        val universe = Universe.createNew()
-        val f1 = Flip(0.7)("f1", universe)
-        val f2 = Flip(0.4)("f2", universe)
-        sampleTest(0.7 * 0.4, List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true))))
+      "return the probability both conditions are satisfied" taggedAs (NonDeterministic) in {
+        val ndtest = new NDTest {
+          override def oneTest = {
+            val value1 = 0.7
+            val value2 = 0.4
+            val target = value1 * value2
+            val universe = Universe.createNew()
+            val f1 = Flip(value1)("f1", universe)
+            val f2 = Flip(value2)("f2", universe)
+            val result = sampleTest(target, List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true))))
+            update(result, new TTestResult("SampleTestResults", target, alpha))
+          }
+        }
+
+        ndtest.run(10)
       }
 
       "return the log probability both conditions are satisfied" taggedAs(NonDeterministic) in {
-        val universe = Universe.createNew()
-        val f1 = Flip(0.7)("f1", universe)
-        val f2 = Flip(0.4)("f2", universe)
-        logProbabilitySampleTest(Math.log(0.7 * 0.4), List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true))))
+        val ndtest = new NDTest {
+          override def oneTest = {
+            val value1 = 0.7
+            val value2 = 0.4
+            val target = Math.log((value1 * value2))
+            val universe = Universe.createNew()
+            val f1 = Flip(value1)("f1", universe)
+            val f2 = Flip(value2)("f2", universe)
+            val result = logProbabilitySampleTest(target, List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true))))
+            update(result, new TTestResult("LogProbabilitySampleTestResults", target, alpha))
+          }
+        }
+
+        ndtest.run(10)        
       }
     }
 
     "given a vanilla mode with two dependent conditions" should {
-      "return the probability both conditions are jointly satisfied" in {
-        val universe = Universe.createNew()
-        val d = Select(0.2 -> 0.6, 0.8 -> 0.9)
-        val f1 = Flip(d)("f1", universe)
-        val f2 = Flip(d)("f2", universe)
-        sampleTest(0.2 * 0.6 * 0.6 + 0.8 * 0.9 * 0.9, List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true))))
+      "return the probability both conditions are jointly satisfied" taggedAs (NonDeterministic) in {
+        val ndtest = new NDTest {
+          override def oneTest = {
+            val target = 0.2 * 0.6 * 0.6 + 0.8 * 0.9 * 0.9
+            val universe = Universe.createNew()
+            val d = Select(0.2 -> 0.6, 0.8 -> 0.9)
+            val f1 = Flip(d)("f1", universe)
+            val f2 = Flip(d)("f2", universe)
+            val result = sampleTest(target, List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true))))
+            update(result, new TTestResult("SampleTestResults", target, alpha))
+          }
+        }
+
+        ndtest.run(10)
       }
 
-      "return the log probability both conditions are jointly satisfied" in {
-        val universe = Universe.createNew()
-        val d = Select(0.2 -> 0.6, 0.8 -> 0.9)
-        val f1 = Flip(d)("f1", universe)
-        val f2 = Flip(d)("f2", universe)
-        logProbabilitySampleTest(Math.log((0.2 * 0.6 * 0.6 + 0.8 * 0.9 * 0.9)), List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true))))
+      "return the log probability both conditions are jointly satisfied" taggedAs (NonDeterministic) in {
+        val ndtest = new NDTest {
+          override def oneTest = {
+            val target = Math.log((0.2 * 0.6 * 0.6 + 0.8 * 0.9 * 0.9))
+            val universe = Universe.createNew()
+            val d = Select(0.2 -> 0.6, 0.8 -> 0.9)
+            val f1 = Flip(d)("f1", universe)
+            val f2 = Flip(d)("f2", universe)
+            val result = logProbabilitySampleTest(target, List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true))))
+            update(result, new TTestResult("LogProbabilitySampleTestResults", target, alpha))
+          }
+        }
+
+        ndtest.run(10)        
       }
 
     }
 
     "given a vanilla model with two dependent conditions and a constraint" should {
-      "return the probability both conditions are satisfied, taking into account the constraint" in {
-        val universe = Universe.createNew()
-        val d = Select(0.5 -> 0.6, 0.5 -> 0.9)("d", universe)
-        d.setConstraint((d: Double) => if (d > 0.7) 0.8; else 0.2)
-        val f1 = Flip(d)("f1", universe)
-        val f2 = Flip(d)("f2", universe)
-        sampleTest(0.2 * 0.6 * 0.6 + 0.8 * 0.9 * 0.9, List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true))))
+      "return the probability both conditions are satisfied, taking into account the constraint" taggedAs (NonDeterministic) in {
+        val ndtest = new NDTest {
+          override def oneTest = {
+            val target = 0.2 * 0.6 * 0.6 + 0.8 * 0.9 * 0.9
+            val universe = Universe.createNew()
+            val d = Select(0.5 -> 0.6, 0.5 -> 0.9)("d", universe)
+            d.setConstraint((d: Double) => if (d > 0.7) 0.8; else 0.2)
+            val f1 = Flip(d)("f1", universe)
+            val f2 = Flip(d)("f2", universe)
+            val result = sampleTest(target, List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true))))
+            update(result, new TTestResult("SampleTestResults", target, alpha))
+          }
+        }
+
+        ndtest.run(10)      
       }
 
-      "return the log probability both conditions are satisfied, taking into account the constraint" in {
-        val universe = Universe.createNew()
-        val d = Select(0.5 -> 0.6, 0.5 -> 0.9)("d", universe)
-        d.setConstraint((d: Double) => if (d > 0.7) 0.8; else 0.2)
-        val f1 = Flip(d)("f1", universe)
-        val f2 = Flip(d)("f2", universe)
-        logProbabilitySampleTest(Math.log((0.2 * 0.6 * 0.6 + 0.8 * 0.9 * 0.9)), List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true))))
+      "return the log probability both conditions are satisfied, taking into account the constraint" taggedAs (NonDeterministic) in {
+        val ndtest = new NDTest {
+          override def oneTest = {
+            val target = Math.log((0.2 * 0.6 * 0.6 + 0.8 * 0.9 * 0.9))
+            val universe = Universe.createNew()
+            val d = Select(0.5 -> 0.6, 0.5 -> 0.9)("d", universe)
+            d.setConstraint((d: Double) => if (d > 0.7) 0.8; else 0.2)
+            val f1 = Flip(d)("f1", universe)
+            val f2 = Flip(d)("f2", universe)
+            val result = logProbabilitySampleTest(target, List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true))))
+            update(result, new TTestResult("LogProbabilitySampleTestResults", target, alpha))
+          }
+        }
+
+        ndtest.run(10)        
       }
 
     }
 
     "given a constant whose condition is not satisfied" should {
-      "return 0" in {
-        val universe = Universe.createNew()
-        val c = Constant(8)("c", universe)
-        sampleTest(0, List(NamedEvidence("c", Observation(7))))
+      "return 0" taggedAs (NonDeterministic) in {
+        val ndtest = new NDTest {
+          override def oneTest = {
+            val target = 0
+            val universe = Universe.createNew()
+            val c = Constant(8)("c", universe)
+            val result = sampleTest(target, List(NamedEvidence("c", Observation(7))))
+            update(result, new TTestResult("SampleTestResults", target, alpha))
+          }
+        }
+
+        ndtest.run(10)      
       }
 
-      "return negative infinity for log probability" in {
-        val universe = Universe.createNew()
-        val c = Constant(8)("c", universe)
-        logProbabilitySampleTest(Double.NegativeInfinity, List(NamedEvidence("c", Observation(7))))
+      "return negative infinity for log probability" taggedAs (NonDeterministic) in {
+        val ndtest = new NDTest {
+          override def oneTest = {
+            val target = Double.NegativeInfinity
+            val universe = Universe.createNew()
+            val c = Constant(8)("c", universe)
+            val result = logProbabilitySampleTest(target, List(NamedEvidence("c", Observation(7))))
+            update(result, new TTestResult("LogProbabilitySampleTestResults", target, alpha))
+          }
+        }
+
+        ndtest.run(10)      
       }
 
     }
 
     "given a simple dist with a condition on the result" should {
-      "return the expectation over the clauses of the probability the result satisfies the condition" in {
-        val universe = Universe.createNew()
-        val d = Dist(0.3 -> Flip(0.6), 0.7 -> Flip(0.9))("d", universe)
-        sampleTest(0.3 * 0.6 + 0.7 * 0.9, List(NamedEvidence("d", Observation(true))))
+      "return the expectation over the clauses of the probability the result satisfies the condition" taggedAs (NonDeterministic) in {
+        val ndtest = new NDTest {
+          override def oneTest = {
+            val target = 0.3 * 0.6 + 0.7 * 0.9
+            val universe = Universe.createNew()
+            val d = Dist(0.3 -> Flip(0.6), 0.7 -> Flip(0.9))("d", universe)
+            val result = sampleTest(target, List(NamedEvidence("d", Observation(true))))
+            update(result, new TTestResult("SampleTestResults", target, alpha))
+          }
+        }
+
+        ndtest.run(10)      
       }
 
-      "return the expectation over the clauses of the log probability the result satisfies the condition" in {
-        val universe = Universe.createNew()
-        val d = Dist(0.3 -> Flip(0.6), 0.7 -> Flip(0.9))("d", universe)
-        logProbabilitySampleTest(Math.log((0.3 * 0.6) + (0.7 * 0.9)), List(NamedEvidence("d", Observation(true))))
+      "return the expectation over the clauses of the log probability the result satisfies the condition" taggedAs (NonDeterministic) in {
+        val ndtest = new NDTest {
+          override def oneTest = {
+            val target = Math.log((0.3 * 0.6) + (0.7 * 0.9))
+            val universe = Universe.createNew()
+            val d = Dist(0.3 -> Flip(0.6), 0.7 -> Flip(0.9))("d", universe)
+            val result = logProbabilitySampleTest(target, List(NamedEvidence("d", Observation(true))))
+            update(result, new TTestResult("LogProbabilitySampleTestResults", target, alpha))
+          }
+        }
+
+        ndtest.run(10)
       }
     }
 
     "given a complex dist with a condition on the result" should {
-      "return the expectation over the clauses of the probability the result satisfies the condition" in {
-        val universe = Universe.createNew()
-        val p1 = Select(0.2 -> 0.4, 0.8 -> 0.6)
-        val p2 = Constant(0.4)
-        val d = Dist(p1 -> Flip(0.6), p2 -> Flip(0.9))("d", universe)
-        sampleTest(0.2 * (0.5 * 0.6 + 0.5 * 0.9) + 0.8 * (0.6 * 0.6 + 0.4 * 0.9), List(NamedEvidence("d", Observation(true))))
+      "return the expectation over the clauses of the probability the result satisfies the condition" taggedAs (NonDeterministic) in {
+        val ndtest = new NDTest {
+          override def oneTest = {
+            val target = 0.2 * (0.5 * 0.6 + 0.5 * 0.9) + 0.8 * (0.6 * 0.6 + 0.4 * 0.9)
+            val universe = Universe.createNew()
+            val p1 = Select(0.2 -> 0.4, 0.8 -> 0.6)
+            val p2 = Constant(0.4)
+            val d = Dist(p1 -> Flip(0.6), p2 -> Flip(0.9))("d", universe)
+            val result = sampleTest(target, List(NamedEvidence("d", Observation(true))))
+            update(result, new TTestResult("SampleTestResults", target, alpha))
+          }
+        }
+
+        ndtest.run(10)      
       }
 
-      "return the expectation over the clauses of the log probability the result satisfies the condition" in {
-        val universe = Universe.createNew()
-        val p1 = Select(0.2 -> 0.4, 0.8 -> 0.6)
-        val p2 = Constant(0.4)
-        val d = Dist(p1 -> Flip(0.6), p2 -> Flip(0.9))("d", universe)
-        logProbabilitySampleTest(Math.log((0.2 * (0.5 * 0.6 + 0.5 * 0.9)) + (0.8 * (0.6 * 0.6 + 0.4 * 0.9))), List(NamedEvidence("d", Observation(true))))
+      "return the expectation over the clauses of the log probability the result satisfies the condition" taggedAs (NonDeterministic) in {
+        val ndtest = new NDTest {
+          override def oneTest = {
+            val target = Math.log((0.2 * (0.5 * 0.6 + 0.5 * 0.9)) + (0.8 * (0.6 * 0.6 + 0.4 * 0.9)))
+            val universe = Universe.createNew()
+            val p1 = Select(0.2 -> 0.4, 0.8 -> 0.6)
+            val p2 = Constant(0.4)
+            val d = Dist(p1 -> Flip(0.6), p2 -> Flip(0.9))("d", universe)
+            val result = logProbabilitySampleTest(target, List(NamedEvidence("d", Observation(true))))
+            update(result, new TTestResult("LogProbabilitySampleTestResults", target, alpha))
+          }
+        }
+
+        ndtest.run(10)
       }
     }
 
     "given a continuous uniform with a condition" should {
-      "return the uniform probability of the condition" in {
-        val universe = Universe.createNew()
-        val u = Uniform(0.0, 1.0)("u", universe)
-        val condition = (d: Double) => d < 0.4
-        sampleTest(0.4, List(NamedEvidence("u", Condition(condition))))
+      "return the uniform probability of the condition" taggedAs (NonDeterministic) in {
+        val ndtest = new NDTest {
+          override def oneTest = {
+            val target = 0.4
+            val universe = Universe.createNew()
+            val u = Uniform(0.0, 1.0)("u", universe)
+            val condition = (d: Double) => d < target
+            val result = sampleTest(target, List(NamedEvidence("u", Condition(condition))))
+            update(result, new TTestResult("SampleTestResults", target, alpha))
+          }
+        }
+
+        ndtest.run(10)      
       }
 
-      "return the log of uniform probability of the condition" in {
-        val universe = Universe.createNew()
-        val u = Uniform(0.0, 1.0)("u", universe)
-        val condition = (d: Double) => d < 0.4
-        logProbabilitySampleTest(Math.log(0.4), List(NamedEvidence("u", Condition(condition))))
+      "return the log of uniform probability of the condition" taggedAs (NonDeterministic) in {
+        val ndtest = new NDTest {
+          override def oneTest = {
+            val value = 0.4
+            val target = Math.log(value)
+            val universe = Universe.createNew()
+            val u = Uniform(0.0, 1.0)("u", universe)
+            val condition = (d: Double) => d < value
+            val result = logProbabilitySampleTest(target, List(NamedEvidence("d", Observation(true))))
+            update(result, new TTestResult("LogProbabilitySampleTestResults", target, alpha))
+          }
+        }
+
+        ndtest.run(10)
       }
     }
 
     "given a caching chain with a condition on the result" should {
-      "return the expectation over the parent of the probability the result satisfies the condition" in {
-        val universe = Universe.createNew()
-        val p1 = Select(0.4 -> 0.3, 0.6 -> 0.9)
-        val c = CachingChain(p1, (d: Double) => if (d < 0.4) Flip(0.3); else Flip(0.8))("c", universe)
-        sampleTest(0.4 * 0.3 + 0.6 * 0.8, List(NamedEvidence("c", Observation(true))))
+      "return the expectation over the parent of the probability the result satisfies the condition" taggedAs (NonDeterministic) in {
+        val ndtest = new NDTest {
+          override def oneTest = {
+            val target = 0.4 * 0.3 + 0.6 * 0.8
+            val universe = Universe.createNew()
+            val p1 = Select(0.4 -> 0.3, 0.6 -> 0.9)
+            val c = CachingChain(p1, (d: Double) => if (d < 0.4) Flip(0.3); else Flip(0.8))("c", universe)
+            val result = sampleTest(target, List(NamedEvidence("c", Observation(true))))
+            update(result, new TTestResult("SampleTestResults", target, alpha))
+          }
+        }
+
+        ndtest.run(10)      
       }
 
-      "return the expectation over the parent of the log probability the result satisfies the condition" in {
-        val universe = Universe.createNew()
-        val p1 = Select(0.4 -> 0.3, 0.6 -> 0.9)
-        val c = CachingChain(p1, (d: Double) => if (d < 0.4) Flip(0.3); else Flip(0.8))("c", universe)
-        logProbabilitySampleTest(Math.log(0.4 * 0.3 + 0.6 * 0.8), List(NamedEvidence("c", Observation(true))))
+      "return the expectation over the parent of the log probability the result satisfies the condition" taggedAs (NonDeterministic) in {
+        val ndtest = new NDTest {
+          override def oneTest = {
+            val target = Math.log(0.4 * 0.3 + 0.6 * 0.8)
+            val universe = Universe.createNew()
+            val p1 = Select(0.4 -> 0.3, 0.6 -> 0.9)
+            val c = CachingChain(p1, (d: Double) => if (d < 0.4) Flip(0.3); else Flip(0.8))("c", universe)
+            val result = logProbabilitySampleTest(target, List(NamedEvidence("c", Observation(true))))
+            update(result, new TTestResult("LogProbabilitySampleTestResults", target, alpha))
+          }
+        }
+
+        ndtest.run(10)      
       }
     }
 
     "given a non-caching chain with a condition on the result" should {
 
-      "return the expectation over the parent of the probability the result satisfies the condition" in {
-        val universe = Universe.createNew()
-        val p1 = Uniform(0.0, 1.0)
-        val c = NonCachingChain(p1, (d: Double) => if (d < 0.4) Flip(0.3); else Flip(0.8))("c", universe)
-        sampleTest(0.4 * 0.3 + 0.6 * 0.8, List(NamedEvidence("c", Observation(true))))
-      }
-      "return the expectation over the parent of the log probability the result satisfies the condition" in {
-        val universe = Universe.createNew()
-        val p1 = Uniform(0.0, 1.0)
-        val c = NonCachingChain(p1, (d: Double) => if (d < 0.4) Flip(0.3); else Flip(0.8))("c", universe)
-        //Ensure this line is correct.
-        logProbabilitySampleTest(Math.log(0.4 * 0.3 + 0.6 * 0.8), List(NamedEvidence("c", Observation(true))))
+      "return the expectation over the parent of the probability the result satisfies the condition" taggedAs (NonDeterministic) in {
+        val ndtest = new NDTest {
+          override def oneTest = {
+            val target = 0.4 * 0.3 + 0.6 * 0.8
+            val universe = Universe.createNew()
+            val p1 = Uniform(0.0, 1.0)
+            val c = NonCachingChain(p1, (d: Double) => if (d < 0.4) Flip(0.3); else Flip(0.8))("c", universe)
+            val result = sampleTest(target, List(NamedEvidence("c", Observation(true))))
+            update(result, new TTestResult("SampleTestResults", target, alpha))
+          }
+        }
 
+        ndtest.run(10)      
+      }
+      
+      "return the expectation over the parent of the log probability the result satisfies the condition" taggedAs (NonDeterministic) in {
+        val ndtest = new NDTest {
+          override def oneTest = {
+            val target = Math.log(0.4 * 0.3 + 0.6 * 0.8)
+            val universe = Universe.createNew()
+            val p1 = Uniform(0.0, 1.0)
+            val c = NonCachingChain(p1, (d: Double) => if (d < 0.4) Flip(0.3); else Flip(0.8))("c", universe)
+            val result = logProbabilitySampleTest(target, List(NamedEvidence("c", Observation(true))))
+            update(result, new TTestResult("LogProbabilitySampleTestResults", target, alpha))
+          }
+        }
+
+        ndtest.run(10)
       }
 
     }
 
     "given a chain of two arguments whose result is a different element with a condition on the result" should {
-      "return the correct probability of evidence in the result" in {
-        val universe = Universe.createNew()
-        val x = Constant(false)
-        val y = Constant(false)
-        val u1 = Uniform(0.0, 1.0)
-        val u2 = Uniform(0.0, 2.0)
-        val a = CachingChain(x, y, (x: Boolean, y: Boolean) => if (x || y) u1; else u2)("a", universe)
-        def condition(d: Double) = d < 0.5
-        sampleTest(0.25, List(NamedEvidence("a", Condition(condition))))
+      "return the correct probability of evidence in the result" taggedAs (NonDeterministic) in {
+        val ndtest = new NDTest {
+          override def oneTest = {
+            val target = 0.25
+            val universe = Universe.createNew()
+            val x = Constant(false)
+            val y = Constant(false)
+            val u1 = Uniform(0.0, 1.0)
+            val u2 = Uniform(0.0, 2.0)
+            val a = CachingChain(x, y, (x: Boolean, y: Boolean) => if (x || y) u1; else u2)("a", universe)
+            def condition(d: Double) = d < 0.5
+            val result = sampleTest(target, List(NamedEvidence("a", Condition(condition))))
+            update(result, new TTestResult("SampleTestResults", target, alpha))
+          }
+        }
+
+        ndtest.run(10)
       }
 
-      "return the correct log probability of evidence in the result" taggedAs(NonDeterministic) in {
-        val universe = Universe.createNew()
-        val x = Constant(false)
-        val y = Constant(false)
-        val u1 = Uniform(0.0, 1.0)
-        val u2 = Uniform(0.0, 2.0)
-        val a = CachingChain(x, y, (x: Boolean, y: Boolean) => if (x || y) u1; else u2)("a", universe)
-        def condition(d: Double) = d < 0.5
-        logProbabilitySampleTest(Math.log(0.25), List(NamedEvidence("a", Condition(condition))))
+      "return the correct log probability of evidence in the result" taggedAs (NonDeterministic) in {
+        val ndtest = new NDTest {
+          override def oneTest = {
+            val target = Math.log(0.25)
+            val universe = Universe.createNew()
+            val x = Constant(false)
+            val y = Constant(false)
+            val u1 = Uniform(0.0, 1.0)
+            val u2 = Uniform(0.0, 2.0)
+            val a = CachingChain(x, y, (x: Boolean, y: Boolean) => if (x || y) u1; else u2)("a", universe)
+            def condition(d: Double) = d < 0.5
+            val result = logProbabilitySampleTest(target, List(NamedEvidence("a", Condition(condition))))
+            update(result, new TTestResult("LogProbabilitySampleTestResults", target, alpha))
+          }
+        }
+
+        ndtest.run(10)
       }
     }
 
   }
 
   "Anytime computing probability of evidence" should {
-    "produce an answer after the algorithm has started" in {
-      val universe = Universe.createNew()
-      val f = Flip(0.3)("f", universe)
-      val alg = ProbEvidenceSampler(200L, List(NamedEvidence("f", Observation(true))))
-      alg.start()
-      Thread.sleep(200L)
-      alg.probEvidence should be(0.3 +- 0.01)
-      alg.kill()
+    "produce an answer after the algorithm has started" taggedAs (NonDeterministic) in {
+      val ndtest = new NDTest {
+        override def oneTest = {
+          val target = 0.3
+          val universe = Universe.createNew()
+          val f = Flip(target)("f", universe)
+          val alg = ProbEvidenceSampler(200L, List(NamedEvidence("f", Observation(true))))
+          alg.start()
+          Thread.sleep(200L)
+          val result = alg.probEvidence
+          alg.kill()
+          update(result, new TTestResult("ProbabilityOfEvidenceTestResults", target, alpha))
+        }
+      }
+
+      ndtest.run(10)    
     }
 
     "sets evidence appropriately and cleans up after itself" in {
@@ -270,17 +462,16 @@ class ProbEvidenceTest extends WordSpec with Matchers {
     }
   }
 
-  def sampleTest(prob: Double, evidence: List[NamedEvidence[_]]) {
-    ProbEvidenceSampler.computeProbEvidence(60000, evidence) should be(prob +- 0.01)
+  def sampleTest(prob: Double, evidence: List[NamedEvidence[_]]): Double = {
+    ProbEvidenceSampler.computeProbEvidence(60000, evidence)
   }
 
-  def logProbabilitySampleTest(logProb: Double, evidence: List[NamedEvidence[_]]) {
+  def logProbabilitySampleTest(logProb: Double, evidence: List[NamedEvidence[_]]): Double = {
     val alg = ProbEvidenceSampler(60000, evidence)
     alg.start
     val result = alg.logProbEvidence
     alg.stop
     alg.kill
-    result should be(logProb +- 0.01)
-
+    result
   }
 }

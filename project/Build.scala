@@ -40,6 +40,7 @@ object FigaroBuild extends Build {
     scalaVersion := "2.11.4",
     crossPaths := true,
     publishMavenStyle := true,
+    javacOptions ++= Seq("-Xmx", "2g"),
     pomExtra :=
 	<url>http://www.github.com/p2t2/figaro</url>
 	<developers>
