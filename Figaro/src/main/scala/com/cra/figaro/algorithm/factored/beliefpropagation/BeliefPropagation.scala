@@ -98,7 +98,7 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
   private def getNewMessageFactorToVar(fn: FactorNode, vn: VariableNode) = {
     val vnFactor = factorGraph.getLastMessage(vn, fn)
 
-    val total = beliefMap(fn).combination(vnFactor, semiring.divide, semiring)
+    val total = beliefMap(fn).combination(vnFactor, semiring.divide)
     total.marginalizeTo(semiring, vn.variable)
   }
 
@@ -110,7 +110,7 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
   private def getNewMessageVarToFactor(vn: VariableNode, fn: FactorNode) = {
     val fnFactor = factorGraph.getLastMessage(fn, vn)
 
-    val total = beliefMap(vn).combination(fnFactor, semiring.divide, semiring)
+    val total = beliefMap(vn).combination(fnFactor, semiring.divide)
     total
   }
 
@@ -126,9 +126,9 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
         case vn: VariableNode => factorGraph.uniformFactor(List(vn.variable))
       }
     } else {
-      val messageBelief = messageList.reduceLeft(_.product(_, semiring))
+      val messageBelief = messageList.reduceLeft(_.product(_))
       source match {
-        case fn: FactorNode => messageBelief.product(factorGraph.getFactorForNode(fn), semiring)
+        case fn: FactorNode => messageBelief.product(factorGraph.getFactorForNode(fn))
         case vn: VariableNode => messageBelief
       }
     }
@@ -213,11 +213,11 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
   }
 
   private[figaro] def makeLogarithmic(factor: Factor[Double]): Factor[Double] = {
-    factor.mapTo((d: Double) => Math.log(d))
+    factor.mapTo((d: Double) => Math.log(d), LogSumProductSemiring())
   }
 
   private[figaro] def unmakeLogarithmic(factor: Factor[Double]): Factor[Double] = {
-    factor.mapTo((d: Double) => Math.exp(d))
+    factor.mapTo((d: Double) => Math.exp(d), SumProductSemiring())
   }
 
   /**
@@ -328,7 +328,7 @@ abstract class ProbQueryBeliefPropagation(override val universe: Universe, targe
 
   val queryTargets = targetElements
 
-  val semiring = LogSumProductSemiring
+  val semiring = LogSumProductSemiring()
 
   var neededElements: List[Element[_]] = _
   var needsBounds: Boolean = _

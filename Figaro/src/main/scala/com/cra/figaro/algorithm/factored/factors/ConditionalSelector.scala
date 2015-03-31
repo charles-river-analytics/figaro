@@ -23,24 +23,27 @@ import scala.reflect.runtime.universe._
  *
  * @param <T>
  */
-class ConditionalSelector[T: TypeTag](parents: List[Variable[_]], output: List[Variable[_]]) 
-  extends SparseFactor[T](parents, output) {
+class ConditionalSelector[T: TypeTag](_parents: List[Variable[_]], _output: List[Variable[_]], _semiring: Semiring[T] = SumProductSemiring().asInstanceOf[Semiring[T]])
+  extends SparseFactor[T](_parents, _output, _semiring) {
 
-  override def createFactor[T: TypeTag](parents: List[Variable[_]], output: List[Variable[_]]) =
-    new SparseFactor[T](parents, output)
+  override def createFactor[T: TypeTag](_parents: List[Variable[_]], _output: List[Variable[_]], _semiring: Semiring[T] = semiring) = 
+    new SparseFactor[T](_parents, _output, _semiring)
 
-  defaultValue = tpe match {
-    case t if t =:= typeOf[Double] => 1.0
-    case t if t =:= typeOf[Int] => 1
-    case t if t =:= typeOf[Boolean] => true
-    case t if t =:= typeOf[(Double, Double)] => (1.0, 0.0)
-    case _ => /*println("unknown type " + tpe)*/
-      1.0
-  }
+  override def defaultValue = semiring.one
   
   /**
    * List all the indices for this factor
    */
  override def getIndices = new Indices(variables)
 
+    /**
+   * Convert the contents of the target by applying the given function to all elements of this factor.
+   */
+  override def mapTo[U: TypeTag](fn: T => U, _semiring: Semiring[U] = semiring): Factor[U] = {
+    val newFactor = new ConditionalSelector[U](parents, output, _semiring)
+    for { (key, value) <- contents } {
+      newFactor.set(key, fn(value))
+    }
+    newFactor
+  }
 }
