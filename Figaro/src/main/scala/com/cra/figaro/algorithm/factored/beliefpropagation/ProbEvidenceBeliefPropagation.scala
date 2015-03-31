@@ -54,20 +54,6 @@ trait ProbEvidenceBeliefPropagation extends ProbabilisticBeliefPropagation with 
     e
   }
 
-  /* Not true mutual information for > 2 factors, but standard for computing Bethe approximation */
-  private def mutualInformation(joint: Factor[Double], marginals: Iterable[Factor[Double]]) = {
-    if (debug) {
-      println(joint.toReadableString)
-      marginals foreach (f => println(f.toReadableString))
-    }
-    val newFactor = (joint /: marginals)((c: Factor[Double], n: Factor[Double]) => c.combination(n, semiring.divide, semiring))
-    val mi = (0.0 /: newFactor.getIndices)((c: Double, i: List[Int]) => {
-      val p = probFcn(newFactor.get(i))
-      if (p == 0) c else c + p * logFcn(newFactor.get(i))
-    })
-    mi
-  }
-
   /**
    * Compute the evidence of the model. Returns the probability of evidence on the model. This assumes that BP
    * has already been run on this algorithm instance.

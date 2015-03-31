@@ -27,7 +27,7 @@ class ParameterizedTest extends WordSpec with PrivateMethodTester with Matchers 
   "A flip" when {
     "created from a beta parameter" should {
       "create a parameterized flip" in {
-        val b = BetaParameter(5, 2)
+        val b = Beta(5, 2)
         val f = Flip(b)
         f.isInstanceOf[ParameterizedFlip] should equal(true)
       }

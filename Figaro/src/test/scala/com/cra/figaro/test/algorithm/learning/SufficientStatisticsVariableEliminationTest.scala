@@ -40,7 +40,7 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               val universe = Universe.createNew
               val f1 = Flip(0.5)
               val f2 = Flip(0.2)
-              val p1 = BetaParameter(1, 1)
+              val p1 = Beta(1, 1)
               val f3 = Flip(p1)
               val targetParameters = List(p1)
 
@@ -85,7 +85,7 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               val universe = Universe.createNew
               val f1 = Select(0.5 -> true, 0.5 -> false)
               val f2 = Select(0.2 -> true, 0.8 -> false)
-              val p1 = DirichletParameter(1, 1)
+              val p1 = Dirichlet(1, 1)
               val f3 = Select(p1, true, false)
               val targetParameters = List(p1)
 
@@ -131,7 +131,7 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               val universe = Universe.createNew
               val f1 = Select(0.5 -> 1, 0.4 -> 2, 0.1 -> 3)
               val f2 = Select(0.1 -> 1, 0.8 -> 2, 0.1 -> 3)
-              val p1 = DirichletParameter(1, 1, 1)
+              val p1 = Dirichlet(1, 1, 1)
               val f3 = Select(p1, 1, 2, 3)
               val targetParameters = List(p1)
 
@@ -176,7 +176,7 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
             {
               val universe = Universe.createNew
               val f1 = Flip(0.9)
-              val p1 = BetaParameter(12, 12)
+              val p1 = Beta(12, 12)
               val f2 = Flip(p1)
               f2.observe(true)
 
@@ -209,7 +209,7 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               val universe = Universe.createNew
               val f1 = Select(0.5 -> true, 0.5 -> false)
               val f2 = Select(0.2 -> true, 0.8 -> false)
-              val p1 = DirichletParameter(1, 1)
+              val p1 = Dirichlet(1, 1)
               val f3 = Select(p1, true, false)
               f3.observe(true)
               val targetParameters = List(p1)
@@ -239,7 +239,7 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               val universe = Universe.createNew
               val f1 = Select(0.5 -> 1, 0.4 -> 2, 0.1 -> 3)
               val f2 = Select(0.1 -> 1, 0.8 -> 2, 0.1 -> 3)
-              val p1 = DirichletParameter(1, 1, 1)
+              val p1 = Dirichlet(1, 1, 1)
               val f3 = Select(p1, 1, 2, 3)
 
               f3.observe(1)
@@ -273,7 +273,7 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               val universe = Universe.createNew
               val f1 = Select(0.5 -> 1, 0.4 -> 2, 0.1 -> 3)
               val f2 = Select(0.1 -> 1, 0.8 -> 2, 0.1 -> 3)
-              val p1 = DirichletParameter(1, 1, 1)
+              val p1 = Dirichlet(1, 1, 1)
               val f3 = Select(p1, 1, 2, 3)
 
               f3.observe(1)
@@ -309,7 +309,7 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               val universe = Universe.createNew
               val f1 = Select(0.5 -> 1, 0.4 -> 2, 0.1 -> 3)
               val f2 = Select(0.1 -> 1, 0.8 -> 2, 0.1 -> 3)
-              val p1 = DirichletParameter(1, 1, 1)
+              val p1 = Dirichlet(1, 1, 1)
               val f3 = Select(p1, 1, 2, 3)
 
               f3.observe(1)
@@ -347,7 +347,7 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               val universe = Universe.createNew
               val f1 = Select(0.5 -> 1, 0.4 -> 2, 0.1 -> 3)
               val f2 = Select(0.1 -> 1, 0.8 -> 2, 0.1 -> 3)
-              val p1 = DirichletParameter(1, 1, 1)
+              val p1 = Dirichlet(1, 1, 1)
               val f3 = Select(p1, 1, 2, 3)
 
               f3.observe(1)
