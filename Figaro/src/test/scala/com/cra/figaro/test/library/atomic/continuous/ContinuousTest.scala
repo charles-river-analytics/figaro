@@ -31,7 +31,7 @@ class ContinuousTest extends WordSpec with Matchers {
       val alg = Importance(20000, elem)
       alg.start()
       alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(0.25 +- 0.01)
-            alg.stop()
+      alg.stop()
       alg.kill
     }
 
@@ -41,7 +41,7 @@ class ContinuousTest extends WordSpec with Matchers {
       val alg = MetropolisHastings(20000, ProposalScheme.default, elem)
       alg.start()
       alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(0.25 +- 0.01)
-            alg.stop()
+      alg.stop()
       alg.kill
     }
 
@@ -72,7 +72,7 @@ class ContinuousTest extends WordSpec with Matchers {
       // p(1.25 < x < 1.5 | lower = l) = 0.25 / (2-l)
       // Expectation of l = \int_{0}^{1} 1 / (2-l) dl = 0.25(-ln(2-1) + ln(2-0)) = 0.1733
       alg.probability(uniformComplex, (d: Double) => 1.25 <= d && d < 1.5) should be(0.1733 +- 0.01)
-            alg.stop()
+      alg.stop()
       alg.kill
     }
 
@@ -93,7 +93,7 @@ class ContinuousTest extends WordSpec with Matchers {
       val dist = new NormalDistribution(1.0, 2.0)
       val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
       alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
-            alg.stop()
+      alg.stop()
       alg.kill
     }
 
@@ -105,7 +105,7 @@ class ContinuousTest extends WordSpec with Matchers {
       val dist = new NormalDistribution(1.0, 2.0)
       val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
       alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
-            alg.stop()
+      alg.stop()
       alg.kill
     }
 
@@ -134,14 +134,38 @@ class ContinuousTest extends WordSpec with Matchers {
         def getProb(dist: ProbabilityDistribution) = dist.cumulative(1.2) - dist.cumulative(0.7)
         val targetProb = 0.5 * getProb(dist1) + 0.5 * getProb(dist2)
         alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
-              alg.stop()
-      alg.kill
+        alg.stop()
+        alg.kill
       }
 
     "convert to the correct string" in {
       Universe.createNew()
       val sel = Select(0.5 -> 0.5, 0.5 -> 1.0)
       Normal(sel, 2.0).toString should equal("Normal(" + sel + ", 2.0)")
+    }
+  }
+
+  "A CompoundNormalVariance" should {
+    //Need to work this out on paper.
+    "have value within a range with probability equal to the expectation over the mean and variance of the" +
+      "cumulative probability of the upper minus the lower" in {
+        Universe.createNew()
+        val elem = Normal(2.0, Select(0.5 -> 2.0, 0.5 -> 3.0))
+        val alg = Importance(20000, elem)
+        alg.start()
+        val dist1 = new NormalDistribution(2.0, 2.0)
+        val dist2 = new NormalDistribution(2.0, 3.0)
+        def getProb(dist: ProbabilityDistribution) = dist.cumulative(1.2) - dist.cumulative(0.7)
+        val targetProb = 0.5 * getProb(dist1) + 0.5 * getProb(dist2)
+        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
+        alg.stop()
+        alg.kill
+      }
+
+    "convert to the correct string" in {
+      Universe.createNew()
+      val g = Gamma(1.0,5.0)
+      Normal(2.0, Gamma(1.0,5.0)).toString should equal("Normal(2.0, Gamma(1.0, 5.0))")
     }
   }
 
@@ -159,8 +183,8 @@ class ContinuousTest extends WordSpec with Matchers {
         def getProb(dist: ProbabilityDistribution) = dist.cumulative(1.2) - dist.cumulative(0.7)
         val targetProb = 0.25 * getProb(dist1) + 0.25 * getProb(dist2) + 0.25 * getProb(dist3) + 0.25 * getProb(dist4)
         alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
-              alg.stop()
-      alg.kill
+        alg.stop()
+        alg.kill
       }
 
     "convert to the correct string" in {
@@ -170,6 +194,8 @@ class ContinuousTest extends WordSpec with Matchers {
       Normal(sel1, sel2).toString should equal("Normal(" + sel1 + ", " + sel2 + ")")
     }
 
+    
+    
     "produce the right probability when conditioned under Metropolis-Hastings" in {
       val sampleUniverse = Universe.createNew()
       val nSamples = Normal(2.5, 2.0)("", sampleUniverse)
@@ -193,7 +219,7 @@ class ContinuousTest extends WordSpec with Matchers {
       alg.stop()
       alg.kill
     }
-
+    
     "produce the right probability when conditioned under Importance Sampling" in {
       val sampleUniverse = Universe.createNew()
       val nSamples = Normal(2.5, 2.0)("", sampleUniverse)
@@ -221,6 +247,86 @@ class ContinuousTest extends WordSpec with Matchers {
 
   }
 
+  
+    "A CompoundMultivariateNormal" should {
+    val means = List(1.0, 2.0)
+    val covariances = List(List(.25, .15), List(.15, .25))
+
+    //    "have value within a range with probability equal to the cumulative probability of the upper minus the lower" in {
+    //      Universe.createNew()
+    //      val elem = Normal(1.0, 2.0)
+    //      val alg = Importance(20000, elem)
+    //      alg.start()
+    //      val dist = new NormalDistribution(1.0, 2.0)
+    //      val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
+    //      alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
+    //    }
+
+    //    "compute the correct probability under Metropolis-Hastings" in {
+    //      Universe.createNew()
+    //      val elem = Normal(1.0, 2.0)
+    //      val alg = MetropolisHastings(20000, ProposalScheme.default, elem)
+    //      alg.start()
+    //      val dist = new NormalDistribution(1.0, 2.0)
+    //      val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
+    //      alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
+    //    }
+
+    "have the correct density" in {
+      Universe.createNew()
+      val elem = MultivariateNormal(means, covariances)
+      val dist = new MultivariateNormalDistribution(means.toArray, covariances.map((l: List[Double]) => l.toArray).toArray)
+
+      elem.density(List(1.5, 2.5)) should be(dist.density(Array(1.5, 2.5)) +- 0.00000001)
+    }
+
+    "produce samples with the correct means and covariances" in {
+      Universe.createNew()
+      val elem = MultivariateNormal(means, covariances)
+
+      var n = 0
+      var sumx1 = 0.0
+      var sumx2 = 0.0
+      var ss1 = 0.0
+      var ss2 = 0.0
+      var sc12 = 0.0
+
+      for (i <- 0 to 10000) {
+        val rand = elem.generateRandomness()
+        val values = elem.generateValue(rand)
+
+        val x1 = values(0)
+        val x2 = values(1)
+
+        n += 1
+        sumx1 += x1
+        sumx2 += x2
+        ss1 += x1 * x1
+        ss2 += x2 * x2
+        sc12 += x1 * x2
+      }
+
+      val mean1 = sumx1 / n
+      val mean2 = sumx2 / n
+      val var1 = (ss1 - (sumx1 * sumx1 / n)) / (n - 1)
+      val var2 = (ss2 - (sumx2 * sumx2 / n)) / (n - 1)
+      val cov = (sc12 - (sumx1 * sumx2 / n)) / (n - 1)
+
+      mean1 should be(means(0) +- 0.01)
+      mean2 should be(means(1) +- 0.01)
+
+      var1 should be(covariances(0)(0) +- 0.01)
+      var2 should be(covariances(1)(1) +- 0.01)
+      cov should be(covariances(0)(1) +- 0.01)
+    }
+
+    "convert to the correct string" in {
+      Universe.createNew()
+      MultivariateNormal(means, covariances).toString should equal("MultivariateNormal(" + means + ",\n" + covariances + ")")
+    }
+  }
+  
+  
   "An AtomicMultivariateNormal" should {
     val means = List(1.0, 2.0)
     val covariances = List(List(.25, .15), List(.15, .25))
@@ -351,7 +457,7 @@ class ContinuousTest extends WordSpec with Matchers {
         val targetProb = 0.5 * getProb(dist1) + 0.5 * getProb(dist2)
         alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
         alg.stop()
-      alg.kill
+        alg.kill
       }
 
     "convert to the correct string" in {
@@ -411,7 +517,7 @@ class ContinuousTest extends WordSpec with Matchers {
         val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
         alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
         alg.stop()
-      alg.kill
+        alg.kill
       }
 
       "compute the correct value under Metropolis-Hastings" in {
@@ -424,7 +530,7 @@ class ContinuousTest extends WordSpec with Matchers {
         val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
         alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
         alg.stop()
-      alg.kill
+        alg.kill
       }
 
       "have the correct density" in {
@@ -452,7 +558,7 @@ class ContinuousTest extends WordSpec with Matchers {
         val targetProb = cdf(1.2) - cdf(0.7)
         alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
         alg.stop()
-      alg.kill
+        alg.kill
       }
 
       "compute the correct probability under Metropolis-Hastings" in {
@@ -466,7 +572,7 @@ class ContinuousTest extends WordSpec with Matchers {
         val targetProb = cdf(1.2) - cdf(0.7)
         alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
         alg.stop()
-      alg.kill
+        alg.kill
       }
 
       "have the correct density" in {
@@ -495,7 +601,7 @@ class ContinuousTest extends WordSpec with Matchers {
         val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
         alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
         alg.stop()
-      alg.kill
+        alg.kill
       }
 
       "compute the correct probability under Metropolis-Hastings" in {
@@ -508,7 +614,7 @@ class ContinuousTest extends WordSpec with Matchers {
         val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
         alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
         alg.stop()
-      alg.kill
+        alg.kill
       }
     }
 
@@ -523,7 +629,7 @@ class ContinuousTest extends WordSpec with Matchers {
         val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
         alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
         alg.stop()
-      alg.kill
+        alg.kill
       }
 
       "compute the correct probability under Metropolis-Hastings" in {
@@ -536,7 +642,7 @@ class ContinuousTest extends WordSpec with Matchers {
         val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
         alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
         alg.stop()
-      alg.kill
+        alg.kill
       }
     }
   }
@@ -554,7 +660,7 @@ class ContinuousTest extends WordSpec with Matchers {
         val targetProb = 0.5 * getProb(dist1) + 0.5 * getProb(dist2)
         alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
         alg.stop()
-      alg.kill
+        alg.kill
       }
 
     "convert to the correct string" in {
@@ -577,7 +683,7 @@ class ContinuousTest extends WordSpec with Matchers {
         val targetProb = 0.5 * getProb(dist1) + 0.5 * getProb(dist2)
         alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
         alg.stop()
-      alg.kill
+        alg.kill
       }
 
     "convert to the correct string" in {
@@ -692,7 +798,7 @@ class ContinuousTest extends WordSpec with Matchers {
         val targetProb = 0.25 * getProb(dist1) + 0.25 * getProb(dist2) + 0.25 * getProb(dist3) + 0.25 * getProb(dist4)
         alg.probability(elem, (d: Double) => 0.2 <= d && d < 0.3) should be(targetProb +- 0.01)
         alg.stop()
-      alg.kill
+        alg.kill
       }
 
     "convert to the correct string" in {
@@ -822,7 +928,7 @@ class ContinuousTest extends WordSpec with Matchers {
         }
         alg.probability(elem, (ds: Array[Double]) => check(ds)) should be(targetProb +- 0.01)
         alg.stop()
-      alg.kill
+        alg.kill
       }
 
     "have the correct density" in {

@@ -13,8 +13,13 @@
 
 package com.cra.figaro.test.algorithm.sampling
 
+import scala.collection.mutable.Map
+import scala.language.existentials
+
 import org.scalatest.Matchers
-import org.scalatest.{ WordSpec, PrivateMethodTester }
+import org.scalatest.PrivateMethodTester
+import org.scalatest.WordSpec
+
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.algorithm.sampling.MetropolisHastings._
@@ -22,13 +27,12 @@ import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.library.compound._
 import com.cra.figaro.test._
-import scala.collection.mutable.Map
-import scala.language.existentials
-import com.cra.figaro.test.tags.Performance
 import com.cra.figaro.test.tags.NonDeterministic
+import com.cra.figaro.test.tags.Performance
 
 class MHTest extends WordSpec with Matchers with PrivateMethodTester {
   "Anytime MetropolisHastings" should {
+        
     "for a constant produce the constant with probability 1" in {
       Universe.createNew()
       val c = Constant(1)
@@ -332,6 +336,53 @@ class MHTest extends WordSpec with Matchers with PrivateMethodTester {
   }
 
   "Testing a Metropolis-Hastings algorithm" should {
+    
+   "produce correct results with a typed scheme" in {
+      val numSamples = 200000
+      val tolerance = 0.01
+      Universe.createNew()
+      val f1 = Flip(0.3)
+      val f2 = Flip(0.8)
+      val f3 = Flip(0.4)
+      f3.setCondition((b: Boolean) => b)
+      val c = CachingChain(f1, (b: Boolean) => if (b) f2; else f3)
+      val f4 = Flip(0.6)
+      val eq = c === f4
+      eq.setCondition((b: Boolean) => b)
+      val p1 = 0.3 * (0.6 * 0.8 + 0.4 * 0.2)
+      val p2 = 0.7 * (0.6 * 1 + 0.4 * 0)
+      /*
+       * The default proposal scheme does not work here. If it gets to the state:
+       * f1: T, f2: T, f3: F, f4: F, it cannot change state in a way that satisfies both conditions by a single
+       * proposal.
+       */
+      val scheme = TypedScheme[Boolean](() => f4, (b: Boolean) => Some(FinalScheme(() => Universe.universe.randomStochasticElement())))
+      val mh = MetropolisHastings(numSamples, scheme, f1)
+      try {
+        mh.start()
+        mh.stop()
+        mh.probability(f1, (b: Boolean) => b) should be(p1 / (p1 + p2) +- tolerance)
+      } finally {
+        mh.kill()
+      }
+    }
+   
+   //Need  better use cases for these two schemes.
+    "produce correct results with a switching scheme" in {
+      Universe.createNew()
+      val s1 = Select(0.4 -> 1, 0.6 -> 4)
+      val s2 = Select(0.2 -> 2, 0.8 -> 3)
+      s1.setConstraint((i: Int) => if (i == 1) 1; else 0.25)
+      val p1 = Predicate(s1, (i: Int) => i == 4)
+      val scheme = SwitchScheme(() => (s1,s2),Some(FinalScheme(() => Universe.universe.randomStochasticElement())))
+      val alg = MetropolisHastings(scheme)
+      s1.value = 1
+      val (_, scores, _) = alg.test(10000, List(p1), List())
+      // probability of s1 changing to 4 is 0.5 (prob. s1 proposed) * 0.6 (prob 4 is chosen if s1 proposed) * 0.25
+      scores(p1) should be(0.075 +- 0.01)
+    }
+    
+    
     "produce values satisfying a predicate the correct amount of the time without conditions or constraints" in {
       Universe.createNew()
       val s1 = Select(0.4 -> 1, 0.6 -> 4)

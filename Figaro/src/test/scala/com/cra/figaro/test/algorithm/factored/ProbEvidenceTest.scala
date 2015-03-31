@@ -102,8 +102,6 @@ class ProbEvidenceTest extends WordSpec with Matchers {
 
   }
 
- 
-
   def sampleTest(prob: Double, evidence: List[NamedEvidence[_]], universe: Universe) {
     
     //universe.assertEvidence(evidence)

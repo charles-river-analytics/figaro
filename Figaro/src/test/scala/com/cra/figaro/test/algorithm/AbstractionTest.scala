@@ -46,6 +46,15 @@ class AbstractionTest extends WordSpec with Matchers {
       u.addPragma(a)
       assert(u.pragmas contains a)
     }
+    
+    "not have a pragma after adding and removing it" in {
+      Universe.createNew()
+      val u = Uniform(0.0, 1.0)
+      val a = Abstraction[Double](10)
+      u.addPragma(a)
+      u.removePragma(a)
+      u.pragmas contains a should equal(false)
+    }
 
     "have an added pragma's abstraction scheme be discretization" in {
       Universe.createNew()

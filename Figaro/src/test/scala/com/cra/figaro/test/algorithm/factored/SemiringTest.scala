@@ -23,8 +23,8 @@ import org.scalatest.WordSpec
 
 import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.language.Parameter
-import com.cra.figaro.library.atomic.continuous.BetaParameter
-import com.cra.figaro.library.atomic.continuous.DirichletParameter
+import com.cra.figaro.library.atomic.continuous.Beta
+import com.cra.figaro.library.atomic.continuous.Dirichlet
 import com.cra.figaro.util.random
 class SemiringTest extends WordSpec with Matchers with PrivateMethodTester {
 
@@ -134,7 +134,7 @@ class SemiringTest extends WordSpec with Matchers with PrivateMethodTester {
       "handle zero values in weighted multiplication without crashing" in
         {
           val numberOfParameters = 1
-          val param = DirichletParameter(1, 1, 1)
+          val param = Dirichlet(1, 1, 1)
           val parameterMap = mutable.Map.empty[Parameter[_], Seq[Double]]
           parameterMap += param -> Seq(0.0, 0.0, 0.0)
 
@@ -161,7 +161,7 @@ class SemiringTest extends WordSpec with Matchers with PrivateMethodTester {
 
       "correctly multiply two numbers" in
         {
-          val param = DirichletParameter(1, 1, 1)
+          val param = Dirichlet(1, 1, 1)
           val parameterMap = mutable.Map.empty[Parameter[_], Seq[Double]]
           parameterMap += param -> Seq(0.0, 0.0, 0.0)
 
@@ -178,7 +178,7 @@ class SemiringTest extends WordSpec with Matchers with PrivateMethodTester {
 
       "correctly add two numbers" in
         {
-          val param = DirichletParameter(1, 1, 1)
+          val param = Dirichlet(1, 1, 1)
           val parameterMap = mutable.Map.empty[Parameter[_], Seq[Double]]
           parameterMap += param -> Seq(0.0, 0.0, 0.0)
 
@@ -198,16 +198,16 @@ class SemiringTest extends WordSpec with Matchers with PrivateMethodTester {
         {
           val iterations = 100000
 
-          val p1 = DirichletParameter(1)
-          val p2 = BetaParameter(1, 1)
-          val p3 = DirichletParameter(1, 1, 1)
-          val p4 = DirichletParameter(1, 1, 1, 1)
-          val p5 = DirichletParameter(1, 1, 1, 1, 1)
-          val p6 = DirichletParameter(1, 1, 1, 1, 1, 1)
-          val p7 = DirichletParameter(1, 1, 1, 1, 1, 1, 1)
-          val p8 = DirichletParameter(1, 1, 1, 1, 1, 1, 1, 1)
-          val p9 = DirichletParameter(1, 1, 1, 1, 1, 1, 1, 1, 1)
-          val p10 = DirichletParameter(1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+          val p1 = Dirichlet(1)
+          val p2 = Beta(1, 1)
+          val p3 = Dirichlet(1, 1, 1)
+          val p4 = Dirichlet(1, 1, 1, 1)
+          val p5 = Dirichlet(1, 1, 1, 1, 1)
+          val p6 = Dirichlet(1, 1, 1, 1, 1, 1)
+          val p7 = Dirichlet(1, 1, 1, 1, 1, 1, 1)
+          val p8 = Dirichlet(1, 1, 1, 1, 1, 1, 1, 1)
+          val p9 = Dirichlet(1, 1, 1, 1, 1, 1, 1, 1, 1)
+          val p10 = Dirichlet(1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
 
           val zeroSufficientStatisticsMap = mutable.Map.empty[Parameter[_], Seq[Double]]
 

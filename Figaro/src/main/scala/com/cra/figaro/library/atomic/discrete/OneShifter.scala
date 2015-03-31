@@ -32,10 +32,7 @@ trait OneShifter extends Atomic[Int] {
   private lazy val prob10 = density0 / (density0 + density2)
   private lazy val prob12 = 1.0 - prob10
   private lazy val prob21 = density1 / (density1 + density3)
-  private lazy val prob23 = 1.0 - prob21
-  private lazy val ratio01 = prob10 * density1 / density0 // forward probability is 1.0
-  private lazy val ratio10 = density0 / (prob10 * density1)
-  private lazy val ratio12 = prob21 * density2 / (prob12 * density1)
+
 
   private lazy val densityU0 = density(upperBound)
   private lazy val densityU1 = density(upperBound - 1)
@@ -44,10 +41,7 @@ trait OneShifter extends Atomic[Int] {
   private lazy val probU10 = densityU0 / (densityU0 + densityU2)
   private lazy val probU12 = 1.0 - probU10
   private lazy val probU21 = densityU1 / (densityU1 + densityU3)
-  private lazy val probU23 = 1.0 - probU21
-  private lazy val ratioU01 = probU10 * densityU1 / densityU0 // forward probability is 1.0
-  private lazy val ratioU10 = densityU0 / (probU10 * densityU1)
-  private lazy val ratioU12 = probU21 * densityU2 / (probU12 * densityU1)
+
 
   /**
    * Shift the randomness by one. Returns the new randomness,
