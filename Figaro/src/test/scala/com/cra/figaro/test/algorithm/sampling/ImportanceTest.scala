@@ -16,6 +16,7 @@ package com.cra.figaro.test.algorithm.sampling
 import org.scalatest._
 import org.scalatest.Matchers
 import com.cra.figaro.algorithm._
+import com.cra.figaro.algorithm.sampling.Importance.Reject
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
@@ -28,10 +29,36 @@ import JSci.maths.statistics._
 import com.cra.figaro.test.tags.Performance
 import com.cra.figaro.test.tags.NonDeterministic
 import scala.language.reflectiveCalls
-
+import org.scalatest.Matchers
+import org.scalatest.{ PrivateMethodTester, WordSpec }
 class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
 
   "Sampling a value of a single element" should {
+
+    "reject sampling process if condition violated" in {
+      Universe.createNew()
+      val target = Flip(0.7)
+      target.observe(false)
+      val numTrials = 100000
+      val tolerance = 0.01
+      val imp = Importance(target)
+      val state = Importance.State()
+      an[RuntimeException] should be thrownBy { imp.sampleOne(state, target, Some(true)) }
+
+    }
+
+    "sample normally if observations match" in {
+      Universe.createNew()
+      val target = Flip(0.7)
+      target.observe(false)
+      val numTrials = 100000
+      val tolerance = 0.01
+      val imp = Importance(target)
+      val state = Importance.State()
+      val value = imp.sampleOne(state, target, Some(false))
+      value should equal(false)
+    }
+
     "for a Constant return the constant with probability 1" in {
       Universe.createNew()
       val c = Constant(8)
@@ -186,7 +213,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       val alg = Importance(1, c)
       val state = Importance.State()
       alg.sampleOne(state, c, None)
-      c.value.asInstanceOf[List[Boolean]].head should be (true || false)
+      c.value.asInstanceOf[List[Boolean]].head should be(true || false)
     }
   }
 
@@ -311,7 +338,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
     "with an observation on a parameterized flip, terminate quickly and produce the correct result" taggedAs (NonDeterministic) in {
       // Tests the likelihood weighting implementation for compound flip
       Universe.createNew()
-      val b = BetaParameter(2.0, 5.0)
+      val b = Beta(2.0, 5.0)
       val f1 = Flip(b)
       val f2 = Flip(b)
       val f3 = Flip(b)
