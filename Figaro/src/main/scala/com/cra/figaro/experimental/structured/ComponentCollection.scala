@@ -23,7 +23,8 @@ class ComponentCollection {
   // Checks in the cache if an expansion exists and creates one if necessary
   private[structured] def expansion[P,V](function: Function1[P, Element[V]], parentValue: P): NestedProblem[V] = {
     expansions.get((function, parentValue)) match {
-      case Some(p) => p.asInstanceOf[NestedProblem[V]]
+      case Some(p) =>
+        p.asInstanceOf[NestedProblem[V]]
       case None =>
         val result = new NestedProblem(this, function(parentValue))
         expansions += (function, parentValue) -> result

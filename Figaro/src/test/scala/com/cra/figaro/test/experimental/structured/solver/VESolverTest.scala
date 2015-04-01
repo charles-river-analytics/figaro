@@ -38,6 +38,7 @@ class VESolverTest extends WordSpec with Matchers {
         pr.solve(variableElimination)
 
         pr.globals should equal (Set(c2))
+        pr.solved should equal (true)
         val result = multiplyAll(pr.solution)
         result.variables should equal (List(c2.variable))
         result.size should equal (2)
