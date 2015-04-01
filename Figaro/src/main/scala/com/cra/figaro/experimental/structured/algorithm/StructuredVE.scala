@@ -26,11 +26,11 @@ class StructuredVE(val universe: Universe, targets: Element[_]*) extends Algorit
     val evidenceElems = universe.conditionedElements ::: universe.constrainedElements
     evidenceElems.foreach(elem => if (!cc.contains(elem)) problem.add(elem))
     recursiveSolver(variableElimination)(problem)
-    val joint = problem.solution.foldLeft(Factory.unit(SumProductSemiring))(_.product(_, SumProductSemiring))
+    val joint = problem.solution.foldLeft(Factory.unit(SumProductSemiring()))(_.product(_))
 
     def marginalizeToTarget(target: Element[_]): Unit = {
       val targetVar = cc(target).variable
-      val unnormalizedTargetFactor = joint.marginalizeTo(SumProductSemiring, targetVar)
+      val unnormalizedTargetFactor = joint.marginalizeTo(SumProductSemiring(), targetVar)
       val z = unnormalizedTargetFactor.foldLeft(0.0, _ + _)
       val targetFactor = unnormalizedTargetFactor.mapTo((d: Double) => d / z)
       targetFactors += target -> targetFactor
