@@ -177,14 +177,14 @@ object ApplyFactory {
     val arg3Indices = arg3Var.range.zipWithIndex
     val arg4Indices = arg4Var.range.zipWithIndex
     val arg5Indices = arg5Var.range.zipWithIndex
-    val resultIndices = resultVar.range.zipWithIndex
+//    val resultIndices = resultVar.range.zipWithIndex
     for {
       (arg1Val, arg1Index) <- arg1Indices
       (arg2Val, arg2Index) <- arg2Indices
       (arg3Val, arg3Index) <- arg3Indices
       (arg4Val, arg4Index) <- arg4Indices
       (arg5Val, arg5Index) <- arg5Indices
-      (resultVal, resultIndex) <- resultIndices
+//      (resultVal, resultIndex) <- resultIndices
     } {
       if (arg1Val.isRegular && arg2Val.isRegular && arg3Val.isRegular && arg4Val.isRegular && arg5Val.isRegular) {
         // arg1Val.value should have been placed in applyMap at the time the values of this apply were computed.

@@ -12,9 +12,9 @@
  */
 package com.cra.figaro.experimental.factored.factors.factory
 
-import com.cra.figaro.experimental.factored.factors.{BasicFactor, InternalVariable}
+import com.cra.figaro.experimental.factored.factors.{InternalVariable}
 import com.cra.figaro.algorithm.PointMapper
-import com.cra.figaro.algorithm.factored.factors.{Factor, SparseFactor, Variable}
+import com.cra.figaro.algorithm.factored.factors.{BasicFactor, Factor, SparseFactor, Variable}
 import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.language._
 import scala.collection.immutable.SortedSet

@@ -32,7 +32,7 @@ class MPEVariableElimination(override val universe: Universe)(
   val dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double) extends OneTimeMPE with ProbabilisticVariableElimination {
 
   override val comparator = Some((x: Double, y: Double) => x < y)
-  override val semiring = MaxProductSemiring
+  override val semiring = MaxProductSemiring()
   
   /*
    * We are trying to find a configuration of all the elements, so we must make them all starter elements for expansion.

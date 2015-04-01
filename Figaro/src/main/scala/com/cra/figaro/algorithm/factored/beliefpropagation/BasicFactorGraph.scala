@@ -24,13 +24,13 @@ class BasicFactorGraph(factors: List[Factor[Double]], semiring: Semiring[Double]
   extends FactorGraph[Double] {
 
   def uniformFactor(v: List[Variable[_]]): Factor[Double] = {
-    val f = new BasicFactor[Double](List(), v)
+    val f = new BasicFactor[Double](List(), v, semiring)
     f.fillByRule((l: List[Any]) => semiring.one)
     f
   }
 
   // Combine all factors of the same variables into a single factor
-  private def combineFactors() = factors.groupBy(_.variables.map(_.id)).values.map(_.reduceLeft(_.product(_, semiring))).toList
+  private def combineFactors() = factors.groupBy(_.variables.map(_.id)).values.map(_.reduceLeft(_.product(_))).toList
 
   /*
    * Create Nodes for factors

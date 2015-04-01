@@ -29,7 +29,7 @@ abstract class MPEBeliefPropagation(override val universe: Universe)(
   val dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double)
   extends MPEAlgorithm with ProbabilisticBeliefPropagation {
 
-  override val semiring = LogMaxProductSemiring
+  override val semiring = LogMaxProductSemiring()
   /*
    * Empty for MPE Algorithms
    */
