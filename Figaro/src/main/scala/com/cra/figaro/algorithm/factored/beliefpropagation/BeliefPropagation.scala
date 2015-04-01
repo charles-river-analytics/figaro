@@ -273,34 +273,6 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
 trait OneTimeProbabilisticBeliefPropagation extends ProbabilisticBeliefPropagation with OneTime {
   val iterations: Int
   def run() = {
-    if (debug) {
-      val varNodes = factorGraph.getNodes.filter(_.isInstanceOf[VariableNode])
-      val allVars = (Set[Variable[_]]() /: factorGraph.getNodes)((s: Set[Variable[_]], n: Node) => {
-        val a = (n match {
-          case vn: VariableNode => Set(vn.variable)
-          case fn: FactorNode => fn.variables
-        })
-        s ++ a
-      })
-      println("*****************\nElement ids:")
-      for { variable <- allVars } {
-        variable match {
-          case elemVar: /*Extended*/ ElementVariable[_] =>
-            println(variable.id + "(" + elemVar.element.name.string + ")" + "@" + elemVar.element.hashCode + ": " + elemVar.element)
-          case _ =>
-            println(variable.id + ": not an element variable")
-        }
-      }
-      println("*****************\nOriginal Factors:")
-      factorGraph.getNodes.foreach { n =>
-        n match {
-          case fn: FactorNode => println(factorGraph.getFactorForNode(fn).toReadableString)
-          case _ =>
-        }
-      }
-      println("*****************")
-    }
-
     for { i <- 1 to iterations } { runStep() }
   }
 }
