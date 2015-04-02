@@ -97,7 +97,7 @@ object FigaroBuild extends Build {
       "com.typesafe.akka" %% "akka-actor" % "2.3.8",
       "org.scalanlp" %% "breeze" % "0.10",
       "io.argonaut" %% "argonaut" % "6.0.4",
-      "org.scalatest" %% "scalatest" % "2.2.1" % "test"
+      "org.scalatest" %% "scalatest" % "2.2.4" % "test"
     ))
     // test settings
     .settings(parallelExecution in Test := false)
