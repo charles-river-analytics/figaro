@@ -60,7 +60,7 @@ extends com.cra.figaro.algorithm.factored.beliefpropagation.OneTimeProbabilistic
 
   val universe = null
 
-  val semiring = LogSumProductSemiring
+  val semiring = LogSumProductSemiring()
 
   val targetElements = null
 }
