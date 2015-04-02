@@ -14,4 +14,10 @@ package object solver {
     val ve = new VESolver(toEliminate, toPreserve, factors)
     ve.go()
   }
+
+  def beliefPropagation(toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): List[Factor[Double]] = {
+    val ve = new BPSolver(toEliminate, toPreserve, factors)
+    ve.go()
+  }
+
 }
