@@ -153,7 +153,7 @@ trait ParticleBeliefPropagation extends FactoredAlgorithm[Double] with InnerBPHa
     // Take the single factor, and divide out the original factor. We do this since the single factor in the graph
     // can have evidence multiplied in, so we only want to remove the original factor for it. We will use the original
     // density instead of the factor to estimate densities during resampling
-    val factors = lastMessages.patch(singleFactorIndex, Nil, 1).map(_._2) :+ singleFactor._2.combination(bp.makeLogarithmic(originalFactor(0)), bp.semiring.divide, bp.semiring)
+    val factors = lastMessages.patch(singleFactorIndex, Nil, 1).map(_._2) :+ singleFactor._2.combination(bp.makeLogarithmic(originalFactor(0)), bp.semiring.divide)
     factors
   }
 
@@ -226,7 +226,7 @@ abstract class ProbQueryParticleBeliefPropagation(numArgSamples: Int, numTotalSa
 
   val queryTargets = targetElements
 
-  val semiring = LogSumProductSemiring
+  val semiring = LogSumProductSemiring()
   
   val densityEstimator = new AutomaticDensityEstimator
 

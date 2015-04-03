@@ -367,52 +367,63 @@ class ContinuousTest extends WordSpec with Matchers {
     //      alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
     //    }
 
-    "have the correct density" in {
-      Universe.createNew()
-      val elem = MultivariateNormal(means, covariances)
-      val dist = new MultivariateNormalDistribution(means.toArray, covariances.map((l: List[Double]) => l.toArray).toArray)
-
-      elem.density(List(1.5, 2.5)) should be(dist.density(Array(1.5, 2.5)) +- 0.00000001)
-    }
-
-    "produce samples with the correct means and covariances" in {
-      Universe.createNew()
-      val elem = MultivariateNormal(means, covariances)
-
-      var n = 0
-      var sumx1 = 0.0
-      var sumx2 = 0.0
-      var ss1 = 0.0
-      var ss2 = 0.0
-      var sc12 = 0.0
-
-      for (i <- 0 to 10000) {
-        val rand = elem.generateRandomness()
-        val values = elem.generateValue(rand)
-
-        val x1 = values(0)
-        val x2 = values(1)
-
-        n += 1
-        sumx1 += x1
-        sumx2 += x2
-        ss1 += x1 * x1
-        ss2 += x2 * x2
-        sc12 += x1 * x2
+    "have the correct density" taggedAs (NonDeterministic) in {
+      val ndtest = new NDTest {
+        override def oneTest = {
+          Universe.createNew()
+          val elem = MultivariateNormal(means, covariances)
+          val dist = new MultivariateNormalDistribution(means.toArray, covariances.map((l: List[Double]) => l.toArray).toArray)
+          val result = elem.density(List(1.5, 2.5))
+          update(result, new TTestResult("CompoundMultivariateNormalTestResults", dist.density(Array(1.5, 2.5)), alpha))
+        }
       }
 
-      val mean1 = sumx1 / n
-      val mean2 = sumx2 / n
-      val var1 = (ss1 - (sumx1 * sumx1 / n)) / (n - 1)
-      val var2 = (ss2 - (sumx2 * sumx2 / n)) / (n - 1)
-      val cov = (sc12 - (sumx1 * sumx2 / n)) / (n - 1)
+      ndtest.run(10)      
+    }
 
-      mean1 should be(means(0) +- 0.01)
-      mean2 should be(means(1) +- 0.01)
+    "produce samples with the correct means and covariances" taggedAs (NonDeterministic) in {
+      val ndtest = new NDTest {
+        override def oneTest = {
+          Universe.createNew()
+          val elem = MultivariateNormal(means, covariances)
+    
+          var n = 0
+          var sumx1 = 0.0
+          var sumx2 = 0.0
+          var ss1 = 0.0
+          var ss2 = 0.0
+          var sc12 = 0.0
+    
+          for (i <- 0 to 10000) {
+            val rand = elem.generateRandomness()
+            val values = elem.generateValue(rand)
+    
+            val x1 = values(0)
+            val x2 = values(1)
+    
+            n += 1
+            sumx1 += x1
+            sumx2 += x2
+            ss1 += x1 * x1
+            ss2 += x2 * x2
+            sc12 += x1 * x2
+          }
+    
+          val mean1 = sumx1 / n
+          val mean2 = sumx2 / n
+          val var1 = (ss1 - (sumx1 * sumx1 / n)) / (n - 1)
+          val var2 = (ss2 - (sumx2 * sumx2 / n)) / (n - 1)
+          val cov = (sc12 - (sumx1 * sumx2 / n)) / (n - 1)
 
-      var1 should be(covariances(0)(0) +- 0.01)
-      var2 should be(covariances(1)(1) +- 0.01)
-      cov should be(covariances(0)(1) +- 0.01)
+          update(mean1, new TTestResult("CompoundMultivariateNormalTestResultsMean1", means(0), alpha))
+          update(mean2, new TTestResult("CompoundMultivariateNormalTestResultsMean2", means(1), alpha))
+          update(var1, new TTestResult("CompoundMultivariateNormalTestResultsVar1", covariances(0)(0), alpha))
+          update(var2, new TTestResult("CompoundMultivariateNormalTestResultsVar2", covariances(1)(1), alpha))
+          update(cov, new TTestResult("CompoundMultivariateNormalTestResultsCov", covariances(0)(1), alpha))
+        }
+      }
+
+      ndtest.run(10)
     }
 
     "convert to the correct string" in {
@@ -514,34 +525,55 @@ class ContinuousTest extends WordSpec with Matchers {
 
   "An AtomicExponential" should {
     "have value within a range with probability equal to the cumulative probability of the upper minus the lower" taggedAs (NonDeterministic) in {
-      Universe.createNew()
-      val elem = Exponential(2.0)
-      val alg = Importance(20000, elem)
-      alg.start()
-      val dist = new ExponentialDistribution(2.0)
-      val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
-      alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
-      alg.stop()
-      alg.kill
+      val ndtest = new NDTest {
+        override def oneTest = {
+          Universe.createNew()
+          val elem = Exponential(2.0)
+          val alg = Importance(20000, elem)
+          alg.start()
+          val dist = new ExponentialDistribution(2.0)
+          val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
+          val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+          alg.stop()
+          alg.kill
+          update(result, new TTestResult("AtomicExponentialTestResults", targetProb, alpha))
+        }
+      }
+
+      ndtest.run(10)
     }
 
     "compute the correct probability under Metropolis-Hastings" taggedAs (NonDeterministic) in {
-      Universe.createNew()
-      val elem = Exponential(2.0)
-      val alg = MetropolisHastings(20000, ProposalScheme.default, elem)
-      alg.start()
-      val dist = new ExponentialDistribution(2.0)
-      val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
-      alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
-      alg.stop()
-      alg.kill
+      val ndtest = new NDTest {
+        override def oneTest = {
+          Universe.createNew()
+          val elem = Exponential(2.0)
+          val alg = MetropolisHastings(20000, ProposalScheme.default, elem)
+          alg.start()
+          val dist = new ExponentialDistribution(2.0)
+          val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
+          val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+          alg.stop()
+          alg.kill
+          update(result, new TTestResult("AtomicExponentialTestResults", targetProb, alpha))
+        }
+      }
+
+      ndtest.run(10)
     }
 
     "have the correct density" taggedAs (NonDeterministic) in {
-      Universe.createNew()
-      val elem = Exponential(2.0)
-      val dist = new ExponentialDistribution(2.0)
-      elem.density(1.5) should be(dist.probability(1.5) +- 0.0000000001)
+      val ndtest = new NDTest {
+        override def oneTest = {
+          Universe.createNew()
+          val elem = Exponential(2.0)
+          val dist = new ExponentialDistribution(2.0)
+          val result = elem.density(1.5)
+          update(result, new TTestResult("AtomicExponentialTestResults", dist.probability(1.5), alpha))
+        }
+      }
+
+      ndtest.run(10)
     }
 
     "convert to the correct string" in {
@@ -554,17 +586,24 @@ class ContinuousTest extends WordSpec with Matchers {
   "An CompoundExponential" should {
     "have value within a range with probability equal to the expectation over the mean of the" +
       "cumulative probability of the upper minus the lower" taggedAs (NonDeterministic) in {
-        Universe.createNew()
-        val elem = Exponential(Select(0.5 -> 1.0, 0.5 -> 2.0))
-        val alg = Importance(20000, elem)
-        alg.start()
-        val dist1 = new ExponentialDistribution(1.0)
-        val dist2 = new ExponentialDistribution(2.0)
-        def getProb(dist: ProbabilityDistribution) = dist.cumulative(1.2) - dist.cumulative(0.7)
-        val targetProb = 0.5 * getProb(dist1) + 0.5 * getProb(dist2)
-        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
-        alg.stop()
-        alg.kill
+        val ndtest = new NDTest {
+          override def oneTest = {
+            Universe.createNew()
+            val elem = Exponential(Select(0.5 -> 1.0, 0.5 -> 2.0))
+            val alg = Importance(20000, elem)
+            alg.start()
+            val dist1 = new ExponentialDistribution(1.0)
+            val dist2 = new ExponentialDistribution(2.0)
+            def getProb(dist: ProbabilityDistribution) = dist.cumulative(1.2) - dist.cumulative(0.7)
+            val targetProb = 0.5 * getProb(dist1) + 0.5 * getProb(dist2)
+            val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+            alg.stop()
+            alg.kill
+            update(result, new TTestResult("CompoundExponentialTestResults", targetProb, alpha))
+          }
+        }
+  
+        ndtest.run(10)
       }
 
     "convert to the correct string" in {
@@ -574,77 +613,114 @@ class ContinuousTest extends WordSpec with Matchers {
     }
 
     "produce the right probability when conditioned under Metropolis-Hastings" taggedAs (NonDeterministic) in {
-      val sampleUniverse = Universe.createNew()
-      val nSamples = Exponential(2)("", sampleUniverse)
-      val samples = for (i <- 1 to 100)
-        yield nSamples.generateValue(nSamples.generateRandomness())
-
-      val universe = Universe.createNew()
-      val lambda = Uniform(0, 10)("lambda", universe)
-      for (sample <- samples) {
-        val exponential = Exponential(lambda)
-        exponential.observe(sample)
+      val ndtest = new NDTest {
+        override def oneTest = {
+          val sampleUniverse = Universe.createNew()
+          val nSamples = Exponential(2)("", sampleUniverse)
+          val samples = for (i <- 1 to 100)
+            yield nSamples.generateValue(nSamples.generateRandomness())
+    
+          val universe = Universe.createNew()
+          val lambda = Uniform(0, 10)("lambda", universe)
+          for (sample <- samples) {
+            val exponential = Exponential(lambda)
+            exponential.observe(sample)
+          }
+          val alg = MetropolisHastings(200000, ProposalScheme.default, lambda)
+          alg.start()
+          val target = 2.0
+          val result = alg.mean(lambda)
+          alg.stop()
+          alg.kill
+          update(result, new TTestResult("CompoundExponentialTestResults", target, alpha))
+        }
       }
-      val alg = MetropolisHastings(200000, ProposalScheme.default, lambda)
-      alg.start()
-      alg.mean(lambda) should be(2.0 +- 0.5)
-      alg.stop()
-      alg.kill
+  
+      ndtest.run(10)
     }
 
     "produce the right probability when conditioned under Importance Sampling" taggedAs (NonDeterministic) in {
-      val sampleUniverse = Universe.createNew()
-      val nSamples = Exponential(2)("", sampleUniverse)
-      val samples = for (i <- 1 to 25)
-        yield nSamples.generateValue(nSamples.generateRandomness())
-
-      val universe = Universe.createNew()
-      val lambda = Uniform(0, 10)("lambda", universe)
-      for (sample <- samples) {
-        val exponential = Exponential(lambda)
-        exponential.observe(sample)
+      val ndtest = new NDTest {
+        override def oneTest = {
+          val sampleUniverse = Universe.createNew()
+          val nSamples = Exponential(2)("", sampleUniverse)
+          val samples = for (i <- 1 to 25)
+            yield nSamples.generateValue(nSamples.generateRandomness())
+    
+          val universe = Universe.createNew()
+          val lambda = Uniform(0, 10)("lambda", universe)
+          for (sample <- samples) {
+            val exponential = Exponential(lambda)
+            exponential.observe(sample)
+          }
+          val alg = Importance(20000, lambda)
+          alg.start()
+          val target = 2.0
+          val result = alg.mean(lambda)
+          alg.stop()
+          alg.kill
+          update(result, new TTestResult("CompoundExponentialTestResults", target, alpha))
+        }
       }
-      val alg = Importance(20000, lambda)
-      alg.start()
-      alg.mean(lambda) should be(2.0 +- 0.5)
-      alg.stop()
-      alg.kill
+  
+      ndtest.run(10)
     }
   }
 
   "A AtomicGamma" when {
     "k > 1.0, theta = 1.0" should {
       "have value within a range with probability equal to the cumulative probability of the upper minus the lower" taggedAs (NonDeterministic) in {
-        Universe.createNew()
-        val k = 2.5
-        val elem = Gamma(k)
-        val alg = Importance(20000, elem)
-        alg.start()
-        val dist = new GammaDistribution(k)
-        val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
-        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
-        alg.stop()
-        alg.kill
+        val ndtest = new NDTest {
+          override def oneTest = {
+            Universe.createNew()
+            val k = 2.5
+            val elem = Gamma(k)
+            val alg = Importance(20000, elem)
+            alg.start()
+            val dist = new GammaDistribution(k)
+            val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
+            val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+            alg.stop()
+            alg.kill
+            update(result, new TTestResult("AtomicGammaTestResults", targetProb, alpha))
+          }
+        }
+    
+        ndtest.run(10)
       }
 
       "compute the correct value under Metropolis-Hastings" taggedAs (NonDeterministic) in {
-        Universe.createNew()
-        val k = 2.5
-        val elem = Gamma(k)
-        val alg = MetropolisHastings(20000, ProposalScheme.default, elem)
-        alg.start()
-        val dist = new GammaDistribution(k)
-        val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
-        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
-        alg.stop()
-        alg.kill
+        val ndtest = new NDTest {
+          override def oneTest = {
+            Universe.createNew()
+            val k = 2.5
+            val elem = Gamma(k)
+            val alg = MetropolisHastings(20000, ProposalScheme.default, elem)
+            alg.start()
+            val dist = new GammaDistribution(k)
+            val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
+            val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+            alg.stop()
+            alg.kill
+            update(result, new TTestResult("AtomicGammaTestResults", targetProb, alpha))
+          }
+        }
+    
+        ndtest.run(10)
       }
 
       "have the correct density" taggedAs (NonDeterministic) in {
-        Universe.createNew()
-        val elem = Gamma(2.5)
-        val dist = new GammaDistribution(2.5)
-        elem.density(1.5) should be(dist.probability(1.5) +- 0.0000000001)
+        val ndtest = new NDTest {
+          override def oneTest = {
+            Universe.createNew()
+            val elem = Gamma(2.5)
+            val dist = new GammaDistribution(2.5)
+            val result = elem.density(1.5)
+            update(result, new TTestResult("AtomicGammaTestResults", dist.probability(1.5), alpha))
+          }
+        }
+    
+        ndtest.run(10)
       }
 
       "convert to the correct string" in {
@@ -655,40 +731,61 @@ class ContinuousTest extends WordSpec with Matchers {
 
     "k = 1.0, theta is not 1.0" should {
       "have value within a range with probability equal to the cumulative probability of the upper minus the lower" taggedAs (NonDeterministic) in {
-        Universe.createNew()
-        val theta = 2.0
-        val elem = Gamma(1.0, theta)
-        val alg = Importance(20000, elem)
-        alg.start()
-        // Using the fact that for Gamma(1,theta), the CDF is given by F(x) = 1 - exp(-x/theta)
-        def cdf(x: Double) = 1 - exp(-x / theta)
-        val targetProb = cdf(1.2) - cdf(0.7)
-        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
-        alg.stop()
-        alg.kill
+        val ndtest = new NDTest {
+          override def oneTest = {
+            Universe.createNew()
+            val theta = 2.0
+            val elem = Gamma(1.0, theta)
+            val alg = Importance(20000, elem)
+            alg.start()
+            // Using the fact that for Gamma(1,theta), the CDF is given by F(x) = 1 - exp(-x/theta)
+            def cdf(x: Double) = 1 - exp(-x / theta)
+            val targetProb = cdf(1.2) - cdf(0.7)
+            val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+            alg.stop()
+            alg.kill
+            update(result, new TTestResult("AtomicGammaTestResults", targetProb, alpha))
+          }
+        }
+    
+        ndtest.run(10)
       }
 
       "compute the correct probability under Metropolis-Hastings" taggedAs (NonDeterministic) in {
-        Universe.createNew()
-        val theta = 2.0
-        val elem = Gamma(1.0, theta)
-        val alg = MetropolisHastings(20000, ProposalScheme.default, elem)
-        alg.start()
-        // Using the fact that for Gamma(1,theta), the CDF is given by F(x) = 1 - exp(-x/theta)
-        def cdf(x: Double) = 1 - exp(-x / theta)
-        val targetProb = cdf(1.2) - cdf(0.7)
-        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
-        alg.stop()
-        alg.kill
+        val ndtest = new NDTest {
+          override def oneTest = {
+            Universe.createNew()
+            val theta = 2.0
+            val elem = Gamma(1.0, theta)
+            val alg = MetropolisHastings(20000, ProposalScheme.default, elem)
+            alg.start()
+            // Using the fact that for Gamma(1,theta), the CDF is given by F(x) = 1 - exp(-x/theta)
+            def cdf(x: Double) = 1 - exp(-x / theta)
+            val targetProb = cdf(1.2) - cdf(0.7)
+            val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+            alg.stop()
+            alg.kill
+            update(result, new TTestResult("AtomicGammaTestResults", targetProb, alpha))
+          }
+        }
+    
+        ndtest.run(10)
       }
 
       "have the correct density" taggedAs (NonDeterministic) in {
-        Universe.createNew()
-        val theta = 2.0
-        val elem = Gamma(1, theta)
-        // Using the fact that for Gamme(1,theta), the PDF is given by p(x) = exp(-x/theta)/theta
-        val prob = exp(-1.5 / theta) / theta
-        elem.density(1.5) should be(prob +- 0.0000001)
+        val ndtest = new NDTest {
+          override def oneTest = {
+            Universe.createNew()
+            val theta = 2.0
+            val elem = Gamma(1, theta)
+            // Using the fact that for Gamme(1,theta), the PDF is given by p(x) = exp(-x/theta)/theta
+            val prob = exp(-1.5 / theta) / theta
+            val result = elem.density(1.5)
+            update(result, new TTestResult("AtomicGammaTestResults", prob, alpha))
+          }
+        }
+    
+        ndtest.run(10)
       }
 
       "convert to the correct string" in {
@@ -699,57 +796,85 @@ class ContinuousTest extends WordSpec with Matchers {
 
     "k = 1.0, theta = 1.0" should {
       "have value within a range with probability equal to the cumulative probability of the upper minus the lower" taggedAs (NonDeterministic) in {
-        Universe.createNew()
-        val k = 1.0
-        val elem = Gamma(k)
-        val alg = Importance(20000, elem)
-        alg.start()
-        val dist = new GammaDistribution(k)
-        val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
-        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
-        alg.stop()
-        alg.kill
+        val ndtest = new NDTest {
+          override def oneTest = {
+            Universe.createNew()
+            val k = 1.0
+            val elem = Gamma(k)
+            val alg = Importance(20000, elem)
+            alg.start()
+            val dist = new GammaDistribution(k)
+            val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
+            val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+            alg.stop()
+            alg.kill
+            update(result, new TTestResult("AtomicGammaTestResults", targetProb, alpha))
+          }
+        }
+    
+        ndtest.run(10)
       }
 
       "compute the correct probability under Metropolis-Hastings" taggedAs (NonDeterministic) in {
-        Universe.createNew()
-        val k = 1.0
-        val elem = Gamma(k)
-        val alg = MetropolisHastings(20000, ProposalScheme.default, elem)
-        alg.start()
-        val dist = new GammaDistribution(k)
-        val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
-        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
-        alg.stop()
-        alg.kill
+        val ndtest = new NDTest {
+          override def oneTest = {
+            Universe.createNew()
+            val k = 1.0
+            val elem = Gamma(k)
+            val alg = MetropolisHastings(20000, ProposalScheme.default, elem)
+            alg.start()
+            val dist = new GammaDistribution(k)
+            val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
+            val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+            alg.stop()
+            alg.kill
+            update(result, new TTestResult("AtomicGammaTestResults", targetProb, alpha))
+          }
+        }
+    
+        ndtest.run(10)
       }
     }
 
     "k < 1.0, theta = 1.0" should {
       "have value within a range with probability equal to the cumulative probability of the upper minus the lower" taggedAs (NonDeterministic) in {
-        Universe.createNew()
-        val k = 0.6
-        val elem = Gamma(k)
-        val alg = Importance(20000, elem)
-        alg.start()
-        val dist = new GammaDistribution(k)
-        val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
-        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
-        alg.stop()
-        alg.kill
+        val ndtest = new NDTest {
+          override def oneTest = {
+            Universe.createNew()
+            val k = 0.6
+            val elem = Gamma(k)
+            val alg = Importance(20000, elem)
+            alg.start()
+            val dist = new GammaDistribution(k)
+            val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
+            val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+            alg.stop()
+            alg.kill
+            update(result, new TTestResult("AtomicGammaTestResults", targetProb, alpha))
+          }
+        }
+    
+        ndtest.run(10)
       }
 
       "compute the correct probability under Metropolis-Hastings" taggedAs (NonDeterministic) in {
-        Universe.createNew()
-        val k = 0.6
-        val elem = Gamma(k)
-        val alg = MetropolisHastings(20000, ProposalScheme.default, elem)
-        alg.start()
-        val dist = new GammaDistribution(k)
-        val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
-        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
-        alg.stop()
-        alg.kill
+        val ndtest = new NDTest {
+          override def oneTest = {
+            Universe.createNew()
+            val k = 0.6
+            val elem = Gamma(k)
+            val alg = MetropolisHastings(20000, ProposalScheme.default, elem)
+            alg.start()
+            val dist = new GammaDistribution(k)
+            val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
+            val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+            alg.stop()
+            alg.kill
+            update(result, new TTestResult("AtomicGammaTestResults", targetProb, alpha))
+          }
+        }
+    
+        ndtest.run(10)
       }
     }
   }
@@ -757,17 +882,24 @@ class ContinuousTest extends WordSpec with Matchers {
   "A CompoundGammaK" should {
     "have value within a range with probability equal to the expectation over k of the" +
       "cumulative probability of the upper minus the lower" taggedAs (NonDeterministic) in {
-        Universe.createNew()
-        val elem = Gamma(Select(0.5 -> 2.0, 0.5 -> 3.0))
-        val alg = Importance(20000, elem)
-        alg.start()
-        val dist1 = new GammaDistribution(2.0)
-        val dist2 = new GammaDistribution(3.0)
-        def getProb(dist: ProbabilityDistribution) = dist.cumulative(1.2) - dist.cumulative(0.7)
-        val targetProb = 0.5 * getProb(dist1) + 0.5 * getProb(dist2)
-        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
-        alg.stop()
-        alg.kill
+        val ndtest = new NDTest {
+          override def oneTest = {
+            Universe.createNew()
+            val elem = Gamma(Select(0.5 -> 2.0, 0.5 -> 3.0))
+            val alg = Importance(20000, elem)
+            alg.start()
+            val dist1 = new GammaDistribution(2.0)
+            val dist2 = new GammaDistribution(3.0)
+            def getProb(dist: ProbabilityDistribution) = dist.cumulative(1.2) - dist.cumulative(0.7)
+            val targetProb = 0.5 * getProb(dist1) + 0.5 * getProb(dist2)
+            val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+            alg.stop()
+            alg.kill
+            update(result, new TTestResult("CompoundGammaKTestResults", targetProb, alpha))
+          }
+        }
+    
+        ndtest.run(10)
       }
 
     "convert to the correct string" in {
@@ -780,17 +912,24 @@ class ContinuousTest extends WordSpec with Matchers {
   "A CompoundGamma" should {
     "have value within a range with probability equal to the expectation over k and theta of the" +
       "cumulative probability of the upper minus the lower" taggedAs (NonDeterministic) in {
-        Universe.createNew()
-        val elem = Gamma(Select(0.5 -> 0.5, 0.5 -> 1.0), Constant(1.0))
-        val alg = Importance(20000, elem)
-        alg.start()
-        val dist1 = new GammaDistribution(0.5)
-        val dist2 = new GammaDistribution(1.0)
-        def getProb(dist: ProbabilityDistribution) = dist.cumulative(1.2) - dist.cumulative(0.7)
-        val targetProb = 0.5 * getProb(dist1) + 0.5 * getProb(dist2)
-        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
-        alg.stop()
-        alg.kill
+        val ndtest = new NDTest {
+          override def oneTest = {
+            Universe.createNew()
+            val elem = Gamma(Select(0.5 -> 0.5, 0.5 -> 1.0), Constant(1.0))
+            val alg = Importance(20000, elem)
+            alg.start()
+            val dist1 = new GammaDistribution(0.5)
+            val dist2 = new GammaDistribution(1.0)
+            def getProb(dist: ProbabilityDistribution) = dist.cumulative(1.2) - dist.cumulative(0.7)
+            val targetProb = 0.5 * getProb(dist1) + 0.5 * getProb(dist2)
+            val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+            alg.stop()
+            alg.kill
+            update(result, new TTestResult("CompoundGammaTestResults", targetProb, alpha))
+          }
+        }
+    
+        ndtest.run(10)
       }
 
     "convert to the correct string" in {
@@ -801,87 +940,123 @@ class ContinuousTest extends WordSpec with Matchers {
     }
 
     "produce the right probability when conditioned under Metropolis-Hastings" taggedAs (NonDeterministic) in {
-      val sampleUniverse = Universe.createNew()
-      val nSamples = Gamma(2, 2)("", sampleUniverse)
-      val samples = for (i <- 1 to 100)
-        yield nSamples.generateValue(nSamples.generateRandomness())
-
-      val universe = Universe.createNew()
-      val k = Uniform(0, 10)("k", universe)
-      val theta = Uniform(0, 10)("theta", universe)
-      for (sample <- samples) {
-        val gamma = Gamma(k, theta)
-        gamma.observe(sample)
+      val ndtest = new NDTest {
+        override def oneTest = {
+          val sampleUniverse = Universe.createNew()
+          val nSamples = Gamma(2, 2)("", sampleUniverse)
+          val samples = for (i <- 1 to 100)
+            yield nSamples.generateValue(nSamples.generateRandomness())
+    
+          val universe = Universe.createNew()
+          val k = Uniform(0, 10)("k", universe)
+          val theta = Uniform(0, 10)("theta", universe)
+          for (sample <- samples) {
+            val gamma = Gamma(k, theta)
+            gamma.observe(sample)
+          }
+          val alg = MetropolisHastings(200000, ProposalScheme.default, k, theta)
+          alg.start()
+          val resultK = alg.mean(k)
+          val resultTheta = alg.mean(theta)
+          alg.stop()
+          alg.kill
+          update(resultK, new TTestResult("CompoundGammaTestResultsK", 2.0, alpha))
+          update(resultTheta, new TTestResult("CompoundGammaTestResultsTheta", 2.0, alpha))
+        }
       }
-      val alg = MetropolisHastings(200000, ProposalScheme.default, k, theta)
-      alg.start()
-      alg.mean(k) should be(2.0 +- 1.0)
-      alg.mean(theta) should be(2.0 +- 1.0)
-      alg.stop()
-      alg.kill
+    
+      ndtest.run(10)      
     }
 
     "produce the right probability when conditioned under Importance Sampling" taggedAs (NonDeterministic) in {
-      val sampleUniverse = Universe.createNew()
-      val nSamples = Gamma(2, 2)("", sampleUniverse)
-
-      val samples = for (i <- 1 to 25)
-        yield nSamples.generateValue(nSamples.generateRandomness())
-
-      val universe = Universe.createNew()
-      val k = Uniform(0, 10)("k", universe)
-      val theta = Uniform(0, 10)("theta", universe)
-      for (sample <- samples) {
-        val gamma = Gamma(k, theta)
-        gamma.observe(sample)
+      val ndtest = new NDTest {
+        override def oneTest = {
+          val sampleUniverse = Universe.createNew()
+          val nSamples = Gamma(2, 2)("", sampleUniverse)
+    
+          val samples = for (i <- 1 to 25)
+            yield nSamples.generateValue(nSamples.generateRandomness())
+    
+          val universe = Universe.createNew()
+          val k = Uniform(0, 10)("k", universe)
+          val theta = Uniform(0, 10)("theta", universe)
+          for (sample <- samples) {
+            val gamma = Gamma(k, theta)
+            gamma.observe(sample)
+          }
+    
+          val alg = Importance(20000, k, theta)
+          alg.start()
+          val resultK = alg.mean(k)
+          val resultTheta = alg.mean(theta)
+          alg.stop()
+          alg.kill
+          update(resultK, new TTestResult("CompoundGammaTestResultsK", 2.0, alpha))
+          update(resultTheta, new TTestResult("CompoundGammaTestResultsTheta", 2.0, alpha))
+        }
       }
-
-      val alg = Importance(20000, k, theta)
-      alg.start()
-      alg.mean(k) should be(2.0 +- 1.0)
-      alg.mean(theta) should be(2.0 +- 1.0)
-      alg.stop()
-      alg.kill
+    
+      ndtest.run(10) 
     }
-
   }
 
   "A AtomicBeta" should {
     "have value within a range with probability equal to the cumulative probability of the upper minus the lower" taggedAs (NonDeterministic) in {
-      Universe.createNew()
-      val a = 1.2
-      val b = 0.5
-      val elem = Beta(a, b)
-      val alg = Importance(20000, elem)
-      alg.start()
-      val dist = new BetaDistribution(a, b)
-      val targetProb = dist.cumulative(0.3) - dist.cumulative(0.2)
-      alg.probability(elem, (d: Double) => 0.2 <= d && d < 0.3) should be(targetProb +- 0.01)
-      alg.stop()
-      alg.kill
+      val ndtest = new NDTest {
+        override def oneTest = {
+          Universe.createNew()
+          val a = 1.2
+          val b = 0.5
+          val elem = Beta(a, b)
+          val alg = Importance(20000, elem)
+          alg.start()
+          val dist = new BetaDistribution(a, b)
+          val targetProb = dist.cumulative(0.3) - dist.cumulative(0.2)
+          val result = alg.probability(elem, (d: Double) => 0.2 <= d && d < 0.3)
+          alg.stop()
+          alg.kill
+          update(result, new TTestResult("AtomicBetaTestResults", targetProb, alpha))
+        }
+      }
+    
+      ndtest.run(10)
     }
 
     "compute the correct probability under Metropolis-Hastings" taggedAs (NonDeterministic) in {
-      Universe.createNew()
-      val a = 1.2
-      val b = 0.5
-      val elem = Beta(a, b)
-      val alg = MetropolisHastings(20000, ProposalScheme.default, elem)
-      alg.start()
-      val dist = new BetaDistribution(a, b)
-      val targetProb = dist.cumulative(0.3) - dist.cumulative(0.2)
-      alg.probability(elem, (d: Double) => 0.2 <= d && d < 0.3) should be(targetProb +- 0.01)
-      alg.stop()
-      alg.kill
+      val ndtest = new NDTest {
+        override def oneTest = {
+          Universe.createNew()
+          val a = 1.2
+          val b = 0.5
+          val elem = Beta(a, b)
+          val alg = MetropolisHastings(20000, ProposalScheme.default, elem)
+          alg.start()
+          val dist = new BetaDistribution(a, b)
+          val targetProb = dist.cumulative(0.3) - dist.cumulative(0.2)
+          val result = alg.probability(elem, (d: Double) => 0.2 <= d && d < 0.3)
+          alg.stop()
+          alg.kill
+          update(result, new TTestResult("AtomicBetaTestResults", targetProb, alpha))
+        }
+      }
+    
+      ndtest.run(10)
     }
 
     "have the correct density" taggedAs (NonDeterministic) in {
-      Universe.createNew()
-      val a = 1.2
-      val b = 0.5
-      val elem = Beta(a, b)
-      val dist = new BetaDistribution(a, b)
-      elem.density(0.3) should be(dist.probability(0.3) +- 0.0000000001)
+      val ndtest = new NDTest {
+        override def oneTest = {
+          Universe.createNew()
+          val a = 1.2
+          val b = 0.5
+          val elem = Beta(a, b)
+          val dist = new BetaDistribution(a, b)
+          val result = elem.density(0.3)
+          update(result, new TTestResult("AtomicBetaTestResults", dist.probability(0.3), alpha))
+        }
+      }
+    
+      ndtest.run(10)
     }
 
     "convert to the correct string" in {
@@ -893,19 +1068,26 @@ class ContinuousTest extends WordSpec with Matchers {
   "A CompoundBeta" should {
     "have value within a range with probability equal to the expectation over a and b of the" +
       "cumulative probability of the upper minus the lower" taggedAs (NonDeterministic) in {
-        Universe.createNew()
-        val elem = Beta(Select(0.5 -> 0.5, 0.5 -> 1.0), Select(0.5 -> 2.0, 0.5 -> 3.0))
-        val alg = Importance(20000, elem)
-        alg.start()
-        val dist1 = new BetaDistribution(0.5, 2.0)
-        val dist2 = new BetaDistribution(1.0, 2.0)
-        val dist3 = new BetaDistribution(0.5, 3.0)
-        val dist4 = new BetaDistribution(1.0, 3.0)
-        def getProb(dist: ProbabilityDistribution) = dist.cumulative(0.3) - dist.cumulative(0.2)
-        val targetProb = 0.25 * getProb(dist1) + 0.25 * getProb(dist2) + 0.25 * getProb(dist3) + 0.25 * getProb(dist4)
-        alg.probability(elem, (d: Double) => 0.2 <= d && d < 0.3) should be(targetProb +- 0.01)
-        alg.stop()
-        alg.kill
+        val ndtest = new NDTest {
+          override def oneTest = {
+            Universe.createNew()
+            val elem = Beta(Select(0.5 -> 0.5, 0.5 -> 1.0), Select(0.5 -> 2.0, 0.5 -> 3.0))
+            val alg = Importance(20000, elem)
+            alg.start()
+            val dist1 = new BetaDistribution(0.5, 2.0)
+            val dist2 = new BetaDistribution(1.0, 2.0)
+            val dist3 = new BetaDistribution(0.5, 3.0)
+            val dist4 = new BetaDistribution(1.0, 3.0)
+            def getProb(dist: ProbabilityDistribution) = dist.cumulative(0.3) - dist.cumulative(0.2)
+            val targetProb = 0.25 * getProb(dist1) + 0.25 * getProb(dist2) + 0.25 * getProb(dist3) + 0.25 * getProb(dist4)
+            val result = alg.probability(elem, (d: Double) => 0.2 <= d && d < 0.3)
+            alg.stop()
+            alg.kill
+            update(result, new TTestResult("CompoundBetaTestResults", targetProb, alpha))
+          }
+        }
+      
+        ndtest.run(10)
       }
 
     "convert to the correct string" in {
@@ -916,98 +1098,135 @@ class ContinuousTest extends WordSpec with Matchers {
     }
 
     "produce the right probability when conditioned under Metropolis-Hastings" taggedAs (NonDeterministic) in {
-      val sampleUniverse = Universe.createNew()
-      val nSamples = Beta(2, 5)("", sampleUniverse)
-      val samples = for (i <- 1 to 100)
-        yield nSamples.generateValue(nSamples.generateRandomness())
-
-      val universe = Universe.createNew()
-      val a = Uniform(0, 10)("a", universe)
-      val b = Uniform(0, 10)("b", universe)
-      for (sample <- samples) {
-        val beta = Beta(a, b)
-        beta.observe(sample)
+      val ndtest = new NDTest {
+        override def oneTest = {
+          val sampleUniverse = Universe.createNew()
+          val nSamples = Beta(2, 5)("", sampleUniverse)
+          val samples = for (i <- 1 to 100)
+            yield nSamples.generateValue(nSamples.generateRandomness())
+    
+          val universe = Universe.createNew()
+          val a = Uniform(0, 10)("a", universe)
+          val b = Uniform(0, 10)("b", universe)
+          for (sample <- samples) {
+            val beta = Beta(a, b)
+            beta.observe(sample)
+          }
+          val alg = MetropolisHastings(200000, ProposalScheme.default, a, b)
+          alg.start()
+          val resultA = alg.mean(a)
+          val resultB = alg.mean(b)
+          alg.stop()
+          alg.kill
+          update(resultA, new TTestResult("CompoundBetaTestResultsA", 2.0, alpha))
+          update(resultB, new TTestResult("CompoundBetaTestResultsB", 5.0, alpha))
+        }
       }
-      val alg = MetropolisHastings(200000, ProposalScheme.default, a, b)
-      alg.start()
-      alg.mean(a) should be(2.0 +- 1.5)
-      alg.mean(b) should be(5.0 +- 1.5)
-      alg.stop()
-      alg.kill
+      
+      ndtest.run(10)
     }
 
     "produce the right probability when conditioned under Importance Sampling" taggedAs (NonDeterministic) in {
-      val sampleUniverse = Universe.createNew()
-      val nSamples = Beta(2, 5)("", sampleUniverse)
-      val samples = for (i <- 1 to 25)
-        yield nSamples.generateValue(nSamples.generateRandomness())
-
-      val universe = Universe.createNew()
-      val a = Uniform(0, 10)("a", universe)
-      val b = Uniform(0, 10)("b", universe)
-      for (sample <- samples) {
-        val beta = Beta(a, b)
-        beta.observe(sample)
+      val ndtest = new NDTest {
+        override def oneTest = {
+          val sampleUniverse = Universe.createNew()
+          val nSamples = Beta(2, 5)("", sampleUniverse)
+          val samples = for (i <- 1 to 25)
+            yield nSamples.generateValue(nSamples.generateRandomness())
+    
+          val universe = Universe.createNew()
+          val a = Uniform(0, 10)("a", universe)
+          val b = Uniform(0, 10)("b", universe)
+          for (sample <- samples) {
+            val beta = Beta(a, b)
+            beta.observe(sample)
+          }
+          val alg = Importance(40000, a, b)
+          alg.start()
+          val resultA = alg.mean(a)
+          val resultB = alg.mean(b)
+          alg.stop()
+          alg.kill
+          update(resultA, new TTestResult("CompoundBetaTestResultsA", 2.0, alpha))
+          update(resultB, new TTestResult("CompoundBetaTestResultsB", 5.0, alpha))
+        }
       }
-      val alg = Importance(40000, a, b)
-      alg.start()
-      alg.mean(a) should be(2.0 +- 1.5)
-      alg.mean(b) should be(5.0 +- 1.5)
-      alg.stop()
-      alg.kill
+      
+      ndtest.run(10)
     }
   }
 
   // We can test Dirichlets using the special case where alpha.length = 2
   "A AtomicDirichlet" should {
     "have value within a range with probability equal to the cumulative probability of the upper minus the lower" taggedAs (NonDeterministic) in {
-      Universe.createNew()
-      val a = 1.2
-      val b = 0.5
-      val elem = Dirichlet(a, b)
-      val alg = Importance(20000, elem)
-      alg.start()
-      val dist = new BetaDistribution(a, b)
-      val targetProb = dist.cumulative(0.3) - dist.cumulative(0.2)
-      def check(ds: Array[Double]) = {
-        val r = ds(0) / (ds(0) + ds(1))
-        0.2 <= r && r < 0.3
+      val ndtest = new NDTest {
+        override def oneTest = {
+          Universe.createNew()
+          val a = 1.2
+          val b = 0.5
+          val elem = Dirichlet(a, b)
+          val alg = Importance(20000, elem)
+          alg.start()
+          val dist = new BetaDistribution(a, b)
+          val targetProb = dist.cumulative(0.3) - dist.cumulative(0.2)
+          def check(ds: Array[Double]) = {
+            val r = ds(0) / (ds(0) + ds(1))
+            0.2 <= r && r < 0.3
+          }
+          val result = alg.probability(elem, (ds: Array[Double]) => check(ds))
+          alg.stop()
+          alg.kill
+          update(result, new TTestResult("AtomicDirichletTestResults", targetProb, alpha))
+        }
       }
-      alg.probability(elem, (ds: Array[Double]) => check(ds)) should be(targetProb +- 0.01)
-      alg.stop()
-      alg.kill
+      
+      ndtest.run(10)
     }
 
     "produce the correct probability under Metropolis-Hastings" taggedAs (NonDeterministic) in {
-      Universe.createNew()
-      val a = 1.2
-      val b = 0.5
-      val elem = Dirichlet(a, b)
-      val alg = MetropolisHastings(20000, ProposalScheme.default, elem)
-      alg.start()
-      val dist = new BetaDistribution(a, b)
-      val targetProb = dist.cumulative(0.3) - dist.cumulative(0.2)
-      def check(ds: Array[Double]) = {
-        val r = ds(0) / (ds(0) + ds(1))
-        0.2 <= r && r < 0.3
+      val ndtest = new NDTest {
+        override def oneTest = {
+          Universe.createNew()
+          val a = 1.2
+          val b = 0.5
+          val elem = Dirichlet(a, b)
+          val alg = MetropolisHastings(20000, ProposalScheme.default, elem)
+          alg.start()
+          val dist = new BetaDistribution(a, b)
+          val targetProb = dist.cumulative(0.3) - dist.cumulative(0.2)
+          def check(ds: Array[Double]) = {
+            val r = ds(0) / (ds(0) + ds(1))
+            0.2 <= r && r < 0.3
+          }
+          val result = alg.probability(elem, (ds: Array[Double]) => check(ds))
+          alg.stop()
+          alg.kill
+          update(result, new TTestResult("AtomicDirichletTestResults", targetProb, alpha))
+        }
       }
-      alg.probability(elem, (ds: Array[Double]) => check(ds)) should be(targetProb +- 0.01)
-      alg.stop()
-      alg.kill
+      
+      ndtest.run(10)
     }
 
     "have the correct density" taggedAs (NonDeterministic) in {
-      Universe.createNew()
-      val a0 = 1.2
-      val a1 = 0.5
-      val elem = Dirichlet(a0, a1)
-      val x0 = 0.3
-      val x1 = 0.6
-      val normalizer = gamma(a0 + a1) / (gamma(a0) * gamma(a1))
-      val pow0 = pow(x0, a0 - 1)
-      val pow1 = pow(x1, a1 - 1)
-      val target = normalizer * pow(x0, a0 - 1) * pow(x1, a1 - 1)
-      elem.density(Array(x0, x1)) should be(target +- 0.0000000001)
+      val ndtest = new NDTest {
+        override def oneTest = {
+          Universe.createNew()
+          val a0 = 1.2
+          val a1 = 0.5
+          val elem = Dirichlet(a0, a1)
+          val x0 = 0.3
+          val x1 = 0.6
+          val normalizer = gamma(a0 + a1) / (gamma(a0) * gamma(a1))
+          val pow0 = pow(x0, a0 - 1)
+          val pow1 = pow(x1, a1 - 1)
+          val target = normalizer * pow(x0, a0 - 1) * pow(x1, a1 - 1)
+          val result = elem.density(Array(x0, x1))
+          update(result, new TTestResult("AtomicDirichletTestResults", target, alpha))
+        }
+      }
+      
+      ndtest.run(10)
     }
 
     "convert to the correct string" in {
@@ -1019,32 +1238,46 @@ class ContinuousTest extends WordSpec with Matchers {
   "A CompoundDirichlet" should {
     "have value within a range with probability equal to the expectation over the alphas " +
       "of the cumulative probability of the upper minus the lower" taggedAs (NonDeterministic) in {
-        Universe.createNew()
-        val a = Select(0.5 -> 0.7, 0.5 -> 1.2)
-        val b = Constant(0.5)
-        val elem = Dirichlet(a, b)
-        val alg = Importance(20000, elem)
-        alg.start()
-        val dist1 = new BetaDistribution(0.7, 0.5)
-        val dist2 = new BetaDistribution(1.2, 0.5)
-        def getProb(dist: ProbabilityDistribution) = dist.cumulative(0.3) - dist.cumulative(0.2)
-        val targetProb = 0.5 * getProb(dist1) + 0.5 * getProb(dist2)
-        def check(ds: Array[Double]) = {
-          val r = ds(0) / (ds(0) + ds(1))
-          0.2 <= r && r < 0.3
+      val ndtest = new NDTest {
+        override def oneTest = {
+          Universe.createNew()
+          val a = Select(0.5 -> 0.7, 0.5 -> 1.2)
+          val b = Constant(0.5)
+          val elem = Dirichlet(a, b)
+          val alg = Importance(20000, elem)
+          alg.start()
+          val dist1 = new BetaDistribution(0.7, 0.5)
+          val dist2 = new BetaDistribution(1.2, 0.5)
+          def getProb(dist: ProbabilityDistribution) = dist.cumulative(0.3) - dist.cumulative(0.2)
+          val targetProb = 0.5 * getProb(dist1) + 0.5 * getProb(dist2)
+          def check(ds: Array[Double]) = {
+            val r = ds(0) / (ds(0) + ds(1))
+            0.2 <= r && r < 0.3
+          }
+          val result = alg.probability(elem, (ds: Array[Double]) => check(ds))
+          alg.stop()
+          alg.kill
+          update(result, new TTestResult("CompoundDirichletTestResults", targetProb, alpha))
         }
-        alg.probability(elem, (ds: Array[Double]) => check(ds)) should be(targetProb +- 0.01)
-        alg.stop()
-        alg.kill
       }
+        
+      ndtest.run(10)
+    }
 
     "have the correct density" taggedAs (NonDeterministic) in {
-      Universe.createNew()
-      val a = 1.2
-      val b = 0.5
-      val elem = Beta(a, b)
-      val dist = new BetaDistribution(a, b)
-      elem.density(0.3) should be(dist.probability(0.3) +- 0.0000000001)
+      val ndtest = new NDTest {
+        override def oneTest = {
+          Universe.createNew()
+          val a = 1.2
+          val b = 0.5
+          val elem = Beta(a, b)
+          val dist = new BetaDistribution(a, b)
+          val result = elem.density(0.3)
+          update(result, new TTestResult("CompoundDirichletTestResults", dist.probability(0.3), alpha))
+        }
+      }
+        
+      ndtest.run(10)
     }
 
     "convert to the correct string" in {
@@ -1055,49 +1288,67 @@ class ContinuousTest extends WordSpec with Matchers {
     }
 
     "produce the right probability when conditioned under Metropolis-Hastings" taggedAs (NonDeterministic) in {
-      val sampleUniverse = Universe.createNew()
-      val nSamples = Dirichlet(1, 2, 3)("", sampleUniverse)
-      val samples = for (i <- 1 to 100)
-        yield nSamples.generateValue(nSamples.generateRandomness())
-
-      val universe = Universe.createNew()
-      val alpha1 = Uniform(0, 10)("a1", universe)
-      val alpha2 = Uniform(0, 10)("a2", universe)
-      val alpha3 = Uniform(0, 10)("a3", universe)
-      for (sample <- samples) {
-        val dirichlet = Dirichlet(alpha1, alpha2, alpha3)
-        dirichlet.observe(sample)
+      val ndtest = new NDTest {
+        override def oneTest = {
+          val sampleUniverse = Universe.createNew()
+          val nSamples = Dirichlet(1, 2, 3)("", sampleUniverse)
+          val samples = for (i <- 1 to 100)
+            yield nSamples.generateValue(nSamples.generateRandomness())
+    
+          val universe = Universe.createNew()
+          val alpha1 = Uniform(0, 10)("a1", universe)
+          val alpha2 = Uniform(0, 10)("a2", universe)
+          val alpha3 = Uniform(0, 10)("a3", universe)
+          for (sample <- samples) {
+            val dirichlet = Dirichlet(alpha1, alpha2, alpha3)
+            dirichlet.observe(sample)
+          }
+          val alg = MetropolisHastings(200000, ProposalScheme.default, alpha1, alpha2, alpha3)
+          alg.start()
+          val resultA = alg.mean(alpha1)
+          val resultB = alg.mean(alpha2)
+          val resultC = alg.mean(alpha3)
+          alg.stop()
+          alg.kill
+          update(resultA, new TTestResult("CompoundDirichletTestResultsAlpha1", 1.0, alpha))
+          update(resultB, new TTestResult("CompoundDirichletTestResultsAlpha2", 2.0, alpha))
+          update(resultC, new TTestResult("CompoundDirichletTestResultsAlpha3", 3.0, alpha))
+        }
       }
-      val alg = MetropolisHastings(200000, ProposalScheme.default, alpha1, alpha2, alpha3)
-      alg.start()
-      alg.mean(alpha1) should be(1.0 +- 1.0)
-      alg.mean(alpha2) should be(2.0 +- 1.0)
-      alg.mean(alpha3) should be(3.0 +- 1.0)
-      alg.stop()
-      alg.kill
+        
+      ndtest.run(10)
     }
 
     "produce the right probability when conditioned under Importance Sampling" taggedAs (NonDeterministic) in {
-      val sampleUniverse = Universe.createNew()
-      val nSamples = Dirichlet(1, 2, 3)("", sampleUniverse)
-      val samples = for (i <- 1 to 25)
-        yield nSamples.generateValue(nSamples.generateRandomness())
-
-      val universe = Universe.createNew()
-      val alpha1 = Uniform(0, 10)("a1", universe)
-      val alpha2 = Uniform(0, 10)("a2", universe)
-      val alpha3 = Uniform(0, 10)("a3", universe)
-      for (sample <- samples) {
-        val dirichlet = Dirichlet(alpha1, alpha2, alpha3)
-        dirichlet.observe(sample)
+      val ndtest = new NDTest {
+        override def oneTest = {
+          val sampleUniverse = Universe.createNew()
+          val nSamples = Dirichlet(1, 2, 3)("", sampleUniverse)
+          val samples = for (i <- 1 to 25)
+            yield nSamples.generateValue(nSamples.generateRandomness())
+    
+          val universe = Universe.createNew()
+          val alpha1 = Uniform(0, 10)("a1", universe)
+          val alpha2 = Uniform(0, 10)("a2", universe)
+          val alpha3 = Uniform(0, 10)("a3", universe)
+          for (sample <- samples) {
+            val dirichlet = Dirichlet(alpha1, alpha2, alpha3)
+            dirichlet.observe(sample)
+          }
+          val alg = Importance(30000, alpha1, alpha2, alpha3)
+          alg.start()
+          val resultA = alg.mean(alpha1)
+          val resultB = alg.mean(alpha2)
+          val resultC = alg.mean(alpha3)
+          alg.stop()
+          alg.kill
+          update(resultA, new TTestResult("CompoundDirichletTestResultsAlpha1", 1.0, alpha))
+          update(resultB, new TTestResult("CompoundDirichletTestResultsAlpha2", 2.0, alpha))
+          update(resultC, new TTestResult("CompoundDirichletTestResultsAlpha3", 3.0, alpha))
+        }
       }
-      val alg = Importance(30000, alpha1, alpha2, alpha3)
-      alg.start()
-      alg.mean(alpha1) should be(1.0 +- 1.0)
-      alg.mean(alpha2) should be(2.0 +- 1.0)
-      alg.mean(alpha3) should be(3.0 +- 1.0)
-      alg.stop()
-      alg.kill
+        
+      ndtest.run(10)
     }
   }
 }

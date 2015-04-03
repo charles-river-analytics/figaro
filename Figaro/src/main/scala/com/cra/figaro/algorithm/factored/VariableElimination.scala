@@ -104,8 +104,8 @@ trait VariableElimination[T] extends FactoredAlgorithm[T] with OneTime {
       for { factor <- varFactors } { println(factor.toReadableString) }
     }
     if (varFactors nonEmpty) {
-      val productFactor = varFactors reduceLeft (_.product(_, semiring))
-      val resultFactor = productFactor.sumOver(variable, semiring)
+      val productFactor = varFactors reduceLeft (_.product(_))
+      val resultFactor = productFactor.sumOver(variable)
       varFactors foreach (removeFactor(_, map))
       addFactor(resultFactor, map)
       comparator match {
@@ -227,9 +227,10 @@ class ProbQueryVariableElimination(override val universe: Universe, targets: Ele
   val targetElements = targets.toList
   lazy val queryTargets = targets.toList
 
-  val semiring = SumProductSemiring
+  val semiring = SumProductSemiring()
+  
   private def marginalizeToTarget(factor: Factor[Double], target: Element[_]): Unit = {
-    val unnormalizedTargetFactor = factor.marginalizeTo(semiring, Variable(target))
+    val unnormalizedTargetFactor = factor.marginalizeTo(semiring.asInstanceOf[Semiring[Double]], Variable(target))
     val z = unnormalizedTargetFactor.foldLeft(semiring.zero, _ + _)
     //val targetFactor = Factory.make[Double](unnormalizedTargetFactor.variables)
     val targetFactor = unnormalizedTargetFactor.mapTo((d: Double) => d / z)
@@ -242,7 +243,7 @@ class ProbQueryVariableElimination(override val universe: Universe, targets: Ele
   private def makeResultFactor(factorsAfterElimination: Set[Factor[Double]]): Factor[Double] = {
     // It is possible that there are no factors (this will happen if there are  no queries or evidence).
     // Therefore, we start with the unit factor and use foldLeft, instead of simply reducing the factorsAfterElimination.
-    factorsAfterElimination.foldLeft(Factory.unit(semiring))(_.product(_, semiring))
+    factorsAfterElimination.foldLeft(Factory.unit(semiring))(_.product(_))
   }
 
   def finish(factorsAfterElimination: Set[Factor[Double]], eliminationOrder: List[Variable[_]]) =

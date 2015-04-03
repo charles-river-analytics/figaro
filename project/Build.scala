@@ -40,7 +40,7 @@ object FigaroBuild extends Build {
     scalaVersion := "2.11.4",
     crossPaths := true,
     publishMavenStyle := true,
-    javacOptions ++= Seq("-Xmx", "2g"),
+    javacOptions ++= Seq("-Xmx", "3g"),
     pomExtra :=
 	<url>http://www.github.com/p2t2/figaro</url>
 	<developers>
@@ -97,7 +97,7 @@ object FigaroBuild extends Build {
       "com.typesafe.akka" %% "akka-actor" % "2.3.8",
       "org.scalanlp" %% "breeze" % "0.10",
       "io.argonaut" %% "argonaut" % "6.0.4",
-      "org.scalatest" %% "scalatest" % "2.2.1" % "test"
+      "org.scalatest" %% "scalatest" % "2.2.4" % "test"
     ))
     // test settings
     .settings(parallelExecution in Test := false)

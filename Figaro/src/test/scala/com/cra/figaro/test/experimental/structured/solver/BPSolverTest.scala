@@ -705,7 +705,7 @@ class BPSolverTest extends WordSpec with Matchers {
 
   }
 
-  def multiplyAll(factors: List[Factor[Double]]): Factor[Double] = factors.foldLeft(Factory.unit(SumProductSemiring))(_.product(_, SumProductSemiring))
+  def multiplyAll(factors: List[Factor[Double]]): Factor[Double] = factors.foldLeft(Factory.unit(SumProductSemiring()))(_.product(_))
 
   class EC1 extends ElementCollection { }
 }

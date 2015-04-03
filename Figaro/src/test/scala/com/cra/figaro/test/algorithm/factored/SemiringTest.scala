@@ -26,19 +26,20 @@ import com.cra.figaro.language.Parameter
 import com.cra.figaro.library.atomic.continuous.Beta
 import com.cra.figaro.library.atomic.continuous.Dirichlet
 import com.cra.figaro.util.random
+
 class SemiringTest extends WordSpec with Matchers with PrivateMethodTester {
 
   "The joint semiring" should
     {
       "correctly multiply two numbers" in
         {
-          val semiring = SumProductUtilitySemiring
+          val semiring = SumProductUtilitySemiring()
           semiring.product((0.5, 0.5), (0.5, 0.5)) should equal((0.25, 1))
         }
 
       "correctly add two numbers" in
         {
-          val semiring = SumProductUtilitySemiring
+          val semiring = SumProductUtilitySemiring()
           semiring.sum((0.5, 0.5), (0.5, 0.5)) should equal((1, 0.5))
           val s2 = semiring.sum((1, 1), (2, 2))
           s2._1 should be(3.0 +- 0.000000001)
@@ -50,7 +51,7 @@ class SemiringTest extends WordSpec with Matchers with PrivateMethodTester {
 
       "satisfy semiring properties for random data" in
         {
-          val semiring = SumProductUtilitySemiring
+          val semiring = SumProductUtilitySemiring()
 
           //Tolerance could be hard coded inside function.
           def probPlusOrMinus(x: (Double, Double), y: (Double, Double), epsilon: (Double, Double)): Boolean =
@@ -68,13 +69,13 @@ class SemiringTest extends WordSpec with Matchers with PrivateMethodTester {
     {
       "correctly multiply two numbers" in
         {
-          val semiring = MaxProductSemiring
+          val semiring = MaxProductSemiring()
           semiring.product(0.5, 0.5) should equal(0.25)
         }
 
       "correctly add two numbers" in
         {
-          val semiring = MaxProductSemiring
+          val semiring = MaxProductSemiring()
           semiring.sum(0.5, 0.5) should equal(0.5)
           semiring.sum(1, 2) should equal(2)
           semiring.sum(0.5, 1) should equal(1)
@@ -82,7 +83,7 @@ class SemiringTest extends WordSpec with Matchers with PrivateMethodTester {
 
       "satisfy semiring properties for random data" in
         {
-          val semiring = SumProductSemiring
+          val semiring = SumProductSemiring()
 
           //Tolerance could be hard coded inside function.
           def probPlusOrMinus(x: Double, y: Double, epsilon: Double): Boolean =
@@ -101,19 +102,19 @@ class SemiringTest extends WordSpec with Matchers with PrivateMethodTester {
     {
       "correctly multiply two numbers" in
         {
-          val semiring = SumProductSemiring
+          val semiring = SumProductSemiring()
           semiring.product(0.5, 0.5) should equal(0.25)
         }
 
       "correctly add two numbers" in
         {
-          val semiring = SumProductSemiring
+          val semiring = SumProductSemiring()
           semiring.sum(0.5, 0.5) should equal(1.0)
         }
 
       "satisfy semiring properties for random data" in
         {
-          val semiring = SumProductSemiring
+          val semiring = SumProductSemiring()
 
           //Tolerance could be hard coded inside function.
           def probPlusOrMinus(x: Double, y: Double, epsilon: Double): Boolean =

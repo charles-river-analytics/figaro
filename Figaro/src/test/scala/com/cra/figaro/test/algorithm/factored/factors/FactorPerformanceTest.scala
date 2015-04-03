@@ -27,6 +27,7 @@ import scala.reflect.runtime.universe
 class FactorPerformanceTest extends WordSpec with Matchers with PrivateMethodTester {
 
   val factorSize = 75
+  val analyze = true
 
   "A sparse factor" should {
     "multiply O(n^k) faster than basic factors" in {
@@ -41,8 +42,8 @@ class FactorPerformanceTest extends WordSpec with Matchers with PrivateMethodTes
 
       val p1Factor = Factory.make(p1).head
       val p2Factor = Factory.make(p2).head
-      val sumSparseFactor = Factory.make(sum).head.asInstanceOf[SparseFactor[Double]]
-      
+      val sumSparseFactor = Factory.make(sum).head
+
       val sumBasicFactor = new BasicFactor[Double](sumSparseFactor.parents, sumSparseFactor.output)
       val arg1Indices = sumSparseFactor.parents(0).range.zipWithIndex
       val arg2Indices = sumSparseFactor.parents(1).range.zipWithIndex
@@ -56,8 +57,17 @@ class FactorPerformanceTest extends WordSpec with Matchers with PrivateMethodTes
       }
       sumSparseFactor.getIndices.foreach(f => sumBasicFactor.set(f, sumSparseFactor.get(f)))
 
-      val sparseTime = measureTime(() => sumSparseFactor.product(p1Factor, SumProductSemiring), 3, 5)
-      val denseTime = measureTime(() => sumBasicFactor.product(p1Factor, SumProductSemiring), 3, 5)
+      val sparseTime = measureTime(() => sumSparseFactor.product(p1Factor/*, SumProductSemiring*/), 3, 5)
+      val denseTime = measureTime(() => sumBasicFactor.product(p1Factor/*, SumProductSemiring*/), 3, 5)
+
+      if (analyze) {
+
+        println("Sparse factor size: " + sumSparseFactor.contents.size)
+        println("Basic factor size: " + sumBasicFactor.contents.size)
+
+        println("Performance ratio (dense/sparse) = " + denseTime / sparseTime)
+      }
+
       denseTime / sparseTime should be >= 5.0
     }
 
@@ -71,7 +81,7 @@ class FactorPerformanceTest extends WordSpec with Matchers with PrivateMethodTes
       val p2v = Variable(p2)
       val sumv = Variable(sum)
 
-      val sumSparseFactor = Factory.make(sum).head.asInstanceOf[SparseFactor[Double]]
+      val sumSparseFactor = Factory.make(sum).head
       val sumBasicFactor = new BasicFactor[Double](sumSparseFactor.parents, sumSparseFactor.output)
       val arg1Indices = sumSparseFactor.parents(0).range.zipWithIndex
       val arg2Indices = sumSparseFactor.parents(1).range.zipWithIndex
@@ -85,8 +95,17 @@ class FactorPerformanceTest extends WordSpec with Matchers with PrivateMethodTes
       }
       sumSparseFactor.getIndices.foreach(f => sumBasicFactor.set(f, sumSparseFactor.get(f)))
 
-      val sparseTime = measureTime(() => sumSparseFactor.sumOver(p1v, SumProductSemiring), 3, 5)
-      val denseTime = measureTime(() => sumBasicFactor.sumOver(p1v, SumProductSemiring), 3, 5)
+      val sparseTime = measureTime(() => sumSparseFactor.sumOver(p1v/*, SumProductSemiring*/), 3, 5)
+      val denseTime = measureTime(() => sumBasicFactor.sumOver(p1v/*, SumProductSemiring*/), 3, 5)
+
+      if (analyze) {
+
+        println("Sparse factor size: " + sumSparseFactor.contents.size)
+        println("Basic factor size: " + sumBasicFactor.contents.size)
+
+        println("Performance ratio (dense/sparse) = " + denseTime / sparseTime)
+      }
+
       denseTime / sparseTime should be >= 5.0
     }
   }

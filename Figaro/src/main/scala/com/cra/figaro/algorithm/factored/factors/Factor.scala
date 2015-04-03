@@ -31,7 +31,8 @@ import scala.reflect.runtime.universe._
  *
  */
 trait Factor[T] {
-
+  def semiring: Semiring[T]
+  
   def parents: List[Variable[_]]
   def output: List[Variable[_]]
   def variables = parents ::: output
@@ -45,7 +46,7 @@ trait Factor[T] {
   /**
    * Creates a new factor of the same type
    */
-  def createFactor[T: TypeTag](parents: List[Variable[_]], output: List[Variable[_]]): Factor[T]
+  def createFactor[T: TypeTag](parents: List[Variable[_]], output: List[Variable[_]], _semiring: Semiring[T] = semiring): Factor[T]
 
   /**
    * Description that includes the variable list and conditional probabilities
@@ -108,7 +109,7 @@ trait Factor[T] {
   /**
    * Fill the contents of the target by applying the given function to all elements of this factor.
    */
-  def mapTo[U: TypeTag](fn: T => U): Factor[U]
+  def mapTo[U: TypeTag](fn: T => U, _semiring: Semiring[U] = semiring): Factor[U]
 
   /**
    * Returns the product of this factor with another factor according to a given multiplication function.
@@ -116,8 +117,7 @@ trait Factor[T] {
    * is the product of the values in the two inputs.
    */
   def product(
-    that: Factor[T],
-    semiring: Semiring[T]): Factor[T]
+    that: Factor[T]): Factor[T]
 
   /**
    * Generic combination function for factors. By default, this is product, but other operations
@@ -125,8 +125,7 @@ trait Factor[T] {
    */
   def combination(
     that: Factor[T],
-    op: (T, T) => T,
-    semiring: Semiring[T]): Factor[T]
+    op: (T, T) => T): Factor[T]
 
   /**
    * Returns the summation of the factor over a variable according to an addition function.
@@ -134,7 +133,7 @@ trait Factor[T] {
    * input except for the summed over variable and the value for a set of assignments is the
    * sum of the values of the corresponding assignments in the input.
    */
-  def sumOver(variable: Variable[_], semiring: Semiring[T]): Factor[T]
+  def sumOver(variable: Variable[_]): Factor[T]
 
   /**
    * Returns a factor that maps values of the other variables to the value of the given variable that
@@ -145,7 +144,7 @@ trait Factor[T] {
    * other variables in this factor to this type.
    * @tparam T The type of entries of this factor.
    */
-  def recordArgMax[U: TypeTag](variable: Variable[U], comparator: (T, T) => Boolean): Factor[U]
+  def recordArgMax[U: TypeTag](variable: Variable[U], comparator: (T, T) => Boolean, _semiring: Semiring[U] = semiring.asInstanceOf[Semiring[U]]): Factor[U]
 
   /**
    * Returns the marginalization of the factor to a variable according to the given addition function.
@@ -227,25 +226,47 @@ class Indices(variables: List[Variable[_]]) extends Iterable[List[Int]] {
    * Given a list of indices corresponding to a row in the factor, returns the list of indices
    * corresponding to the next row.
    * Returns None if the last index list has been reached.
-   */
+   */  
   def nextIndices(indices: List[Int]): Option[List[Int]] = {
-    // Copies all values prior to the position
-    // Increments the position value by 1
-    // Sets all values after the position to 0
-    def makeNext(position: Int) = for { i <- 0 until numVars } yield {
-      if (i < position) indices(i)
-      else if (i > position) 0
-      else indices(position) + 1
-    }
+    var temp = indices.reverse
+    var newIndices = List[Int]()
+    var success = true
+    var carry = true
+    
+    var position = numVars - 1
+    
+    while(carry) {
+      temp match {
+        case head :: tail => {
+          //  current position can be incremented
+          // stop here
+          if (head < limits(position)) {
+            newIndices ::= head + 1
+            newIndices :::= tail.reverse
+            carry = false
+          }
+          // limit reached so zero current position and 
+          // carry to next
+          else if (head == limits(position)) {
+            newIndices ::= 0
+            temp = tail
+            position = position - 1
+          }
+        }
 
-    // Checks to see if variable at position is exhausted
-    // If so recurses to next position
-    @tailrec def helper(position: Int): Option[List[Int]] =
-      if (position < 0) None
-      else if (indices(position) < limits(position)) Some(makeNext(position).toList)
-      else helper(position - 1)
-      
-    helper(numVars - 1)
+        case Nil => {
+          success = false
+          carry = false
+        }
+      }
+    }
+    
+    if (success) {
+      Some(newIndices)
+    }
+    else {
+      None
+    }
   }
 }
 

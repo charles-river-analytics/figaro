@@ -24,7 +24,7 @@ import com.cra.figaro.library.compound._
 import com.cra.figaro.library.collection._
 import com.cra.figaro.library.atomic.discrete._
 import scala.reflect.runtime.universe.{typeTag, TypeTag}
-
+import com.cra.figaro.experimental.factored.factors.InternalVariable
 /**
  * A trait for elements that are able to construct their own Factor.
  */
@@ -41,7 +41,7 @@ object Factory {
    * The mutliplicative identity factor.
    */
   def unit[T: TypeTag](semiring: Semiring[T]): Factor[T] = {
-    val result = new BasicFactor[T](List(), List())
+    val result = new BasicFactor[T](List(), List(), semiring)
     result.set(List(), semiring.one)
     result
   }
@@ -49,8 +49,8 @@ object Factory {
   /**
    * Create a BasicFactor from the supplied parent and children variables
    */
-  def defaultFactor[T: TypeTag](parents: List[Variable[_]], children: List[Variable[_]]) = 
-      new BasicFactor[T](parents, children)
+  def defaultFactor[T: TypeTag](parents: List[Variable[_]], children: List[Variable[_]], _semiring: Semiring[T] = SumProductSemiring().asInstanceOf[Semiring[T]]) = 
+      new BasicFactor[T](parents, children, _semiring)
 
   private def makeFactors[T](const: Constant[T]): List[Factor[Double]] = {
     val factor = new BasicFactor[Double](List(), List(Variable(const)))
@@ -172,7 +172,7 @@ object Factory {
         val potentialSize = calculateSize(nextFactor.size, newVariables)
         if ((nextFactor.numVars + newVariables.size) < maxElementCount
           && potentialSize < maxSize) {
-          nextFactor = nextFactor.product(factor, semiring)
+          nextFactor = factor.product(nextFactor)
         } else {
           if (removeTemporaries) {
             newFactors ++= reduceFactor(nextFactor, semiring, maxElementCount)
@@ -197,15 +197,21 @@ object Factory {
     newFactors.toList
   }
 
-  val variableSet = scala.collection.mutable.Set[ElementVariable[_]]()
+  val variableSet = scala.collection.mutable.Set[Variable[_]]()
   val nextFactors = ListBuffer[Factor[Double]]()
 
   private def reduceFactor(factor: Factor[Double], semiring: Semiring[Double], maxElementCount: Int): List[Factor[Double]] = {
     variableSet.clear
 
-    (variableSet /: List(factor))(_ ++= _.variables.asInstanceOf[List[ElementVariable[_]]])
+    var resultFactor = unit[Double](semiring).product(factor)
+
+    (variableSet /: List(factor))(_ ++= _.variables.asInstanceOf[List[Variable[_]]])
+    for (variable <- variableSet.filter { _.isInstanceOf[InternalVariable[_]]}) {
+      resultFactor = resultFactor.sumOver(variable)
+      variableSet.remove(variable)
+    }
+    
     var elementCount = variableSet count (v => !isTemporary(v))
-    var resultFactor = unit[Double](semiring).product(factor, semiring)
 
     var tempCount = 0;
 
@@ -217,7 +223,7 @@ object Factory {
         elementCount = variableSet count (v => !isTemporary(v))
 
         for (nextFactor <- nextFactors) {
-          resultFactor = resultFactor.product(nextFactor, semiring)
+          resultFactor = resultFactor.product(nextFactor)
         }
         tempCount += 1
       }
@@ -226,7 +232,7 @@ object Factory {
     if (tempCount > 0 && elementCount <= maxElementCount) {
       for { variable <- variableSet } {
         if (isTemporary(variable)) {
-          resultFactor = resultFactor.sumOver(variable, semiring)
+          resultFactor = resultFactor.sumOver(variable)
         }
       }
 
@@ -241,6 +247,7 @@ object Factory {
   private def isTemporary[_T](variable: Variable[_]): Boolean = {
     variable match {
       case e: ElementVariable[_] => e.element.isTemporary
+      case i: InternalVariable[_] => true
       case _ => false
     }
   }
@@ -306,7 +313,7 @@ object Factory {
       case d: AtomicDist[_] => SelectFactory.makeFactors(d)
       case d: CompoundDist[_] => SelectFactory.makeFactors(d)
       case s: IntSelector => SelectFactory.makeFactors(s)
-      case c: Chain[_, _] => ChainFactory.makeFactors(c)
+      case c: Chain[_, _] => com.cra.figaro.experimental.factored.factors.factory.ChainFactory.makeFactors(c)
       case a: Apply1[_, _] => ApplyFactory.makeFactors(a)
       case a: Apply2[_, _, _] => ApplyFactory.makeFactors(a)
       case a: Apply3[_, _, _, _] => ApplyFactory.makeFactors(a)
