@@ -54,6 +54,7 @@ object ComplexFactory {
           // - get the factors associated with restVar by calling make(firstCollection, restVar, restRef)
           // - use a conditional selector to select thos factors appropriately
           // Then we take all of the factors for all first element collections.
+          val (pairVar, pairFactor) = Factory.makeTupleVarAndFactor(cc, firstVar, startVar)
           val selectedFactors =
             for {
               (firstXValue, firstIndex) <- firstVar.range.zipWithIndex
@@ -63,13 +64,14 @@ object ComplexFactory {
                 val restRange = Range.getRangeOfSingleValuedReference(cc, firstCollection, restRef)
                 val restVar: Variable[T] = Factory.makeVariable(cc, restRange)
                 val restFactors = make(firstCollection, restVar, restRef)
-                Factory.makeConditionalSelector(cc, startVar, firstVar, firstIndex, restVar) :: restFactors
+
+                Factory.makeConditionalSelector(pairVar, firstXValue, restVar) :: restFactors
               } else {
                 val dummy = Factory.makeVariable(cc, ValueSet.withStar[T](Set()))
-                List(Factory.makeConditionalSelector(cc, startVar, firstVar, firstIndex, dummy))
+                List(Factory.makeConditionalSelector(pairVar, firstXValue, dummy))
               }
             }
-        selectedFactors.flatten
+        pairFactor :: selectedFactors.flatten
       }
     }
 
@@ -128,76 +130,76 @@ object ComplexFactory {
     // startVar represents the variable whose value is the value of the reference.
     def make(ec: ElementCollection, startVar: Variable[MultiSet[T]], reference: Reference[T]): List[Factor[Double]] = {
       val (firstElem, restRefOpt) = ec.getFirst(reference)
-      val selectionFactors: List[List[Factor[Double]]] = {
-        restRefOpt match {
-          case None => {
-            // When the reference is simple, it only refers to a single element, so we just get the factor mapping
-            // values of that element to values of startVar
-            val firstVar = Factory.getVariable(cc, firstElem)
-            val factor = new SparseFactor[Double](List(firstVar), List(startVar))
-            for {
-              (firstVal, firstIndex) <- firstVar.range.zipWithIndex
-            } {
-              val startIndex =
-                if (firstVal.isRegular) startVar.range.indexWhere(_.value == HashMultiSet(firstVal.value))
-                else startVar.range.indexWhere(!_.isRegular)
-              factor.set(List(firstIndex, startIndex), 1.0)
-            }
-            List(List(factor))
+      val firstVar = Factory.getVariable(cc, firstElem).asInstanceOf[Variable[firstElem.Value]]
+      restRefOpt match {
+        case None => {
+          // When the reference is simple, it only refers to a single element, so we just get the factor mapping
+          // values of that element to values of startVar
+          val factor = new SparseFactor[Double](List(firstVar), List(startVar))
+          for {
+            (firstVal, firstIndex) <- firstVar.range.zipWithIndex
+          } {
+            val startIndex =
+              if (firstVal.isRegular) startVar.range.indexWhere(_.value == HashMultiSet(firstVal.value))
+              else startVar.range.indexWhere(!_.isRegular)
+            factor.set(List(firstIndex, startIndex), 1.0)
           }
+          List(factor)
+        }
 
           case Some(restRef) => {
             // When the reference is indirect, we get all factors associated with all values of the first name in the reference.
             // Each first value is either a single element collection, in which case we recurse simply, just like for a single-valued reference.
             // Otherwise, the first value is a traversable of element collections, in which case see below.
-            val firstVar = Factory.getVariable(cc, firstElem).asInstanceOf[Variable[firstElem.Value]]
-            val selectedFactors =
-              for {
-                (firstXvalue, firstIndex) <- firstVar.range.zipWithIndex
-              } yield {
-                if (!firstXvalue.isRegular) {
-                  val dummy = Factory.makeVariable(cc, ValueSet.withStar[MultiSet[T]](Set()))
-                  List(Factory.makeConditionalSelector(cc, startVar, firstVar, firstIndex, dummy))
-                }
-                else {
-                  firstXvalue.value match {
-                    case firstCollection: ElementCollection =>
-                      val restRange = Range.getRangeOfMultiValuedReference(cc, firstCollection, restRef)
-                      val restVar: Variable[MultiSet[T]] = Factory.makeVariable(cc, restRange)
-                      val restFactors = make(firstCollection, restVar, restRef)
-                      Factory.makeConditionalSelector(cc, startVar, firstVar, firstIndex, restVar) :: restFactors
-                    case cs: Traversable[_] =>
-                      // If the first value consists of multiple element collections, we first get a list of distinct collections.
-                      // This is because multi-valued references use set semantics, whereby if an element is pointed to more than once,
-                      // its value only counts once in the multiset value of the reference element.
-                      // So, a multiset value consists of a value for each of the distinct element collections.
-                      // For each collection, we get the factors for it using make(firstCollection, restVar, restRef)
-                      // We add a conditional selector on the first value to determine when these factors are relevant.
-                      // Then, we essentially create an embedded Inject on the variables representing these collections,
-                      // and then an Apply that takes a list of values from these collections and turns them into a multiset.
-                      // However, unlike the old implementation, we do not actually create these as elements, as that would
-                      // break the atomicity of makeFactors required by structured factored inference.
-                      // We just create a variable for the Inject and a variable for the Apply and create the factors directly.
-                      val collections = cs.asInstanceOf[Traversable[ElementCollection]].toList.distinct // Set semantics
-                      val factorsForCollections =
-                        for { firstCollection <- collections } yield {
-                          val restRange = Range.getRangeOfMultiValuedReference(cc, firstCollection, restRef)
-                          val restVar: Variable[MultiSet[T]] = Factory.makeVariable(cc, restRange)
-                          val restFactors = make(firstCollection, restVar, restRef)
-                          (restVar, restFactors)
-                        }
-                      val (injectVar, injectFactor) = makeEmbeddedInject(factorsForCollections.map(_._1))
-                      val (applyVar, applyFactor) = makeEmbeddedApply(injectVar)
-                      val valueFactors = applyFactor :: injectFactor :: factorsForCollections.map(_._2).flatten
-                      Factory.makeConditionalSelector(cc, startVar, firstVar, firstIndex, applyVar) :: valueFactors
+            val (pairVar, pairFactor) = Factory.makeTupleVarAndFactor(cc, firstVar, startVar)
+            val selectionFactors: List[List[Factor[Double]]] = {
+              val selectedFactors =
+                for {
+                  (firstXvalue, firstIndex) <- firstVar.range.zipWithIndex
+                } yield {
+                  if (!firstXvalue.isRegular) {
+                    val dummy = Factory.makeVariable(cc, ValueSet.withStar[MultiSet[T]](Set()))
+                    List(Factory.makeConditionalSelector(pairVar, firstXvalue, dummy))
                   }
-                }
+                  else {
+                    firstXvalue.value match {
+                      case firstCollection: ElementCollection =>
+                        val restRange = Range.getRangeOfMultiValuedReference(cc, firstCollection, restRef)
+                        val restVar: Variable[MultiSet[T]] = Factory.makeVariable(cc, restRange)
+                        val restFactors = make(firstCollection, restVar, restRef)
+                        Factory.makeConditionalSelector(pairVar, firstXvalue, restVar) :: restFactors
+                      case cs: Traversable[_] =>
+                        // If the first value consists of multiple element collections, we first get a list of distinct collections.
+                        // This is because multi-valued references use set semantics, whereby if an element is pointed to more than once,
+                        // its value only counts once in the multiset value of the reference element.
+                        // So, a multiset value consists of a value for each of the distinct element collections.
+                        // For each collection, we get the factors for it using make(firstCollection, restVar, restRef)
+                        // We add a conditional selector on the first value to determine when these factors are relevant.
+                        // Then, we essentially create an embedded Inject on the variables representing these collections,
+                        // and then an Apply that takes a list of values from these collections and turns them into a multiset.
+                        // However, unlike the old implementation, we do not actually create these as elements, as that would
+                        // break the atomicity of makeFactors required by structured factored inference.
+                        // We just create a variable for the Inject and a variable for the Apply and create the factors directly.
+                        val collections = cs.asInstanceOf[Traversable[ElementCollection]].toList.distinct // Set semantics
+                        val factorsForCollections =
+                          for { firstCollection <- collections } yield {
+                            val restRange = Range.getRangeOfMultiValuedReference(cc, firstCollection, restRef)
+                            val restVar: Variable[MultiSet[T]] = Factory.makeVariable(cc, restRange)
+                            val restFactors = make(firstCollection, restVar, restRef)
+                            (restVar, restFactors)
+                          }
+                        val (injectVar, injectFactor) = makeEmbeddedInject(factorsForCollections.map(_._1))
+                        val (applyVar, applyFactor) = makeEmbeddedApply(injectVar)
+                        val valueFactors = applyFactor :: injectFactor :: factorsForCollections.map(_._2).flatten
+                        Factory.makeConditionalSelector(pairVar, firstXvalue, applyVar) :: valueFactors
+                    }
+                  }
               }
             selectedFactors
           }
+          pairFactor :: selectionFactors.flatten
         }
       }
-      selectionFactors.flatten
     }
 
     make(element.collection, Factory.getVariable(cc, element), element.reference)

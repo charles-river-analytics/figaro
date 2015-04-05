@@ -10,9 +10,146 @@ import com.cra.figaro.algorithm.factored.factors.Factor
 import com.cra.figaro.experimental.structured.factory.Factory
 import com.cra.figaro.algorithm.factored.factors.SumProductSemiring
 import com.cra.figaro.algorithm.lazyfactored.Regular
+import com.cra.figaro.algorithm.factored.factors.Variable
 
 class BPSolverTest extends WordSpec with Matchers {
+
+  "Making a tuple factor for the BP solver" should {
+    "create a factor whose variables are the targets plus a tuple variable" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val e1 = Flip(0.5)
+      val e2 = Constant(1)
+      val pr = new Problem(cc)
+      pr.add(e1)
+      pr.add(e2)
+      val c1 = cc(e1)
+      val c2 = cc(e2)
+      c1.generateRange()
+      c2.generateRange()
+      val v1 = c1.variable
+      val v2 = c2.variable
+      val bp = new BPSolver(pr, Set(), Set(v1, v2), List())
+
+      val vars = bp.tupleFactor.variables
+      vars.size should equal (3)
+      vars.contains(v1) should equal (true)
+      vars.contains(v2) should equal (true)
+      vars.contains(bp.tupleVar) should equal (true)
+    }
+
+    "create a variable whose range is all the tuples of the targets, without * when the targets do not have *" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val e1 = Flip(0.5)
+      val e2 = Constant(1)
+      val pr = new Problem(cc)
+      pr.add(e1)
+      pr.add(e2)
+      val c1 = cc(e1)
+      val c2 = cc(e2)
+      c1.generateRange()
+      c2.generateRange()
+      val v1 = c1.variable
+      val v2 = c2.variable
+      val bp = new BPSolver(pr, Set(), Set(v1, v2), List())
+
+      val vs = bp.tupleVar.valueSet
+      vs.hasStar should equal (false)
+      if (bp.tupleFactor.variables(0) == v1) {
+        vs.regularValues should equal (Set(List(Regular(true), Regular(1)), List(Regular(false), Regular(1))))
+      } else {
+        vs.regularValues should equal (Set(List(Regular(1), Regular(true)), List(Regular(1), Regular(false))))
+      }
+    }
+
+    "create a variable whose range is all the tuples of the targets, with * when the targets have *" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val e1 = Flip(0.5)
+      val e21 = Constant(1)
+      val e22 = Constant(2)
+      val e3 = Dist(0.4 -> e21, 0.6 -> e22)
+      val pr = new Problem(cc)
+      pr.add(e1)
+      pr.add(e21)
+      pr.add(e3)
+      val c1 = cc(e1)
+      val c21 = cc(e21)
+      val c3 = cc(e3)
+      c1.generateRange()
+      c21.generateRange()
+      c3.generateRange()
+      val v1 = c1.variable
+      val v3 = c3.variable
+      val v3IndexStar = v3.range.indexWhere(!_.isRegular)
+      val v3Star = v3.range(v3IndexStar)
+      val bp = new BPSolver(pr, Set(), Set(v1, v3), List())
+
+      val vs = bp.tupleVar.valueSet
+      vs.hasStar should equal (false)
+      if (bp.tupleFactor.variables(0) == v1) {
+        vs.regularValues should equal (Set(List(Regular(true), Regular(1)), List(Regular(false), Regular(1)),
+                                           List(Regular(true), v3Star), List(Regular(false), v3Star)))
+      } else {
+        vs.regularValues should equal (Set(List(Regular(1), Regular(true)), List(Regular(1), Regular(false)),
+                                           List(v3Star, Regular(true)), List(v3Star, Regular(false))))
+      }
+    }
+
+    "create a sparse factor in which regular values are mapped to the corresponding tuple and * values are mapped to *" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val e1 = Flip(0.5)
+      val e21 = Constant(1)
+      val e22 = Constant(2)
+      val e3 = Dist(0.4 -> e21, 0.6 -> e22)
+      val pr = new Problem(cc)
+      pr.add(e1)
+      pr.add(e21)
+      pr.add(e3)
+      val c1 = cc(e1)
+      val c21 = cc(e21)
+      val c3 = cc(e3)
+      c1.generateRange()
+      c21.generateRange()
+      c3.generateRange()
+      val v1 = c1.variable
+      val v3 = c3.variable
+      val bp = new BPSolver(pr, Set(), Set(v1, v3), List())
+
+      val factor = bp.tupleFactor
+      val vt = bp.tupleVar
+      factor.contents.size should equal (4)
+      val v1IndexT = v1.range.indexOf(Regular(true))
+      val v1IndexF = v1.range.indexOf(Regular(false))
+      val v3Index1 = v3.range.indexOf(Regular(1))
+      val v3IndexStar = v3.range.indexWhere(!_.isRegular)
+      val v3Star = v3.range(v3IndexStar)
+      if (factor.variables(0) == v1) {
+        val vtIndexT1 = vt.range.indexOf(Regular(List(Regular(true), Regular(1))))
+        val vtIndexF1 = vt.range.indexOf(Regular(List(Regular(false), Regular(1))))
+        val vtIndexTStar = vt.range.indexOf(Regular(List(Regular(true), v3Star)))
+        val vtIndexFStar = vt.range.indexOf(Regular(List(Regular(false), v3Star)))
+        factor.get(List(v1IndexT, v3Index1, vtIndexT1)) should equal (1.0)
+        factor.get(List(v1IndexF, v3Index1, vtIndexF1)) should equal (1.0)
+        factor.get(List(v1IndexT, v3IndexStar, vtIndexTStar)) should equal (1.0)
+        factor.get(List(v1IndexF, v3IndexStar, vtIndexFStar)) should equal (1.0)
+      } else {
+        val vtIndex1T = vt.range.indexOf(Regular(List(Regular(1), Regular(true))))
+        val vtIndex1F = vt.range.indexOf(Regular(List(Regular(1), Regular(false))))
+        val vtIndexStarT = vt.range.indexOf(Regular(List(v3IndexStar, Regular(true))))
+        val vtIndexStarF = vt.range.indexOf(Regular(List(v3IndexStar, Regular(false))))
+        factor.get(List(v3Index1, v1IndexT, vtIndex1T)) should equal (1.0)
+        factor.get(List(v3Index1, v1IndexF, vtIndex1F)) should equal (1.0)
+        factor.get(List(v3IndexStar, v1IndexT, vtIndexStarT)) should equal (1.0)
+        factor.get(List(v3IndexStar, v1IndexF, vtIndexStarF)) should equal (1.0)
+      }
+    }
+  }
+
   "Running beliefPropagation without *" when {
+
     "given a flat model with no conditions or constraints" should {
       "produce the correct result over a single element" in {
         Universe.createNew()
@@ -68,7 +205,7 @@ class BPSolverTest extends WordSpec with Matchers {
         c1.makeConstraintFactors()
         c2.makeConstraintFactors()
         c3.makeConstraintFactors()
-        pr.solve(beliefPropagation)
+        pr.solve(variableElimination)
 
         pr.globals should equal (Set(c2, c3))
         val result = multiplyAll(pr.solution)
@@ -129,10 +266,15 @@ class BPSolverTest extends WordSpec with Matchers {
         val c1Index7 = c1.variable.range.indexOf(Regular(0.7))
         val c1Index9 = c1.variable.range.indexOf(Regular(0.9))
         result.size should equal (4)
-        result.get(List(c1Index3)) should be ((0.25 * 0.3) +- 0.000000001)
-        result.get(List(c1Index5)) should be ((0.25 * 0.5) +- 0.000000001)
-        result.get(List(c1Index7)) should be ((0.25 * 0.7) +- 0.000000001)
-        result.get(List(c1Index9)) should be ((0.25 * 0.9) +- 0.000000001)
+        val x3 = 0.25 * 0.3
+        val x5 = 0.25 * 0.5
+        val x7 = 0.25 * 0.7
+        val x9 = 0.25 * 0.9
+        val z = x3 + x5 + x7 + x9
+        result.get(List(c1Index3)) should be ((x3 / z) +- 0.000000001)
+        result.get(List(c1Index5)) should be ((x5 / z) +- 0.000000001)
+        result.get(List(c1Index7)) should be ((x7 / z) +- 0.000000001)
+        result.get(List(c1Index9)) should be ((x9 / z) +- 0.000000001)
       }
     }
 
@@ -168,10 +310,15 @@ class BPSolverTest extends WordSpec with Matchers {
         val c1Index7 = c1.variable.range.indexOf(Regular(0.7))
         val c1Index9 = c1.variable.range.indexOf(Regular(0.9))
         result.size should equal (4)
-        result.get(List(c1Index3)) should be ((0.25 * (0.3 * 0.5 + 0.7 * 0.2)) +- 0.000000001)
-        result.get(List(c1Index5)) should be ((0.25 * (0.5 * 0.5 + 0.5 * 0.2)) +- 0.000000001)
-        result.get(List(c1Index7)) should be ((0.25 * (0.7 * 0.5 + 0.3 * 0.2)) +- 0.000000001)
-        result.get(List(c1Index9)) should be ((0.25 * (0.9 * 0.5 + 0.1 * 0.2)) +- 0.000000001)
+        val x3 = 0.25 * (0.3 * 0.5 + 0.7 * 0.2)
+        val x5 = 0.25 * (0.5 * 0.5 + 0.5 * 0.2)
+        val x7 = 0.25 * (0.7 * 0.5 + 0.3 * 0.2)
+        val x9 = 0.25 * (0.9 * 0.5 + 0.1 * 0.2)
+        val z = x3 + x5 + x7 + x9
+        result.get(List(c1Index3)) should be (x3 / z +- 0.000000001)
+        result.get(List(c1Index5)) should be (x5 / z +- 0.000000001)
+        result.get(List(c1Index7)) should be (x7 / z +- 0.000000001)
+        result.get(List(c1Index9)) should be (x9 / z +- 0.000000001)
       }
     }
 
@@ -208,10 +355,15 @@ class BPSolverTest extends WordSpec with Matchers {
         val c1Index7 = c1.variable.range.indexOf(Regular(0.7))
         val c1Index9 = c1.variable.range.indexOf(Regular(0.9))
         result.size should equal (4)
-        result.get(List(c1Index3)) should be ((0.25 * (0.3 * 0.5 * 0.4 + 0.7 * 0.2 * 0.1)) +- 0.000000001)
-        result.get(List(c1Index5)) should be ((0.25 * (0.5 * 0.5 * 0.4 + 0.5 * 0.2 * 0.1)) +- 0.000000001)
-        result.get(List(c1Index7)) should be ((0.25 * (0.7 * 0.5 * 0.4 + 0.3 * 0.2 * 0.1)) +- 0.000000001)
-        result.get(List(c1Index9)) should be ((0.25 * (0.9 * 0.5 * 0.4 + 0.1 * 0.2 * 0.1)) +- 0.000000001)
+        val x3 = 0.25 * (0.3 * 0.5 * 0.4 + 0.7 * 0.2 * 0.1)
+        val x5 = 0.25 * (0.5 * 0.5 * 0.4 + 0.5 * 0.2 * 0.1)
+        val x7 = 0.25 * (0.7 * 0.5 * 0.4 + 0.3 * 0.2 * 0.1)
+        val x9 = 0.25 * (0.9 * 0.5 * 0.4 + 0.1 * 0.2 * 0.1)
+        val z = x3 + x5 + x7 + x9
+        result.get(List(c1Index3)) should be (x3 / z +- 0.000000001)
+        result.get(List(c1Index5)) should be (x5 / z +- 0.000000001)
+        result.get(List(c1Index7)) should be (x7 / z +- 0.000000001)
+        result.get(List(c1Index9)) should be (x9 / z +- 0.000000001)
       }
     }
 
@@ -248,10 +400,15 @@ class BPSolverTest extends WordSpec with Matchers {
         val c1Index7 = c1.variable.range.indexOf(Regular(0.7))
         val c1Index9 = c1.variable.range.indexOf(Regular(0.9))
         result.size should equal (4)
-        result.get(List(c1Index3)) should be ((0.25 * (0.3 * 0.5 * 0.4 + 0.7 * 0.2 * 0.1)) +- 0.000000001)
-        result.get(List(c1Index5)) should be ((0.25 * (0.5 * 0.5 * 0.4 + 0.5 * 0.2 * 0.1)) +- 0.000000001)
-        result.get(List(c1Index7)) should be ((0.25 * (0.7 * 0.5 * 0.4 + 0.3 * 0.2 * 0.1)) +- 0.000000001)
-        result.get(List(c1Index9)) should be ((0.25 * (0.9 * 0.5 * 0.4 + 0.1 * 0.2 * 0.1)) +- 0.000000001)
+        val x3 = 0.25 * (0.3 * 0.5 * 0.4 + 0.7 * 0.2 * 0.1)
+        val x5 = 0.25 * (0.5 * 0.5 * 0.4 + 0.5 * 0.2 * 0.1)
+        val x7 = 0.25 * (0.7 * 0.5 * 0.4 + 0.3 * 0.2 * 0.1)
+        val x9 = 0.25 * (0.9 * 0.5 * 0.4 + 0.1 * 0.2 * 0.1)
+        val z = x3 + x5 + x7 + x9
+        result.get(List(c1Index3)) should be (x3 / z +- 0.000000001)
+        result.get(List(c1Index5)) should be (x5 / z +- 0.000000001)
+        result.get(List(c1Index7)) should be (x7 / z +- 0.000000001)
+        result.get(List(c1Index9)) should be (x9 / z +- 0.000000001)
       }
     }
 
@@ -287,8 +444,11 @@ class BPSolverTest extends WordSpec with Matchers {
         val c2Index1 = c2.variable.range.indexOf(Regular(ec1))
         val c2Index2 = c2.variable.range.indexOf(Regular(ec2))
         result.size should equal (2)
-        result.get(List(c2Index1)) should be ((0.8 * 0.6) +- 0.000000001)
-        result.get(List(c2Index2)) should be ((0.2 * 0.3) +- 0.000000001)
+        val x1 = (0.8 * 0.6)
+        val x2 = (0.2 * 0.3)
+        val z = x1 + x2
+        result.get(List(c2Index1)) should be ((x1 / z) +- 0.000000001)
+        result.get(List(c2Index2)) should be ((x2 / z) +- 0.000000001)
       }
     }
 
@@ -392,7 +552,7 @@ class BPSolverTest extends WordSpec with Matchers {
       val fIndexF = cf.variable.range.indexOf(Regular(false))
       val pT = result.get(List(fIndexT))
       val pF = result.get(List(fIndexF))
-      (pT / (pT + pF)) should be (0.6 +- 0.000000001)
+      (pT / (pT + pF)) should be (0.6 +- 0.01)
     }
 
     "with a model using chain and no conditions or constraints, when the outcomes are at the top level, produce the correct answer" in {
@@ -619,7 +779,7 @@ class BPSolverTest extends WordSpec with Matchers {
       val c1IndexF = c1.variable.range.indexOf(Regular(false))
       val pT = result.get(List(c1IndexT))
       val pF = result.get(List(c1IndexF))
-      (pT / (pT + pF)) should be (0.3 +- 0.000000001)
+      (pT / (pT + pF)) should be (0.3 +- 0.01)
     }
 
     "with a model using chain and a condition on one of the outcome elements, when the outcomes are nested, correctly condition the result" in {
@@ -700,7 +860,7 @@ class BPSolverTest extends WordSpec with Matchers {
       val c1IndexF = c1.variable.range.indexOf(Regular(false))
       val pT = result.get(List(c1IndexT))
       val pF = result.get(List(c1IndexF))
-      (pT / (pT + pF)) should be (0.3 +- 0.000000001)
+      (pT / (pT + pF)) should be (0.3 +- 0.01)
     }
 
   }

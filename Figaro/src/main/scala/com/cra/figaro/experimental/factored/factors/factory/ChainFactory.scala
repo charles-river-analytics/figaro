@@ -1,13 +1,13 @@
 /*
  * ChainFactory.scala
  * Create a factor from a Chain element.
- * 
+ *
  * Created By:      Glenn Takata (gtakata@cra.com)
  * Creation Date:   Mar 22, 2015
- * 
+ *
  * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 package com.cra.figaro.experimental.factored.factors.factory
@@ -88,7 +88,7 @@ object ChainFactory {
     factor
   }
 
-  private def makeCares[U](factor: SparseFactor[Double], parentIndex: Int, outcomeVar: Variable[U], 
+  private def makeCares[U](factor: ConditionalSelector[Double], parentIndex: Int, outcomeVar: Variable[U],
       outputVar: Variable[U], choices: Set[U], selector: Factor[Double])(implicit mapper: PointMapper[U]): Unit = {
     // We care to match up overallVar with outcomeVar
     val outputSize = outputVar.size
@@ -105,7 +105,7 @@ object ChainFactory {
           else 0.0
         } else if (!outputVal.isRegular && !outcomeVal.isRegular) 1.0
         else 0.0
-        
+
       val selectorIndex = parentIndex * outputSize + k
       selector.set(List(parentIndex, selectorIndex, k), 1.0)
       factor.set(List(selectorIndex, j), entry)

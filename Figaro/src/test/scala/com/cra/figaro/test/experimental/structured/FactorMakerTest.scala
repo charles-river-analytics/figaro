@@ -17,8 +17,243 @@ import com.cra.figaro.util.HashMultiSet
 import com.cra.figaro.library.atomic.discrete.FromRange
 import com.cra.figaro.library.collection.MakeArray
 import com.cra.figaro.library.compound.FoldLeft
+import com.cra.figaro.experimental.structured.factory.Factory.{makeTupleVarAndFactor, makeConditionalSelector}
 
 class FactorMakerTest extends WordSpec with Matchers {
+  "Making a tuple variable and factor for a set of variables" should {
+    "create a factor whose variables are the targets plus a tuple variable" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val e1 = Flip(0.5)
+      val e2 = Constant(1)
+      val pr = new Problem(cc)
+      pr.add(e1)
+      pr.add(e2)
+      val c1 = cc(e1)
+      val c2 = cc(e2)
+      c1.generateRange()
+      c2.generateRange()
+      val v1 = c1.variable
+      val v2 = c2.variable
+      val (tupleVar, tupleFactor) = makeTupleVarAndFactor(cc, v1, v2)
+
+      val vars = tupleFactor.variables
+      vars.size should equal (3)
+      vars.contains(v1) should equal (true)
+      vars.contains(v2) should equal (true)
+      vars.contains(tupleVar) should equal (true)
+    }
+
+    "create a variable whose range is all the tuples of the extended values of the targets" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val e1 = Flip(0.5)
+      val e21 = Constant(1)
+      val e22 = Constant(2)
+      val e3 = Dist(0.4 -> e21, 0.6 -> e22)
+      val pr = new Problem(cc)
+      pr.add(e1)
+      pr.add(e21)
+      pr.add(e3)
+      val c1 = cc(e1)
+      val c21 = cc(e21)
+      val c3 = cc(e3)
+      c1.generateRange()
+      c21.generateRange()
+      c3.generateRange()
+      val v1 = c1.variable
+      val v3 = c3.variable
+      val (tupleVar, tupleFactor) = makeTupleVarAndFactor(cc, v1, v3)
+
+      val vs = tupleVar.valueSet
+      vs.hasStar should equal (false)
+      vs.regularValues.size should equal (4)
+      if (tupleFactor.variables(0) == v1) {
+        vs.regularValues.contains(List(Regular(true), Regular(1)))
+        vs.regularValues.contains(List(Regular(false), Regular(1)))
+        vs.regularValues.exists(v => v(0) == Regular(true) && !v(1).isRegular) should equal (true)
+        vs.regularValues.exists(v => v(0) == Regular(false) && !v(1).isRegular) should equal (true)
+      } else {
+        vs.regularValues.contains(List(Regular(1), Regular(true)))
+        vs.regularValues.contains(List(Regular(1), Regular(false)))
+        vs.regularValues.exists(v => v(1) == Regular(true) && !v(0).isRegular) should equal (true)
+        vs.regularValues.exists(v => v(1) == Regular(false) && !v(0).isRegular) should equal (true)
+      }
+    }
+
+    "create a sparse factor in which extended values are mapped to the corresponding list" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val e1 = Flip(0.5)
+      val e21 = Constant(1)
+      val e22 = Constant(2)
+      val e3 = Dist(0.4 -> e21, 0.6 -> e22)
+      val pr = new Problem(cc)
+      pr.add(e1)
+      pr.add(e21)
+      pr.add(e3)
+      val c1 = cc(e1)
+      val c21 = cc(e21)
+      val c3 = cc(e3)
+      c1.generateRange()
+      c21.generateRange()
+      c3.generateRange()
+      val v1 = c1.variable
+      val v3 = c3.variable
+      val (tupleVar, tupleFactor) = makeTupleVarAndFactor(cc, v1, v3)
+
+      tupleFactor.contents.size should equal (4)
+      val v1IndexT = v1.range.indexOf(Regular(true))
+      val v1IndexF = v1.range.indexOf(Regular(false))
+      val v3Index1 = v3.range.indexOf(Regular(1))
+      val v3IndexStar = v3.range.indexWhere(!_.isRegular)
+      if (tupleFactor.variables(0) == v1) {
+        val vtIndexT1 = tupleVar.range.indexOf(Regular(List(Regular(true), Regular(1))))
+        val vtIndexF1 = tupleVar.range.indexOf(Regular(List(Regular(false), Regular(1))))
+        val vtIndexTStar = tupleVar.range.indexWhere(xv => xv.value(0) == Regular(true) && !xv.value(1).isRegular)
+        val vtIndexFStar = tupleVar.range.indexWhere(xv => xv.value(0) == Regular(false) && !xv.value(1).isRegular)
+        tupleFactor.get(List(v1IndexT, v3Index1, vtIndexT1)) should equal (1.0)
+        tupleFactor.get(List(v1IndexF, v3Index1, vtIndexF1)) should equal (1.0)
+        tupleFactor.get(List(v1IndexT, v3IndexStar, vtIndexTStar)) should equal (1.0)
+        tupleFactor.get(List(v1IndexF, v3IndexStar, vtIndexFStar)) should equal (1.0)
+      } else {
+        val vtIndex1T = tupleVar.range.indexOf(Regular(List(Regular(1), Regular(true))))
+        val vtIndex1F = tupleVar.range.indexOf(Regular(List(Regular(1), Regular(false))))
+        val vtIndexStarT = tupleVar.range.indexWhere(xv => xv.value(1) == Regular(true) && !xv.value(0).isRegular)
+        val vtIndexStarF = tupleVar.range.indexWhere(xv => xv.value(1) == Regular(false) && !xv.value(0).isRegular)
+        tupleFactor.get(List(v3Index1, v1IndexT, vtIndex1T)) should equal (1.0)
+        tupleFactor.get(List(v3Index1, v1IndexF, vtIndex1F)) should equal (1.0)
+        tupleFactor.get(List(v3IndexStar, v1IndexT, vtIndexStarT)) should equal (1.0)
+        tupleFactor.get(List(v3IndexStar, v1IndexF, vtIndexStarF)) should equal (1.0)
+      }
+    }
+  }
+
+  "Making a conditional selector" should {
+    "create a factor whose variables are the pair and the outcome" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val e1 = Flip(0.5)
+      val e2 = Select(0.2 -> 1, 0.3 -> 2, 0.5 -> 3)
+      val e3 = Select(0.4 -> 1, 0.6 -> 2)
+      val pr = new Problem(cc)
+      pr.add(e1)
+      pr.add(e2)
+      pr.add(e3)
+      val c1 = cc(e1)
+      val c2 = cc(e2)
+      val c3 = cc(e3)
+      c1.generateRange()
+      c2.generateRange()
+      c3.generateRange()
+      val v1 = c1.variable
+      val v2 = c2.variable
+      val v3 = c3.variable
+      val (tupleVar, tupleFactor) = makeTupleVarAndFactor(cc, v1, v2)
+      val selector = makeConditionalSelector(tupleVar, Regular(true), v3)
+
+      selector.variables should equal (List(tupleVar, v3))
+    }
+
+    "without *, create a factor with the correct cares and don't cares" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val e1 = Flip(0.5)
+      val e2 = Select(0.2 -> 1, 0.3 -> 2, 0.5 -> 3)
+      val e3 = Select(0.4 -> 1, 0.6 -> 2)
+      val pr = new Problem(cc)
+      pr.add(e1)
+      pr.add(e2)
+      pr.add(e3)
+      val c1 = cc(e1)
+      val c2 = cc(e2)
+      val c3 = cc(e3)
+      c1.generateRange()
+      c2.generateRange()
+      c3.generateRange()
+      val v1 = c1.variable
+      val v2 = c2.variable
+      val v3 = c3.variable
+      val (tupleVar, tupleFactor) = makeTupleVarAndFactor(cc, v1, v2)
+      val selector = makeConditionalSelector(tupleVar, Regular(true), v3)
+
+      val ctIndexT2 = tupleVar.range.indexOf(Regular(List(Regular(true), Regular(2))))
+      val ctIndexF2 = tupleVar.range.indexOf(Regular(List(Regular(false), Regular(2))))
+      val ctIndexT3 = tupleVar.range.indexOf(Regular(List(Regular(true), Regular(3))))
+      val ctIndexF3 = tupleVar.range.indexOf(Regular(List(Regular(false), Regular(3))))
+      val c3Index2 = v3.range.indexOf(Regular(2))
+      selector.get(List(ctIndexT2, c3Index2)) should equal (1.0)
+      selector.get(List(ctIndexT3, c3Index2)) should equal (0.0)
+      selector.get(List(ctIndexF2, c3Index2)) should equal (1.0)
+      selector.get(List(ctIndexF3, c3Index2)) should equal (1.0)
+
+    }
+
+    "with *, create a factor with the correct cares and don't cares" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val e0t = Constant(true)
+      val e0f = Constant(false)
+      val e1 = Dist(0.5 -> e0t, 0.5 -> e0f)
+      val e41 = Constant(1)
+      val e42 = Constant(2)
+      val e43 = Constant(3)
+      val e2 = Dist(0.2 -> e41, 0.3 -> e42, 0.5 -> e43)
+      val e3 = Dist(0.4 -> e41, 0.6 -> e42)
+      val pr = new Problem(cc)
+      pr.add(e0f)
+      pr.add(e1)
+      pr.add(e2)
+      pr.add(e42)
+      pr.add(e43)
+      pr.add(e3)
+      val c0f = cc(e0f)
+      val c1 = cc(e1)
+      val c2 = cc(e2)
+      val c42 = cc(e42)
+      val c43 = cc(e43)
+      val c3 = cc(e3)
+      c0f.generateRange()
+      c1.generateRange()
+      c42.generateRange()
+      c43.generateRange()
+      c2.generateRange()
+      c3.generateRange()
+      val v1 = c1.variable
+      val v2 = c2.variable
+      val v3 = c3.variable
+      val (tupleVar, tupleFactor) = makeTupleVarAndFactor(cc, v1, v2)
+
+      val c1IndexStar = v1.range.indexWhere(!_.isRegular)
+      val c1Star = v1.range(c1IndexStar)
+      val c3IndexStar = v1.range.indexWhere(!_.isRegular)
+      val c3Star = v3.range(c3IndexStar)
+      val selectorF = makeConditionalSelector(tupleVar, Regular(false), v3)
+      val selectorStar = makeConditionalSelector(tupleVar, c1Star, v3)
+      val ctIndexStar2 = tupleVar.range.indexOf(Regular(List(c1Star, Regular(2))))
+      val ctIndexF2 = tupleVar.range.indexOf(Regular(List(Regular(false), Regular(2))))
+      val ctIndexStar3 = tupleVar.range.indexOf(Regular(List(c1Star, Regular(3))))
+      val ctIndexStarStar = tupleVar.range.indexOf(Regular(List(c1Star, c3Star)))
+      val ctIndexF3 = tupleVar.range.indexOf(Regular(List(Regular(false), Regular(3))))
+      val c3Index2 = v3.range.indexOf(Regular(2))
+      selectorF.get(List(ctIndexF2, c3Index2)) should equal (1.0)
+      selectorF.get(List(ctIndexF3, c3Index2)) should equal (0.0)
+      selectorF.get(List(ctIndexF2, c3IndexStar)) should equal (0.0)
+      selectorF.get(List(ctIndexStar2, c3Index2)) should equal (1.0)
+      selectorF.get(List(ctIndexStar3, c3Index2)) should equal (1.0)
+      selectorF.get(List(ctIndexStar2, c3IndexStar)) should equal (1.0)
+      selectorStar.get(List(ctIndexF2, c3Index2)) should equal (1.0)
+      selectorStar.get(List(ctIndexF3, c3Index2)) should equal (1.0)
+      selectorStar.get(List(ctIndexF2, c3IndexStar)) should equal (1.0)
+      // When the parent value is *, the only possible value for the outcome is *
+      selectorStar.get(List(ctIndexStar2, c3Index2)) should equal (0.0)
+      selectorStar.get(List(ctIndexStar3, c3Index2)) should equal (0.0)
+      selectorStar.get(List(ctIndexStar2, c3IndexStar)) should equal (0.0)
+      selectorStar.get(List(ctIndexStarStar, c3IndexStar)) should equal (1.0)
+
+    }
+  }
+
   "Making factors from an element" when {
 
     "given a constant" should {
@@ -604,12 +839,14 @@ class FactorMakerTest extends WordSpec with Matchers {
           c2.generateRange()
           c2.makeNonConstraintFactors(false)
 
-          val factors = c2.nonConstraintFactors
+          val tupleFactor :: factors = c2.nonConstraintFactors
+          val List(var1, var2, tupleVar) = tupleFactor.variables
+          var1 should equal (c1.variable)
+          var2 should equal (c2.variable)
           factors.size should equal (ParticleGenerator.defaultTotalSamples)
           val vars = factors(0).variables
-          vars.size should equal (3)
-          vars(0) should equal (c1.variable)
-          vars(2) should equal (c2.variable)
+          vars.size should equal (2)
+          vars(0) should equal (tupleVar)
       }
     }
 
@@ -656,8 +893,7 @@ class FactorMakerTest extends WordSpec with Matchers {
     }
 
     "given an atomic dist" should {
-      "produce a list of factors, one for each outcome and one representing the choice over outcomes; " +
-        "the factor for an outcome matches the outcome value to the dist value" in {
+      "produce a list of factors, one representing the choice over outcomes, a tuple factor, and a conditional selector for each outcome" in {
           Universe.createNew()
           val cc = new ComponentCollection
           val pr = new Problem(cc)
@@ -677,32 +913,41 @@ class FactorMakerTest extends WordSpec with Matchers {
 
           val v1Vals = c1.variable.range
           val v3Vals = c3.variable.range
-          val v1TrueIndex = v1Vals.indexOf(Regular(true))
-          val v1FalseIndex = v1Vals.indexOf(Regular(false))
-          val v3TrueIndex = v3Vals.indexOf(Regular(true))
-          val v3FalseIndex = v3Vals.indexOf(Regular(false))
+          val v1IndexT = v1Vals.indexOf(Regular(true))
+          val v1IndexF = v1Vals.indexOf(Regular(false))
+          val v3IndexT = v3Vals.indexOf(Regular(true))
+          val v3IndexF = v3Vals.indexOf(Regular(false))
           val v1Index = v3.outcomes.indexOf(v1)
           val v2Index = v3.outcomes.indexOf(v2)
-          val selectFactor :: outcomeFactors = c3.nonConstraintFactors
+          val selectFactor :: tupleFactor :: outcomeFactors = c3.nonConstraintFactors
+          tupleFactor.variables.size should equal (3)
+          val selectVar = tupleFactor.variables(0)
+          tupleFactor.variables(1) should equal (c3.variable)
+          val tupleVar = tupleFactor.variables(2)
           outcomeFactors.size should equal(2)
+          outcomeFactors(0).variables(0) should equal (tupleVar)
+          outcomeFactors(1).variables(0) should equal (tupleVar)
+          val vtIndex0T = tupleVar.range.indexOf(Regular(List(Regular(0), Regular(true))))
+          val vtIndex0F = tupleVar.range.indexOf(Regular(List(Regular(0), Regular(false))))
+          val vtIndex1T = tupleVar.range.indexOf(Regular(List(Regular(1), Regular(true))))
+          val vtIndex1F = tupleVar.range.indexOf(Regular(List(Regular(1), Regular(false))))
           val v1Factor = outcomeFactors(v1Index)
           val v2Factor = outcomeFactors(v2Index)
           selectFactor.get(List(v1Index)) should equal(0.3)
           selectFactor.get(List(v2Index)) should equal(0.7)
-          v1Factor.get(List(v1Index, v1TrueIndex, v3TrueIndex)) should equal(1.0)
-          v1Factor.get(List(v1Index, v1FalseIndex, v3TrueIndex)) should equal(0.0)
-          v1Factor.get(List(v1Index, v1TrueIndex, v3FalseIndex)) should equal(0.0)
-          v1Factor.get(List(v1Index, v1FalseIndex, v3FalseIndex)) should equal(1.0)
-          for { i <- 0 to 1; j <- 0 to 1 } v1Factor.get(List(v2Index, i, j)) should equal(1.0)
-          v2Factor.get(List(v2Index, 0, v3FalseIndex)) should equal(1.0)
-          v2Factor.get(List(v2Index, 0, v3TrueIndex)) should equal(0.0)
-          for { i <- 0 to 1} v2Factor.get(List(v1Index, 0, i)) should equal(1.0)
+          v1Factor.get(List(vtIndex0T, v3IndexT)) should equal(1.0)
+          v1Factor.get(List(vtIndex0T, v3IndexF)) should equal(0.0)
+          v1Factor.get(List(vtIndex0F, v3IndexT)) should equal(0.0)
+          v1Factor.get(List(vtIndex0F, v3IndexF)) should equal(1.0)
+          v1Factor.get(List(vtIndex1T, v3IndexT)) should equal(1.0)
+          v1Factor.get(List(vtIndex1T, v3IndexF)) should equal(1.0)
+          v1Factor.get(List(vtIndex1F, v3IndexT)) should equal(1.0)
+          v1Factor.get(List(vtIndex1F, v3IndexF)) should equal(1.0)
       }
     }
 
     "given a compound dist" should {
-      "produce a list of factors, one for each outcome and one representing the choice over outcomes; " +
-        "the factor for an outcome matches the outcome value to the dist value" in {
+      "produce a list of factors, one representing the choice over outcomes, a tuple factor, and a conditional selector for each outcome" in {
           Universe.createNew()
           val cc = new ComponentCollection
           val pr = new Problem(cc)
@@ -743,10 +988,23 @@ class FactorMakerTest extends WordSpec with Matchers {
           val v3t = v3Vals.indexOf(Regular(true))
           val v5f = v5Vals.indexOf(Regular(false))
           val v5t = v5Vals.indexOf(Regular(true))
-          val selectFactor :: outcomeFactors = c5.nonConstraintFactors
+          val selectFactor :: tupleFactor :: outcomeFactors = c5.nonConstraintFactors
+          tupleFactor.variables.size should equal (3)
+          val selectVar = tupleFactor.variables(0)
+          tupleFactor.variables(1) should equal (c5.variable)
+          val tupleVar = tupleFactor.variables(2)
           outcomeFactors.size should equal(2)
+          outcomeFactors(0).variables(0) should equal (tupleVar)
+          outcomeFactors(1).variables(0) should equal (tupleVar)
+          val vtIndex0T = tupleVar.range.indexOf(Regular(List(Regular(0), Regular(true))))
+          val vtIndex0F = tupleVar.range.indexOf(Regular(List(Regular(0), Regular(false))))
+          val vtIndex1T = tupleVar.range.indexOf(Regular(List(Regular(1), Regular(true))))
+          val vtIndex1F = tupleVar.range.indexOf(Regular(List(Regular(1), Regular(false))))
           val v1Factor = outcomeFactors(v3Index)
           val v2Factor = outcomeFactors(v4Index)
+          selectFactor.variables(0) should equal (c1.variable)
+          selectFactor.variables(1) should equal (c2.variable)
+          selectFactor.variables(2) should equal (selectVar)
           selectFactor.get(List(v102, v204, 0)) should be(0.2 / 0.6 +- 0.0001)
           selectFactor.get(List(v102, v204, 1)) should be(0.4 / 0.6 +- 0.0001)
           selectFactor.get(List(v102, v206, 0)) should be(0.2 / 0.8 +- 0.0001)
@@ -755,14 +1013,14 @@ class FactorMakerTest extends WordSpec with Matchers {
           selectFactor.get(List(v108, v204, 1)) should be(0.4 / 1.2 +- 0.0001)
           selectFactor.get(List(v108, v206, 0)) should be(0.8 / 1.4 +- 0.0001)
           selectFactor.get(List(v108, v206, 1)) should be(0.6 / 1.4 +- 0.0001)
-          v1Factor.get(List(0, v3t, v5t)) should equal(1.0)
-          v1Factor.get(List(0, v3f, v5t)) should equal(0.0)
-          v1Factor.get(List(0, v3t, v5f)) should equal(0.0)
-          v1Factor.get(List(0, v3f, v5f)) should equal(1.0)
-          for { i <- 0 to 1; j <- 0 to 1 } v1Factor.get(List(1, i, j)) should equal(1.0)
-          v2Factor.get(List(1, 0, v5f)) should equal(1.0)
-          v2Factor.get(List(1, 0, v5t)) should equal(0.0)
-          for { i <- 0 to 0; j <- 0 to 1 } v2Factor.get(List(0, i, j)) should equal(1.0)
+          v1Factor.get(List(vtIndex0T, v5t)) should equal(1.0)
+          v1Factor.get(List(vtIndex0F, v5t)) should equal(0.0)
+          v1Factor.get(List(vtIndex0T, v5f)) should equal(0.0)
+          v1Factor.get(List(vtIndex0F, v5f)) should equal(1.0)
+          v1Factor.get(List(vtIndex1T, v5t)) should equal(1.0)
+          v1Factor.get(List(vtIndex1F, v5t)) should equal(1.0)
+          v1Factor.get(List(vtIndex1T, v5f)) should equal(1.0)
+          v1Factor.get(List(vtIndex1F, v5f)) should equal(1.0)
         }
     }
 
@@ -798,7 +1056,7 @@ class FactorMakerTest extends WordSpec with Matchers {
         val v41 = v4Vals indexOf Regular(1)
         val v42 = v4Vals indexOf Regular(2)
         val v43 = v4Vals indexOf Regular(3)
-        val selectors: List[Factor[Double]] = c4.nonConstraintFactors
+        val tupleFactor :: selectors = c4.nonConstraintFactors
         selectors.size should equal (2)
         val (trueSelector, falseSelector) =
           if (v1t == 0) {
@@ -809,8 +1067,11 @@ class FactorMakerTest extends WordSpec with Matchers {
             assert(v1f == 0)
             (selectors(1), selectors(0))
         }
-        trueSelector.variables should equal (List(c1.variable, c2.variable, c4.variable))
-        falseSelector.variables should equal (List(c1.variable, c3.variable, c4.variable))
+        tupleFactor.variables(0) should equal (c1.variable)
+        tupleFactor.variables(1) should equal (c4.variable)
+        val tupleVar = tupleFactor.variables(2)
+        trueSelector.variables should equal (List(tupleVar, c2.variable))
+        falseSelector.variables should equal (List(tupleVar, c3.variable))
         trueSelector.size should equal (12)
         falseSelector.size should equal (6)
         val v1TrueIndex = c1.variable.range.indexOf(Regular(true))
@@ -820,24 +1081,30 @@ class FactorMakerTest extends WordSpec with Matchers {
         val v41Index = c4.variable.range.indexOf(Regular(1))
         val v42Index = c4.variable.range.indexOf(Regular(2))
         val v43Index = c4.variable.range.indexOf(Regular(3))
-        trueSelector.get(List(v1TrueIndex, v21Index, v41Index)) should equal (1.0)
-        trueSelector.get(List(v1TrueIndex, v21Index, v42Index)) should equal (0.0)
-        trueSelector.get(List(v1TrueIndex, v21Index, v43Index)) should equal (0.0)
-        trueSelector.get(List(v1TrueIndex, v22Index, v41Index)) should equal (0.0)
-        trueSelector.get(List(v1TrueIndex, v22Index, v42Index)) should equal (1.0)
-        trueSelector.get(List(v1TrueIndex, v22Index, v43Index)) should equal (0.0)
-        trueSelector.get(List(v1FalseIndex, v21Index, v41Index)) should equal (1.0)
-        trueSelector.get(List(v1FalseIndex, v21Index, v42Index)) should equal (1.0)
-        trueSelector.get(List(v1FalseIndex, v21Index, v43Index)) should equal (1.0)
-        trueSelector.get(List(v1FalseIndex, v22Index, v41Index)) should equal (1.0)
-        trueSelector.get(List(v1FalseIndex, v22Index, v42Index)) should equal (1.0)
-        trueSelector.get(List(v1FalseIndex, v22Index, v43Index)) should equal (1.0)
-        falseSelector.get(List(v1TrueIndex, 0, v41Index)) should equal (1.0)
-        falseSelector.get(List(v1TrueIndex, 0, v42Index)) should equal (1.0)
-        falseSelector.get(List(v1TrueIndex, 0, v43Index)) should equal (1.0)
-        falseSelector.get(List(v1FalseIndex, 0, v41Index)) should equal (0.0)
-        falseSelector.get(List(v1FalseIndex, 0, v42Index)) should equal (0.0)
-        falseSelector.get(List(v1FalseIndex, 0, v43Index)) should equal (1.0)
+        val vtIndexT1 = tupleVar.range.indexOf(Regular(List(Regular(true), Regular(1))))
+        val vtIndexF1 = tupleVar.range.indexOf(Regular(List(Regular(false), Regular(1))))
+        val vtIndexT2 = tupleVar.range.indexOf(Regular(List(Regular(true), Regular(2))))
+        val vtIndexF2 = tupleVar.range.indexOf(Regular(List(Regular(false), Regular(2))))
+        val vtIndexT3 = tupleVar.range.indexOf(Regular(List(Regular(true), Regular(3))))
+        val vtIndexF3 = tupleVar.range.indexOf(Regular(List(Regular(false), Regular(3))))
+        trueSelector.get(List(vtIndexT1, v21Index)) should equal (1.0)
+        trueSelector.get(List(vtIndexT1, v22Index)) should equal (0.0)
+        trueSelector.get(List(vtIndexT2, v21Index)) should equal (0.0)
+        trueSelector.get(List(vtIndexT2, v22Index)) should equal (1.0)
+        trueSelector.get(List(vtIndexT3, v21Index)) should equal (0.0)
+        trueSelector.get(List(vtIndexT3, v22Index)) should equal (0.0)
+        trueSelector.get(List(vtIndexF1, v21Index)) should equal (1.0)
+        trueSelector.get(List(vtIndexF1, v22Index)) should equal (1.0)
+        trueSelector.get(List(vtIndexF2, v21Index)) should equal (1.0)
+        trueSelector.get(List(vtIndexF2, v22Index)) should equal (1.0)
+        trueSelector.get(List(vtIndexF3, v21Index)) should equal (1.0)
+        trueSelector.get(List(vtIndexF3, v22Index)) should equal (1.0)
+        falseSelector.get(List(vtIndexT1, 0)) should equal (1.0)
+        falseSelector.get(List(vtIndexT2, 0)) should equal (1.0)
+        falseSelector.get(List(vtIndexT3, 0)) should equal (1.0)
+        falseSelector.get(List(vtIndexF1, 0)) should equal (0.0)
+        falseSelector.get(List(vtIndexF2, 0)) should equal (0.0)
+        falseSelector.get(List(vtIndexF3, 0)) should equal (1.0)
       }
 
       "produce a conditional selector for each non-temporary parent value" in {
@@ -871,7 +1138,7 @@ class FactorMakerTest extends WordSpec with Matchers {
         val v41 = v4Vals indexOf Regular(1)
         val v42 = v4Vals indexOf Regular(2)
         val v43 = v4Vals indexOf Regular(3)
-        val selectors: List[Factor[Double]] = c4.nonConstraintFactors
+        val tupleFactor :: selectors = c4.nonConstraintFactors
         selectors.size should equal (2)
         val (trueSelector, falseSelector) =
           if (v1t == 0) {
@@ -882,8 +1149,11 @@ class FactorMakerTest extends WordSpec with Matchers {
             assert(v1f == 0)
             (selectors(1), selectors(0))
         }
-        trueSelector.variables should equal (List(c1.variable, c2.variable, c4.variable))
-        falseSelector.variables should equal (List(c1.variable, c3.variable, c4.variable))
+        tupleFactor.variables(0) should equal (c1.variable)
+        tupleFactor.variables(1) should equal (c4.variable)
+        val tupleVar = tupleFactor.variables(2)
+        trueSelector.variables should equal (List(tupleVar, c2.variable))
+        falseSelector.variables should equal (List(tupleVar, c3.variable))
         trueSelector.size should equal (12)
         falseSelector.size should equal (6)
         val v1TrueIndex = c1.variable.range.indexOf(Regular(true))
@@ -893,24 +1163,30 @@ class FactorMakerTest extends WordSpec with Matchers {
         val v41Index = c4.variable.range.indexOf(Regular(1))
         val v42Index = c4.variable.range.indexOf(Regular(2))
         val v43Index = c4.variable.range.indexOf(Regular(3))
-        trueSelector.get(List(v1TrueIndex, v21Index, v41Index)) should equal (1.0)
-        trueSelector.get(List(v1TrueIndex, v21Index, v42Index)) should equal (0.0)
-        trueSelector.get(List(v1TrueIndex, v21Index, v43Index)) should equal (0.0)
-        trueSelector.get(List(v1TrueIndex, v22Index, v41Index)) should equal (0.0)
-        trueSelector.get(List(v1TrueIndex, v22Index, v42Index)) should equal (1.0)
-        trueSelector.get(List(v1TrueIndex, v22Index, v43Index)) should equal (0.0)
-        trueSelector.get(List(v1FalseIndex, v21Index, v41Index)) should equal (1.0)
-        trueSelector.get(List(v1FalseIndex, v21Index, v42Index)) should equal (1.0)
-        trueSelector.get(List(v1FalseIndex, v21Index, v43Index)) should equal (1.0)
-        trueSelector.get(List(v1FalseIndex, v22Index, v41Index)) should equal (1.0)
-        trueSelector.get(List(v1FalseIndex, v22Index, v42Index)) should equal (1.0)
-        trueSelector.get(List(v1FalseIndex, v22Index, v43Index)) should equal (1.0)
-        falseSelector.get(List(v1TrueIndex, 0, v41Index)) should equal (1.0)
-        falseSelector.get(List(v1TrueIndex, 0, v42Index)) should equal (1.0)
-        falseSelector.get(List(v1TrueIndex, 0, v43Index)) should equal (1.0)
-        falseSelector.get(List(v1FalseIndex, 0, v41Index)) should equal (0.0)
-        falseSelector.get(List(v1FalseIndex, 0, v42Index)) should equal (0.0)
-        falseSelector.get(List(v1FalseIndex, 0, v43Index)) should equal (1.0)
+        val vtIndexT1 = tupleVar.range.indexOf(Regular(List(Regular(true), Regular(1))))
+        val vtIndexT2 = tupleVar.range.indexOf(Regular(List(Regular(true), Regular(2))))
+        val vtIndexT3 = tupleVar.range.indexOf(Regular(List(Regular(true), Regular(3))))
+        val vtIndexF1 = tupleVar.range.indexOf(Regular(List(Regular(false), Regular(1))))
+        val vtIndexF2 = tupleVar.range.indexOf(Regular(List(Regular(false), Regular(2))))
+        val vtIndexF3 = tupleVar.range.indexOf(Regular(List(Regular(false), Regular(3))))
+        trueSelector.get(List(vtIndexT1, v21Index)) should equal (1.0)
+        trueSelector.get(List(vtIndexT1, v22Index)) should equal (0.0)
+        trueSelector.get(List(vtIndexT2, v21Index)) should equal (0.0)
+        trueSelector.get(List(vtIndexT2, v22Index)) should equal (1.0)
+        trueSelector.get(List(vtIndexT3, v21Index)) should equal (0.0)
+        trueSelector.get(List(vtIndexT3, v22Index)) should equal (0.0)
+        trueSelector.get(List(vtIndexF1, v21Index)) should equal (1.0)
+        trueSelector.get(List(vtIndexF1, v22Index)) should equal (1.0)
+        trueSelector.get(List(vtIndexF2, v21Index)) should equal (1.0)
+        trueSelector.get(List(vtIndexF2, v22Index)) should equal (1.0)
+        trueSelector.get(List(vtIndexF3, v21Index)) should equal (1.0)
+        trueSelector.get(List(vtIndexF3, v22Index)) should equal (1.0)
+        falseSelector.get(List(vtIndexT1, 0)) should equal (1.0)
+        falseSelector.get(List(vtIndexT2, 0)) should equal (1.0)
+        falseSelector.get(List(vtIndexT3, 0)) should equal (1.0)
+        falseSelector.get(List(vtIndexF1, 0)) should equal (0.0)
+        falseSelector.get(List(vtIndexF2, 0)) should equal (0.0)
+        falseSelector.get(List(vtIndexF3, 0)) should equal (1.0)
       }
     }
 
@@ -940,11 +1216,11 @@ class FactorMakerTest extends WordSpec with Matchers {
         c6.makeNonConstraintFactors()
 
         val v3Star = c3.variable.range.indexWhere(!_.isRegular)
-        val selectors = c6.nonConstraintFactors
+        val tupleFactor :: selectors = c6.nonConstraintFactors
+        val tupleVar = tupleFactor.variables(2)
         val starSelector = selectors(v3Star)
-        starSelector.variables.size should equal (3)
-        starSelector.variables(0) should equal (c3.variable)
-        starSelector.variables(2) should equal (c6.variable)
+        starSelector.variables.size should equal (2)
+        starSelector.variables(0) should equal (tupleVar)
         starSelector.variables(1).range.size should equal (1)
         starSelector.variables(1).range(0).isRegular should equal (false)
       }
@@ -1951,7 +2227,13 @@ class FactorMakerTest extends WordSpec with Matchers {
 
         // Four factors should be produced: two conditional selectors, and one for each of the possibilities
         // The conditional selector and result factors for each parent value are produced in turn
-        val factors = c3.nonConstraintFactors
+        val tupleFactor :: factors = c3.nonConstraintFactors
+        val tupleVar = tupleFactor.variables(2)
+        tupleFactor.variables(1) should equal (c3.variable)
+        val startVar = tupleFactor.variables(0)
+        startVar.valueSet.hasStar should equal (false)
+        startVar.valueSet.regularValues should equal (Set(ec1, ec2))
+
         factors.size should equal (4)
         val ec1Index = c2.variable.range.indexOf(Regular(ec1))
         val ec2Index = c2.variable.range.indexOf(Regular(ec2))
@@ -1961,38 +2243,24 @@ class FactorMakerTest extends WordSpec with Matchers {
         val ec1Result = factors(ec1Index * 2 + 1)
         val ec2Selector = factors(ec2Index * 2)
         val ec2Result = factors(ec2Index * 2 + 1)
-
-        ec1Selector.variables.size should equal (3)
-        ec1Selector.variables(0) should equal (c2.variable)
-        ec1Selector.variables(2) should equal (c3.variable)
+        val vtIndex1T = tupleVar.range.indexOf(Regular(List(Regular(ec1), Regular(true))))
+        val vtIndex1F = tupleVar.range.indexOf(Regular(List(Regular(ec1), Regular(false))))
+        val vtIndex2T = tupleVar.range.indexOf(Regular(List(Regular(ec2), Regular(true))))
+        val vtIndex2F = tupleVar.range.indexOf(Regular(List(Regular(ec2), Regular(false))))
+        ec1Selector.variables.size should equal (2)
+        ec1Selector.variables(0) should equal (tupleVar)
         ec1Selector.variables(1).range should equal (List(Regular(true)))
         ec1Selector.size should equal (4)
-        ec1Selector.get(List(ec1Index, 0, e3TrueIndex)) should equal (1.0)
-        ec1Selector.get(List(ec1Index, 0, e3FalseIndex)) should equal (0.0)
-        ec1Selector.get(List(ec2Index, 0, e3TrueIndex)) should equal (1.0)
-        ec1Selector.get(List(ec2Index, 0, e3FalseIndex)) should equal (1.0)
+        ec1Selector.get(List(vtIndex1T, 0)) should equal (1.0)
+        ec1Selector.get(List(vtIndex1F, 0)) should equal (0.0)
+        ec1Selector.get(List(vtIndex2T, 0)) should equal (1.0)
+        ec1Selector.get(List(vtIndex2F, 0)) should equal (1.0)
 
         ec1Result.variables.size should equal (2)
         ec1Result.variables(0) should equal (c11.variable)
         ec1Result.variables(1).range should equal (List(Regular(true)))
         ec1Result.size should equal (1)
         ec1Result.get(List(0, 0)) should equal (1.0)
-
-        ec2Selector.variables.size should equal (3)
-        ec2Selector.variables(0) should equal (c2.variable)
-        ec2Selector.variables(2) should equal (c3.variable)
-        ec2Selector.variables(1).range should equal (List(Regular(false)))
-        ec2Selector.size should equal (4)
-        ec2Selector.get(List(ec1Index, 0, e3TrueIndex)) should equal (1.0)
-        ec2Selector.get(List(ec1Index, 0, e3FalseIndex)) should equal (1.0)
-        ec2Selector.get(List(ec2Index, 0, e3TrueIndex)) should equal (0.0)
-        ec2Selector.get(List(ec2Index, 0, e3FalseIndex)) should equal (1.0)
-
-        ec2Result.variables.size should equal (2)
-        ec2Result.variables(0) should equal (c12.variable)
-        ec2Result.variables(1).range should equal (List(Regular(false)))
-        ec2Result.size should equal (1)
-        ec2Result.get(List(0, 0)) should equal (1.0)
       }
     }
 
@@ -2035,8 +2303,12 @@ class FactorMakerTest extends WordSpec with Matchers {
         // Two conditional selectors at the top level,
         // Three conditional selectors at the second level
         // Three result factors at the third level
-        val factors = c4.nonConstraintFactors
-        //factors.size should equal (8)
+        val topTupleFactor :: factors = c4.nonConstraintFactors
+        val topTupleVar = topTupleFactor.variables(2)
+        val topIndex3T = topTupleVar.range.indexOf(Regular(List(Regular(ec3), Regular(true))))
+        val topIndex3F = topTupleVar.range.indexOf(Regular(List(Regular(ec3), Regular(false))))
+        val topIndex4T = topTupleVar.range.indexOf(Regular(List(Regular(ec4), Regular(true))))
+        val topIndex4F = topTupleVar.range.indexOf(Regular(List(Regular(ec4), Regular(false))))
         val c23Index1 = c23.variable.range.indexOf(Regular(ec1))
         val c23Index2 = c23.variable.range.indexOf(Regular(ec2))
         val c24Index2 = c24.variable.range.indexOf(Regular(ec2))
@@ -2046,83 +2318,47 @@ class FactorMakerTest extends WordSpec with Matchers {
         val c4IndexFalse = c4.variable.range.indexOf(Regular(false))
 
         val (ec3Factors, ec4Factors) =
-          if (c3Index3 == 0) (factors.slice(0, 5), factors.slice(5, 8)) else (factors.slice(3, 8), factors.slice(0, 3))
-        val ec3Selector = ec3Factors(0)
+          if (c3Index3 == 0) (factors.slice(0, 6), factors.slice(6, 10)) else (factors.slice(4, 10), factors.slice(0, 4))
+        val ec3Selector :: ec3TupleFactor :: ec3RestFactors = ec3Factors
         val (ec31Selector, ec31Result, ec32Selector, ec32Result) =
-          if (c23Index1 == 0) (ec3Factors(1), ec3Factors(2), ec3Factors(3), ec3Factors(4))
-          else (ec3Factors(3), ec3Factors(4), ec3Factors(1), ec3Factors(2))
-        val List(ec4Selector, ec41Selector, ec41Result) = ec4Factors
+          if (c23Index1 == 0) (ec3RestFactors(0), ec3RestFactors(1), ec3RestFactors(2), ec3RestFactors(3))
+          else (ec3RestFactors(2), ec3RestFactors(3), ec3RestFactors(0), ec3RestFactors(1))
+        val List(ec4Selector, ec4TupleFactor, ec41Selector, ec41Result) = ec4Factors
 
-        ec3Selector.variables.size should equal (3)
-        ec3Selector.variables(0) should equal (c3.variable)
-        ec3Selector.variables(2) should equal (c4.variable)
+        ec3Selector.variables.size should equal (2)
+        ec3Selector.variables(0) should equal (topTupleVar)
         val ec3Var = ec3Selector.variables(1)
         ec3Var.range should equal (List(Regular(true), Regular(false)))
         val ec3VarIndexTrue = ec3Var.range.indexOf(Regular(true))
         val ec3VarIndexFalse = ec3Var.range.indexOf(Regular(false))
         ec3Selector.size should equal (8)
-        for {
-          index3 <- List(0, 1)
-          index4 <- List(0, 1)
-        } {
-          val entry = if ((index3 == ec3VarIndexTrue && index4 == c4IndexTrue) || (index3 == ec3VarIndexFalse && index4 == c4IndexFalse)) 1.0 else 0.0
-          ec3Selector.get(List(c3Index3, index3, index4)) should equal (entry)
-          ec3Selector.get(List(c3Index4, index3, index4)) should equal (1.0)
-        }
+        ec3Selector.get(List(topIndex3T, c4IndexTrue)) should equal (1.0)
+        ec3Selector.get(List(topIndex3T, c4IndexFalse)) should equal (0.0)
+        ec3Selector.get(List(topIndex3F, c4IndexTrue)) should equal (0.0)
+        ec3Selector.get(List(topIndex3F, c4IndexFalse)) should equal (1.0)
+        ec3Selector.get(List(topIndex4T, c4IndexTrue)) should equal (1.0)
+        ec3Selector.get(List(topIndex4T, c4IndexFalse)) should equal (1.0)
+        ec3Selector.get(List(topIndex4F, c4IndexTrue)) should equal (1.0)
+        ec3Selector.get(List(topIndex4F, c4IndexFalse)) should equal (1.0)
 
-        ec4Selector.variables.size should equal (3)
-        ec4Selector.variables(0) should equal (c3.variable)
-        ec4Selector.variables(2) should equal (c4.variable)
-        val ec4Var = ec4Selector.variables(1)
-        ec4Var.range should equal (List(Regular(true)))
-        ec4Selector.size should equal (4)
-        ec4Selector.get(List(c3Index3, 0, c4IndexTrue)) should equal (1.0)
-        ec4Selector.get(List(c3Index3, 0, c4IndexFalse)) should equal (1.0)
-        ec4Selector.get(List(c3Index4, 0, c4IndexTrue)) should equal (1.0)
-        ec4Selector.get(List(c3Index4, 0, c4IndexFalse)) should equal (0.0)
-
-        ec31Selector.variables.size should equal (3)
-        ec31Selector.variables(0) should equal (c23.variable)
-        ec31Selector.variables(2) should equal (ec3Var)
+        val ec3TupleVar = ec3TupleFactor.variables(2)
+        val ec3Index1T = ec3TupleVar.range.indexOf(Regular(List(Regular(ec1), Regular(true))))
+        val ec3Index1F = ec3TupleVar.range.indexOf(Regular(List(Regular(ec1), Regular(false))))
+        val ec3Index2T = ec3TupleVar.range.indexOf(Regular(List(Regular(ec2), Regular(true))))
+        val ec3Index2F = ec3TupleVar.range.indexOf(Regular(List(Regular(ec2), Regular(false))))
+        ec31Selector.variables.size should equal (2)
+        ec31Selector.variables(0) should equal (ec3TupleVar)
         val ec31Var = ec31Selector.variables(1)
         ec31Var.range should equal (List(Regular(true)))
         ec31Selector.size should equal (4)
-        ec31Selector.get(List(c23Index1, 0, ec3VarIndexTrue)) should equal (1.0)
-        ec31Selector.get(List(c23Index1, 0, ec3VarIndexFalse)) should equal (0.0)
-        ec31Selector.get(List(c23Index2, 0, ec3VarIndexTrue)) should equal (1.0)
-        ec31Selector.get(List(c23Index2, 0, ec3VarIndexFalse)) should equal (1.0)
-
-        ec32Selector.variables.size should equal (3)
-        ec32Selector.variables(0) should equal (c23.variable)
-        ec32Selector.variables(2) should equal (ec3Var)
-        val ec32Var = ec32Selector.variables(1)
-        ec32Var.range should equal (List(Regular(false)))
-        ec32Selector.size should equal (4)
-        ec32Selector.get(List(c23Index1, 0, ec3VarIndexTrue)) should equal (1.0)
-        ec32Selector.get(List(c23Index1, 0, ec3VarIndexFalse)) should equal (1.0)
-        ec32Selector.get(List(c23Index2, 0, ec3VarIndexTrue)) should equal (0.0)
-        ec32Selector.get(List(c23Index2, 0, ec3VarIndexFalse)) should equal (1.0)
-
-        ec41Selector.variables.size should equal (3)
-        ec41Selector.variables(0) should equal (c24.variable)
-        ec41Selector.variables(2) should equal (ec4Var)
-        val ec41Var = ec41Selector.variables(1)
-        ec41Var.range should equal (List(Regular(true)))
-        ec41Selector.size should equal (1)
-        ec41Selector.get(List(0, 0, 0)) should equal (1.0)
+        ec31Selector.get(List(ec3Index1T, 0)) should equal (1.0)
+        ec31Selector.get(List(ec3Index1F, 0)) should equal (0.0)
+        ec31Selector.get(List(ec3Index2T, 0)) should equal (1.0)
+        ec31Selector.get(List(ec3Index2F, 0)) should equal (1.0)
 
         ec31Result.variables should equal (List(c11.variable, ec31Var))
         ec31Result.size should equal (1)
         ec31Result.get(List(0, 0)) should equal (1.0)
-
-        ec32Result.variables should equal (List(c12.variable, ec32Var))
-        ec32Result.size should equal (1)
-        ec32Result.get(List(0, 0)) should equal (1.0)
-
-        ec41Result.variables should equal (List(c11.variable, ec41Var))
-        ec41Result.size should equal (1)
-        ec41Result.get(List(0, 0)) should equal (1.0)
-
       }
     }
 
@@ -2158,24 +2394,31 @@ class FactorMakerTest extends WordSpec with Matchers {
 
         // Three factors should be produced: one regular conditional selector with its possibility, and one * conditional selector
         // The conditional selector and result factors for each parent value are produced in turn
-        val factors = c4.nonConstraintFactors
-        factors.size should equal (3)
         val e3ec2Index = c3.variable.range.indexOf(Regular(ec2))
         val e3StarIndex = c3.variable.range.indexWhere(!_.isRegular)
+        val e3Star = c3.variable.range(e3StarIndex)
         val e4FalseIndex = c4.variable.range.indexOf(Regular(false))
         val e4StarIndex = c4.variable.range.indexWhere(!_.isRegular)
+        val e4Star = c4.variable.range(e4StarIndex)
+        val tupleFactor :: factors = c4.nonConstraintFactors
+        val tupleVar = tupleFactor.variables(2)
+        val vtIndexStarStar = tupleVar.range.indexOf(Regular(List(e3Star, e4Star)))
+        val vtIndexStarF = tupleVar.range.indexOf(Regular(List(e3Star, Regular(false))))
+        val vtIndex2Star = tupleVar.range.indexOf(Regular(List(Regular(ec2), e4Star)))
+        val vtIndex2F = tupleVar.range.indexOf(Regular(List(Regular(ec2), Regular(false))))
+
+        factors.size should equal (3)
         val (ec2Selector, ec2Result, starSelector) =
           if (e4FalseIndex == 0) (factors(0), factors(1), factors(2)) else (factors(1), factors(2), factors(0))
 
-        ec2Selector.variables.size should equal (3)
-        ec2Selector.variables(0) should equal (c3.variable)
-        ec2Selector.variables(2) should equal (c4.variable)
+        ec2Selector.variables.size should equal (2)
+        ec2Selector.variables(0) should equal (tupleVar)
         ec2Selector.variables(1).range should equal (List(Regular(false)))
         ec2Selector.size should equal (4)
-        ec2Selector.get(List(e3ec2Index, 0, e4StarIndex)) should equal (0.0)
-        ec2Selector.get(List(e3ec2Index, 0, e4FalseIndex)) should equal (1.0)
-        ec2Selector.get(List(e3StarIndex, 0, e4StarIndex)) should equal (1.0)
-        ec2Selector.get(List(e3StarIndex, 0, e4FalseIndex)) should equal (1.0)
+        ec2Selector.get(List(vtIndex2Star, 0)) should equal (0.0)
+        ec2Selector.get(List(vtIndex2F, 0)) should equal (1.0)
+        ec2Selector.get(List(vtIndexStarStar, 0)) should equal (1.0)
+        ec2Selector.get(List(vtIndexStarF, 0)) should equal (1.0)
 
         ec2Result.variables.size should equal (2)
         ec2Result.variables(0) should equal (c12.variable)
@@ -2183,16 +2426,15 @@ class FactorMakerTest extends WordSpec with Matchers {
         ec2Result.size should equal (1)
         ec2Result.get(List(0, 0)) should equal (1.0)
 
-        starSelector.variables.size should equal (3)
-        starSelector.variables(0) should equal (c3.variable)
-        starSelector.variables(2) should equal (c4.variable)
+        starSelector.variables.size should equal (2)
+        starSelector.variables(0) should equal (tupleVar)
         starSelector.variables(1).range.size should equal (1)
         starSelector.variables(1).range(0).isRegular should equal (false)
         starSelector.size should equal (4)
-        starSelector.get(List(e3ec2Index, 0, e4StarIndex)) should equal (1.0)
-        starSelector.get(List(e3ec2Index, 0, e4FalseIndex)) should equal (1.0)
-        starSelector.get(List(e3StarIndex, 0, e4StarIndex)) should equal (1.0)
-        starSelector.get(List(e3StarIndex, 0, e4FalseIndex)) should equal (0.0)
+        starSelector.get(List(vtIndex2Star, 0)) should equal (1.0)
+        starSelector.get(List(vtIndex2F, 0)) should equal (1.0)
+        starSelector.get(List(vtIndexStarStar, 0)) should equal (1.0)
+        starSelector.get(List(vtIndexStarF, 0)) should equal (0.0)
       }
     }
 
@@ -2223,7 +2465,7 @@ class FactorMakerTest extends WordSpec with Matchers {
       }
     }
 
-    "for a simple multi-valued reference y witht *" should {
+    "for a simple multi-valued reference y with *" should {
       "produce the single factor mapping regular values to singleton multisets and * to *" in {
         val universe = Universe.createNew()
         def aggregate(ms: MultiSet[Boolean]) = ms(true)
@@ -2258,7 +2500,7 @@ class FactorMakerTest extends WordSpec with Matchers {
     }
 
     "given an indirect multi-valued reference with reference uncertainty and multiple values without *" should {
-      "produce the conditional selectors and result factors for the values, as well as the inject and apply factors" in {
+      "produce the tuple factor, conditional selectors and result factors for the values, as well as the inject and apply factors" in {
         val universe = Universe.createNew()
         def aggregate(ms: MultiSet[Int]) = ms(2)
         val cc = new ComponentCollection
@@ -2284,7 +2526,6 @@ class FactorMakerTest extends WordSpec with Matchers {
         c4.generateRange()
         c4.makeNonConstraintFactors()
 
-        val factors = c4.nonConstraintFactors
         val c11Index1 = c11.variable.range.indexOf(Regular(1))
         val c11Index2 = c11.variable.range.indexOf(Regular(2))
         val c12Index2 = c12.variable.range.indexOf(Regular(2))
@@ -2298,8 +2539,25 @@ class FactorMakerTest extends WordSpec with Matchers {
         val c4Index22 = c4.variable.range.indexOf(Regular(HashMultiSet(2, 2)))
         val c4Index23 = c4.variable.range.indexOf(Regular(HashMultiSet(2, 3)))
 
-        // 9 factors should be produced: two conditional selectors, 2 applys, 2 injects, and three for the simple references
+        // 10 factors should be produced: one tuple factor, two conditional selectors, 2 applys, 2 injects, and three for the simple references
+        val tupleFactor :: factors = c4.nonConstraintFactors
         factors.size should equal (9)
+        tupleFactor.variables(0) should equal (c2.variable)
+        tupleFactor.variables(1) should equal (c4.variable)
+        val tupleVar = tupleFactor.variables(2)
+        val tvIndex11 = tupleVar.range.indexOf(Regular(List(Regular(List(ec1)), Regular(HashMultiSet(1)))))
+        val tvIndex12 = tupleVar.range.indexOf(Regular(List(Regular(List(ec1)), Regular(HashMultiSet(2)))))
+        val tvIndex112 = tupleVar.range.indexOf(Regular(List(Regular(List(ec1)), Regular(HashMultiSet(1, 2)))))
+        val tvIndex113 = tupleVar.range.indexOf(Regular(List(Regular(List(ec1)), Regular(HashMultiSet(1, 3)))))
+        val tvIndex122 = tupleVar.range.indexOf(Regular(List(Regular(List(ec1)), Regular(HashMultiSet(2, 2)))))
+        val tvIndex123 = tupleVar.range.indexOf(Regular(List(Regular(List(ec1)), Regular(HashMultiSet(2, 3)))))
+        val tvIndex21 = tupleVar.range.indexOf(Regular(List(Regular(List(ec1, ec2)), Regular(HashMultiSet(1)))))
+        val tvIndex22 = tupleVar.range.indexOf(Regular(List(Regular(List(ec1, ec2)), Regular(HashMultiSet(2)))))
+        val tvIndex212 = tupleVar.range.indexOf(Regular(List(Regular(List(ec1, ec2)), Regular(HashMultiSet(1, 2)))))
+        val tvIndex213 = tupleVar.range.indexOf(Regular(List(Regular(List(ec1, ec2)), Regular(HashMultiSet(1, 3)))))
+        val tvIndex222 = tupleVar.range.indexOf(Regular(List(Regular(List(ec1, ec2)), Regular(HashMultiSet(2, 2)))))
+        val tvIndex223 = tupleVar.range.indexOf(Regular(List(Regular(List(ec1, ec2)), Regular(HashMultiSet(2, 3)))))
+
         val List(oneECSelector, oneECApply, oneECInject, oneECBasic1) =
           if (c2Index1 == 0) factors.slice(0, 4) else factors.slice(5, 9)
         val List(twoECSelector, twoECApply, twoECInject, twoECBasic1, twoECBasic2) =
@@ -2389,39 +2647,20 @@ class FactorMakerTest extends WordSpec with Matchers {
         twoECApply.get(List(twoInjectIndex22, twoApplyIndex22)) should equal (1.0)
         twoECApply.get(List(twoInjectIndex23, twoApplyIndex23)) should equal (1.0)
 
-        oneECSelector.variables should equal (List(c2.variable, oneECApplyVar, c4.variable))
-        for {
-            applyIndex <- List(oneApplyIndex1, oneApplyIndex2)
-            overallIndex <- List(c4Index1, c4Index2, c4Index12, c4Index13, c4Index22, c4Index23)
-          } {
-            val entry = if (
-                (applyIndex == oneApplyIndex1 && overallIndex == c4Index1) ||
-                (applyIndex == oneApplyIndex2 && overallIndex == c4Index2)
-            ) 1.0 else 0.0
-            oneECSelector.get(List(c2Index1, applyIndex, overallIndex)) should equal (entry)
-            oneECSelector.get(List(c2Index2, applyIndex, overallIndex)) should equal (1.0)
-          }
+        oneECSelector.variables should equal (List(tupleVar, oneECApplyVar))
+        oneECSelector.get(List(tvIndex11, oneApplyIndex1)) should equal (1.0)
+        oneECSelector.get(List(tvIndex11, oneApplyIndex2)) should equal (0.0)
+        oneECSelector.get(List(tvIndex21, oneApplyIndex2)) should equal (1.0)
 
-        twoECSelector.variables should equal (List(c2.variable, twoECApplyVar, c4.variable))
-        for {
-            applyIndex <- List(twoApplyIndex12, twoApplyIndex13, twoApplyIndex22, twoApplyIndex23)
-            overallIndex <- List(c4Index12, c4Index13, c4Index22, c4Index23, c4Index1, c4Index2)
-          } {
-            val entry = if (
-                (applyIndex == twoApplyIndex12 && overallIndex == c4Index12) ||
-                (applyIndex == twoApplyIndex13 && overallIndex == c4Index13) ||
-                (applyIndex == twoApplyIndex22 && overallIndex == c4Index22) ||
-                (applyIndex == twoApplyIndex23 && overallIndex == c4Index23)
-            ) 1.0 else 0.0
-            twoECSelector.get(List(c2Index1, applyIndex, overallIndex)) should equal (1.0)
-            twoECSelector.get(List(c2Index2, applyIndex, overallIndex)) should equal (entry)
-          }
-
+        twoECSelector.variables should equal (List(tupleVar, twoECApplyVar))
+        twoECSelector.get(List(tvIndex212, twoApplyIndex12)) should equal (1.0)
+        twoECSelector.get(List(tvIndex212, twoApplyIndex13)) should equal (0.0)
+        twoECSelector.get(List(tvIndex112, twoApplyIndex13)) should equal (1.0)
       }
     }
 
     "given an three-step multi-valued reference with reference uncertainty and multiple values without *" should {
-      "produce the conditional selectors and result factors for the values, as well as the inject and apply factors" in {
+      "produce the tuple factors, conditional selectors and result factors for the values, as well as the inject and apply factors" in {
         val universe = Universe.createNew()
         def aggregate(ms: MultiSet[Int]) = ms(2)
         val cc = new ComponentCollection
@@ -2457,12 +2696,12 @@ class FactorMakerTest extends WordSpec with Matchers {
         c5.generateRange()
         c5.makeNonConstraintFactors()
 
-        val factors = c5.nonConstraintFactors
-        // 15 factors are produced
-        // 2 top level selectors
-        // - for option ec3: 2 selectors, 2 applys, 2 injects, 3 results
-        // - for option ec4: 1 selector, 1 apply, 1 inject, 1 result
-        factors.size should equal (15)
+        // 18 factors are produced
+        // 1 top level tuple factor, 2 top level selectors
+        // - for option ec3: 1 tuple factor, 2 selectors, 2 applys, 2 injects, 3 results
+        // - for option ec4: 1 tuple factor, 1 selector, 1 apply, 1 inject, 1 result
+        val topTupleFactor :: factors = c5.nonConstraintFactors
+        factors.size should equal (17)
         val c11Index1 = c11.variable.range.indexOf(Regular(1))
         val c11Index2 = c11.variable.range.indexOf(Regular(2))
         val c12Index2 = c12.variable.range.indexOf(Regular(2))
@@ -2480,13 +2719,13 @@ class FactorMakerTest extends WordSpec with Matchers {
         val c5Index23 = c5.variable.range.indexOf(Regular(HashMultiSet(2, 3)))
 
         val (ec3Factors, ec4Factors) =
-          if (c3Index3 == 0) (factors.slice(0, 10), factors.slice(10, 15)) else (factors.slice(0, 10), factors.slice(10, 15))
-        val ec3Selector :: ec3Tail = ec3Factors
+          if (c3Index3 == 0) (factors.slice(0, 11), factors.slice(11, 17)) else (factors.slice(0, 6), factors.slice(6, 17))
+        val ec3Selector :: ec3TupleFactor :: ec3Tail = ec3Factors
         val (ec31Factors, ec312Factors) =
           if (c23Index1 == 0) (ec3Tail.slice(0, 4), ec3Tail.slice(4, 9)) else (ec3Tail.slice(5, 9), ec3Tail.slice(0, 5))
         val List(ec31Selector, ec31Apply, ec31Inject, ec31Result1) = ec31Factors
         val List(ec312Selector, ec312Apply, ec312Inject, ec312Result1, ec312Result2) = ec312Factors
-        val List(ec4Selector, ec41Selector, ec41Apply, ec41Inject, ec41Result1) = ec4Factors
+        val List(ec4Selector, ec4TupleFactor, ec41Selector, ec41Apply, ec41Inject, ec41Result1) = ec4Factors
 
         ec31Result1.variables.size should equal (2)
         ec31Result1.variables(0) should equal (c11.variable)
@@ -2600,87 +2839,23 @@ class FactorMakerTest extends WordSpec with Matchers {
         ec41Apply.get(List(ec41InjectIndex1, ec41ApplyIndex1)) should equal (1.0)
         ec41Apply.get(List(ec41InjectIndex2, ec41ApplyIndex2)) should equal (1.0)
 
-        ec31Selector.variables.size should equal (3)
-        ec31Selector.variables(0) should equal (c23.variable)
-        ec31Selector.variables(1) should equal (ec31ApplyVar)
-        val ec3SelectVar = ec31Selector.variables(2)
-        val ec3SelectIndex1 = ec3SelectVar.range.indexOf(Regular(HashMultiSet(1)))
-        val ec3SelectIndex2 = ec3SelectVar.range.indexOf(Regular(HashMultiSet(2)))
-        val ec3SelectIndex12 = ec3SelectVar.range.indexOf(Regular(HashMultiSet(1, 2)))
-        val ec3SelectIndex13 = ec3SelectVar.range.indexOf(Regular(HashMultiSet(1, 3)))
-        val ec3SelectIndex22 = ec3SelectVar.range.indexOf(Regular(HashMultiSet(2, 2)))
-        val ec3SelectIndex23 = ec3SelectVar.range.indexOf(Regular(HashMultiSet(2, 3)))
-        for {
-            applyIndex <- List(ec31ApplyIndex1, ec31ApplyIndex2)
-            overallIndex <- List(ec3SelectIndex1, ec3SelectIndex2, ec3SelectIndex12, ec3SelectIndex13, ec3SelectIndex22, ec3SelectIndex23)
-          } {
-            val entry = if (
-                (applyIndex == ec31ApplyIndex1 && overallIndex == ec3SelectIndex1) ||
-                (applyIndex == ec31ApplyIndex2 && overallIndex == ec3SelectIndex2)
-            ) 1.0 else 0.0
-            ec31Selector.get(List(c23Index1, applyIndex, overallIndex)) should equal (entry)
-            ec31Selector.get(List(c23Index12, applyIndex, overallIndex)) should equal (1.0)
-          }
 
-        ec312Selector.variables should equal (List(c23.variable, ec312ApplyVar, ec3SelectVar))
-        for {
-            applyIndex <- List(ec312ApplyIndex12, ec312ApplyIndex13, ec312ApplyIndex22, ec312ApplyIndex23)
-            overallIndex <- List(ec3SelectIndex1, ec3SelectIndex2, ec3SelectIndex12, ec3SelectIndex13, ec3SelectIndex22, ec3SelectIndex23)
-          } {
-            val entry = if (
-                (applyIndex == ec312ApplyIndex12 && overallIndex == ec3SelectIndex12) ||
-                (applyIndex == ec312ApplyIndex13 && overallIndex == ec3SelectIndex13) ||
-                (applyIndex == ec312ApplyIndex22 && overallIndex == ec3SelectIndex22) ||
-                (applyIndex == ec312ApplyIndex23 && overallIndex == ec3SelectIndex23)
-            ) 1.0 else 0.0
-            ec312Selector.get(List(c23Index1, applyIndex, overallIndex)) should equal (1.0)
-            ec312Selector.get(List(c23Index12, applyIndex, overallIndex)) should equal (entry)
-          }
+        val topTupleVar = topTupleFactor.variables(2)
+        val ec3TupleVar = ec3TupleFactor.variables(2)
+        val ec4TupleVar = ec4TupleFactor.variables(2)
 
-        ec41Selector.variables.size should equal (3)
-        ec41Selector.variables(0) should equal (c24.variable)
-        ec41Selector.variables(1) should equal (ec41ApplyVar)
-        val ec4SelectVar = ec41Selector.variables(2)
-        val ec4SelectIndex1 = ec4SelectVar.range.indexOf(Regular(HashMultiSet(1)))
-        val ec4SelectIndex2 = ec4SelectVar.range.indexOf(Regular(HashMultiSet(2)))
-        ec41Selector.size should equal (4)
-        for {
-            applyIndex <- List(ec41ApplyIndex1, ec41ApplyIndex2)
-            overallIndex <- List(ec4SelectIndex1, ec4SelectIndex2)
-          } {
-            val entry = if (
-                (applyIndex == ec41ApplyIndex1 && overallIndex == ec4SelectIndex1) ||
-                (applyIndex == ec41ApplyIndex2 && overallIndex == ec4SelectIndex2)
-            ) 1.0 else 0.0
-            ec41Selector.get(List(c24Index1, applyIndex, overallIndex)) should equal (entry)
-          }
-
-          ec3Selector.variables should equal (List(c3.variable, ec3SelectVar, c5.variable))
-          ec3Selector.size should equal (72)
-          for {
-            selectVal <- List(HashMultiSet(1), HashMultiSet(2), HashMultiSet(1, 2), HashMultiSet(1, 3), HashMultiSet(2, 2), HashMultiSet(2, 3))
-            overallVal <- List(HashMultiSet(1), HashMultiSet(2), HashMultiSet(1, 2), HashMultiSet(1, 3), HashMultiSet(2, 2), HashMultiSet(2, 3))
-          } {
-            val entry = if (selectVal == overallVal) 1.0 else 0.0
-            ec3Selector.get(List(c3Index3, ec3SelectVar.range.indexOf(Regular(selectVal)), c5.variable.range.indexOf(Regular(overallVal)))) should equal (entry)
-            ec3Selector.get(List(c3Index4, ec3SelectVar.range.indexOf(Regular(selectVal)), c5.variable.range.indexOf(Regular(overallVal)))) should equal (1.0)
-          }
-
-          ec4Selector.variables should equal (List(c3.variable, ec4SelectVar, c5.variable))
-          ec4Selector.size should equal (24)
-          for {
-            selectVal <- List(HashMultiSet(1), HashMultiSet(2))
-            overallVal <- List(HashMultiSet(1), HashMultiSet(2), HashMultiSet(1, 2), HashMultiSet(1, 3), HashMultiSet(2, 2), HashMultiSet(2, 3))
-          } {
-            val entry = if (selectVal == overallVal) 1.0 else 0.0
-            ec4Selector.get(List(c3Index3, ec4SelectVar.range.indexOf(Regular(selectVal)), c5.variable.range.indexOf(Regular(overallVal)))) should equal (1.0)
-            ec4Selector.get(List(c3Index4, ec4SelectVar.range.indexOf(Regular(selectVal)), c5.variable.range.indexOf(Regular(overallVal)))) should equal (entry)
-          }
+        ec31Selector.variables should equal (List(ec3TupleVar, ec31ApplyVar))
+        ec312Selector.variables should equal (List(ec3TupleVar, ec312ApplyVar))
+        ec41Selector.variables should equal (List(ec4TupleVar, ec41ApplyVar))
+        ec3Selector.variables.size should equal (2)
+        ec3Selector.variables(0) should equal (topTupleVar)
+        ec4Selector.variables.size should equal (2)
+        ec4Selector.variables(0) should equal (topTupleVar)
       }
     }
 
     "given an indirect multi-valued reference with reference uncertainty and multiple values with *" should {
-      "produce the conditional selectors and result factors for the values, as well as the inject and apply factors, plus the * selector" in {
+      "produce the tuple factor, conditional selectors and result factors for the values, as well as the inject and apply factors, plus the * selector" in {
         val universe = Universe.createNew()
         def aggregate(ms: MultiSet[Int]) = ms(2)
         val cc = new ComponentCollection
@@ -2715,7 +2890,6 @@ class FactorMakerTest extends WordSpec with Matchers {
         c4.generateRange()
         c4.makeNonConstraintFactors()
 
-        val factors = c4.nonConstraintFactors
         val c11Index1 = c11.variable.range.indexOf(Regular(1))
         val c11Index2 = c11.variable.range.indexOf(Regular(2))
         val c12Index2 = c12.variable.range.indexOf(Regular(2))
@@ -2723,6 +2897,7 @@ class FactorMakerTest extends WordSpec with Matchers {
         val c2Index1 = c2.variable.range.indexOf(Regular(List(ec1)))
         val c2Index12 = c2.variable.range.indexOf(Regular(List(ec1, ec2)))
         val c2IndexStar = c2.variable.range.indexWhere(!_.isRegular)
+        val c2Star = c2.variable.range(c2IndexStar)
         val c4Index1 = c4.variable.range.indexOf(Regular(HashMultiSet(1)))
         val c4Index2 = c4.variable.range.indexOf(Regular(HashMultiSet(2)))
         val c4Index12 = c4.variable.range.indexOf(Regular(HashMultiSet(1, 2)))
@@ -2730,9 +2905,36 @@ class FactorMakerTest extends WordSpec with Matchers {
         val c4Index22 = c4.variable.range.indexOf(Regular(HashMultiSet(2, 2)))
         val c4Index23 = c4.variable.range.indexOf(Regular(HashMultiSet(2, 3)))
         val c4IndexStar = c4.variable.range.indexWhere(!_.isRegular)
+        val c4Star = c4.variable.range(c4IndexStar)
 
-        // 10 factors should be produced: two conditional selectors, one star selector, 2 applys, 2 injects, and three for the simple references
+        // 1 factors should be produced:
+        // one tuple factor, two conditional selectors, one star selector, 2 applys, 2 injects, and three for the simple references
+        val tupleFactor :: factors = c4.nonConstraintFactors
         factors.size should equal (10)
+        val tupleVar = tupleFactor.variables(2)
+        tupleFactor.variables(0) should equal (c2.variable)
+        tupleFactor.variables(1) should equal (c4.variable)
+        val tvIndex11 = tupleVar.range.indexOf(Regular(List(Regular(List(ec1)), Regular(HashMultiSet(1)))))
+        val tvIndex12 = tupleVar.range.indexOf(Regular(List(Regular(List(ec1)), Regular(HashMultiSet(2)))))
+        val tvIndex112 = tupleVar.range.indexOf(Regular(List(Regular(List(ec1)), Regular(HashMultiSet(1, 2)))))
+        val tvIndex113 = tupleVar.range.indexOf(Regular(List(Regular(List(ec1)), Regular(HashMultiSet(1, 3)))))
+        val tvIndex122 = tupleVar.range.indexOf(Regular(List(Regular(List(ec1)), Regular(HashMultiSet(2, 2)))))
+        val tvIndex123 = tupleVar.range.indexOf(Regular(List(Regular(List(ec1)), Regular(HashMultiSet(2, 3)))))
+        val tvIndex1Star = tupleVar.range.indexOf(Regular(List(Regular(List(ec1)), c4Star)))
+        val tvIndex21 = tupleVar.range.indexOf(Regular(List(Regular(List(ec1, ec2)), Regular(HashMultiSet(1)))))
+        val tvIndex22 = tupleVar.range.indexOf(Regular(List(Regular(List(ec1, ec2)), Regular(HashMultiSet(2)))))
+        val tvIndex212 = tupleVar.range.indexOf(Regular(List(Regular(List(ec1, ec2)), Regular(HashMultiSet(1, 2)))))
+        val tvIndex213 = tupleVar.range.indexOf(Regular(List(Regular(List(ec1, ec2)), Regular(HashMultiSet(1, 3)))))
+        val tvIndex222 = tupleVar.range.indexOf(Regular(List(Regular(List(ec1, ec2)), Regular(HashMultiSet(2, 2)))))
+        val tvIndex223 = tupleVar.range.indexOf(Regular(List(Regular(List(ec1, ec2)), Regular(HashMultiSet(2, 3)))))
+        val tvIndex2Star = tupleVar.range.indexOf(Regular(List(Regular(List(ec1, ec2)), c4Star)))
+        val tvIndexStar1 = tupleVar.range.indexOf(Regular(List(c2Star, Regular(HashMultiSet(1)))))
+        val tvIndexStar2 = tupleVar.range.indexOf(Regular(List(c2Star, Regular(HashMultiSet(2)))))
+        val tvIndexStar12 = tupleVar.range.indexOf(Regular(List(c2Star, Regular(HashMultiSet(1, 2)))))
+        val tvIndexStar13 = tupleVar.range.indexOf(Regular(List(c2Star, Regular(HashMultiSet(1, 3)))))
+        val tvIndexStar22 = tupleVar.range.indexOf(Regular(List(c2Star, Regular(HashMultiSet(2, 2)))))
+        val tvIndexStar23 = tupleVar.range.indexOf(Regular(List(c2Star, Regular(HashMultiSet(2, 3)))))
+        val tvIndexStarStar = tupleVar.range.indexOf(Regular(List(c2Star, c4Star)))
 
         val (oneFactors, twoFactors, starSelector) =
           (c2Index1, c2Index12, c2IndexStar) match {
@@ -2830,48 +3032,22 @@ class FactorMakerTest extends WordSpec with Matchers {
         twoECApply.get(List(twoInjectIndex22, twoApplyIndex22)) should equal (1.0)
         twoECApply.get(List(twoInjectIndex23, twoApplyIndex23)) should equal (1.0)
 
-        starSelector.variables.size should equal (3)
-        starSelector.variables(0) should equal (c2.variable)
-        starSelector.variables(2) should equal (c4.variable)
+        starSelector.variables.size should equal (2)
+        starSelector.variables(0) should equal (tupleVar)
         starSelector.variables(1).valueSet.hasStar should equal (true)
         starSelector.variables(1).valueSet.regularValues should equal (Set())
-        for {
-            overallIndex <- List(c4Index1, c4Index2, c4Index12, c4Index13, c4Index22, c4Index23, c4IndexStar)
-        } {
-          val entry = if (overallIndex == c4IndexStar) 1.0 else 0.0
-          starSelector.get(List(c2IndexStar, 0, overallIndex)) should equal (entry)
-          starSelector.get(List(c2Index1, 0, overallIndex)) should equal (1.0)
-          starSelector.get(List(c2Index12, 0, overallIndex)) should equal (1.0)
-        }
+        starSelector.get(List(tvIndexStarStar, 0)) should equal (1.0)
+        starSelector.get(List(tvIndexStar1, 0)) should equal (0.0)
+        starSelector.get(List(tvIndex21, 0)) should equal (1.0)
+        oneECSelector.variables should equal (List(tupleVar, oneECApplyVar))
+        oneECSelector.get(List(tvIndex11, oneApplyIndex1)) should equal (1.0)
+        oneECSelector.get(List(tvIndex1Star, oneApplyIndex1)) should equal (0.0)
+        oneECSelector.get(List(tvIndex2Star, oneApplyIndex1)) should equal (1.0)
 
-        oneECSelector.variables should equal (List(c2.variable, oneECApplyVar, c4.variable))
-        for {
-            applyIndex <- List(oneApplyIndex1, oneApplyIndex2)
-            overallIndex <- List(c4Index1, c4Index2, c4Index12, c4Index13, c4Index22, c4Index23, c4IndexStar)
-          } {
-            val entry = if (
-                (applyIndex == oneApplyIndex1 && overallIndex == c4Index1) ||
-                (applyIndex == oneApplyIndex2 && overallIndex == c4Index2)
-            ) 1.0 else 0.0
-            oneECSelector.get(List(c2Index1, applyIndex, overallIndex)) should equal (entry)
-            oneECSelector.get(List(c2Index12, applyIndex, overallIndex)) should equal (1.0)
-          }
-
-        twoECSelector.variables should equal (List(c2.variable, twoECApplyVar, c4.variable))
-        for {
-            applyIndex <- List(twoApplyIndex12, twoApplyIndex13, twoApplyIndex22, twoApplyIndex23)
-            overallIndex <- List(c4Index12, c4Index13, c4Index22, c4Index23, c4Index1, c4Index2, c4IndexStar)
-          } {
-            val entry = if (
-                (applyIndex == twoApplyIndex12 && overallIndex == c4Index12) ||
-                (applyIndex == twoApplyIndex13 && overallIndex == c4Index13) ||
-                (applyIndex == twoApplyIndex22 && overallIndex == c4Index22) ||
-                (applyIndex == twoApplyIndex23 && overallIndex == c4Index23)
-            ) 1.0 else 0.0
-            twoECSelector.get(List(c2Index1, applyIndex, overallIndex)) should equal (1.0)
-            twoECSelector.get(List(c2Index12, applyIndex, overallIndex)) should equal (entry)
-          }
-
+        twoECSelector.variables should equal (List(tupleVar, twoECApplyVar))
+        twoECSelector.get(List(tvIndex212, twoApplyIndex12)) should equal (1.0)
+        twoECSelector.get(List(tvIndex2Star, twoApplyIndex12)) should equal (0.0)
+        twoECSelector.get(List(tvIndex1Star, twoApplyIndex12)) should equal (1.0)
       }
     }
 
@@ -3407,6 +3583,7 @@ class FactorMakerTest extends WordSpec with Matchers {
         factor2U.get(List(e2Index2, 0)) should equal (0.3)
       }
     }
+
   }
 
   class EC1(universe: Universe) extends ElementCollection

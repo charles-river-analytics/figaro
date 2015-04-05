@@ -3,9 +3,11 @@ package com.cra.figaro.experimental.structured.solver
 import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.experimental.structured.Problem
 
-class VESolver(toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]])
+class VESolver(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]])
 extends com.cra.figaro.algorithm.factored.VariableElimination[Double] {
   val semiring: Semiring[Double] = SumProductSemiring()
+
+//  debug = true
 
   private var result: List[Factor[Double]] = _
 

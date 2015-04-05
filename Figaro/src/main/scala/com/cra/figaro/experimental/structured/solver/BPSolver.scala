@@ -9,13 +9,30 @@ import com.cra.figaro.algorithm.factored.factors.ElementVariable
 import com.cra.figaro.algorithm.factored.beliefpropagation.VariableNode
 import com.cra.figaro.algorithm.factored.beliefpropagation.Node
 import com.cra.figaro.algorithm.factored.factors.LogSumProductSemiring
+import com.cra.figaro.util._
+import com.cra.figaro.algorithm.lazyfactored._
+import ValueSet._
+import com.cra.figaro.algorithm.factored.factors.SparseFactor
+import com.cra.figaro.algorithm.factored.beliefpropagation.FactorNode
+import com.cra.figaro.experimental.structured.factory.Factory.makeTupleVarAndFactor
+import com.cra.figaro.experimental.structured.ComponentCollection
+import com.cra.figaro.experimental.structured.Problem
 
-class BPSolver(toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]])
+class BPSolver(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]])
 extends com.cra.figaro.algorithm.factored.beliefpropagation.OneTimeProbabilisticBeliefPropagation {
+  // We need to create a joint probability distribution over the interface to this nested subproblem.
+  // To achieve this, we create a new variable representing the tuple of the attributes to preserve.
+  // We create a factor to represent the tuple creation.
+  // We then run BP as usual.
+  // At the end, we sum the tuple variable out of this factor to obtain the solution.
+
+  val (tupleVar, tupleFactor): (Variable[_], Factor[Double]) = makeTupleVarAndFactor(problem.collection, toPreserve.toList:_*)
+
   override val debug = false
 
   def generateGraph() = {
-    factorGraph = new BasicFactorGraph(factors.map(makeLogarithmic(_)), semiring): FactorGraph[Double]
+    val allFactors = tupleFactor :: factors
+    factorGraph = new BasicFactorGraph(allFactors.map(makeLogarithmic(_)), semiring): FactorGraph[Double]
   }
 
   override def initialize() = {
@@ -23,27 +40,13 @@ extends com.cra.figaro.algorithm.factored.beliefpropagation.OneTimeProbabilistic
     super.initialize
   }
 
-  private def getNodeForVariable(variable: Variable[_]): Node = {
-    val targetNode = factorGraph.getNodes.find { node =>
-      node match {
-        case vn: VariableNode => vn.variable == variable
-        case _ => false
-      }
-    }
-    targetNode.get
-  }
-
-  private def getFinalFactorForVariable(variable: Variable[_]): Factor[Double] = {
-    beliefMap(getNodeForVariable(variable))
-  }
-
   def go(): List[Factor[Double]] = {
     initialize()
     run()
-    for { variable <- toPreserve.toList } yield {
-      val factor = getFinalFactorForVariable(variable)
-      unmakeLogarithmic(normalize(factor))
-    }
+    val targetVars = toPreserve.toList ::: List(tupleVar)
+    val tupleBelief = belief(FactorNode(toPreserve + tupleVar))
+    val targetBelief = tupleBelief.sumOver(tupleVar)
+    List(unmakeLogarithmic(normalize(targetBelief)))
   }
 
   def computeDistribution[T](target: Element[T]): Stream[(Double, T)] = getBeliefsForElement(target).toStream
