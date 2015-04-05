@@ -16,8 +16,8 @@ package com.cra.figaro.experimental.structured.factory
 import com.cra.figaro.algorithm._
 import com.cra.figaro.language._
 import com.cra.figaro.util._
-import com.cra.figaro.algorithm.lazyfactored.{Extended, ValueSet}
-import ValueSet.withStar
+import com.cra.figaro.algorithm.lazyfactored._
+import ValueSet._
 import com.cra.figaro.algorithm.factored._
 import scala.collection.mutable.ListBuffer
 import com.cra.figaro.algorithm.factored.factors._
@@ -62,7 +62,25 @@ object Factory {
     result.set(List(), semiring.one)
     result
   }
-
+  
+  def makeTupleVarAndFactor(cc: ComponentCollection, inputs: Variable[_]*): (Variable[List[Extended[_]]], Factor[Double]) = {
+    val inputList: List[Variable[_]] = inputs.toList
+    // Subtlety alert: In the tuple, we can't just map inputs with * to *. We need to remember which input was *.
+    // Therefore, instead, we make the value a regular value consisting of a list of extended values.
+    val tupleRangeRegular: List[List[_]] = cartesianProduct(inputList.map(_.range):_*)
+    val tupleVS: ValueSet[List[Extended[_]]] = withoutStar(tupleRangeRegular.map(_.asInstanceOf[List[Extended[_]]]).toSet)
+    val tupleVar: Variable[List[Extended[_]]] = Factory.makeVariable(cc, tupleVS)
+    val tupleFactor = new SparseFactor[Double](inputList, List(tupleVar))
+    for { pair <- tupleVar.range.zipWithIndex } {
+      val tupleVal: List[Extended[_]] = pair._1.value
+      val tupleIndex = pair._2
+      val inputIndices =
+        for { (input, value) <- inputList.zip(tupleVal) } yield input.range.indexOf(value)
+      tupleFactor.set(inputIndices ::: List(tupleIndex), 1.0)
+    }
+    (tupleVar, tupleFactor)
+  }
+    
   /**
    * Create a BasicFactor from the supplied parent and children variables
    */
@@ -75,38 +93,39 @@ object Factory {
     List(factor)
   }
 
-  private def makeDontCares[U](factor: ConditionalSelector[Double],
-    intermedIndex: Int,
-    outcomeVar: Variable[U],
-    overallVar: Variable[U]): Unit = {
-    // If we don't care, we assign 1.0 to all combinations of the distVar and outcomeVar
-    for {
-      j <- 0 until outcomeVar.size
-      k <- 0 until overallVar.size
-    } {
-      factor.set(List(intermedIndex, j, k), 1.0)
-    }
-  }
+//  private def makeDontCares[U](factor: ConditionalSelector[Double],
+//    intermedIndex: Int,
+//    outcomeVar: Variable[U],
+//    overallVar: Variable[U]): Unit = {
+//    // If we don't care, we assign 1.0 to all combinations of the distVar and outcomeVar
+//    for {
+//      j <- 0 until outcomeVar.size
+//      k <- 0 until overallVar.size
+//    } {
+//      factor.set(List(intermedIndex, j, k), 1.0)
+//    }
+//  }
+//
+//  private def makeCares[U](factor: ConditionalSelector[Double], intermedIndex: Int,
+//    outcomeVar: Variable[U], overallVar: Variable[U], choices: Set[U])(implicit mapper: PointMapper[U]): Unit = {
+//    // We care to match up overallVar with outcomeVar
+//    for {
+//      (outcomeVal, j) <- outcomeVar.range.zipWithIndex
+//      (overallVal, k) <- overallVar.range.zipWithIndex
+//    } {
+//      // Star stands for "something". If outcomeVal is Star and overallVal is Star, we know something will match something, so the entry is (1,1).
+//      // If outcomeVal is Star and overallVal is a regular value, then maybe there will be a match, so the entry is (0,1).
+//      // If outcomeVal is regular, all the probability mass associated with that outcome should be on regular values of overallVal, so the entry is (0,0).
+//      val entry =
+//        if (overallVal.isRegular && outcomeVal.isRegular) {
+//          if (overallVal.value == mapper.map(outcomeVal.value, choices)) 1.0
+//          else 0.0
+//        } else if (!overallVal.isRegular && !outcomeVal.isRegular) 1.0
+//        else 0.0
+//      factor.set(List(intermedIndex, j, k), entry)
+//    }
+//  }
 
-  private def makeCares[U](factor: ConditionalSelector[Double], intermedIndex: Int,
-    outcomeVar: Variable[U], overallVar: Variable[U], choices: Set[U])(implicit mapper: PointMapper[U]): Unit = {
-    // We care to match up overallVar with outcomeVar
-    for {
-      (outcomeVal, j) <- outcomeVar.range.zipWithIndex
-      (overallVal, k) <- overallVar.range.zipWithIndex
-    } {
-      // Star stands for "something". If outcomeVal is Star and overallVal is Star, we know something will match something, so the entry is (1,1).
-      // If outcomeVal is Star and overallVal is a regular value, then maybe there will be a match, so the entry is (0,1).
-      // If outcomeVal is regular, all the probability mass associated with that outcome should be on regular values of overallVal, so the entry is (0,0).
-      val entry =
-        if (overallVal.isRegular && outcomeVal.isRegular) {
-          if (overallVal.value == mapper.map(outcomeVal.value, choices)) 1.0
-          else 0.0
-        } else if (!overallVal.isRegular && !outcomeVal.isRegular) 1.0
-        else 0.0
-      factor.set(List(intermedIndex, j, k), entry)
-    }
-  }
 
   /*
    * The conditional selector creates a factor in which, when the selector's value is such that the result
@@ -121,140 +140,30 @@ object Factory {
    * This is solved by decomposing the chain factor into a product of factors, each of which contains the
    * parent element, one of the result elements, and the overall chain element.
    */
-  def makeConditionalSelector[T, U](cc: ComponentCollection, overallVar: Variable[U], selector: Variable[T],
-    outcomeIndex: Int, outcomeVar: Variable[U])(implicit mapper: PointMapper[U]): Factor[Double] = {
-//    val overallVar = getVariable(cc, overallElem)
-    val overallValues = overallVar.valueSet
-    val factor = new ConditionalSelector[Double](List(selector, outcomeVar), List(overallVar))
-    for { i <- 0 until selector.size } {
-      if (i == outcomeIndex) {
-        makeCares(factor, outcomeIndex, outcomeVar, overallVar, overallValues.regularValues)(mapper)
-      } else {
-        makeDontCares(factor, i, outcomeVar, overallVar)
-      }
-    }
 
+  def makeConditionalSelector[T,U](pairVar: Variable[List[Extended[_]]], parentXVal: Extended[T], outcomeVar: Variable[U]): Factor[Double] = {
+    val factor = new BasicFactor[Double](List(pairVar), List(outcomeVar))
+    for {
+      (pairXVal, pairIndex) <- pairVar.range.zipWithIndex
+      (outcomeXVal, outcomeIndex) <- outcomeVar.range.zipWithIndex
+    } {
+      // See makeTupleVarAndFactor: pairXVal is always regular and consists of a list of two elements: the extended parent value
+      // and the extended outcome value.
+      val List(selectXVal, overallXVal) = pairXVal.value
+      val entry = 
+        if (selectXVal.isRegular && parentXVal.isRegular) {
+          if (selectXVal.value == parentXVal.value) {
+            if (overallXVal == outcomeXVal || (!overallXVal.isRegular && !outcomeXVal.isRegular)) 1.0 else 0.0
+          } else 1.0
+        } else if (selectXVal.isRegular || parentXVal.isRegular) 1.0 // they are different
+        else if (!overallXVal.isRegular) 1.0 // if parentXVal is *, the only possible outcomeXVal is *
+        else 0.0
+//println("pairXVal = " + pairXVal + ", outcomeXVal = " + outcomeXVal + ", entry = " + entry)        
+      factor.set(List(pairIndex, outcomeIndex), entry)
+    }
     factor
   }
-//
-//  private def makeFactors[T, U](chain: Chain[T, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {
-//    val chainMap: scala.collection.mutable.Map[T, Element[U]] = LazyValues(chain.universe).getMap(chain)
-//    val parentVar = Variable(chain.parent)
-//    var tempFactors = parentVar.range.zipWithIndex flatMap (pair => {
-//      val parentVal = pair._1
-//      // parentVal.value should have been placed in applyMap at the time the values of this apply were computed.
-//      // By using chainMap, we can make sure that the result element is the same now as they were when values were computed.
-//      if (parentVal.isRegular) List(makeConditionalSelector(chain, parentVar, pair._2, Variable(chainMap(parentVal.value)))(mapper))
-//      else {
-//        // We create a dummy variable for the outcome variable whose value is always star.
-//        // We create a dummy factor for that variable.
-//        // Then we use makeConditionalSelector with the dummy variable
-//        val dummy = new Variable(ValueSet.withStar[U](Set()))
-//        val dummyFactor = new BasicFactor[Double](List(), List(dummy))
-//        dummyFactor.set(List(0), 1.0)
-//        List(makeConditionalSelector(chain, parentVar, pair._2, dummy), dummyFactor)
-//      }
-//    })
-//    tempFactors
-//  }
-
-//  val maxElementCount = 6
-//  val maxSize = 500
-//  val newFactors = ListBuffer[Factor[Double]]()
-//  val tempFactors = ListBuffer[Factor[Double]]()
-//
-//  /**
-//   * Combines a set of factors into a single larger factor. This method is used when a factor has
-//   * been decomposed into may dependent Factors and a single Factor is required.
-//   */
-//  def combineFactors(oldFactors: List[Factor[Double]], semiring: Semiring[Double], removeTemporaries: Boolean): List[Factor[Double]] = {
-//    newFactors.clear
-//    tempFactors.clear
-//
-//    for (factor <- oldFactors) {
-//      if (factor.hasStar) {
-//        newFactors += factor
-//      } else {
-//        tempFactors += factor
-//      }
-//    }
-//
-//    var nextFactor = tempFactors.head
-//
-//    for (factor <- tempFactors.tail) {
-//      val commonVariables = factor.variables.toSet & nextFactor.variables.toSet
-//
-//      if (commonVariables.size > 0) {
-//        val newVariables = factor.variables.toSet -- nextFactor.variables.toSet
-//        val potentialSize = calculateSize(nextFactor.size, newVariables)
-//        if ((nextFactor.numVars + newVariables.size) < maxElementCount
-//          && potentialSize < maxSize) {
-//          nextFactor = nextFactor.product(factor, semiring)
-//        } else {
-//          if (removeTemporaries) {
-//            newFactors ++= reduceFactor(nextFactor, semiring, maxElementCount)
-//          } else {
-//            newFactors += nextFactor
-//          }
-//          nextFactor = factor
-//        }
-//      } else {
-//        newFactors += nextFactor
-//        nextFactor = factor
-//      }
-//    }
-//
-//    if (nextFactor.numVars > 0) {
-//      if (removeTemporaries) {
-//        newFactors ++= reduceFactor(nextFactor, semiring, maxElementCount)
-//      } else {
-//        newFactors += nextFactor
-//      }
-//    }
-//    newFactors.toList
-//  }
-//
-//  val variableSet = scala.collection.mutable.Set[ElementVariable[_]]()
-//  val nextFactors = ListBuffer[Factor[Double]]()
-//
-//  private def reduceFactor(factor: Factor[Double], semiring: Semiring[Double], maxElementCount: Int): List[Factor[Double]] = {
-//    variableSet.clear
-//
-//    (variableSet /: List(factor))(_ ++= _.variables.asInstanceOf[List[ElementVariable[_]]])
-//    var elementCount = variableSet count (v => !isTemporary(v))
-//    var resultFactor = unit[Double](semiring).product(factor, semiring)
-//
-//    var tempCount = 0;
-//
-//    for { variable <- variableSet } {
-//      if (isTemporary(variable) && elementCount <= maxElementCount) {
-//        nextFactors.clear
-//        nextFactors ++= concreteFactors(variable.asInstanceOf[ElementVariable[_]].element)
-//        (variableSet /: nextFactors)(_ ++= _.variables.asInstanceOf[List[ElementVariable[_]]])
-//        elementCount = variableSet count (v => !isTemporary(v))
-//
-//        for (nextFactor <- nextFactors) {
-//          resultFactor = resultFactor.product(nextFactor, semiring)
-//        }
-//        tempCount += 1
-//      }
-//    }
-//
-//    if (tempCount > 0 && elementCount <= maxElementCount) {
-//      for { variable <- variableSet } {
-//        if (isTemporary(variable)) {
-//          resultFactor = resultFactor.sumOver(variable, semiring)
-//        }
-//      }
-//
-//    }
-//    List(resultFactor)
-//  }
-//
-//  private def calculateSize(currentSize: Int, variables: Set[Variable[_]]) = {
-//    (currentSize /: variables)(_ * _.size)
-//  }
-
+  
   private def isTemporary[_T](variable: Variable[_]): Boolean = {
     variable match {
       case e: ElementVariable[_] => e.element.isTemporary

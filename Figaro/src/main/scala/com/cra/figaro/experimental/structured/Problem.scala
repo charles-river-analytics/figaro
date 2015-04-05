@@ -32,7 +32,7 @@ class Problem(val collection: ComponentCollection, targets: List[Element[_]] = L
    * A flag indicating whether the problem has been solved.
    */
   var solved: Boolean = false
-  
+
   /**
    * Add a component for the given element to this problem.
    */
@@ -73,7 +73,7 @@ class Problem(val collection: ComponentCollection, targets: List[Element[_]] = L
     val allVariables = (Set[Variable[_]]() /: allFactors)(_ ++ _.variables)
     val (toEliminate, toPreserve) = allVariables.partition(internal(_))
     globals = toPreserve.map(collection.variableToComponent(_))
-    solution = algorithm(toEliminate, toPreserve, allFactors)
+    solution = algorithm(this, toEliminate, toPreserve, allFactors)
     solved = true
     toEliminate.foreach((v: Variable[_]) => {
       if (collection.intermediates.contains(v)) collection.intermediates -= v

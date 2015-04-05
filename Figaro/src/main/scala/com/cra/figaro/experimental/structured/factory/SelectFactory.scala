@@ -17,7 +17,7 @@ import com.cra.figaro.language._
 import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.library.compound._
 import com.cra.figaro.util._
-import com.cra.figaro.algorithm.lazyfactored.{Extended, ValueSet}
+import com.cra.figaro.algorithm.lazyfactored._
 import ValueSet.withStar
 import com.cra.figaro.experimental.structured.ComponentCollection
 import com.cra.figaro.algorithm.lazyfactored.Star
@@ -153,9 +153,10 @@ object SelectFactory {
   private def intermedAndClauseFactors[U, T](cc: ComponentCollection, dist: Dist[U, T]): (Variable[Int], List[Factor[Double]]) = {
     val intermed = Factory.makeVariable(cc, ValueSet.withoutStar((0 until dist.clauses.size).toSet))
     val distVar = Factory.getVariable(cc, dist)
+    val (pairVar, pairFactor) = Factory.makeTupleVarAndFactor(cc, intermed, distVar)
     val clauseFactors = dist.outcomes.zipWithIndex map (pair =>
-      Factory.makeConditionalSelector(cc, distVar, intermed, pair._2, Factory.getVariable(cc, pair._1)))
-    (intermed, clauseFactors)
+      Factory.makeConditionalSelector(pairVar, Regular(pair._2), Factory.getVariable(cc, pair._1)))
+    (intermed, pairFactor :: clauseFactors)
   }
 
   /**
