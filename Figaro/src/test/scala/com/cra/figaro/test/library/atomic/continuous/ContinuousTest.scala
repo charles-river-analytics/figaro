@@ -223,17 +223,24 @@ class ContinuousTest extends WordSpec with Matchers {
     //Need to work this out on paper.
     "have value within a range with probability equal to the expectation over the mean and variance of the" +
       "cumulative probability of the upper minus the lower" in {
-        Universe.createNew()
-        val elem = Normal(2.0, Select(0.5 -> 2.0, 0.5 -> 3.0))
-        val alg = Importance(20000, elem)
-        alg.start()
-        val dist1 = new NormalDistribution(2.0, 2.0)
-        val dist2 = new NormalDistribution(2.0, 3.0)
-        def getProb(dist: ProbabilityDistribution) = dist.cumulative(1.2) - dist.cumulative(0.7)
-        val targetProb = 0.5 * getProb(dist1) + 0.5 * getProb(dist2)
-        alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
-        alg.stop()
-        alg.kill
+        val ndtest = new NDTest {
+          override def oneTest = {
+            Universe.createNew()
+            val elem = Normal(2.0, Select(0.5 -> 2.0, 0.5 -> 3.0))
+            val alg = Importance(20000, elem)
+            alg.start()
+            val dist1 = new NormalDistribution(2.0, 2.0)
+            val dist2 = new NormalDistribution(2.0, 3.0)
+            def getProb(dist: ProbabilityDistribution) = dist.cumulative(1.2) - dist.cumulative(0.7)
+            val targetProb = 0.5 * getProb(dist1) + 0.5 * getProb(dist2)
+            val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+            alg.stop()
+            alg.kill
+            update(result, new TTestResult("CompoundNormalMeanTestResults", targetProb, alpha))
+          }
+        }
+  
+        ndtest.run(10)
       }
 
     "convert to the correct string" in {

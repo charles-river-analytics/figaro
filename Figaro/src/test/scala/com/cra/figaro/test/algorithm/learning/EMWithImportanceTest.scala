@@ -29,185 +29,228 @@ import com.cra.figaro.util.random
 import scala.math.abs
 import java.io._
 import com.cra.figaro.test.tags.NonDeterministic
+import com.cra.figaro.ndtest._
 
 class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matchers {
+  val alpha: Double = 0.05
+
   "Expectation Maximization with importance sampling" when
     {
-          "when provided a termination criteria based on sufficient statistics magnitudes" should {
-        "exit before reaching the maximum iterations" in {
-            val universe = Universe.createNew
-            val b = Beta(2, 2)
-            val terminationCriteria = EMTerminationCriteria.sufficientStatisticsMagnitude(0.05)
-            for (i <- 1 to 7) {
-
-              val f = Flip(b)
-              f.observe(true)
+      "provided a termination criteria based on sufficient statistics magnitudes" should {
+        "exit before reaching the maximum iterations" taggedAs(NonDeterministic) in {
+           val ndtest = new NDTest {
+              override def oneTest = {
+                val universe = Universe.createNew
+                val b = Beta(2, 2)
+                val terminationCriteria = EMTerminationCriteria.sufficientStatisticsMagnitude(0.05)
+                for (i <- 1 to 7) {
+    
+                  val f = Flip(b)
+                  f.observe(true)
+                }
+    
+                for (i <- 1 to 3) {
+    
+                  val f = Flip(b)
+                  f.observe(false)
+                }
+    
+                val algorithm = EMWithImportance(terminationCriteria, 10, b)(universe)
+                algorithm.start
+    
+                val result = b.MAPValue
+                algorithm.kill
+                
+                update(result, new TTestResult("EMImportanceTestResults", 0.6666, alpha))
+              }
             }
-
-            for (i <- 1 to 3) {
-
-              val f = Flip(b)
-              f.observe(false)
-            }
-
-            val algorithm = EMWithImportance(terminationCriteria, 10, b)(universe)
-            algorithm.start
-
-            val result = b.MAPValue
-            algorithm.kill
-            result should be(0.6666 +- 0.01)
-
-          }
+  
+          ndtest.run(10)
         }
+      }
     
       "used to estimate a Beta parameter" should
         {
-          "detect bias after a large enough number of trials" in
+          "detect bias after a large enough number of trials" taggedAs(NonDeterministic) in
             {
-              val universe = Universe.createNew
-              val b = Beta(2, 2)
-
-              for (i <- 1 to 7) {
-
-                val f = Flip(b)
-                f.observe(true)
-              }
-
-              for (i <- 1 to 3) {
-
-               val f = Flip(b)
-                f.observe(false)
-              }
-
-              val algorithm = EMWithImportance(2, 100, b)(universe)
-              algorithm.start
-
-              val result = b.MAPValue
-              algorithm.kill
-              result should be(0.6666 +- 0.01)
-
+               val ndtest = new NDTest {
+                  override def oneTest = {
+                    val universe = Universe.createNew
+                    val b = Beta(2, 2)
+      
+                    for (i <- 1 to 7) {
+      
+                      val f = Flip(b)
+                      f.observe(true)
+                    }
+      
+                    for (i <- 1 to 3) {
+      
+                     val f = Flip(b)
+                      f.observe(false)
+                    }
+      
+                    val algorithm = EMWithImportance(2, 100, b)(universe)
+                    algorithm.start
+      
+                    val result = b.MAPValue
+                    algorithm.kill
+                    
+                    update(result, new TTestResult("EMImportanceTestResults", 0.6666, alpha))
+                  }
+                }
+      
+              ndtest.run(10)
             }
 
-          "take the prior concentration parameters into account" in
+          "take the prior concentration parameters into account" taggedAs(NonDeterministic) in
             {
-              val universe = Universe.createNew
-              val b = Beta(3.0, 7.0)
-
-              for (i <- 1 to 7) {
-
-                val f = Flip(b)
-                f.observe(true)
+              val ndtest = new NDTest {
+                override def oneTest = {
+                  val universe = Universe.createNew
+                  val b = Beta(3.0, 7.0)
+      
+                  for (i <- 1 to 7) {
+      
+                    val f = Flip(b)
+                    f.observe(true)
+                  }
+      
+                  for (i <- 1 to 3) {
+      
+                    val f = Flip(b)
+                    f.observe(false)
+                  }
+      
+                  val algorithm = EMWithImportance(2, 100, b)(universe)
+                  algorithm.start
+      
+                  val result = b.MAPValue
+                  algorithm.kill
+                    
+                  update(result, new TTestResult("EMImportanceTestResults", 0.50, alpha))
+                }
               }
-
-              for (i <- 1 to 3) {
-
-                val f = Flip(b)
-                f.observe(false)
-              }
-
-              val algorithm = EMWithImportance(2, 100, b)(universe)
-              algorithm.start
-
-              val result = b.MAPValue
-              algorithm.kill
-              result should be(0.50 +- 0.01)
-
+      
+              ndtest.run(10)
             }
 
 
-          "learn the bias from observations of binomial elements" in {
-              val universe = Universe.createNew
-              val b = Beta(2, 2)
-
-              val b1 = Binomial(7, b)
-              b1.observe(6)
-              val b2 = Binomial(3, b)
-              b2.observe(1)
-
-              val algorithm = EMWithImportance(2, 100, b)(universe)
-              algorithm.start
-
-              val result = b.MAPValue
-              algorithm.kill
-              result should be(0.6666 +- 0.01)
-
-            
+          "learn the bias from observations of binomial elements" taggedAs(NonDeterministic) in {
+              val ndtest = new NDTest {
+                override def oneTest = {
+                  val universe = Universe.createNew
+                  val b = Beta(2, 2)
+    
+                  val b1 = Binomial(7, b)
+                  b1.observe(6)
+                  val b2 = Binomial(3, b)
+                  b2.observe(1)
+    
+                  val algorithm = EMWithImportance(2, 100, b)(universe)
+                  algorithm.start
+    
+                  val result = b.MAPValue
+                  algorithm.kill
+                    
+                  update(result, new TTestResult("EMImportanceTestResults", 0.6666, alpha))
+                }
+              }
+      
+              ndtest.run(10)
           }
         }
 
-          "correctly use a uniform prior" in {
-              val universe = Universe.createNew
-              val b = Beta(1, 1)
+        "correctly use a uniform prior" taggedAs(NonDeterministic) in {
+              val ndtest = new NDTest {
+                override def oneTest = {
+                  val universe = Universe.createNew
+                  val b = Beta(1, 1)
+    
+                  val b1 = Binomial(7, b)
+                  b1.observe(6)
+                  val b2 = Binomial(3, b)
+                  b2.observe(1)
+    
+                  val algorithm = EMWithImportance(2, 100, b)(universe)
+                  algorithm.start
+    
+                  val result = b.MAPValue
+                  algorithm.kill
+                    
+                  update(result, new TTestResult("EMImportanceTestResults", 0.7, alpha))
+                }
+              }
+      
+              ndtest.run(10)
+        }
 
-              val b1 = Binomial(7, b)
-              b1.observe(6)
-              val b2 = Binomial(3, b)
-              b2.observe(1)
-
-              val algorithm = EMWithImportance(2, 100, b)(universe)
-              algorithm.start
-
-              val result = b.MAPValue
-              algorithm.kill
-              result should be(0.7 +- 0.01)
-
-            
-          }
-
-          "used to estimate a Dirichlet parameter with two concentration parameters" should
+        "used to estimate a Dirichlet parameter with two concentration parameters" should
         {
 
-          "detect bias after a large enough number of trials" in
-            {
-              val universe = Universe.createNew
-              val b = Dirichlet(2, 2)
-
-              for (i <- 1 to 7) {
-
-                val f = Select(b, true, false)
-                f.observe(true)
+          "detect bias after a large enough number of trials" taggedAs(NonDeterministic)  in
+          {
+              val ndtest = new NDTest {
+                override def oneTest = {
+                  val universe = Universe.createNew
+                  val b = Dirichlet(2, 2)
+    
+                  for (i <- 1 to 7) {
+    
+                    val f = Select(b, true, false)
+                    f.observe(true)
+                  }
+    
+                  for (i <- 1 to 3) {
+    
+                    val f = Select(b, true, false)
+                    f.observe(false)
+                  }
+    
+                  val algorithm = EMWithImportance(2, 1000, b)(universe)
+                  algorithm.start
+    
+                  val result = b.MAPValue
+                  algorithm.kill
+                    
+                  update(result(0), new TTestResult("EMImportanceTestResults", 0.6666, alpha))
+                }
               }
-
-              for (i <- 1 to 3) {
-
-                val f = Select(b, true, false)
-                f.observe(false)
-              }
-
-              val algorithm = EMWithImportance(2, 1000, b)(universe)
-              algorithm.start
-
-              val result = b.MAPValue
-              algorithm.kill
-              result(0) should be(0.6666 +- 0.01)
-
+      
+              ndtest.run(10)
             }
 
-          "take the prior concentration parameters into account" in
+          "take the prior concentration parameters into account" taggedAs(NonDeterministic) in
             {
-              val universe = Universe.createNew
-
-              val b = Dirichlet(3, 7)
-
-              for (i <- 1 to 7) {
-
-                val f = Select(b, true, false)
-                f.observe(true)
+              val ndtest = new NDTest {
+                override def oneTest = {
+                  val universe = Universe.createNew
+    
+                  val b = Dirichlet(3, 7)
+    
+                  for (i <- 1 to 7) {
+    
+                    val f = Select(b, true, false)
+                    f.observe(true)
+                  }
+    
+                  for (i <- 1 to 3) {
+    
+                    val f = Select(b, true, false)
+                    f.observe(false)
+                  }
+    
+                  val algorithm = EMWithImportance(2, 1000, b)(universe)
+                  algorithm.start
+    
+                  val result = b.MAPValue
+                  algorithm.kill
+                    
+                  update(result(0), new TTestResult("EMImportanceTestResults", 0.50, alpha))
+                }
               }
-
-              for (i <- 1 to 3) {
-
-                val f = Select(b, true, false)
-                f.observe(false)
-              }
-
-              val algorithm = EMWithImportance(2, 1000, b)(universe)
-              algorithm.start
-
-              val result = b.MAPValue
-              algorithm.kill
-              result(0) should be(0.50 +- 0.01)
-
+      
+              ndtest.run(10)
             }
 
         }
@@ -215,258 +258,298 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
       "used to estimate a Dirichlet parameter with three concentration parameters" should
         {
 
-          "calculate sufficient statistics in the correct order for long lists of concentration parameters" in
+          "calculate sufficient statistics in the correct order for long lists of concentration parameters" taggedAs(NonDeterministic) in
             {
-              val universe = Universe.createNew
-              val alphas = Seq[Double](0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476)
-              val d = Dirichlet(alphas: _*)
-              val outcomes = List(2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23)
-              val outcome = Select(d, outcomes: _*)
-              val algorithm = EMWithImportance(2, 1000, d)
-              algorithm.start
-
-              val result = d.MAPValue
-              algorithm.kill
-              result(0) should be(0.04 +- 0.01)
-              result(1) should be(0.04 +- 0.01)
-              result(2) should be(0.04 +- 0.01)
-              result(3) should be(0.04 +- 0.01)
-              result(4) should be(0.04 +- 0.01)
-              result(5) should be(0.04 +- 0.01)
-              result(6) should be(0.04 +- 0.01)
-              result(7) should be(0.04 +- 0.01)
-              result(8) should be(0.04 +- 0.01)
-              result(9) should be(0.04 +- 0.01)
-              result(10) should be(0.04 +- 0.01)
-              result(11) should be(0.04 +- 0.01)
-              result(12) should be(0.04 +- 0.01)
-              result(13) should be(0.04 +- 0.01)
-              result(14) should be(0.04 +- 0.01)
-              result(15) should be(0.04 +- 0.01)
-              result(16) should be(0.04 +- 0.01)
-              result(17) should be(0.04 +- 0.01)
-              result(18) should be(0.04 +- 0.01)
-              result(19) should be(0.04 +- 0.01)
-              result(20) should be(0.04 +- 0.01)
-              result(21) should be(0.04 +- 0.01)
-
+              val ndtest = new NDTest {
+                override def oneTest = {
+                  val universe = Universe.createNew
+                  val alphas = Seq[Double](0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476)
+                  val d = Dirichlet(alphas: _*)
+                  val outcomes = List(2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23)
+                  val outcome = Select(d, outcomes: _*)
+                  val algorithm = EMWithImportance(2, 1000, d)
+                  algorithm.start
+    
+                  val result = d.MAPValue
+                  algorithm.kill
+                    
+                  update(result(0), new TTestResult("EMImportanceTestResults0", 0.04, alpha))
+                  update(result(1), new TTestResult("EMImportanceTestResults1", 0.04, alpha))
+                  update(result(2), new TTestResult("EMImportanceTestResults2", 0.04, alpha))
+                  update(result(3), new TTestResult("EMImportanceTestResults3", 0.04, alpha))
+                  update(result(4), new TTestResult("EMImportanceTestResults4", 0.04, alpha))
+                  update(result(5), new TTestResult("EMImportanceTestResults5", 0.04, alpha))
+                  update(result(6), new TTestResult("EMImportanceTestResults6", 0.04, alpha))
+                  update(result(7), new TTestResult("EMImportanceTestResults7", 0.04, alpha))
+                  update(result(8), new TTestResult("EMImportanceTestResults8", 0.04, alpha))
+                  update(result(9), new TTestResult("EMImportanceTestResults9", 0.04, alpha))
+                  update(result(10), new TTestResult("EMImportanceTestResults10", 0.04, alpha))
+                  update(result(11), new TTestResult("EMImportanceTestResults11", 0.04, alpha))
+                  update(result(12), new TTestResult("EMImportanceTestResults12", 0.04, alpha))
+                  update(result(13), new TTestResult("EMImportanceTestResults13", 0.04, alpha))
+                  update(result(14), new TTestResult("EMImportanceTestResults14", 0.04, alpha))                  
+                  update(result(15), new TTestResult("EMImportanceTestResults15", 0.04, alpha))
+                  update(result(16), new TTestResult("EMImportanceTestResults16", 0.04, alpha))
+                  update(result(17), new TTestResult("EMImportanceTestResults17", 0.04, alpha))
+                  update(result(18), new TTestResult("EMImportanceTestResults18", 0.04, alpha))
+                  update(result(19), new TTestResult("EMImportanceTestResults19", 0.04, alpha))
+                  update(result(20), new TTestResult("EMImportanceTestResults20", 0.04, alpha))
+                  update(result(21), new TTestResult("EMImportanceTestResults21", 0.04, alpha))                  
+                }
+              }
+      
+              ndtest.run(10)
             }
 
           "calculate sufficient statistics in the correct order for long lists of concentration parameters, taking into account a condition" taggedAs(NonDeterministic) in
             {
-              val universe = Universe.createNew
-              val alphas = Seq[Double](1.0476, 1.0476, 1.0476, 1.0476, 1.0476)
-              val d = Dirichlet(alphas: _*)
-              val outcomes = List(2, 3, 4, 5, 6)
-
-              for (i <- 1 to 10) {
-                val outcome = Select(d, outcomes: _*)
-                outcome.addCondition(x => x >= 3 && x <= 6)
+              val ndtest = new NDTest {
+                override def oneTest = {
+                  val universe = Universe.createNew
+                  val alphas = Seq[Double](1.0476, 1.0476, 1.0476, 1.0476, 1.0476)
+                  val d = Dirichlet(alphas: _*)
+                  val outcomes = List(2, 3, 4, 5, 6)
+    
+                  for (i <- 1 to 10) {
+                    val outcome = Select(d, outcomes: _*)
+                    outcome.addCondition(x => x >= 3 && x <= 6)
+                  }
+    
+                  val algorithm = EMWithImportance(2, 1000, d)
+                  algorithm.start
+                  val result = d.MAPValue
+                  algorithm.kill
+                    
+                  update(result(0), new TTestResult("EMImportanceTestResults0", 0.0, alpha))
+                  update(result(1), new TTestResult("EMImportanceTestResults1", 0.25, alpha))
+                  update(result(2), new TTestResult("EMImportanceTestResults2", 0.25, alpha))
+                  update(result(3), new TTestResult("EMImportanceTestResults3", 0.25, alpha))
+                  update(result(4), new TTestResult("EMImportanceTestResults4", 0.25, alpha))
+                }
               }
-
-              val algorithm = EMWithImportance(2, 1000, d)
-              algorithm.start
-              val result = d.MAPValue
-              algorithm.kill
-              result(0) should be(0.0 +- 0.01)
-              result(1) should be(0.25 +- 0.01)
-              result(2) should be(0.25 +- 0.01)
-              result(3) should be(0.25 +- 0.01)
-              result(4) should be(0.25 +- 0.01)
+      
+              ndtest.run(10)
             }
 
-          "detect bias after a large enough number of trials" in
+          "detect bias after a large enough number of trials" taggedAs(NonDeterministic) in
             {
-              val universe = Universe.createNew
-              val b = Dirichlet(2, 2, 2)
-              val outcomes = List(1, 2, 3)
-              val errorTolerance = 0.01
-              for (i <- 1 to 8) {
-
-               val f = Select(b, outcomes: _*)
-               f.observe(1)
-
+              val ndtest = new NDTest {
+                override def oneTest = {
+                  val universe = Universe.createNew
+                  val b = Dirichlet(2, 2, 2)
+                  val outcomes = List(1, 2, 3)
+                  for (i <- 1 to 8) {
+    
+                   val f = Select(b, outcomes: _*)
+                   f.observe(1)
+    
+                  }
+    
+                  for (i <- 1 to 6) {
+                    val f = Select(b, outcomes: _*)
+                    f.observe(2)
+                  }
+    
+                  for (i <- 1 to 2) {
+                    val f = Select(b, outcomes: _*)
+                    f.observe(3)
+                  }
+    
+                  val algorithm = EMWithImportance(2, 1000, b)(universe)
+                  algorithm.start
+    
+                  val result = b.MAPValue
+                  algorithm.kill
+                      
+                  //9/19
+                  update(result(0), new TTestResult("EMImportanceTestResults0", 0.47, alpha))
+                  //7/19
+                  update(result(1), new TTestResult("EMImportanceTestResults1", 0.36, alpha))
+                  //3/19
+                  update(result(2), new TTestResult("EMImportanceTestResults2", 0.15, alpha))
+                }
               }
-
-              for (i <- 1 to 6) {
-                val f = Select(b, outcomes: _*)
-                f.observe(2)
-              }
-
-              for (i <- 1 to 2) {
-                val f = Select(b, outcomes: _*)
-                f.observe(3)
-              }
-
-              val algorithm = EMWithImportance(2, 1000, b)(universe)
-              algorithm.start
-
-              val result = b.MAPValue
-              algorithm.kill
-
-              //9/19
-              result(0) should be(0.47 +- errorTolerance)
-
-              //7/19
-              result(1) should be(0.36 +- errorTolerance)
-              //3/19
-              result(2) should be(0.15 +- errorTolerance)
-
+      
+              ndtest.run(10)
             }
 
-          "take the prior concentration parameters into account" in
+          "take the prior concentration parameters into account" taggedAs(NonDeterministic) in
             {
-              val universe = Universe.createNew
-              val b = Dirichlet(2.0, 3.0, 2.0)
-              val outcomes = List(1, 2, 3)
-
-              for (i <- 1 to 3) {
-
-                val f2 = Select(b, outcomes: _*)
-                f2.observe(1)
+              val ndtest = new NDTest {
+                override def oneTest = {
+                  val universe = Universe.createNew
+                  val b = Dirichlet(2.0, 3.0, 2.0)
+                  val outcomes = List(1, 2, 3)
+    
+                  for (i <- 1 to 3) {
+    
+                    val f2 = Select(b, outcomes: _*)
+                    f2.observe(1)
+                  }
+    
+                  for (i <- 1 to 2) {
+                    val f3 = Select(b, outcomes: _*)
+                    f3.observe(2)
+                  }
+    
+                  for (i <- 1 to 3) {
+    
+                    val f1 = Select(b, outcomes: _*)
+                    f1.observe(3)
+                  }
+    
+                  val algorithm = EMWithImportance(2, 1000, b)(universe)
+                  algorithm.start
+    
+                  val result = b.MAPValue
+                  algorithm.kill
+                      
+                  update(result(0), new TTestResult("EMImportanceTestResults0", 0.33, alpha))
+                  update(result(1), new TTestResult("EMImportanceTestResults1", 0.33, alpha))
+                  update(result(2), new TTestResult("EMImportanceTestResults2", 0.33, alpha))
+                }
               }
-
-              for (i <- 1 to 2) {
-                val f3 = Select(b, outcomes: _*)
-                f3.observe(2)
-              }
-
-              for (i <- 1 to 3) {
-
-                val f1 = Select(b, outcomes: _*)
-                f1.observe(3)
-              }
-
-              val algorithm = EMWithImportance(2, 1000, b)(universe)
-              algorithm.start
-
-              val result = b.MAPValue
-              algorithm.kill
-              result(0) should be(0.33 +- 0.01)
-              result(1) should be(0.33 +- 0.01)
-              result(2) should be(0.33 +- 0.01)
-
+      
+              ndtest.run(10)
             }
 
-          "correctly use a uniform prior" in 
+          "correctly use a uniform prior" taggedAs(NonDeterministic) in 
             {
-              val universe = Universe.createNew
-              val b = Dirichlet(1.0, 1.0, 1.0)
-              val outcomes = List(1, 2, 3)
-
-              for (i <- 1 to 3) {
-
-                val f2 = Select(b, outcomes: _*)
-                f2.observe(1)
+              val ndtest = new NDTest {
+                override def oneTest = {
+                  val universe = Universe.createNew
+                  val b = Dirichlet(1.0, 1.0, 1.0)
+                  val outcomes = List(1, 2, 3)
+    
+                  for (i <- 1 to 3) {
+    
+                    val f2 = Select(b, outcomes: _*)
+                    f2.observe(1)
+                  }
+    
+                  for (i <- 1 to 3) {
+                    val f3 = Select(b, outcomes: _*)
+                    f3.observe(2)
+                  }
+    
+                  for (i <- 1 to 3) {
+                    val f1 = Select(b, outcomes: _*)
+                    f1.observe(3)
+                  }
+            
+                  val algorithm = EMWithImportance(2, 1000, b)(universe)
+                  algorithm.start
+    
+                  val result = b.MAPValue
+                  algorithm.kill
+                      
+                  update(result(0), new TTestResult("EMImportanceTestResults0", 0.33, alpha))
+                  update(result(1), new TTestResult("EMImportanceTestResults1", 0.33, alpha))
+                  update(result(2), new TTestResult("EMImportanceTestResults2", 0.33, alpha))
+                }
               }
-
-              for (i <- 1 to 3) {
-                val f3 = Select(b, outcomes: _*)
-                f3.observe(2)
-              }
-
-              for (i <- 1 to 3) {
-                val f1 = Select(b, outcomes: _*)
-                f1.observe(3)
-              }
-        
-              val algorithm = EMWithImportance(2, 1000, b)(universe)
-              algorithm.start
-
-              val result = b.MAPValue
-              algorithm.kill
-              result(0) should be(0.33 +- 0.01)
-              result(1) should be(0.33 +- 0.01)
-              result(2) should be(0.33 +- 0.01)
+      
+              ndtest.run(10)            
             }
         }
 
           "used to estimate multiple parameters" should
             {
 
-              "leave parameters having no observations unchanged" in
+              "leave parameters having no observations unchanged" taggedAs(NonDeterministic) in
                 {
-                  val universe = Universe.createNew
-                  val d = Dirichlet(2.0, 4.0, 2.0)
-                  val b = Beta(2.0, 2.0)
-                  val outcomes = List(1, 2, 3)
-
-                  for (i <- 1 to 4) {
-
-                    val f2 = Select(d, outcomes: _*)
-                    f2.observe(1)
+                  val ndtest = new NDTest {
+                    override def oneTest = {
+                      val universe = Universe.createNew
+                      val d = Dirichlet(2.0, 4.0, 2.0)
+                      val b = Beta(2.0, 2.0)
+                      val outcomes = List(1, 2, 3)
+    
+                      for (i <- 1 to 4) {
+    
+                        val f2 = Select(d, outcomes: _*)
+                        f2.observe(1)
+                      }
+    
+                      for (i <- 1 to 2) {
+                        val f3 = Select(d, outcomes: _*)
+                        f3.observe(2)
+                      }
+    
+                     for (i <- 1 to 4) {
+                        val f1 = Select(d, outcomes: _*)
+                        f1.observe(3)
+                      }
+    
+                      val algorithm = EMWithImportance(2, 1000, d, b)(universe)
+                      algorithm.start
+    
+                      val result = d.MAPValue
+                      algorithm.kill
+    
+                      val betaResult = b.MAPValue
+                          
+                      update(result(0), new TTestResult("EMImportanceTestResults0", 0.33, alpha))
+                      update(result(1), new TTestResult("EMImportanceTestResults1", 0.33, alpha))
+                      update(result(2), new TTestResult("EMImportanceTestResults2", 0.33, alpha))
+                      update(betaResult, new TTestResult("EMImportanceTestResultsBeta", 0.5, alpha))
+                    }
                   }
-
-                  for (i <- 1 to 2) {
-                    val f3 = Select(d, outcomes: _*)
-                    f3.observe(2)
-                  }
-
-                 for (i <- 1 to 4) {
-                    val f1 = Select(d, outcomes: _*)
-                    f1.observe(3)
-                  }
-
-                  val algorithm = EMWithImportance(2, 1000, d, b)(universe)
-                  algorithm.start
-
-                  val result = d.MAPValue
-                  algorithm.kill
-                  result(0) should be(0.33 +- 0.01)
-                  result(1) should be(0.33 +- 0.01)
-                  result(2) should be(0.33 +- 0.01)
-
-                  val betaResult = b.MAPValue
-                  betaResult should be(0.5)
-
+          
+                  ndtest.run(10)
                 }
 
-              "correctly estimate all parameters with observations" in
+              "correctly estimate all parameters with observations" taggedAs(NonDeterministic) in
                 {
-                  val universe = Universe.createNew
-                  val d = Dirichlet(2.0, 3.0, 2.0)
-                  val b = Beta(3.0, 7.0)
-                  val outcomes = List(1, 2, 3)
-
-                  for (i <- 1 to 3) {
-
-                    val f2 = Select(d, outcomes: _*)
-                    f2.observe(1)
+                  val ndtest = new NDTest {
+                    override def oneTest = {
+                      val universe = Universe.createNew
+                      val d = Dirichlet(2.0, 3.0, 2.0)
+                      val b = Beta(3.0, 7.0)
+                      val outcomes = List(1, 2, 3)
+    
+                      for (i <- 1 to 3) {
+    
+                        val f2 = Select(d, outcomes: _*)
+                        f2.observe(1)
+                      }
+    
+                      for (i <- 1 to 2) {
+                        val f3 = Select(d, outcomes: _*)
+                        f3.observe(2)
+                      }
+    
+                      for (i <- 1 to 3) {
+                        val f1 = Select(d, outcomes: _*)
+                        f1.observe(3)
+                      }
+    
+                      for (i <- 1 to 7) {
+                        val f = Flip(b)
+                        f.observe(true)
+                      }
+    
+                      for (i <- 1 to 3) {
+                        val f = Flip(b)
+    
+                       f.observe(false)
+                      }
+    
+                      val algorithm = EMWithImportance(2, 1000, b,d)(universe)
+                      algorithm.start
+    
+                      val result = d.MAPValue
+    
+                      val betaResult = b.MAPValue
+                          
+                      update(result(0), new TTestResult("EMImportanceTestResults0", 0.33, alpha))
+                      update(result(1), new TTestResult("EMImportanceTestResults1", 0.33, alpha))
+                      update(result(2), new TTestResult("EMImportanceTestResults2", 0.33, alpha))
+                      update(betaResult, new TTestResult("EMImportanceTestResultsBeta", 0.5, alpha))
+                    }
                   }
-
-                  for (i <- 1 to 2) {
-                    val f3 = Select(d, outcomes: _*)
-                    f3.observe(2)
-                  }
-
-                  for (i <- 1 to 3) {
-                    val f1 = Select(d, outcomes: _*)
-                    f1.observe(3)
-                  }
-
-                  for (i <- 1 to 7) {
-                    val f = Flip(b)
-                    f.observe(true)
-                  }
-
-                  for (i <- 1 to 3) {
-                    val f = Flip(b)
-
-                   f.observe(false)
-                  }
-
-                  val algorithm = EMWithImportance(2, 1000, b,d)(universe)
-                  algorithm.start
-
-                  val result = d.MAPValue
-
-                  result(0) should be(0.33 +- 0.01)
-                  result(1) should be(0.33 +- 0.01)
-                  result(2) should be(0.33 +- 0.01)
-
-                  val betaResult = b.MAPValue
-                  betaResult should be(0.5 +- 0.01)
-
+          
+                  ndtest.run(10)
                 }
           }
 
@@ -670,36 +753,41 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
       }
 
       "derive parameters within a reasonable accuracy for random data" taggedAs(NonDeterministic) in
-        {
-
-          val numEMIterations = 5
-          val testSet = List.fill(testSetSize)(generateDatum())
-          val trainingSet = List.fill(trainingSetSize)(generateDatum())
-
-          def learner(parameters: Parameters): Algorithm = {
-            parameters match {
-              case ps: LearnableParameters => EMWithImportance(numEMIterations, 1000, ps.b1, ps.b2, ps.b3, ps.b4, ps.b5, ps.b6, ps.b7, ps.b8, ps.b9)(parameters.universe)
-              case _ => throw new IllegalArgumentException("Not learnable parameters")
-            }
-          }
-
-          def parameterGetter(algorithm: Algorithm, parameter: Element[Double]): Double = {
-            parameter match {
-              case p: Parameter[Double] => {
-                p.MAPValue
+      {
+          val ndtest = new NDTest {
+            override def oneTest = {
+              val numEMIterations = 5
+              val testSet = List.fill(testSetSize)(generateDatum())
+              val trainingSet = List.fill(trainingSetSize)(generateDatum())
+    
+              def learner(parameters: Parameters): Algorithm = {
+                parameters match {
+                  case ps: LearnableParameters => EMWithImportance(numEMIterations, 1000, ps.b1, ps.b2, ps.b3, ps.b4, ps.b5, ps.b6, ps.b7, ps.b8, ps.b9)(parameters.universe)
+                  case _ => throw new IllegalArgumentException("Not learnable parameters")
+                }
               }
-              case _ => throw new IllegalArgumentException("Not a learnable parameter")
+    
+              def parameterGetter(algorithm: Algorithm, parameter: Element[Double]): Double = {
+                parameter match {
+                  case p: Parameter[Double] => {
+                    p.MAPValue
+                  }
+                  case _ => throw new IllegalArgumentException("Not a learnable parameter")
+                }
+              }
+              val (trueParamErr, truePredAcc) = assessModel(TrueModel, testSet)
+              val (learnedModel, learningTime) = train(trainingSet, new LearnableParameters(new Universe), learner, parameterGetter, learningFlipConstructor)
+              val (learnedParamErr, learnedPredAcc) = assessModel(learnedModel, testSet)
+    
+              // println(learnedParamErr)
+              // println(learnedPredAcc)
+
+              update(learnedParamErr, new TTestResult("EMImportanceTestResultsLearnedParamErr", 0.00, alpha))
+              update(learnedPredAcc, new TTestResult("EMImportanceTestResultsLearnedPredAcc", truePredAcc, alpha))
             }
           }
-          val (trueParamErr, truePredAcc) = assessModel(TrueModel, testSet)
-          val (learnedModel, learningTime) = train(trainingSet, new LearnableParameters(new Universe), learner, parameterGetter, learningFlipConstructor)
-          val (learnedParamErr, learnedPredAcc) = assessModel(learnedModel, testSet)
-
-          println(learnedParamErr)
-          println(learnedPredAcc)
-          learnedParamErr should be(0.00 +- 0.12)
-          learnedPredAcc should be(truePredAcc +- 0.12)
-
+          
+          ndtest.run(10)
         }
 
     }
