@@ -18,7 +18,7 @@ import com.cra.figaro.experimental.structured.factory.Factory.makeTupleVarAndFac
 import com.cra.figaro.experimental.structured.ComponentCollection
 import com.cra.figaro.experimental.structured.Problem
 
-class BPSolver(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]])
+class BPSolver(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]], val iterations: Int)
 extends com.cra.figaro.algorithm.factored.beliefpropagation.OneTimeProbabilisticBeliefPropagation {
   // We need to create a joint probability distribution over the interface to this nested subproblem.
   // To achieve this, we create a new variable representing the tuple of the attributes to preserve.
@@ -28,10 +28,9 @@ extends com.cra.figaro.algorithm.factored.beliefpropagation.OneTimeProbabilistic
 
   val (tupleVar, tupleFactor): (Variable[_], Factor[Double]) = makeTupleVarAndFactor(problem.collection, toPreserve.toList:_*)
 
-  override val debug = false
-
   def generateGraph() = {
     val allFactors = tupleFactor :: factors
+println("Initial factors:\n" + allFactors.map(_.toReadableString).mkString("\n"))
     factorGraph = new BasicFactorGraph(allFactors.map(makeLogarithmic(_)), semiring): FactorGraph[Double]
   }
 
@@ -54,8 +53,6 @@ extends com.cra.figaro.algorithm.factored.beliefpropagation.OneTimeProbabilistic
   def computeExpectation[T](target: Element[T], function: T => Double): Double = {
     computeDistribution(target).map((pair: (Double, T)) => pair._1 * function(pair._2)).sum
   }
-
-  val iterations = 100
 
   val dependentUniverses = null
 

@@ -29,7 +29,7 @@ class BPSolverTest extends WordSpec with Matchers {
       c2.generateRange()
       val v1 = c1.variable
       val v2 = c2.variable
-      val bp = new BPSolver(pr, Set(), Set(v1, v2), List())
+      val bp = new BPSolver(pr, Set(), Set(v1, v2), List(), 100)
 
       val vars = bp.tupleFactor.variables
       vars.size should equal (3)
@@ -52,7 +52,7 @@ class BPSolverTest extends WordSpec with Matchers {
       c2.generateRange()
       val v1 = c1.variable
       val v2 = c2.variable
-      val bp = new BPSolver(pr, Set(), Set(v1, v2), List())
+      val bp = new BPSolver(pr, Set(), Set(v1, v2), List(), 100)
 
       val vs = bp.tupleVar.valueSet
       vs.hasStar should equal (false)
@@ -84,7 +84,7 @@ class BPSolverTest extends WordSpec with Matchers {
       val v3 = c3.variable
       val v3IndexStar = v3.range.indexWhere(!_.isRegular)
       val v3Star = v3.range(v3IndexStar)
-      val bp = new BPSolver(pr, Set(), Set(v1, v3), List())
+      val bp = new BPSolver(pr, Set(), Set(v1, v3), List(), 100)
 
       val vs = bp.tupleVar.valueSet
       vs.hasStar should equal (false)
@@ -116,7 +116,7 @@ class BPSolverTest extends WordSpec with Matchers {
       c3.generateRange()
       val v1 = c1.variable
       val v3 = c3.variable
-      val bp = new BPSolver(pr, Set(), Set(v1, v3), List())
+      val bp = new BPSolver(pr, Set(), Set(v1, v3), List(), 100)
 
       val factor = bp.tupleFactor
       val vt = bp.tupleVar
@@ -172,7 +172,7 @@ class BPSolverTest extends WordSpec with Matchers {
         c1.makeConstraintFactors()
         c2.makeConstraintFactors()
         c3.makeConstraintFactors()
-        pr.solve(beliefPropagation)
+        pr.solve(beliefPropagation())
 
         pr.globals should equal (Set(c2))
         pr.solved should equal (true)
@@ -257,7 +257,7 @@ class BPSolverTest extends WordSpec with Matchers {
         c1.makeConstraintFactors()
         c2.makeConstraintFactors()
         c3.makeConstraintFactors()
-        pr.solve(beliefPropagation)
+        pr.solve(beliefPropagation())
 
         pr.globals should equal  (Set(c1))
         val result = multiplyAll(pr.solution)
@@ -301,7 +301,7 @@ class BPSolverTest extends WordSpec with Matchers {
         c1.makeConstraintFactors()
         c2.makeConstraintFactors()
         c3.makeConstraintFactors()
-        pr.solve(beliefPropagation)
+        pr.solve(beliefPropagation())
 
         pr.globals should equal  (Set(c1))
         val result = multiplyAll(pr.solution)
@@ -346,7 +346,7 @@ class BPSolverTest extends WordSpec with Matchers {
         c1.makeConstraintFactors()
         c2.makeConstraintFactors()
         c3.makeConstraintFactors()
-        pr.solve(beliefPropagation)
+        pr.solve(beliefPropagation())
 
         pr.globals should equal  (Set(c1))
         val result = multiplyAll(pr.solution)
@@ -391,7 +391,7 @@ class BPSolverTest extends WordSpec with Matchers {
         c1.makeConstraintFactors()
         c2.makeConstraintFactors()
         c3.makeConstraintFactors()
-        pr.solve(beliefPropagation)
+        pr.solve(beliefPropagation())
 
         pr.globals should equal  (Set(c1))
         val result = multiplyAll(pr.solution)
@@ -437,7 +437,7 @@ class BPSolverTest extends WordSpec with Matchers {
         c11.makeConstraintFactors()
         c12.makeConstraintFactors()
         c2.makeConstraintFactors()
-        pr.solve(beliefPropagation)
+        pr.solve(beliefPropagation())
 
         pr.globals should equal (Set(c2))
         val result = multiplyAll(pr.solution)
@@ -468,7 +468,7 @@ class BPSolverTest extends WordSpec with Matchers {
         c2.makeNonConstraintFactors()
         c1.makeConstraintFactors()
         c2.makeConstraintFactors()
-        pr.solve(beliefPropagation)
+        pr.solve(beliefPropagation())
         val result = multiplyAll(pr.solution)
         val c2IndexT = c2.variable.range.indexOf(Regular(true))
         val c2IndexF = c2.variable.range.indexOf(Regular(false))
@@ -511,7 +511,7 @@ class BPSolverTest extends WordSpec with Matchers {
       ce1.makeConstraintFactors()
       ce2.makeConstraintFactors()
       cd.makeConstraintFactors()
-      pr.solve(beliefPropagation)
+      pr.solve(beliefPropagation())
 
       // Probability that f1 is true = 0.6
       // Probability that e1 is true = 1.0
@@ -546,7 +546,7 @@ class BPSolverTest extends WordSpec with Matchers {
       cu.makeConstraintFactors()
       cf.makeConstraintFactors()
       ca.makeConstraintFactors()
-      pr.solve(beliefPropagation)
+      pr.solve(beliefPropagation())
       val result = multiplyAll(pr.solution)
       val fIndexT = cf.variable.range.indexOf(Regular(true))
       val fIndexF = cf.variable.range.indexOf(Regular(false))
@@ -583,7 +583,7 @@ class BPSolverTest extends WordSpec with Matchers {
       c2.makeConstraintFactors()
       c3.makeConstraintFactors()
       c4.makeConstraintFactors()
-      pr.solve(beliefPropagation)
+      pr.solve(beliefPropagation())
       val result = multiplyAll(pr.solution)
       val c4Index1 = c4.variable.range.indexOf(Regular(1))
       result.get(List(c4Index1)) should be ((0.3 * 0.1 + 0.7 * 0.7) +- 0.000000001)
@@ -614,9 +614,9 @@ class BPSolverTest extends WordSpec with Matchers {
       c1.makeNonConstraintFactors()
       c2.makeNonConstraintFactors()
       c3.makeNonConstraintFactors()
-      c4.subproblems.values.foreach(_.solve(beliefPropagation))
+      c4.subproblems.values.foreach(_.solve(beliefPropagation()))
       c4.makeNonConstraintFactors()
-      pr.solve(beliefPropagation)
+      pr.solve(beliefPropagation())
       val result = multiplyAll(pr.solution)
       val c4Index1 = c4.variable.range.indexOf(Regular(1))
       result.get(List(c4Index1)) should be ((0.3 * 0.1 + 0.7 * 0.7) +- 0.000000001)
@@ -652,7 +652,7 @@ class BPSolverTest extends WordSpec with Matchers {
       c2.makeNonConstraintFactors()
       c3.makeNonConstraintFactors()
       c4.makeNonConstraintFactors()
-      pr.solve(beliefPropagation)
+      pr.solve(beliefPropagation())
 
       val result = multiplyAll(pr.solution)
       val c1IndexT = c1.variable.range.indexOf(Regular(true))
@@ -689,9 +689,9 @@ class BPSolverTest extends WordSpec with Matchers {
       c1.makeNonConstraintFactors()
       c2.makeNonConstraintFactors()
       c3.makeNonConstraintFactors()
-      c4.subproblems.values.foreach(_.solve(beliefPropagation))
+      c4.subproblems.values.foreach(_.solve(beliefPropagation()))
       c4.makeNonConstraintFactors()
-      pr.solve(beliefPropagation)
+      pr.solve(beliefPropagation())
 
       val result = multiplyAll(pr.solution)
       val c1IndexT = c1.variable.range.indexOf(Regular(true))
@@ -730,7 +730,7 @@ class BPSolverTest extends WordSpec with Matchers {
       c2.makeNonConstraintFactors()
       c3.makeNonConstraintFactors()
       c4.makeNonConstraintFactors()
-      pr.solve(beliefPropagation)
+      pr.solve(beliefPropagation())
 
       val result = multiplyAll(pr.solution)
       val c4Index1 = c4.variable.range.indexOf(Regular(1))
@@ -772,7 +772,7 @@ class BPSolverTest extends WordSpec with Matchers {
       c2.makeNonConstraintFactors()
       c3.makeNonConstraintFactors()
       c4.makeNonConstraintFactors()
-      pr.solve(beliefPropagation)
+      pr.solve(beliefPropagation())
 
       val result = multiplyAll(pr.solution)
       val c1IndexT = c1.variable.range.indexOf(Regular(true))
@@ -809,9 +809,9 @@ class BPSolverTest extends WordSpec with Matchers {
       c1.makeNonConstraintFactors()
       c2.makeNonConstraintFactors()
       c3.makeNonConstraintFactors()
-      c4.subproblems.values.foreach(_.solve(beliefPropagation))
+      c4.subproblems.values.foreach(_.solve(beliefPropagation()))
       c4.makeNonConstraintFactors()
-      pr.solve(beliefPropagation)
+      pr.solve(beliefPropagation())
 
       val result = multiplyAll(pr.solution)
       val c4Index1 = c4.variable.range.indexOf(Regular(1))
@@ -851,9 +851,9 @@ class BPSolverTest extends WordSpec with Matchers {
       c1.makeNonConstraintFactors()
       c2.makeNonConstraintFactors()
       c3.makeNonConstraintFactors()
-      c4.subproblems.values.foreach(_.solve(beliefPropagation))
+      c4.subproblems.values.foreach(_.solve(beliefPropagation()))
       c4.makeNonConstraintFactors()
-      pr.solve(beliefPropagation)
+      pr.solve(beliefPropagation())
 
       val result = multiplyAll(pr.solution)
       val c1IndexT = c1.variable.range.indexOf(Regular(true))
