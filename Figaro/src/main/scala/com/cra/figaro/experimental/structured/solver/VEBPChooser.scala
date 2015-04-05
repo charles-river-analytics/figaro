@@ -1,12 +1,29 @@
 package com.cra.figaro.experimental.structured.solver
 
+import com.cra.figaro.algorithm.factored.VariableElimination
 import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.experimental.structured.Problem
 
-class VESolver(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]])
-extends com.cra.figaro.algorithm.factored.VariableElimination[Double] {
+/*
+ * The score threshold is the threshold to determine whether VE or BP will be used.
+ * This score represents the maximum increase in cost of the factors through using VE, compared to the initial factors.
+ */
+class VEBPChooser(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]],
+                  val scoreThreshold: Double, val iterations: Int)
+extends VariableElimination[Double] {
   def go(): List[Factor[Double]] = {
-    doElimination(factors, toPreserve.toList)
+    val (score, order) = VariableElimination.eliminationOrder(factors, toPreserve)
+    print("Score = " + score + " - ")
+    if (score > scoreThreshold) {
+      println("Choosing BP")
+      val bp = new BPSolver(problem, toEliminate, toPreserve, factors, iterations)
+      result = bp.go()
+    } else {
+      println("Choosing VE")
+      // Since we've already computed the order, we don't call doElimination but only do the steps after computing the order
+      val factorsAfterElimination = eliminateInOrder(order, scala.collection.mutable.Set(factors: _*), initialFactorMap(factors))
+      finish(factorsAfterElimination, order)
+    }
     result
   }
 
@@ -31,4 +48,5 @@ extends com.cra.figaro.algorithm.factored.VariableElimination[Double] {
    val targetElements: List[com.cra.figaro.language.Element[_]] = null
 
    val universe: com.cra.figaro.language.Universe = null
+
 }

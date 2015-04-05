@@ -1,13 +1,13 @@
 /*
- * VETest.scala  
+ * VETest.scala
  * Variable elimination tests.
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -280,8 +280,7 @@ class VETest extends WordSpec with Matchers {
         // v3, v6, v1, v4, v7, v2
         // v3, v6, v1, v7, v4, v2
         // v3, v6, v4, v1, v7, v2
-        val ve = VariableElimination(e5, e8)
-        val order = ve.eliminationOrder(List(f, g, h, i), Set(v5, v8))
+        val order = VariableElimination.eliminationOrder(List(f, g, h, i), Set(v5, v8))._2
         assert(order == List(v3, v4, v1, v6, v7, v2) ||
           order == List(v3, v4, v1, v7, v6, v2) ||
           order == List(v3, v4, v6, v1, v7, v2) ||
@@ -304,7 +303,7 @@ class VETest extends WordSpec with Matchers {
       val factors1 = make(small)
       val factors2 = make(large)
       def order(factors: Traversable[Factor[Double]])() =
-        VariableElimination().eliminationOrder(factors, List())
+        VariableElimination.eliminationOrder(factors, List())._2
       val time1 = measureTime(order(factors1), 20, 100)
       val time2 = measureTime(order(factors2), 20, 100)
       val slack = 1.1
@@ -421,7 +420,7 @@ class VETest extends WordSpec with Matchers {
 
        ndtest.run(10)
     }
-    
+
     "on a different universe from the current universe, produce the correct result" taggedAs (NonDeterministic) in {
        val ndtest = new NDTest {
          override def oneTest = {
@@ -565,7 +564,7 @@ class VETest extends WordSpec with Matchers {
       alg.mostLikelyValue(e4) should equal(true)
     }
   }
-  
+
   def test[T](target: Element[T], predicate: T => Boolean) : Double = {
     val algorithm = VariableElimination(target)
     algorithm.start()

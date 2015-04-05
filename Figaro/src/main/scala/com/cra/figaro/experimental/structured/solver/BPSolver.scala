@@ -30,7 +30,6 @@ extends com.cra.figaro.algorithm.factored.beliefpropagation.OneTimeProbabilistic
 
   def generateGraph() = {
     val allFactors = tupleFactor :: factors
-println("Initial factors:\n" + allFactors.map(_.toReadableString).mkString("\n"))
     factorGraph = new BasicFactorGraph(allFactors.map(makeLogarithmic(_)), semiring): FactorGraph[Double]
   }
 

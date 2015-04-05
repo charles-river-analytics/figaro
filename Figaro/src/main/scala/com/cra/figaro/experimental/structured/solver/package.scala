@@ -15,9 +15,15 @@ package object solver {
     ve.go()
   }
 
-  def beliefPropagation(iterations: Int = 100)(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): List[Factor[Double]] = {
-    val ve = new BPSolver(problem, toEliminate, toPreserve, factors, iterations)
-    ve.go()
+  def beliefPropagation(iterations: Int = 100)(problem: Problem, toEliminate: Set[Variable[_]], 
+      toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): List[Factor[Double]] = {
+    val bp = new BPSolver(problem, toEliminate, toPreserve, factors, iterations)
+    bp.go()
   }
-
+  
+  def chooseVEOrBP(threshold: Double, iterations: Int = 100)(problem: Problem, toEliminate: Set[Variable[_]], 
+      toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): List[Factor[Double]] = {
+    val solver = new VEBPChooser(problem, toEliminate, toPreserve, factors, threshold, iterations)
+    solver.go()
+  }
 }

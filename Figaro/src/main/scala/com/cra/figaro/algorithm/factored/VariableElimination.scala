@@ -1,13 +1,13 @@
 /*
  * VariableElimination.scala
  * Variable elimination algorithm.
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -74,7 +74,7 @@ trait VariableElimination[T] extends FactoredAlgorithm[T] with OneTime {
   private def removeFactor[T](factor: Factor[T], map: FactorMap[T]): Unit =
     factor.variables foreach (v => map += v -> (map.getOrElse(v, Set()) - factor))
 
-  private def initialFactorMap(factors: Traversable[Factor[T]]): FactorMap[T] = {
+  protected def initialFactorMap(factors: Traversable[Factor[T]]): FactorMap[T] = {
     val map: FactorMap[T] = Map()
     factors foreach (addFactor(_, map))
     map
@@ -119,7 +119,7 @@ trait VariableElimination[T] extends FactoredAlgorithm[T] with OneTime {
     }
   }
 
-  private def eliminateInOrder(
+  protected def eliminateInOrder(
     order: List[Variable[_]],
     factors: Set[Factor[T]],
     map: FactorMap[T]): Set[Factor[T]] =
@@ -130,35 +130,6 @@ trait VariableElimination[T] extends FactoredAlgorithm[T] with OneTime {
         eliminate(first, factors, map)
         eliminateInOrder(rest, factors, map)
     }
-
-  /**
-   * Method for choosing the elimination order.
-   * The default order chooses first the variable that
-   * minimizes the number of extra factor entries that would be created when it is eliminated.
-   * Override this method if you want a different rule.
-   */
-  def eliminationOrder(factors: Traversable[Factor[T]], toPreserve: Traversable[Variable[_]]): List[Variable[_]] = {
-    val eliminableVars = (Set[Variable[_]]() /: factors)(_ ++ _.variables) -- toPreserve
-    var initialGraph = new VEGraph(factors)
-    val candidates = new HeapPriorityMap[Variable[_], Double]
-    eliminableVars foreach (v => candidates += v -> initialGraph.score(v))
-    eliminationOrderHelper(candidates, toPreserve, initialGraph, List())
-  }
-
-  @tailrec private def eliminationOrderHelper(candidates: PriorityMap[Variable[_], Double],
-    toPreserve: Traversable[Variable[_]],
-    graph: VEGraph,
-    accum: List[Variable[_]]): List[Variable[_]] = {
-    if (candidates.isEmpty) accum.reverse
-    else {
-      val best = candidates.extractMin()._1
-      // do not read the best variable after it has been removed, and do not add the preserved variables
-      val touched = graph.info(best).neighbors - best -- toPreserve
-      val nextGraph = graph.eliminate(best)
-      touched foreach (v => candidates += v -> graph.score(v))
-      eliminationOrderHelper(candidates, toPreserve, nextGraph, best :: accum)
-    }
-  }
 
   private[figaro] def ve(): Unit = {
     //expand()
@@ -174,7 +145,7 @@ trait VariableElimination[T] extends FactoredAlgorithm[T] with OneTime {
       println("*****************\nStarting factors\n")
       allFactors.foreach((f: Factor[_]) => println(f.toReadableString))
     }
-    val order = optionallyShowTiming(eliminationOrder(allFactors, targetVariables), "Computing elimination order")
+    val (_, order) = optionallyShowTiming(VariableElimination.eliminationOrder(allFactors, targetVariables), "Computing elimination order")
     val factorsAfterElimination =
       optionallyShowTiming(eliminateInOrder(order, Set(allFactors: _*), initialFactorMap(allFactors)), "Elimination")
     if (debug) println("*****************")
@@ -228,7 +199,7 @@ class ProbQueryVariableElimination(override val universe: Universe, targets: Ele
   lazy val queryTargets = targets.toList
 
   val semiring = SumProductSemiring()
-  
+
   private def marginalizeToTarget(factor: Factor[Double], target: Element[_]): Unit = {
     val unnormalizedTargetFactor = factor.marginalizeTo(semiring.asInstanceOf[Semiring[Double]], Variable(target))
     val z = unnormalizedTargetFactor.foldLeft(semiring.zero, _ + _)
@@ -250,7 +221,7 @@ class ProbQueryVariableElimination(override val universe: Universe, targets: Ele
     marginalize(makeResultFactor(factorsAfterElimination))
 
   /**
-   * Computes the normalized distribution over a single target element.  
+   * Computes the normalized distribution over a single target element.
    */
   def computeDistribution[T](target: Element[T]): Stream[(Double, T)] = {
     val factor = targetFactors(target)
@@ -262,7 +233,7 @@ class ProbQueryVariableElimination(override val universe: Universe, targets: Ele
   }
 
  /**
-   * Computes the expectation of a given function for single target element.  
+   * Computes the expectation of a given function for single target element.
    */
   def computeExpectation[T](target: Element[T], function: T => Double): Double = {
     def get(pair: (Double, T)) = pair._1 * function(pair._2)
@@ -271,6 +242,38 @@ class ProbQueryVariableElimination(override val universe: Universe, targets: Ele
 }
 
 object VariableElimination {
+  /**
+   * Method for choosing the elimination order.
+   * The default order chooses first the variable that
+   * minimizes the number of extra factor entries that would be created when it is eliminated.
+   * Override this method if you want a different rule.
+   *
+   * Returns the score of the ordering as well as the ordering.
+   */
+  def eliminationOrder[T](factors: Traversable[Factor[T]], toPreserve: Traversable[Variable[_]]): (Double, List[Variable[_]]) = {
+    val eliminableVars = (Set[Variable[_]]() /: factors)(_ ++ _.variables) -- toPreserve
+    var initialGraph = new VEGraph(factors)
+    val candidates = new HeapPriorityMap[Variable[_], Double]
+    eliminableVars foreach (v => candidates += v -> initialGraph.score(v))
+    eliminationOrderHelper(candidates, toPreserve, initialGraph, Double.NegativeInfinity, List())
+  }
+
+  @tailrec private def eliminationOrderHelper(candidates: PriorityMap[Variable[_], Double],
+    toPreserve: Traversable[Variable[_]],
+    graph: VEGraph,
+    currentScore: Double,
+    accum: List[Variable[_]]): (Double, List[Variable[_]]) = {
+    if (candidates.isEmpty) (currentScore, accum.reverse)
+    else {
+      val (best, bestScore) = candidates.extractMin()
+      // do not read the best variable after it has been removed, and do not add the preserved variables
+      val touched = graph.info(best).neighbors - best -- toPreserve
+      val nextGraph = graph.eliminate(best)
+      touched foreach (v => candidates += v -> graph.score(v))
+      eliminationOrderHelper(candidates, toPreserve, nextGraph, bestScore max currentScore, best :: accum)
+    }
+  }
+
   /**
    * Create a variable elimination computer with the given target query variables in the current default
    * universe.
@@ -334,7 +337,7 @@ object VariableElimination {
     alg.kill()
     result
   }
-  
+
   /**
    * Use VE to compute the probability that the given element has the given value.
    */

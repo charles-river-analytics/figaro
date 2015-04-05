@@ -1,13 +1,13 @@
 /*
  * VEGraph.scala
  * Induced graph for variable elimination.
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -25,7 +25,7 @@ case class AbstractFactor(variables: List[Variable[_]])
 /**
  * Information associated with a variable during variable elimination, including the factors to which it
  * belongs and variables with which it shares a factor.
- * 
+ *
  * @param factors The abstract factors to which this variable belongs.
  * @param neighbors The variables that share a factor in common with this variable.
  */
@@ -33,8 +33,8 @@ case class VariableInfo(factors: Set[AbstractFactor], neighbors: Set[Variable[_]
 
 /**
  * Induced graph for variable elimination.
- * 
- * @param info A map from variables to information about the variables describing the 
+ *
+ * @param info A map from variables to information about the variables describing the
  * factors to which it belongs and its neighbors.
  */
 class VEGraph private (val info: Map[Variable[_], VariableInfo]) {

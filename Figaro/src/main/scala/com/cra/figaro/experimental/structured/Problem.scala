@@ -32,7 +32,7 @@ class Problem(val collection: ComponentCollection, targets: List[Element[_]] = L
    * A flag indicating whether the problem has been solved.
    */
   var solved: Boolean = false
-  
+
   /**
    * Add a component for the given element to this problem.
    */
