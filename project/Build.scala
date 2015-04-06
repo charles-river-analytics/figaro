@@ -86,7 +86,8 @@ object FigaroBuild extends Build {
     .settings (scalacOptions ++= Seq(
 	"-feature",
 	"-language:existentials",
-	"-deprecation"
+	"-deprecation",
+	"-language:postfixOps"
     ))
     .settings(packageOptions := Seq(Package.JarManifest(figaroManifest)))
     .settings(libraryDependencies ++= Seq(
