@@ -24,7 +24,8 @@ object FigaroWorkBuild extends Build {
     .settings (scalacOptions ++= Seq(
 	"-feature",
 	"-language:existentials",
-	"-deprecation"
+	"-deprecation",
+	"-language:postfixOps"
     ))
     .settings(libraryDependencies ++= Seq(
       "com.cra.figaro" %% "figaro" % "latest.release"
