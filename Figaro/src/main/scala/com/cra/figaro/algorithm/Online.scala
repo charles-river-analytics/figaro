@@ -27,8 +27,6 @@ import com.cra.figaro.language.Universe
  * Querying and asserting evidence to a online algorithm are done using references. This is because references are stable over time,
  * while the particular elements they refer to are not.
  * 
- * @param initial The initial universe.
- * @param transition A transition function to a new timestep.
  */
 abstract trait Online extends Algorithm {
 

@@ -78,6 +78,9 @@ trait ExpectationMaximization extends Algorithm with ParameterLearner {
   }
 }
 
+/**
+ * An EM algorithm which learns parameters incrementally
+ */
 trait OnlineExpectationMaximization extends Online with ExpectationMaximization {
 
   protected var lastIterationStatistics: Map[Parameter[_], Seq[Double]] = Map(targetParameters.map(p => p -> p.zeroSufficientStatistics): _*)
@@ -92,6 +95,9 @@ trait OnlineExpectationMaximization extends Online with ExpectationMaximization 
     }).toSeq:_*)
   } 
   
+ /**
+ * Observe new evidence and perform one expectation step and one maximization step
+ */
   def update(evidence: Seq[NamedEvidence[_]] = Seq()): Unit = {
     currentUniverse = transition()
     currentUniverse.assertEvidence(evidence)
@@ -103,6 +109,9 @@ trait OnlineExpectationMaximization extends Online with ExpectationMaximization 
 
 }
 
+/**
+ * An EM algorithm which learns parameters using a factored algorithm
+ */
 class ExpectationMaximizationWithFactors(val universe: Universe, val targetParameters: Parameter[_]*)(val terminationCriteria: () => EMTerminationCriteria) extends ExpectationMaximization {
 
   protected def doExpectationStep(): Map[Parameter[_], Seq[Double]] = {
@@ -115,6 +124,10 @@ class ExpectationMaximizationWithFactors(val universe: Universe, val targetParam
 
 }
 
+
+/**
+ * An online EM algorithm which learns parameters using a factored algorithm
+ */
 class OnlineExpectationMaximizationWithFactors(override val initial: Universe, override val transition: Function0[Universe], val targetParameters: Parameter[_]*)(val terminationCriteria: () => EMTerminationCriteria)
   extends OnlineExpectationMaximization {
   
@@ -129,7 +142,9 @@ class OnlineExpectationMaximizationWithFactors(override val initial: Universe, o
 }
 
 
-
+/**
+ * An EM algorithm which learns parameters using an inference algorithm provided as an argument
+ */
 class GeneralizedEM(inferenceAlgorithmConstructor: Seq[Element[_]] => Universe => ProbQueryAlgorithm with OneTime, val universe: Universe, val targetParameters: Parameter[_]*)(val terminationCriteria: () => EMTerminationCriteria) extends ExpectationMaximization {
 
   protected def doExpectationStep(): Map[Parameter[_], Seq[Double]] = {
@@ -159,6 +174,9 @@ class GeneralizedEM(inferenceAlgorithmConstructor: Seq[Element[_]] => Universe =
 
 }
 
+/**
+ * An EM algorithm which learns parameters using an inference algorithm provided as an argument
+ */
 class GeneralizedOnlineEM(inferenceAlgorithmConstructor: Seq[Element[_]] => Universe => ProbQueryAlgorithm with OneTime, override val initial: Universe, override val transition: Function0[Universe], val targetParameters: Parameter[_]*)(val terminationCriteria: () => EMTerminationCriteria) extends OnlineExpectationMaximization {
 
   

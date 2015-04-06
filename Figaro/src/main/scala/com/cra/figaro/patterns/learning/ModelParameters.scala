@@ -144,6 +144,9 @@ class ModelParameters extends ElementCollection {
       result
     }
 
+    /**
+     * @param The name of a parameter to retrieve from the set of model parameters 
+     */
     def apply(s: String): ParameterType = {
       val p = getElementByReference(s)
       val result = p match {
@@ -179,11 +182,17 @@ class ModelParameters extends ElementCollection {
 
 object ModelParameters {
 
+  /**
+   * Decode JSON into a parameter element
+   */
   implicit val decodeJson: DecodeJson[Parameter[_]] = DecodeJson { c =>
     c.downField("Beta").as[AtomicBeta] |||
     c.downField("Dirichlet").as[AtomicDirichlet]
   }
-
+  
+  /**
+   * Encode a set of model parameters into JSON
+   */
   implicit def ModelParametersEncodeJson: EncodeJson[ModelParameters] = {
     EncodeJson((params: ModelParameters) => {
       val encodedParameters = for (p <- params.convertToParameterList) yield {
@@ -197,7 +206,9 @@ object ModelParameters {
     })
   }
 
-  
+  /**
+   * Decode JSON into a set of model parameters
+   */
   implicit def ModelParametersDecodeJson(implicit collection: ElementCollection): DecodeJson[ModelParameters] =
     DecodeJson(c => for {
       jsonParameters <- (c --\ "allParameters").as[List[Parameter[_]]]
@@ -207,6 +218,9 @@ object ModelParameters {
    * Create a new set of model parameters.
    */
   def apply() = new ModelParameters()
+    /**
+   * Create a new set of model parameters containing the list of parameters provided
+   */
   def apply(l: List[Parameter[_]]) = {
     val m = new ModelParameters()
     l.foreach(m.add(_))
