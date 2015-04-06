@@ -33,6 +33,12 @@ import com.cra.figaro.ndtest._
 
 class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matchers {
   val alpha: Double = 0.05
+    def binomialConstraint(count: Int)(truth: Int, baseWeight: Double): Double = {
+    if (count == truth) baseWeight
+    else {
+      math.pow(.01, Math.abs(truth - count).toDouble) * baseWeight
+    }
+  }
 
   "Expectation Maximization with importance sampling" when
     {
@@ -143,9 +149,9 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
                   val b = Beta(2, 2)
     
                   val b1 = Binomial(7, b)
-                  b1.observe(6)
+                  b1.setConstraint((c: Int) => binomialConstraint(c)(6,1.0))
                   val b2 = Binomial(3, b)
-                  b2.observe(1)
+                  b2.setConstraint((c: Int) => binomialConstraint(c)(1,1.0))
     
                   val algorithm = EMWithImportance(2, 100, b)(universe)
                   algorithm.start
@@ -168,9 +174,9 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
                   val b = Beta(1, 1)
     
                   val b1 = Binomial(7, b)
-                  b1.observe(6)
+                  b1.setConstraint((c: Int) => binomialConstraint(c)(6,1.0))
                   val b2 = Binomial(3, b)
-                  b2.observe(1)
+                  b2.setConstraint((c: Int) => binomialConstraint(c)(1,1.0))
     
                   val algorithm = EMWithImportance(2, 100, b)(universe)
                   algorithm.start
