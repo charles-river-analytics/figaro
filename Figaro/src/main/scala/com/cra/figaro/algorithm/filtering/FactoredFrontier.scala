@@ -77,8 +77,7 @@ abstract class FactoredFrontier(static: Universe, initial: Universe, transition:
     val dummyUniverse = createDummyUniverse(previousUniverse)
     currentStatic = createDummyUniverse(previousStatic)
 
-    LazyValues.clear(previousUniverse)
-    bp.kill()
+    LazyValues.clear(previousUniverse)    
 
     /*
      * We don't want to clear the static universe given to us in the constructor, as this would kill the FF algorithm.
