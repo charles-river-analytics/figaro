@@ -46,7 +46,7 @@ trait Factor[T] {
   /**
    * Creates a new factor of the same type
    */
-  def createFactor[T: TypeTag](parents: List[Variable[_]], output: List[Variable[_]], _semiring: Semiring[T] = semiring): Factor[T]
+  def createFactor[T](parents: List[Variable[_]], output: List[Variable[_]], _semiring: Semiring[T] = semiring): Factor[T]
 
   /**
    * Description that includes the variable list and conditional probabilities
@@ -109,7 +109,7 @@ trait Factor[T] {
   /**
    * Fill the contents of the target by applying the given function to all elements of this factor.
    */
-  def mapTo[U: TypeTag](fn: T => U, _semiring: Semiring[U] = semiring): Factor[U]
+  def mapTo[U](fn: T => U, _semiring: Semiring[U] = semiring): Factor[U]
 
   /**
    * Returns the product of this factor with another factor according to a given multiplication function.
@@ -144,7 +144,7 @@ trait Factor[T] {
    * other variables in this factor to this type.
    * @tparam T The type of entries of this factor.
    */
-  def recordArgMax[U: TypeTag](variable: Variable[U], comparator: (T, T) => Boolean, _semiring: Semiring[U] = semiring.asInstanceOf[Semiring[U]]): Factor[U]
+  def recordArgMax[U](variable: Variable[U], comparator: (T, T) => Boolean, _semiring: Semiring[U] = semiring.asInstanceOf[Semiring[U]]): Factor[U]
 
   /**
    * Returns the marginalization of the factor to a variable according to the given addition function.
@@ -162,7 +162,7 @@ trait Factor[T] {
   /**
    * Creates a new Factor of the same class with a different type
    */
-  def convert[U: TypeTag](semiring: Semiring[U]): Factor[U]
+  def convert[U](semiring: Semiring[U]): Factor[U]
 
   /**
    * Produce a readable string representation of the factor
@@ -197,20 +197,6 @@ class Indices(variables: List[Variable[_]]) extends Iterable[List[Int]] {
 
     def next: List[Int] = current
   }
-    
- /* 
-  def iterator = new Iterator[List[Int]] {
-    val indices = allIndices
-    var current = 0
-    def hasNext = current < indices.size
-    def next = {
-      val n = indices(current)
-      current = current + 1
-      n
-    }
-  }
-  * 
-  */
   
   def allIndices: List[List[Int]] = {
     @tailrec def helper(current: List[Int], accum: List[List[Int]]): List[List[Int]] =
@@ -271,29 +257,29 @@ class Indices(variables: List[Variable[_]]) extends Iterable[List[Int]] {
 }
 
 object Factor {
-  def combineIndices(thisIndices: List[Int], thisIndexMap: List[Int], thatIndices: List[Int], thatIndexMap: List[Int], numVars: Int): Option[List[Int]] = {
-    var newIndices = new ListBuffer[Int]()
-    var good = true;
-
-    for (i <- 0 until numVars) {
-      val inThis = thisIndexMap.indexOf(i)
-      val inThat = thatIndexMap.indexOf(i)
-
-      (inThis >= 0, inThat >= 0) match {
-        case (true, false) => newIndices.append(thisIndices(inThis))
-        case (false, true) => newIndices.append(thatIndices(inThat))
-        case (true, true) =>
-          if (thisIndices(inThis) == thatIndices(inThat))
-            newIndices.append(thisIndices(inThis))
-          else
-            good = false
-        case _ => good = false
-      }
-    }
-
-    if (good)
-      Some(newIndices.toList)
-    else
-      None
-  }
+//  def combineIndices(thisIndices: List[Int], thisIndexMap: List[Int], thatIndices: List[Int], thatIndexMap: List[Int], numVars: Int): Option[List[Int]] = {
+//    var newIndices = new ListBuffer[Int]()
+//    var good = true;
+//
+//    for (i <- 0 until numVars) {
+//      val inThis = thisIndexMap.indexOf(i)
+//      val inThat = thatIndexMap.indexOf(i)
+//
+//      (inThis >= 0, inThat >= 0) match {
+//        case (true, false) => newIndices.append(thisIndices(inThis))
+//        case (false, true) => newIndices.append(thatIndices(inThat))
+//        case (true, true) =>
+//          if (thisIndices(inThis) == thatIndices(inThat))
+//            newIndices.append(thisIndices(inThis))
+//          else
+//            good = false
+//        case _ => good = false
+//      }
+//    }
+//
+//    if (good)
+//      Some(newIndices.toList)
+//    else
+//      None
+//  }
 }
