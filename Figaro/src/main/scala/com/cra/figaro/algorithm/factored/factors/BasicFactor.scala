@@ -23,13 +23,13 @@ import scala.reflect.runtime.universe._
  * Default implementation of Factor. A factor is associated with a set of variables and specifies a value for every
  * combination of assignments to those variables. Factors are parameterized by the types of values they contain.
  */
-class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_]], val semiring: Semiring[T] = SumProductSemiring().asInstanceOf[Semiring[T]])(implicit tag: TypeTag[T])
+class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_]], val semiring: Semiring[T] = SumProductSemiring().asInstanceOf[Semiring[T]])
   extends Factor[T] {
 
-  override def createFactor[T: TypeTag](parents: List[Variable[_]], output: List[Variable[_]], _semiring: Semiring[T] = semiring): Factor[T] =
+  override def createFactor[T](parents: List[Variable[_]], output: List[Variable[_]], _semiring: Semiring[T] = semiring): Factor[T] =
     new BasicFactor[T](parents, output, _semiring)
 
-  override def convert[U: TypeTag](semiring: Semiring[U]): Factor[U] = {
+  override def convert[U](semiring: Semiring[U]): Factor[U] = {
     createFactor[U](parents, output, semiring)
   }
 
@@ -47,7 +47,7 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
   /**
    * Convert the contents of the target by applying the given function to all elements of this factor.
    */
-  override def mapTo[U: TypeTag](fn: T => U, _semiring: Semiring[U] = semiring): Factor[U] = {
+  override def mapTo[U](fn: T => U, _semiring: Semiring[U] = semiring): Factor[U] = {
     val newFactor = createFactor[U](parents, output, _semiring)
     for { (key, value) <- contents } {
       newFactor.set(key, fn(value))
@@ -72,8 +72,8 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
    * Similarly it produces a mapping from each new variable to its new location.
    */
   def unionVars[U](that: Factor[U]): (List[Variable[_]], List[Variable[_]], List[Int], List[Int]) = {
-    val allParents = parents.union(that.parents).distinct
-    val allOutputs = output.union(that.output).distinct diff (allParents)
+    val allOutputs = that.output
+    val allParents = variables.union(that.variables).distinct diff (allOutputs)
 
     val resultVars = allParents ::: allOutputs
     val thisIndexMap: List[Int] = variables map (resultVars.indexOf(_))
@@ -96,16 +96,24 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
   override def combination(
     that: Factor[T],
     op: (T, T) => T): Factor[T] = {
-    val (allParents, allChildren, indexMap1, indexMap2) = unionVars(that)
-    val result: Factor[T] = that.createFactor(allParents, allChildren)
+    that match {
+      case _:SparseFactor[T] => that.combination(this, op)
+      case _ => {
+        val (allParents, allChildren, indexMap1, indexMap2) = unionVars(that)
+        val result: Factor[T] = that.createFactor(allParents, allChildren)
 
-    for { indices <- result.generateIndices } {
-      val indexIntoThis = indexMap1 map (indices(_))
-      val indexIntoThat = indexMap2 map (indices(_))
-      val value = op(get(indexIntoThis), that.get(indexIntoThat))
-      result.set(indices, value)
+        val numVars = result.numVars
+        
+        for { indices <- result.generateIndices } {
+          val indexIntoThis = indexMap1 map (indices(_))
+          val indexIntoThat = indexMap2 map (indices(_))
+          val value = op(get(indexIntoThis), that.get(indexIntoThat))
+          
+          result.set(indices, value)
+        }
+        result
+      }
     }
-    result
   }
 
   private def computeSum(
@@ -132,6 +140,7 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
       val newOutput = output.filterNot(_ == variable)
 
       val result = createFactor[T](newParents, newOutput)
+      val numVars = result.numVars
       val indexMap: List[Int] = result.variables map (variables.indexOf(_))
 
       for { index <- getIndices } {
@@ -183,7 +192,7 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
     valuesWithEntries.reduceLeft(process(_, _))._1
   }
 
-  override def recordArgMax[U: TypeTag](variable: Variable[U], comparator: (T, T) => Boolean, _semiring: Semiring[U] = semiring.asInstanceOf[Semiring[U]]): Factor[U] = {
+  override def recordArgMax[U](variable: Variable[U], comparator: (T, T) => Boolean, _semiring: Semiring[U] = semiring.asInstanceOf[Semiring[U]]): Factor[U] = {
     if (!(variables contains variable)) throw new IllegalArgumentException("Recording value of a variable not present")
     val indicesOfSummedVariable = indices(variables, variable)
 
@@ -214,7 +223,7 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
   }
 
   private def deDuplicate(factor: Factor[T]): Factor[T] = {
-    
+
     if (factor.variables.distinct.size != factor.variables.size) {
       val repeats = findRepeats(factor.variables)
       val reducedVariables = factor.variables.distinct

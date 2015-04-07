@@ -26,27 +26,13 @@ import com.cra.figaro.language.Parameter
  * Sparse implementation of Factor. A factor is associated with a set of variables and specifies a value for every
  * combination of assignments to those variables. Factors are parameterized by the types of values they contain.
  */
-class SparseFactor[T](_parents: List[Variable[_]], _output: List[Variable[_]], _semiring: Semiring[T] = SumProductSemiring().asInstanceOf[Semiring[T]])(implicit tag: TypeTag[T])
+class SparseFactor[T](_parents: List[Variable[_]], _output: List[Variable[_]], _semiring: Semiring[T] = SumProductSemiring().asInstanceOf[Semiring[T]])
   extends BasicFactor[T](_parents, _output, _semiring) {
 
-  val tpe = tag.tpe
-  
-  override def createFactor[T: TypeTag](_parents: List[Variable[_]], _output: List[Variable[_]], _semiring: Semiring[T] = semiring) = {
+  override def createFactor[T](_parents: List[Variable[_]], _output: List[Variable[_]], _semiring: Semiring[T] = semiring) = {
     val nf = new SparseFactor[T](_parents, _output, _semiring)
     nf
   }
-  
-  def defaultValue = semiring.zero
-
-//  var defaultValue = tag.tpe match {
-//    case t if t =:= typeOf[Double] => 0.0
-//    case t if t =:= typeOf[Int] => 0
-//    case t if t =:= typeOf[Boolean] => true
-//    case t if t =:= typeOf[(Double, Double)] => (0.0, 0.0)
-//    case t if t =:= typeOf[(Double, Map[Parameter[_], Seq[Double]])] => (0.0, Map())
-//    case _ => /*println("unknown type " + tpe)*/
-//      0.0
-//  }
 
   /**
    * Get the value associated with a row. The row is identified by an list of indices
@@ -56,7 +42,7 @@ class SparseFactor[T](_parents: List[Variable[_]], _output: List[Variable[_]], _
   override def get(indices: List[Int]): T = {
     contents.get(indices) match {
       case Some(value) => value.asInstanceOf[T]
-      case _ => defaultValue.asInstanceOf[T]
+      case _ => semiring.zero
     }
   }
 
@@ -65,17 +51,16 @@ class SparseFactor[T](_parents: List[Variable[_]], _output: List[Variable[_]], _
    */
   override def getIndices: Indices = new SparseIndices(variables)
 
-    /**
+  /**
    * Convert the contents of the target by applying the given function to all elements of this factor.
    */
-//  override def mapTo[U: TypeTag](fn: T => U): Factor[U] = {
-//    val newFactor = createFactor[U](parents, output)
-//    newFactor.defaultValue = fn(this.defaultValue.asInstanceOf[T])
-//    for { (key, value) <- contents } {
-//      newFactor.set(key, fn(value))
-//    }
-//    newFactor
-//  }
+  override def mapTo[U](fn: T => U, _semiring: Semiring[U] = semiring): Factor[U] = {
+    val newFactor = new SparseFactor[U](parents, output, _semiring)
+    for { (key, value) <- contents } {
+      newFactor.set(key, fn(value))
+    }
+    newFactor
+  }
 
   /**
    * Generic combination function for factors. By default, this is product, but other operations
@@ -84,38 +69,56 @@ class SparseFactor[T](_parents: List[Variable[_]], _output: List[Variable[_]], _
   override def combination(
     that: Factor[T],
     op: (T, T) => T): Factor[T] = {
+
+
     val (allParents, allChildren, thisIndexMap, thatIndexMap) = unionVars(that)
+    val commonMap = thisIndexMap intersect thatIndexMap
+    val thisCommon = commonMap map (thisIndexMap.indexOf(_))
+    val thatCommon = commonMap map (thatIndexMap.indexOf(_))
+
     val result = createFactor[T](allParents, allChildren)
     val numVars = result.numVars
 
-    for {
-      thisIndices <- this.getIndices
-      thatIndices <- that.getIndices
-    } {
-      Factor.combineIndices(thisIndices, thisIndexMap, thatIndices, thatIndexMap, numVars) match {
-        case Some(newIndices) =>
-          val value = op(get(thisIndices), that.get(thatIndices))
-          result.set(newIndices.toList, value)
-        case None =>
+    val thatCommonValues: Map[List[Int], List[(List[Int], T)]] = Map()
+    val thatSize = that.numVars
+    for ((thatIndices, thatValue) <- that.contents) {
+      if (thatSize != thatIndices.size) {
+        println("Found bad entry: " + thatIndices)
       }
+      val key = thatCommon map (thatIndices(_))
+      val matches = thatCommonValues.getOrElse(key, List())
+      thatCommonValues.put(key, matches :+ (thatIndices, thatValue))
+    }
+    
+    for ((thisIndices, thisValue) <- this.contents) {
+      val key = thisCommon map (thisIndices(_))
+      thatCommonValues.get(key) match {
+        case Some(matches) => {
+          var newIndices = new Array[Int](numVars)
+          for (i <- 0 until thisIndices.size) {
+            newIndices(thisIndexMap(i)) = thisIndices(i)
+          }
+          
+          for ((thatIndices, thatValue) <- matches) {
+            for (i <- 0 until thatIndices.size) {
+              newIndices(thatIndexMap(i)) = thatIndices(i)
+            }
+
+            val newValue = op(thisValue, thatValue)
+            result.set(newIndices.toList, newValue)
+          }
+        }
+        case _ =>
+      }
+      //      Factor.combineIndices(thisIndices, thisIndexMap, thatIndices, thatIndexMap, numVars) match {
+      //        case Some(newIndices) =>
+      //          val value = op(get(thisIndices), that.get(thatIndices))
+      //          result.set(newIndices.toList, value)
+      //        case None =>
+      //      }
     }
     result
   }
-
-//  private def computeSum(
-//    resultIndices: List[Int],
-//    summedVariable: Variable[_],
-//    summedVariableIndices: List[Int],
-//    summedNonZeroIndices: List[Int],
-//    semiring: Semiring[T]): T = {
-//    var value = semiring.zero
-//    val values =
-//      for { i <- summedNonZeroIndices } yield {
-//        val sourceIndices = insertAtIndices(resultIndices, summedVariableIndices, i)
-//        if (contents.contains(sourceIndices)) get(sourceIndices) else semiring.zero
-//      }
-//    semiring.sumMany(values)
-//  }
 
   private def computeArgMax[U](
     resultIndices: List[Int],
@@ -141,7 +144,7 @@ class SparseFactor[T](_parents: List[Variable[_]], _output: List[Variable[_]], _
     }
   }
 
-  override def recordArgMax[U: TypeTag](variable: Variable[U], comparator: (T, T) => Boolean, _semiring: Semiring[U] = semiring.asInstanceOf[Semiring[U]]): Factor[U] = {
+  override def recordArgMax[U](variable: Variable[U], comparator: (T, T) => Boolean, _semiring: Semiring[U] = semiring.asInstanceOf[Semiring[U]]): Factor[U] = {
     if (!(variables contains variable)) throw new IllegalArgumentException("Recording value of a variable not present")
     val indicesOfSummedVariable = indices(variables, variable)
 
@@ -171,36 +174,5 @@ class SparseFactor[T](_parents: List[Variable[_]], _output: List[Variable[_]], _
   class SparseIndices(variables: List[Variable[_]]) extends Indices(variables) {
     override def iterator = contents.keys.iterator
 
-    /**
-     * Given a list of indices corresponding to a row in the factor, returns the list of indices
-     * corresponding to the next row.
-     * Returns None if the last index list has been reached.
-     */
-//    override def nextIndices(indices: List[Int]): Option[List[Int]] = {
-//      var current = indices
-//      // Copies all values prior to the position
-//      // Increments the position value by 1
-//      // Sets all values after the position to 0
-//      def makeNext(position: Int) = for { i <- 0 until numVars } yield {
-//        if (i < position) current(i)
-//        else if (i > position) 0
-//        else current(position) + 1
-//      }
-//
-//      // Checks to see if variable at position is exhausted
-//      // If so recurses to next position
-//      def helper(position: Int): Option[List[Int]] =
-//        if (position < 0) None
-//        else if (current(position) < limits(position)) {
-//          val nextIndices = makeNext(position).toList
-//          if (contents.contains(nextIndices)) {
-//            Some(nextIndices)
-//          } else {
-//            current = nextIndices
-//            helper(position)
-//          }
-//        } else helper(position - 1)
-//      helper(numVars - 1)
-//    }
   }
 }
