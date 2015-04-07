@@ -44,8 +44,8 @@ class BPTest extends WordSpec with Matchers {
       val fn = graph.adjacencyList.filter(p => { p._1 match { case fn: FactorNode => true; case _ => false; } })
       val vn = graph.adjacencyList.filter(p => { p._1 match { case vn: VariableNode => true; case _ => false; } })
 
-      fn.size should equal(6)
-      vn.size should equal(5)
+      fn.size should equal(7)
+      vn.size should equal(6)
     }
 
     "Create an edge to between each factor and the variables it has" in {
@@ -305,10 +305,10 @@ class BPTest extends WordSpec with Matchers {
       val e3 = If(e1, Flip(0.52), Flip(0.4))
       val e4 = e2 === e3
       e4.observe(true)
-      // p(e1=T,e2=T,e3=T) = 0.75 * 0.4 * 0.52
-      // p(e1=T,e2=F,e3=F) = 0.75 * 0.6 * 0.48
-      // p(e1=F,e2=T,e3=T) = 0.25 * 0.9 * 0.4
-      // p(e1=F,e2=F,e3=F) = 0.25 * 0.1 * 0.6
+      // p(e1=T,e2=T,e3=T) = 0.75 * 0.4 * 0.52 = .156
+      // p(e1=T,e2=F,e3=F) = 0.75 * 0.6 * 0.48 = .216
+      // p(e1=F,e2=T,e3=T) = 0.25 * 0.9 * 0.4 = .09
+      // p(e1=F,e2=F,e3=F) = 0.25 * 0.1 * 0.6 = .015
       // MPE: e1=T,e2=F,e3=F,e4=T
       val alg = MPEBeliefPropagation(20)
       alg.start()

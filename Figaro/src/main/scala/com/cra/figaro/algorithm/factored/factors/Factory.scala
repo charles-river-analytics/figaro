@@ -148,7 +148,7 @@ object Factory {
 
   /**
    * Combines a set of factors into a single larger factor. This method is used when a factor has
-   * been decomposed into may dependent Factors and a single Factor is required.
+   * been decomposed into many dependent Factors and a single Factor is required.
    */
   def combineFactors(oldFactors: List[Factor[Double]], semiring: Semiring[Double], removeTemporaries: Boolean): List[Factor[Double]] = {
     newFactors.clear

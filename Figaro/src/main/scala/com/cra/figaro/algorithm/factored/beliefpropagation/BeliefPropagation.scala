@@ -1,13 +1,13 @@
 /*
- * BeliefPropagation.scala
+ * BeliefPropagation.scala  
  * A belief propagation algorithm.
- *
+ * 
  * Created By:      Brian Ruttenberg (bruttenberg@cra.com)
  * Creation Date:   Jan 15, 2014
- *
+ * 
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- *
+ * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -68,7 +68,7 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
   /* The factor graph for this BP object */
   protected[figaro] var factorGraph: FactorGraph[T] = _
 
-  /* The beliefs associated with each node in the factor graph. The belief is the product
+  /* The beliefs associated with each node in the factor graph. The belief is the product 
    * of all messages to the node times any factor at the node
    */
   private[figaro] val beliefMap: Map[Node, Factor[T]] = Map()
@@ -92,7 +92,7 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
 
   /*
    * A message from a factor Node to a variable Node is the product of the factor with
-   * messages from all other Nodes (except the destination node),
+   * messages from all other Nodes (except the destination node), 
    * marginalized over all variables except the variable:
    */
   private def getNewMessageFactorToVar(fn: FactorNode, vn: VariableNode) = {
@@ -120,9 +120,9 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
   def belief(source: Node) = {
     val messageList = factorGraph.getNeighbors(source) map (factorGraph.getLastMessage(_, source))
 
-    val f = if (messageList.isEmpty) {
+    if (messageList.isEmpty) {
       source match {
-        case fn: FactorNode => factorGraph.uniformFactor(fn.variables.toList)
+        case fn: FactorNode => factorGraph.getFactorForNode(fn)//factorGraph.uniformFactor(fn.variables.toList)
         case vn: VariableNode => factorGraph.uniformFactor(List(vn.variable))
       }
     } else {
@@ -132,7 +132,7 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
         case vn: VariableNode => messageBelief
       }
     }
-    f
+
   }
 
   /*
@@ -240,7 +240,7 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
       node match {
         case vn: VariableNode => {
           vn.variable match {
-            case elemVar: ElementVariable[_] => elemVar.element  == target
+            case elemVar: ElementVariable[_] => elemVar.element == target
             case _ => false
           }
         }
@@ -277,6 +277,34 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
 trait OneTimeProbabilisticBeliefPropagation extends ProbabilisticBeliefPropagation with OneTime {
   val iterations: Int
   def run() = {
+    if (debug) {
+      val varNodes = factorGraph.getNodes.filter(_.isInstanceOf[VariableNode])
+      val allVars = (Set[Variable[_]]() /: factorGraph.getNodes)((s: Set[Variable[_]], n: Node) => {
+        val a = (n match {
+          case vn: VariableNode => Set(vn.variable)
+          case fn: FactorNode => fn.variables
+        })
+        s ++ a
+      })
+      println("*****************\nElement ids:")
+      for { variable <- allVars } {
+        variable match {
+          case elemVar: /*Extended*/ ElementVariable[_] =>
+            println(variable.id + "(" + elemVar.element.name.string + ")" + "@" + elemVar.element.hashCode + ": " + elemVar.element)
+          case _ =>
+            println(variable.id + ": not an element variable")
+        }
+      }
+      println("*****************\nOriginal Factors:")
+      factorGraph.getNodes.foreach { n =>
+        n match {
+          case fn: FactorNode => println(factorGraph.getFactorForNode(fn).toReadableString)
+          case _ =>
+        }
+      }
+      println("*****************")
+    }
+
     for { i <- 1 to iterations } { runStep() }
   }
 }
@@ -310,7 +338,7 @@ abstract class ProbQueryBeliefPropagation(override val universe: Universe, targe
     neededElements = needs._1
     needsBounds = needs._2
 
-    // Depth < MaxValue implies we are using bounds
+    // Depth < MaxValue implies we are using bounds  
     val factors = if (depth < Int.MaxValue && needsBounds) {
       getFactors(neededElements, targetElements, upperBounds)
     } else {
@@ -402,7 +430,7 @@ object BeliefPropagation {
    * Use BP to compute the probability that the given element satisfies the given predicate.
    */
   def probability[T](target: Element[T], predicate: T => Boolean): Double = {
-    val alg = BeliefPropagation(100, target)
+    val alg = BeliefPropagation(10, target)
     alg.start()
     val result = alg.probability(target, predicate)
     alg.kill()
