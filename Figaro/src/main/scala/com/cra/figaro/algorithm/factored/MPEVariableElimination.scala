@@ -47,7 +47,15 @@ class MPEVariableElimination(override val universe: Universe)(
   private val maximizers: Map[Variable[_], Any] = Map()
 
   private def getMaximizer[T](variable: Variable[T]): T = maximizers(variable).asInstanceOf[variable.Value]
-
+  
+  /*
+   * Convert factors to use MaxProduct
+   */
+  override def getFactors(allElements: List[Element[_]], targetElements: List[Element[_]], upper: Boolean = false): List[Factor[Double]] = {
+    val factors = super.getFactors(allElements, targetElements, upper) 
+    factors.map (_.mapTo(x => x, semiring))
+  }
+  
   def mostLikelyValue[T](target: Element[T]): T = getMaximizer(Variable(target))
 
   private def backtrackOne[T](factor: Factor[_], variable: Variable[T]): Unit = {
