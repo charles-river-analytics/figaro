@@ -89,7 +89,7 @@ class AtomicDirichlet(name: Name[Array[Double]], val alphas: Array[Double], coll
   private val vector = alphas.map(a => 0.0)
 
   private[figaro] override def sufficientStatistics[A](i: Int): Seq[Double] = {
-    val result = vector
+    val result = alphas.map(a => 0.0)
     require(i < result.size)
     result.update(i, 1.0)
     result
