@@ -76,19 +76,24 @@ class ParticleGenerator(de: DensityEstimator, val numArgSamples: Int, val numTot
 
   /**
    * Resample and update the element from the indicated beliefs
-   * beliefs = (Probability, Value)
+   * beliefs/oldMessages = (Probability, Value)
    */
   def resample(elem: Element[_], beliefs: List[(Double, _)], oldMessages: List[List[(Double, _)]], proposalVariance: Double): Unit = {
 
-    def nextInt(i: Int) = if (random.nextBoolean) i + 1 else i - 1
+    /* MH Proposal for Double type. 
+     * TODO: Integrate these proposals with existing MH algorithms
+     */
     def nextDouble(d: Double) = random.nextGaussian() * proposalVariance + d
 
     val numSamples = sampleMap(elem)._2
     
     val sampleDensity: Double = 1.0 / numSamples
-        
-
+       
+    // Generate new samples given the old samples for an element 
     val newSamples = elem match {
+      /* If the element is an instance of OneShifter (Geometric, poisson, etc),
+       * we first resample the existing beliefs so there are numSample particles of equal weight.
+       */
       case o: OneShifter => {
         val toResample = if (beliefs.size < numSamples) {
           val resampler = new MapResampler(beliefs.map(s => (s._1, s._2)))
@@ -96,6 +101,12 @@ class ParticleGenerator(de: DensityEstimator, val numArgSamples: Int, val numTot
         } else {
           beliefs
         }
+        /*
+         * Now for each particle, choose to resample the particle based on a proposal.
+         * Use the OneShifter class to generate the proposal distribution.
+         * Call the accept function to determine if we accept the proposal or stick with the original
+         * Note, if we propose something that has zero density, it is always rejected
+         */
         val samples = toResample.map(b => {
           val oldValue = b._2.asInstanceOf[Int]
           val newValue = o.shiftOne(oldValue)
@@ -104,8 +115,14 @@ class ParticleGenerator(de: DensityEstimator, val numArgSamples: Int, val numTot
           } else oldValue
           (sampleDensity, nextValue)
         })
+        // return the new particles
         samples.groupBy(_._2).toList.map(s => (s._2.unzip._1.sum, s._2.head._2))
       }
+      
+      /* For atomic doubles, we do the same thing as the OneShifters, but we assume
+       * that we never need to resample since the number of particles equals numSamples.
+       * We propose a new double and check its acceptance. Note the proposal is symmetric.
+       */
       case a: Atomic[_] => { // The double is unchecked, bad stuff if the atomic is not double
         beliefs.map(b => {
           val oldValue = b._2.asInstanceOf[Double]
@@ -144,15 +161,31 @@ class ParticleGenerator(de: DensityEstimator, val numArgSamples: Int, val numTot
 }
 
 object ParticleGenerator {
+  /**
+   * Maximum number of particles to generate per atomic
+   */
   var defaultArgSamples = 50
+  
+  /**
+   * Maximum number of particles to generate through a chain.
+   */
   var defaultTotalSamples = 50
 
   private val samplerMap: Map[Universe, ParticleGenerator] = Map()
 
+  /**
+   * Clear the particle generate for a universe
+   */
   def clear(univ: Universe) = samplerMap -= univ
 
+  /**
+   * Clear all particle generators
+   */
   def clear() = samplerMap.clear
 
+  /**
+   * Create a new particle generator for the given universe, using the given density estimatore, number of argument samples and total number of samples
+   */
   def apply(univ: Universe, de: DensityEstimator, numArgSamples: Int, numTotalSamples: Int): ParticleGenerator =
     samplerMap.get(univ) match {
       case Some(e) => e
@@ -163,9 +196,15 @@ object ParticleGenerator {
       }
     }
 
+  /**
+   * Create a new particle generate for a universe using a constant density estimator and default samples
+   */
   def apply(univ: Universe): ParticleGenerator = apply(univ, new ConstantDensityEstimator,
       defaultArgSamples, defaultTotalSamples)
 
+  /**
+   * Check if a particle generate exists for this universe
+   */
   def exists(univ: Universe): Boolean = samplerMap.contains(univ)
 
 }
