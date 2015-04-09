@@ -61,7 +61,7 @@ object ChainFactory {
   private def makeSelectorVariable(parent: Variable[_], overallVar: Variable[_]): Variable[Int] = {
     val selectorSize = parent.size * overallVar.size
 
-    val values = SortedSet[Int]((0 to selectorSize): _*)
+    val values = SortedSet[Int]((0 until selectorSize): _*)
     new InternalVariable(ValueSet.withoutStar(values))
   }
   /*

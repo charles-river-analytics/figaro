@@ -20,7 +20,12 @@ class TTestResult(val name: String, val target: Double, val alpha: Double = .05)
   val statistics = new SummaryStatistics()
 
   def update(value: Any) {
-    statistics.addValue(value.asInstanceOf[Double])
+    value match {
+      case x: Double => statistics.addValue(x)
+      case x: Int => statistics.addValue(x.toDouble)
+      case x: Float => statistics.addValue(x.toDouble)
+      case _ => println (value + " improper value for t-test")
+    }
   }
 
   def check: Boolean = {

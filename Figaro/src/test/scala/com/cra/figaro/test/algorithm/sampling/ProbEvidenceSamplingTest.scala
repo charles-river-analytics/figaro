@@ -25,7 +25,7 @@ import com.cra.figaro.test.tags.Performance
 import com.cra.figaro.test.tags.NonDeterministic
 import com.cra.figaro.ndtest._
 
-class ProbEvidenceTest extends WordSpec with Matchers {
+class ProbEvidenceSamplingTest extends WordSpec with Matchers {
   
   val alpha: Double = 0.05
 
@@ -175,7 +175,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
       "return 0" taggedAs (NonDeterministic) in {
         val ndtest = new NDTest {
           override def oneTest = {
-            val target = 0
+            val target = 0.0
             val universe = Universe.createNew()
             val c = Constant(8)("c", universe)
             val result = sampleTest(target, List(NamedEvidence("c", Observation(7))))
