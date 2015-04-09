@@ -21,14 +21,21 @@ import com.cra.figaro.algorithm.factored.DensityException
 import com.cra.figaro.algorithm.factored.DensityEstimator
 
 /**
- * Doc needed
+ * A density estimator that uses normal kernel density estimation to estimate the density at an arbitrary point
+ * from a set of (probability, value) samples.
  */
 trait NormalKernelDensityEstimator extends DensityEstimator with DoubleDensityEstimator with IntDensityEstimator {
 
+  /**
+   * Get the bandwidth to use for the normal kernel for this set of samples
+   */
   def getBandwidth(samples: List[(Double, Double)]): Double
   
   private def normalizer(bw: Double) = 1.0 / sqrt(2.0 * Pi * bw)
 
+  /*
+   * Estimates the density using a normal kernel and the given samples
+   */
   def getDensity(pt: Double, samples: List[(Double, Double)]): Double = {
     val bandwidth = getBandwidth(samples)
     val gmmDensities = samples.map { s =>

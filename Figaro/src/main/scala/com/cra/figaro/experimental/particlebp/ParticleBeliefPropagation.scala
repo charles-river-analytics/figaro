@@ -37,7 +37,9 @@ import com.cra.figaro.algorithm.UnsupportedAlgorithmException
 import com.cra.figaro.algorithm.sampling.ProbEvidenceSampler
 
 /**
- * Doc needed
+ * Trait for performing particle belief propagation.
+ *
+ * Only supports Double factors at the moment (i.e., no support for utilities or sufficient statistics)
  */
 trait ParticleBeliefPropagation extends FactoredAlgorithm[Double] with InnerBPHandler {
 
@@ -77,8 +79,17 @@ trait ParticleBeliefPropagation extends FactoredAlgorithm[Double] with InnerBPHa
    */
   def starterElements: List[Element[_]] = targetElements
   
+    /**
+   * A list of universes that depend on this universe such that evidence on those universes should be taken into
+   * account in this universe.
+   */
   val dependentUniverses: List[(Universe, List[NamedEvidence[_]])]
   
+    /**
+   * The algorithm to compute probability of specified evidence in a dependent universe.
+   * We use () => Double to represent this algorithm instead of an instance of ProbEvidenceAlgorithm. 
+   * Typical usage is to return the result of ProbEvidenceAlgorithm.computeProbEvidence when invoked.
+   */
   val dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double
   
   /*
@@ -88,7 +99,7 @@ trait ParticleBeliefPropagation extends FactoredAlgorithm[Double] with InnerBPHa
   private[figaro] def runInnerLoop(elemsWithPosteriors: Set[Element[_]], dependentElems: Set[Element[_]]) = {
     currentUniverse = universe
 
-    // Remove factors on all elements that can possibly change during resamples
+    // Remove factors on all elements that can possibly change during resampluing
     dependentElems.foreach(Factory.removeFactors(_))
 
     // Clear the variable and values caches
@@ -118,11 +129,15 @@ trait ParticleBeliefPropagation extends FactoredAlgorithm[Double] with InnerBPHa
       // get the beliefs for the element as computed by BP
       val oldBeliefs = bp.getBeliefsForElement(elem)
 
+      // get the last messages to the node that will be used to compute the density  of new samples
       val factors = getLastMessagesToNode(elem)
       val factorBeliefs = factors.map(bp.factorToBeliefs(_))
 
+      // estimate the bandwidth of the proposal using the old belieds 
       val bw = proposalEstimator(oldBeliefs)
+      // generate new samples
       val newSamples = pbpSampler.resample(elem, oldBeliefs, factorBeliefs, bw)
+      // return the set of dependent elements (and the element itself) that factors will need ot be wipted
       universe.usedBy(elem) + elem
     }
     (needsToBeResampled, dependentElems)
@@ -132,7 +147,7 @@ trait ParticleBeliefPropagation extends FactoredAlgorithm[Double] with InnerBPHa
     * the original factor. That is, we will incorporate that information using the exact
     * density of the element, we don't need to estimate it from a factor. 
     * 
-    * So this function will return all of the last messages to the element node and divie out
+    * So this function will return all of the last messages to the element node and divide out
     * the original factor 
     * 
     */
@@ -171,7 +186,7 @@ trait ParticleBeliefPropagation extends FactoredAlgorithm[Double] with InnerBPHa
   /*
    * Estimates the proposal distribution using the variance of the samples
    */
-  def proposalEstimator(beliefs: List[(Double, _)]): Double = {
+  private def proposalEstimator(beliefs: List[(Double, _)]): Double = {
     val percentOfStd = .1
 
     beliefs.head._2 match {
@@ -196,6 +211,9 @@ trait ParticleBeliefPropagation extends FactoredAlgorithm[Double] with InnerBPHa
 
 }
 
+/**
+ * Trait for One time PBP algorithms
+ */
 trait OneTimeParticleBeliefPropagation extends ParticleBeliefPropagation with OneTime with OneTimeInnerBPHandler {
   val outerIterations: Int
 
@@ -205,7 +223,7 @@ trait OneTimeParticleBeliefPropagation extends ParticleBeliefPropagation with On
 }
 
 /**
- * Trait for Anytime BP algorithms
+ * Trait for Anytime PBP algorithms
  */
 trait AnytimeParticleBeliefPropagation extends ParticleBeliefPropagation with Anytime with AnytimeInnerBPHandler {
   override def cleanUp() = if (bp != null) bp.kill
