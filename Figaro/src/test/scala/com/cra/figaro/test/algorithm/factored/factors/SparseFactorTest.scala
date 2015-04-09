@@ -67,49 +67,6 @@ class SparseFactorTest extends WordSpec with Matchers with PrivateMethodTester {
       f.get(indices) should equal(0.3)
     }
 
-    // Sparse factors checks for available content so this test
-    //  will always fail as content is not defined    
-    //    "have the next index List carry and add correctly" in {
-    //      Universe.createNew()
-    //      val e1 = Flip(0.1)
-    //      val e2 = Constant(8)
-    //      val e3 = Select(0.2 -> "a", 0.3 -> "b", 0.5 -> "c")
-    //      val e4 = Flip(0.7)
-    //      Values()(e1)
-    //      Values()(e2)
-    //      Values()(e3)
-    //      Values()(e4)
-    //      val v1 = Variable(e1)
-    //      val v2 = Variable(e2)
-    //      val v3 = Variable(e3)
-    //      val v4 = Variable(e4)
-    //      val f = new SparseFactor[Double](List(v1, v2, v3), List(v4))
-    //      val ia = List(1, 0, 1, 1)
-    //      val indices = f.getIndices
-    //      val ar = indices.nextIndices(ia).get
-    //      ar should equal(List(1, 0, 2, 0))
-    //    }
-
-    //    "produce None when the index Lists are exhausted" in {
-    //      Universe.createNew()
-    //      val e1 = Flip(0.1)
-    //      val e2 = Constant(8)
-    //      val e3 = Select(0.2 -> "a", 0.3 -> "b", 0.5 -> "c")
-    //      val e4 = Flip(0.7)
-    //      Values()(e1)
-    //      Values()(e2)
-    //      Values()(e3)
-    //      Values()(e4)
-    //      val v1 = Variable(e1)
-    //      val v2 = Variable(e2)
-    //      val v3 = Variable(e3)
-    //      val v4 = Variable(e4)
-    //      val f = Factory.simpleMake[Double](List(v1, v2, v3, v4))
-    //      val ia = List(1, 0, 2, 1)
-    //      val indices = f.getIndices
-    //      indices.nextIndices(ia) should equal(None)
-    //    }
-
     "compute the union of variables in two sparse factors and the correct index maps when calling unionVars" in {
       Universe.createNew()
       val e1 = Flip(0.1)
@@ -134,9 +91,9 @@ class SparseFactorTest extends WordSpec with Matchers with PrivateMethodTester {
       val g = new SparseFactor[Double](List(v5, v3, v2), List(v6))
       val (parents, output, indexMap1, indexMap2) = f.unionVars(g)
       val union = parents ::: output
-      union should equal(List(v1, v2, v3, v5, v4, v6))
-      indexMap1 should equal(List(0, 1, 2, 4))
-      indexMap2 should equal(List(3, 2, 1, 5))
+      union should equal(List(v1, v2, v3, v4, v5, v6))
+      indexMap1 should equal(List(0, 1, 2, 3))
+      indexMap2 should equal(List(4, 2, 1, 5))
     }
 
     "multiplying a factor with a sparse factor" should {
@@ -166,20 +123,23 @@ class SparseFactorTest extends WordSpec with Matchers with PrivateMethodTester {
         g.set(List(1, 0), 0.7)
         g.set(List(0, 1), 0.8)
         g.set(List(1, 1), 0.9)
-        val h = f.product(g/*, SumProductSemiring*/)
-        h.variables should equal(List(v1, v2, v3, v4))
+        val h = f.product(g)
+        h.variables should contain (v1)
+        h.variables should contain (v2)
+        h.variables should contain (v3)
+        h.variables should contain (v4)
         h.get(List(0, 0, 0, 0)) should be(0.0 +- 0.0001)
-        h.get(List(1, 0, 0, 0)) should be(0.06 +- 0.0001)
-        h.get(List(2, 0, 0, 0)) should be(0.12 +- 0.0001)
-        h.get(List(0, 0, 1, 0)) should be(0.24 +- 0.0001)
-        h.get(List(1, 0, 1, 0)) should be(0.32 +- 0.0001)
-        h.get(List(2, 0, 1, 0)) should be(0.4 +- 0.0001)
-        h.get(List(0, 0, 0, 1)) should be(0.0 +- 0.0001)
-        h.get(List(1, 0, 0, 1)) should be(0.07 +- 0.0001)
-        h.get(List(2, 0, 0, 1)) should be(0.14 +- 0.0001)
-        h.get(List(0, 0, 1, 1)) should be(0.27 +- 0.0001)
-        h.get(List(1, 0, 1, 1)) should be(0.36 +- 0.0001)
-        h.get(List(2, 0, 1, 1)) should be(0.45 +- 0.0001)
+        h.get(List(0, 0, 1, 0)) should be(0.06 +- 0.0001)
+        h.get(List(0, 0, 2, 0)) should be(0.12 +- 0.0001)
+        h.get(List(0, 1, 0, 0)) should be(0.24 +- 0.0001)
+        h.get(List(0, 1, 1, 0)) should be(0.32 +- 0.0001)
+        h.get(List(0, 1, 2, 0)) should be(0.4 +- 0.0001)
+        h.get(List(1, 0, 0, 0)) should be(0.0 +- 0.0001)
+        h.get(List(1, 0, 1, 0)) should be(0.07 +- 0.0001)
+        h.get(List(1, 0, 2, 0)) should be(0.14 +- 0.0001)
+        h.get(List(1, 1, 0, 0)) should be(0.27 +- 0.0001)
+        h.get(List(1, 1, 1, 0)) should be(0.36 +- 0.0001)
+        h.get(List(1, 1, 2, 0)) should be(0.45 +- 0.0001)
       }
     }
 
@@ -210,17 +170,17 @@ class SparseFactorTest extends WordSpec with Matchers with PrivateMethodTester {
         g.set(List(1, 0), 0.7)
         g.set(List(0, 1), 0.8)
         g.set(List(1, 1), 0.9)
-        val h = f.product(g/*, SumProductSemiring*/)
-        h.variables should equal(List(v1, v2, v4, v3))
+        val h = f.product(g)
+        h.variables should equal(List(v1, v2, v3, v4))
         h.get(List(0, 0, 0, 0)) should be(0.0 +- 0.0001)
         h.get(List(1, 0, 0, 0)) should be(0.06 +- 0.0001)
         h.get(List(2, 0, 0, 0)) should be(0.12 +- 0.0001)
-        h.get(List(0, 0, 1, 0)) should be(0.0 +- 0.0001)
-        h.get(List(1, 0, 1, 0)) should be(0.07 +- 0.0001)
-        h.get(List(2, 0, 1, 0)) should be(0.14 +- 0.0001)
-        h.get(List(0, 0, 0, 1)) should be(0.24 +- 0.0001)
-        h.get(List(1, 0, 0, 1)) should be(0.32 +- 0.0001)
-        h.get(List(2, 0, 0, 1)) should be(0.4 +- 0.0001)
+        h.get(List(0, 0, 0, 1)) should be(0.0 +- 0.0001)
+        h.get(List(1, 0, 0, 1)) should be(0.07 +- 0.0001)
+        h.get(List(2, 0, 0, 1)) should be(0.14 +- 0.0001)
+        h.get(List(0, 0, 1, 0)) should be(0.24 +- 0.0001)
+        h.get(List(1, 0, 1, 0)) should be(0.32 +- 0.0001)
+        h.get(List(2, 0, 1, 0)) should be(0.4 +- 0.0001)
         h.get(List(0, 0, 1, 1)) should be(0.27 +- 0.0001)
         h.get(List(1, 0, 1, 1)) should be(0.36 +- 0.0001)
         h.get(List(2, 0, 1, 1)) should be(0.45 +- 0.0001)

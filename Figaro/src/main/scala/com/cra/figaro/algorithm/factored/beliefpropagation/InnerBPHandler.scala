@@ -59,19 +59,9 @@ trait OneTimeInnerBPHandler extends InnerBPHandler {
   protected def createBP(targets: List[Element[_]], dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
     dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double, depth: Int = Int.MaxValue, upperBounds: Boolean = false): Unit = {
     bp = new ProbQueryBeliefPropagation(currentUniverse, targets: _*)(dependentUniverses, dependentAlgorithm, depth, upperBounds) with OneTimeProbabilisticBeliefPropagation with OneTimeProbQuery {
-      override val iterations = innerIterations      
+      override val iterations = innerIterations
     }
   }
-  
-  /*
-  protected def createBP(targets: List[Element[_]], depth: Int = Int.MaxValue, upperBounds: Boolean = false): Unit = {
-    bp = new ProbQueryBeliefPropagation(currentUniverse, targets: _*)(List(),
-      (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u), depth, upperBounds) with OneTimeProbabilisticBeliefPropagation with OneTimeProbQuery {
-      override val iterations = innerIterations      
-    }
-  }
-  * 
-  */
 
   protected def runBP() {
     bp.start()
@@ -87,24 +77,15 @@ trait AnytimeInnerBPHandler extends InnerBPHandler {
    */
   val myStepTimeMillis: Long
 
-    protected def createBP(targets: List[Element[_]], dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
+  protected def createBP(targets: List[Element[_]], dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
     dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double, depth: Int = Int.MaxValue, upperBounds: Boolean = false): Unit = {
     if (bp != null) bp.kill
     bp = new ProbQueryBeliefPropagation(currentUniverse, targets: _*)(dependentUniverses, dependentAlgorithm, depth, upperBounds) with AnytimeProbabilisticBeliefPropagation with AnytimeProbQuery
   }
-  
-  /*
-  protected def createBP(targets: List[Element[_]], depth: Int = Int.MaxValue, upperBounds: Boolean = false): Unit = {
-    if (bp != null) bp.kill
-    bp = new ProbQueryBeliefPropagation(currentUniverse, targets: _*)(List(),
-      (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u), depth, upperBounds) with AnytimeProbabilisticBeliefPropagation with AnytimeProbQuery
-  }
-  * 
-  */
 
   protected def runBP() {
     bp.start()
     Thread.sleep(myStepTimeMillis)
-    bp.stop()    
+    bp.stop()
   }
 }

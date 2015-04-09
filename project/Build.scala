@@ -40,7 +40,6 @@ object FigaroBuild extends Build {
     scalaVersion := "2.11.4",
     crossPaths := true,
     publishMavenStyle := true,
-    javacOptions ++= Seq("-Xmx", "3g"),
     pomExtra :=
 	<url>http://www.github.com/p2t2/figaro</url>
 	<developers>
@@ -86,7 +85,8 @@ object FigaroBuild extends Build {
     .settings (scalacOptions ++= Seq(
 	"-feature",
 	"-language:existentials",
-	"-deprecation"
+	"-deprecation",
+	"-language:postfixOps"
     ))
     .settings(packageOptions := Seq(Package.JarManifest(figaroManifest)))
     .settings(libraryDependencies ++= Seq(
@@ -99,6 +99,10 @@ object FigaroBuild extends Build {
       "io.argonaut" %% "argonaut" % "6.0.4",
       "org.scalatest" %% "scalatest" % "2.2.4" % "test"
     ))
+    // Enable forking
+    .settings(fork := true)
+    // Increase max memory for JVM for both testing and runtime
+    .settings(javaOptions in (Test,run) += "-Xmx8G")
     // test settings
     .settings(parallelExecution in Test := false)
     .configs(detTest)
