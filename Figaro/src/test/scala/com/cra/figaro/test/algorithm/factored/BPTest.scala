@@ -218,8 +218,8 @@ class BPTest extends WordSpec with Matchers {
         val c = Chain(f, (b: Boolean) => if (b) s1; else s2)
 
         s1.observe(1)
-        //val c_actual = .79
-        val c_actual = .70907
+        val c_actual = .79
+        //val c_actual = .70907
 
         /*
          * The "c_actual" value has been determine using Dimple to back up the results of Figaro. This exact

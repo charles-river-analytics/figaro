@@ -16,17 +16,22 @@ package com.cra.figaro.ndtest
 import scala.collection.mutable.ListBuffer
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics
 
-class TTestResult(name: String, target: Double, alpha: Double = .05) extends NDTestResult[Double] {
+class TTestResult(val name: String, val target: Double, val alpha: Double = .05) extends NDTestResult {
   val statistics = new SummaryStatistics()
 
-  def update(value: Double) {
-    statistics.addValue(value)
+  def update(value: Any) {
+    statistics.addValue(value.asInstanceOf[Double])
   }
 
   def check: Boolean = {
     val tester = new org.apache.commons.math3.stat.inference.TTest
+    if (statistics.getVariance <= 0) {
+      println("  !NDTest: " + name + " has zero variance")
+    }
+
     // Apache Commons Math T Test
-    // Returns false if the test passed and true if the test fails, so reverse this for return value      
-    !tester.tTest(target, statistics, alpha)
+    // Returns false if the test passed and true if the test fails, so reverse this for return value   
+    !tester.tTest(target.asInstanceOf[scala.Double], statistics, alpha.asInstanceOf[scala.Double])
+
   }
 }

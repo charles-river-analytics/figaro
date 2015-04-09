@@ -67,7 +67,7 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
                 val result = b.MAPValue
                 algorithm.kill
                 
-                update(result, new TTestResult("EMImportanceTestResults", 0.6666, alpha))
+                update(result, NDTest.TTEST, "EMImportanceTestResults", 0.6666, alpha)
               }
             }
   
@@ -102,7 +102,7 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
                     val result = b.MAPValue
                     algorithm.kill
                     
-                    update(result, new TTestResult("EMImportanceTestResults", 0.6666, alpha))
+                    update(result, NDTest.TTEST, "EMImportanceTestResults", 0.6666, alpha)
                   }
                 }
       
@@ -134,7 +134,7 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
                   val result = b.MAPValue
                   algorithm.kill
                     
-                  update(result, new TTestResult("EMImportanceTestResults", 0.50, alpha))
+                  update(result, NDTest.TTEST, "EMImportanceTestResults", 0.50, alpha)
                 }
               }
       
@@ -159,7 +159,7 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
                   val result = b.MAPValue
                   algorithm.kill
                     
-                  update(result, new TTestResult("EMImportanceTestResults", 0.6666, alpha))
+                  update(result, NDTest.TTEST, "EMImportanceTestResults", 0.6666, alpha)
                 }
               }
       
@@ -184,7 +184,7 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
                   val result = b.MAPValue
                   algorithm.kill
                     
-                  update(result, new TTestResult("EMImportanceTestResults", 0.7, alpha))
+                  update(result, NDTest.TTEST, "EMImportanceTestResults", 0.7, alpha)
                 }
               }
       
@@ -219,7 +219,7 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
                   val result = b.MAPValue
                   algorithm.kill
                     
-                  update(result(0), new TTestResult("EMImportanceTestResults", 0.6666, alpha))
+                  update(result(0), NDTest.TTEST, "EMImportanceTestResults", 0.6666, alpha)
                 }
               }
       
@@ -252,7 +252,7 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
                   val result = b.MAPValue
                   algorithm.kill
                     
-                  update(result(0), new TTestResult("EMImportanceTestResults", 0.50, alpha))
+                  update(result(0), NDTest.TTEST, "EMImportanceTestResults", 0.50, alpha)
                 }
               }
       
@@ -279,28 +279,28 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
                   val result = d.MAPValue
                   algorithm.kill
                     
-                  update(result(0), new TTestResult("EMImportanceTestResults0", 0.04, alpha))
-                  update(result(1), new TTestResult("EMImportanceTestResults1", 0.04, alpha))
-                  update(result(2), new TTestResult("EMImportanceTestResults2", 0.04, alpha))
-                  update(result(3), new TTestResult("EMImportanceTestResults3", 0.04, alpha))
-                  update(result(4), new TTestResult("EMImportanceTestResults4", 0.04, alpha))
-                  update(result(5), new TTestResult("EMImportanceTestResults5", 0.04, alpha))
-                  update(result(6), new TTestResult("EMImportanceTestResults6", 0.04, alpha))
-                  update(result(7), new TTestResult("EMImportanceTestResults7", 0.04, alpha))
-                  update(result(8), new TTestResult("EMImportanceTestResults8", 0.04, alpha))
-                  update(result(9), new TTestResult("EMImportanceTestResults9", 0.04, alpha))
-                  update(result(10), new TTestResult("EMImportanceTestResults10", 0.04, alpha))
-                  update(result(11), new TTestResult("EMImportanceTestResults11", 0.04, alpha))
-                  update(result(12), new TTestResult("EMImportanceTestResults12", 0.04, alpha))
-                  update(result(13), new TTestResult("EMImportanceTestResults13", 0.04, alpha))
-                  update(result(14), new TTestResult("EMImportanceTestResults14", 0.04, alpha))                  
-                  update(result(15), new TTestResult("EMImportanceTestResults15", 0.04, alpha))
-                  update(result(16), new TTestResult("EMImportanceTestResults16", 0.04, alpha))
-                  update(result(17), new TTestResult("EMImportanceTestResults17", 0.04, alpha))
-                  update(result(18), new TTestResult("EMImportanceTestResults18", 0.04, alpha))
-                  update(result(19), new TTestResult("EMImportanceTestResults19", 0.04, alpha))
-                  update(result(20), new TTestResult("EMImportanceTestResults20", 0.04, alpha))
-                  update(result(21), new TTestResult("EMImportanceTestResults21", 0.04, alpha))                  
+                  update(result(0), NDTest.TTEST, "EMImportanceTestResults0", 0.04, alpha)
+                  update(result(1), NDTest.TTEST, "EMImportanceTestResults1", 0.04, alpha)
+                  update(result(2), NDTest.TTEST, "EMImportanceTestResults2", 0.04, alpha)
+                  update(result(3), NDTest.TTEST, "EMImportanceTestResults3", 0.04, alpha)
+                  update(result(4), NDTest.TTEST, "EMImportanceTestResults4", 0.04, alpha)
+                  update(result(5), NDTest.TTEST, "EMImportanceTestResults5", 0.04, alpha)
+                  update(result(6), NDTest.TTEST, "EMImportanceTestResults6", 0.04, alpha)
+                  update(result(7), NDTest.TTEST, "EMImportanceTestResults7", 0.04, alpha)
+                  update(result(8), NDTest.TTEST, "EMImportanceTestResults8", 0.04, alpha)
+                  update(result(9), NDTest.TTEST, "EMImportanceTestResults9", 0.04, alpha)
+                  update(result(10), NDTest.TTEST, "EMImportanceTestResults10", 0.04, alpha)
+                  update(result(11), NDTest.TTEST, "EMImportanceTestResults11", 0.04, alpha)
+                  update(result(12), NDTest.TTEST, "EMImportanceTestResults12", 0.04, alpha)
+                  update(result(13), NDTest.TTEST, "EMImportanceTestResults13", 0.04, alpha)
+                  update(result(14), NDTest.TTEST, "EMImportanceTestResults14", 0.04, alpha)                  
+                  update(result(15), NDTest.TTEST, "EMImportanceTestResults15", 0.04, alpha)
+                  update(result(16), NDTest.TTEST, "EMImportanceTestResults16", 0.04, alpha)
+                  update(result(17), NDTest.TTEST, "EMImportanceTestResults17", 0.04, alpha)
+                  update(result(18), NDTest.TTEST, "EMImportanceTestResults18", 0.04, alpha)
+                  update(result(19), NDTest.TTEST, "EMImportanceTestResults19", 0.04, alpha)
+                  update(result(20), NDTest.TTEST, "EMImportanceTestResults20", 0.04, alpha)
+                  update(result(21), NDTest.TTEST, "EMImportanceTestResults21", 0.04, alpha)                 
                 }
               }
       
@@ -326,11 +326,11 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
                   val result = d.MAPValue
                   algorithm.kill
                     
-                  update(result(0), new TTestResult("EMImportanceTestResults0", 0.0, alpha))
-                  update(result(1), new TTestResult("EMImportanceTestResults1", 0.25, alpha))
-                  update(result(2), new TTestResult("EMImportanceTestResults2", 0.25, alpha))
-                  update(result(3), new TTestResult("EMImportanceTestResults3", 0.25, alpha))
-                  update(result(4), new TTestResult("EMImportanceTestResults4", 0.25, alpha))
+                  update(result(0), NDTest.TTEST, "EMImportanceTestResults0", 0.0, alpha)
+                  update(result(1), NDTest.TTEST, "EMImportanceTestResults1", 0.25, alpha)
+                  update(result(2), NDTest.TTEST, "EMImportanceTestResults2", 0.25, alpha)
+                  update(result(3), NDTest.TTEST, "EMImportanceTestResults3", 0.25, alpha)
+                  update(result(4), NDTest.TTEST, "EMImportanceTestResults4", 0.25, alpha)
                 }
               }
       
@@ -368,11 +368,11 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
                   algorithm.kill
                       
                   //9/19
-                  update(result(0), new TTestResult("EMImportanceTestResults0", 0.47, alpha))
+                  update(result(0), NDTest.TTEST, "EMImportanceTestResults0", 0.47, alpha)
                   //7/19
-                  update(result(1), new TTestResult("EMImportanceTestResults1", 0.36, alpha))
+                  update(result(1), NDTest.TTEST, "EMImportanceTestResults1", 0.36, alpha)
                   //3/19
-                  update(result(2), new TTestResult("EMImportanceTestResults2", 0.15, alpha))
+                  update(result(2), NDTest.TTEST, "EMImportanceTestResults2", 0.15, alpha)
                 }
               }
       
@@ -410,9 +410,9 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
                   val result = b.MAPValue
                   algorithm.kill
                       
-                  update(result(0), new TTestResult("EMImportanceTestResults0", 0.33, alpha))
-                  update(result(1), new TTestResult("EMImportanceTestResults1", 0.33, alpha))
-                  update(result(2), new TTestResult("EMImportanceTestResults2", 0.33, alpha))
+                  update(result(0), NDTest.TTEST, "EMImportanceTestResults0", 0.33, alpha)
+                  update(result(1), NDTest.TTEST, "EMImportanceTestResults1", 0.33, alpha)
+                  update(result(2), NDTest.TTEST, "EMImportanceTestResults2", 0.33, alpha)
                 }
               }
       
@@ -449,9 +449,9 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
                   val result = b.MAPValue
                   algorithm.kill
                       
-                  update(result(0), new TTestResult("EMImportanceTestResults0", 0.33, alpha))
-                  update(result(1), new TTestResult("EMImportanceTestResults1", 0.33, alpha))
-                  update(result(2), new TTestResult("EMImportanceTestResults2", 0.33, alpha))
+                  update(result(0), NDTest.TTEST, "EMImportanceTestResults0", 0.33, alpha)
+                  update(result(1), NDTest.TTEST, "EMImportanceTestResults1", 0.33, alpha)
+                  update(result(2), NDTest.TTEST, "EMImportanceTestResults2", 0.33, alpha)
                 }
               }
       
@@ -495,10 +495,10 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
     
                       val betaResult = b.MAPValue
                           
-                      update(result(0), new TTestResult("EMImportanceTestResults0", 0.33, alpha))
-                      update(result(1), new TTestResult("EMImportanceTestResults1", 0.33, alpha))
-                      update(result(2), new TTestResult("EMImportanceTestResults2", 0.33, alpha))
-                      update(betaResult, new TTestResult("EMImportanceTestResultsBeta", 0.5, alpha))
+                      update(result(0), NDTest.TTEST, "EMImportanceTestResults0", 0.33, alpha)
+                      update(result(1), NDTest.TTEST, "EMImportanceTestResults1", 0.33, alpha)
+                      update(result(2), NDTest.TTEST, "EMImportanceTestResults2", 0.33, alpha)
+                      update(betaResult, NDTest.TTEST, "EMImportanceTestResultsBeta", 0.5, alpha)
                     }
                   }
           
@@ -548,10 +548,10 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
     
                       val betaResult = b.MAPValue
                           
-                      update(result(0), new TTestResult("EMImportanceTestResults0", 0.33, alpha))
-                      update(result(1), new TTestResult("EMImportanceTestResults1", 0.33, alpha))
-                      update(result(2), new TTestResult("EMImportanceTestResults2", 0.33, alpha))
-                      update(betaResult, new TTestResult("EMImportanceTestResultsBeta", 0.5, alpha))
+                      update(result(0), NDTest.TTEST, "EMImportanceTestResults0", 0.33, alpha)
+                      update(result(1), NDTest.TTEST, "EMImportanceTestResults1", 0.33, alpha)
+                      update(result(2), NDTest.TTEST, "EMImportanceTestResults2", 0.33, alpha)
+                      update(betaResult, NDTest.TTEST, "EMImportanceTestResultsBeta", 0.5, alpha)
                     }
                   }
           
@@ -788,8 +788,8 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
               // println(learnedParamErr)
               // println(learnedPredAcc)
 
-              update(learnedParamErr, new TTestResult("EMImportanceTestResultsLearnedParamErr", 0.00, alpha))
-              update(learnedPredAcc, new TTestResult("EMImportanceTestResultsLearnedPredAcc", truePredAcc, alpha))
+              update(learnedParamErr, NDTest.TTEST, "EMImportanceTestResultsLearnedParamErr", 0.00, alpha)
+              update(learnedPredAcc, NDTest.TTEST, "EMImportanceTestResultsLearnedPredAcc", truePredAcc, alpha)
             }
           }
           

@@ -18,22 +18,35 @@ import org.scalatest.Matchers
 import scala.collection.mutable.Map
 
 abstract class NDTest extends WordSpec with Matchers {
-  val results: Map[String, NDTestResult[_]] = Map()
+  val results: Map[String, NDTestResult] = Map()
 
-  def update[T](value: T, result: NDTestResult[T]) =
+  def update(value: Any, test: String, name: String, target: Any, alpha: Double = .05) =
   {
-    if (results.contains(result.name) == false)
+    if (!results.contains(name))
     {
-      results.put(result.name, result)
+      results.put(name, createResult(test, name, target, alpha))
     }
-    results(result.name).asInstanceOf[NDTestResult[T]].update(value)
+    results(name).update(value)
   }
   
-  final def run(n: Int)
+  def createResult(test: String, name: String, target: Any, alpha: Double): NDTestResult = {
+    test match {
+      case NDTest.TTEST => new TTestResult(name, target.asInstanceOf[Double], alpha)
+      case _ => new NoTestResult(name)
+    }  
+  }
+  
+  final def run(n: Int, clear: Boolean = true)
   {
+    if (clear) results.clear()
+    
     (0 until n).foreach(_ => oneTest)
     results.values.foreach(_.check should be(true))
   }
 
   def oneTest: Unit
+}
+
+object NDTest {
+  val TTEST = "TTest-type"  
 }

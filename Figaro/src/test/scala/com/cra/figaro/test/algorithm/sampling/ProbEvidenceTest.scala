@@ -39,7 +39,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
               val universe = Universe.createNew()
               val f = Flip(target)("f", universe)
               val result = sampleTest(target, List(NamedEvidence("f", Observation(true))))
-              update(result, new TTestResult("SampleTestResults", target, alpha))
+              update(result, NDTest.TTEST, "SampleTestResults", target, alpha)
             }
           }
 
@@ -54,7 +54,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
             val universe = Universe.createNew()
             val f = Flip(value)("f", universe)
             val result = logProbabilitySampleTest(target, List(NamedEvidence("f", Observation(true))))
-            update(result, new TTestResult("LogProbabilitySampleTestResults", target, alpha))
+            update(result, NDTest.TTEST, "LogProbabilitySampleTestResults", target, alpha)
           }
         }
 
@@ -74,7 +74,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
             val f1 = Flip(value1)("f1", universe)
             val f2 = Flip(value2)("f2", universe)
             val result = sampleTest(target, List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true))))
-            update(result, new TTestResult("SampleTestResults", target, alpha))
+            update(result, NDTest.TTEST, "SampleTestResults", target, alpha)
           }
         }
 
@@ -91,7 +91,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
             val f1 = Flip(value1)("f1", universe)
             val f2 = Flip(value2)("f2", universe)
             val result = logProbabilitySampleTest(target, List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true))))
-            update(result, new TTestResult("LogProbabilitySampleTestResults", target, alpha))
+            update(result, NDTest.TTEST, "LogProbabilitySampleTestResults", target, alpha)
           }
         }
 
@@ -109,7 +109,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
             val f1 = Flip(d)("f1", universe)
             val f2 = Flip(d)("f2", universe)
             val result = sampleTest(target, List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true))))
-            update(result, new TTestResult("SampleTestResults", target, alpha))
+            update(result, NDTest.TTEST, "SampleTestResults", target, alpha)
           }
         }
 
@@ -125,7 +125,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
             val f1 = Flip(d)("f1", universe)
             val f2 = Flip(d)("f2", universe)
             val result = logProbabilitySampleTest(target, List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true))))
-            update(result, new TTestResult("LogProbabilitySampleTestResults", target, alpha))
+            update(result, NDTest.TTEST, "LogProbabilitySampleTestResults", target, alpha)
           }
         }
 
@@ -145,7 +145,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
             val f1 = Flip(d)("f1", universe)
             val f2 = Flip(d)("f2", universe)
             val result = sampleTest(target, List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true))))
-            update(result, new TTestResult("SampleTestResults", target, alpha))
+            update(result, NDTest.TTEST, "SampleTestResults", target, alpha)
           }
         }
 
@@ -162,7 +162,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
             val f1 = Flip(d)("f1", universe)
             val f2 = Flip(d)("f2", universe)
             val result = logProbabilitySampleTest(target, List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true))))
-            update(result, new TTestResult("LogProbabilitySampleTestResults", target, alpha))
+            update(result, NDTest.TTEST, "LogProbabilitySampleTestResults", target, alpha)
           }
         }
 
@@ -179,7 +179,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
             val universe = Universe.createNew()
             val c = Constant(8)("c", universe)
             val result = sampleTest(target, List(NamedEvidence("c", Observation(7))))
-            update(result, new TTestResult("SampleTestResults", target, alpha))
+            update(result, NDTest.TTEST, "SampleTestResults", target, alpha)
           }
         }
 
@@ -193,7 +193,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
             val universe = Universe.createNew()
             val c = Constant(8)("c", universe)
             val result = logProbabilitySampleTest(target, List(NamedEvidence("c", Observation(7))))
-            update(result, new TTestResult("LogProbabilitySampleTestResults", target, alpha))
+            update(result, NDTest.TTEST, "LogProbabilitySampleTestResults", target, alpha)
           }
         }
 
@@ -210,7 +210,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
             val universe = Universe.createNew()
             val d = Dist(0.3 -> Flip(0.6), 0.7 -> Flip(0.9))("d", universe)
             val result = sampleTest(target, List(NamedEvidence("d", Observation(true))))
-            update(result, new TTestResult("SampleTestResults", target, alpha))
+            update(result, NDTest.TTEST, "SampleTestResults", target, alpha)
           }
         }
 
@@ -224,7 +224,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
             val universe = Universe.createNew()
             val d = Dist(0.3 -> Flip(0.6), 0.7 -> Flip(0.9))("d", universe)
             val result = logProbabilitySampleTest(target, List(NamedEvidence("d", Observation(true))))
-            update(result, new TTestResult("LogProbabilitySampleTestResults", target, alpha))
+            update(result, NDTest.TTEST, "LogProbabilitySampleTestResults", target, alpha)
           }
         }
 
@@ -242,7 +242,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
             val p2 = Constant(0.4)
             val d = Dist(p1 -> Flip(0.6), p2 -> Flip(0.9))("d", universe)
             val result = sampleTest(target, List(NamedEvidence("d", Observation(true))))
-            update(result, new TTestResult("SampleTestResults", target, alpha))
+            update(result, NDTest.TTEST, "SampleTestResults", target, alpha)
           }
         }
 
@@ -258,7 +258,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
             val p2 = Constant(0.4)
             val d = Dist(p1 -> Flip(0.6), p2 -> Flip(0.9))("d", universe)
             val result = logProbabilitySampleTest(target, List(NamedEvidence("d", Observation(true))))
-            update(result, new TTestResult("LogProbabilitySampleTestResults", target, alpha))
+            update(result, NDTest.TTEST, "LogProbabilitySampleTestResults", target, alpha)
           }
         }
 
@@ -275,7 +275,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
             val u = Uniform(0.0, 1.0)("u", universe)
             val condition = (d: Double) => d < target
             val result = sampleTest(target, List(NamedEvidence("u", Condition(condition))))
-            update(result, new TTestResult("SampleTestResults", target, alpha))
+            update(result, NDTest.TTEST, "SampleTestResults", target, alpha)
           }
         }
 
@@ -291,7 +291,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
             val u = Uniform(0.0, 1.0)("u", universe)
             val condition = (d: Double) => d < value
             val result = logProbabilitySampleTest(target, List(NamedEvidence("d", Observation(true))))
-            update(result, new TTestResult("LogProbabilitySampleTestResults", target, alpha))
+            update(result, NDTest.TTEST, "LogProbabilitySampleTestResults", target, alpha)
           }
         }
 
@@ -308,7 +308,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
             val p1 = Select(0.4 -> 0.3, 0.6 -> 0.9)
             val c = CachingChain(p1, (d: Double) => if (d < 0.4) Flip(0.3); else Flip(0.8))("c", universe)
             val result = sampleTest(target, List(NamedEvidence("c", Observation(true))))
-            update(result, new TTestResult("SampleTestResults", target, alpha))
+            update(result, NDTest.TTEST, "SampleTestResults", target, alpha)
           }
         }
 
@@ -323,7 +323,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
             val p1 = Select(0.4 -> 0.3, 0.6 -> 0.9)
             val c = CachingChain(p1, (d: Double) => if (d < 0.4) Flip(0.3); else Flip(0.8))("c", universe)
             val result = logProbabilitySampleTest(target, List(NamedEvidence("c", Observation(true))))
-            update(result, new TTestResult("LogProbabilitySampleTestResults", target, alpha))
+            update(result, NDTest.TTEST, "LogProbabilitySampleTestResults", target, alpha)
           }
         }
 
@@ -341,7 +341,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
             val p1 = Uniform(0.0, 1.0)
             val c = NonCachingChain(p1, (d: Double) => if (d < 0.4) Flip(0.3); else Flip(0.8))("c", universe)
             val result = sampleTest(target, List(NamedEvidence("c", Observation(true))))
-            update(result, new TTestResult("SampleTestResults", target, alpha))
+            update(result, NDTest.TTEST, "SampleTestResults", target, alpha)
           }
         }
 
@@ -356,7 +356,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
             val p1 = Uniform(0.0, 1.0)
             val c = NonCachingChain(p1, (d: Double) => if (d < 0.4) Flip(0.3); else Flip(0.8))("c", universe)
             val result = logProbabilitySampleTest(target, List(NamedEvidence("c", Observation(true))))
-            update(result, new TTestResult("LogProbabilitySampleTestResults", target, alpha))
+            update(result, NDTest.TTEST, "LogProbabilitySampleTestResults", target, alpha)
           }
         }
 
@@ -378,7 +378,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
             val a = CachingChain(x, y, (x: Boolean, y: Boolean) => if (x || y) u1; else u2)("a", universe)
             def condition(d: Double) = d < 0.5
             val result = sampleTest(target, List(NamedEvidence("a", Condition(condition))))
-            update(result, new TTestResult("SampleTestResults", target, alpha))
+            update(result, NDTest.TTEST, "SampleTestResults", target, alpha)
           }
         }
 
@@ -397,7 +397,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
             val a = CachingChain(x, y, (x: Boolean, y: Boolean) => if (x || y) u1; else u2)("a", universe)
             def condition(d: Double) = d < 0.5
             val result = logProbabilitySampleTest(target, List(NamedEvidence("a", Condition(condition))))
-            update(result, new TTestResult("LogProbabilitySampleTestResults", target, alpha))
+            update(result, NDTest.TTEST, "LogProbabilitySampleTestResults", target, alpha)
           }
         }
 
@@ -419,7 +419,7 @@ class ProbEvidenceTest extends WordSpec with Matchers {
           Thread.sleep(200L)
           val result = alg.probEvidence
           alg.kill()
-          update(result, new TTestResult("ProbabilityOfEvidenceTestResults", target, alpha))
+          update(result, NDTest.TTEST, "ProbabilityOfEvidenceTestResults", target, alpha)
         }
       }
 

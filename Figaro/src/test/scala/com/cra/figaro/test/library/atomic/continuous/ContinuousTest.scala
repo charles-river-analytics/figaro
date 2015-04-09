@@ -41,7 +41,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
           alg.stop()
           alg.kill
-          update(result, new TTestResult("AtomicUniformTestResults", target, alpha))
+          update(result, NDTest.TTEST, "AtomicUniformTestResults", target, alpha)
         }
       }
 
@@ -59,7 +59,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
           alg.stop()
           alg.kill
-          update(result, new TTestResult("AtomicUniformTestResults", target, alpha))
+          update(result, NDTest.TTEST, "AtomicUniformTestResults", target, alpha)
         }
       }
 
@@ -72,7 +72,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val target = 0.5
           Universe.createNew()
           val result = Uniform(0.0, 2.0).density(1.5)
-          update(result, new TTestResult("AtomicUniformTestResults", target, alpha))
+          update(result, NDTest.TTEST, "AtomicUniformTestResults", target, alpha)
         }
       }
 
@@ -85,7 +85,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val target = 0.0
           Universe.createNew()
           val result = Uniform(0.0, 2.0).density(2.5)
-          update(result, new TTestResult("AtomicUniformTestResults", target, alpha))
+          update(result, NDTest.TTEST, "AtomicUniformTestResults", target, alpha)
         }
       }
 
@@ -114,7 +114,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val result = alg.probability(uniformComplex, (d: Double) => 1.25 <= d && d < 1.5)
           alg.stop()
           alg.kill
-          update(result, new TTestResult("CompoundUniformTestResults", target, alpha))
+          update(result, NDTest.TTEST, "CompoundUniformTestResults", target, alpha)
         }
       }
 
@@ -142,7 +142,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
           alg.stop()
           alg.kill
-          update(result, new TTestResult("AtomicNormalTestResults", target, alpha))
+          update(result, NDTest.TTEST, "AtomicNormalTestResults", target, alpha)
         }
       }
 
@@ -161,7 +161,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
           alg.stop()
           alg.kill
-          update(result, new TTestResult("AtomicNormalTestResults", target, alpha))
+          update(result, NDTest.TTEST, "AtomicNormalTestResults", target, alpha)
         }
       }
 
@@ -176,7 +176,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val dist = new NormalDistribution(1.0, 2.0)
           val target = dist.probability(1.5)
           val result = elem.density(1.5)
-          update(result, new TTestResult("AtomicNormalTestResults", target, alpha))
+          update(result, NDTest.TTEST, "AtomicNormalTestResults", target, alpha)
         }
       }
 
@@ -205,7 +205,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
           alg.stop()
           alg.kill
-          update(result, new TTestResult("CompoundNormalMeanTestResults", target, alpha))
+          update(result, NDTest.TTEST, "CompoundNormalMeanTestResults", target, alpha)
         }
       }
 
@@ -236,7 +236,7 @@ class ContinuousTest extends WordSpec with Matchers {
             val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
             alg.stop()
             alg.kill
-            update(result, new TTestResult("CompoundNormalMeanTestResults", targetProb, alpha))
+            update(result, NDTest.TTEST, "CompoundNormalMeanTestResults", targetProb, alpha)
           }
         }
   
@@ -268,7 +268,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
           alg.stop()
           alg.kill
-          update(result, new TTestResult("CompoundNormalTestResults", target, alpha))
+          update(result, NDTest.TTEST, "CompoundNormalTestResults", target, alpha)
         }
       }
 
@@ -306,8 +306,8 @@ class ContinuousTest extends WordSpec with Matchers {
           val result2 = alg.mean(variance)
           alg.stop()
           alg.kill
-          update(result1, new TTestResult("CompoundNormalTestResultsMean", samplesMean, alpha))
-          update(result2, new TTestResult("CompoundNormalTestResultsVar", samplesVariance, alpha))
+          update(result1, NDTest.TTEST, "CompoundNormalTestResultsMean", samplesMean, alpha)
+          update(result2, NDTest.TTEST, "CompoundNormalTestResultsVar", samplesVariance, alpha)
         }
       }
 
@@ -339,8 +339,8 @@ class ContinuousTest extends WordSpec with Matchers {
           val result2 = alg.mean(variance)
           alg.stop()
           alg.kill
-          update(result1, new TTestResult("CompoundNormalTestResultsMean", samplesMean, alpha))
-          update(result2, new TTestResult("CompoundNormalTestResultsVar", samplesVariance, alpha))
+          update(result1, NDTest.TTEST, "CompoundNormalTestResultsMean", samplesMean, alpha)
+          update(result2, NDTest.TTEST, "CompoundNormalTestResultsVar", samplesVariance, alpha)
         }
       }
 
@@ -381,7 +381,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val elem = MultivariateNormal(means, covariances)
           val dist = new MultivariateNormalDistribution(means.toArray, covariances.map((l: List[Double]) => l.toArray).toArray)
           val result = elem.density(List(1.5, 2.5))
-          update(result, new TTestResult("CompoundMultivariateNormalTestResults", dist.density(Array(1.5, 2.5)), alpha))
+          update(result, NDTest.TTEST, "CompoundMultivariateNormalTestResults", dist.density(Array(1.5, 2.5)), alpha)
         }
       }
 
@@ -422,11 +422,11 @@ class ContinuousTest extends WordSpec with Matchers {
           val var2 = (ss2 - (sumx2 * sumx2 / n)) / (n - 1)
           val cov = (sc12 - (sumx1 * sumx2 / n)) / (n - 1)
 
-          update(mean1, new TTestResult("CompoundMultivariateNormalTestResultsMean1", means(0), alpha))
-          update(mean2, new TTestResult("CompoundMultivariateNormalTestResultsMean2", means(1), alpha))
-          update(var1, new TTestResult("CompoundMultivariateNormalTestResultsVar1", covariances(0)(0), alpha))
-          update(var2, new TTestResult("CompoundMultivariateNormalTestResultsVar2", covariances(1)(1), alpha))
-          update(cov, new TTestResult("CompoundMultivariateNormalTestResultsCov", covariances(0)(1), alpha))
+          update(mean1, NDTest.TTEST, "CompoundMultivariateNormalTestResultsMean1", means(0), alpha)
+          update(mean2, NDTest.TTEST, "CompoundMultivariateNormalTestResultsMean2", means(1), alpha)
+          update(var1, NDTest.TTEST, "CompoundMultivariateNormalTestResultsVar1", covariances(0)(0), alpha)
+          update(var2, NDTest.TTEST, "CompoundMultivariateNormalTestResultsVar2", covariances(1)(1), alpha)
+          update(cov, NDTest.TTEST, "CompoundMultivariateNormalTestResultsCov", covariances(0)(1), alpha)
         }
       }
 
@@ -472,7 +472,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val dist = new MultivariateNormalDistribution(means.toArray, covariances.map((l: List[Double]) => l.toArray).toArray)
           val target = dist.density(Array(1.5, 2.5))
           val result = elem.density(List(1.5, 2.5))
-          update(result, new TTestResult("AtomicMultivariateNormalTestResults", target, alpha))
+          update(result, NDTest.TTEST, "AtomicMultivariateNormalTestResults", target, alpha)
         }
       }
 
@@ -513,11 +513,11 @@ class ContinuousTest extends WordSpec with Matchers {
           val var2 = (ss2 - (sumx2 * sumx2 / n)) / (n - 1)
           val cov = (sc12 - (sumx1 * sumx2 / n)) / (n - 1)
     
-          update(mean1, new TTestResult("AtomicMultivariateNormalTestResultsMean1", means(0), alpha))
-          update(mean2, new TTestResult("AtomicMultivariateNormalTestResultsMean2", means(1), alpha))
-          update(var1, new TTestResult("AtomicMultivariateNormalTestResultsVar1", covariances(0)(0), alpha))
-          update(var2, new TTestResult("AtomicMultivariateNormalTestResultsVar2", covariances(1)(1), alpha))
-          update(cov, new TTestResult("AtomicMultivariateNormalTestResultsCov", covariances(0)(1), alpha))
+          update(mean1, NDTest.TTEST, "AtomicMultivariateNormalTestResultsMean1", means(0), alpha)
+          update(mean2, NDTest.TTEST, "AtomicMultivariateNormalTestResultsMean2", means(1), alpha)
+          update(var1, NDTest.TTEST, "AtomicMultivariateNormalTestResultsVar1", covariances(0)(0), alpha)
+          update(var2, NDTest.TTEST, "AtomicMultivariateNormalTestResultsVar2", covariances(1)(1), alpha)
+          update(cov, NDTest.TTEST, "AtomicMultivariateNormalTestResultsCov", covariances(0)(1), alpha)
         }
       }
 
@@ -543,7 +543,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
           alg.stop()
           alg.kill
-          update(result, new TTestResult("AtomicExponentialTestResults", targetProb, alpha))
+          update(result, NDTest.TTEST, "AtomicExponentialTestResults", targetProb, alpha)
         }
       }
 
@@ -562,7 +562,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
           alg.stop()
           alg.kill
-          update(result, new TTestResult("AtomicExponentialTestResults", targetProb, alpha))
+          update(result, NDTest.TTEST, "AtomicExponentialTestResults", targetProb, alpha)
         }
       }
 
@@ -576,7 +576,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val elem = Exponential(2.0)
           val dist = new ExponentialDistribution(2.0)
           val result = elem.density(1.5)
-          update(result, new TTestResult("AtomicExponentialTestResults", dist.probability(1.5), alpha))
+          update(result, NDTest.TTEST, "AtomicExponentialTestResults", dist.probability(1.5), alpha)
         }
       }
 
@@ -606,7 +606,7 @@ class ContinuousTest extends WordSpec with Matchers {
             val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
             alg.stop()
             alg.kill
-            update(result, new TTestResult("CompoundExponentialTestResults", targetProb, alpha))
+            update(result, NDTest.TTEST, "CompoundExponentialTestResults", targetProb, alpha)
           }
         }
   
@@ -639,7 +639,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val result = alg.mean(lambda)
           alg.stop()
           alg.kill
-          update(result, new TTestResult("CompoundExponentialTestResults", target, alpha))
+          update(result, NDTest.TTEST, "CompoundExponentialTestResults", target, alpha)
         }
       }
   
@@ -666,7 +666,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val result = alg.mean(lambda)
           alg.stop()
           alg.kill
-          update(result, new TTestResult("CompoundExponentialTestResults", target, alpha))
+          update(result, NDTest.TTEST, "CompoundExponentialTestResults", target, alpha)
         }
       }
   
@@ -689,7 +689,7 @@ class ContinuousTest extends WordSpec with Matchers {
             val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
             alg.stop()
             alg.kill
-            update(result, new TTestResult("AtomicGammaTestResults", targetProb, alpha))
+            update(result, NDTest.TTEST, "AtomicGammaTestResults", targetProb, alpha)
           }
         }
     
@@ -709,7 +709,7 @@ class ContinuousTest extends WordSpec with Matchers {
             val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
             alg.stop()
             alg.kill
-            update(result, new TTestResult("AtomicGammaTestResults", targetProb, alpha))
+            update(result, NDTest.TTEST, "AtomicGammaTestResults", targetProb, alpha)
           }
         }
     
@@ -723,7 +723,7 @@ class ContinuousTest extends WordSpec with Matchers {
             val elem = Gamma(2.5)
             val dist = new GammaDistribution(2.5)
             val result = elem.density(1.5)
-            update(result, new TTestResult("AtomicGammaTestResults", dist.probability(1.5), alpha))
+            update(result, NDTest.TTEST, "AtomicGammaTestResults", dist.probability(1.5), alpha)
           }
         }
     
@@ -751,7 +751,7 @@ class ContinuousTest extends WordSpec with Matchers {
             val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
             alg.stop()
             alg.kill
-            update(result, new TTestResult("AtomicGammaTestResults", targetProb, alpha))
+            update(result, NDTest.TTEST, "AtomicGammaTestResults", targetProb, alpha)
           }
         }
     
@@ -772,7 +772,7 @@ class ContinuousTest extends WordSpec with Matchers {
             val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
             alg.stop()
             alg.kill
-            update(result, new TTestResult("AtomicGammaTestResults", targetProb, alpha))
+            update(result, NDTest.TTEST, "AtomicGammaTestResults", targetProb, alpha)
           }
         }
     
@@ -788,7 +788,7 @@ class ContinuousTest extends WordSpec with Matchers {
             // Using the fact that for Gamme(1,theta), the PDF is given by p(x) = exp(-x/theta)/theta
             val prob = exp(-1.5 / theta) / theta
             val result = elem.density(1.5)
-            update(result, new TTestResult("AtomicGammaTestResults", prob, alpha))
+            update(result, NDTest.TTEST, "AtomicGammaTestResults", prob, alpha)
           }
         }
     
@@ -815,7 +815,7 @@ class ContinuousTest extends WordSpec with Matchers {
             val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
             alg.stop()
             alg.kill
-            update(result, new TTestResult("AtomicGammaTestResults", targetProb, alpha))
+            update(result, NDTest.TTEST, "AtomicGammaTestResults", targetProb, alpha)
           }
         }
     
@@ -835,7 +835,7 @@ class ContinuousTest extends WordSpec with Matchers {
             val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
             alg.stop()
             alg.kill
-            update(result, new TTestResult("AtomicGammaTestResults", targetProb, alpha))
+            update(result, NDTest.TTEST, "AtomicGammaTestResults", targetProb, alpha)
           }
         }
     
@@ -857,7 +857,7 @@ class ContinuousTest extends WordSpec with Matchers {
             val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
             alg.stop()
             alg.kill
-            update(result, new TTestResult("AtomicGammaTestResults", targetProb, alpha))
+            update(result, NDTest.TTEST, "AtomicGammaTestResults", targetProb, alpha)
           }
         }
     
@@ -877,7 +877,7 @@ class ContinuousTest extends WordSpec with Matchers {
             val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
             alg.stop()
             alg.kill
-            update(result, new TTestResult("AtomicGammaTestResults", targetProb, alpha))
+            update(result, NDTest.TTEST, "AtomicGammaTestResults", targetProb, alpha)
           }
         }
     
@@ -902,7 +902,7 @@ class ContinuousTest extends WordSpec with Matchers {
             val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
             alg.stop()
             alg.kill
-            update(result, new TTestResult("CompoundGammaKTestResults", targetProb, alpha))
+            update(result, NDTest.TTEST, "CompoundGammaKTestResults", targetProb, alpha)
           }
         }
     
@@ -932,7 +932,7 @@ class ContinuousTest extends WordSpec with Matchers {
             val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
             alg.stop()
             alg.kill
-            update(result, new TTestResult("CompoundGammaTestResults", targetProb, alpha))
+            update(result, NDTest.TTEST, "CompoundGammaTestResults", targetProb, alpha)
           }
         }
     
@@ -967,8 +967,8 @@ class ContinuousTest extends WordSpec with Matchers {
           val resultTheta = alg.mean(theta)
           alg.stop()
           alg.kill
-          update(resultK, new TTestResult("CompoundGammaTestResultsK", 2.0, alpha))
-          update(resultTheta, new TTestResult("CompoundGammaTestResultsTheta", 2.0, alpha))
+          update(resultK, NDTest.TTEST, "CompoundGammaTestResultsK", 2.0, alpha)
+          update(resultTheta, NDTest.TTEST, "CompoundGammaTestResultsTheta", 2.0, alpha)
         }
       }
     
@@ -998,8 +998,8 @@ class ContinuousTest extends WordSpec with Matchers {
           val resultTheta = alg.mean(theta)
           alg.stop()
           alg.kill
-          update(resultK, new TTestResult("CompoundGammaTestResultsK", 2.0, alpha))
-          update(resultTheta, new TTestResult("CompoundGammaTestResultsTheta", 2.0, alpha))
+          update(resultK, NDTest.TTEST, "CompoundGammaTestResultsK", 2.0, alpha)
+          update(resultTheta, NDTest.TTEST, "CompoundGammaTestResultsTheta", 2.0, alpha)
         }
       }
     
@@ -1022,7 +1022,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val result = alg.probability(elem, (d: Double) => 0.2 <= d && d < 0.3)
           alg.stop()
           alg.kill
-          update(result, new TTestResult("AtomicBetaTestResults", targetProb, alpha))
+          update(result, NDTest.TTEST, "AtomicBetaTestResults", targetProb, alpha)
         }
       }
     
@@ -1043,7 +1043,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val result = alg.probability(elem, (d: Double) => 0.2 <= d && d < 0.3)
           alg.stop()
           alg.kill
-          update(result, new TTestResult("AtomicBetaTestResults", targetProb, alpha))
+          update(result, NDTest.TTEST, "AtomicBetaTestResults", targetProb, alpha)
         }
       }
     
@@ -1059,7 +1059,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val elem = Beta(a, b)
           val dist = new BetaDistribution(a, b)
           val result = elem.density(0.3)
-          update(result, new TTestResult("AtomicBetaTestResults", dist.probability(0.3), alpha))
+          update(result, NDTest.TTEST, "AtomicBetaTestResults", dist.probability(0.3), alpha)
         }
       }
     
@@ -1090,7 +1090,7 @@ class ContinuousTest extends WordSpec with Matchers {
             val result = alg.probability(elem, (d: Double) => 0.2 <= d && d < 0.3)
             alg.stop()
             alg.kill
-            update(result, new TTestResult("CompoundBetaTestResults", targetProb, alpha))
+            update(result, NDTest.TTEST, "CompoundBetaTestResults", targetProb, alpha)
           }
         }
       
@@ -1125,8 +1125,8 @@ class ContinuousTest extends WordSpec with Matchers {
           val resultB = alg.mean(b)
           alg.stop()
           alg.kill
-          update(resultA, new TTestResult("CompoundBetaTestResultsA", 2.0, alpha))
-          update(resultB, new TTestResult("CompoundBetaTestResultsB", 5.0, alpha))
+          update(resultA, NDTest.TTEST, "CompoundBetaTestResultsA", 2.0, alpha)
+          update(resultB, NDTest.TTEST, "CompoundBetaTestResultsB", 5.0, alpha)
         }
       }
       
@@ -1154,8 +1154,8 @@ class ContinuousTest extends WordSpec with Matchers {
           val resultB = alg.mean(b)
           alg.stop()
           alg.kill
-          update(resultA, new TTestResult("CompoundBetaTestResultsA", 2.0, alpha))
-          update(resultB, new TTestResult("CompoundBetaTestResultsB", 5.0, alpha))
+          update(resultA, NDTest.TTEST, "CompoundBetaTestResultsA", 2.0, alpha)
+          update(resultB, NDTest.TTEST, "CompoundBetaTestResultsB", 5.0, alpha)
         }
       }
       
@@ -1183,7 +1183,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val result = alg.probability(elem, (ds: Array[Double]) => check(ds))
           alg.stop()
           alg.kill
-          update(result, new TTestResult("AtomicDirichletTestResults", targetProb, alpha))
+          update(result, NDTest.TTEST, "AtomicDirichletTestResults", targetProb, alpha)
         }
       }
       
@@ -1208,7 +1208,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val result = alg.probability(elem, (ds: Array[Double]) => check(ds))
           alg.stop()
           alg.kill
-          update(result, new TTestResult("AtomicDirichletTestResults", targetProb, alpha))
+          update(result, NDTest.TTEST, "AtomicDirichletTestResults", targetProb, alpha)
         }
       }
       
@@ -1229,7 +1229,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val pow1 = pow(x1, a1 - 1)
           val target = normalizer * pow(x0, a0 - 1) * pow(x1, a1 - 1)
           val result = elem.density(Array(x0, x1))
-          update(result, new TTestResult("AtomicDirichletTestResults", target, alpha))
+          update(result, NDTest.TTEST, "AtomicDirichletTestResults", target, alpha)
         }
       }
       
@@ -1264,7 +1264,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val result = alg.probability(elem, (ds: Array[Double]) => check(ds))
           alg.stop()
           alg.kill
-          update(result, new TTestResult("CompoundDirichletTestResults", targetProb, alpha))
+          update(result, NDTest.TTEST, "CompoundDirichletTestResults", targetProb, alpha)
         }
       }
         
@@ -1280,7 +1280,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val elem = Beta(a, b)
           val dist = new BetaDistribution(a, b)
           val result = elem.density(0.3)
-          update(result, new TTestResult("CompoundDirichletTestResults", dist.probability(0.3), alpha))
+          update(result, NDTest.TTEST, "CompoundDirichletTestResults", dist.probability(0.3), alpha)
         }
       }
         
@@ -1317,9 +1317,9 @@ class ContinuousTest extends WordSpec with Matchers {
           val resultC = alg.mean(alpha3)
           alg.stop()
           alg.kill
-          update(resultA, new TTestResult("CompoundDirichletTestResultsAlpha1", 1.0, alpha))
-          update(resultB, new TTestResult("CompoundDirichletTestResultsAlpha2", 2.0, alpha))
-          update(resultC, new TTestResult("CompoundDirichletTestResultsAlpha3", 3.0, alpha))
+          update(resultA, NDTest.TTEST, "CompoundDirichletTestResultsAlpha1", 1.0, alpha)
+          update(resultB, NDTest.TTEST, "CompoundDirichletTestResultsAlpha2", 2.0, alpha)
+          update(resultC, NDTest.TTEST, "CompoundDirichletTestResultsAlpha3", 3.0, alpha)
         }
       }
         
@@ -1349,9 +1349,9 @@ class ContinuousTest extends WordSpec with Matchers {
           val resultC = alg.mean(alpha3)
           alg.stop()
           alg.kill
-          update(resultA, new TTestResult("CompoundDirichletTestResultsAlpha1", 1.0, alpha))
-          update(resultB, new TTestResult("CompoundDirichletTestResultsAlpha2", 2.0, alpha))
-          update(resultC, new TTestResult("CompoundDirichletTestResultsAlpha3", 3.0, alpha))
+          update(resultA, NDTest.TTEST, "CompoundDirichletTestResultsAlpha1", 1.0, alpha)
+          update(resultB, NDTest.TTEST, "CompoundDirichletTestResultsAlpha2", 2.0, alpha)
+          update(resultC, NDTest.TTEST, "CompoundDirichletTestResultsAlpha3", 3.0, alpha)
         }
       }
         

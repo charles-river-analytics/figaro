@@ -42,6 +42,14 @@ abstract class MPEBeliefPropagation(override val universe: Universe)(
     super.initialize
   }
 
+  /*
+   * Convert factors to use MaxProduct
+   */
+  override def getFactors(allElements: List[Element[_]], targetElements: List[Element[_]], upper: Boolean = false): List[Factor[Double]] = {
+    val factors = super.getFactors(allElements, targetElements, upper) 
+    factors.map (_.mapTo(x => x, semiring))
+  }
+
   def mostLikelyValue[T](target: Element[T]): T = {
     val beliefs = getBeliefsForElement(target)
     beliefs.maxBy(_._1)._2
