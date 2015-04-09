@@ -54,9 +54,13 @@ class ParameterTest extends WordSpec with Matchers {
    "properly calculate sufficient statistics" in {
       val b = Beta(1, 1)
       b.sufficientStatistics(true)(0) should equal (1.0)
-      b.sufficientStatistics(false)(1) should equal (0.0)
-      b.sufficientStatistics(1.0)(0) should equal (1.0)
-      b.sufficientStatistics(0.0)(1) should equal (0.0)
+      b.sufficientStatistics(true)(1) should equal (0.0)
+      b.sufficientStatistics(false)(0) should equal (0.0)
+      b.sufficientStatistics(false)(1) should equal (1.0)
+      b.sufficientStatistics(0)(0) should equal (1.0)
+      b.sufficientStatistics(0)(1) should equal (0.0)
+      b.sufficientStatistics(1)(0) should equal (0.0)
+      b.sufficientStatistics(1)(1) should equal (1.0)
     }
     
     "properly calculate expected value" in {
@@ -141,11 +145,12 @@ class ParameterTest extends WordSpec with Matchers {
 
     "properly calculate sufficient statistics" in {
       val d = Dirichlet(1, 1)
-      d.sufficientStatistics(1)(0) should equal (1.0)
+      
+      d.sufficientStatistics(0)(0) should equal (1.0)
       d.sufficientStatistics(0)(1) should equal (0.0)
-      d.sufficientStatistics(1.0)(0) should equal (1.0)
-      d.sufficientStatistics(0.0)(1) should equal (0.0)
-    }
+      d.sufficientStatistics(1)(0) should equal (0.0)
+      d.sufficientStatistics(1)(1) should equal (1.0)
+     }
     
     "provide the correct format of its sufficient statistics vector" in {
       val d = Dirichlet(3, 2)
