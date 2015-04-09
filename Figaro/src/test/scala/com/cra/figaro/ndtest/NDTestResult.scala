@@ -13,8 +13,8 @@
 
 package com.cra.figaro.ndtest
 
-trait NDTestResult[T] {
-  var name : String = null
-  def update(value: T)
+trait NDTestResult  {
+  def name : String
+  def update(value: Any)
   def check: Boolean
 }
