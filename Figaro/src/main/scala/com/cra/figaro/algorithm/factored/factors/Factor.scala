@@ -22,8 +22,11 @@ import scala.reflect.runtime.universe._
  * Definition of Factor <p>
  *
  * A factor is associated with a set of variables and specifies a value for every
- * combination of assignments to those variables. Factors are parameterized by the
- * Variables they contain. Parent variables are distinguished from the output variable.
+ * combination of assignments to those variables. 
+ * 
+ * Factors are parameterized by the type of the Variables they contain and contain a semiring
+ * that defines the mathematical operation to be performed on the values 
+ * Parent variables are distinguished from the output variable.
  *
  * Refactored by
  *
@@ -120,7 +123,7 @@ trait Factor[T] {
     that: Factor[T]): Factor[T]
 
   /**
-   * Generic combination function for factors. By default, this is product, but other operations
+   * Combination function for factors. By default, this is product, but other operations
    * (such as divide that is a valid operation for some semirings) can use this
    */
   def combination(
@@ -160,7 +163,7 @@ trait Factor[T] {
   def deDuplicate(): Factor[T]
 
   /**
-   * Creates a new Factor of the same class with a different type
+   * Creates a new Factor of the same class with a different type and semiring
    */
   def convert[U](semiring: Semiring[U]): Factor[U]
 

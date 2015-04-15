@@ -20,7 +20,9 @@ import scala.collection.mutable.Map
 import com.cra.figaro.algorithm.lazyfactored.{ LazyValues, Extended, ValueSet }
 
 /**
- * Variables that appear in factors.
+ * Variables that are internal to Factors.
+ * 
+ * This is the same as a temporary variable, but is more explicitly identified
  *
  * @param range The range of values of the variable
  */
