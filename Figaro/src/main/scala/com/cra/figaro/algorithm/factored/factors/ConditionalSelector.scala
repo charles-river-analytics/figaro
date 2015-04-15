@@ -28,11 +28,6 @@ class ConditionalSelector[T](_parents: List[Variable[_]], _output: List[Variable
 
   override def createFactor[T](_parents: List[Variable[_]], _output: List[Variable[_]], _semiring: Semiring[T] = semiring) = 
     new BasicFactor[T](_parents, _output, _semiring)
-  
-  /**
-   * List all the indices for this factor
-   */
-// override def getIndices = new Indices(variables)
 
   /**
    * Get the value associated with a row. The row is identified by an list of indices
@@ -45,7 +40,7 @@ class ConditionalSelector[T](_parents: List[Variable[_]], _output: List[Variable
       case _ => semiring.one
     }
   }
-    /**
+  /**
    * Convert the contents of the target by applying the given function to all elements of this factor.
    */
   override def mapTo[U](fn: T => U, _semiring: Semiring[U] = semiring): Factor[U] = {

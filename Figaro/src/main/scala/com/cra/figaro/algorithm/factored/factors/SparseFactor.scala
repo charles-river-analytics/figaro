@@ -23,8 +23,14 @@ import scala.reflect.runtime.universe._
 import com.cra.figaro.language.Parameter
 
 /**
- * Sparse implementation of Factor. A factor is associated with a set of variables and specifies a value for every
- * combination of assignments to those variables. Factors are parameterized by the types of values they contain.
+ * Sparse implementation of Factor. 
+ * 
+ * Factors are parameterized by the type of the Variables they contain and contain a semiring
+ * that defines the mathematical operation to be performed on the values 
+ * Parent variables are distinguished from the output variable.
+ * 
+ * This implementation stores only non-default (non-zero) elements and supplies special sum and product methods to
+ * account for the missing values.
  */
 class SparseFactor[T](_parents: List[Variable[_]], _output: List[Variable[_]], _semiring: Semiring[T] = SumProductSemiring().asInstanceOf[Semiring[T]])
   extends BasicFactor[T](_parents, _output, _semiring) {
@@ -52,7 +58,12 @@ class SparseFactor[T](_parents: List[Variable[_]], _output: List[Variable[_]], _
   override def getIndices: Indices = new SparseIndices(variables)
 
   /**
-   * Convert the contents of the target by applying the given function to all elements of this factor.
+   * Creates a new SparseFactor by applying the supplied function to all values of this factor.
+   * 
+   * The new factor can have a new type parameter as well as a new semiring
+   * 
+   * @param fn The function to apply to each value of this Factor
+   * @param semiring A semiring to be used in the new Factor
    */
   override def mapTo[U](fn: T => U, _semiring: Semiring[U] = semiring): Factor[U] = {
     val newFactor = new SparseFactor[U](parents, output, _semiring)
@@ -63,15 +74,25 @@ class SparseFactor[T](_parents: List[Variable[_]], _output: List[Variable[_]], _
   }
 
   /**
-   * Generic combination function for factors. By default, this is product, but other operations
-   * (such as divide that is a valid operation for some semirings) can use this
+   * produces a new Factor from the combined input variables of the input factors.
+   * 
+   * The factor values are computed using the corresponding values from the input factors. This correspondence 
+   * is determined by the overlap between the variables of this factor and the multiplier factor. When 
+   * indices from this factor and indices from the multiplier match on the overlapping variables, a new set of 
+   * indices is constructed for the new factor based on the two input indices and a new value is computed by
+   * applying the op to the two input values. The new factor is updated with the new indices and the new value.
+   * 
+   * @param that The Factor to combine with this one
+   * @param op The operation used to combine (multiply) factor values 
+   * @return The new Factor containing the combined values of the inputs
    */
   override def combination(
     that: Factor[T],
     op: (T, T) => T): Factor[T] = {
 
-
     val (allParents, allChildren, thisIndexMap, thatIndexMap) = unionVars(that)
+    
+    // Find and map the Variables that the two multiplier Factors have in common
     val commonMap = thisIndexMap intersect thatIndexMap
     val thisCommon = commonMap map (thisIndexMap.indexOf(_))
     val thatCommon = commonMap map (thatIndexMap.indexOf(_))
@@ -79,6 +100,9 @@ class SparseFactor[T](_parents: List[Variable[_]], _output: List[Variable[_]], _
     val result = createFactor[T](allParents, allChildren)
     val numVars = result.numVars
 
+    // In a single pass create a map from the values of the overlapping variables to 
+    // the contents of the other multiplier
+    // TODO see if selecting which one to map makes a difference (eg the bigger one)
     val thatCommonValues: Map[List[Int], List[(List[Int], T)]] = Map()
     val thatSize = that.numVars
     for ((thatIndices, thatValue) <- that.contents) {
@@ -90,32 +114,35 @@ class SparseFactor[T](_parents: List[Variable[_]], _output: List[Variable[_]], _
       thatCommonValues.put(key, matches :+ (thatIndices, thatValue))
     }
     
+    // For each of the current contents, find the overlap key
+    // from the map of the other contents and combine the current
+    // item with all the other items with the same overlap and
+    // update the new factor
     for ((thisIndices, thisValue) <- this.contents) {
+      // Create a search key based on the overlapping Variables
       val key = thisCommon map (thisIndices(_))
+      // Use the key to check the 'that' map
       thatCommonValues.get(key) match {
         case Some(matches) => {
           var newIndices = new Array[Int](numVars)
+          // insert 'this' indices into the newIndices
           for (i <- 0 until thisIndices.size) {
             newIndices(thisIndexMap(i)) = thisIndices(i)
           }
           
           for ((thatIndices, thatValue) <- matches) {
+            // insert 'that' indices into the newIndices
             for (i <- 0 until thatIndices.size) {
               newIndices(thatIndexMap(i)) = thatIndices(i)
             }
 
+            // calculate the new value and update the new Factor
             val newValue = op(thisValue, thatValue)
             result.set(newIndices.toList, newValue)
           }
         }
         case _ =>
       }
-      //      Factor.combineIndices(thisIndices, thisIndexMap, thatIndices, thatIndexMap, numVars) match {
-      //        case Some(newIndices) =>
-      //          val value = op(get(thisIndices), that.get(thatIndices))
-      //          result.set(newIndices.toList, value)
-      //        case None =>
-      //      }
     }
     result
   }
@@ -128,7 +155,6 @@ class SparseFactor[T](_parents: List[Variable[_]], _output: List[Variable[_]], _
     comparator: (T, T) => Boolean): U = {
     val valuesWithEntries =
       for {
-        //i <- 0 until summedVariable.size
         i <- summedNonZeroIndices
         xvalue = summedVariable.range(i)
         index = insertAtIndices(resultIndices, summedVariableIndices, i)
@@ -153,7 +179,7 @@ class SparseFactor[T](_parents: List[Variable[_]], _output: List[Variable[_]], _
 
     // Compute the indices of the summed out variable
     val indicesSummed = this.contents.keys.map(index => {
-      val rest = List.tabulate(numVars)(n => n).diff(indicesOfSummedVariable)
+//      val rest = List.tabulate(numVars)(n => n).diff(indicesOfSummedVariable)
       indicesOfSummedVariable.map(i => index(i))
     }).toList.flatten.distinct
 

@@ -21,7 +21,10 @@ import com.cra.figaro.language._
  *
  */
 object ChainFactory {
-
+  
+  /**
+   * Factor constructor for a Chain Element
+   */
   def makeFactors[T, U](chain: Chain[T, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {
     val chainMap: scala.collection.mutable.Map[T, Element[U]] = LazyValues(chain.universe).getMap(chain)
     val parentVar = Variable(chain.parent)
