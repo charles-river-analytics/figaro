@@ -20,8 +20,15 @@ import com.cra.figaro.algorithm.lazyfactored.Extended
 import scala.reflect.runtime.universe._
 
 /**
- * Default implementation of Factor. A factor is associated with a set of variables and specifies a value for every
- * combination of assignments to those variables. Factors are parameterized by the types of values they contain.
+ * Default implementation of Factor. 
+ * 
+ * A factor is associated with a set of variables and specifies a value for every combination of assignments to those variables. 
+ * Factors are parameterized by the types of values they contain.
+ * 
+ * @param parents A list of parent variables for this factor representing all the dependencies of this factor
+ * @param output The single output variable for this factor
+ * @param semiring A Semiring class that defines the operations (sum/max, product) to be used in this factor. This defaults to
+ * SumProductSemiring
  */
 class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_]], val semiring: Semiring[T] = SumProductSemiring().asInstanceOf[Semiring[T]])
   extends Factor[T] {
@@ -56,7 +63,8 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
   }
 
   /**
-   * Fill the contents of this factor by applying a rule to every combination of values.
+   * Fill the contents of this factor by applying a rule to every combination of 
+   * parent and output values.
    */
   override def fillByRule(rule: List[Extended[_]] => T): Factor[T] = {
     for (indices <- getIndices) {
@@ -66,11 +74,11 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
     this
   }
 
-  /* unionVars takes the variables in two factors and produces their union.
-   *
-   * It produces a mapping from each original variable to its new location.
-   * Similarly it produces a mapping from each new variable to its new location.
-   */
+  /** takes the variables in two factors and produces their set union.
+    *
+    * It produces a mapping from each original variable to its new location.
+    * Similarly it produces a mapping from each new variable to its new location.
+    */
   def unionVars[U](that: Factor[U]): (List[Variable[_]], List[Variable[_]], List[Int], List[Int]) = {
     val allOutputs = that.output
     val allParents = variables.union(that.variables).distinct diff (allOutputs)
@@ -82,8 +90,8 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
   }
 
   /**
-   * Returns the product of this factor with another factor according to a given multiplication function.
-   * The product is associated with all variables in the two inputs, and the value associated with an assignment
+   * returns the product of this factor with another factor according to a given multiplication function.
+   * The product is associated with the combined variables of the two inputs, and the value associated with an assignment
    * is the product of the values in the two inputs.
    */
   override def product(
@@ -93,6 +101,17 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
     dThis.combination(dThat, semiring.product)
   }
 
+  /**
+   * produces a new Factor from the combined input variables of the input factors.
+   * 
+   * The factor values are computed using the corresponding values from the input factors. This correspondence 
+   * is determined by the indices of the input factors that overlap with each of the indices of the 
+   * result factor
+   * 
+   * @param that The Factor to combine with this one
+   * @param op The operation used to combine (multiply) factor values 
+   * @return The new Factor containing the combined values of the inputs
+   */
   override def combination(
     that: Factor[T],
     op: (T, T) => T): Factor[T] = {
@@ -170,6 +189,7 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
       true
     }
   }
+  
   /*
    * Finds the value of argVariable that has the largest output
    * in the factor, as determined by the comparator
