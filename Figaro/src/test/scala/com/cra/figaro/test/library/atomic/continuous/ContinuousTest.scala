@@ -26,9 +26,9 @@ import com.cra.figaro.test.tags.NonDeterministic
 import com.cra.figaro.ndtest._
 
 class ContinuousTest extends WordSpec with Matchers {
-  
+
   val alpha: Double = 0.05
-    
+
   "A AtomicUniform" should {
     "have value within a range with probability equal to the fraction represented by the range" taggedAs (NonDeterministic) in {
       val ndtest = new NDTest {
@@ -45,7 +45,7 @@ class ContinuousTest extends WordSpec with Matchers {
         }
       }
 
-      ndtest.run(10)      
+      ndtest.run(10)
     }
 
     "compute the correct probability under Metropolis-Hastings" taggedAs (NonDeterministic) in {
@@ -63,33 +63,19 @@ class ContinuousTest extends WordSpec with Matchers {
         }
       }
 
-      ndtest.run(10)      
+      ndtest.run(10)
     }
 
-    "for an input within the interval have density equal to 1 divided by the size of the interval" taggedAs (NonDeterministic) in {
-      val ndtest = new NDTest {
-        override def oneTest = {
-          val target = 0.5
-          Universe.createNew()
-          val result = Uniform(0.0, 2.0).density(1.5)
-          update(result, NDTest.TTEST, "AtomicUniformTestResults", target, alpha)
-        }
-      }
-
-      ndtest.run(10)    
+    "for an input within the interval have density equal to 1 divided by the size of the interval" in {
+      Universe.createNew()
+      val result = Uniform(0.0, 2.0).density(1.5)
+      result should be(0.5 +- 0.00001)
     }
 
-    "for an input outside the interval have density 0" taggedAs (NonDeterministic) in {
-      val ndtest = new NDTest {
-        override def oneTest = {
-          val target = 0.0
-          Universe.createNew()
-          val result = Uniform(0.0, 2.0).density(2.5)
-          update(result, NDTest.TTEST, "AtomicUniformTestResults", target, alpha)
-        }
-      }
-
-      ndtest.run(10)    
+    "for an input outside the interval have density 0" in {
+      Universe.createNew()
+      val result = Uniform(0.0, 2.0).density(2.5)
+      result should be(0.0 +- 0.00001)
     }
 
     "convert to the correct string" in {
@@ -118,7 +104,7 @@ class ContinuousTest extends WordSpec with Matchers {
         }
       }
 
-      ndtest.run(10)    
+      ndtest.run(10)
     }
 
     "convert to the correct string" in {
@@ -165,22 +151,16 @@ class ContinuousTest extends WordSpec with Matchers {
         }
       }
 
-      ndtest.run(10)    
+      ndtest.run(10)
     }
 
-    "have the correct density" taggedAs (NonDeterministic) in {
-      val ndtest = new NDTest {
-        override def oneTest = {
-          Universe.createNew()
-          val elem = Normal(1.0, 2.0)
-          val dist = new NormalDistribution(1.0, 2.0)
-          val target = dist.probability(1.5)
-          val result = elem.density(1.5)
-          update(result, NDTest.TTEST, "AtomicNormalTestResults", target, alpha)
-        }
-      }
-
-      ndtest.run(10)    
+    "have the correct density" in {
+      Universe.createNew()
+      val elem = Normal(1.0, 2.0)
+      val dist = new NormalDistribution(1.0, 2.0)
+      val target = dist.probability(1.5)
+      val result = elem.density(1.5)
+      result should be(target +- 0.00001)
     }
 
     "convert to the correct string" in {
@@ -192,25 +172,25 @@ class ContinuousTest extends WordSpec with Matchers {
   "A CompoundNormalMean" should {
     "have value within a range with probability equal to the expectation over the mean of the" +
       "cumulative probability of the upper minus the lower" taggedAs (NonDeterministic) in {
-      val ndtest = new NDTest {
-        override def oneTest = {
-          Universe.createNew()
-          val elem = Normal(Select(0.5 -> 0.5, 0.5 -> 1.0), 2.0)
-          val alg = Importance(20000, elem)
-          alg.start()
-          val dist1 = new NormalDistribution(0.5, 2.0)
-          val dist2 = new NormalDistribution(1.0, 2.0)
-          def getProb(dist: ProbabilityDistribution) = dist.cumulative(1.2) - dist.cumulative(0.7)
-          val target = 0.5 * getProb(dist1) + 0.5 * getProb(dist2)
-          val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
-          alg.stop()
-          alg.kill
-          update(result, NDTest.TTEST, "CompoundNormalMeanTestResults", target, alpha)
+        val ndtest = new NDTest {
+          override def oneTest = {
+            Universe.createNew()
+            val elem = Normal(Select(0.5 -> 0.5, 0.5 -> 1.0), 2.0)
+            val alg = Importance(20000, elem)
+            alg.start()
+            val dist1 = new NormalDistribution(0.5, 2.0)
+            val dist2 = new NormalDistribution(1.0, 2.0)
+            def getProb(dist: ProbabilityDistribution) = dist.cumulative(1.2) - dist.cumulative(0.7)
+            val target = 0.5 * getProb(dist1) + 0.5 * getProb(dist2)
+            val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+            alg.stop()
+            alg.kill
+            update(result - target, NDTest.TTEST, "CompoundNormalMeanResultsDiff", 0.0, alpha)
+          }
         }
-      }
 
-      ndtest.run(10)    
-    }
+        ndtest.run(10)
+      }
 
     "convert to the correct string" in {
       Universe.createNew()
@@ -239,41 +219,41 @@ class ContinuousTest extends WordSpec with Matchers {
             update(result, NDTest.TTEST, "CompoundNormalMeanTestResults", targetProb, alpha)
           }
         }
-  
+
         ndtest.run(10)
       }
 
     "convert to the correct string" in {
       Universe.createNew()
-      val g = Gamma(1.0,5.0)
-      Normal(2.0, Gamma(1.0,5.0)).toString should equal("Normal(2.0, Gamma(1.0, 5.0))")
+      val g = Gamma(1.0, 5.0)
+      Normal(2.0, Gamma(1.0, 5.0)).toString should equal("Normal(2.0, Gamma(1.0, 5.0))")
     }
   }
 
   "A CompoundNormal" should {
     "have value within a range with probability equal to the expectation over the mean and variance of the" +
       "cumulative probability of the upper minus the lower" taggedAs (NonDeterministic) in {
-      val ndtest = new NDTest {
-        override def oneTest = {
-          Universe.createNew()
-          val elem = Normal(Select(0.5 -> 0.5, 0.5 -> 1.0), Select(0.5 -> 2.0, 0.5 -> 3.0))
-          val alg = Importance(20000, elem)
-          alg.start()
-          val dist1 = new NormalDistribution(0.5, 2.0)
-          val dist2 = new NormalDistribution(1.0, 2.0)
-          val dist3 = new NormalDistribution(0.5, 3.0)
-          val dist4 = new NormalDistribution(1.0, 3.0)
-          def getProb(dist: ProbabilityDistribution) = dist.cumulative(1.2) - dist.cumulative(0.7)
-          val target = 0.25 * getProb(dist1) + 0.25 * getProb(dist2) + 0.25 * getProb(dist3) + 0.25 * getProb(dist4)
-          val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
-          alg.stop()
-          alg.kill
-          update(result, NDTest.TTEST, "CompoundNormalTestResults", target, alpha)
+        val ndtest = new NDTest {
+          override def oneTest = {
+            Universe.createNew()
+            val elem = Normal(Select(0.5 -> 0.5, 0.5 -> 1.0), Select(0.5 -> 2.0, 0.5 -> 3.0))
+            val alg = Importance(20000, elem)
+            alg.start()
+            val dist1 = new NormalDistribution(0.5, 2.0)
+            val dist2 = new NormalDistribution(1.0, 2.0)
+            val dist3 = new NormalDistribution(0.5, 3.0)
+            val dist4 = new NormalDistribution(1.0, 3.0)
+            def getProb(dist: ProbabilityDistribution) = dist.cumulative(1.2) - dist.cumulative(0.7)
+            val target = 0.25 * getProb(dist1) + 0.25 * getProb(dist2) + 0.25 * getProb(dist3) + 0.25 * getProb(dist4)
+            val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+            alg.stop()
+            alg.kill
+            update(result - target, NDTest.TTEST, "CompoundNormalTestResults", 0.0, alpha)
+          }
         }
-      }
 
-      ndtest.run(10)        
-    }
+        ndtest.run(10)
+      }
 
     "convert to the correct string" in {
       Universe.createNew()
@@ -289,10 +269,10 @@ class ContinuousTest extends WordSpec with Matchers {
           val nSamples = Normal(2.5, 2.0)("", sampleUniverse)
           val samples = for (i <- 1 to 100)
             yield nSamples.generateValue(nSamples.generateRandomness())
-    
+
           val samplesMean = samples.sum / samples.size
           val samplesVariance = samples.map(s => (s - samplesMean) * (s - samplesMean)).sum / samples.size
-    
+
           val universe = Universe.createNew()
           val mean = Uniform(-5, 5)("mean", universe)
           val variance = Uniform(0, 5)("variance", universe)
@@ -306,12 +286,12 @@ class ContinuousTest extends WordSpec with Matchers {
           val result2 = alg.mean(variance)
           alg.stop()
           alg.kill
-          update(result1, NDTest.TTEST, "CompoundNormalTestResultsMean", samplesMean, alpha)
-          update(result2, NDTest.TTEST, "CompoundNormalTestResultsVar", samplesVariance, alpha)
+          update(result1 - samplesMean, NDTest.TTEST, "CompoundNormalTestResultsMean", 0.0, alpha)
+          update(result2 / samplesVariance, NDTest.TTEST, "CompoundNormalTestResultsVar", 1.0, alpha)
         }
       }
 
-      ndtest.run(10)    
+      ndtest.run(10)
     }
 
     "produce the right probability when conditioned under Importance Sampling" taggedAs (NonDeterministic) in {
@@ -321,10 +301,10 @@ class ContinuousTest extends WordSpec with Matchers {
           val nSamples = Normal(2.5, 2.0)("", sampleUniverse)
           val samples = for (i <- 1 to 25)
             yield nSamples.generateValue(nSamples.generateRandomness())
-    
+
           val samplesMean = samples.sum / samples.size
           val samplesVariance = samples.map(s => (s - samplesMean) * (s - samplesMean)).sum / samples.size
-    
+
           val universe = Universe.createNew()
           val mean = Uniform(-5, 5)("mean", universe)
           val variance = Uniform(0, 5)("variance", universe)
@@ -332,25 +312,24 @@ class ContinuousTest extends WordSpec with Matchers {
             val normal = Normal(mean, variance)
             normal.observe(sample)
           }
-    
+
           val alg = Importance(20000, mean, variance)
           alg.start()
           val result1 = alg.mean(mean)
           val result2 = alg.mean(variance)
           alg.stop()
           alg.kill
-          update(result1, NDTest.TTEST, "CompoundNormalTestResultsMean", samplesMean, alpha)
-          update(result2, NDTest.TTEST, "CompoundNormalTestResultsVar", samplesVariance, alpha)
+          update(result1 - samplesMean, NDTest.TTEST, "CompoundNormalTestResultsMean", 0.0, alpha)
+          update(result2 / samplesVariance, NDTest.TTEST, "CompoundNormalTestResultsVar", 1.0, alpha)
         }
       }
 
-      ndtest.run(10)    
+      ndtest.run(10)
     }
 
   }
 
-  
-    "A CompoundMultivariateNormal" should {
+  "A CompoundMultivariateNormal" should {
     val means = List(1.0, 2.0)
     val covariances = List(List(.25, .15), List(.15, .25))
 
@@ -374,18 +353,12 @@ class ContinuousTest extends WordSpec with Matchers {
     //      alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
     //    }
 
-    "have the correct density" taggedAs (NonDeterministic) in {
-      val ndtest = new NDTest {
-        override def oneTest = {
-          Universe.createNew()
-          val elem = MultivariateNormal(means, covariances)
-          val dist = new MultivariateNormalDistribution(means.toArray, covariances.map((l: List[Double]) => l.toArray).toArray)
-          val result = elem.density(List(1.5, 2.5))
-          update(result, NDTest.TTEST, "CompoundMultivariateNormalTestResults", dist.density(Array(1.5, 2.5)), alpha)
-        }
-      }
-
-      ndtest.run(10)      
+    "have the correct density" in {
+      Universe.createNew()
+      val elem = MultivariateNormal(means, covariances)
+      val dist = new MultivariateNormalDistribution(means.toArray, covariances.map((l: List[Double]) => l.toArray).toArray)
+      val result = elem.density(List(1.5, 2.5))
+      result should be(dist.density(Array(1.5, 2.5)) +- 0.00001)
     }
 
     "produce samples with the correct means and covariances" taggedAs (NonDeterministic) in {
@@ -393,21 +366,21 @@ class ContinuousTest extends WordSpec with Matchers {
         override def oneTest = {
           Universe.createNew()
           val elem = MultivariateNormal(means, covariances)
-    
+
           var n = 0
           var sumx1 = 0.0
           var sumx2 = 0.0
           var ss1 = 0.0
           var ss2 = 0.0
           var sc12 = 0.0
-    
+
           for (i <- 0 to 10000) {
             val rand = elem.generateRandomness()
             val values = elem.generateValue(rand)
-    
+
             val x1 = values(0)
             val x2 = values(1)
-    
+
             n += 1
             sumx1 += x1
             sumx2 += x2
@@ -415,7 +388,7 @@ class ContinuousTest extends WordSpec with Matchers {
             ss2 += x2 * x2
             sc12 += x1 * x2
           }
-    
+
           val mean1 = sumx1 / n
           val mean2 = sumx2 / n
           val var1 = (ss1 - (sumx1 * sumx1 / n)) / (n - 1)
@@ -438,8 +411,7 @@ class ContinuousTest extends WordSpec with Matchers {
       MultivariateNormal(means, covariances).toString should equal("MultivariateNormal(" + means + ",\n" + covariances + ")")
     }
   }
-  
-  
+
   "An AtomicMultivariateNormal" should {
     val means = List(1.0, 2.0)
     val covariances = List(List(.25, .15), List(.15, .25))
@@ -464,19 +436,14 @@ class ContinuousTest extends WordSpec with Matchers {
     //      alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
     //    }
 
-    "have the correct density" taggedAs (NonDeterministic) in {
-      val ndtest = new NDTest {
-        override def oneTest = {
-          Universe.createNew()
-          val elem = MultivariateNormal(means, covariances)
-          val dist = new MultivariateNormalDistribution(means.toArray, covariances.map((l: List[Double]) => l.toArray).toArray)
-          val target = dist.density(Array(1.5, 2.5))
-          val result = elem.density(List(1.5, 2.5))
-          update(result, NDTest.TTEST, "AtomicMultivariateNormalTestResults", target, alpha)
-        }
-      }
+    "have the correct density" in {
+      Universe.createNew()
+      val elem = MultivariateNormal(means, covariances)
+      val dist = new MultivariateNormalDistribution(means.toArray, covariances.map((l: List[Double]) => l.toArray).toArray)
+      val target = dist.density(Array(1.5, 2.5))
+      val result = elem.density(List(1.5, 2.5))
+      result should be(target +- 0.00001)
 
-      ndtest.run(10)    
     }
 
     "produce samples with the correct means and covariances" taggedAs (NonDeterministic) in {
@@ -484,21 +451,21 @@ class ContinuousTest extends WordSpec with Matchers {
         override def oneTest = {
           Universe.createNew()
           val elem = MultivariateNormal(means, covariances)
-    
+
           var n = 0
           var sumx1 = 0.0
           var sumx2 = 0.0
           var ss1 = 0.0
           var ss2 = 0.0
           var sc12 = 0.0
-    
+
           for (i <- 0 to 10000) {
             val rand = elem.generateRandomness()
             val values = elem.generateValue(rand)
-    
+
             val x1 = values(0)
             val x2 = values(1)
-    
+
             n += 1
             sumx1 += x1
             sumx2 += x2
@@ -506,13 +473,13 @@ class ContinuousTest extends WordSpec with Matchers {
             ss2 += x2 * x2
             sc12 += x1 * x2
           }
-    
+
           val mean1 = sumx1 / n
           val mean2 = sumx2 / n
           val var1 = (ss1 - (sumx1 * sumx1 / n)) / (n - 1)
           val var2 = (ss2 - (sumx2 * sumx2 / n)) / (n - 1)
           val cov = (sc12 - (sumx1 * sumx2 / n)) / (n - 1)
-    
+
           update(mean1, NDTest.TTEST, "AtomicMultivariateNormalTestResultsMean1", means(0), alpha)
           update(mean2, NDTest.TTEST, "AtomicMultivariateNormalTestResultsMean2", means(1), alpha)
           update(var1, NDTest.TTEST, "AtomicMultivariateNormalTestResultsVar1", covariances(0)(0), alpha)
@@ -521,7 +488,7 @@ class ContinuousTest extends WordSpec with Matchers {
         }
       }
 
-      ndtest.run(10)    
+      ndtest.run(10)
     }
 
     "convert to the correct string" in {
@@ -569,18 +536,12 @@ class ContinuousTest extends WordSpec with Matchers {
       ndtest.run(10)
     }
 
-    "have the correct density" taggedAs (NonDeterministic) in {
-      val ndtest = new NDTest {
-        override def oneTest = {
-          Universe.createNew()
-          val elem = Exponential(2.0)
-          val dist = new ExponentialDistribution(2.0)
-          val result = elem.density(1.5)
-          update(result, NDTest.TTEST, "AtomicExponentialTestResults", dist.probability(1.5), alpha)
-        }
-      }
-
-      ndtest.run(10)
+    "have the correct density" in {
+      Universe.createNew()
+      val elem = Exponential(2.0)
+      val dist = new ExponentialDistribution(2.0)
+      val result = elem.density(1.5)
+      result should be(dist.probability(1.5) +- 0.00001)
     }
 
     "convert to the correct string" in {
@@ -609,7 +570,7 @@ class ContinuousTest extends WordSpec with Matchers {
             update(result, NDTest.TTEST, "CompoundExponentialTestResults", targetProb, alpha)
           }
         }
-  
+
         ndtest.run(10)
       }
 
@@ -626,7 +587,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val nSamples = Exponential(2)("", sampleUniverse)
           val samples = for (i <- 1 to 100)
             yield nSamples.generateValue(nSamples.generateRandomness())
-    
+
           val universe = Universe.createNew()
           val lambda = Uniform(0, 10)("lambda", universe)
           for (sample <- samples) {
@@ -642,7 +603,7 @@ class ContinuousTest extends WordSpec with Matchers {
           update(result, NDTest.TTEST, "CompoundExponentialTestResults", target, alpha)
         }
       }
-  
+
       ndtest.run(10)
     }
 
@@ -653,7 +614,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val nSamples = Exponential(2)("", sampleUniverse)
           val samples = for (i <- 1 to 25)
             yield nSamples.generateValue(nSamples.generateRandomness())
-    
+
           val universe = Universe.createNew()
           val lambda = Uniform(0, 10)("lambda", universe)
           for (sample <- samples) {
@@ -669,7 +630,7 @@ class ContinuousTest extends WordSpec with Matchers {
           update(result, NDTest.TTEST, "CompoundExponentialTestResults", target, alpha)
         }
       }
-  
+
       ndtest.run(10)
     }
   }
@@ -692,7 +653,7 @@ class ContinuousTest extends WordSpec with Matchers {
             update(result, NDTest.TTEST, "AtomicGammaTestResults", targetProb, alpha)
           }
         }
-    
+
         ndtest.run(10)
       }
 
@@ -712,22 +673,16 @@ class ContinuousTest extends WordSpec with Matchers {
             update(result, NDTest.TTEST, "AtomicGammaTestResults", targetProb, alpha)
           }
         }
-    
+
         ndtest.run(10)
       }
 
-      "have the correct density" taggedAs (NonDeterministic) in {
-        val ndtest = new NDTest {
-          override def oneTest = {
-            Universe.createNew()
-            val elem = Gamma(2.5)
-            val dist = new GammaDistribution(2.5)
-            val result = elem.density(1.5)
-            update(result, NDTest.TTEST, "AtomicGammaTestResults", dist.probability(1.5), alpha)
-          }
-        }
-    
-        ndtest.run(10)
+      "have the correct density" in {
+        Universe.createNew()
+        val elem = Gamma(2.5)
+        val dist = new GammaDistribution(2.5)
+        val result = elem.density(1.5)
+        result should be(dist.probability(1.5) +- 0.00001)
       }
 
       "convert to the correct string" in {
@@ -754,7 +709,7 @@ class ContinuousTest extends WordSpec with Matchers {
             update(result, NDTest.TTEST, "AtomicGammaTestResults", targetProb, alpha)
           }
         }
-    
+
         ndtest.run(10)
       }
 
@@ -775,24 +730,18 @@ class ContinuousTest extends WordSpec with Matchers {
             update(result, NDTest.TTEST, "AtomicGammaTestResults", targetProb, alpha)
           }
         }
-    
+
         ndtest.run(10)
       }
 
-      "have the correct density" taggedAs (NonDeterministic) in {
-        val ndtest = new NDTest {
-          override def oneTest = {
-            Universe.createNew()
-            val theta = 2.0
-            val elem = Gamma(1, theta)
-            // Using the fact that for Gamme(1,theta), the PDF is given by p(x) = exp(-x/theta)/theta
-            val prob = exp(-1.5 / theta) / theta
-            val result = elem.density(1.5)
-            update(result, NDTest.TTEST, "AtomicGammaTestResults", prob, alpha)
-          }
-        }
-    
-        ndtest.run(10)
+      "have the correct density" in {
+        Universe.createNew()
+        val theta = 2.0
+        val elem = Gamma(1, theta)
+        // Using the fact that for Gamme(1,theta), the PDF is given by p(x) = exp(-x/theta)/theta
+        val prob = exp(-1.5 / theta) / theta
+        val result = elem.density(1.5)
+        result should be(prob +- 0.00001)
       }
 
       "convert to the correct string" in {
@@ -818,7 +767,7 @@ class ContinuousTest extends WordSpec with Matchers {
             update(result, NDTest.TTEST, "AtomicGammaTestResults", targetProb, alpha)
           }
         }
-    
+
         ndtest.run(10)
       }
 
@@ -838,7 +787,7 @@ class ContinuousTest extends WordSpec with Matchers {
             update(result, NDTest.TTEST, "AtomicGammaTestResults", targetProb, alpha)
           }
         }
-    
+
         ndtest.run(10)
       }
     }
@@ -860,7 +809,7 @@ class ContinuousTest extends WordSpec with Matchers {
             update(result, NDTest.TTEST, "AtomicGammaTestResults", targetProb, alpha)
           }
         }
-    
+
         ndtest.run(10)
       }
 
@@ -880,7 +829,7 @@ class ContinuousTest extends WordSpec with Matchers {
             update(result, NDTest.TTEST, "AtomicGammaTestResults", targetProb, alpha)
           }
         }
-    
+
         ndtest.run(10)
       }
     }
@@ -905,7 +854,7 @@ class ContinuousTest extends WordSpec with Matchers {
             update(result, NDTest.TTEST, "CompoundGammaKTestResults", targetProb, alpha)
           }
         }
-    
+
         ndtest.run(10)
       }
 
@@ -935,7 +884,7 @@ class ContinuousTest extends WordSpec with Matchers {
             update(result, NDTest.TTEST, "CompoundGammaTestResults", targetProb, alpha)
           }
         }
-    
+
         ndtest.run(10)
       }
 
@@ -953,7 +902,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val nSamples = Gamma(2, 2)("", sampleUniverse)
           val samples = for (i <- 1 to 100)
             yield nSamples.generateValue(nSamples.generateRandomness())
-    
+
           val universe = Universe.createNew()
           val k = Uniform(0, 10)("k", universe)
           val theta = Uniform(0, 10)("theta", universe)
@@ -971,8 +920,8 @@ class ContinuousTest extends WordSpec with Matchers {
           update(resultTheta, NDTest.TTEST, "CompoundGammaTestResultsTheta", 2.0, alpha)
         }
       }
-    
-      ndtest.run(10)      
+
+      ndtest.run(10)
     }
 
     "produce the right probability when conditioned under Importance Sampling" taggedAs (NonDeterministic) in {
@@ -980,10 +929,10 @@ class ContinuousTest extends WordSpec with Matchers {
         override def oneTest = {
           val sampleUniverse = Universe.createNew()
           val nSamples = Gamma(2, 2)("", sampleUniverse)
-    
+
           val samples = for (i <- 1 to 25)
             yield nSamples.generateValue(nSamples.generateRandomness())
-    
+
           val universe = Universe.createNew()
           val k = Uniform(0, 10)("k", universe)
           val theta = Uniform(0, 10)("theta", universe)
@@ -991,7 +940,7 @@ class ContinuousTest extends WordSpec with Matchers {
             val gamma = Gamma(k, theta)
             gamma.observe(sample)
           }
-    
+
           val alg = Importance(20000, k, theta)
           alg.start()
           val resultK = alg.mean(k)
@@ -1002,8 +951,8 @@ class ContinuousTest extends WordSpec with Matchers {
           update(resultTheta, NDTest.TTEST, "CompoundGammaTestResultsTheta", 2.0, alpha)
         }
       }
-    
-      ndtest.run(10) 
+
+      ndtest.run(10)
     }
   }
 
@@ -1025,7 +974,7 @@ class ContinuousTest extends WordSpec with Matchers {
           update(result, NDTest.TTEST, "AtomicBetaTestResults", targetProb, alpha)
         }
       }
-    
+
       ndtest.run(10)
     }
 
@@ -1046,24 +995,18 @@ class ContinuousTest extends WordSpec with Matchers {
           update(result, NDTest.TTEST, "AtomicBetaTestResults", targetProb, alpha)
         }
       }
-    
+
       ndtest.run(10)
     }
 
-    "have the correct density" taggedAs (NonDeterministic) in {
-      val ndtest = new NDTest {
-        override def oneTest = {
-          Universe.createNew()
-          val a = 1.2
-          val b = 0.5
-          val elem = Beta(a, b)
-          val dist = new BetaDistribution(a, b)
-          val result = elem.density(0.3)
-          update(result, NDTest.TTEST, "AtomicBetaTestResults", dist.probability(0.3), alpha)
-        }
-      }
-    
-      ndtest.run(10)
+    "have the correct density" in {
+      Universe.createNew()
+      val a = 1.2
+      val b = 0.5
+      val elem = Beta(a, b)
+      val dist = new BetaDistribution(a, b)
+      val result = elem.density(0.3)
+      result should be(dist.probability(0.3) +- 0.00001)
     }
 
     "convert to the correct string" in {
@@ -1093,7 +1036,7 @@ class ContinuousTest extends WordSpec with Matchers {
             update(result, NDTest.TTEST, "CompoundBetaTestResults", targetProb, alpha)
           }
         }
-      
+
         ndtest.run(10)
       }
 
@@ -1111,7 +1054,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val nSamples = Beta(2, 5)("", sampleUniverse)
           val samples = for (i <- 1 to 100)
             yield nSamples.generateValue(nSamples.generateRandomness())
-    
+
           val universe = Universe.createNew()
           val a = Uniform(0, 10)("a", universe)
           val b = Uniform(0, 10)("b", universe)
@@ -1129,7 +1072,7 @@ class ContinuousTest extends WordSpec with Matchers {
           update(resultB, NDTest.TTEST, "CompoundBetaTestResultsB", 5.0, alpha)
         }
       }
-      
+
       ndtest.run(10)
     }
 
@@ -1140,7 +1083,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val nSamples = Beta(2, 5)("", sampleUniverse)
           val samples = for (i <- 1 to 25)
             yield nSamples.generateValue(nSamples.generateRandomness())
-    
+
           val universe = Universe.createNew()
           val a = Uniform(0, 10)("a", universe)
           val b = Uniform(0, 10)("b", universe)
@@ -1158,7 +1101,7 @@ class ContinuousTest extends WordSpec with Matchers {
           update(resultB, NDTest.TTEST, "CompoundBetaTestResultsB", 5.0, alpha)
         }
       }
-      
+
       ndtest.run(10)
     }
   }
@@ -1186,7 +1129,7 @@ class ContinuousTest extends WordSpec with Matchers {
           update(result, NDTest.TTEST, "AtomicDirichletTestResults", targetProb, alpha)
         }
       }
-      
+
       ndtest.run(10)
     }
 
@@ -1211,29 +1154,23 @@ class ContinuousTest extends WordSpec with Matchers {
           update(result, NDTest.TTEST, "AtomicDirichletTestResults", targetProb, alpha)
         }
       }
-      
+
       ndtest.run(10)
     }
 
-    "have the correct density" taggedAs (NonDeterministic) in {
-      val ndtest = new NDTest {
-        override def oneTest = {
-          Universe.createNew()
-          val a0 = 1.2
-          val a1 = 0.5
-          val elem = Dirichlet(a0, a1)
-          val x0 = 0.3
-          val x1 = 0.6
-          val normalizer = gamma(a0 + a1) / (gamma(a0) * gamma(a1))
-          val pow0 = pow(x0, a0 - 1)
-          val pow1 = pow(x1, a1 - 1)
-          val target = normalizer * pow(x0, a0 - 1) * pow(x1, a1 - 1)
-          val result = elem.density(Array(x0, x1))
-          update(result, NDTest.TTEST, "AtomicDirichletTestResults", target, alpha)
-        }
-      }
-      
-      ndtest.run(10)
+    "have the correct density" in {
+      Universe.createNew()
+      val a0 = 1.2
+      val a1 = 0.5
+      val elem = Dirichlet(a0, a1)
+      val x0 = 0.3
+      val x1 = 0.6
+      val normalizer = gamma(a0 + a1) / (gamma(a0) * gamma(a1))
+      val pow0 = pow(x0, a0 - 1)
+      val pow1 = pow(x1, a1 - 1)
+      val target = normalizer * pow(x0, a0 - 1) * pow(x1, a1 - 1)
+      val result = elem.density(Array(x0, x1))
+      result should be(target +- 0.00001)
     }
 
     "convert to the correct string" in {
@@ -1245,46 +1182,40 @@ class ContinuousTest extends WordSpec with Matchers {
   "A CompoundDirichlet" should {
     "have value within a range with probability equal to the expectation over the alphas " +
       "of the cumulative probability of the upper minus the lower" taggedAs (NonDeterministic) in {
-      val ndtest = new NDTest {
-        override def oneTest = {
-          Universe.createNew()
-          val a = Select(0.5 -> 0.7, 0.5 -> 1.2)
-          val b = Constant(0.5)
-          val elem = Dirichlet(a, b)
-          val alg = Importance(20000, elem)
-          alg.start()
-          val dist1 = new BetaDistribution(0.7, 0.5)
-          val dist2 = new BetaDistribution(1.2, 0.5)
-          def getProb(dist: ProbabilityDistribution) = dist.cumulative(0.3) - dist.cumulative(0.2)
-          val targetProb = 0.5 * getProb(dist1) + 0.5 * getProb(dist2)
-          def check(ds: Array[Double]) = {
-            val r = ds(0) / (ds(0) + ds(1))
-            0.2 <= r && r < 0.3
+        val ndtest = new NDTest {
+          override def oneTest = {
+            Universe.createNew()
+            val a = Select(0.5 -> 0.7, 0.5 -> 1.2)
+            val b = Constant(0.5)
+            val elem = Dirichlet(a, b)
+            val alg = Importance(20000, elem)
+            alg.start()
+            val dist1 = new BetaDistribution(0.7, 0.5)
+            val dist2 = new BetaDistribution(1.2, 0.5)
+            def getProb(dist: ProbabilityDistribution) = dist.cumulative(0.3) - dist.cumulative(0.2)
+            val targetProb = 0.5 * getProb(dist1) + 0.5 * getProb(dist2)
+            def check(ds: Array[Double]) = {
+              val r = ds(0) / (ds(0) + ds(1))
+              0.2 <= r && r < 0.3
+            }
+            val result = alg.probability(elem, (ds: Array[Double]) => check(ds))
+            alg.stop()
+            alg.kill
+            update(result, NDTest.TTEST, "CompoundDirichletTestResults", targetProb, alpha)
           }
-          val result = alg.probability(elem, (ds: Array[Double]) => check(ds))
-          alg.stop()
-          alg.kill
-          update(result, NDTest.TTEST, "CompoundDirichletTestResults", targetProb, alpha)
         }
-      }
-        
-      ndtest.run(10)
-    }
 
-    "have the correct density" taggedAs (NonDeterministic) in {
-      val ndtest = new NDTest {
-        override def oneTest = {
-          Universe.createNew()
-          val a = 1.2
-          val b = 0.5
-          val elem = Beta(a, b)
-          val dist = new BetaDistribution(a, b)
-          val result = elem.density(0.3)
-          update(result, NDTest.TTEST, "CompoundDirichletTestResults", dist.probability(0.3), alpha)
-        }
+        ndtest.run(10)
       }
-        
-      ndtest.run(10)
+
+    "have the correct density" in {
+      Universe.createNew()
+      val a = 1.2
+      val b = 0.5
+      val elem = Beta(a, b)
+      val dist = new BetaDistribution(a, b)
+      val result = elem.density(0.3)
+      result should be(dist.probability(0.3) +- 0.00001)
     }
 
     "convert to the correct string" in {
@@ -1301,7 +1232,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val nSamples = Dirichlet(1, 2, 3)("", sampleUniverse)
           val samples = for (i <- 1 to 100)
             yield nSamples.generateValue(nSamples.generateRandomness())
-    
+
           val universe = Universe.createNew()
           val alpha1 = Uniform(0, 10)("a1", universe)
           val alpha2 = Uniform(0, 10)("a2", universe)
@@ -1322,7 +1253,7 @@ class ContinuousTest extends WordSpec with Matchers {
           update(resultC, NDTest.TTEST, "CompoundDirichletTestResultsAlpha3", 3.0, alpha)
         }
       }
-        
+
       ndtest.run(10)
     }
 
@@ -1333,7 +1264,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val nSamples = Dirichlet(1, 2, 3)("", sampleUniverse)
           val samples = for (i <- 1 to 25)
             yield nSamples.generateValue(nSamples.generateRandomness())
-    
+
           val universe = Universe.createNew()
           val alpha1 = Uniform(0, 10)("a1", universe)
           val alpha2 = Uniform(0, 10)("a2", universe)
@@ -1354,7 +1285,7 @@ class ContinuousTest extends WordSpec with Matchers {
           update(resultC, NDTest.TTEST, "CompoundDirichletTestResultsAlpha3", 3.0, alpha)
         }
       }
-        
+
       ndtest.run(10)
     }
   }
