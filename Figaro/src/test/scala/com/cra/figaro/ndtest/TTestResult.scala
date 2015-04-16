@@ -24,19 +24,26 @@ class TTestResult(val name: String, val target: Double, val alpha: Double = .05)
       case x: Double => statistics.addValue(x)
       case x: Int => statistics.addValue(x.toDouble)
       case x: Float => statistics.addValue(x.toDouble)
-      case _ => println (value + " improper value for t-test")
+      case _ => println(value + " improper value for t-test")
     }
   }
 
   def check: Boolean = {
     val tester = new org.apache.commons.math3.stat.inference.TTest
-    if (statistics.getVariance <= 0) {
+    val result = if (statistics.getVariance <= 0) {
       println("  !NDTest: " + name + " has zero variance")
+      target == statistics.getMean
+    } else {
+      // Apache Commons Math T Test
+      // Returns false if the test passed and true if the test fails, so reverse this for return value   
+      !tester.tTest(target.asInstanceOf[scala.Double], statistics, alpha.asInstanceOf[scala.Double])
     }
 
-    // Apache Commons Math T Test
-    // Returns false if the test passed and true if the test fails, so reverse this for return value   
-    !tester.tTest(target.asInstanceOf[scala.Double], statistics, alpha.asInstanceOf[scala.Double])
-
+    if (!result) {
+      val mean = statistics.getMean
+      val variance = statistics.getVariance
+      println(f"$name failed with mean $mean%.4f  and variance $variance%.6f")
+    }
+    result
   }
 }
