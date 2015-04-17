@@ -24,6 +24,7 @@ import com.cra.figaro.library.compound._
 import com.cra.figaro.library.decision._
 import com.cra.figaro.test._
 import com.cra.figaro.test.tags.Example
+import com.cra.figaro.ndtest._
 
 class MultiDecisionTest extends WordSpec with Matchers {
 
@@ -31,20 +32,47 @@ class MultiDecisionTest extends WordSpec with Matchers {
 
   "A multi decision network" should {
     "produce the correct decisions under variable elimination" taggedAs (Example) in {
-      test((e1: List[Element[Double]], e2: List[Decision[_, _]]) => MultiDecisionVariableElimination(e1, e2: _*))
+      val result = doTest((e1: List[Element[Double]], e2: List[Decision[_, _]]) => MultiDecisionVariableElimination(e1, e2: _*))
+
+      result(0) should equal(true)
+      result(1) should equal(false)
+      result(2) should equal(true)
+      result(3) should equal(true)
+      result(4) should equal(true)
+
     }
 
     "produce the correct decisions under importance sampling" taggedAs (Example) in {
-      test((e1: List[Element[Double]], e2: List[Decision[_, _]]) => MultiDecisionImportance(30000, e1, e2: _*))
+      val result = doTest((e1: List[Element[Double]], e2: List[Decision[_, _]]) => MultiDecisionImportance(30000, e1, e2: _*))
+
+      result(0) should equal(true)
+      result(1) should equal(false)
+      result(2) should equal(true)
+      result(3) should equal(true)
+      result(4) should equal(true)
+
     }
 
     "produce the correct decisions under Metropolis-Hastings" taggedAs (Example) in {
-      test((e1: List[Element[Double]], e2: List[Decision[_, _]]) =>
-        MultiDecisionMetropolisHastings(200000, propmaker, 10000, e1, e2: _*))
+      val ndtest = new NDTest {
+        override def oneTest = {
+
+          val result = doTest((e1: List[Element[Double]], e2: List[Decision[_, _]]) =>
+            MultiDecisionMetropolisHastings(200000, propmaker, 10000, e1, e2: _*))
+
+          update(result(0), NDTest.BOOLEAN, "MHMulti-DecisionFound(-1)", true, .90)
+          update(result(1), NDTest.BOOLEAN, "MHMulti-DecisionFound(0)", false, .90)
+          update(result(2), NDTest.BOOLEAN, "MHMulti-DecisionFound(1)", true, .90)
+          update(result(3), NDTest.BOOLEAN, "MHMulti-DecisionFound(2)", true, .90)
+          update(result(4), NDTest.BOOLEAN, "MHMulti-DecisionTest(0)", true, .90)
+        }
+      }
+      ndtest.run(10)
+
     }
   }
 
-  def test(algorithmCreator: (List[Element[Double]], List[Decision[_, _]]) => MultiDecisionAlgorithm): Unit = {
+  def doTest(algorithmCreator: (List[Element[Double]], List[Decision[_, _]]) => MultiDecisionAlgorithm) = {
     Universe.createNew()
     val Market = Select(0.5 -> 0, 0.3 -> 1, 0.2 -> 2)
     val Test = Decision(Constant(0), List(true, false))
@@ -73,12 +101,20 @@ class MultiDecisionTest extends WordSpec with Matchers {
     val alg = algorithmCreator(List(Value, Cost), List(Found, Test))
     alg.start()
 
-    Found.getPolicy(-1).value should equal(true)
-    Found.getPolicy(0).value should equal(false)
-    Found.getPolicy(1).value should equal(true)
-    Found.getPolicy(2).value should equal(true)
-    Test.getPolicy(0).value should equal(true)
+    //          found.getPolicy(-1).value should equal(true)
+    //          found.getPolicy(0).value should equal(false)
+    //          found.getPolicy(1).value should equal(true)
+    //          found.getPolicy(2).value should equal(true)
+    //          test.getPolicy(0).value should equal(true)
+
+    val result = List(Found.getPolicy(-1).value,
+      Found.getPolicy(0).value,
+      Found.getPolicy(1).value,
+      Found.getPolicy(2).value,
+      Test.getPolicy(0).value)
 
     alg.kill
+
+    result
   }
 }

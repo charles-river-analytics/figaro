@@ -290,7 +290,7 @@ class ProbEvidenceSamplingTest extends WordSpec with Matchers {
             val universe = Universe.createNew()
             val u = Uniform(0.0, 1.0)("u", universe)
             val condition = (d: Double) => d < value
-            val result = logProbabilitySampleTest(target, List(NamedEvidence("d", Observation(true))))
+            val result = logProbabilitySampleTest(target, List(NamedEvidence("u", Condition(condition))))
             update(result, NDTest.TTEST, "LogProbabilitySampleTestResults", target, alpha)
           }
         }
