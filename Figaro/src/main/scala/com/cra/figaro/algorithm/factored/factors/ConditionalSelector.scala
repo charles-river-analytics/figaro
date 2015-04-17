@@ -1,7 +1,6 @@
 /*
  * ConditionalSelector.scala
- * Implementation of conditional selector (in chain) using sparse
- * factors.
+ * Implementation of conditional selector (in chain) using sparse factors.
  * 
  * Created By:      Glenn Takata (gtakata@cra.com)
  * Creation Date:   Feb 20, 2015
@@ -10,7 +9,8 @@
  * See http://www.cra.com or email figaro@cra.com for information.
  * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
- */package com.cra.figaro.algorithm.factored.factors
+ */
+package com.cra.figaro.algorithm.factored.factors
 
 import scala.reflect.runtime.universe._
 
