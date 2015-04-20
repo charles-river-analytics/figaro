@@ -22,35 +22,35 @@ class BooleanResult(val name: String, val target: Boolean, val alpha: Double = .
   def update(value: Any) {
     value match {
       case x: Boolean => statistics.addValue(x)
-      case _ => println (value + " improper value for t-test")
+      case _ => println(value + " improper value for t-test")
     }
   }
 
   def check: Boolean = {
     // observed hit rate should be greater than alpha
-    
+
     val result = statistics.hitRate >= alpha
-    
-    if (!result) {
-      val rate = statistics.hitRate
-      println(f"$name failed with percentage $rate%.2f")
-    }
-    
+
     result
   }
-  
+
+  def errorMessage = {
+    val rate = statistics.hitRate
+    f"$name failed with percentage $rate%.2f ($name)"
+  }
+
   case class BooleanStatistics(val target: Boolean) {
     var hits = 0
     var count = 0
-    
+
     def addValue(value: Boolean) {
       count += 1
       if (target == value) hits += 1
     }
-    
+
     def hitRate: Double = {
       hits.toDouble / count.toDouble
     }
-    
+
   }
 }

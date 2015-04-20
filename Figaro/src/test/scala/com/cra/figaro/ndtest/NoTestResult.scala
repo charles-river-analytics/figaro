@@ -22,7 +22,9 @@ class NoTestResult(val name: String) extends NDTestResult {
   }
 
   def check: Boolean = {
-    println("No test for " + name)
     false
   }
+  
+  def errorMessage = "No test for " + name
+
 }

@@ -42,7 +42,9 @@ abstract class NDTest extends WordSpec with Matchers {
     if (clear) results.clear()
     
     (0 until n).foreach(_ => oneTest)
-    results.values.foreach(_.check should be(true))
+    for (result <- results.values) {
+      assert(result.check, result.errorMessage)
+    }
   }
 
   def oneTest: Unit
