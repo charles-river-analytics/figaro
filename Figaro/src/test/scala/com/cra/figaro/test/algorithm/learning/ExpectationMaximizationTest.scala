@@ -90,7 +90,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
                 val f = Flip(b)
                 f.observe(false)
               }
-              
+
               val algorithm = EMWithVE(15, b)(universe)
               algorithm.start
 
@@ -101,41 +101,39 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
             }
 
           "learn the bias from observations of binomial elements" in {
-              val universe = Universe.createNew
-              val b = Beta(2, 2)
+            val universe = Universe.createNew
+            val b = Beta(2, 2)
 
-              val b1 = Binomial(7, b)
-              b1.observe(6)
-              val b2 = Binomial(3, b)
-              b2.observe(1)
+            val b1 = Binomial(7, b)
+            b1.observe(6)
+            val b2 = Binomial(3, b)
+            b2.observe(1)
 
-              val algorithm = EMWithVE(15, b)(universe)
-              algorithm.start
+            val algorithm = EMWithVE(15, b)(universe)
+            algorithm.start
 
-              val result = b.MAPValue
-              algorithm.kill
-              result should be(0.6666 +- 0.01)
-  
+            val result = b.MAPValue
+            algorithm.kill
+            result should be(0.6666 +- 0.01)
 
           }
 
           "correctly use a uniform prior" in {
-              val universe = Universe.createNew
-              val b = Beta(1, 1)
+            val universe = Universe.createNew
+            val b = Beta(1, 1)
 
-              val b1 = Binomial(7, b)
-              b1.observe(6)
-              val b2 = Binomial(3, b)
-              b2.observe(1)
+            val b1 = Binomial(7, b)
+            b1.observe(6)
+            val b2 = Binomial(3, b)
+            b2.observe(1)
 
-              val algorithm = EMWithVE(15, b)(universe)
-              algorithm.start
+            val algorithm = EMWithVE(15, b)(universe)
+            algorithm.start
 
-              val result = b.MAPValue
-              algorithm.kill
-              result should be(0.7 +- 0.01)
+            val result = b.MAPValue
+            algorithm.kill
+            result should be(0.7 +- 0.01)
 
-            
           }
 
         }
@@ -351,7 +349,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
 
             }
 
-          "correctly use a uniform prior" in 
+          "correctly use a uniform prior" in
             {
               val universe = Universe.createNew
               val b = Dirichlet(1.0, 1.0, 1.0)
@@ -373,7 +371,7 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
                 val f1 = Select(b, outcomes: _*)
                 f1.observe(3)
               }
-        
+
               val algorithm = EMWithVE(3, b)(universe)
               algorithm.start
 
@@ -383,99 +381,102 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
               result(1) should be(0.33 +- 0.01)
               result(2) should be(0.33 +- 0.01)
             }
-        }          
-          
-          "used to estimate multiple parameters" should
+        }
+
+      "used to estimate multiple parameters" should
+        {
+
+          "leave parameters having no observations unchanged" in
             {
+              val universe = Universe.createNew
+              val d = Dirichlet(2.0, 4.0, 2.0)
+              val b = Beta(2.0, 2.0)
+              val outcomes = List(1, 2, 3)
 
-              "leave parameters having no observations unchanged" in
-                {
-                  val universe = Universe.createNew
-                  val d = Dirichlet(2.0, 4.0, 2.0)
-                  val b = Beta(2.0, 2.0)
-                  val outcomes = List(1, 2, 3)
+              for (i <- 1 to 4) {
 
-                  for (i <- 1 to 4) {
+                val f2 = Select(d, outcomes: _*)
+                f2.observe(1)
+              }
 
-                    val f2 = Select(d, outcomes: _*)
-                    f2.observe(1)
-                  }
+              for (i <- 1 to 2) {
+                val f3 = Select(d, outcomes: _*)
+                f3.observe(2)
+              }
 
-                  for (i <- 1 to 2) {
-                    val f3 = Select(d, outcomes: _*)
-                    f3.observe(2)
-                  }
+              for (i <- 1 to 4) {
 
-                  for (i <- 1 to 4) {
+                val f1 = Select(d, outcomes: _*)
+                f1.observe(3)
+              }
 
-                    val f1 = Select(d, outcomes: _*)
-                    f1.observe(3)
-                  }
+              val algorithm = EMWithVE(10, d, b)(universe)
+              algorithm.start
 
-                  val algorithm = EMWithVE(10, d, b)(universe)
-                  algorithm.start
+              val result = d.MAPValue
+              val betaResult = b.MAPValue
 
-                  val result = d.MAPValue
-                  algorithm.kill
-                  result(0) should be(0.33 +- 0.01)
-                  result(1) should be(0.33 +- 0.01)
-                  result(2) should be(0.33 +- 0.01)
+              algorithm.kill
+              result(0) should be(0.33 +- 0.01)
+              result(1) should be(0.33 +- 0.01)
+              result(2) should be(0.33 +- 0.01)
 
-                  val betaResult = b.MAPValue
-                  betaResult should be(0.5)
+              betaResult should be(0.5)
 
-                }
-
-              "correctly estimate all parameters with observations" in
-                {
-                  val universe = Universe.createNew
-                  val d = Dirichlet(2.0, 3.0, 2.0)
-                  val b = Beta(3.0, 7.0)
-                  val outcomes = List(1, 2, 3)
-
-                  for (i <- 1 to 3) {
-
-                    val f2 = Select(d, outcomes: _*)
-                    f2.observe(1)
-                  }
-
-                  for (i <- 1 to 2) {
-                    val f3 = Select(d, outcomes: _*)
-                    f3.observe(2)
-                  }
-
-                  for (i <- 1 to 3) {
-
-                    val f1 = Select(d, outcomes: _*)
-                    f1.observe(3)
-                  }
-
-                  for (i <- 1 to 7) {
-
-                    val f = Flip(b)
-                    f.observe(true)
-                  }
-
-                  for (i <- 1 to 3) {
-
-                    val f = Flip(b)
-                    f.observe(false)
-                  }
-
-                  val algorithm = EMWithVE(15, b,d)(universe)
-                  algorithm.start
-
-                  val result = d.MAPValue
-
-                  result(0) should be(0.33 +- 0.01)
-                  result(1) should be(0.33 +- 0.01)
-                  result(2) should be(0.33 +- 0.01)
-
-                  val betaResult = b.MAPValue
-                  betaResult should be(0.5 +- 0.01)
-
-                }
             }
+
+          "correctly estimate all parameters with observations" in
+            {
+              val universe = Universe.createNew
+              val d = Dirichlet(2.0, 3.0, 2.0)
+              val b = Beta(3.0, 7.0)
+              val outcomes = List(1, 2, 3)
+
+              for (i <- 1 to 3) {
+
+                val f2 = Select(d, outcomes: _*)
+                f2.observe(1)
+              }
+
+              for (i <- 1 to 2) {
+                val f3 = Select(d, outcomes: _*)
+                f3.observe(2)
+              }
+
+              for (i <- 1 to 3) {
+
+                val f1 = Select(d, outcomes: _*)
+                f1.observe(3)
+              }
+
+              for (i <- 1 to 7) {
+
+                val f = Flip(b)
+                f.observe(true)
+              }
+
+              for (i <- 1 to 3) {
+
+                val f = Flip(b)
+                f.observe(false)
+              }
+
+              val algorithm = EMWithVE(15, b, d)(universe)
+              algorithm.start
+
+              val result = d.MAPValue
+              val betaResult = b.MAPValue
+
+              algorithm.kill
+
+              result(0) should be(0.33 +- 0.01)
+              result(1) should be(0.33 +- 0.01)
+              result(2) should be(0.33 +- 0.01)
+
+              betaResult should be(0.5 +- 0.01)
+
+            }
+        }
 
       val observationProbability = 0.7
       val trainingSetSize = 100
@@ -644,19 +645,19 @@ class ExpectationMaximizationTest extends WordSpec with PrivateMethodTester with
         algorithm.start()
 
         val resultUniverse = new Universe
-        def extractParameter(parameter: Element[Double], name: String) = 
+        def extractParameter(parameter: Element[Double], name: String) =
           {
-        		parameter match
-        		{
-        		  case b: AtomicBeta =>
-        		    {
+            parameter match {
+              case b: AtomicBeta =>
+                {
 
-        		      Constant(valueGetter(algorithm, parameter))(name, resultUniverse)
-        		    }
-        		  case _ => Constant(valueGetter(algorithm, parameter))(name, resultUniverse)
-        		}
-        		
+                  Constant(valueGetter(algorithm, parameter))(name, resultUniverse)
+                }
+              case _ => Constant(valueGetter(algorithm, parameter))(name, resultUniverse)
+            }
+
           }
+
         val learnedParameters = new Parameters(resultUniverse) {
           val b1 = extractParameter(parameters.b1, "b1"); b1.generate()
           val b2 = extractParameter(parameters.b2, "b2"); b2.generate()
