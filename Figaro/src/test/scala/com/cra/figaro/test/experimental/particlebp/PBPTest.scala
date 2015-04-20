@@ -35,11 +35,13 @@ import com.cra.figaro.library.atomic.continuous.Beta
 import com.cra.figaro.algorithm.sampling.Importance
 import com.cra.figaro.experimental.particlebp.AutomaticDensityEstimator
 import com.cra.figaro.algorithm.sampling.ProbEvidenceSampler
+import com.cra.figaro.ndtest._
 import org.apache.commons.math3.distribution.MultivariateNormalDistribution
 
 class PBPTest extends WordSpec with Matchers {
 
   val globalTol = 0.025
+  val alpha = 0.05
 
   "Running ParticleBeliefPropagation" should {
 
@@ -134,37 +136,57 @@ class PBPTest extends WordSpec with Matchers {
     }
 
     "with no conditions or constraints produce the correct result for a one time algorithm" in {
-      Universe.createNew()
-      val u = CUniform(0.3, 0.9)
-      val f = Flip(u)
-      val a = If(f, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
-      test(f, 1, 30, 100, 100, (b: Boolean) => b, 0.6, globalTol)
+      val ndtest = new NDTest {
+        override def oneTest = {
+          Universe.createNew()
+          val u = CUniform(0.3, 0.9)
+          val f = Flip(u)
+          val a = If(f, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
+          val result = test(f, 1, 30, 100, 100, (b: Boolean) => b, 0.6, globalTol)
+          update(result, NDTest.TTEST, "NoConditionsOrConstraints", 0.6, alpha)
+        }
+      }
+      ndtest.run(10)
     }
 
     "with a condition on a dependent element produce the result with the correct probability for a one time algorithm" in {
-      Universe.createNew()
-      val u = CUniform(0.3, 0.9)
-      val f = Flip(u)
-      val a = If(f, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
-      a.setCondition((i: Int) => i == 2)
-      // U(true) = \int_{0.2}^{1.0) 0.7 p = 0.35 * 0.96
-      // U(false) = \int_{0.2}^{1.0) (1-p)
-      val u1 = 0.35 * 0.96
-      val u2 = 0.32
-      test(f, 10, 30, 100, 100, (b: Boolean) => b, u1 / (u1 + u2), globalTol)
+      val ndtest = new NDTest {
+        override def oneTest = {
+          Universe.createNew()
+          val u = CUniform(0.3, 0.9)
+          val f = Flip(u)
+          val a = If(f, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
+          a.setCondition((i: Int) => i == 2)
+          // U(true) = \int_{0.2}^{1.0) 0.7 p = 0.35 * 0.96
+          // U(false) = \int_{0.2}^{1.0) (1-p)
+          val u1 = 0.35 * 0.96
+          val u2 = 0.32
+          val result = test(f, 10, 30, 100, 100, (b: Boolean) => b, u1 / (u1 + u2), globalTol)
+          update(result, NDTest.TTEST, "ConditionOnDependentElement", u1 / (u1 + u2), alpha)
+        }
+      }
+      ndtest.run(10)
     }
 
     "with a constraint on a dependent element produce the result with the correct probability for a one time algorithm" in {
-      Universe.createNew()
-      val u = CUniform(0.3, 0.9)
-      val f = Flip(u)
-      val a = If(f, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
-      a.setConstraint((i: Int) => i.toDouble)
-      // U(true) = \int_{0.2}^{1.0} (0.3 + 2 * 0.7) p = 0.85 * 0.96
-      // U(false) = \int_{0.2}^(1.0) (2 * (1-p)) = 0.64
-      val u1 = 0.85 * 0.96
-      val u2 = 0.64
-      test(f, 10, 30, 100, 100, (b: Boolean) => b, u1 / (u1 + u2), globalTol)
+      val ndtest = new NDTest {
+        override def oneTest = {
+          Universe.createNew()
+          val u = CUniform(0.3, 0.9)
+          val f = Flip(u)
+          val a = If(f, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
+          a.setConstraint((i: Int) => i.toDouble)
+          // U(true) = \int_{0.2}^{1.0} (0.3 + 2 * 0.7) p = 0.85 * 0.96
+          // U(false) = \int_{0.2}^(1.0) (2 * (1-p)) = 0.64
+          val u1 = 0.85 * 0.96
+          val u2 = 0.64
+          val result = test(f, 10, 30, 100, 100, (b: Boolean) => b, u1 / (u1 + u2), globalTol)
+
+          update(result, NDTest.TTEST, "ConstraintOnDependentElement", u1 / (u1 + u2), alpha)
+        }
+      }
+      ndtest.run(10)
+
     }
 
     "with no conditions or constraints produce the correct result for a anytime algorithm" in {
@@ -172,33 +194,45 @@ class PBPTest extends WordSpec with Matchers {
       val u = CUniform(0.3, 0.9)
       val f = Flip(u)
       val a = If(f, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
-      test(f, 1000, 500, 100, 100, (b: Boolean) => b, 0.6, globalTol, false)
+      test(f, 1000, 500, 100, 100, (b: Boolean) => b, 0.6, globalTol, false) should be(0.6 +- globalTol)
     }
 
-    "with a condition on a dependent element produce the result with the correct probability for a anytime algorithm" in {
-      Universe.createNew()
-      val u = CUniform(0.3, 0.9)
-      val f = Flip(u)
-      val a = If(f, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
-      a.setCondition((i: Int) => i == 2)
-      // U(true) = \int_{0.2}^{1.0) 0.7 p = 0.35 * 0.96
-      // U(false) = \int_{0.2}^{1.0) (1-p)
-      val u1 = 0.35 * 0.96
-      val u2 = 0.32
-      test(f, 5000, 250, 100, 100, (b: Boolean) => b, u1 / (u1 + u2), globalTol, false)
+    "with a condition on a dependent element produce the result with the correct probability for an anytime algorithm" in {
+      val ndtest = new NDTest {
+        override def oneTest = {
+          Universe.createNew()
+          val u = CUniform(0.3, 0.9)
+          val f = Flip(u)
+          val a = If(f, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
+          a.setCondition((i: Int) => i == 2)
+          // U(true) = \int_{0.2}^{1.0) 0.7 p = 0.35 * 0.96
+          // U(false) = \int_{0.2}^{1.0) (1-p)
+          val u1 = 0.35 * 0.96
+          val u2 = 0.32
+          val result = test(f, 5000, 250, 100, 100, (b: Boolean) => b, u1 / (u1 + u2), globalTol, false)
+          update(result, NDTest.TTEST, "ConditionOnDependentElement", u1 / (u1 + u2), alpha)
+        }
+      }
+      ndtest.run(10)
     }
 
-    "with a constraint on a dependent element produce the result with the correct probability for a anytime algorithm" in {
-      Universe.createNew()
-      val u = CUniform(0.3, 0.9)
-      val f = Flip(u)
-      val a = If(f, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
-      a.setConstraint((i: Int) => i.toDouble)
-      // U(true) = \int_{0.2}^{1.0} (0.3 + 2 * 0.7) p = 0.85 * 0.96
-      // U(false) = \int_{0.2}^(1.0) (2 * (1-p)) = 0.64
-      val u1 = 0.85 * 0.96
-      val u2 = 0.64
-      test(f, 5000, 250, 100, 100, (b: Boolean) => b, u1 / (u1 + u2), globalTol, false)
+    "with a constraint on a dependent element produce the result with the correct probability for an anytime algorithm" in {
+      val ndtest = new NDTest {
+        override def oneTest = {
+          Universe.createNew()
+          val u = CUniform(0.3, 0.9)
+          val f = Flip(u)
+          val a = If(f, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
+          a.setConstraint((i: Int) => i.toDouble)
+          // U(true) = \int_{0.2}^{1.0} (0.3 + 2 * 0.7) p = 0.85 * 0.96
+          // U(false) = \int_{0.2}^(1.0) (2 * (1-p)) = 0.64
+          val u1 = 0.85 * 0.96
+          val u2 = 0.64
+          val result = test(f, 5000, 250, 100, 100, (b: Boolean) => b, u1 / (u1 + u2), globalTol, false)
+          update(result, NDTest.TTEST, "ConstraintOnDependentElement", u1 / (u1 + u2), alpha)
+        }
+      }
+      ndtest.run(10)
     }
 
     "with an element that uses another element multiple times, " +
@@ -206,7 +240,7 @@ class PBPTest extends WordSpec with Matchers {
         Universe.createNew()
         val f = CUniform(0.3, 0.9)
         val e = f === f
-        test(e, 1, 30, 100, 100, (b: Boolean) => b, 1.0, globalTol)
+        test(e, 1, 30, 100, 100, (b: Boolean) => b, 1.0, globalTol) should be(1.0 +- globalTol)
       }
 
     "with a constraint on an element that is used multiple times, only factor in the constraint once" in {
@@ -221,19 +255,26 @@ class PBPTest extends WordSpec with Matchers {
       // Probability that e1 is true = 1.0
       // Probability that e2 is true = 0.6 * 0.3 + 0.4 * 0.7 = 0.46
       // Probability that d is true = 0.5 * 1 + 0.5 * 0.46 = 0.73
-      test(d, 1, 30, 100, 100, (b: Boolean) => b, 0.73, globalTol)
+      test(d, 1, 30, 100, 100, (b: Boolean) => b, 0.73, globalTol) should be(0.73 +- globalTol)
     }
 
     "on a different universe from the current universe, produce the correct result" in {
-      val u1 = Universe.createNew()
-      val u = CUniform(0.3, 0.9)
-      val f = Flip(u)
-      val a = If(f, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
-      Universe.createNew()
-      val algorithm = ParticleBeliefPropagation(1, 20, 100, 100, f)(u1)
-      algorithm.start()
-      algorithm.probability(f, (b: Boolean) => b) should be(0.6 +- .025)
-      algorithm.kill()
+      val ndtest = new NDTest {
+        override def oneTest = {
+          val u1 = Universe.createNew()
+          val u = CUniform(0.3, 0.9)
+          val f = Flip(u)
+          val a = If(f, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
+          Universe.createNew()
+          val algorithm = ParticleBeliefPropagation(1, 20, 100, 100, f)(u1)
+          algorithm.start()
+          val result = algorithm.probability(f, (b: Boolean) => b)
+          algorithm.kill()
+          update(result, NDTest.TTEST, "DifferentUniverse", 0.6, alpha)
+        }
+      }
+      ndtest.run(10)
+
     }
 
     /*
@@ -254,17 +295,26 @@ class PBPTest extends WordSpec with Matchers {
     */
 
     "with a posterior different than the prior, converge upon the correct posterior distribution of a continuous variable" in {
-      Universe.createNew()
-      val fp = CUniform(0.0, 1.0)
-      val f = Flip(fp)
-      val s1 = Select(0.1 -> 1, 0.9 -> 2)
-      val s2 = Select(0.7 -> 1, 0.2 -> 2, 0.1 -> 3)
-      val c = Chain(f, (b: Boolean) => if (b) s1; else s2)
-      c.observe(1)
-      // ans = \int_0_1 [-.6*x + .7 dx]*x / \int_0_1 [-.6*x + .7 dx] = .15/.4 = .375
-      val algorithm = ParticleBeliefPropagation(10, 40, 100, 100, fp)
-      algorithm.start()
-      algorithm.expectation(fp, (i: Double) => i) should be(.375 +- globalTol)
+      val ndtest = new NDTest {
+        override def oneTest = {
+          Universe.createNew()
+          val fp = CUniform(0.0, 1.0)
+          val f = Flip(fp)
+          val s1 = Select(0.1 -> 1, 0.9 -> 2)
+          val s2 = Select(0.7 -> 1, 0.2 -> 2, 0.1 -> 3)
+          val c = Chain(f, (b: Boolean) => if (b) s1; else s2)
+          c.observe(1)
+          // ans = \int_0_1 [-.6*x + .7 dx]*x / \int_0_1 [-.6*x + .7 dx] = .15/.4 = .375
+          val algorithm = ParticleBeliefPropagation(10, 40, 100, 100, fp)
+          algorithm.start()
+          // algorithm.expectation(fp, (i: Double) => i) should be(.375 +- globalTol)
+          val result = algorithm.expectation(fp, (i: Double) => i)
+          algorithm.kill
+
+          update(result, NDTest.TTEST, "PosteriorDifferentThanPrior", 0.375, alpha)
+        }
+      }
+      ndtest.run(10)
     }
 
     "with a posterior different than the prior, reduce the variance of the posterior as compared to BP" in {
@@ -279,16 +329,16 @@ class PBPTest extends WordSpec with Matchers {
       })
       val algorithm = ParticleBeliefPropagation(10, 4, 15, 15, loc, locX, locY)
       algorithm.start()
-      val locE = algorithm.expectation(loc, (d: (Double, Double)) => d._1*d._2)
-      val cov = locE - algorithm.mean(locX)*algorithm.mean(locY)
-      
+      val locE = algorithm.expectation(loc, (d: (Double, Double)) => d._1 * d._2)
+      val cov = locE - algorithm.mean(locX) * algorithm.mean(locY)
+
       ParticleGenerator.clear
       val algorithm2 = ParticleBeliefPropagation(1, 20, 15, 15, loc, locX, locY)
       algorithm2.start()
-      val locE2 = algorithm2.expectation(loc, (d: (Double, Double)) => d._1*d._2)
-      val cov2 = locE - algorithm2.mean(locX)*algorithm2.mean(locY)
-      (math.abs(cov-origCov) < math.abs(origCov-cov2)) should be (true)
-      
+      val locE2 = algorithm2.expectation(loc, (d: (Double, Double)) => d._1 * d._2)
+      val cov2 = locE - algorithm2.mean(locX) * algorithm2.mean(locY)
+      (math.abs(cov - origCov) < math.abs(origCov - cov2)) should be(true)
+
     }
 
     "with a dependent universe, correctly take into account probability of evidence in the dependent universe" in {
@@ -356,7 +406,9 @@ class PBPTest extends WordSpec with Matchers {
   * 
   */
 
-  def test[T](target: Element[T], outer: Int, inner: Int, argSamples: Int, totalSamples: Int, predicate: T => Boolean, prob: Double, tol: Double, oneTime: Boolean = true) {
+  def test[T](target: Element[T], outer: Int, inner: Int,
+    argSamples: Int, totalSamples: Int,
+    predicate: T => Boolean, prob: Double, tol: Double, oneTime: Boolean = true): Double = {
     val algorithm = if (oneTime) {
       ParticleBeliefPropagation(outer, inner, argSamples, totalSamples, target)
     } else {
@@ -365,7 +417,11 @@ class PBPTest extends WordSpec with Matchers {
     algorithm.start()
     if (!oneTime) Thread.sleep(outer.toLong)
     algorithm.stop
-    algorithm.probability(target, predicate) should be(prob +- tol)
+    //    algorithm.probability(target, predicate) should be(prob +- tol)
+
+    val result = algorithm.probability(target, predicate)
     algorithm.kill
+
+    result
   }
 }

@@ -496,7 +496,7 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
               betaResult should be(0.5 +- 0.001)
 
             }
-        }
+        
 
       val observationProbability = 0.7
       val trainingSetSize = 100
@@ -727,13 +727,13 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
 //               println(learnedPredAcc)
 
               update(learnedParamErr, NDTest.TTEST, "EMImportanceTestResultsLearnedParamErr", 0.00, alpha)
-              update(learnedPredAcc, NDTest.TTEST, "EMImportanceTestResultsLearnedPredAcc", truePredAcc, alpha)
+              update(learnedPredAcc - truePredAcc, NDTest.TTEST, "EMImportanceTestResultsLearnedPredAcc", 0.00, alpha)
             }
           }
 
           ndtest.run(10)
         }
-
+        }
     }
 
 }
