@@ -1,6 +1,6 @@
 /*
- * Importance.scala
- * Importance sampler.
+ * ChainFactory.scala
+ * Methods to create factors associated with Chain elements.
  *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
@@ -22,15 +22,30 @@ import com.cra.figaro.experimental.structured.ComponentCollection
  *
  */
 object ChainFactory {
+  /**
+   * Make the factors associated with a chain element.
+   */
   def makeFactors[T, U](cc: ComponentCollection, chain: Chain[T, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {
+    val chainComp = cc(chain)
     val parentVar = Factory.getVariable(cc, chain.parent)
     val chainVar = Factory.getVariable(cc, chain)
     val (pairVar, pairFactor) = Factory.makeTupleVarAndFactor(cc, parentVar, chainVar)
     var tempFactors = parentVar.range.zipWithIndex flatMap (pair => {
       val (parentVal, parentIndex) = pair
       if (parentVal.isRegular) {
-        val outcomeElem = cc.expansions((chain.chainFunction, parentVal.value)).target.asInstanceOf[Element[U]]
-        List(Factory.makeConditionalSelector(pairVar, parentVal, Factory.getVariable(cc, outcomeElem)))
+        // We need to create an actual variable to represent the outcome of the chain.
+        // This will have the same range as the formal variable associated with the expansion.
+        // The formal variable will be replaced with the actual variable in the solution.
+        // There are two possibilities.
+        // If the outcome element is defined inside the chain, it will actually be different in every expansion,
+        // even though the formal variable is the same. But if the outcome element is defined outside the chain,
+        // it is a global that will be the same every time, so the actual variable is the variable of this global.
+        val nestedProblem = cc.expansions((chain.chainFunction, parentVal.value))
+        val outcomeElem = nestedProblem.target.asInstanceOf[Element[U]]
+        val formalVar = Factory.getVariable(cc, outcomeElem)
+        val actualVar = if (nestedProblem.internal(formalVar)) Factory.makeVariable(cc, formalVar.valueSet) else formalVar
+        chainComp.actualSubproblemVariables += parentVal.value -> actualVar
+        List(Factory.makeConditionalSelector(pairVar, parentVal, actualVar))
       }
       else {
         // We create a dummy variable for the outcome variable whose value is always star.

@@ -1,6 +1,6 @@
 /*
  * DistributionFactory.scala
- * Description needed
+ * Methods to create factors for simple distributions.
  *
  * Created By:      Glenn Takata (gtakata@cra.com)
  * Creation Date:   Dec 15, 2014
@@ -18,7 +18,6 @@ import com.cra.figaro.library.atomic.discrete._
 import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.lazyfactored.{Regular, Star}
 import com.cra.figaro.experimental.structured.ComponentCollection
-//import com.cra.figaro.algorithm.lazyfactored._
 
 /**
  * A Sub-Factory for simple probability distribution Elements
@@ -123,6 +122,9 @@ object DistributionFactory {
     List(factor)
   }
 
+  /**
+   * Factor constructor for a parameterized binomial
+   */
   def makeFactors(cc: ComponentCollection, binomial: ParameterizedBinomialFixedNumTrials, parameterized: Boolean): List[Factor[Double]] = {
     if (parameterized) {
       val binVar = Factory.getVariable(cc, binomial)

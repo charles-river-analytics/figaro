@@ -1,6 +1,6 @@
 /*
  * ComplexFactory.scala
- * Description needed
+ * Methods to create factors associated with a variety of complex elements.
  *
  * Created By:      Glenn Takata (gtakata@cra.com)
  * Creation Date:   Dec 15, 2014
@@ -13,7 +13,6 @@
 
 package com.cra.figaro.experimental.structured.factory
 
-//import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.algorithm.lazyfactored.{ValueSet, Extended, Regular}
 import ValueSet._
 import com.cra.figaro.language._
@@ -85,7 +84,6 @@ object ComplexFactory {
     def makeEmbeddedInject(inputVariables: List[Variable[MultiSet[T]]]): (Variable[List[MultiSet[T]]], Factor[Double]) = {
       def rule(values: List[Extended[_]]) = {
         val inputXvalues :+ resultXvalue = values
-        // See logic under makeCares
         if (inputXvalues.exists(!_.isRegular)) {
           if (!resultXvalue.isRegular) 1.0; else 0.0
         } else if (resultXvalue.isRegular) {
@@ -114,7 +112,6 @@ object ComplexFactory {
       val factor = new SparseFactor[Double](List(injectVar), List(applyVar))
       for { (injectVal, injectIndex) <- injectVar.range.zipWithIndex } {
         if (injectVal.isRegular) {
-//        val resultVal = mapper.map(apply.fn(arg1Val.value), applyValues.regularValues)
           val resultVal = rule(injectVal.value)
           val resultIndex = applyVar.range.indexWhere(_.value == resultVal)
           factor.set(List(injectIndex, resultIndex), 1.0)
@@ -226,30 +223,6 @@ object ComplexFactory {
     List(factor)
   }
 
-  /*
-   * Constructor for a MakeList Element.
-   *
-   * MakeList is not supported by SFI.
-   */
-//  def makeFactors[T](cc: ComponentCollection, element: MakeList[T]): List[Factor[Double]] = {
-//    val parentVar = Variable(element.numItems)
-//    // We need to create factors for the items and the lists themselves, which are encapsulated in this MakeList
-//    val regularParents = parentVar.range.filter(_.isRegular).map(_.value)
-//    val maxItem = regularParents.reduce(_ max _)
-//    val itemFactors = List.tabulate(maxItem)((i: Int) => Factory.make(element.items(i)))
-//    val indexedResultElemsAndFactors =
-//      for { i <- regularParents } yield {
-//        val elem = element.embeddedInject(i)
-//        val factors = Factory.make(elem)
-//        (Regular(i), elem, factors)
-//      }
-//    val conditionalFactors =
-//      parentVar.range.zipWithIndex map (pair =>
-//        Factory.makeConditionalSelector(element, parentVar, pair._2, Variable(indexedResultElemsAndFactors.find(_._1 == pair._1).get._2)))
-//    conditionalFactors ::: itemFactors.flatten ::: indexedResultElemsAndFactors.flatMap(_._3)
-//  }
-
-  // adapted from Apply1
   /**
    * Factor constructor for a MakeArray Element
    */

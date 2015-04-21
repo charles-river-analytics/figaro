@@ -23,10 +23,10 @@ class ProblemTest extends WordSpec with Matchers {
       c1.constraintLower should be (empty)
       c1.constraintUpper should be (empty)
       c1.nonConstraintFactors should be (empty)
-      c1.belief should equal (null)
-      c1.neighbors should be (empty)
-      c1.incomingMessages should be (empty)
-      c1.queuedMessages should be (empty)
+//      c1.belief should equal (null)
+//      c1.neighbors should be (empty)
+//      c1.incomingMessages should be (empty)
+//      c1.queuedMessages should be (empty)
     }
 
     "for a chain element, create an initialized chain problem component in the collection" in {
