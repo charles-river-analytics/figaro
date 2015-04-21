@@ -78,8 +78,8 @@ object FigaroBuild extends Build {
   lazy val root = Project("root", file("."))
     .settings(publishLocal := {})
     .settings(publish := {})
-    .dependsOn(figaro, examples)
-    .aggregate(figaro, examples)
+    .dependsOn(figaro, examples, work)
+    .aggregate(figaro, examples, work)
 
   lazy val figaro = Project("Figaro", file("Figaro"))
     .settings (scalacOptions ++= Seq(
@@ -132,6 +132,9 @@ object FigaroBuild extends Build {
     .settings(packageOptions := Seq(Package.JarManifest(examplesManifest)))
     // Copy dependency JARs
     .settings(copyDepTask)
+
+  lazy val work = Project("FigaroWork", file("FigaroWork"))
+    .dependsOn(figaro)
 
   lazy val detTest = config("det") extend(Test)
   lazy val nonDetTest = config("nonDet") extend(Test)
