@@ -99,7 +99,7 @@ class ProbEvidenceSamplingTest extends WordSpec with Matchers {
       }
     }
 
-    "given a vanilla mode with two dependent conditions" should {
+    "given a vanilla model with two dependent conditions" should {
       "return the probability both conditions are jointly satisfied" taggedAs (NonDeterministic) in {
         val ndtest = new NDTest {
           override def oneTest = {
