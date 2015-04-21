@@ -162,7 +162,7 @@ class PBPTest extends WordSpec with Matchers {
           val u1 = 0.35 * 0.96
           val u2 = 0.32
           val result = test(f, 10, 30, 100, 100, (b: Boolean) => b, u1 / (u1 + u2), globalTol)
-          update(result, NDTest.TTEST, "ConditionOnDependentElement", u1 / (u1 + u2), alpha)
+          update(result - (u1 / (u1 + u2)), NDTest.TTEST, "ConditionOnDependentElement", 0.0, alpha)
         }
       }
       ndtest.run(10)
@@ -182,7 +182,7 @@ class PBPTest extends WordSpec with Matchers {
           val u2 = 0.64
           val result = test(f, 10, 30, 100, 100, (b: Boolean) => b, u1 / (u1 + u2), globalTol)
 
-          update(result, NDTest.TTEST, "ConstraintOnDependentElement", u1 / (u1 + u2), alpha)
+          update(result - (u1 / (u1 + u2)), NDTest.TTEST, "ConstraintOnDependentElement", 0.00, alpha)
         }
       }
       ndtest.run(10)
