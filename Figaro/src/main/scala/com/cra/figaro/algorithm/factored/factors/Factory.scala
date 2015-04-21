@@ -24,7 +24,7 @@ import com.cra.figaro.library.compound._
 import com.cra.figaro.library.collection._
 import com.cra.figaro.library.atomic.discrete._
 import scala.reflect.runtime.universe.{typeTag, TypeTag}
-import com.cra.figaro.experimental.factored.factors.InternalVariable
+
 /**
  * A trait for elements that are able to construct their own Factor.
  */
@@ -313,7 +313,7 @@ object Factory {
       case d: AtomicDist[_] => SelectFactory.makeFactors(d)
       case d: CompoundDist[_] => SelectFactory.makeFactors(d)
       case s: IntSelector => SelectFactory.makeFactors(s)
-      case c: Chain[_, _] => com.cra.figaro.experimental.factored.factors.factory.ChainFactory.makeFactors(c)
+      case c: Chain[_, _] => ChainFactory.makeFactors(c)
       case a: Apply1[_, _] => ApplyFactory.makeFactors(a)
       case a: Apply2[_, _, _] => ApplyFactory.makeFactors(a)
       case a: Apply3[_, _, _, _] => ApplyFactory.makeFactors(a)
