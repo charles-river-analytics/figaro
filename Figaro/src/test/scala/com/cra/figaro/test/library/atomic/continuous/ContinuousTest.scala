@@ -271,7 +271,7 @@ class ContinuousTest extends WordSpec with Matchers {
             yield nSamples.generateValue(nSamples.generateRandomness())
 
           val samplesMean = samples.sum / samples.size
-          val samplesVariance = samples.map(s => (s - samplesMean) * (s - samplesMean)).sum / samples.size
+          val samplesVariance = samples.map(s => (s - samplesMean) * (s - samplesMean)).sum / (samples.size - 1)
 
           val universe = Universe.createNew()
           val mean = Uniform(-5, 5)("mean", universe)
@@ -303,7 +303,7 @@ class ContinuousTest extends WordSpec with Matchers {
             yield nSamples.generateValue(nSamples.generateRandomness())
 
           val samplesMean = samples.sum / samples.size
-          val samplesVariance = samples.map(s => (s - samplesMean) * (s - samplesMean)).sum / samples.size
+          val samplesVariance = samples.map(s => (s - samplesMean) * (s - samplesMean)).sum / (samples.size - 1)
 
           val universe = Universe.createNew()
           val mean = Uniform(-5, 5)("mean", universe)

@@ -11,7 +11,7 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
-package com.cra.figaro.test.experimental.factored.factors.factory
+package com.cra.figaro.test.algorithm.factored.factors.factory
 
 import org.scalatest.Matchers
 import org.scalatest.PrivateMethodTester
