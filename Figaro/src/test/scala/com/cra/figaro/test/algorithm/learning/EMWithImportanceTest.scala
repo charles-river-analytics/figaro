@@ -232,55 +232,12 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
       "used to estimate a Dirichlet parameter with three concentration parameters" should
         {
 
-          "calculate sufficient statistics in the correct order for long lists of concentration parameters" taggedAs (NonDeterministic) in
+
+          "calculate sufficient statistics in the correct order for long lists of concentration parameters, taking into account a condition" in
             {
-              val ndtest = new NDTest {
-                override def oneTest = {
+
                   val universe = Universe.createNew
-                  val alphas = Seq[Double](0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476)
-                  val d = Dirichlet(alphas: _*)
-                  val outcomes = List(2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23)
-                  val outcome = Select(d, outcomes: _*)
-                  val algorithm = EMWithImportance(2, 1000, d)
-                  algorithm.start
-
-                  val result = d.MAPValue
-                  algorithm.kill
-
-                  update(result(0), NDTest.TTEST, "EMImportanceTestResults0", 0.04, alpha)
-                  update(result(1), NDTest.TTEST, "EMImportanceTestResults1", 0.04, alpha)
-                  update(result(2), NDTest.TTEST, "EMImportanceTestResults2", 0.04, alpha)
-                  update(result(3), NDTest.TTEST, "EMImportanceTestResults3", 0.04, alpha)
-                  update(result(4), NDTest.TTEST, "EMImportanceTestResults4", 0.04, alpha)
-                  update(result(5), NDTest.TTEST, "EMImportanceTestResults5", 0.04, alpha)
-                  update(result(6), NDTest.TTEST, "EMImportanceTestResults6", 0.04, alpha)
-                  update(result(7), NDTest.TTEST, "EMImportanceTestResults7", 0.04, alpha)
-                  update(result(8), NDTest.TTEST, "EMImportanceTestResults8", 0.04, alpha)
-                  update(result(9), NDTest.TTEST, "EMImportanceTestResults9", 0.04, alpha)
-                  update(result(10), NDTest.TTEST, "EMImportanceTestResults10", 0.04, alpha)
-                  update(result(11), NDTest.TTEST, "EMImportanceTestResults11", 0.04, alpha)
-                  update(result(12), NDTest.TTEST, "EMImportanceTestResults12", 0.04, alpha)
-                  update(result(13), NDTest.TTEST, "EMImportanceTestResults13", 0.04, alpha)
-                  update(result(14), NDTest.TTEST, "EMImportanceTestResults14", 0.04, alpha)
-                  update(result(15), NDTest.TTEST, "EMImportanceTestResults15", 0.04, alpha)
-                  update(result(16), NDTest.TTEST, "EMImportanceTestResults16", 0.04, alpha)
-                  update(result(17), NDTest.TTEST, "EMImportanceTestResults17", 0.04, alpha)
-                  update(result(18), NDTest.TTEST, "EMImportanceTestResults18", 0.04, alpha)
-                  update(result(19), NDTest.TTEST, "EMImportanceTestResults19", 0.04, alpha)
-                  update(result(20), NDTest.TTEST, "EMImportanceTestResults20", 0.04, alpha)
-                  update(result(21), NDTest.TTEST, "EMImportanceTestResults21", 0.04, alpha)
-                }
-              }
-
-              ndtest.run(10)
-            }
-
-          "calculate sufficient statistics in the correct order for long lists of concentration parameters, taking into account a condition" taggedAs (NonDeterministic) in
-            {
-              val ndtest = new NDTest {
-                override def oneTest = {
-                  val universe = Universe.createNew
-                  val alphas = Seq[Double](1.0476, 1.0476, 1.0476, 1.0476, 1.0476)
+                  val alphas = Seq[Double](2.0,2.0,2.0,2.0,2.0)
                   val d = Dirichlet(alphas: _*)
                   val outcomes = List(2, 3, 4, 5, 6)
 
@@ -293,16 +250,11 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
                   algorithm.start
                   val result = d.MAPValue
                   algorithm.kill
-
-                  update(result(0), NDTest.TTEST, "EMImportanceTestResults0", 0.0, alpha)
-                  update(result(1), NDTest.TTEST, "EMImportanceTestResults1", 0.25, alpha)
-                  update(result(2), NDTest.TTEST, "EMImportanceTestResults2", 0.25, alpha)
-                  update(result(3), NDTest.TTEST, "EMImportanceTestResults3", 0.25, alpha)
-                  update(result(4), NDTest.TTEST, "EMImportanceTestResults4", 0.25, alpha)
-                }
-              }
-
-              ndtest.run(10)
+                  result(0) should be ((2.0 + 0.0 - 1.0) / (10.0 + 10.0 - 5.0) +- 0.01) 
+                  result(1) should be ((2.0 + 10*.25 - 1.0) / (10.0 + 10.0 - 5.0)+- 0.01) 
+                  result(2) should be ((2.0 + 10*.25 - 1.0) / (10.0 + 10.0 - 5.0)+- 0.01) 
+                  result(3) should be ((2.0 + 10*.25 - 1.0) / (10.0 + 10.0 - 5.0)+- 0.01) 
+                  result(4) should be ((2.0 + 10*.25 - 1.0) / (10.0 + 10.0 - 5.0)+- 0.01) 
             }
 
           "detect bias after a large enough number of trials" in
