@@ -1,3 +1,15 @@
+/*
+ * ConstraintFactory.scala
+ * Methods to create factors for conditions and constraints on elements.
+ *
+ * Created By:      Avi Pfeffer (apfeffer@cra.com)
+ * Creation Date:   March 1, 2015
+ *
+ * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * See http://www.cra.com or email figaro@cra.com for information.
+ *
+ * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
 package com.cra.figaro.experimental.structured.factory
 
 import com.cra.figaro.language._
@@ -6,6 +18,10 @@ import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.lazyfactored.Regular
 
 object ConstraintFactory {
+  /**
+   * Make the constraint factors associated with the given element.
+   * @param upper If true, upper bound factors will be created, otherwise lower bound
+   */
   def makeFactors[T](cc: ComponentCollection, elem: Element[T], upper: Boolean): List[Factor[Double]] =
     elem.allConditions.map(makeConditionFactor(cc, elem, _, upper)) ::: elem.allConstraints.map(makeConstraintFactor(cc, elem, _, upper))
 

@@ -1,3 +1,16 @@
+/*
+ * StructuredVEBPChooser.scala
+ * A hybrid algorithm that chooses between variable elimination and belief propagation for each component.
+ *
+ * Created By:      Avi Pfeffer (apfeffer@cra.com)
+ * Creation Date:   March 1, 2015
+ *
+ * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * See http://www.cra.com or email figaro@cra.com for information.
+ *
+ * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
+
 package com.cra.figaro.experimental.structured.algorithm
 
 import com.cra.figaro.algorithm.OneTimeProbQuery
@@ -62,6 +75,13 @@ extends Algorithm with OneTimeProbQuery {
 }
 
 object StructuredVEBPChooser {
+  /**
+   * Create a hybrid algorithm that chooses between variable elimination and belief propagation on each subproblem.
+   * @param scoreThreshold The minimum value of the increase in score caused by eliminating a variable that causes the hybrid algorithm to
+   * choose BP for a subproblem.
+   * @param bpIterations The number of iterations to use when BP is chosen for a subproblem.
+   * @param targets The query targets
+   */
   def apply(scoreThreshold: Double, BPIterations: Int, targets: Element[_]*) = {
     if (targets.isEmpty) throw new IllegalArgumentException("Cannot run VE with no targets")
     val universes = targets.map(_.universe).toSet
@@ -70,10 +90,10 @@ object StructuredVEBPChooser {
   }
 
   /**
-   * Use VE to compute the probability that the given element satisfies the given predicate.
+   * Use the hybrid algorithm to compute the probability that the given element satisfies the given predicate.
    */
-  def probability[T](target: Element[T], predicate: T => Boolean): Double = {
-    val alg = StructuredVEBPChooser(0.0, 100, target)
+  def probability[T](target: Element[T], predicate: T => Boolean, threshold: Double, iterations: Int): Double = {
+    val alg = StructuredVEBPChooser(0.0, iterations, target)
     alg.start()
     val result = alg.probability(target, predicate)
     alg.kill()
@@ -81,8 +101,8 @@ object StructuredVEBPChooser {
   }
 
   /**
-   * Use VE to compute the probability that the given element has the given value.
+   * Use the hybrid algorithm to compute the probability that the given element has the given value.
    */
-  def probability[T](target: Element[T], value: T): Double =
-    probability(target, (t: T) => t == value)
+  def probability[T](target: Element[T], value: T, threshold: Double = 0.0, iterations: Int = 100): Double =
+    probability(target, (t: T) => t == value, threshold, iterations)
 }

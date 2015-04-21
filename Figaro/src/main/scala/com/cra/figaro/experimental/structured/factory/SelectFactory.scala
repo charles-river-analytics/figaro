@@ -1,6 +1,6 @@
 /*
  * SelectFactory.scala
- * Description needed
+ * Methods to create factors for Select and Dist elements.
  *
  * Created By:      Glenn Takata (gtakata@cra.com)
  * Creation Date:   Dec 15, 2014
@@ -75,11 +75,6 @@ object SelectFactory {
    */
   def makeFactors[T](cc: ComponentCollection, select: ParameterizedSelect[T], parameterized: Boolean): List[Factor[Double]] = {
     if (parameterized) {
-//    val selectVar = Factory.getVariable(cc, select)
-//    if (selectVar.range.exists(!_.isRegular)) {
-//      assert(selectVar.range.size == 1) // Select's range must either be a list of regular values or {*}
-//      StarFactory.makeStarFactor(cc, select)
-//    } else {
       val selectVar = Factory.getVariable(cc, select)
       val probs = parameterizedGetProbs(cc, select)
       List(makeSimpleDistribution(selectVar, probs))

@@ -1,6 +1,6 @@
 /*
  * Factory.scala
- * Factors over variables.
+ * Methods to create factors over variables.
  *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
@@ -28,17 +28,14 @@ import scala.reflect.runtime.universe.{typeTag, TypeTag}
 import com.cra.figaro.experimental.structured.ComponentCollection
 import com.cra.figaro.experimental.structured.ProblemComponent
 
-///**
-// * A trait for elements that are able to construct their own Factor.
-// */
-//trait FactorMaker[T] {
-//  def makeFactors[T]: List[Factor[Double]]
-//}
-
 /**
  * Methods for creating probabilistic factors associated with elements.
  */
 object Factory {
+  /**
+   * Get the variable associated with the given element in the given component collection.
+   * If the element does not exist in the component collection, an intermediate variable is created whose range is { Star }.
+   */
   def getVariable[T](cc: ComponentCollection, element: Element[T]): Variable[T] = {
     if (cc.contains(element)) {
       val component = cc(element)
@@ -48,10 +45,28 @@ object Factory {
     }
   }
 
-  def makeVariable[T](cc: ComponentCollection, vs: ValueSet[T]): Variable[T] = {
-    val v = new Variable(vs)
+  /**
+   * Create an intermediate variable in the given component collection with the given value set.
+   */
+  def makeVariable[T](cc: ComponentCollection, valueSet: ValueSet[T]): Variable[T] = {
+    val v = new Variable(valueSet)
     cc.intermediates += v
     v
+  }
+
+  /**
+   * Create a new factor in which one variable is replaced with another.
+   */
+  def replaceVariable[T](factor: Factor[Double], oldVariable: Variable[T], newVariable: Variable[T]): Factor[Double] = {
+    if (oldVariable.range != newVariable.range) throw new IllegalArgumentException("Replacing variable with variable with different range")
+    val newVariables = factor.variables.map(v => if (v == oldVariable) newVariable else v)
+    val newFactor =
+      factor match {
+        case s: SparseFactor[Double] => new SparseFactor[Double](newVariables, List())
+        case b: BasicFactor[Double] => new BasicFactor[Double](newVariables, List())
+      }
+    for { indices <- factor.getIndices } { newFactor.set(indices, factor.get(indices)) }
+    newFactor
   }
 
   /**
@@ -62,7 +77,12 @@ object Factory {
     result.set(List(), semiring.one)
     result
   }
-  
+
+  /**
+   * Given a sequence of variables, create a new variable representing the tuple of the inputs
+   * and create the factor mapping the inputs to their tuple.
+   * @param inputs the variables to be formed into a tuple
+   */
   def makeTupleVarAndFactor(cc: ComponentCollection, inputs: Variable[_]*): (Variable[List[Extended[_]]], Factor[Double]) = {
     val inputList: List[Variable[_]] = inputs.toList
     // Subtlety alert: In the tuple, we can't just map inputs with * to *. We need to remember which input was *.
@@ -80,7 +100,7 @@ object Factory {
     }
     (tupleVar, tupleFactor)
   }
-    
+
   /**
    * Create a BasicFactor from the supplied parent and children variables
    */
@@ -92,40 +112,6 @@ object Factory {
     factor.set(List(0), 1.0)
     List(factor)
   }
-
-//  private def makeDontCares[U](factor: ConditionalSelector[Double],
-//    intermedIndex: Int,
-//    outcomeVar: Variable[U],
-//    overallVar: Variable[U]): Unit = {
-//    // If we don't care, we assign 1.0 to all combinations of the distVar and outcomeVar
-//    for {
-//      j <- 0 until outcomeVar.size
-//      k <- 0 until overallVar.size
-//    } {
-//      factor.set(List(intermedIndex, j, k), 1.0)
-//    }
-//  }
-//
-//  private def makeCares[U](factor: ConditionalSelector[Double], intermedIndex: Int,
-//    outcomeVar: Variable[U], overallVar: Variable[U], choices: Set[U])(implicit mapper: PointMapper[U]): Unit = {
-//    // We care to match up overallVar with outcomeVar
-//    for {
-//      (outcomeVal, j) <- outcomeVar.range.zipWithIndex
-//      (overallVal, k) <- overallVar.range.zipWithIndex
-//    } {
-//      // Star stands for "something". If outcomeVal is Star and overallVal is Star, we know something will match something, so the entry is (1,1).
-//      // If outcomeVal is Star and overallVal is a regular value, then maybe there will be a match, so the entry is (0,1).
-//      // If outcomeVal is regular, all the probability mass associated with that outcome should be on regular values of overallVal, so the entry is (0,0).
-//      val entry =
-//        if (overallVal.isRegular && outcomeVal.isRegular) {
-//          if (overallVal.value == mapper.map(outcomeVal.value, choices)) 1.0
-//          else 0.0
-//        } else if (!overallVal.isRegular && !outcomeVal.isRegular) 1.0
-//        else 0.0
-//      factor.set(List(intermedIndex, j, k), entry)
-//    }
-//  }
-
 
   /*
    * The conditional selector creates a factor in which, when the selector's value is such that the result
@@ -150,7 +136,7 @@ object Factory {
       // See makeTupleVarAndFactor: pairXVal is always regular and consists of a list of two elements: the extended parent value
       // and the extended outcome value.
       val List(selectXVal, overallXVal) = pairXVal.value
-      val entry = 
+      val entry =
         if (selectXVal.isRegular && parentXVal.isRegular) {
           if (selectXVal.value == parentXVal.value) {
             if (overallXVal == outcomeXVal || (!overallXVal.isRegular && !outcomeXVal.isRegular)) 1.0 else 0.0
@@ -158,12 +144,11 @@ object Factory {
         } else if (selectXVal.isRegular || parentXVal.isRegular) 1.0 // they are different
         else if (!overallXVal.isRegular) 1.0 // if parentXVal is *, the only possible outcomeXVal is *
         else 0.0
-//println("pairXVal = " + pairXVal + ", outcomeXVal = " + outcomeXVal + ", entry = " + entry)        
       factor.set(List(pairIndex, outcomeIndex), entry)
     }
     factor
   }
-  
+
   private def isTemporary[_T](variable: Variable[_]): Boolean = {
     variable match {
       case e: ElementVariable[_] => e.element.isTemporary
@@ -281,6 +266,11 @@ object Factory {
       case _ => throw new UnsupportedAlgorithmException(elem)
     }
 
+  /**
+   * Make the non-constraint factors corresponding to the given element in the component collection.
+   *
+   * @param parameterized If true, parameterized elements are assumed to be equal to their previously computed MAP value. If false, they are treated like any other element.
+   */
   def makeFactors[T](cc: ComponentCollection, elem: Element[T], parameterized: Boolean): List[Factor[Double]] = {
     val component = cc(elem)
     if (component.range.hasStar && component.range.regularValues.isEmpty) List()

@@ -1,3 +1,16 @@
+/*
+ * StructuredVE.scala
+ * A structured variable elimination algorithm.
+ *
+ * Created By:      Avi Pfeffer (apfeffer@cra.com)
+ * Creation Date:   March 1, 2015
+ *
+ * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * See http://www.cra.com or email figaro@cra.com for information.
+ *
+ * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
+
 package com.cra.figaro.experimental.structured.algorithm
 
 import com.cra.figaro.algorithm.OneTimeProbQuery
@@ -61,6 +74,7 @@ class StructuredVE(val universe: Universe, targets: Element[_]*) extends Algorit
 }
 
 object StructuredVE {
+  /** Create a structured variable elimination algorithm with the given query targets. */
   def apply(targets: Element[_]*) = {
     if (targets.isEmpty) throw new IllegalArgumentException("Cannot run VE with no targets")
     val universes = targets.map(_.universe).toSet

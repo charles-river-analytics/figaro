@@ -1,3 +1,16 @@
+/*
+ * BPSolver.scala
+ * A belief propagation solver.
+ *
+ * Created By:      Avi Pfeffer (apfeffer@cra.com)
+ * Creation Date:   March 1, 2015
+ *
+ * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * See http://www.cra.com or email figaro@cra.com for information.
+ *
+ * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
+
 package com.cra.figaro.experimental.structured.solver
 
 import com.cra.figaro.algorithm.factored.factors.Factor
@@ -18,7 +31,7 @@ import com.cra.figaro.experimental.structured.factory.Factory.makeTupleVarAndFac
 import com.cra.figaro.experimental.structured.ComponentCollection
 import com.cra.figaro.experimental.structured.Problem
 
-class BPSolver(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]], val iterations: Int)
+private[figaro] class BPSolver(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]], val iterations: Int)
 extends com.cra.figaro.algorithm.factored.beliefpropagation.OneTimeProbabilisticBeliefPropagation {
   // We need to create a joint probability distribution over the interface to this nested subproblem.
   // To achieve this, we create a new variable representing the tuple of the attributes to preserve.
