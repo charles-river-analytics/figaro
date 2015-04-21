@@ -282,6 +282,7 @@ class AbstractionTest extends WordSpec with Matchers {
       }
     }
 
+    // Needs to be redone for new ChainFactor structure
     "given a chain using a regular discretization scheme" should {
       "produce a list of conditional selector factors mapping the argument to the discretized result" in {
         Universe.createNew()
@@ -296,15 +297,18 @@ class AbstractionTest extends WordSpec with Matchers {
         chain.addPragma(Abstraction(numBinsChain)(AbstractionScheme.RegularDiscretization))
         Values()(chain)
         val factors = Factory.make(chain)
-        factors.size should equal(2) // 2 for the conditional selectors
-        val List(factor1, factor2) = factors
+        factors.size should equal(3) // 1 for selection variable; 2 for the conditional selectors
+        val List(factor1, factor2, factor3) = factors
+        val selectorVar = factor1.variables(1)
         val flipVariable = Variable(flip)
         val uniform1Variable = Variable(uniform1)
         val uniform2Variable = Variable(uniform2)
         val chainVariable = Variable(chain)
-        factor1.variables should equal(List(flipVariable, uniform1Variable, chainVariable))
-        factor1.getIndices.foldLeft(0)((sum, _) => sum + 1) should equal(2 * numBinsChain * numBinsUniform)
+        factor1.variables should equal(List(flipVariable, selectorVar, chainVariable))
+        factor2.variables should equal(List(selectorVar, uniform1Variable))
         factor2.getIndices.foldLeft(0)((sum, _) => sum + 1) should equal(2 * numBinsChain * numBinsUniform)
+        factor3.variables should equal(List(selectorVar, uniform2Variable))
+        factor3.getIndices.foldLeft(0)((sum, _) => sum + 1) should equal(2 * numBinsChain * numBinsUniform)
         val flipValues: List[Boolean] = flipVariable.range.map(_.value)
         val uniform1Values: List[Double] = uniform1Variable.range.map(_.value)
         val uniform2Values: List[Double] = uniform2Variable.range.map(_.value)
@@ -323,16 +327,19 @@ class AbstractionTest extends WordSpec with Matchers {
           j <- 0 until numBinsUniform
           k <- 0 until numBinsChain
         } {
-          if (check1(flipValues(i), uniform1Values(j), chainValues(k))) { factor1.get(List(i, j, k)) should equal(1.0) }
-          else { factor1.get(List(i, j, k)) should equal(0.0) }
+          val selectorBin = i * numBinsChain + k
+          if (check1(flipValues(i), uniform1Values(j), chainValues(k))) { factor2.get(List(selectorBin, j)) should equal(1.0) }
+          else { factor1.get(List(selectorBin, j)) should equal(0.0) }
         }
         for {
           i <- 0 to 1
           j <- 0 until numBinsUniform
           k <- 0 until numBinsChain
         } {
-          if (check2(flipValues(i), uniform2Values(j), chainValues(k))) { factor2.get(List(i, j, k)) should equal(1.0) }
-          else { factor2.get(List(i, j, k)) should equal(0.0) }
+          val selectorBin = i * numBinsChain + k
+
+          if (check2(flipValues(i), uniform2Values(j), chainValues(k))) { factor3.get(List(selectorBin, j)) should equal(1.0) }
+          else { factor3.get(List(selectorBin, j)) should equal(0.0) }
         }
       }
     }
