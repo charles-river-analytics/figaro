@@ -377,8 +377,9 @@ class VETest extends WordSpec with Matchers {
       y.setCondition((b: Boolean) => b, List(Element.ElemVal(x, true)))
       // Probability of y should be (0.1 * 0.2 + 0.9 * 0.2) / (0.1 * 0.2 + 0.9 * 0.2 + 0.9 * 0.8) (because the case where x is true and y is false has been ruled out)
       val ve = VariableElimination(y)
-      ve.start()
+      ve.start
       ve.probability(y, true) should be(((0.1 * 0.2 + 0.9 * 0.2) / (0.1 * 0.2 + 0.9 * 0.2 + 0.9 * 0.8)) +- 0.0000000001)
+      ve.kill
     }
     
   }
@@ -398,11 +399,12 @@ class VETest extends WordSpec with Matchers {
       // p(e1=F,e2=F,e3=F) = 0.25 * 0.1 * 0.6 = .015
       // MPE: e1=T,e2=F,e3=F,e4=T
       val alg = MPEVariableElimination()
-      alg.start()
+      alg.start
       alg.mostLikelyValue(e1) should equal(true)
       alg.mostLikelyValue(e2) should equal(false)
       alg.mostLikelyValue(e3) should equal(false)
       alg.mostLikelyValue(e4) should equal(true)
+      alg.kill
     }
   }
   
