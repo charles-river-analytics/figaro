@@ -32,6 +32,7 @@ abstract class NDTest extends WordSpec with Matchers {
   def createResult(test: String, name: String, target: Any, alpha: Double): NDTestResult = {
     test match {
       case NDTest.TTEST => new TTestResult(name, target.asInstanceOf[Double], alpha)
+      case NDTest.BOOLEAN => new BooleanResult(name, target.asInstanceOf[Boolean], alpha)
       case _ => new NoTestResult(name)
     }  
   }
@@ -41,12 +42,15 @@ abstract class NDTest extends WordSpec with Matchers {
     if (clear) results.clear()
     
     (0 until n).foreach(_ => oneTest)
-    results.values.foreach(_.check should be(true))
+    for (result <- results.values) {
+      assert(result.check, result.errorMessage)
+    }
   }
 
   def oneTest: Unit
 }
 
 object NDTest {
-  val TTEST = "TTest-type"  
+  val TTEST = "TTest-type"
+  val BOOLEAN = "BooleanTest-type"
 }

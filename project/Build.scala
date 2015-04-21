@@ -97,6 +97,7 @@ object FigaroBuild extends Build {
       "com.typesafe.akka" %% "akka-actor" % "2.3.8",
       "org.scalanlp" %% "breeze" % "0.10",
       "io.argonaut" %% "argonaut" % "6.0.4",
+      "com.storm-enroute" %% "scalameter" % "0.6" % "provided",
       "org.scalatest" %% "scalatest" % "2.2.4" % "test"
     ))
     // Enable forking
@@ -116,8 +117,15 @@ object FigaroBuild extends Build {
     .settings(test in assembly := {})
     .settings(jarName in assembly := "figaro_" + scalaMajorMinor + "-" + version.value + "-fat.jar")
     .settings(assemblyOption in assembly ~= { _.copy(includeScala = false) })
+    .settings(excludedJars in assembly := {
+	val cp = (fullClasspath in assembly).value
+	cp filter {_.data.getName == "arpack_combined_all-0.1-javadoc.jar"}
+    })
     // Copy dependency JARs
     .settings(copyDepTask)
+    // ScalaMeter settings
+    .settings(testFrameworks += new TestFramework("org.scalameter.ScalaMeterFramework"))
+    .settings(logBuffered := false)
       
   lazy val examples = Project("FigaroExamples", file("FigaroExamples"))
     .dependsOn(figaro)

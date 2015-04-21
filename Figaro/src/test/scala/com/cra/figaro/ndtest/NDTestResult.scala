@@ -17,4 +17,5 @@ trait NDTestResult  {
   def name : String
   def update(value: Any)
   def check: Boolean
+  def errorMessage: String
 }

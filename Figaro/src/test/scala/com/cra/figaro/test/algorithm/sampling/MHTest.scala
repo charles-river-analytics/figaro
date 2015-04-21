@@ -508,7 +508,7 @@ class MHTest extends WordSpec with Matchers with PrivateMethodTester {
       mh.start()
       Thread.sleep(1000)
       mh.stop()
-      println(mh.getSampleCount.toString + " samples")
+//      println(mh.getSampleCount.toString + " samples")
       mh.probability(target, predicate) should be(prob +- tolerance)
     } finally {
       mh.kill()
