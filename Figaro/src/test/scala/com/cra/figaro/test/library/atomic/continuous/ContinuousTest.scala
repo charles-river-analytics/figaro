@@ -29,6 +29,18 @@ class ContinuousTest extends WordSpec with Matchers {
 
   val alpha: Double = 0.05
 
+  def varStatistic(value: Double, target: Double, n: Int) = {
+    val df = n - 1
+    
+    // df * sample value / target value is distributed as chisq with df degrees of freedom
+    val chisq = df * value / target
+    
+    // (chisq - df) / sqrt(2 * df) is approximately N(0, 1) for high df
+    val stat = (chisq - df) / math.sqrt(2 * df)
+    
+    stat
+  }
+  
   "A AtomicUniform" should {
     "have value within a range with probability equal to the fraction represented by the range" taggedAs (NonDeterministic) in {
       val ndtest = new NDTest {
@@ -270,9 +282,9 @@ class ContinuousTest extends WordSpec with Matchers {
           val samples = for (i <- 1 to 100)
             yield nSamples.generateValue(nSamples.generateRandomness())
 
-          val samplesMean = samples.sum / samples.size
-          val samplesVariance = samples.map(s => (s - samplesMean) * (s - samplesMean)).sum / (samples.size - 1)
-
+//          val samplesMean = samples.sum / samples.size
+//          val samplesVariance = samples.map(s => (s - samplesMean) * (s - samplesMean)).sum / (samples.size - 1)
+          
           val universe = Universe.createNew()
           val mean = Uniform(-5, 5)("mean", universe)
           val variance = Uniform(0, 5)("variance", universe)
@@ -286,8 +298,10 @@ class ContinuousTest extends WordSpec with Matchers {
           val result2 = alg.mean(variance)
           alg.stop()
           alg.kill
-          update(result1 - samplesMean, NDTest.TTEST, "CompoundNormalTestResultsMean", 0.0, alpha)
-          update(result2 - samplesVariance, NDTest.TTEST, "CompoundNormalTestResultsVar", 0.0, alpha)
+          update(result1, NDTest.TTEST, "CompoundNormalTestResultsMean", 2.5, alpha)
+          
+          val stat = varStatistic(result2, 2.0, 100)
+          update(stat, NDTest.TTEST, "CompoundNormalTestResultsVar", 0.0, alpha)
         }
       }
 
@@ -302,8 +316,8 @@ class ContinuousTest extends WordSpec with Matchers {
           val samples = for (i <- 1 to 25)
             yield nSamples.generateValue(nSamples.generateRandomness())
 
-          val samplesMean = samples.sum / samples.size
-          val samplesVariance = samples.map(s => (s - samplesMean) * (s - samplesMean)).sum / (samples.size - 1)
+//          val samplesMean = samples.sum / samples.size
+//          val samplesVariance = samples.map(s => (s - samplesMean) * (s - samplesMean)).sum / (samples.size - 1)
 
           val universe = Universe.createNew()
           val mean = Uniform(-5, 5)("mean", universe)
@@ -319,8 +333,10 @@ class ContinuousTest extends WordSpec with Matchers {
           val result2 = alg.mean(variance)
           alg.stop()
           alg.kill
-          update(result1 - samplesMean, NDTest.TTEST, "CompoundNormalTestResultsMean", 0.0, alpha)
-          update(result2 - samplesVariance, NDTest.TTEST, "CompoundNormalTestResultsVar", 0.0, alpha)
+          update(result1, NDTest.TTEST, "CompoundNormalTestResultsMean", 2.5, alpha)
+          
+          val stat = varStatistic(result2, 2.0, 100)
+          update(stat, NDTest.TTEST, "CompoundNormalTestResultsVar", 0.0, alpha)
         }
       }
 
