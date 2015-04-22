@@ -98,7 +98,7 @@ object FigaroBuild extends Build {
       "org.scalanlp" %% "breeze" % "0.10",
       "io.argonaut" %% "argonaut" % "6.0.4",
       "com.storm-enroute" %% "scalameter" % "0.6" % "provided",
-      "org.scalatest" %% "scalatest" % "2.2.4" % "test"
+      "org.scalatest" %% "scalatest" % "2.2.4" % "provided, test"
     ))
     // Enable forking
     .settings(fork := true)
