@@ -29,7 +29,8 @@ object PCFG {
     if (len <= 0) Constant(None)
     else cat match {
       case term: Terminal =>
-        if (len == 1) Select(term.results.map(Some(_)):_*) else Constant(None)
+        // if (len == 1) Select(term.results.map(Some(_)):_*) else Constant(None)
+	if (len == 1) Select(term.results.map(x => (x._1, Some(x._2))):_*) else Constant(None)
       case nonterm: Nonterminal =>
         val firstLen = FromRange(1, len)
         val secondLen = Apply(firstLen, (p: Int) => len - p)
