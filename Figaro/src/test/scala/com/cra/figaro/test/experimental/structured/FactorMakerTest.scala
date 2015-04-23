@@ -3531,7 +3531,7 @@ class FactorMakerTest extends WordSpec with Matchers {
         factor1.get(List(e2Index2, 0)) should equal (1.0)
         factor2.size should equal (2)
         factor2.get(List(e2Index1, 0)) should equal (1.0)
-        factor2.get(List(e2Index2, 0)) should equal (0.3)
+        factor2.get(List(e2Index2, 0)) should equal (0.3 +- .0001)
       }
     }
 
@@ -3575,7 +3575,7 @@ class FactorMakerTest extends WordSpec with Matchers {
         factor1L.get(List(e2IndexStar, 0)) should equal (0.6)
         factor1L.get(List(e2Index2, 0)) should equal (1.0)
         factor2L.size should equal (2)
-        factor2L.get(List(e2IndexStar, 0)) should equal (0.3)
+        factor2L.get(List(e2IndexStar, 0)) should equal (0.3 +- .0001)
         factor2L.get(List(e2Index2, 0)) should equal (0.3)
         val List(factor1U) = c11.constraintUpper
         val List(factor2U) = c12.constraintUpper

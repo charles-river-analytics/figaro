@@ -164,12 +164,12 @@ object ParticleGenerator {
   /**
    * Maximum number of particles to generate per atomic
    */
-  var defaultArgSamples = 50
+  var defaultArgSamples = 15
   
   /**
    * Maximum number of particles to generate through a chain.
    */
-  var defaultTotalSamples = 50
+  var defaultTotalSamples = 15
 
   private val samplerMap: Map[Universe, ParticleGenerator] = Map()
 

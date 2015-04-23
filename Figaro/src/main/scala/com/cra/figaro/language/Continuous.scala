@@ -31,6 +31,7 @@ trait Continuous[T] extends Element[T] {
    * Propagates the effect to dependent elements and ensures that no other value for the element can be generated.
    * For continuous elements, a constraint is added whose value is the log likelihood of the observation. 
    */
+  /*
   override def observe(value: T) {
     //We have to remove old observation first, or repeatedly observing will add on lots of constraints
     //Should conditions be removed as well, as they are in regular element.observe?
@@ -41,13 +42,18 @@ trait Continuous[T] extends Element[T] {
     set(value)
     this.observation = Some(value)
   }
+  * 
+  */
   
   /**
    * Removes conditions on the element and allows different values of the element to be generated.
    */
+  /*
   override def unobserve() {
     this.removeConstraint(observationConstraint)
     unset()
   }
+  * 
+  */
 
 }
