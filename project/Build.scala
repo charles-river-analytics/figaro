@@ -17,6 +17,7 @@ import sbtassembly.Plugin._
 import AssemblyKeys._
 import sbt.Package.ManifestAttributes
 import scoverage.ScoverageSbtPlugin._
+import com.typesafe.sbteclipse.plugin.EclipsePlugin.EclipseKeys
 
 object FigaroBuild extends Build {
 
@@ -126,15 +127,21 @@ object FigaroBuild extends Build {
     // ScalaMeter settings
     .settings(testFrameworks += new TestFramework("org.scalameter.ScalaMeterFramework"))
     .settings(logBuffered := false)
+    // SBTEclipse settings
+    .settings(EclipseKeys.eclipseOutput := Some("target/scala-2.11/classes"))
       
   lazy val examples = Project("FigaroExamples", file("FigaroExamples"))
     .dependsOn(figaro)
     .settings(packageOptions := Seq(Package.JarManifest(examplesManifest)))
     // Copy dependency JARs
     .settings(copyDepTask)
+    // SBTEclipse settings
+    .settings(EclipseKeys.eclipseOutput := Some("target/scala-2.11/classes"))
 
   lazy val work = Project("FigaroWork", file("FigaroWork"))
     .dependsOn(figaro)
+    // SBTEclipse settings
+    .settings(EclipseKeys.eclipseOutput := Some("target/scala-2.11/classes"))
 
   lazy val detTest = config("det") extend(Test)
   lazy val nonDetTest = config("nonDet") extend(Test)
