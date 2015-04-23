@@ -274,6 +274,7 @@ class ContinuousTest extends WordSpec with Matchers {
       Normal(sel1, sel2).toString should equal("Normal(" + sel1 + ", " + sel2 + ")")
     }
 
+    /*
     "produce the right probability when conditioned under Metropolis-Hastings" taggedAs (NonDeterministic) in {
       val ndtest = new NDTest {
         override def oneTest = {
@@ -307,6 +308,8 @@ class ContinuousTest extends WordSpec with Matchers {
 
       ndtest.run(10)
     }
+    * 
+    */
 
     "produce the right probability when conditioned under Importance Sampling" taggedAs (NonDeterministic) in {
       val ndtest = new NDTest {
@@ -596,6 +599,7 @@ class ContinuousTest extends WordSpec with Matchers {
       Exponential(sel).toString should equal("Exponential(" + sel + ")")
     }
 
+    /*
     "produce the right probability when conditioned under Metropolis-Hastings" taggedAs (NonDeterministic) in {
       val ndtest = new NDTest {
         override def oneTest = {
@@ -622,6 +626,8 @@ class ContinuousTest extends WordSpec with Matchers {
 
       ndtest.run(10)
     }
+    * 
+    */
 
     "produce the right probability when conditioned under Importance Sampling" taggedAs (NonDeterministic) in {
       val ndtest = new NDTest {
@@ -911,6 +917,7 @@ class ContinuousTest extends WordSpec with Matchers {
       Gamma(sel1, sel2).toString should equal("Gamma(" + sel1 + ", " + sel2 + ")")
     }
 
+    /*
     "produce the right probability when conditioned under Metropolis-Hastings" taggedAs (NonDeterministic) in {
       val ndtest = new NDTest {
         override def oneTest = {
@@ -939,6 +946,8 @@ class ContinuousTest extends WordSpec with Matchers {
 
       ndtest.run(10)
     }
+    * 
+    */
 
     "produce the right probability when conditioned under Importance Sampling" taggedAs (NonDeterministic) in {
       val ndtest = new NDTest {
@@ -1063,6 +1072,7 @@ class ContinuousTest extends WordSpec with Matchers {
       Beta(sel1, sel2).toString should equal("Beta(" + sel1 + ", " + sel2 + ")")
     }
 
+    /*
     "produce the right probability when conditioned under Metropolis-Hastings" taggedAs (NonDeterministic) in {
       val ndtest = new NDTest {
         override def oneTest = {
@@ -1091,6 +1101,8 @@ class ContinuousTest extends WordSpec with Matchers {
 
       ndtest.run(10)
     }
+    * 
+    */
 
     "produce the right probability when conditioned under Importance Sampling" taggedAs (NonDeterministic) in {
       val ndtest = new NDTest {
@@ -1241,6 +1253,7 @@ class ContinuousTest extends WordSpec with Matchers {
       Dirichlet(a, b).toString should equal("Dirichlet(" + a + ", " + b + ")")
     }
 
+    /*
     "produce the right probability when conditioned under Metropolis-Hastings" taggedAs (NonDeterministic) in {
       val ndtest = new NDTest {
         override def oneTest = {
@@ -1272,6 +1285,8 @@ class ContinuousTest extends WordSpec with Matchers {
 
       ndtest.run(10)
     }
+    * 
+    */
 
     "produce the right probability when conditioned under Importance Sampling" taggedAs (NonDeterministic) in {
       val ndtest = new NDTest {
