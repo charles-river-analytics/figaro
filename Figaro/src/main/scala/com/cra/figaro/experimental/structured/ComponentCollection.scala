@@ -51,8 +51,10 @@ class ComponentCollection {
   private[structured] def expansion[P,V](function: Function1[P, Element[V]], parentValue: P): NestedProblem[V] = {
     expansions.get((function, parentValue)) match {
       case Some(p) =>
+//        println("Cache hit: function = " + function.hashCode + ", parentValue = " + parentValue.hashCode + ": " + parentValue)
         p.asInstanceOf[NestedProblem[V]]
       case None =>
+//        println("Cache miss: function = " + function.hashCode + ", parentValue = " + parentValue.hashCode + ": " + parentValue)
         val result = new NestedProblem(this, function(parentValue))
         expansions += (function, parentValue) -> result
         result
@@ -99,5 +101,9 @@ class ComponentCollection {
     components += element -> component
     problem.components ::= component
     component
+  }
+
+  private[structured] def remove[T](element: Element[T]) {
+    components -= element
   }
 }

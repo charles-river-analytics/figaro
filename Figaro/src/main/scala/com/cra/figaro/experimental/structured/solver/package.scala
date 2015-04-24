@@ -1,8 +1,3 @@
-package com.cra.figaro.experimental.structured
-
-import com.cra.figaro.algorithm.factored.factors.Factor
-import com.cra.figaro.algorithm.factored.factors.Variable
-
 /*
  * solver.scala
  * Definitions of solvers.
@@ -15,6 +10,11 @@ import com.cra.figaro.algorithm.factored.factors.Variable
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
+
+package com.cra.figaro.experimental.structured
+
+import com.cra.figaro.algorithm.factored.factors.Factor
+import com.cra.figaro.algorithm.factored.factors.Variable
 
 package object solver {
   /**

@@ -90,7 +90,9 @@ class Problem(val collection: ComponentCollection, targets: List[Element[_]] = L
     solved = true
     toEliminate.foreach((v: Variable[_]) => {
       if (collection.intermediates.contains(v)) collection.intermediates -= v
-      else collection.components -= collection.variableToComponent(v).element
+      // It's unsafe to remove the component for the element because it might appear in a reused
+      // version of the nested subproblem.
+//      else collection.remove(collection.variableToComponent(v).element)
     })
   }
 
