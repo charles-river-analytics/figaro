@@ -1,6 +1,6 @@
 /*
- * TTestResult.scala 
- * T Test
+ * BooleanResult.scala 
+ * Boolean Test
  * 
  * Created By:      Michael Reposa (mreposa@cra.com), Glenn Takata (gtakata@cra.com), Brian Ruttenberg (bruttenberg@cra.com)
  * Creation Date:   Mar 19, 2015

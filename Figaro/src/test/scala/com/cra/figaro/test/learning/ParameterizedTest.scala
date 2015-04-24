@@ -1,5 +1,5 @@
 /*
- * ParametizedTest.scala   
+ * ParameterizedTest.scala   
  * Tests for parameterized elements.
  * 
  * Created By:      Michael Howard (mhoward@cra.com)

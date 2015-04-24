@@ -1,5 +1,5 @@
 /*
- * Values.scala
+ * LazyValues.scala
  * Lazily compute the range of values of elements.
  *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)

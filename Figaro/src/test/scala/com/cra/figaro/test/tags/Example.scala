@@ -1,5 +1,5 @@
 /*
- * ExampleTest.scala 
+ * Example.scala 
  * Tag for example tests.
  * 
  * Created By:      Avi Pfeffer (apfeffer@cra.com)

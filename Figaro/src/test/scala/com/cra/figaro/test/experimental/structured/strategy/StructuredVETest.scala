@@ -1,5 +1,5 @@
 /*
- * StructuredVE.scala
+ * StructuredVETest.scala
  * Test of structured variable elimination algorithm.
  *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)

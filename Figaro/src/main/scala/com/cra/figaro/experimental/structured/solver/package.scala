@@ -1,5 +1,5 @@
 /*
- * solver.scala
+ * package.scala
  * Definitions of solvers.
  *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)

@@ -1,6 +1,6 @@
 /*
- * ProbEvidenceTest.scala
- * Probability of evidence computation tests.
+ * ProbEvidenceSamplingTest.scala
+ * Probability of evidence sampling tests.
  * 
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009

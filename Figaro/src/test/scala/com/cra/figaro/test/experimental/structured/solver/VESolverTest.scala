@@ -1,5 +1,5 @@
 /*
- * VESolver.scala
+ * VESolverTest.scala
  * Test of variable elimination solver.
  *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)

@@ -1,5 +1,5 @@
 /*
- * ParametizedTest.scala    
+ * ParameterTest.scala    
  * Tests for learnable parameters.
  * 
  * Created By:      Michael Howard (mhoward@cra.com)

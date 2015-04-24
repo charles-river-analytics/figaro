@@ -1,5 +1,5 @@
 /*
- * FactorTest.scala 
+ * FactorPerformanceTest.scala 
  * Factor tests.
  * 
  * Created By:      Avi Pfeffer (apfeffer@cra.com)

@@ -1,5 +1,5 @@
 /*
- * NormalKernelDensityEstimator.scala
+ * ParticleBeliefPropagation.scala
  * Trait to TBD
  * 
  * Created By:      Brian Ruttenberg (bruttenberg@cra.com)

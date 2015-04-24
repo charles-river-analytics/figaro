@@ -1,5 +1,5 @@
 /*
- * strategy.scala
+ * package.scala
  * Definitions of expansion and solution strategies.
  *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)

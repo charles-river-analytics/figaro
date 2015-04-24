@@ -1,6 +1,6 @@
 /*
- * ImportanceTest.scala  
- * Importance sampling tests.
+ * ElementSamplerTest.scala  
+ * Element sampling tests.
  * 
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009

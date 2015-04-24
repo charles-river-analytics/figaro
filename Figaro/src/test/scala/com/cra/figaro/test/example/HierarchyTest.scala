@@ -1,5 +1,5 @@
 /*
- * HiearchyTest.scala 
+ * HierarchyTest.scala 
  * Bayesian network examples tests.
  * 
  * Created By:      Avi Pfeffer (apfeffer@cra.com)

@@ -1,5 +1,5 @@
 /*
- * LazyVE.scala
+ * LazyVariableElimination.scala
  * Lazy variable elimination algorithm.
  *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)

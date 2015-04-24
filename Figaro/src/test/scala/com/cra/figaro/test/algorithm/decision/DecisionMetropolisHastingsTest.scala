@@ -1,5 +1,5 @@
 /*
- * DecisionMetropolisHastingsTests.scala 
+ * DecisionMetropolisHastingsTest.scala 
  * Variable elimination tests.
  * 
  * Created By:      Brian Ruttenberg (bruttenberg@cra.com)

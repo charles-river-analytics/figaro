@@ -1,5 +1,5 @@
 /*
- * EMWithMH.scala
+ * EMWithMHTest.scala
  * Tests for the EM algorithm
  * 
  * Created By:      Michael Howard (mhoward@cra.com)

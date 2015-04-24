@@ -1,5 +1,5 @@
 /*
- * StructuredVEBPChooser.scala
+ * StructuredVEBPChooserTest.scala
  * Test of structured hybrid VE/BP algorithm.
  *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)

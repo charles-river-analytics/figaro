@@ -1,6 +1,6 @@
 /*
- * BPTest.scala  
- * Belief Propagation tests.
+ * PBPTest.scala  
+ * Particle Belief Propagation tests.
  * 
  * Created By:      Brian Ruttenberg (bruttenberg@cra.com)
  * Creation Date:   Jan 15, 2014

@@ -1,5 +1,5 @@
 /*
- * DecisionVETTest.scala  
+ * DecisionVETest.scala  
  * Variable elimination tests.
  * 
  * Created By:      Brian Ruttenberg (bruttenberg@cra.com)
