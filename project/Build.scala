@@ -79,8 +79,8 @@ object FigaroBuild extends Build {
   lazy val root = Project("root", file("."))
     .settings(publishLocal := {})
     .settings(publish := {})
-    .dependsOn(figaro, examples, work)
-    .aggregate(figaro, examples, work)
+    .dependsOn(figaro, examples)
+    .aggregate(figaro, examples)
 
   lazy val figaro = Project("Figaro", file("Figaro"))
     .settings (scalacOptions ++= Seq(
