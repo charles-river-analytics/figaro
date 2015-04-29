@@ -138,11 +138,6 @@ object FigaroBuild extends Build {
     // SBTEclipse settings
     .settings(EclipseKeys.eclipseOutput := Some("target/scala-2.11/classes"))
 
-  lazy val work = Project("FigaroWork", file("FigaroWork"))
-    .dependsOn(figaro)
-    // SBTEclipse settings
-    .settings(EclipseKeys.eclipseOutput := Some("target/scala-2.11/classes"))
-
   lazy val detTest = config("det") extend(Test)
   lazy val nonDetTest = config("nonDet") extend(Test)
 }
