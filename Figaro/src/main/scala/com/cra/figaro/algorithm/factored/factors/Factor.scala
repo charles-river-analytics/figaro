@@ -13,15 +13,20 @@
 package com.cra.figaro.algorithm.factored.factors
 
 import scala.annotation.tailrec
+import scala.collection.Iterable
+import scala.collection.mutable.ListBuffer
 import com.cra.figaro.language.Element
 import com.cra.figaro.algorithm.lazyfactored.Extended
-
+import scala.reflect.runtime.universe._
 /**
  * Definition of Factor <p>
  *
  * A factor is associated with a set of variables and specifies a value for every
- * combination of assignments to those variables. Factors are parameterized by the
- * Variables they contain. Parent variables are distinguished from the output variable.
+ * combination of assignments to those variables. 
+ * 
+ * Factors are parameterized by the type of the Variables they contain and contain a semiring
+ * that defines the mathematical operation to be performed on the values 
+ * Parent variables are distinguished from the output variable.
  *
  * Refactored by
  *
@@ -29,6 +34,8 @@ import com.cra.figaro.algorithm.lazyfactored.Extended
  *
  */
 trait Factor[T] {
+  def semiring: Semiring[T]
+  
   def parents: List[Variable[_]]
   def output: List[Variable[_]]
   def variables = parents ::: output
@@ -40,7 +47,12 @@ trait Factor[T] {
   val size = (1 /: variables)(_ * _.size)
 
   /**
-   * Description that includes the variable list and conditional probabilites
+   * Creates a new factor of the same type
+   */
+  def createFactor[T](parents: List[Variable[_]], output: List[Variable[_]], _semiring: Semiring[T] = semiring): Factor[T]
+
+  /**
+   * Description that includes the variable list and conditional probabilities
    */
   override def toString = "Factor(" + variables.map(_.id).mkString(",") + " " + contents.mkString(",") + ")"
 
@@ -55,29 +67,27 @@ trait Factor[T] {
   def isEmpty = size == 0
 
   /**
+   * Indicates if this Factor is condition/constrained
+   */
+  val isConstraint: Boolean = false
+
+  def contains(index: List[Int]) = contents.contains(index)
+
+  /**
    * Fold the given function through the contents of the factor, beginning with the given initial values
    */
   def foldLeft(initial: T, fn: (T, T) => T): T = {
     (initial /: contents.values)(fn(_, _))
   }
 
-  /**
-   * Returns the indices lists corresponding to all the rows in order.
-   */
-  def allIndices: List[List[Int]] = {
-    @tailrec def helper(current: List[Int], accum: List[List[Int]]): List[List[Int]] =
-      nextIndices(current) match {
-        case Some(next) => helper(next, current :: accum)
-        case None => (current :: accum).reverse
-      }
-    if (isEmpty) List()
-    else helper(firstIndices, List())
-  }
+  def getIndices: Indices = generateIndices
 
-  /**
-   * Returns the list of indices into the variable ranges associated with the first row in the factor.
-   */
-  def firstIndices: List[Int] = List.fill(numVars)(0)
+  def generateIndices: Indices = new Indices(variables)
+  
+  def convertIndicesToValues(indices: List[Int]): List[Extended[_]] = {
+    val values = for { i <- 0 until indices.size } yield variables(i).range(indices(i))
+    values.toList
+  }
 
   /**
    * Set the value associated with a row. The row is identified by an list of indices
@@ -92,24 +102,7 @@ trait Factor[T] {
    * Get the value associated with a row. The row is identified by an list of indices
    * into the ranges of the variables over which the factor is defined.
    */
-  def get(indices: List[Int]): T = contents(indices)
-
-  /**
-   * Given a list of indices corresponding to a row in the factor, returns the list of indices
-   * corresponding to the next row.
-   * Returns None if the last index list has been reached.
-   */
-  def nextIndices(indices: List[Int]): Option[List[Int]] = {
-    def makeNext(position: Int) =
-      for { i <- 0 until numVars } yield if (i < position) indices(i)
-      else if (i > position) 0
-      else indices(position) + 1
-    def helper(position: Int): Option[List[Int]] =
-      if (position < 0) None
-      else if (indices(position) < variables(position).size - 1) Some(makeNext(position).toList)
-      else helper(position - 1)
-    helper(numVars - 1)
-  }
+  def get(indices: List[Int]): T
 
   /**
    * Fill the contents of this factor by applying a rule to every combination of values.
@@ -119,7 +112,7 @@ trait Factor[T] {
   /**
    * Fill the contents of the target by applying the given function to all elements of this factor.
    */
-  def mapTo[U](fn: T => U): Factor[U]
+  def mapTo[U](fn: T => U, _semiring: Semiring[U] = semiring): Factor[U]
 
   /**
    * Returns the product of this factor with another factor according to a given multiplication function.
@@ -127,11 +120,10 @@ trait Factor[T] {
    * is the product of the values in the two inputs.
    */
   def product(
-    that: Factor[T],
-    semiring: Semiring[T]): Factor[T]
+    that: Factor[T]): Factor[T]
 
   /**
-   * Generic combination function for factors. By default, this is product, but other operations
+   * Combination function for factors. By default, this is product, but other operations
    * (such as divide that is a valid operation for some semirings) can use this
    */
   def combination(
@@ -144,7 +136,7 @@ trait Factor[T] {
    * input except for the summed over variable and the value for a set of assignments is the
    * sum of the values of the corresponding assignments in the input.
    */
-  def sumOver(variable: Variable[_], semiring: Semiring[T]): Factor[T]
+  def sumOver(variable: Variable[_]): Factor[T]
 
   /**
    * Returns a factor that maps values of the other variables to the value of the given variable that
@@ -155,7 +147,7 @@ trait Factor[T] {
    * other variables in this factor to this type.
    * @tparam T The type of entries of this factor.
    */
-  def recordArgMax[U](variable: Variable[U], comparator: (T, T) => Boolean): Factor[U]
+  def recordArgMax[U](variable: Variable[U], comparator: (T, T) => Boolean, _semiring: Semiring[U] = semiring.asInstanceOf[Semiring[U]]): Factor[U]
 
   /**
    * Returns the marginalization of the factor to a variable according to the given addition function.
@@ -171,13 +163,126 @@ trait Factor[T] {
   def deDuplicate(): Factor[T]
 
   /**
-   * Creates a new Factor of the same class with a different type
+   * Creates a new Factor of the same class with a different type and semiring
    */
-  def convert[U](): Factor[U]
+  def convert[U](semiring: Semiring[U]): Factor[U]
 
   /**
    * Produce a readable string representation of the factor
    */
   def toReadableString: String
 
+}
+
+class Indices(variables: List[Variable[_]]) extends Iterable[List[Int]] {
+  val limits = variables.map(_.size.asInstanceOf[Int] - 1)
+  val numVars = limits.length
+  val factorSize = (1 /: variables)(_ * _.size)
+  
+  
+  def iterator = new Iterator[List[Int]] {
+    var current: List[Int] = List(-1)
+    def hasNext = {
+      current match {
+        case List(-1) =>
+          current = List.fill(numVars)(0)
+          true
+        case l: List[Int] =>
+          nextIndices(l) match {
+            case Some(i) =>
+              current = i
+              true
+            case None => false
+          }
+        case _ => false
+      }
+    }
+
+    def next: List[Int] = current
+  }
+  
+  def allIndices: List[List[Int]] = {
+    @tailrec def helper(current: List[Int], accum: List[List[Int]]): List[List[Int]] =
+      nextIndices(current) match {
+        case Some(next) => helper(next, current :: accum)
+        case None => (current :: accum).reverse
+      }
+    if (factorSize == 0) List()
+    else helper(List.fill(numVars)(0), List())
+  }
+
+  /**
+   * Given a list of indices corresponding to a row in the factor, returns the list of indices
+   * corresponding to the next row.
+   * Returns None if the last index list has been reached.
+   */  
+  def nextIndices(indices: List[Int]): Option[List[Int]] = {
+    var temp = indices.reverse
+    var newIndices = List[Int]()
+    var success = true
+    var carry = true
+    
+    var position = numVars - 1
+    
+    while(carry) {
+      temp match {
+        case head :: tail => {
+          //  current position can be incremented
+          // stop here
+          if (head < limits(position)) {
+            newIndices ::= head + 1
+            newIndices :::= tail.reverse
+            carry = false
+          }
+          // limit reached so zero current position and 
+          // carry to next
+          else if (head == limits(position)) {
+            newIndices ::= 0
+            temp = tail
+            position = position - 1
+          }
+        }
+
+        case Nil => {
+          success = false
+          carry = false
+        }
+      }
+    }
+    
+    if (success) {
+      Some(newIndices)
+    }
+    else {
+      None
+    }
+  }
+}
+
+object Factor {
+//  def combineIndices(thisIndices: List[Int], thisIndexMap: List[Int], thatIndices: List[Int], thatIndexMap: List[Int], numVars: Int): Option[List[Int]] = {
+//    var newIndices = new ListBuffer[Int]()
+//    var good = true;
+//
+//    for (i <- 0 until numVars) {
+//      val inThis = thisIndexMap.indexOf(i)
+//      val inThat = thatIndexMap.indexOf(i)
+//
+//      (inThis >= 0, inThat >= 0) match {
+//        case (true, false) => newIndices.append(thisIndices(inThis))
+//        case (false, true) => newIndices.append(thatIndices(inThat))
+//        case (true, true) =>
+//          if (thisIndices(inThis) == thatIndices(inThat))
+//            newIndices.append(thisIndices(inThis))
+//          else
+//            good = false
+//        case _ => good = false
+//      }
+//    }
+//
+//    if (good)
+//      Some(newIndices.toList)
+//    else
+//      None
+//  }
 }

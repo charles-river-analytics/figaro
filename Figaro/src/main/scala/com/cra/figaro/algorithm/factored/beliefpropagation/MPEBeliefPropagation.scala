@@ -29,7 +29,7 @@ abstract class MPEBeliefPropagation(override val universe: Universe)(
   val dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double)
   extends MPEAlgorithm with ProbabilisticBeliefPropagation {
 
-  override val semiring = LogMaxProductSemiring
+  override val semiring = LogMaxProductSemiring()
   /*
    * Empty for MPE Algorithms
    */
@@ -40,6 +40,14 @@ abstract class MPEBeliefPropagation(override val universe: Universe)(
 
     factorGraph = new BasicFactorGraph(getFactors(neededElements, targetElements), semiring): FactorGraph[Double]
     super.initialize
+  }
+
+  /*
+   * Convert factors to use MaxProduct
+   */
+  override def getFactors(allElements: List[Element[_]], targetElements: List[Element[_]], upper: Boolean = false): List[Factor[Double]] = {
+    val factors = super.getFactors(allElements, targetElements, upper) 
+    factors.map (_.mapTo(x => x, semiring))
   }
 
   def mostLikelyValue[T](target: Element[T]): T = {

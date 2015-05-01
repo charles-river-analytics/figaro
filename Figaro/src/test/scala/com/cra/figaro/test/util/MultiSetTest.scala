@@ -1,6 +1,6 @@
 /*
  * MultiSetTest.scala   
- * 
+ * Needs description
  * 
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009

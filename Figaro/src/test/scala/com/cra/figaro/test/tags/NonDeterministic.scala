@@ -1,6 +1,6 @@
 /*
- * Importance.scala
- * Importance sampler.
+ * NonDeterministic.scala
+ * Tag for non-deterministic tests.
  * 
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009

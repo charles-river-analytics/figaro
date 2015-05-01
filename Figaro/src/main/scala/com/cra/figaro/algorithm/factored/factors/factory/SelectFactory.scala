@@ -26,7 +26,7 @@ import com.cra.figaro.algorithm.factored.factors.Factory
 object SelectFactory {
   
   /**
-   * Factor constructor for an AtomicDistFlip 
+   * Factor constructor for an AtomicDist
    */
   def makeFactors[T](dist: AtomicDist[T]): List[Factor[Double]] = {
     val (intermed, clauseFactors) = intermedAndClauseFactors(dist)
@@ -150,16 +150,18 @@ object SelectFactory {
     val nVars = probVars.size
     val factor = new BasicFactor[Double](probVars, List(target))
     val probVals: List[List[Extended[Double]]] = probVars map (_.range)
-    for { indices <- factor.allIndices } {
-      // unnormalized is a list, one for each probability element, of the value of that element under these indices
+    for { indices <- factor.getIndices } {
+      // unnormalized is a list, one for each probability element, 
+      // of the value of that element under these indices
       val unnormalized =
-        //     expects outcome to be first, but isn't   
         for { (probIndex, position) <- indices.toList.take(nVars).zipWithIndex } yield {
-          val xprob = probVals(position)(probIndex) // The probability of the particular value of the probability element in this position
+          // The probability of the particular value of the probability element in this position
+          val xprob = probVals(position)(probIndex) 
           if (xprob.isRegular) xprob.value; else 0.0
         }
       val normalized = normalize(unnormalized).toArray
-      // The first variable specifies the position of the remaining variables, so indices(0) is the correct probability
+      // The first variable specifies the position of the remaining variables, 
+      // so indices(last) is the correct probability
       factor.set(indices, normalized(indices.last))
     }
     factor

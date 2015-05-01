@@ -37,10 +37,12 @@ abstract class FactoredFrontier(static: Universe, initial: Universe, transition:
   protected var currentStatic = static
   currentUniverse = initial
   
+  val dependentUniverse = List()
+  val dependentAlgorithm = (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u)
 
   override def initialize() {
     LazyValues.clear(static)
-    createBP(getNamedElements(currentUniverse) ::: getNamedElements(currentStatic))
+    createBP(getNamedElements(currentUniverse) ::: getNamedElements(currentStatic), dependentUniverse, dependentAlgorithm)
   }
 
   def run() {
@@ -75,8 +77,7 @@ abstract class FactoredFrontier(static: Universe, initial: Universe, transition:
     val dummyUniverse = createDummyUniverse(previousUniverse)
     currentStatic = createDummyUniverse(previousStatic)
 
-    LazyValues.clear(previousUniverse)
-    bp.kill()
+    LazyValues.clear(previousUniverse)    
 
     /*
      * We don't want to clear the static universe given to us in the constructor, as this would kill the FF algorithm.
@@ -92,7 +93,7 @@ abstract class FactoredFrontier(static: Universe, initial: Universe, transition:
      * This is to ensure that they are correctly expanded and included for factor creation.
      */
     Factory.removeFactors
-    createBP(getNamedElements(currentUniverse) ::: getNamedElements(currentStatic) ::: getNamedElements(dummyUniverse))
+    createBP(getNamedElements(currentUniverse) ::: getNamedElements(currentStatic) ::: getNamedElements(dummyUniverse), dependentUniverse, dependentAlgorithm)
     runBP()
 
     dummyUniverse.clear()

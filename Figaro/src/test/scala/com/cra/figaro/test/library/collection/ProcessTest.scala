@@ -56,6 +56,40 @@ class ProcessTest extends WordSpec with Matchers {
       val e12 = proc3.chain(if (_) Flip(0.3) else Flip(0.6))(4)
       e11.universe should equal (u1)
       e12.universe should equal (u2)
+    }    
+    
+    "create elements in the correct universe using flatMap instead of chain" in {
+      val u1 = Universe.createNew()
+      val proc = createProcess(List(2,3))
+      val u2 = Universe.createNew()
+      val e1 = proc(2)
+      e1.universe should equal (u1)
+      val e2 = proc.get(2)
+      e2.universe should equal (u1)
+      val e3 = proc(List(2,3))(2)
+      e3.universe should equal (u1)
+      val e4 = proc.get(List(2,3))(2)
+      e4.universe should equal (u1)
+      val e5 = proc.map(!_)(2)
+      e5.universe should equal (u1)
+      val e6 = proc.flatMap(if (_) Flip(0.3) else Flip(0.6))(2)
+      e6.universe should equal (u1)
+      val proc2 = createProcess(List(4))
+      val proc3 = proc ++ proc2
+      // It is possible to have elements from different universes in the same process. Getting an element should produce an element from
+      // the correct universe
+      val e7 = proc3.get(2)
+      val e8 = proc3.get(4)
+      e7.universe should equal (u1)
+      e8.universe should equal (u2)
+      val e9 = proc3.map(!_)(2)
+      val e10 = proc3.map(!_)(4)
+      e9.universe should equal (u1)
+      e10.universe should equal (u2)
+      val e11 = proc3.flatMap(if (_) Flip(0.3) else Flip(0.6))(2)
+      val e12 = proc3.flatMap(if (_) Flip(0.3) else Flip(0.6))(4)
+      e11.universe should equal (u1)
+      e12.universe should equal (u2)
     }
 
     "get the right element for an index in range" in {
@@ -134,6 +168,16 @@ class ProcessTest extends WordSpec with Matchers {
     }
 
     "when chaining, have each point flatMapped according to the function" in {
+      Universe.createNew()
+      val proc = createProcess(List(2,3)).chain(if (_) Flip(0.3) else Flip(0.6))
+      val elem = proc(3)
+      val alg = VariableElimination(elem)
+      alg.start()
+      alg.probability(elem, true) should be ((1.0 / 3 * 0.3 + 2.0 / 3 * 0.6) +- 0.000000001)
+      alg.kill()
+    }
+    
+     "(use flatMap instead of chain) when chaining, have each point flatMapped according to the function" in {
       Universe.createNew()
       val proc = createProcess(List(2,3)).chain(if (_) Flip(0.3) else Flip(0.6))
       val elem = proc(3)

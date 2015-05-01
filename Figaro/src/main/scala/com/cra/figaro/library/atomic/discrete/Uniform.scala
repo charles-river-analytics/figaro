@@ -1,13 +1,13 @@
 /*
  * Uniform.scala
  * Elements representing discrete uniform distributions.
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Feb 25, 2011
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -31,11 +31,7 @@ class AtomicUniform[T](name: Name[T], options: Seq[T], collection: ElementCollec
  * is an element over values.
  */
 class CompoundUniform[T](name: Name[T], options: Seq[Element[T]], collection: ElementCollection)
-  extends CachingChain[List[T], T](
-    name,
-    new Inject("", options, collection),
-    (options: Seq[T]) => new AtomicUniform("", options, collection),
-    collection) {
+  extends AtomicDist[T](name, options.toList map (1.0 -> _), collection) {
   override def toString = "Uniform(" + options.mkString(", ") + ")"
 }
 

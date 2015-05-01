@@ -1,5 +1,5 @@
 /*
- * ProbEvidenceTest.scala
+ * ProbEvidenceParticleFilterTest.scala
  * Probability of evidence computation tests.
  * 
  * Created By:      Avi Pfeffer (apfeffer@cra.com)

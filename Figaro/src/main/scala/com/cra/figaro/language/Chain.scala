@@ -35,6 +35,8 @@ class Chain[T, U](name: Name[U], val parent: Element[T], fcn: T => Element[U], c
   def args: List[Element[_]] = if (active && resultElement != null) List(parent) ::: List(resultElement) else List(parent)
 
   protected def cpd = fcn
+  
+  private[figaro] val chainFunction = fcn
 
   /**
    * The type of the parent argument.

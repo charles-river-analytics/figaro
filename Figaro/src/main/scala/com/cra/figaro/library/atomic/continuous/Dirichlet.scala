@@ -13,28 +13,32 @@
 
 package com.cra.figaro.library.atomic.continuous
 
-import com.cra.figaro.language._
-import com.cra.figaro.util._
-import scala.math.{ pow, log }
-import JSci.maths.SpecialMath._
+import scala.collection.mutable
+import scala.math.log
+import scala.math.pow
+
 import com.cra.figaro.algorithm.ValuesMaker
 import com.cra.figaro.algorithm.lazyfactored.ValueSet
-import scala.collection.mutable
+import com.cra.figaro.language._
+import com.cra.figaro.util._
 
+import JSci.maths.SpecialMath._
+import argonaut._
+import argonaut.Argonaut._
 /**
  * Dirichlet distributions in which the parameters are constants.
  * These Dirichlet elements can also serve as parameters for ParameterizedSelect.
- * 
+ *
  * @param alphas the prior concentration parameters
  */
 class AtomicDirichlet(name: Name[Array[Double]], val alphas: Array[Double], collection: ElementCollection)
-  extends Element[Array[Double]](name, collection) with Atomic[Array[Double]] with ArrayParameter with ValuesMaker[Array[Double]] {
+  extends Element[Array[Double]](name, collection) with Atomic[Array[Double]] with ArrayParameter with ValuesMaker[Array[Double]] with Dirichlet{
 
   /**
    * The number of concentration parameters in the Dirichlet distribution.
    */
   val size = alphas.size
-  
+  def alphaValues: Array[Double] = concentrationParameters.toArray
   type Randomness = Array[Double]
 
   def generateRandomness(): Array[Double] = {
@@ -68,13 +72,13 @@ class AtomicDirichlet(name: Name[Array[Double]], val alphas: Array[Double], coll
 
   /**
    * Returns an element that models the learned distribution.
-   * 
+   *
    * @deprecated
    */
   def getLearnedElement[T](outcomes: List[T]): AtomicSelect[T] = {
     new AtomicSelect("", MAPValue.toList zip outcomes, collection)
   }
-  
+
   def maximize(sufficientStatistics: Seq[Double]) = {
     require(sufficientStatistics.size == concentrationParameters.size)
     for (i <- sufficientStatistics.indices) {
@@ -85,7 +89,7 @@ class AtomicDirichlet(name: Name[Array[Double]], val alphas: Array[Double], coll
   private val vector = alphas.map(a => 0.0)
 
   private[figaro] override def sufficientStatistics[A](i: Int): Seq[Double] = {
-    val result = vector
+    val result = alphas.map(a => 0.0)
     require(i < result.size)
     result.update(i, 1.0)
     result
@@ -105,26 +109,26 @@ class AtomicDirichlet(name: Name[Array[Double]], val alphas: Array[Double], coll
 
     val sumObservedAlphas = concentrationParameters reduceLeft (_ + _)
     val result = new Array[Double](size)
-    
+
     concentrationParameters.zipWithIndex.foreach {
       case (v, i) => {
-          result(i) = (v) / (sumObservedAlphas)
-        }
+        result(i) = (v) / (sumObservedAlphas)
+      }
     }
 
     result
 
   }
-  
+
   override def MAPValue: Array[Double] = {
     val sumObservedAlphas = concentrationParameters reduceLeft (_ + _)
     val result = new Array[Double](size)
 
     concentrationParameters.zipWithIndex.foreach {
       case (v, i) => {
-          result(i) = 
-            if (sumObservedAlphas == size) 1.0 / size
-            else (v - 1) / (sumObservedAlphas - size)
+        result(i) =
+          if (sumObservedAlphas == size) 1.0 / size
+          else (v - 1) / (sumObservedAlphas - size)
       }
     }
     result
@@ -172,23 +176,38 @@ trait Dirichlet extends Continuous[Array[Double]] {
         val (a, x) = v
         (a - 1) * log(x)
       }.sum + normalizer,
-      alphaValues.map(_ > 0): _*
-    )
+      alphaValues.map(_ > 0): _*)
 
 }
 
 object Dirichlet extends Creatable {
+
+  //Needs to be a nested field or a jEmptyArray
+  implicit def DirichletEncodeJson: EncodeJson[Dirichlet] = EncodeJson((d: Dirichlet) =>
+  ("name" := d.name.string) ->: ("alphaValues" := jArray((for (a <- d.alphaValues) yield { jNumber(a) }).toList)) ->: jEmptyObject)
+
+  implicit def DirichletDecodeJson(implicit collection: ElementCollection): DecodeJson[AtomicDirichlet] =
+    DecodeJson(c => for {
+      alphaValues <- (c --\ "alphaValues").as[List[Double]]
+      name <- (c --\ "name").as[String]
+    } yield Dirichlet(alphaValues.toArray)(name, collection))
+
   /**
    * Create a Dirichlet distribution in which the parameters are constants.
    */
   def apply(alphas: Double*)(implicit name: Name[Array[Double]], collection: ElementCollection) =
     new AtomicDirichlet(name, alphas.toArray, collection)
-
+  
+  def apply(alphas: Array[Double])(implicit name: Name[Array[Double]], collection: ElementCollection) =
+    new AtomicDirichlet(name, alphas, collection)
+  
   /**
    * Create a Dirichlet distribution in which the parameters are elements.
    */
   def apply(alphas: Element[Double]*)(implicit name: Name[Array[Double]], collection: ElementCollection) =
     new CompoundDirichlet(name, alphas.toArray, collection)
+  
+
 
   type ResultType = Array[Double]
 

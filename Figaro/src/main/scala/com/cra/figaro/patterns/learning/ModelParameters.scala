@@ -22,7 +22,9 @@ import scala.collection.mutable.ListBuffer
 import com.cra.figaro.language.DoubleParameter
 import com.cra.figaro.language.ArrayParameter
 import com.cra.figaro.language.Parameter
-
+import argonaut._, Argonaut._
+import com.cra.figaro.library.atomic.continuous.Dirichlet
+import com.cra.figaro.library.atomic.continuous.Beta
 /**
  * Case classes defining type parameters of parameter elements.
  * These are used for matching on return types of parameter collections, and for
@@ -142,6 +144,9 @@ class ModelParameters extends ElementCollection {
       result
     }
 
+    /**
+     * @param The name of a parameter to retrieve from the set of model parameters 
+     */
     def apply(s: String): ParameterType = {
       val p = getElementByReference(s)
       val result = p match {
@@ -176,8 +181,49 @@ class ModelParameters extends ElementCollection {
 }
 
 object ModelParameters {
+
+  /**
+   * Decode JSON into a parameter element
+   */
+  implicit val decodeJson: DecodeJson[Parameter[_]] = DecodeJson { c =>
+    c.downField("Beta").as[AtomicBeta] |||
+    c.downField("Dirichlet").as[AtomicDirichlet]
+  }
+  
+  /**
+   * Encode a set of model parameters into JSON
+   */
+  implicit def ModelParametersEncodeJson: EncodeJson[ModelParameters] = {
+    EncodeJson((params: ModelParameters) => {
+      val encodedParameters = for (p <- params.convertToParameterList) yield {
+        p match {
+          case b: Beta => ("Beta" := Beta.BetaEncodeJson(b)) ->: jEmptyObject
+          case d: Dirichlet => ("Dirichlet" := Dirichlet.DirichletEncodeJson(d)) ->: jEmptyObject
+          case default => throw new IllegalArgumentException("Unserializable parameter type.")
+        }
+      }
+      ("allParameters" := jArray(encodedParameters)) ->: jEmptyObject
+    })
+  }
+
+  /**
+   * Decode JSON into a set of model parameters
+   */
+  implicit def ModelParametersDecodeJson(implicit collection: ElementCollection): DecodeJson[ModelParameters] =
+    DecodeJson(c => for {
+      jsonParameters <- (c --\ "allParameters").as[List[Parameter[_]]]
+    } yield ModelParameters(jsonParameters))
+
   /**
    * Create a new set of model parameters.
    */
   def apply() = new ModelParameters()
+    /**
+   * Create a new set of model parameters containing the list of parameters provided
+   */
+  def apply(l: List[Parameter[_]]) = {
+    val m = new ModelParameters()
+    l.foreach(m.add(_))
+    m
+  }
 }

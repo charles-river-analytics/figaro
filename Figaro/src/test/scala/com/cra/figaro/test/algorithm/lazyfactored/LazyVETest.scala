@@ -45,6 +45,8 @@ class LazyVETest extends WordSpec with Matchers {
     	alg.probabilityBounds(outerIf, false)._1 should be ((1 - pOuter) +- 0.000000001)
     	alg.probabilityBounds(outerIf, true)._2 should be (pOuter +- 0.000000001)
     	alg.probabilityBounds(outerIf, false)._2 should be ((1 - pOuter) +- 0.000000001)
+      
+      alg.kill()
       } 
     }
 
@@ -71,6 +73,8 @@ class LazyVETest extends WordSpec with Matchers {
     	alg.probabilityBounds(apply, false)._1 should be (falseLower +- 0.000000001)
     	alg.probabilityBounds(apply, true)._2 should be ((1 - falseLower) +- 0.000000001)
     	alg.probabilityBounds(apply, false)._2 should be ((1 - trueLower) +- 0.000000001)
+      
+      alg.kill()
       }
       
       "produce the correct depth 3 perfect answer" in {
@@ -93,6 +97,8 @@ class LazyVETest extends WordSpec with Matchers {
     	alg.probabilityBounds(apply, false)._1 should be ((1 - pOuter) +- 0.000000001)
     	alg.probabilityBounds(apply, true)._2 should be (pOuter +- 0.000000001)
     	alg.probabilityBounds(apply, false)._2 should be ((1 - pOuter) +- 0.000000001)
+      
+      alg.kill()
       } 
     }
 
@@ -115,6 +121,8 @@ class LazyVETest extends WordSpec with Matchers {
     	alg.probabilityBounds(outerIf, false)._1 should be (falseLower +- 0.000000001)
     	alg.probabilityBounds(outerIf, true)._2 should be ((1 - falseLower) +- 0.000000001)
     	alg.probabilityBounds(outerIf, false)._2 should be ((1 - trueLower) +- 0.000000001)
+      
+      alg.kill()
       }
       
       "produce the correct depth 2 perfect answer" in {
@@ -134,6 +142,8 @@ class LazyVETest extends WordSpec with Matchers {
     	alg.probabilityBounds(outerIf, false)._1 should be ((1 - pOuter) +- 0.000000001)
     	alg.probabilityBounds(outerIf, true)._2 should be (pOuter +- 0.000000001)
     	alg.probabilityBounds(outerIf, false)._2 should be ((1 - pOuter) +- 0.000000001)
+      
+      alg.kill()
       } 
     }
     
@@ -159,6 +169,8 @@ class LazyVETest extends WordSpec with Matchers {
         pLow should be >= (correct - 0.0001)
         pHigh should be >= (correct)
         pHigh should be <= (correct + 0.0001)
+        
+        alg.kill()
       }
     }
 
@@ -185,6 +197,8 @@ class LazyVETest extends WordSpec with Matchers {
         pLow should be >= (correct - 0.0001)
         pHigh should be >= (correct)
         pHigh should be <= (correct + 0.0001)
+        
+        alg.kill()
       }
     }
   }

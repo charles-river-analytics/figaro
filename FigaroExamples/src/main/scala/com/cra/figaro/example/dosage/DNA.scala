@@ -1,5 +1,5 @@
 /*
- * Conversion.scala
+ * DNA.scala
  * Represents DNA, which is an Element[Nucleotide].
  * 
  * Created By:      Brian Ruttenberg (bruttenberg@cra.com)

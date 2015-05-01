@@ -18,15 +18,38 @@ import com.cra.figaro.util.random
 import scala.math._
 import scala.collection.JavaConversions
 import org.apache.commons.math3.distribution.MultivariateNormalDistribution
+import org.apache.commons.math3.random.RandomGenerator
 
 /**
  * A multivariate normal distribution in which the means and variance-covariances are constants.
  */
 class AtomicMultivariateNormal(name: Name[List[Double]], val means: List[Double], val covariances: List[List[Double]], collection: ElementCollection)
   extends Element[List[Double]](name, collection) with Atomic[List[Double]] {
-  
-  val distribution = new MultivariateNormalDistribution(means.toArray, covariances.map((l: List[Double]) => l.toArray).toArray)
-  
+
+  /*
+   * Class to wrap the Figaro RNG around the apache math RNG so we can use the apache math multivariate normal 
+   */
+  private[figaro] abstract class RandomGeneratorWrapper extends RandomGenerator {
+    val rng: scala.util.Random
+    def nextBoolean(): Boolean = rng.nextBoolean
+    def nextBytes(bytes: Array[Byte]) = rng.nextBytes(bytes)
+    def nextDouble() = rng.nextDouble
+    def nextFloat() = rng.nextFloat
+    def nextGaussian() = rng.nextGaussian
+    def nextInt() = rng.nextInt
+    def nextInt(n: Int) = rng.nextInt(n)
+    def nextLong() = rng.nextLong
+    def setSeed(seed: Int) = {}
+    def setSeed(seed: Array[Int]) = {}
+    def setSeed(seed: Long) = {}
+  }
+
+  // Apache RNG
+  val rng = new RandomGeneratorWrapper { val rng = com.cra.figaro.util.random }
+
+  // Use apache math MVN to generate samples and compute density
+  val distribution = new MultivariateNormalDistribution(rng, means.toArray, covariances.map((l: List[Double]) => l.toArray).toArray)
+
   lazy val standardDeviations = distribution.getStandardDeviations()
 
   type Randomness = List[Double]
@@ -41,7 +64,7 @@ class AtomicMultivariateNormal(name: Name[List[Double]], val means: List[Double]
    * Density of a value.
    */
   def density(d: List[Double]) = {
-   distribution.density(d.toArray)
+    distribution.density(d.toArray)
   }
 
   override def toString = "MultivariateNormal(" + means + ",\n" + covariances + ")"

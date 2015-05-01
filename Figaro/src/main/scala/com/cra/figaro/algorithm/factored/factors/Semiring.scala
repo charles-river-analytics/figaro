@@ -56,7 +56,7 @@ trait DivideableSemiRing[T] extends Semiring[T] {
   def divide(x: T, y: T): T
 }
 
-object SumProductUtilitySemiring extends DivideableSemiRing[(Double, Double)] {
+case class SumProductUtilitySemiring() extends DivideableSemiRing[(Double, Double)] {
   /**
    * Decision joint factor combination.
    */
@@ -83,7 +83,7 @@ object SumProductUtilitySemiring extends DivideableSemiRing[(Double, Double)] {
 
 }
 
-object BooleanSemiring extends Semiring[Boolean] {
+case class BooleanSemiring() extends Semiring[Boolean] {
   /**
    * x AND y
    */
@@ -102,11 +102,11 @@ object BooleanSemiring extends Semiring[Boolean] {
   val one = true
 }
 
-object SumProductSemiring extends DivideableSemiRing[Double] {
+case class SumProductSemiring() extends DivideableSemiRing[Double] {
   /**
    * Standard multiplication
    */
-  def product(x: Double, y: Double) = x * y
+  def product(x: Double, y: Double) = x* y
 
   /**
    * Standard division
@@ -130,7 +130,7 @@ object SumProductSemiring extends DivideableSemiRing[Double] {
 /**
  * Semiring for computing sums and products with log probabilities.
  */
-object LogSumProductSemiring extends DivideableSemiRing[Double] {
+case class LogSumProductSemiring() extends DivideableSemiRing[Double] {
   val zero = Double.NegativeInfinity
 
   val one = 0.0
@@ -155,7 +155,7 @@ object LogSumProductSemiring extends DivideableSemiRing[Double] {
 /**
  * Semiring for computing maxs and products with log probabilities.
  */
-object LogMaxProductSemiring extends DivideableSemiRing[Double] {
+case class LogMaxProductSemiring() extends DivideableSemiRing[Double] {
   val zero = Double.NegativeInfinity
 
   val one = 0.0
@@ -170,7 +170,7 @@ object LogMaxProductSemiring extends DivideableSemiRing[Double] {
 /**
  * Semiring for computing sums and products with lower and upper bounds.
  */
-object BoundsSumProductSemiring extends DivideableSemiRing[(Double, Double)] {
+case class BoundsSumProductSemiring() extends DivideableSemiRing[(Double, Double)] {
   def product(x: (Double, Double), y: (Double, Double)) = {
     val (lx, ux) = x
     val (ly, uy) = y
@@ -194,7 +194,7 @@ object BoundsSumProductSemiring extends DivideableSemiRing[(Double, Double)] {
   val one = (1.0, 1.0)
 }
 
-object MaxProductSemiring extends DivideableSemiRing[Double] {
+case class MaxProductSemiring() extends DivideableSemiRing[Double] {
   /**
    * Standard multiplication
    */

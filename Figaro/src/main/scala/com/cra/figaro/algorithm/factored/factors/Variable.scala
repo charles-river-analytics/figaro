@@ -71,6 +71,17 @@ class ParameterizedVariable[T](override val element: Parameterized[T]) extends E
   override def toString = "Parameterized variable:" + element.toString
 }
 
+/**
+ * Variables that are internal to Factors.
+ * 
+ * This is the same as a temporary variable, but is more explicitly identified
+ *
+ * @param range The range of values of the variable
+ */
+class InternalVariable[T](values: ValueSet[T]) extends Variable(values) {
+  override def toString = "Internal variable:" + values.toString
+}
+
 /* Variables generated from sufficient statistics of parameters */
 object Variable {
   // An element should always map to the same variable

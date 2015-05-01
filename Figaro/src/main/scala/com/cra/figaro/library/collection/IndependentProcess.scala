@@ -1,5 +1,5 @@
 /*
- * IncrementalProcess.scala
+ * IndependentProcess.scala
  * Trait for an independent process
  *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)

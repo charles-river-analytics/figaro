@@ -47,11 +47,6 @@ class SufficientStatisticsSemiring(parameterMap: immutable.Map[Parameter[_], Seq
     (simpleProduct(xVector._1, yVector._1), mapProduct(xVector, yVector))
   }
 
-  private def componentProduct(xVector: Seq[Double], yVector: Seq[Double]): Seq[Double] = {
-    require(xVector.size == yVector.size)
-    (for ((x, y) <- xVector zip yVector) yield x * y)
-  }
-
   /**
    * Probabilities are added using standard addition.
    * Sufficient statistics for each parameter are weighted by their respective probabilities and summed together, 

@@ -29,37 +29,46 @@ import com.cra.figaro.util.random
 import scala.math.abs
 import java.io._
 import com.cra.figaro.test.tags.NonDeterministic
+import com.cra.figaro.ndtest._
 
 class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matchers {
+  val alpha: Double = 0.05
+  def binomialConstraint(count: Int)(truth: Int, baseWeight: Double): Double = {
+    if (count == truth) baseWeight
+    else {
+      math.pow(.01, Math.abs(truth - count).toDouble) * baseWeight
+    }
+  }
+
   "Expectation Maximization with importance sampling" when
     {
-          "when provided a termination criteria based on sufficient statistics magnitudes" should {
+      "provided a termination criteria based on sufficient statistics magnitudes" should {
         "exit before reaching the maximum iterations" in {
-            val universe = Universe.createNew
-            val b = Beta(2, 2)
-            val terminationCriteria = EMTerminationCriteria.sufficientStatisticsMagnitude(0.05)
-            for (i <- 1 to 7) {
+          val universe = Universe.createNew
+          val b = Beta(2, 2)
+          val terminationCriteria = EMTerminationCriteria.sufficientStatisticsMagnitude(0.05)
+          for (i <- 1 to 7) {
 
-              val f = Flip(b)
-              f.observe(true)
-            }
-
-            for (i <- 1 to 3) {
-
-              val f = Flip(b)
-              f.observe(false)
-            }
-
-            val algorithm = EMWithImportance(terminationCriteria, 10, b)(universe)
-            algorithm.start
-
-            val result = b.MAPValue
-            algorithm.kill
-            result should be(0.6666 +- 0.01)
-
+            val f = Flip(b)
+            f.observe(true)
           }
+
+          for (i <- 1 to 3) {
+
+            val f = Flip(b)
+            f.observe(false)
+          }
+
+          val algorithm = EMWithImportance(terminationCriteria, 10, b)(universe)
+          algorithm.start
+
+          val result = b.MAPValue
+          algorithm.kill
+
+          result should be(0.666666 +- 0.000001)
         }
-    
+      }
+
       "used to estimate a Beta parameter" should
         {
           "detect bias after a large enough number of trials" in
@@ -75,7 +84,7 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
 
               for (i <- 1 to 3) {
 
-               val f = Flip(b)
+                val f = Flip(b)
                 f.observe(false)
               }
 
@@ -84,8 +93,8 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
 
               val result = b.MAPValue
               algorithm.kill
-              result should be(0.6666 +- 0.01)
 
+              result should be(0.666666 +- 0.000001)
             }
 
           "take the prior concentration parameters into account" in
@@ -110,51 +119,59 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
 
               val result = b.MAPValue
               algorithm.kill
-              result should be(0.50 +- 0.01)
 
+              result should be(0.50 +- 0.001)
             }
 
+          "learn the bias from observations of binomial elements" taggedAs (NonDeterministic) in {
+            val ndtest = new NDTest {
+              override def oneTest = {
+                val universe = Universe.createNew
+                val b = Beta(2, 2)
 
-          "learn the bias from observations of binomial elements" in {
-              val universe = Universe.createNew
-              val b = Beta(2, 2)
+                val b1 = Binomial(7, b)
+                b1.setConstraint((c: Int) => binomialConstraint(c)(6, 1.0))
+                val b2 = Binomial(3, b)
+                b2.setConstraint((c: Int) => binomialConstraint(c)(1, 1.0))
 
-              val b1 = Binomial(7, b)
-              b1.observe(6)
-              val b2 = Binomial(3, b)
-              b2.observe(1)
+                val algorithm = EMWithImportance(2, 100, b)(universe)
+                algorithm.start
 
-              val algorithm = EMWithImportance(2, 100, b)(universe)
-              algorithm.start
+                val result = b.MAPValue
+                algorithm.kill
 
-              val result = b.MAPValue
-              algorithm.kill
-              result should be(0.6666 +- 0.01)
+                update(result, NDTest.TTEST, "EMImportanceTestResults", 0.6666, alpha)
+              }
+            }
 
-            
+            ndtest.run(10)
+          }
+
+          "correctly use a uniform prior" taggedAs (NonDeterministic) in {
+            val ndtest = new NDTest {
+              override def oneTest = {
+                val universe = Universe.createNew
+                val b = Beta(1, 1)
+
+                val b1 = Binomial(7, b)
+                b1.setConstraint((c: Int) => binomialConstraint(c)(6, 1.0))
+                val b2 = Binomial(3, b)
+                b2.setConstraint((c: Int) => binomialConstraint(c)(1, 1.0))
+
+                val algorithm = EMWithImportance(2, 100, b)(universe)
+                algorithm.start
+
+                val result = b.MAPValue
+                algorithm.kill
+                update(result, NDTest.TTEST, "EMImportanceTestResults", 0.7, alpha)
+              }
+            }
+
+            ndtest.run(10)
           }
         }
 
-          "correctly use a uniform prior" in {
-              val universe = Universe.createNew
-              val b = Beta(1, 1)
-
-              val b1 = Binomial(7, b)
-              b1.observe(6)
-              val b2 = Binomial(3, b)
-              b2.observe(1)
-
-              val algorithm = EMWithImportance(2, 100, b)(universe)
-              algorithm.start
-
-              val result = b.MAPValue
-              algorithm.kill
-              result should be(0.7 +- 0.01)
-
-            
-          }
-
-          "used to estimate a Dirichlet parameter with two concentration parameters" should
+      "used to estimate a Dirichlet parameter with two concentration parameters" should
         {
 
           "detect bias after a large enough number of trials" in
@@ -179,8 +196,8 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
 
               val result = b.MAPValue
               algorithm.kill
-              result(0) should be(0.6666 +- 0.01)
 
+              result(0) should be(0.666666 +- 0.000001)
             }
 
           "take the prior concentration parameters into account" in
@@ -206,8 +223,8 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
 
               val result = b.MAPValue
               algorithm.kill
-              result(0) should be(0.50 +- 0.01)
 
+              result(0) should be(0.50 +- 0.001)
             }
 
         }
@@ -215,64 +232,29 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
       "used to estimate a Dirichlet parameter with three concentration parameters" should
         {
 
-          "calculate sufficient statistics in the correct order for long lists of concentration parameters" in
+
+          "calculate sufficient statistics in the correct order for long lists of concentration parameters, taking into account a condition" in
             {
-              val universe = Universe.createNew
-              val alphas = Seq[Double](0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476, 0.0476)
-              val d = Dirichlet(alphas: _*)
-              val outcomes = List(2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23)
-              val outcome = Select(d, outcomes: _*)
-              val algorithm = EMWithImportance(2, 1000, d)
-              algorithm.start
 
-              val result = d.MAPValue
-              algorithm.kill
-              result(0) should be(0.04 +- 0.01)
-              result(1) should be(0.04 +- 0.01)
-              result(2) should be(0.04 +- 0.01)
-              result(3) should be(0.04 +- 0.01)
-              result(4) should be(0.04 +- 0.01)
-              result(5) should be(0.04 +- 0.01)
-              result(6) should be(0.04 +- 0.01)
-              result(7) should be(0.04 +- 0.01)
-              result(8) should be(0.04 +- 0.01)
-              result(9) should be(0.04 +- 0.01)
-              result(10) should be(0.04 +- 0.01)
-              result(11) should be(0.04 +- 0.01)
-              result(12) should be(0.04 +- 0.01)
-              result(13) should be(0.04 +- 0.01)
-              result(14) should be(0.04 +- 0.01)
-              result(15) should be(0.04 +- 0.01)
-              result(16) should be(0.04 +- 0.01)
-              result(17) should be(0.04 +- 0.01)
-              result(18) should be(0.04 +- 0.01)
-              result(19) should be(0.04 +- 0.01)
-              result(20) should be(0.04 +- 0.01)
-              result(21) should be(0.04 +- 0.01)
+                  val universe = Universe.createNew
+                  val alphas = Seq[Double](2.0,2.0,2.0,2.0,2.0)
+                  val d = Dirichlet(alphas: _*)
+                  val outcomes = List(2, 3, 4, 5, 6)
 
-            }
+                  for (i <- 1 to 10) {
+                    val outcome = Select(d, outcomes: _*)
+                    outcome.addCondition(x => x >= 3 && x <= 6)
+                  }
 
-          "calculate sufficient statistics in the correct order for long lists of concentration parameters, taking into account a condition" taggedAs(NonDeterministic) in
-            {
-              val universe = Universe.createNew
-              val alphas = Seq[Double](1.0476, 1.0476, 1.0476, 1.0476, 1.0476)
-              val d = Dirichlet(alphas: _*)
-              val outcomes = List(2, 3, 4, 5, 6)
-
-              for (i <- 1 to 10) {
-                val outcome = Select(d, outcomes: _*)
-                outcome.addCondition(x => x >= 3 && x <= 6)
-              }
-
-              val algorithm = EMWithImportance(2, 1000, d)
-              algorithm.start
-              val result = d.MAPValue
-              algorithm.kill
-              result(0) should be(0.0 +- 0.01)
-              result(1) should be(0.25 +- 0.01)
-              result(2) should be(0.25 +- 0.01)
-              result(3) should be(0.25 +- 0.01)
-              result(4) should be(0.25 +- 0.01)
+                  val algorithm = EMWithImportance(2, 1000, d)
+                  algorithm.start
+                  val result = d.MAPValue
+                  algorithm.kill
+                  result(0) should be ((2.0 + 0.0 - 1.0) / (10.0 + 10.0 - 5.0) +- 0.01) 
+                  result(1) should be ((2.0 + 10*.25 - 1.0) / (10.0 + 10.0 - 5.0)+- 0.01) 
+                  result(2) should be ((2.0 + 10*.25 - 1.0) / (10.0 + 10.0 - 5.0)+- 0.01) 
+                  result(3) should be ((2.0 + 10*.25 - 1.0) / (10.0 + 10.0 - 5.0)+- 0.01) 
+                  result(4) should be ((2.0 + 10*.25 - 1.0) / (10.0 + 10.0 - 5.0)+- 0.01) 
             }
 
           "detect bias after a large enough number of trials" in
@@ -280,11 +262,10 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
               val universe = Universe.createNew
               val b = Dirichlet(2, 2, 2)
               val outcomes = List(1, 2, 3)
-              val errorTolerance = 0.01
               for (i <- 1 to 8) {
 
-               val f = Select(b, outcomes: _*)
-               f.observe(1)
+                val f = Select(b, outcomes: _*)
+                f.observe(1)
 
               }
 
@@ -304,13 +285,12 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
               val result = b.MAPValue
               algorithm.kill
 
-              //9/19
-              result(0) should be(0.47 +- errorTolerance)
-
+              // 9/19
+              result(0) should be(0.473 +- 0.001)
               //7/19
-              result(1) should be(0.36 +- errorTolerance)
+              result(1) should be(0.368 +- 0.001)
               //3/19
-              result(2) should be(0.15 +- errorTolerance)
+              result(2) should be(0.157 +- 0.001)
 
             }
 
@@ -342,13 +322,13 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
 
               val result = b.MAPValue
               algorithm.kill
-              result(0) should be(0.33 +- 0.01)
-              result(1) should be(0.33 +- 0.01)
-              result(2) should be(0.33 +- 0.01)
 
+              result(0) should be(0.333333 +- 0.000001)
+              result(1) should be(0.333333 +- 0.000001)
+              result(2) should be(0.333333 +- 0.000001)
             }
 
-          "correctly use a uniform prior" in 
+          "correctly use a uniform prior" in
             {
               val universe = Universe.createNew
               val b = Dirichlet(1.0, 1.0, 1.0)
@@ -369,106 +349,106 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
                 val f1 = Select(b, outcomes: _*)
                 f1.observe(3)
               }
-        
+
               val algorithm = EMWithImportance(2, 1000, b)(universe)
               algorithm.start
 
               val result = b.MAPValue
               algorithm.kill
-              result(0) should be(0.33 +- 0.01)
-              result(1) should be(0.33 +- 0.01)
-              result(2) should be(0.33 +- 0.01)
+              result(0) should be(0.333333 +- 0.000001)
+              result(1) should be(0.333333 +- 0.000001)
+              result(2) should be(0.333333 +- 0.000001)
             }
         }
 
-          "used to estimate multiple parameters" should
+      "used to estimate multiple parameters" should
+        {
+
+          "leave parameters having no observations unchanged" in
             {
+              val universe = Universe.createNew
+              val d = Dirichlet(2.0, 4.0, 2.0)
+              val b = Beta(2.0, 2.0)
+              val outcomes = List(1, 2, 3)
 
-              "leave parameters having no observations unchanged" in
-                {
-                  val universe = Universe.createNew
-                  val d = Dirichlet(2.0, 4.0, 2.0)
-                  val b = Beta(2.0, 2.0)
-                  val outcomes = List(1, 2, 3)
+              for (i <- 1 to 4) {
 
-                  for (i <- 1 to 4) {
+                val f2 = Select(d, outcomes: _*)
+                f2.observe(1)
+              }
 
-                    val f2 = Select(d, outcomes: _*)
-                    f2.observe(1)
-                  }
+              for (i <- 1 to 2) {
+                val f3 = Select(d, outcomes: _*)
+                f3.observe(2)
+              }
 
-                  for (i <- 1 to 2) {
-                    val f3 = Select(d, outcomes: _*)
-                    f3.observe(2)
-                  }
+              for (i <- 1 to 4) {
+                val f1 = Select(d, outcomes: _*)
+                f1.observe(3)
+              }
 
-                 for (i <- 1 to 4) {
-                    val f1 = Select(d, outcomes: _*)
-                    f1.observe(3)
-                  }
+              val algorithm = EMWithImportance(2, 1000, d, b)(universe)
+              algorithm.start
 
-                  val algorithm = EMWithImportance(2, 1000, d, b)(universe)
-                  algorithm.start
+              val result = d.MAPValue
+              algorithm.kill
 
-                  val result = d.MAPValue
-                  algorithm.kill
-                  result(0) should be(0.33 +- 0.01)
-                  result(1) should be(0.33 +- 0.01)
-                  result(2) should be(0.33 +- 0.01)
+              val betaResult = b.MAPValue
 
-                  val betaResult = b.MAPValue
-                  betaResult should be(0.5)
+              result(0) should be(0.333333 +- 0.000001)
+              result(1) should be(0.333333 +- 0.000001)
+              result(2) should be(0.333333 +- 0.000001)
+              betaResult should be(0.5 +- 0.001)
+            }
 
-                }
+          "correctly estimate all parameters with observations" in
+            {
+              val universe = Universe.createNew
+              val d = Dirichlet(2.0, 3.0, 2.0)
+              val b = Beta(3.0, 7.0)
+              val outcomes = List(1, 2, 3)
 
-              "correctly estimate all parameters with observations" in
-                {
-                  val universe = Universe.createNew
-                  val d = Dirichlet(2.0, 3.0, 2.0)
-                  val b = Beta(3.0, 7.0)
-                  val outcomes = List(1, 2, 3)
+              for (i <- 1 to 3) {
 
-                  for (i <- 1 to 3) {
+                val f2 = Select(d, outcomes: _*)
+                f2.observe(1)
+              }
 
-                    val f2 = Select(d, outcomes: _*)
-                    f2.observe(1)
-                  }
+              for (i <- 1 to 2) {
+                val f3 = Select(d, outcomes: _*)
+                f3.observe(2)
+              }
 
-                  for (i <- 1 to 2) {
-                    val f3 = Select(d, outcomes: _*)
-                    f3.observe(2)
-                  }
+              for (i <- 1 to 3) {
+                val f1 = Select(d, outcomes: _*)
+                f1.observe(3)
+              }
 
-                  for (i <- 1 to 3) {
-                    val f1 = Select(d, outcomes: _*)
-                    f1.observe(3)
-                  }
+              for (i <- 1 to 7) {
+                val f = Flip(b)
+                f.observe(true)
+              }
 
-                  for (i <- 1 to 7) {
-                    val f = Flip(b)
-                    f.observe(true)
-                  }
+              for (i <- 1 to 3) {
+                val f = Flip(b)
 
-                  for (i <- 1 to 3) {
-                    val f = Flip(b)
+                f.observe(false)
+              }
 
-                   f.observe(false)
-                  }
+              val algorithm = EMWithImportance(2, 1000, b, d)(universe)
+              algorithm.start
 
-                  val algorithm = EMWithImportance(2, 1000, b,d)(universe)
-                  algorithm.start
+              val result = d.MAPValue
 
-                  val result = d.MAPValue
+              val betaResult = b.MAPValue
 
-                  result(0) should be(0.33 +- 0.01)
-                  result(1) should be(0.33 +- 0.01)
-                  result(2) should be(0.33 +- 0.01)
+              result(0) should be(0.333333 +- 0.000001)
+              result(1) should be(0.333333 +- 0.000001)
+              result(2) should be(0.333333 +- 0.000001)
+              betaResult should be(0.5 +- 0.001)
 
-                  val betaResult = b.MAPValue
-                  betaResult should be(0.5 +- 0.01)
-
-                }
-          }
+            }
+        
 
       val observationProbability = 0.7
       val trainingSetSize = 100
@@ -636,20 +616,19 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
         algorithm.start()
 
         val resultUniverse = new Universe
-        def extractParameter(parameter: Element[Double], name: String) = 
+        def extractParameter(parameter: Element[Double], name: String) =
           {
-           parameter match
-           {
-             case b: AtomicBeta =>
-               {
+            parameter match {
+              case b: AtomicBeta =>
+                {
 
-                 Constant(valueGetter(algorithm, parameter))(name, resultUniverse)
-               }
-             case _ => Constant(valueGetter(algorithm, parameter))(name, resultUniverse)
-           }
-           
+                  Constant(valueGetter(algorithm, parameter))(name, resultUniverse)
+                }
+              case _ => Constant(valueGetter(algorithm, parameter))(name, resultUniverse)
+            }
+
           }
-        
+
         val learnedParameters = new Parameters(resultUniverse) {
           val b1 = extractParameter(parameters.b1, "b1"); b1.generate()
           val b2 = extractParameter(parameters.b2, "b2"); b2.generate()
@@ -669,39 +648,44 @@ class EMWithImportanceTest extends WordSpec with PrivateMethodTester with Matche
         (new Model(learnedParameters, normalFlipConstructor), totalTime)
       }
 
-      "derive parameters within a reasonable accuracy for random data" taggedAs(NonDeterministic) in
+      "derive parameters within a reasonable accuracy for random data" taggedAs (NonDeterministic) in
         {
+          val ndtest = new NDTest {
+            override def oneTest = {
+              val numEMIterations = 5
+              val testSet = List.fill(testSetSize)(generateDatum())
+              val trainingSet = List.fill(trainingSetSize)(generateDatum())
 
-          val numEMIterations = 5
-          val testSet = List.fill(testSetSize)(generateDatum())
-          val trainingSet = List.fill(trainingSetSize)(generateDatum())
-
-          def learner(parameters: Parameters): Algorithm = {
-            parameters match {
-              case ps: LearnableParameters => EMWithImportance(numEMIterations, 1000, ps.b1, ps.b2, ps.b3, ps.b4, ps.b5, ps.b6, ps.b7, ps.b8, ps.b9)(parameters.universe)
-              case _ => throw new IllegalArgumentException("Not learnable parameters")
-            }
-          }
-
-          def parameterGetter(algorithm: Algorithm, parameter: Element[Double]): Double = {
-            parameter match {
-              case p: Parameter[Double] => {
-                p.MAPValue
+              def learner(parameters: Parameters): Algorithm = {
+                parameters match {
+                  case ps: LearnableParameters => EMWithImportance(numEMIterations, 1000, ps.b1, ps.b2, ps.b3, ps.b4, ps.b5, ps.b6, ps.b7, ps.b8, ps.b9)(parameters.universe)
+                  case _ => throw new IllegalArgumentException("Not learnable parameters")
+                }
               }
-              case _ => throw new IllegalArgumentException("Not a learnable parameter")
+
+              def parameterGetter(algorithm: Algorithm, parameter: Element[Double]): Double = {
+                parameter match {
+                  case p: Parameter[Double] => {
+                    p.MAPValue
+                  }
+                  case _ => throw new IllegalArgumentException("Not a learnable parameter")
+                }
+              }
+              val (trueParamErr, truePredAcc) = assessModel(TrueModel, testSet)
+              val (learnedModel, learningTime) = train(trainingSet, new LearnableParameters(new Universe), learner, parameterGetter, learningFlipConstructor)
+              val (learnedParamErr, learnedPredAcc) = assessModel(learnedModel, testSet)
+
+//               println(learnedParamErr)
+//               println(learnedPredAcc)
+
+              update(learnedParamErr, NDTest.TTEST, "EMImportanceTestResultsLearnedParamErr", 0.00, alpha)
+              update(learnedPredAcc - truePredAcc, NDTest.TTEST, "EMImportanceTestResultsLearnedPredAcc", 0.00, alpha)
             }
           }
-          val (trueParamErr, truePredAcc) = assessModel(TrueModel, testSet)
-          val (learnedModel, learningTime) = train(trainingSet, new LearnableParameters(new Universe), learner, parameterGetter, learningFlipConstructor)
-          val (learnedParamErr, learnedPredAcc) = assessModel(learnedModel, testSet)
 
-          println(learnedParamErr)
-          println(learnedPredAcc)
-          learnedParamErr should be(0.00 +- 0.12)
-          learnedPredAcc should be(truePredAcc +- 0.12)
-
+          ndtest.run(10)
         }
-
+        }
     }
 
 }
