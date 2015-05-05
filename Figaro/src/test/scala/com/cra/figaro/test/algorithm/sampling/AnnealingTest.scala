@@ -22,6 +22,9 @@ import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.library.compound.^^
 import com.cra.figaro.test._
+import scala.util.Random
+import com.cra.figaro.library.atomic.discrete.SwitchingFlip
+import com.cra.figaro.library.compound.If
 
 class AnnealingTest extends WordSpec with Matchers with PrivateMethodTester {
 
@@ -63,7 +66,7 @@ class AnnealingTest extends WordSpec with Matchers with PrivateMethodTester {
     "converge to the most likely value with an interval using anytime" in {
       Universe.createNew()
       val elems = buildUndirected(4, Flip(0.5), (b: (Boolean, Boolean)) => if (b._1 && b._2) 2.0 else 1.0)
-      val annealer = MetropolisHastingsAnnealer(ProposalScheme.default, Schedule.default(2.0),1,2)
+      val annealer = MetropolisHastingsAnnealer(ProposalScheme.default, Schedule.default(2.0), 1, 2)
       annealer.start()
       Thread.sleep(500)
       annealer.stop()
@@ -73,11 +76,11 @@ class AnnealingTest extends WordSpec with Matchers with PrivateMethodTester {
       }
       annealer.kill
     }
-    
+
     "converge to the most likely value with an interval using one-time" in {
       Universe.createNew()
       val elems = buildUndirected(4, Flip(0.5), (b: (Boolean, Boolean)) => if (b._1 && b._2) 2.0 else 1.0)
-      val annealer = MetropolisHastingsAnnealer(10000, ProposalScheme.default, Schedule.default(2.0),1,2)
+      val annealer = MetropolisHastingsAnnealer(10000, ProposalScheme.default, Schedule.default(2.0), 1, 2)
       annealer.start()
       annealer.stop()
       for { i <- 1 to 4 } {
@@ -86,40 +89,39 @@ class AnnealingTest extends WordSpec with Matchers with PrivateMethodTester {
       }
       annealer.kill
     }
-    
-    
+
     "produce higher temperatue with higher k" in {
       Universe.createNew()
       val elems1 = buildUndirected(4, Flip(0.5), (b: (Boolean, Boolean)) => if (b._1 && b._2) 2.0 else 1.0)
-      val annealer1 = MetropolisHastingsAnnealer(1000, ProposalScheme.default, Schedule.default(4.0),100)
+      val annealer1 = MetropolisHastingsAnnealer(1000, ProposalScheme.default, Schedule.default(4.0), 100)
       annealer1.start()
       val temp1 = annealer1.getTemperature
 
       val elems2 = buildUndirected(4, Flip(0.5), (b: (Boolean, Boolean)) => if (b._1 && b._2) 2.0 else 1.0)
-      val annealer2 = MetropolisHastingsAnnealer(1000, ProposalScheme.default, Schedule.default(2.0),100)
+      val annealer2 = MetropolisHastingsAnnealer(1000, ProposalScheme.default, Schedule.default(2.0), 100)
       annealer2.start()
       val temp2 = annealer2.getTemperature
 
       temp2 should be > temp1
-      
+
       annealer1.kill
       annealer2.kill
     }
-    
+
     "produce higher temperatue with higher k with burn-in" in {
       Universe.createNew()
       val elems1 = buildUndirected(4, Flip(0.5), (b: (Boolean, Boolean)) => if (b._1 && b._2) 2.0 else 1.0)
-      val annealer1 = MetropolisHastingsAnnealer(1000, ProposalScheme.default, Schedule.default(4.0),100)
+      val annealer1 = MetropolisHastingsAnnealer(1000, ProposalScheme.default, Schedule.default(4.0), 100)
       annealer1.start()
       val temp1 = annealer1.getTemperature
 
       val elems2 = buildUndirected(4, Flip(0.5), (b: (Boolean, Boolean)) => if (b._1 && b._2) 2.0 else 1.0)
-      val annealer2 = MetropolisHastingsAnnealer(1000, ProposalScheme.default, Schedule.default(2.0),100)
+      val annealer2 = MetropolisHastingsAnnealer(1000, ProposalScheme.default, Schedule.default(2.0), 100)
       annealer2.start()
       val temp2 = annealer2.getTemperature
 
       temp2 should be > temp1
-      
+
       annealer1.kill
       annealer2.kill
     }
@@ -142,11 +144,11 @@ class AnnealingTest extends WordSpec with Matchers with PrivateMethodTester {
       temp2 should be > temp1
       annealer1.kill
     }
-    
+
     "increase the temperature with more iterations, including with burn-in" in {
       Universe.createNew()
       val elems1 = buildUndirected(4, Flip(0.5), (b: (Boolean, Boolean)) => if (b._1 && b._2) 2.0 else 1.0)
-      val annealer1 = MetropolisHastingsAnnealer(ProposalScheme.default, Schedule.default(2.0),100)
+      val annealer1 = MetropolisHastingsAnnealer(ProposalScheme.default, Schedule.default(2.0), 100)
       annealer1.start()
       Thread.sleep(250)
       annealer1.stop
@@ -162,6 +164,42 @@ class AnnealingTest extends WordSpec with Matchers with PrivateMethodTester {
       annealer1.kill
     }
 
+  }
+
+  "Running anytime annealing" should {
+
+    def buildComplicatedModel(): Universe = {
+      val u = Universe.createNew()
+      val flips = Seq.fill(10000)(Math.pow(0.01, Random.nextDouble)).map(SwitchingFlip(_))
+      val ifs = for ((f, i) <- flips.zipWithIndex) yield {
+        val fi = If(f, SwitchingFlip(Math.pow(0.01, Random.nextDouble)), Constant(false))(i.toString(), u)
+        if (Random.nextDouble > 0.80) fi.observe(Random.nextBoolean())
+      }
+      u
+    }
+
+    "give a most likely value at any time" in {
+      try {
+        val u = buildComplicatedModel()
+        val annealer = MetropolisHastingsAnnealer(ProposalScheme.default, Schedule.default(2.0))(u)
+        if (annealer.isActive) annealer.resume else annealer.start
+        Thread.sleep(100)
+        annealer.stop()
+        for (i <- 1 to 10000) {
+          if (annealer.isActive) annealer.resume else annealer.start
+          Thread.sleep(25)
+          annealer.stop()
+          println("loop once")
+          for (i <- 0 until 10000) {
+            annealer.mostLikelyValue(u.getElementByReference[Boolean](i.toString()))
+          }
+        }
+        annealer.kill
+      } catch {
+        case knf: Exception => fail("running algorithm should not produce exceptions.")
+        case _ =>
+      }
+    }
   }
 
 }
