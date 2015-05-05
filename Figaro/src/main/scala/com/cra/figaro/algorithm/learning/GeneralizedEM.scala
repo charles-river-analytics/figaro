@@ -105,6 +105,7 @@ trait OnlineExpectationMaximization extends Online with ExpectationMaximization 
     val updated = updateStatistics(newStatistics)
     doMaximizationStep(updated)
     lastIterationStatistics = updated
+    currentUniverse.clear()
   }
 
 }
