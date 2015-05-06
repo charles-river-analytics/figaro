@@ -105,7 +105,6 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
     if (dissatisfied.isEmpty) {
       sampleCount += 1
       val toUpdate = if (currentEnergy > bestEnergy) {
-        allLastUpdates.clear
         saveState
       } else Map[Element[_], Any]()
       (true, toUpdate)
