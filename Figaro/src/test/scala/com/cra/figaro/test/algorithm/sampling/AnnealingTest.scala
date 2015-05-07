@@ -189,7 +189,6 @@ class AnnealingTest extends WordSpec with Matchers with PrivateMethodTester {
           if (annealer.isActive) annealer.resume else annealer.start
           Thread.sleep(25)
           annealer.stop()
-          println("loop once")
           for (i <- 0 until 10000) {
             annealer.mostLikelyValue(u.getElementByReference[Boolean](i.toString()))
           }
