@@ -32,25 +32,25 @@ trait ExpectationMaximization extends Algorithm with ParameterLearner {
   protected val paramMap: Map[Parameter[_], Seq[Double]] = Map(targetParameters.map(p => p -> p.zeroSufficientStatistics): _*)
   protected def doExpectationStep(): Map[Parameter[_], Seq[Double]]
 
-  protected def doStart(): Unit = {
+  protected[algorithm] def doStart(): Unit = {
     em()
   }
 
   /*
    * Stop the algorithm from computing. The algorithm is still ready to provide answers after it returns.
    */
-  protected def doStop(): Unit = {}
+  protected[algorithm] def doStop(): Unit = {}
 
   /*
    * Resume the computation of the algorithm, if it has been stopped.
    */
 
-  protected def doResume(): Unit = {}
+  protected[algorithm] def doResume(): Unit = {}
 
   /*
    * Kill the algorithm so that it is inactive. It will no longer be able to provide answers.
    */
-  protected def doKill(): Unit = {}
+  protected[algorithm] def doKill(): Unit = {}
 
   val terminationCriteria: () => EMTerminationCriteria
   val targetParameters: Seq[Parameter[_]]

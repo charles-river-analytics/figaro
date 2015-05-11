@@ -76,7 +76,7 @@ abstract class WeightedSampler(override val universe: Universe, targets: Element
   protected def update(): Unit = {
   }
 
-  private def projection[T](target: Element[T]): List[(T, Double)] = {
+  private[algorithm] def projection[T](target: Element[T]): List[(T, Double)] = {
     val weightSeen = allWeightsSeen.find(_._1 == target).get._2.asInstanceOf[Map[T, Double]]
     weightSeen.mapValues(s => math.exp(s - getTotalWeight)).toList
   }
