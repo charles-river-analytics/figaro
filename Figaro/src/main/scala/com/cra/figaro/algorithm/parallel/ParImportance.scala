@@ -23,9 +23,18 @@ import com.cra.figaro.language._
  * that will do its work on separate threads, over separate universes. This creates two major
  * differences with how a user interacts with the algorithm. First of all, rather than defining
  * a model on a universe and then starting the algorithm, the user must define a function that 
- * generates a universe, and pass that to the companion object to create the algorithm. The 
- * second major difference is that elements must be referred to using references, since each
- * variable will exist as multiple elements across the different universes.
+ * generates a universe and applies any evidence, and then pass that to the companion object 
+ * to create the algorithm. The second major difference is that elements must be referred to 
+ * using references, since each variable will exist as multiple elements across the different 
+ * universes.
+ * 
+ * One-time sampling will be faster, since, it divides the work over the different threads. 
+ * Anytime sampling should provide more accurate results, since it can take more samples over 
+ * the same amount of time. Both cases will most likely require more memory, at least using the 
+ * current implementation of WeightedSampler, which keeps track of all values and weights that 
+ * have been sampled. When querying, a weighted combination of the results of the various threads 
+ * is returned. This last step adds some overhead, which should be negligible as long as you are 
+ * taking a large number of samples.
  */
 abstract class ParImportance(algs: Seq[Importance], targets: Reference[_]*) 
 extends ParProbQueryAlgorithm {
