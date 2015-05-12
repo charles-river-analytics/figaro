@@ -20,15 +20,19 @@ import com.cra.figaro.language._
 
 /**
  * Parallel version of Importance sampling. Has a parallel collection of algorithm instances 
- * that will do its work on separate threads, over separate universes. This creates two major
- * differences with how a user interacts with the algorithm. First of all, rather than defining
- * a model on a universe and then starting the algorithm, the user must define a function that 
- * generates a universe and applies any evidence, and then pass that to the companion object 
- * to create the algorithm. The second major difference is that elements must be referred to 
- * using references, since each variable will exist as multiple elements across the different 
- * universes.
+ * that will do its work on separate threads, over separate universes. Uses Scala's parallel 
+ * collections to divide up the work, so it will work best if told to run on a number of threads 
+ * less than or equal to the number of worker threads Scala creates when operating over parallel 
+ * collections. 
  * 
- * One-time sampling will be faster, since, it divides the work over the different threads. 
+ * This creates two major differences with how a user interacts with the algorithm. First of all, 
+ * rather than defining a model on a universe and then starting the algorithm, the user must 
+ * define a function that generates a universe and applies any evidence, and then pass that to 
+ * the companion object to create the algorithm. The second major difference is that elements 
+ * must be referred to using references, since each variable will exist as multiple elements 
+ * across the different universes.
+ * 
+ * One-time sampling will be faster, since it divides the work over the different threads. 
  * Anytime sampling should provide more accurate results, since it can take more samples over 
  * the same amount of time. Both cases will most likely require more memory, at least using the 
  * current implementation of WeightedSampler, which keeps track of all values and weights that 
