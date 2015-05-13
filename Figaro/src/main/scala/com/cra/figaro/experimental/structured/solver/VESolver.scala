@@ -14,6 +14,7 @@ package com.cra.figaro.experimental.structured.solver
 
 import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.experimental.structured.Problem
+import com.cra.figaro.util.MultiSet
 
 private[figaro] class VESolver(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]])
 extends com.cra.figaro.algorithm.factored.VariableElimination[Double] {
@@ -22,13 +23,13 @@ extends com.cra.figaro.algorithm.factored.VariableElimination[Double] {
     result
   }
 
-  debug = true
+  debug = false
 
   val semiring: Semiring[Double] = SumProductSemiring()
 
   private var result: List[Factor[Double]] = _
 
-  def finish(factorsAfterElimination: scala.collection.mutable.Set[Factor[Double]], eliminationOrder: List[Variable[_]]): Unit = {
+  def finish(factorsAfterElimination: MultiSet[Factor[Double]], eliminationOrder: List[Variable[_]]): Unit = {
     result = factorsAfterElimination.toList
   }
 

@@ -189,7 +189,7 @@ extends ExpandableComponent[ParentValue, Value](problem, chain.parent, chain) {
         (parentValue, subproblem) <- subproblems
         factor <- subproblem.solution
       } yield Factory.replaceVariable(factor, problem.collection(subproblem.target).variable, actualSubproblemVariables(parentValue))
-    nonConstraintFactors = subproblems.values.toList.flatMap(_.solution) ::: nonConstraintFactors
+    nonConstraintFactors = subproblemFactors.toList ::: nonConstraintFactors
   }
 
   /*

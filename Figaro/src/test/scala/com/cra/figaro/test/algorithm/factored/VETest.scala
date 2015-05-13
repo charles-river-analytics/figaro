@@ -1,13 +1,13 @@
 /*
- * VETest.scala  
+ * VETest.scala
  * Variable elimination tests.
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -306,7 +306,7 @@ class VETest extends WordSpec with Matchers {
       val a = If(f, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
       test(f, (b: Boolean) => b, 0.6)
     }
-    
+
     "on a different universe from the current universe, produce the correct result" in {
       val u1 = Universe.createNew()
       val u = Select(0.25 -> 0.3, 0.25 -> 0.5, 0.25 -> 0.7, 0.25 -> 0.9)
@@ -381,7 +381,7 @@ class VETest extends WordSpec with Matchers {
       ve.probability(y, true) should be(((0.1 * 0.2 + 0.9 * 0.2) / (0.1 * 0.2 + 0.9 * 0.2 + 0.9 * 0.8)) +- 0.0000000001)
       ve.kill
     }
-    
+
   }
 
   "MPEVariableElimination" should {
@@ -407,7 +407,7 @@ class VETest extends WordSpec with Matchers {
       alg.kill
     }
   }
-  
+
   def test[T](target: Element[T], predicate: T => Boolean, prob: Double) {
     val tolerance = 0.0000001
     val algorithm = VariableElimination(target)
