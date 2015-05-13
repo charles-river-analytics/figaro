@@ -26,7 +26,7 @@ import com.cra.figaro.test.tags.NonDeterministic
 
 class MutableMovieTest extends WordSpec with Matchers {
   "A PRM with a global constraint with mutation" should {
-    "produce the correct probability under variable elimination" taggedAs (Example, NonDeterministic) in {
+    "produce the correct probability under variable elimination" taggedAs (Example) in {
       test((e: Element[Boolean]) => VariableElimination(e))
     }
 
@@ -35,11 +35,12 @@ class MutableMovieTest extends WordSpec with Matchers {
     }
 
     "produce the correct probability under Metropolis-Hastings" taggedAs (Example, NonDeterministic) in {
-      test((e: Element[Boolean]) => MetropolisHastings(200000, chooseScheme, e))
+      test((e: Element[Boolean]) => MetropolisHastings(200000, chooseScheme, 10000, e))
+      println(com.cra.figaro.util.seed)
     }
   }
 
-  val random = new scala.util.Random()
+  val random = com.cra.figaro.util.random
 
   val numActors = 2
   val numMovies = 2

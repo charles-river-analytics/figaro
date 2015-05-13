@@ -1,13 +1,13 @@
 /*
  * Element.scala
  * Elements of Figaro models.
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -53,7 +53,7 @@ import scala.language.implicitConversions
  * An element has a name and belongs to an element collection that is used to find the element the name.
  *
  * Elements can be cacheable or non-cacheable, which determines what type of Chain will be created for them.
- * If you create a new Element class that you want to be cached, you should declare it to implement the Cachable or IfArgsCachable traits.
+ * If you create a new Element class that you want to be cached, you should declare it to implement the Cacheable or IfArgsCacheable traits.
  *
  * @param name The name of the element
  * @param collection The element collection to which this element belongs
@@ -74,7 +74,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    * The type of soft constraints on the element. A constraint is a function from a value to a Double.
    */
   type Constraint = T => Double
-  
+
   /**
    * The type of randomness content of the element.
    */
@@ -89,7 +89,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
 
   /**
    * The cacheability of the element. Chains create caches of their parent values, and it is useful to know when these values can be effectively cached and reused.
-   *  In general, continuous distributions are not cacheable
+   *  In general, continuous distributions are not cacheable.
    */
   def isCachable(): Boolean = false
 
@@ -101,11 +101,11 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   /**
    * Generate the next randomness given the current randomness.
    * Returns three values: The next randomness, the Metropolis-Hastings proposal probability
-   * ratio, which is
+   * ratio, which is:
    *
    * P(new -> old) / P(old -> new)
    *
-   * and the model probability ratio, which is
+   * and the model probability ratio, which is:
    *
    * P(new) / P(old)
    *
@@ -121,7 +121,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   var randomness: Randomness = _
 
   /**
-   * Generate the value of the element determinstically given its randomness and the values of
+   * Generate the value of the element deterministically given its randomness and the values of
    * its arguments.
    */
   def generateValue(rand: Randomness): Value
@@ -146,18 +146,18 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   /* Complete context of this element */
   private[language] var myContext: List[Element[_]] = List()
 
-  /** The elements on which the existence of this element depends */
+  /** The elements on which the existence of this element depends. */
   def context = if (!active) {
     throw new NoSuchElementException
   } else myContext
 
   /* Stores the elements that were created in this element's context. Note this is not used
-   * for chains, since they maintain their own context control. 
+   * for chains, since they maintain their own context control.
    */
   private val myDirectContextContents: Set[Element[_]] = Set()
 
   /**
-   * Returns the set of elements directly created in the context of this element
+   * Returns the set of elements directly created in the context of this element.
    */
   def directContextContents: Set[Element[_]] = if (!active) {
     throw new NoSuchElementException
@@ -168,12 +168,12 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   private[language] def removeContextContents(e: Element[_]): Unit = myDirectContextContents -= e
 
   /**
-   * Returns true if this element is temporary, that is, was created in the context of another element
+   * Returns true if this element is temporary, that is, was created in the context of another element.
    */
   def isTemporary = !myContext.isEmpty
 
   /**
-   * Clears all the temporary elements associated with this element (all elements created in it's context)
+   * Clears all the temporary elements associated with this element (all elements created in it's context).
    */
   def clearContext() = universe.deactivate(directContextContents)
 
@@ -188,6 +188,16 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   private[figaro]type Contingency = Element.Contingency
   private[figaro]type ElemVal[T] = Element.ElemVal[T]
 
+  /**
+   * Returns the elements that this element is contingent on. These are elements that are required to have a certain value for a condition or constraint
+   * to be relevant to this element. The contingency is required because conditions and constraints can be applied to references that are
+   * uncertain. Every possible element that could be pointed to by a reference must be given the condition or constraint, but the condition
+   * or constraint only applies if the elements earlier in the reference have the required value.
+   *
+   * Figaro takes care of handling all this under the
+   * hood. However, some algorithms may need to know which elements an element is contingent on. For example, sampling algorithms may need to sample
+   * those other elements first. This method is supplied to support this use case.
+   */
   def elementsIAmContingentOn: Set[Element[_]] = {
     val conditionElements =
       for {
@@ -223,12 +233,12 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    * captured in a condition. However, for some algorithms, such as importance sampling,
    * it is useful to know that a condition is actually an observation of a specific value.
    * This is a common case, and to optimize it, we store the observation.
-   * 
+   *
    * If an element has any other condition besides this observation, we cannot use the
    * observation. However, it can have a constraint.
    */
   private[figaro] var observation: Option[T] = None
-  
+
   /*
    * Testing whether a condition is satisfied can use any type of value. The condition can only be satisfied if the value has the right type and the condition returns true.
    */
@@ -288,11 +298,24 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    */
   def allConstraints = myConstraints
 
+  // Avoid issuing a warning every time this method is called, e.g. for every sample.
+  private var constraintWarningIssued = false
+
   /*
-   * Testing whether a condition is satisfied can use any type of value. The condition can only be satisfied if the value has the right type and the condition returns true.
+   * Computes the result of the element's constraint on a given value.
+   * A value of any type can be passed, but if the value is of an inappropriate type, the constraint result is negative infinity.
+   * This method also issues a warning if the constraint is greater than log(1) = 0.
    */
   private def checkedConstraint(constraint: Constraint, value: Any): Double =
-    try { constraint(value.asInstanceOf[Value]) } catch { case _: ClassCastException => Double.NegativeInfinity }
+    try {
+      val result = constraint(value.asInstanceOf[Value])
+      if (result > 0 && !constraintWarningIssued) {
+
+        //println("Warning: constraint value " + result + " is greater than 1. Algorithms that use an upper bound of 1 will be incorrect.")
+        constraintWarningIssued = true
+      }
+      result
+    } catch { case _: ClassCastException => Double.NegativeInfinity }
 
   /*
    * Determines the result of a contingent constraint for a given value of this element. If any of the contingent elements does not have its appropriate value, the result is 1,
@@ -330,7 +353,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
     contingency.foreach(ev => ensureContingency(ev.elem))
     myConstraints ::= (ProbConstraintType(constraint), contingency)
   }
-  
+
     /**
    * Add a log contingent constraint to the element. By default, the contingency is empty.
    */
@@ -339,7 +362,6 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
     contingency.foreach(ev => ensureContingency(ev.elem))
     myConstraints ::= (LogConstraintType(constraint), contingency)
   }
-  
 
   /**
    * Remove all constraints associated with the given contingency. By default, the contingency is empty.
@@ -349,6 +371,12 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
     if (myConstraints.isEmpty) universe.makeUnconstrained(this)
   }
 
+  protected def removeConstraint(constraint: Constraint, contingency: Contingency = List()): Unit = {
+    myConstraints = myConstraints.filterNot((c: (Constraint,Contingency)) => c._2 == contingency && c._1 == constraint)
+    if (myConstraints.isEmpty) universe.makeUnconstrained(this)
+  }
+
+
   /**
    * Set the constraint associated with the contingency. Removes previous constraints associated with the contingency.  By default, the contingency is empty.
    */
@@ -356,7 +384,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
     removeConstraints(contingency)
     addConstraint(newConstraint, contingency)
   }
-  
+
     /**
    * Set the log constraint associated with the contingency. Removes previous constraints associated with the contingency.  By default, the contingency is empty.
    */
@@ -377,7 +405,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   }
 
   /**
-   * Removes conditions on the element and allows different values of the element to be generated
+   * Removes conditions on the element and allows different values of the element to be generated.
    */
   def unobserve(): Unit = {
     unset()
@@ -484,7 +512,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   def !==(that: Element[Value])(implicit universe: Universe) = new Neq("", this, that, universe)
 
   /**
-   * A string that is the element's name, if it has a non-empty one, otherwise the result of the element's toString
+   * A string that is the element's name, if it has a non-empty one, otherwise the result of the element's toString.
    */
   def toNameString = if (name.string != "") name.string; else toString
 
@@ -548,7 +576,7 @@ object Element {
 
   /**
    * Returns the given elements and all elements on which they are contingent, closed recursively.
-   * Only elements with condition
+   * Only elements with condition.
    */
   def closeUnderContingencies(elements: scala.collection.Set[Element[_]]): scala.collection.Set[Element[_]] = {
     def findContingent(elements: scala.collection.Set[Element[_]]): scala.collection.Set[Element[_]] = {
@@ -582,5 +610,3 @@ trait Cacheable[V] extends Element[V] {
 trait IfArgsCacheable[V] extends Element[V] {
   override def isCachable = args forall (_.isCachable)
 }
-
-

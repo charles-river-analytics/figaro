@@ -241,7 +241,7 @@ object SimpleLearning {
 
     def learner(parameters: Parameters): Algorithm = {
       parameters match {
-        case ps: LearnableParameters => EM.withVE(numEMIterations, ps.b1, ps.b2, ps.b3, ps.b4, ps.b5, ps.b6, ps.b7, ps.b8, ps.b9)(parameters.universe)
+        case ps: LearnableParameters => EMWithVE(numEMIterations, ps.b1, ps.b2, ps.b3, ps.b4, ps.b5, ps.b6, ps.b7, ps.b8, ps.b9)(parameters.universe)
         case _ => throw new IllegalArgumentException("Not learnable parameters")
       }
     }

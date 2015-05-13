@@ -18,6 +18,7 @@ import org.scalatest.{ PrivateMethodTester, WordSpec }
 import com.cra.figaro.algorithm.learning._
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.factored._
+import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
@@ -39,7 +40,7 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               val universe = Universe.createNew
               val f1 = Flip(0.5)
               val f2 = Flip(0.2)
-              val p1 = BetaParameter(1, 1)
+              val p1 = Beta(1, 1)
               val f3 = Flip(p1)
               val targetParameters = List(p1)
 
@@ -67,9 +68,9 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
                 //println(factor.toReadableString)
 
                 if (factor.variables.contains(Variable(f1)) == true) {
-                  factor.allIndices.foreach(a => factor.get(a)._2 should equal(zero._2))
+                  factor.getIndices.foreach(a => factor.get(a)._2 should equal(zero._2))
                 } else if (factor.variables.contains(Variable(f1)) == true) {
-                  factor.allIndices.foreach(a => factor.get(a)._2 should equal(zero._2))
+                  factor.getIndices.foreach(a => factor.get(a)._2 should equal(zero._2))
                 } else if (factor.variables.contains(Variable(f3)) == true) {
                   val i = Variable(f3).range.indexOf(Regular(true))
                   //println(factor.get(List(i))._2(p1))
@@ -84,7 +85,7 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               val universe = Universe.createNew
               val f1 = Select(0.5 -> true, 0.5 -> false)
               val f2 = Select(0.2 -> true, 0.8 -> false)
-              val p1 = DirichletParameter(1, 1)
+              val p1 = Dirichlet(1, 1)
               val f3 = Select(p1, true, false)
               val targetParameters = List(p1)
 
@@ -111,12 +112,12 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               for (factor <- factors) {
 
                 if (factor.variables.contains(Variable(f1)) == true) {
-                  factor.allIndices.foreach(a => factor.get(a)._2 should equal(zero._2))
+                  factor.getIndices.foreach(a => factor.get(a)._2 should equal(zero._2))
                 } else if (factor.variables.contains(Variable(f1)) == true) {
-                  factor.allIndices.foreach(a => factor.get(a)._2 should equal(zero._2))
+                  factor.getIndices.foreach(a => factor.get(a)._2 should equal(zero._2))
                 } else if (factor.variables.contains(Variable(f3)) == true) {
 
-                  factor.allIndices.foreach(a => factor.get(a)._2.contains(p1) should equal(true))
+                  factor.getIndices.foreach(a => factor.get(a)._2.contains(p1) should equal(true))
                   val i = Variable(f3).range.indexOf(Regular(true))
                   factor.get(List(i))._2(p1) should equal(Seq(1.0, 0.0))
                   factor.get(List(i + 1))._2(p1) should equal(Seq(0.0, 1.0))
@@ -130,7 +131,7 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               val universe = Universe.createNew
               val f1 = Select(0.5 -> 1, 0.4 -> 2, 0.1 -> 3)
               val f2 = Select(0.1 -> 1, 0.8 -> 2, 0.1 -> 3)
-              val p1 = DirichletParameter(1, 1, 1)
+              val p1 = Dirichlet(1, 1, 1)
               val f3 = Select(p1, 1, 2, 3)
               val targetParameters = List(p1)
 
@@ -156,12 +157,12 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               for (factor <- factors) {
 
                 if (factor.variables.contains(Variable(f1)) == true) {
-                  factor.allIndices.foreach(a => factor.get(a)._2 should equal(zero._2))
+                  factor.getIndices.foreach(a => factor.get(a)._2 should equal(zero._2))
                 } else if (factor.variables.contains(Variable(f1)) == true) {
-                  factor.allIndices.foreach(a => factor.get(a)._2 should equal(zero._2))
+                  factor.getIndices.foreach(a => factor.get(a)._2 should equal(zero._2))
                 } else if (factor.variables.contains(Variable(f3)) == true) {
 
-                  factor.allIndices.foreach(a => factor.get(a)._2.contains(p1) should equal(true))
+                  factor.getIndices.foreach(a => factor.get(a)._2.contains(p1) should equal(true))
                   val i = Variable(f3).range.indexOf(Regular(1))
                   factor.get(List(i))._2(p1) should equal(Seq(1.0, 0.0, 0.0))
                   factor.get(List(i + 1))._2(p1) should equal(Seq(0.0, 1.0, 0.0))
@@ -175,7 +176,7 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
             {
               val universe = Universe.createNew
               val f1 = Flip(0.9)
-              val p1 = BetaParameter(12, 12)
+              val p1 = Beta(12, 12)
               val f2 = Flip(p1)
               f2.observe(true)
 
@@ -208,7 +209,7 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               val universe = Universe.createNew
               val f1 = Select(0.5 -> true, 0.5 -> false)
               val f2 = Select(0.2 -> true, 0.8 -> false)
-              val p1 = DirichletParameter(1, 1)
+              val p1 = Dirichlet(1, 1)
               val f3 = Select(p1, true, false)
               f3.observe(true)
               val targetParameters = List(p1)
@@ -238,7 +239,7 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               val universe = Universe.createNew
               val f1 = Select(0.5 -> 1, 0.4 -> 2, 0.1 -> 3)
               val f2 = Select(0.1 -> 1, 0.8 -> 2, 0.1 -> 3)
-              val p1 = DirichletParameter(1, 1, 1)
+              val p1 = Dirichlet(1, 1, 1)
               val f3 = Select(p1, 1, 2, 3)
 
               f3.observe(1)
@@ -272,7 +273,7 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               val universe = Universe.createNew
               val f1 = Select(0.5 -> 1, 0.4 -> 2, 0.1 -> 3)
               val f2 = Select(0.1 -> 1, 0.8 -> 2, 0.1 -> 3)
-              val p1 = DirichletParameter(1, 1, 1)
+              val p1 = Dirichlet(1, 1, 1)
               val f3 = Select(p1, 1, 2, 3)
 
               f3.observe(1)
@@ -308,7 +309,7 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               val universe = Universe.createNew
               val f1 = Select(0.5 -> 1, 0.4 -> 2, 0.1 -> 3)
               val f2 = Select(0.1 -> 1, 0.8 -> 2, 0.1 -> 3)
-              val p1 = DirichletParameter(1, 1, 1)
+              val p1 = Dirichlet(1, 1, 1)
               val f3 = Select(p1, 1, 2, 3)
 
               f3.observe(1)
@@ -346,7 +347,7 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               val universe = Universe.createNew
               val f1 = Select(0.5 -> 1, 0.4 -> 2, 0.1 -> 3)
               val f2 = Select(0.1 -> 1, 0.8 -> 2, 0.1 -> 3)
-              val p1 = DirichletParameter(1, 1, 1)
+              val p1 = Dirichlet(1, 1, 1)
               val f3 = Select(p1, 1, 2, 3)
 
               f3.observe(1)

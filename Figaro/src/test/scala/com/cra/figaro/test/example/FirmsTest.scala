@@ -1,13 +1,13 @@
 /*
- * FirmsTest.scala 
- * Firms examples tests. 
- * 
+ * FirmsTest.scala
+ * Firms examples tests.
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -42,10 +42,9 @@ class FirmsTest extends WordSpec with Matchers {
 
   private class Firm(name: String) {
     val efficient = Flip(0.3)(name + "efficient", universe)
-    val bid = If(
-      efficient,
-      continuous.Uniform(5.0, 15.0)(name + "bidWhenEfficient", universe),
-      continuous.Uniform(10.0, 20.0)(name + "bidWhenInefficient", universe))(name + "bid", universe)
+    val bidWhenEfficient = continuous.Uniform(5.0, 15.0)(name + "bidWhenEfficient", universe)
+    val bidWhenInefficient = continuous.Uniform(10.0, 20.0)(name + "bidWhenInefficient", universe)
+    val bid = If(efficient, bidWhenEfficient, bidWhenInefficient)("bid", universe)
   }
 
   def test(algorithmCreator: Element[Boolean] => ProbQueryAlgorithm) {

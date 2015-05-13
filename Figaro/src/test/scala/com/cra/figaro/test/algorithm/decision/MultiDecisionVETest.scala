@@ -1,5 +1,5 @@
 /*
- * MultiDecisionVETTest.scala 
+ * MultiDecisionVETest.scala 
  * Variable elimination tests.
  * 
  * Created By:      Brian Ruttenberg (bruttenberg@cra.com)

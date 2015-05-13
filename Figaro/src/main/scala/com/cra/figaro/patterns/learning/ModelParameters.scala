@@ -1,3 +1,16 @@
+/*
+ * ModelParameters.scala
+ * Collections for defining prior and posterior parameters.
+ * 
+ * Created By:      Michael Howard (mhoward@cra.com)
+ * Creation Date:   Oct 29, 2014
+ * 
+ * Copyright 2014 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * See http://www.cra.com or email figaro@cra.com for information.
+ * 
+ * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
+
 package com.cra.figaro.patterns.learning
 
 import com.cra.figaro.language.Element
@@ -9,24 +22,39 @@ import scala.collection.mutable.ListBuffer
 import com.cra.figaro.language.DoubleParameter
 import com.cra.figaro.language.ArrayParameter
 import com.cra.figaro.language.Parameter
-//Double, array[double], (or matrix[double]
-//Or element[double], element[array[double]]
-
-
-abstract class ParameterType 
+import argonaut._, Argonaut._
+import com.cra.figaro.library.atomic.continuous.Dirichlet
+import com.cra.figaro.library.atomic.continuous.Beta
+/**
+ * Case classes defining type parameters of parameter elements.
+ * These are used for matching on return types of parameter collections, and for
+ * correctly instantiating elements from the posterior and prior parameters.
+ */
+abstract class ParameterType
+/**
+ * Parameters whose MAP value is a double
+ */
 case class PrimitiveDouble(val d: Double) extends ParameterType {
   override def toString = d.toString()
 }
+/**
+ * Learnable parameters whose MAP value is a double
+ */
 case class ParameterDouble(val p: Parameter[Double]) extends ParameterType {
   override def toString = p.toString()
 }
+/**
+ * Parameters whose MAP value is an array of doubles
+ */
 case class PrimitiveArray(val a: Array[Double]) extends ParameterType {
   override def toString = a.toString()
 }
+/**
+ * Learnable parameters whose MAP value is an array of doubles
+ */
 case class ParameterArray(val p: Parameter[Array[Double]]) extends ParameterType {
   override def toString = p.toString()
 }
-
 
 object ParameterType {
   def apply(d: Double) = new PrimitiveDouble(d)
@@ -39,73 +67,163 @@ object ParameterType {
   def apply(a: Array[Double]) = new PrimitiveArray(a)
 }
 
-
-abstract class ParameterCollection {
+/**
+ * Defines a collection of prior or posterior parameters, obtained from a set of ModelParameters
+ */
+trait ParameterCollection {
   def get(s: String): ParameterType
 }
 
+/**
+ * A class representing the prior and posterior parameters of a model
+ */
 class ModelParameters extends ElementCollection {
 
+  /**
+   * Add a parameter to the collection
+   */
   override def add[T](element: Element[T]) = {
     element match {
       case p: Parameter[T] => super.add(p)
+      case default => {
+        //Do not add non-parameter elements to the set of model parameters.
+      }
     }
   }
-  
-  
+
+  /**
+   * Convert the contents of to a list of parameter elements
+   */
   def convertToParameterList: List[Parameter[_]] = {
     val l = ListBuffer.empty[Parameter[_]]
     for (p <- this.namedElements) {
       p match {
         case a: Parameter[_] => {
-           l += a 
+          l += a
         }
-        case _ => {
-          
+        case default => {
+          //Do not add non-parameter elements to the result list. This should never be reached.
         }
       }
     }
     l.toList
   }
-  
-  
-  private class PriorParameterCollection extends ParameterCollection {
+
+  private object PriorParameterCollection extends ParameterCollection {
     def get(s: String): ParameterType = {
-      val p = ModelParameters.super.getElementByReference(s)
+      val p = getElementByReference(s)
       val result = p match {
         case p: Parameter[_] => ParameterType(p)
+        case default => throw new IllegalArgumentException("Cannot retrieve non-parameter elements from parameter collection.")
+      }
+      result
+    }
+
+    def apply(s: String): ParameterType = {
+      val p = getElementByReference(s)
+      val result = p match {
+        case p: Parameter[_] => ParameterType(p)
+        case default => throw new IllegalArgumentException("Cannot retrieve non-parameter elements from parameter collection.")
       }
       result
     }
   }
-  
-  private class PosteriorParameterCollection extends ParameterCollection {
-    def get(s: String): ParameterType = {      
-      val p = ModelParameters.super.getElementByReference(s)
-      val result = p match {//Kind of lame to handle every parameter individually...
-        case x: Parameter[_] => { 
+
+  private object PosteriorParameterCollection extends ParameterCollection {
+    def get(s: String): ParameterType = {
+      val p = getElementByReference(s)
+      val result = p match {
+        case x: Parameter[_] => {
           x match {
             case d: DoubleParameter => ParameterType(d.MAPValue)
             case a: ArrayParameter => ParameterType(a.MAPValue)
+            case default => throw new IllegalArgumentException("Cannot retrieve non-parameter elements from parameter collection.")
           }
         }
       }
-      result   
+      result
+    }
+
+    /**
+     * @param The name of a parameter to retrieve from the set of model parameters 
+     */
+    def apply(s: String): ParameterType = {
+      val p = getElementByReference(s)
+      val result = p match {
+        case x: Parameter[_] => {
+          x match {
+            case d: DoubleParameter => ParameterType(d.MAPValue)
+            case a: ArrayParameter => ParameterType(a.MAPValue)
+            case default => throw new IllegalArgumentException("Cannot retrieve non-parameter elements from parameter collection.")
+          }
+        }
+      }
+      result
     }
   }
 
+  /**
+   * Get the collection of prior parameters
+   */
   def priorParameters: ParameterCollection = {
-    val p = new PriorParameterCollection()
+    val p = PriorParameterCollection
     p
   }
 
+  /**
+   * Get the collection of posterior parameters (after learning)
+   */
   def posteriorParameters: ParameterCollection = {
-    val p = new PosteriorParameterCollection()
+    val p = PosteriorParameterCollection
     p
   }
 
 }
 
 object ModelParameters {
+
+  /**
+   * Decode JSON into a parameter element
+   */
+  implicit val decodeJson: DecodeJson[Parameter[_]] = DecodeJson { c =>
+    c.downField("Beta").as[AtomicBeta] |||
+    c.downField("Dirichlet").as[AtomicDirichlet]
+  }
+  
+  /**
+   * Encode a set of model parameters into JSON
+   */
+  implicit def ModelParametersEncodeJson: EncodeJson[ModelParameters] = {
+    EncodeJson((params: ModelParameters) => {
+      val encodedParameters = for (p <- params.convertToParameterList) yield {
+        p match {
+          case b: Beta => ("Beta" := Beta.BetaEncodeJson(b)) ->: jEmptyObject
+          case d: Dirichlet => ("Dirichlet" := Dirichlet.DirichletEncodeJson(d)) ->: jEmptyObject
+          case default => throw new IllegalArgumentException("Unserializable parameter type.")
+        }
+      }
+      ("allParameters" := jArray(encodedParameters)) ->: jEmptyObject
+    })
+  }
+
+  /**
+   * Decode JSON into a set of model parameters
+   */
+  implicit def ModelParametersDecodeJson(implicit collection: ElementCollection): DecodeJson[ModelParameters] =
+    DecodeJson(c => for {
+      jsonParameters <- (c --\ "allParameters").as[List[Parameter[_]]]
+    } yield ModelParameters(jsonParameters))
+
+  /**
+   * Create a new set of model parameters.
+   */
   def apply() = new ModelParameters()
+    /**
+   * Create a new set of model parameters containing the list of parameters provided
+   */
+  def apply(l: List[Parameter[_]]) = {
+    val m = new ModelParameters()
+    l.foreach(m.add(_))
+    m
+  }
 }

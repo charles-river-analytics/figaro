@@ -28,7 +28,7 @@ class ValueSet[T](val xvalues: Set[Extended[T]]) {
   
   /**
    * Returns the union of this value set with that value set.
-   * If both have a Star, only one Star is kept in the result
+   * If both have a Star, only one Star is kept in the result.
    */
   def ++(that: ValueSet[T]): ValueSet[T] = {
     if (hasStar && that.hasStar) new ValueSet(xvalues ++ that.xvalues.filter(_.isRegular))

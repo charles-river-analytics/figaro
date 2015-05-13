@@ -1,5 +1,5 @@
 /*
- * EMWithMH.scala
+ * EMWithMHTest.scala
  * Tests for the EM algorithm
  * 
  * Created By:      Michael Howard (mhoward@cra.com)
@@ -32,8 +32,42 @@ import com.cra.figaro.test.tags.NonDeterministic
 
 class EMWithMHTest extends WordSpec with PrivateMethodTester with Matchers {
 
+  def binomialConstraint(count: Int)(truth: Int, baseWeight: Double): Double = {
+    if (count == truth) baseWeight
+    else {
+      math.pow(.01, Math.abs(truth - count).toDouble) * baseWeight
+    }
+  }
+
   "Expectation Maximization with MetropolisHastings" when
     {
+          "when provided a termination criteria based on sufficient statistics magnitudes" should {
+        "exit before reaching the maximum iterations" in {
+            val universe = Universe.createNew
+            val b = Beta(2, 2)
+            val terminationCriteria = EMTerminationCriteria.sufficientStatisticsMagnitude(0.05)
+            for (i <- 1 to 7) {
+
+              val f = Flip(b)
+              f.observe(true)
+            }
+
+            for (i <- 1 to 3) {
+
+              val f = Flip(b)
+              f.observe(false)
+            }
+
+            val algorithm = EMWithBP(terminationCriteria, 10, b)(universe)
+            algorithm.start
+
+            val result = b.MAPValue
+            algorithm.kill
+            result should be(0.6666 +- 0.01)
+
+          }
+        }
+    
 
       "used to estimate a Beta parameter" should
         {
@@ -95,9 +129,9 @@ class EMWithMHTest extends WordSpec with PrivateMethodTester with Matchers {
               val b = Beta(2, 2)
 
               val b1 = Binomial(7, b)
-              b1.observe(6)
+              b1.setConstraint((c: Int) => binomialConstraint(c)(6,1.0))
               val b2 = Binomial(3, b)
-              b2.observe(1)
+              b2.setConstraint((c: Int) => binomialConstraint(c)(1,1.0))
 
               val algorithm = EMWithMH(2, 100000, b)(universe)
               algorithm.start
@@ -115,9 +149,9 @@ class EMWithMHTest extends WordSpec with PrivateMethodTester with Matchers {
               val b = Beta(1, 1)
 
               val b1 = Binomial(7, b)
-              b1.observe(6)
+              b1.setConstraint((c: Int) => binomialConstraint(c)(6,1.0))
               val b2 = Binomial(3, b)
-              b2.observe(1)
+              b2.setConstraint((c: Int) => binomialConstraint(c)(1,1.0))
 
               val algorithm = EMWithMH(2, 100000, b)(universe)
               algorithm.start

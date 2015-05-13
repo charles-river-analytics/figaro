@@ -21,10 +21,24 @@ import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.library.compound._
 import scala.collection.mutable._
 import scala.collection.mutable.Map
+import com.cra.figaro.algorithm.factored.VariableElimination
 
 class UniverseTest extends WordSpec with Matchers {
   "A Universe" when {
     "having activated and deactivated some elements" should {
+      
+     "activate parent elements" in {
+        createNew()
+        val e1 = Constant(8)
+        val e2 = Constant(6)
+        val e3 = Chain(e1,(i:Int) => e2)
+        
+        e1.deactivate()
+        e3.deactivate()
+        e3.activate()
+        e1.active should equal(true)
+      }
+      
       "have all elements whose last activation was later than their last deactivation be active and no others" in {
         createNew()
         val e1 = Constant(8)
@@ -99,6 +113,20 @@ class UniverseTest extends WordSpec with Matchers {
         val e2 = Constant(7)
         e2.isTemporary should equal(true)
       }
+
+      "retrieve elements in context" in {
+        Universe.createNew()
+        val c = CachingChain(com.cra.figaro.library.atomic.discrete.Uniform(0, 10), (b: Int) => Constant(b))
+        val e1 = c.get(0)
+        val e2 = c.get(1)
+        val e3 = c.get(2)
+        Universe.universe.inContext(e1, c) should equal (true)
+        Universe.universe.inContext(e2, c) should equal (true)
+        Universe.universe.inContext(e3, c) should equal (true)
+        val e4 = Constant(4)
+        Universe.universe.inContext(e4, c) should equal (false)
+      }
+  
     }
 
     "calling contextContents on an element" should {
@@ -391,6 +419,20 @@ class UniverseTest extends WordSpec with Matchers {
     }
   }
 
+
+  
+  "clearing unnamed elements" should {
+    "remove only elements without names" in {
+      val u = Universe.createNew()
+      val e1 = Flip(0.1)("e1",u)
+      val e2 = Flip(0.2)("e2",u)
+      val e3 = Flip(0.3)
+      u.activeElements.size should equal(3)
+      u.clearUnnamed()
+      u.activeElements.size should equal(2)
+    }
+  }
+  
   "Computing independent elements" should {
     "given a set produce the independent and dependent elements" in {
       createNew()
@@ -418,6 +460,7 @@ class UniverseTest extends WordSpec with Matchers {
       layers(1) should equal(List(e4))
       layers(2) should equal(List(e5))
     }
+    
   }
 
   "Setting a new universe as the default universe" should {
@@ -426,6 +469,22 @@ class UniverseTest extends WordSpec with Matchers {
       universe = u
       val f = Flip(0.5)
       f.universe should equal(u)
+    }
+  }
+  
+   "Registering and deregistering algorithms" should {
+    "add algorithms to registered list" in {
+      val u = new Universe
+      val f = Flip(0.50)
+      val alg = VariableElimination(f)
+      u.registerAlgorithm(alg)
+    }
+    
+    "remove algorithms from registered list" in {
+      val u = new Universe
+      val f = Flip(0.50)
+      val alg = VariableElimination(f)
+      u.deregisterAlgorithm(alg)
     }
   }
 }

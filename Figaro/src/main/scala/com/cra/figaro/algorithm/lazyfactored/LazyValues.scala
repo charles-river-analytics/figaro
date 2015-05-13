@@ -1,13 +1,13 @@
 /*
- * Values.scala
+ * LazyValues.scala
  * Lazily compute the range of values of elements.
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Dec 27, 2013
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -23,25 +23,29 @@ import ValueSet._
 import com.cra.figaro.algorithm.factored.ParticleGenerator
 
 /*
- * The Values class takes a universe and a depth and provides a 
+ * The Values class takes a universe and a depth and provides a
  * Computing values in a lazy way requires a depth to be specified. Every time a Chain is expanded, the depth is decreased by 1. If the depth is 0, the chain is
  * not expanded, and its value set contains only Star, which means unspecified values.
- * 
+ *
  */
 
+/**
+ * Object for lazily computing the range of values of elements in a universe. Given a universe, you can compute the values
+ * of elements in the universe to any desired depth.
+ */
 class LazyValues(universe: Universe) {
   private def values[T](element: Element[T], depth: Int, numArgSamples: Int, numTotalSamples: Int): ValueSet[T] = {
     // In some cases (e.g. CompoundFlip), we might know the value of an element without getting the values of its arguments.
     // However, future algorithms rely on the values of the arguments having been gotten already.
-    // Therefore, we compute the values of the arguments (to a lesser depth) first, 
+    // Therefore, we compute the values of the arguments (to a lesser depth) first,
     // and use the stored values of the arguments when we actually compute the values of the element.
-    
+
     // Override the argument list for chains since the resultElement of the chain will be processed as the chain is processed
     val elementArgs = element match {
-      case c: Chain[_,_] => List(c.parent) 
+      case c: Chain[_,_] => List(c.parent)
       case _ => element.args
     }
-       
+
     for { arg <- elementArgs } {
       LazyValues(arg.universe)(arg, depth - 1, numArgSamples, numTotalSamples)
       usedBy(arg) = usedBy.getOrElse(arg, Set()) + element
@@ -150,7 +154,7 @@ class LazyValues(universe: Universe) {
         def findChainValues[T, U](chain: Chain[T, U], cmap: Map[T, Element[U]], pVals: ValueSet[T], samples: Int): Set[ValueSet[U]] = {
           val chainVals = pVals.regularValues.map { parentVal =>
             val resultElem = getOrElseInsert(cmap, parentVal, chain.getUncached(parentVal))
-            val result = LazyValues(resultElem.universe)(resultElem, depth - 1, samples, samples) 
+            val result = LazyValues(resultElem.universe)(resultElem, depth - 1, samples, samples)
             usedBy(resultElem) = usedBy.getOrElse(resultElem, Set()) + element
             result
           }
@@ -163,9 +167,9 @@ class LazyValues(universe: Universe) {
         }
 
         val chainMap = getMap(c)
-        val parentVS = LazyValues(c.parent.universe).storedValues(c.parent)        
+        val parentVS = LazyValues(c.parent.universe).storedValues(c.parent)
         val samplesPerValue = math.max(1, (numTotalSamples.toDouble/parentVS.regularValues.size).toInt)
-        
+
         val resultVSs = findChainValues(c, chainMap, parentVS, samplesPerValue)
 
         val startVS: ValueSet[c.Value] =
@@ -185,7 +189,7 @@ class LazyValues(universe: Universe) {
           println("Warning: Sampling element " + a + " even though no sampler defined for this universe")
         }
         val thisSampler = ParticleGenerator(universe)
-    	val samples = thisSampler(a, numArgSamples)
+    	  val samples = thisSampler(a, numArgSamples)
         withoutStar(samples.unzip._2.toSet)
       }
       case _ =>
@@ -211,13 +215,13 @@ class LazyValues(universe: Universe) {
     if (hasStar) withStar(results); else withoutStar(results)
   }
 
-  /* 
+  /*
    * The memoized values for an element contains the value set that was found so far for the element, together with
    * the depth of expansion that was performed.
    */
   private val memoValues: Map[Element[_], (ValueSet[_], Int)] = Map()
   universe.register(memoValues)
-  
+
   private val requiredDepths: Map[Element[_], Int] = Map()
   universe.register(requiredDepths)
 
@@ -228,7 +232,7 @@ class LazyValues(universe: Universe) {
    */
   private val usedBy: Map[Element[_], Set[Element[_]]] = Map()
   universe.register(usedBy)
-  
+
   /**
    * Returns the range of values of an element. This method is memoized.
    * If it has previously been called on the same element with a depth at least as great as this one,
@@ -243,7 +247,7 @@ class LazyValues(universe: Universe) {
     }
     apply(element, depth, numArgSamples, numTotalSamples)
   }
-  
+
   def apply[T](element: Element[T], depth: Int, numArgSamples: Int, numTotalSamples: Int): ValueSet[T] = {
     val myDepth = requiredDepths.getOrElse(element, -1).max(depth)
     if (LazyValues.debug) {
@@ -325,7 +329,7 @@ class LazyValues(universe: Universe) {
    * even for non-caching chains. First, it is necessary for correctness of factored inference. Second, if we are computing the range of values
    * of the chain, we are already computing all the values of the parent, so in most cases the number of parent values will not be so large as to
    * cause memory problems.
-   * 
+   *
    * New development: We have discovered a design pattern where the result of an Apply is a container of elements. For example, see the lazy list example
    * where the result of Apply is a Cons containing a head element and a tail element. In these cases, we also need to make sure that these elements are
    * the same. Therefore, we also have to maintain a map from Apply arguments to their resulting values. This cache is contained in applyMap.
@@ -392,13 +396,13 @@ object LazyValues {
         e.applyMaps.clear()
         e.usedBy.clear()
         e.requiredDepths.clear()
-        
+
         universe.deregister(e.memoValues)
         universe.deregister(e.chainMaps)
         universe.deregister(e.applyMaps)
         universe.deregister(e.usedBy)
         universe.deregister(e.requiredDepths)
-        
+
         universe.deregisterUniverse(expansions)
         expansions -= universe
       }

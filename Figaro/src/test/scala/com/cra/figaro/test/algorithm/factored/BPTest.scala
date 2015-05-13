@@ -1,13 +1,13 @@
 /*
- * BPTest.scala  
+ * BPTest.scala
  * Belief Propagation tests.
- * 
+ *
  * Created By:      Brian Ruttenberg (bruttenberg@cra.com)
  * Creation Date:   Jan 15, 2014
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -17,6 +17,7 @@ import scala.collection.mutable.Map
 import org.scalatest.WordSpec
 import org.scalatest.Matchers
 import com.cra.figaro.algorithm.factored._
+import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.factored.beliefpropagation._
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound.If
@@ -36,15 +37,15 @@ class BPTest extends WordSpec with Matchers {
       val u = Select(0.25 -> 0.3, 0.25 -> 0.5, 0.25 -> 0.7, 0.25 -> 0.9)
       val f = Flip(u)
       val a = If(f, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
-      val semiring = SumProductSemiring
+      val semiring = SumProductSemiring()
       LazyValues(Universe.universe).expandAll(Universe.universe.activeElements.toSet.map((elem: Element[_]) => ((elem, Integer.MAX_VALUE))))
       val factors = Universe.universe.activeElements flatMap (Factory.make(_))
       val graph = new BasicFactorGraph(factors, semiring)
       val fn = graph.adjacencyList.filter(p => { p._1 match { case fn: FactorNode => true; case _ => false; } })
       val vn = graph.adjacencyList.filter(p => { p._1 match { case vn: VariableNode => true; case _ => false; } })
 
-      fn.size should equal(6)
-      vn.size should equal(5)
+      fn.size should equal(7)
+      vn.size should equal(6)
     }
 
     "Create an edge to between each factor and the variables it has" in {
@@ -52,7 +53,7 @@ class BPTest extends WordSpec with Matchers {
       val u = Select(0.25 -> 0.3, 0.25 -> 0.5, 0.25 -> 0.7, 0.25 -> 0.9)
       val f = Flip(u)
       val a = If(f, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
-      val semiring = SumProductSemiring
+      val semiring = SumProductSemiring()
       LazyValues(Universe.universe).expandAll(Universe.universe.activeElements.toSet.map((elem: Element[_]) => ((elem, Integer.MAX_VALUE))))
       val factors = Universe.universe.activeElements flatMap (Factory.make(_))
       val graph = new BasicFactorGraph(factors, semiring)
@@ -96,7 +97,7 @@ class BPTest extends WordSpec with Matchers {
       }
     }
 
-    /* Due to the way that factors are implemented for Chain, all 
+    /* Due to the way that factors are implemented for Chain, all
      * models that use chain will result in loops. To test a non-loopy
      * graph we have to not use chain, which IntSelector does not.
      */
@@ -217,8 +218,8 @@ class BPTest extends WordSpec with Matchers {
         val c = Chain(f, (b: Boolean) => if (b) s1; else s2)
 
         s1.observe(1)
-        //val c_actual = .79
-        val c_actual = .70907
+        val c_actual = .79
+        //val c_actual = .70907
 
         /*
          * The "c_actual" value has been determine using Dimple to back up the results of Figaro. This exact
@@ -226,9 +227,9 @@ class BPTest extends WordSpec with Matchers {
          * The same is done with 'f' (set as an increased tolerance below),
          *  although this test is not doing much since the while point it to show
          * that f does not change, at least it does not change significantly
-         * 
+         *
          * The factor model is no longer loopy so the exact result .79 applies (Glenn)
-         * 
+         *
          * UPDATE: We're going back to loopy since factor combining in ProbFactor is not default in BP.
          */
         test(c, (i: Int) => i == 1, c_actual, globalTol)
@@ -270,7 +271,7 @@ class BPTest extends WordSpec with Matchers {
       ve.start()
       ve.probability(y, true) should be(((0.1 * 0.2 + 0.9 * 0.2) / (0.1 * 0.2 + 0.9 * 0.2 + 0.9 * 0.8)) +- globalTol)
     }
-    
+
     "should not underflow" in {
       Universe.createNew()
       val x = Flip(0.99)
@@ -281,7 +282,7 @@ class BPTest extends WordSpec with Matchers {
       bp.start()
       bp.probability(x, true) should be (1.0)
     }
-        
+
     // Removed, we now support non-caching chains
     /*
     "should not support non-caching chains" in {
@@ -289,9 +290,9 @@ class BPTest extends WordSpec with Matchers {
       val f = Flip(0.5)
       val x = NonCachingChain(f, (b: Boolean) => if (b) Constant(0) else Constant(1))
       val ve = BeliefPropagation(50)
-      an [UnsupportedAlgorithmException] should be thrownBy { ve.getNeededElements(List(x), Int.MaxValue) } 
+      an [UnsupportedAlgorithmException] should be thrownBy { ve.getNeededElements(List(x), Int.MaxValue) }
     }
-    * 
+    *
     */
   }
 
@@ -304,10 +305,10 @@ class BPTest extends WordSpec with Matchers {
       val e3 = If(e1, Flip(0.52), Flip(0.4))
       val e4 = e2 === e3
       e4.observe(true)
-      // p(e1=T,e2=T,e3=T) = 0.75 * 0.4 * 0.52
-      // p(e1=T,e2=F,e3=F) = 0.75 * 0.6 * 0.48
-      // p(e1=F,e2=T,e3=T) = 0.25 * 0.9 * 0.4
-      // p(e1=F,e2=F,e3=F) = 0.25 * 0.1 * 0.6
+      // p(e1=T,e2=T,e3=T) = 0.75 * 0.4 * 0.52 = .156
+      // p(e1=T,e2=F,e3=F) = 0.75 * 0.6 * 0.48 = .216
+      // p(e1=F,e2=T,e3=T) = 0.25 * 0.9 * 0.4 = .09
+      // p(e1=F,e2=F,e3=F) = 0.25 * 0.1 * 0.6 = .015
       // MPE: e1=T,e2=F,e3=F,e4=T
       val alg = MPEBeliefPropagation(20)
       alg.start()
@@ -316,6 +317,32 @@ class BPTest extends WordSpec with Matchers {
       alg.mostLikelyValue(e3) should equal(false)
       alg.mostLikelyValue(e4) should equal(true)
     }
+    
+    "compute the most likely values of all the variables given the conditions and constraints as an anytime algorithm" in {
+      Universe.createNew()
+      val e1 = Flip(0.5)
+      e1.setConstraint((b: Boolean) => if (b) 3.0; else 1.0)
+      val e2 = If(e1, Flip(0.4), Flip(0.9))
+      val e3 = If(e1, Flip(0.52), Flip(0.4))
+      val e4 = e2 === e3
+      e4.observe(true)
+      // p(e1=T,e2=T,e3=T) = 0.75 * 0.4 * 0.52
+      // p(e1=T,e2=F,e3=F) = 0.75 * 0.6 * 0.48
+      // p(e1=F,e2=T,e3=T) = 0.25 * 0.9 * 0.4
+      // p(e1=F,e2=F,e3=F) = 0.25 * 0.1 * 0.6
+      // MPE: e1=T,e2=F,e3=F,e4=T
+      val alg = MPEBeliefPropagation()
+      alg.start()
+      Thread.sleep(5000)
+      alg.stop()
+      alg.mostLikelyValue(e1) should equal(true)
+      alg.mostLikelyValue(e2) should equal(false)
+      alg.mostLikelyValue(e3) should equal(false)
+      alg.mostLikelyValue(e4) should equal(true)
+      alg.kill()
+    }
+        
+        
 
   }
 

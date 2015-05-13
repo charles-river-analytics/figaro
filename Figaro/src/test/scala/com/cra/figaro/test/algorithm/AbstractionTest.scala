@@ -17,6 +17,7 @@ import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.factored._
+import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
@@ -44,6 +45,15 @@ class AbstractionTest extends WordSpec with Matchers {
       val a = Abstraction[Double](10)
       u.addPragma(a)
       assert(u.pragmas contains a)
+    }
+    
+    "not have a pragma after adding and removing it" in {
+      Universe.createNew()
+      val u = Uniform(0.0, 1.0)
+      val a = Abstraction[Double](10)
+      u.addPragma(a)
+      u.removePragma(a)
+      u.pragmas contains a should equal(false)
     }
 
     "have an added pragma's abstraction scheme be discretization" in {
@@ -136,9 +146,9 @@ class AbstractionTest extends WordSpec with Matchers {
         val factor = factors(0)
         val variable = Variable(uniform)
         factor.variables should equal(List(variable))
-        val allIndices = factor.allIndices
-        allIndices.size should equal(numBins)
-        for { indices <- allIndices } {
+ 
+        factor.getIndices.foldLeft(0)((sum, _) => sum + 1) should equal(numBins)
+        for { indices <- factor.getIndices} {
           factor.get(indices) should be(1.0 / max +- 0.000001) // constant density of Uniform(0, max)
         }
       }
@@ -161,7 +171,8 @@ class AbstractionTest extends WordSpec with Matchers {
         val uniformVariable = Variable(uniform)
         val applyVariable = Variable(apply)
         factor.variables should equal(List(uniformVariable, applyVariable))
-        factor.allIndices.size should equal(numBinsUniform * numBinsApply)
+        // No longer true for sparse factors
+        // factor.getIndices.foldLeft(0)((sum, _) => sum + 1) should equal(numBinsUniform * numBinsApply)
         val uniformValues: List[Double] = uniformVariable.range.map(_.value)
         val applyValues: List[Double] = applyVariable.range.map(_.value)
         def check(uniformValue: Double, applyValue: Double): Boolean = {
@@ -175,7 +186,7 @@ class AbstractionTest extends WordSpec with Matchers {
           j <- 0 until numBinsApply
         } {
           if (check(uniformValues(i), applyValues(j))) { factor.get(List(i, j)) should equal(1.0) }
-          else { factor.get(List(i, j)) should equal(0.0) }
+          else { factor.contains(List(i, j)) should equal(false) }
         }
       }
     }
@@ -200,7 +211,8 @@ class AbstractionTest extends WordSpec with Matchers {
         val uniform2Variable = Variable(uniform2)
         val applyVariable = Variable(apply)
         factor.variables should equal(List(uniform1Variable, uniform2Variable, applyVariable))
-        factor.allIndices.size should equal(numBinsUniform * numBinsUniform * numBinsApply)
+        // No longer true for sparse factors
+        // factor.getIndices.foldLeft(0)((sum, _) => sum + 1) should equal(numBinsUniform * numBinsUniform * numBinsApply)
         val uniform1Values: List[Double] = uniform1Variable.range.map(_.value)
         val uniform2Values: List[Double] = uniform2Variable.range.map(_.value)
         val applyValues: List[Double] = applyVariable.range.map(_.value)
@@ -217,7 +229,7 @@ class AbstractionTest extends WordSpec with Matchers {
         } {
           if (check(uniform1Values(i), uniform2Values(j), applyValues(k))) {
             factor.get(List(i, j, k)) should equal(1.0)
-          } else { factor.get(List(i, j, k)) should equal(0.0) }
+          } else { factor.contains(List(i, j, k)) should equal(false) }
         }
       }
     }
@@ -245,7 +257,8 @@ class AbstractionTest extends WordSpec with Matchers {
         val uniform3Variable = Variable(uniform3)
         val applyVariable = Variable(apply)
         factor.variables should equal(List(uniform1Variable, uniform2Variable, uniform3Variable, applyVariable))
-        factor.allIndices.size should equal(numBinsUniform * numBinsUniform * numBinsUniform * numBinsApply)
+        // No longer true for sparse factors
+        // factor.getIndices.foldLeft(0)((sum, _) => sum + 1) should equal(numBinsUniform * numBinsUniform * numBinsUniform * numBinsApply)
         val uniform1Values: List[Double] = uniform1Variable.range.map(_.value)
         val uniform2Values: List[Double] = uniform2Variable.range.map(_.value)
         val uniform3Values: List[Double] = uniform3Variable.range.map(_.value)
@@ -264,11 +277,12 @@ class AbstractionTest extends WordSpec with Matchers {
         } {
           if (check(uniform1Values(i), uniform2Values(j), uniform3Values(k), applyValues(l))) {
             factor.get(List(i, j, k, l)) should equal(1.0)
-          } else { factor.get(List(i, j, k, l)) should equal(0.0) }
+          } else { factor.contains(List(i, j, k, l)) should equal(false) }
         }
       }
     }
 
+    // Needs to be redone for new ChainFactor structure
     "given a chain using a regular discretization scheme" should {
       "produce a list of conditional selector factors mapping the argument to the discretized result" in {
         Universe.createNew()
@@ -283,15 +297,18 @@ class AbstractionTest extends WordSpec with Matchers {
         chain.addPragma(Abstraction(numBinsChain)(AbstractionScheme.RegularDiscretization))
         Values()(chain)
         val factors = Factory.make(chain)
-        factors.size should equal(2) // 2 for the conditional selectors
-        val List(factor1, factor2) = factors
+        factors.size should equal(3) // 1 for selection variable; 2 for the conditional selectors
+        val List(factor1, factor2, factor3) = factors
+        val selectorVar = factor1.variables(1)
         val flipVariable = Variable(flip)
         val uniform1Variable = Variable(uniform1)
         val uniform2Variable = Variable(uniform2)
         val chainVariable = Variable(chain)
-        factor1.variables should equal(List(flipVariable, chainVariable, uniform1Variable))
-        factor1.allIndices.size should equal(2 * numBinsChain * numBinsUniform)
-        factor2.allIndices.size should equal(2 * numBinsChain * numBinsUniform)
+        factor1.variables should equal(List(flipVariable, selectorVar, chainVariable))
+        factor2.variables should equal(List(selectorVar, uniform1Variable))
+        factor2.getIndices.foldLeft(0)((sum, _) => sum + 1) should equal(2 * numBinsChain * numBinsUniform)
+        factor3.variables should equal(List(selectorVar, uniform2Variable))
+        factor3.getIndices.foldLeft(0)((sum, _) => sum + 1) should equal(2 * numBinsChain * numBinsUniform)
         val flipValues: List[Boolean] = flipVariable.range.map(_.value)
         val uniform1Values: List[Double] = uniform1Variable.range.map(_.value)
         val uniform2Values: List[Double] = uniform2Variable.range.map(_.value)
@@ -301,25 +318,28 @@ class AbstractionTest extends WordSpec with Matchers {
             (Double.MaxValue /: chainValues)((d1: Double, d2: Double) => d1 min math.abs(uniformValue - d2))
           math.abs(uniformValue - chainValue) <= minDiff
         }
-        def check1(flipValue: Boolean, chainValue: Double, uniformValue: Double): Boolean =
+        def check1(flipValue: Boolean, uniformValue: Double, chainValue: Double): Boolean =
           !flipValue || closest(chainValue, uniformValue)
-        def check2(flipValue: Boolean, chainValue: Double, uniformValue: Double): Boolean =
+        def check2(flipValue: Boolean, uniformValue: Double, chainValue: Double): Boolean =
           flipValue || closest(chainValue, uniformValue)
         for {
           i <- 0 to 1
-          j <- 0 until numBinsChain
-          k <- 0 until numBinsUniform
+          j <- 0 until numBinsUniform
+          k <- 0 until numBinsChain
         } {
-          if (check1(flipValues(i), chainValues(j), uniform1Values(k))) { factor1.get(List(i, j, k)) should equal(1.0) }
-          else { factor1.get(List(i, j, k)) should equal(0.0) }
+          val selectorBin = i * numBinsChain + k
+          if (check1(flipValues(i), uniform1Values(j), chainValues(k))) { factor2.get(List(selectorBin, j)) should equal(1.0) }
+          else { factor1.get(List(selectorBin, j)) should equal(0.0) }
         }
         for {
           i <- 0 to 1
-          j <- 0 until numBinsChain
-          k <- 0 until numBinsUniform
+          j <- 0 until numBinsUniform
+          k <- 0 until numBinsChain
         } {
-          if (check2(flipValues(i), chainValues(j), uniform2Values(k))) { factor2.get(List(i, j, k)) should equal(1.0) }
-          else { factor2.get(List(i, j, k)) should equal(0.0) }
+          val selectorBin = i * numBinsChain + k
+
+          if (check2(flipValues(i), uniform2Values(j), chainValues(k))) { factor3.get(List(selectorBin, j)) should equal(1.0) }
+          else { factor3.get(List(selectorBin, j)) should equal(0.0) }
         }
       }
     }

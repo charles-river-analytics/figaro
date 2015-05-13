@@ -1,13 +1,13 @@
 /*
  * OpenUniverse.scala
  * An example of open universe reasoning.
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -18,6 +18,7 @@ import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous.{ Uniform, Normal }
 import com.cra.figaro.library.atomic.discrete.{ Geometric, FromRange }
 import com.cra.figaro.library.compound._
+import com.cra.figaro.library.collection._
 import com.cra.figaro.language.Universe._
 import com.cra.figaro.util._
 
@@ -27,9 +28,11 @@ import com.cra.figaro.util._
 object OpenUniverse {
   createNew()
 
-  private def source(): Element[Double] = Uniform(0.0, 1.0)
+  private def source(): Element[Double] = {
+    Uniform(0.0, 1.0)
+  }
 
-  private val numSources = Geometric(0.9)
+  private val numSources = FromRange(1,4)
 
   private val sources = MakeList(numSources, source _)
 
@@ -48,17 +51,18 @@ object OpenUniverse {
 
   def chooseScheme(): ProposalScheme =
     DisjointScheme(
-      (0.25, () => ProposalScheme(numSources)),
-      (0.25, () => ProposalScheme(sources.items(random.nextInt(numSources.value)))),
-      (0.25, () => ProposalScheme(samples(random.nextInt(numSamples)).sourceNum)),
-      (0.25, () => ProposalScheme(samples(random.nextInt(numSamples)).position.resultElement)))
+      (0.1, () => ProposalScheme(numSources)),
+      (0.9, () => ProposalScheme.default))
 
   def main(args: Array[String]) = {
     sample1.position.addCondition((y: Double) => y >= 0.7 && y < 0.8)
     sample2.position.addCondition((y: Double) => y >= 0.7 && y < 0.8)
-    val alg = MetropolisHastings(100000, chooseScheme, 5000, equal)
+    val alg = MetropolisHastings(chooseScheme, 5000, equal)
     alg.start()
+    Thread.sleep(10000)
+    alg.stop()
     println(alg.probability(equal, true))
+    println(alg.getSampleCount + " samples taken")
     alg.kill
   }
 }

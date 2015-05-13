@@ -35,7 +35,7 @@ trait AnytimeProbQuery extends ProbQueryAlgorithm with Anytime {
    */
   case class Distribution[T](distribution: Stream[(Double, T)]) extends Response
    /**
-   * A message instructing the handler to compute the expectation of the target element under the given function
+   * A message instructing the handler to compute the expectation of the target element under the given function.
    */
   case class ComputeExpectation[T](target: Element[T], function: T => Double) extends Service
     /**

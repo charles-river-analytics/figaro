@@ -16,6 +16,7 @@ package com.cra.figaro.algorithm.factored
 import com.cra.figaro.algorithm._
 import com.cra.figaro.language._
 import com.cra.figaro.library.decision._
+import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.util._
 import annotation.tailrec
 import scala.collection._
@@ -72,7 +73,8 @@ trait FactoredAlgorithm[T] extends Algorithm {
         if (depth >= 0) {
           val includeThisElement = depth > LazyValues(element.universe).expandedDepth(element).getOrElse(-1)
           // Keeping track of what's been chased so far avoids infinite recursion
-          val toChase = element.universe.directlyUsedBy(element).toSet ++ dependentUniverseCoparents.getOrElse(element, Set()) -- chasedSoFar
+          val related = element.universe.directlyUsedBy(element).toSet ++ dependentUniverseCoparents.getOrElse(element, Set())
+          val toChase = related.filter(!chasedSoFar.contains(_))
           val rest = toChase.flatMap((elem: Element[_]) => chaseDown(elem, depth - 1, chasedSoFar ++ toChase))
           if (includeThisElement) rest + ((element, depth)); else rest
         } else Set()

@@ -18,6 +18,7 @@ import org.scalatest.{ WordSpec, PrivateMethodTester }
 import math.log
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.factored._
+import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound._
@@ -45,8 +46,8 @@ class VETest extends WordSpec with Matchers {
         val v4 = Variable(e4)
         val v5 = Variable(e5)
         val v6 = Variable(e6)
-        val f = Factory.make[Double](List(v1, v2, v3, v4))
-        val g = Factory.make[Double](List(v5, v3, v2, v6))
+        val f = Factory.simpleMake[Double](List(v1, v2, v3, v4))
+        val g = Factory.simpleMake[Double](List(v5, v3, v2, v6))
         val af = AbstractFactor(f.variables)
         val ag = AbstractFactor(g.variables)
         val graph = new VEGraph(List(f, g))
@@ -81,8 +82,8 @@ class VETest extends WordSpec with Matchers {
         val v4 = Variable(e4)
         val v5 = Variable(e5)
         val v6 = Variable(e6)
-        val f = Factory.make[Double](List(v1, v2, v3, v4))
-        val g = Factory.make[Double](List(v5, v3, v2, v6))
+        val f = Factory.simpleMake[Double](List(v1, v2, v3, v4))
+        val g = Factory.simpleMake[Double](List(v5, v3, v2, v6))
         val af = AbstractFactor(f.variables)
         val ag = AbstractFactor(g.variables)
         VEGraph.cost(List(af, ag)) should equal(18) // 2*1*3*2 + 1*3*1*2
@@ -113,9 +114,9 @@ class VETest extends WordSpec with Matchers {
         val v5 = Variable(e5)
         val v6 = Variable(e6)
         val v7 = Variable(e7)
-        val f = Factory.make[Double](List(v1, v2, v3, v4))
-        val g = Factory.make[Double](List(v5, v3, v2, v6))
-        val h = Factory.make[Double](List(v1, v7))
+        val f = Factory.simpleMake[Double](List(v1, v2, v3, v4))
+        val g = Factory.simpleMake[Double](List(v5, v3, v2, v6))
+        val h = Factory.simpleMake[Double](List(v1, v7))
         val graph1 = new VEGraph(List(f, g, h))
         val score = graph1.score(v3)
         score should equal(-10) // 2*1*2*1*2 - (2*1*3*2 + 1*3*1*2)
@@ -140,9 +141,9 @@ class VETest extends WordSpec with Matchers {
           val v5 = Variable(e5)
           val v6 = Variable(e6)
           val v7 = Variable(e7)
-          val f = Factory.make[Double](List(v1, v2, v3, v4))
-          val g = Factory.make[Double](List(v5, v3, v2, v6))
-          val h = Factory.make[Double](List(v1, v7))
+          val f = Factory.simpleMake[Double](List(v1, v2, v3, v4))
+          val g = Factory.simpleMake[Double](List(v5, v3, v2, v6))
+          val h = Factory.simpleMake[Double](List(v1, v7))
           val graph1 = new VEGraph(List(f, g, h))
           val graph2 = graph1.eliminate(v3)
           val VariableInfo(v1Factors, v1Neighbors) = graph2.info(v1)
@@ -166,9 +167,9 @@ class VETest extends WordSpec with Matchers {
         val v5 = Variable(e5)
         val v6 = Variable(e6)
         val v7 = Variable(e7)
-        val f = Factory.make[Double](List(v1, v2, v3, v4))
-        val g = Factory.make[Double](List(v5, v3, v2, v6))
-        val h = Factory.make[Double](List(v1, v7))
+        val f = Factory.simpleMake[Double](List(v1, v2, v3, v4))
+        val g = Factory.simpleMake[Double](List(v5, v3, v2, v6))
+        val h = Factory.simpleMake[Double](List(v1, v7))
         val graph1 = new VEGraph(List(f, g, h))
         val graph2 = graph1.eliminate(v3)
         val VariableInfo(v1Factors, v1Neighbors) = graph2.info(v1)
@@ -205,79 +206,11 @@ class VETest extends WordSpec with Matchers {
         val v6 = Variable(e6)
         val v7 = Variable(e7)
         val v8 = Variable(e8)
-        val f = Factory.make[Double](List(v1, v2, v3, v4))
-        val g = Factory.make[Double](List(v5, v3, v2, v6))
-        val h = Factory.make[Double](List(v1, v7))
-        val i = Factory.make[Double](List(v8, v1, v3))
-	/* Old method that considered old cost of factor containing variable */
-        // Initially:
-        // Assume we will not eliminate v5 or v8
-        // cost(f) = 2*1*3*2 = 12
-        // cost(g) = 1*3*1*2 = 6
-        // cost(h) = 2*2 = 4
-        // cost(i) = 2*2*3 = 12
-        // Eliminating v1 will produce a factor X1(v2,v3,v4,v7,v8) with cost 1*3*2*2*2 = 24
-        // Eliminating v2 will produce a factor X2(v1,v3,v4,v5,v6) with cost 2*3*2*1*2 = 24
-        // Eliminating v3 will produce a factor X3(v1,v2,v4,v5,v6,v8) with cost 2*1*2*1*2*2 = 16
-        // Eliminating v4 will produce a factor X4(v1,v2,v3) with cost 2*1*3 = 6
-        // Eliminating v6 will produce a factor X5(v2,v3,v5) with cost 1*3*1 = 3
-        // Eliminating v7 will produce a factor X6(v1) with cost 2
-        // cost(v1) = 24 - (12+4+12) = -4
-        // cost(v2) = 24 - (12+6) = 6
-        // cost(v3) = 16 - (12+6+12) = -14
-        // cost(v4) = 6 - 12 = -6
-        // cost(v6) = 3 - 6 = -3
-        // cost(v7) = 2 - 4 = -2
-        // Choose v3 first.
-        // We now have:
-        // h(v1,v7) with cost 4
-        // X3(v1,v2,v4,v5,v6,v8) with cost 16
-        // Eliminating v1 will produce a factor X7(v2,v4,v5,v6,v7,v8) with cost 1*2*1*2*2*2 = 16
-        // Eliminating v2 will produce a factor X8(v1,v4,v5,v6,v8) with cost 2*2*1*2*2 = 16
-        // Eliminating v4 will produce a factor X9(v1,v2,v5,v6,v8) with cost 2*1*1*2*2 = 8
-        // Eliminating v6 will produce a factor X10(v1,v2,v4,v5,v8) with cost 2*1*2*1*2 = 8
-        // Eliminating v7 will produce a factor X11(v1) with cost 2
-        // cost(v1) = 16 - (4+16) = -4
-        // cost(v2) = 16 - 16 = 0
-        // cost(v4) = 8 - 16 = -8
-        // cost(v6) = 8 - 16 = -8
-        // cost(v7) = 2 - 4 = -2
-        // Choose v4 or v6. WLOG assume v4.
-        // We now have:
-        // h(v1,v7) with cost 4
-        // X9(v1,v2,v5,v6,v8) with cost 8
-        // Eliminating v1 will produce a factor X12(v2,v5,v6,v7,v8) with cost 1*1*2*2*2 = 8
-        // Eliminating v2 will produce a factor X13(v1,v5,v6,v8) with cost 2*1*2*2 = 8
-        // Eliminating v6 will produce a factor X14(v1,v2,v5,v8) with cost 2*1*1*2 = 4
-        // Eliminating v7 will produce a factor X15(v1) with cost 2
-        // cost(v1) = 8 - (4+8) = -4
-        // cost(v2) = 8-8 = 0
-        // cost(v6) = 4 - 8 = -4
-        // cost(v7) = 2 - 4 = -1
-        // Suppose we choose v1.
-        // We now have:
-        // X12(v2,v5,v6,v7,v8).
-        // We will first eliminate either v6 or v7, then the other one, then v2.
-        // Suppose instead we choose v6.
-        // We now have:
-        // h(v1,v7) with cost 4
-        // X14(v1,v2,v5,v8) with cost 4
-        // Eliminating v1 will produce a factor X16(v2,v5,v7,v8) with cost 4.
-        // Eliminating v2 will produce a factor X17(v1,v5,v8) with cost 4.
-        // Eliminating v7 will produce a factor X18(v1,v7) with cost 4.
-        // cost(v1) = -4 wins. Eliminate v1.
-        // We now have:
-        // X16(v2,v5,v7,v8). Eliminate v7, then v2.
-        //
-        // Bottom line: possible elimination orders are:
-        // v3, v4, v1, v6, v7, v2
-        // v3, v4, v1, v7, v6, v2
-        // v3, v4, v6, v1, v7, v2
-        // v3, v6, v1, v4, v7, v2
-        // v3, v6, v1, v7, v4, v2
-        // v3, v6, v4, v1, v7, v2
-        val ve = VariableElimination(e5, e8)
-        val order = ve.eliminationOrder(List(f, g, h, i), Set(v5, v8))
+        val f = Factory.simpleMake[Double](List(v1, v2, v3, v4))
+        val g = Factory.simpleMake[Double](List(v5, v3, v2, v6))
+        val h = Factory.simpleMake[Double](List(v1, v7))
+        val i = Factory.simpleMake[Double](List(v8, v1, v3))
+        val order = VariableElimination.eliminationOrder(List(f, g, h, i), Set(v5, v8))._2
         assert(order == List(v3, v4, v1, v6, v7, v2) ||
           order == List(v3, v4, v1, v7, v6, v2) ||
           order == List(v3, v4, v6, v1, v7, v2) ||
@@ -286,6 +219,8 @@ class VETest extends WordSpec with Matchers {
           order == List(v3, v6, v4, v1, v7, v2))
       }
 
+    // While this test is non-deterministic, it tests time as a "less than" and the usual T-Test will not work well here
+    // Also, we shouldn't test our performance this way.... every machine is different so this isn't likely to pass often
     "take O(|factors| log |variables|)" taggedAs (Performance, NonDeterministic) in {
       Universe.createNew()
       val small = 100
@@ -293,12 +228,12 @@ class VETest extends WordSpec with Matchers {
       def make(numVars: Int): Traversable[Factor[Double]] = {
         val universe = new Universe
         val a: List[Variable[_]] = List.tabulate(numVars)(i => Variable(Flip(0.3)("", universe)))
-        for { i <- 0 to numVars - 2 } yield Factory.make[Double](List(a(i), a(i + 1)))
+        for { i <- 0 to numVars - 2 } yield Factory.simpleMake[Double](List(a(i), a(i + 1)))
       }
       val factors1 = make(small)
       val factors2 = make(large)
       def order(factors: Traversable[Factor[Double]])() =
-        VariableElimination().eliminationOrder(factors, List())
+        VariableElimination.eliminationOrder(factors, List())._2
       val time1 = measureTime(order(factors1), 20, 100)
       val time2 = measureTime(order(factors2), 20, 100)
       val slack = 1.1
@@ -442,21 +377,11 @@ class VETest extends WordSpec with Matchers {
       y.setCondition((b: Boolean) => b, List(Element.ElemVal(x, true)))
       // Probability of y should be (0.1 * 0.2 + 0.9 * 0.2) / (0.1 * 0.2 + 0.9 * 0.2 + 0.9 * 0.8) (because the case where x is true and y is false has been ruled out)
       val ve = VariableElimination(y)
-      ve.start()
+      ve.start
       ve.probability(y, true) should be(((0.1 * 0.2 + 0.9 * 0.2) / (0.1 * 0.2 + 0.9 * 0.2 + 0.9 * 0.8)) +- 0.0000000001)
+      ve.kill
     }
     
-    // Removed, we now support non-caching chains
-    /*
-    "should not support non-caching chains" in {
-      Universe.createNew()
-      val f = Flip(0.5)
-      val x = NonCachingChain(f, (b: Boolean) => if (b) Constant(0) else Constant(1))
-      val ve = VariableElimination(x)
-      an [UnsupportedAlgorithmException] should be thrownBy { ve.getNeededElements(List(x), Int.MaxValue) } 
-    }
-    * 
-    */
   }
 
   "MPEVariableElimination" should {
@@ -468,17 +393,18 @@ class VETest extends WordSpec with Matchers {
       val e3 = If(e1, Flip(0.52), Flip(0.4))
       val e4 = e2 === e3
       e4.observe(true)
-      // p(e1=T,e2=T,e3=T) = 0.75 * 0.4 * 0.52
-      // p(e1=T,e2=F,e3=F) = 0.75 * 0.6 * 0.48
-      // p(e1=F,e2=T,e3=T) = 0.25 * 0.9 * 0.4
-      // p(e1=F,e2=F,e3=F) = 0.25 * 0.1 * 0.6
+      // p(e1=T,e2=T,e3=T) = 0.75 * 0.4 * 0.52 = .156
+      // p(e1=T,e2=F,e3=F) = 0.75 * 0.6 * 0.48 = .216
+      // p(e1=F,e2=T,e3=T) = 0.25 * 0.9 * 0.4 = .09
+      // p(e1=F,e2=F,e3=F) = 0.25 * 0.1 * 0.6 = .015
       // MPE: e1=T,e2=F,e3=F,e4=T
       val alg = MPEVariableElimination()
-      alg.start()
+      alg.start
       alg.mostLikelyValue(e1) should equal(true)
       alg.mostLikelyValue(e2) should equal(false)
       alg.mostLikelyValue(e3) should equal(false)
       alg.mostLikelyValue(e4) should equal(true)
+      alg.kill
     }
   }
   

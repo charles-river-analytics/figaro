@@ -1,5 +1,5 @@
 /*
- * CoinExample.scala
+ * FairCoin.scala
  * A model for learning the fairness of a coin.
  * 
  * Created By:      Michael Howard (mhoward@cra.com)

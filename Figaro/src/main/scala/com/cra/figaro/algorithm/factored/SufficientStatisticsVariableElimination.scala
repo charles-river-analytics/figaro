@@ -16,6 +16,7 @@ package com.cra.figaro.algorithm.factored
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.learning._
 import com.cra.figaro.language._
+import com.cra.figaro.algorithm.factored.factors._
 import scala.collection._
 import scala.collection.mutable.{ Map, Set }
 
@@ -77,7 +78,7 @@ class SufficientStatisticsVariableElimination(
   def finish(factorsAfterElimination: Set[Factor[(Double, Map[Parameter[_], Seq[Double]])]], eliminationOrder: List[Variable[_]]): Unit = {
     // It is possible that there are no factors (this will happen if there is no evidence).
     // Therefore, we start with the unit factor and use foldLeft, instead of simply reducing the factorsAfterElimination.
-    val finalFactor = factorsAfterElimination.foldLeft(Factor.unit(semiring))(_.product(_, semiring))
+    val finalFactor = factorsAfterElimination.foldLeft(Factory.unit(semiring))(_.product(_))
     finalFactor.variables.size match {
       case 0 => result = finalFactor.get(List())
       case _ => throw new RuntimeException("Final factor has variables")

@@ -1,6 +1,6 @@
 /*
- * PerformanceTest.scala 
- * Tag for example tests.
+ * Performance.scala 
+ * Tag for performance tests.
  * 
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009

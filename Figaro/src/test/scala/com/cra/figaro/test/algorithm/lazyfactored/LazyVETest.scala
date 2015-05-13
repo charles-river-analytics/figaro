@@ -1,3 +1,16 @@
+/*
+ * LazyVETest.scala
+ * Lazy variable elimination tests.
+ * 
+ * Created By:      Avi Pfeffer (apfeffer@cra.com)
+ * Creation Date:   Feb 21, 2013
+ * 
+ * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * See http://www.cra.com or email figaro@cra.com for information.
+ * 
+ * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
+
 package com.cra.figaro.test.algorithm.lazyfactored
 
 import org.scalatest.Matchers
@@ -32,6 +45,8 @@ class LazyVETest extends WordSpec with Matchers {
     	alg.probabilityBounds(outerIf, false)._1 should be ((1 - pOuter) +- 0.000000001)
     	alg.probabilityBounds(outerIf, true)._2 should be (pOuter +- 0.000000001)
     	alg.probabilityBounds(outerIf, false)._2 should be ((1 - pOuter) +- 0.000000001)
+      
+      alg.kill()
       } 
     }
 
@@ -58,6 +73,8 @@ class LazyVETest extends WordSpec with Matchers {
     	alg.probabilityBounds(apply, false)._1 should be (falseLower +- 0.000000001)
     	alg.probabilityBounds(apply, true)._2 should be ((1 - falseLower) +- 0.000000001)
     	alg.probabilityBounds(apply, false)._2 should be ((1 - trueLower) +- 0.000000001)
+      
+      alg.kill()
       }
       
       "produce the correct depth 3 perfect answer" in {
@@ -80,6 +97,8 @@ class LazyVETest extends WordSpec with Matchers {
     	alg.probabilityBounds(apply, false)._1 should be ((1 - pOuter) +- 0.000000001)
     	alg.probabilityBounds(apply, true)._2 should be (pOuter +- 0.000000001)
     	alg.probabilityBounds(apply, false)._2 should be ((1 - pOuter) +- 0.000000001)
+      
+      alg.kill()
       } 
     }
 
@@ -102,6 +121,8 @@ class LazyVETest extends WordSpec with Matchers {
     	alg.probabilityBounds(outerIf, false)._1 should be (falseLower +- 0.000000001)
     	alg.probabilityBounds(outerIf, true)._2 should be ((1 - falseLower) +- 0.000000001)
     	alg.probabilityBounds(outerIf, false)._2 should be ((1 - trueLower) +- 0.000000001)
+      
+      alg.kill()
       }
       
       "produce the correct depth 2 perfect answer" in {
@@ -121,6 +142,8 @@ class LazyVETest extends WordSpec with Matchers {
     	alg.probabilityBounds(outerIf, false)._1 should be ((1 - pOuter) +- 0.000000001)
     	alg.probabilityBounds(outerIf, true)._2 should be (pOuter +- 0.000000001)
     	alg.probabilityBounds(outerIf, false)._2 should be ((1 - pOuter) +- 0.000000001)
+      
+      alg.kill()
       } 
     }
     
@@ -146,6 +169,8 @@ class LazyVETest extends WordSpec with Matchers {
         pLow should be >= (correct - 0.0001)
         pHigh should be >= (correct)
         pHigh should be <= (correct + 0.0001)
+        
+        alg.kill()
       }
     }
 
@@ -172,6 +197,8 @@ class LazyVETest extends WordSpec with Matchers {
         pLow should be >= (correct - 0.0001)
         pHigh should be >= (correct)
         pHigh should be <= (correct + 0.0001)
+        
+        alg.kill()
       }
     }
   }

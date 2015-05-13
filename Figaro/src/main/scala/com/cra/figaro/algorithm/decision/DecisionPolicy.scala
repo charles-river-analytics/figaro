@@ -27,7 +27,7 @@ import com.cra.figaro.algorithm.lazyfactored.Regular
 /**
  * Abstract base class for all Decision Policies. Must define two functions:
  * toFcn: T => Element[U] - this is the function that is called to
- *  compute the decision for a parent value
+ *  compute the decision for a parent value.
  *
  * toUtility: T => Element[Double] - this returns the expected utility of the
  * decision for a parent value. Used in backward induction algorithm.
@@ -39,12 +39,12 @@ trait DecisionPolicy[T, U] {
   
   /* All implemented Decision policies must define these two functions   */
   /**
-   * The function that returns a decision (Element[U]) given the value of the parent T
+   * The function that returns a decision (Element[U]) given the value of the parent T.
    */
   def toFcn(): T => Element[U]
   
   /**
-   * The function that returns the expected utility (Element[Double]) given the value of the parent T
+   * The function that returns the expected utility (Element[Double]) given the value of the parent T.
    */
   def toUtility(): T => Element[Double]
 }
@@ -56,7 +56,7 @@ object DecisionPolicy {
   /**
    * Computes the maximal decision from a set of (decision, utility) samples,
    * returned from a nearest neighbor algorithm. It is unweighted because the
-   * samples are NOT weighted by their distance from the parent value
+   * samples are NOT weighted by their distance from the parent value.
    */
   def UWMAX[U](nn: List[(Double, U, DecisionSample)]): (U, Double) = {
     val decisions = scala.collection.mutable.Map[U, DecisionSample]()
@@ -73,7 +73,7 @@ object DecisionPolicy {
    * Computes the maximal decision from a set of (decision, utility) samples,
    * returned from the nearest neighbor algorithm. This method IS weighted. Samples
    * who's parent value closer to the query parent value are weighted more when
-   * computing the expected value
+   * computing the expected value.
    */
   def WMAX[U](nn: List[(Double, U, DecisionSample)]): (U, Double) = {
     val decisions = scala.collection.mutable.Map[U, DecisionSample]()
@@ -128,7 +128,7 @@ class DecisionPolicyNN[T <% Distance[T], U](D: Index[T, U], combineFcn: (List[(D
   
   /**
    * Returns the number of nearest neighbors to use. If kNN is greater than 1, then return kNN. If kNN is less than
-   * 1, then return kNN* Number of Samples 
+   * 1, then return kNN* Number of Samples.
    */
   def getNumNNSamples = if (numNNSamples >= 1) {
     numNNSamples.toInt
@@ -167,14 +167,14 @@ object DecisionPolicyExact {
   }
 
   /** 
-   *  Create an exact decision policy from a Map of (parent, decision) tuples to a DecisionSample
+   *  Create an exact decision policy from a Map of (parent, decision) tuples to a DecisionSample.
    */
   def apply[T, U](policy: Map[(T, U), DecisionSample]) = {
     new DecisionPolicyExact(maxPolicy(policy))
   }
 
   /** 
-   *  Create an exact decision policy from a DecisionAlgorithm
+   *  Create an exact decision policy from a DecisionAlgorithm.
    */
   def apply[T, U](Alg: DecisionAlgorithm[T, U]) = {
     val policy_t = Alg.getUtility()
@@ -207,7 +207,7 @@ object DecisionPolicyNN {
 
   /** 
    *  Create an approximate decision policy from a DecisionAlgorithm, using the supplied combination function
-   *  and kNN. This uses the default index (VP-Tree)
+   *  and kNN. This uses the default index (VP-Tree).
    *  
    */
   def apply[T <% Distance[T], U](Alg: DecisionAlgorithm[T, U], 
@@ -219,7 +219,7 @@ object DecisionPolicyNN {
 
   /** 
    *  Create an approximate decision policy from a Map of (parent, decision) tuples to a DecisionSample, 
-   *  using the supplied combination function and kNN. This uses the default index (VP-Tree)
+   *  using the supplied combination function and kNN. This uses the default index (VP-Tree).
    *  
    */
   def apply[T <% Distance[T], U](policy: Map[(T, U), DecisionSample], 

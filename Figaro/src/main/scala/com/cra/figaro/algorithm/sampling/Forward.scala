@@ -23,18 +23,20 @@ object Forward {
   /**
    * Sample the universe by generating a value for each element of the universe.
    */
-  def apply(implicit universe: Universe) = {
+  def apply(implicit universe: Universe): Unit = apply(false)(universe) 
+  
+  def apply(useObservation: Boolean)(implicit universe: Universe): Unit = {
     // avoiding recursion
     var state = Set[Element[_]]()
     var elementsRemaining = universe.activeElements
     while (!elementsRemaining.isEmpty) {
-      if (elementsRemaining.head.active) state = sampleInState(elementsRemaining.head, state, universe)
+      if (elementsRemaining.head.active) state = sampleInState(elementsRemaining.head, state, universe, useObservation)
       elementsRemaining = elementsRemaining.tail
     }
   }
   
-  def apply[T](element: Element[T]) = {
-    sampleInState(element, Set[Element[_]](), element.universe)
+  def apply[T](element: Element[T], useObservation: Boolean = false) = {
+    sampleInState(element, Set[Element[_]](), element.universe, useObservation)
   }
 
   private type State = Set[Element[_]]
@@ -43,7 +45,7 @@ object Forward {
    * To allow this algorithm to be used for dependent universes, we make sure elements in a different universe are not
    * sampled.
    */
-  private def sampleInState[T](element: Element[T], state: State, universe: Universe): State = {
+  private def sampleInState[T](element: Element[T], state: State, universe: Universe, useObservation: Boolean): State = {
     if (element.universe != universe || (state contains element)) state
     else {
       val (state1, sampledValue) = {
@@ -56,7 +58,7 @@ object Forward {
                   var resultState = state
                   var probsRemaining = dc.probs
                   while (!probsRemaining.isEmpty) {
-                    resultState = sampleInState(probsRemaining.head, resultState, universe)
+                    resultState = sampleInState(probsRemaining.head, resultState, universe, useObservation)
                     probsRemaining = probsRemaining.tail
                   }
                   resultState
@@ -64,26 +66,32 @@ object Forward {
               }
             val rand = d.generateRandomness()
             val index = d.selectIndex(rand)
-            val state2 = sampleInState(d.outcomeArray(index), state1, universe)
+            val state2 = sampleInState(d.outcomeArray(index), state1, universe, useObservation)
             (state2, d.finishGeneration(index))
           case c: Chain[_, _] =>
-            val state1 = sampleInState(c.parent, state, universe)
+            val state1 = sampleInState(c.parent, state, universe, useObservation)
             val result = c.get(c.parent.value)
-            val state2 = sampleInState(result, state1, universe)
+            val state2 = sampleInState(result, state1, universe, useObservation)
             (state2, result.value)
           case _ =>
             // avoiding recursion
             var state1 = state
-            var argsRemaining = (element.args ::: element.elementsIAmContingentOn.toList)
+            var initialArgs = (element.args ::: element.elementsIAmContingentOn.toList).toSet
+            var argsRemaining = initialArgs 
             while (!argsRemaining.isEmpty) {
-              state1 = sampleInState(argsRemaining.head, state1, universe)
-              argsRemaining = argsRemaining.tail
+              state1 = sampleInState(argsRemaining.head, state1, universe, useObservation)
+              val newArgs = element.args.filter(!initialArgs.contains(_))
+              initialArgs = initialArgs ++ newArgs
+              argsRemaining = argsRemaining.tail ++ newArgs
             }
             element.generate
             (state1, element.value)
         }
       }
-      element.value = sampledValue.asInstanceOf[T]
+      element.value = (useObservation, element.observation) match {
+        case (true, Some(v)) => v 
+        case _ => sampledValue.asInstanceOf[T]
+      }
       state1 + element
     }
   }

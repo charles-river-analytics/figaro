@@ -1,5 +1,5 @@
 /*
- * Entrepreneur.scala
+ * SingleDecision.scala
  * A Single Decision Example, based on the Entrepreneur example from Koller and Friedman, 2009.
  * 
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
