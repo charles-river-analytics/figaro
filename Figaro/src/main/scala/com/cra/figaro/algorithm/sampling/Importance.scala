@@ -20,6 +20,7 @@ import scala.annotation.tailrec
 import scala.collection.mutable.{ Set, Map }
 import com.cra.figaro.experimental.particlebp.AutomaticDensityEstimator
 import com.cra.figaro.algorithm.factored.ParticleGenerator
+import com.cra.figaro.algorithm.parallel.ParImportance
 
 /**
  * Importance samplers.
@@ -323,4 +324,8 @@ object Importance {
   def probability[T](target: Element[T], value: T): Double =
     probability(target, (t: T) => t == value)
 
+  /**
+   * The parallel implementation of IS
+   */
+  def par = ParImportance
 }
