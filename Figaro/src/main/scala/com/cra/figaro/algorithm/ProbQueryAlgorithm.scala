@@ -71,6 +71,14 @@ trait BaseProbQueryAlgorithm[U[_]]
   def computeProbability[T](target: U[T], predicate: T => Boolean): Double = {
     computeExpectation(target, (t: T) => if (predicate(t)) 1.0; else 0.0)
   }
+
+  protected[algorithm] def computeProjection[T](target: U[T]): List[(T, Double)] = {
+    projectDistribution(computeDistribution(target))
+  }
+  
+  private def projectDistribution[T](distribution: Stream[(Double, T)]): List[(T, Double)] = {
+    (distribution map (_.swap)).toList
+  }
     
 
   /*
@@ -83,6 +91,10 @@ trait BaseProbQueryAlgorithm[U[_]]
   protected def doExpectation[T](target: U[T], function: T => Double): Double
 
   protected def doProbability[T](target: U[T], predicate: T => Boolean): Double
+
+  protected def doProjection[T](target: U[T]): List[(T, Double)] = {
+    projectDistribution(doDistribution(target))
+  }
 
   private def check[T](target: U[T]): Unit = {
     if (!active) throw new AlgorithmInactiveException

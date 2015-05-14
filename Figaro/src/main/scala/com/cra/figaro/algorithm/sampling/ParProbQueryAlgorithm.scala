@@ -11,9 +11,8 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
-package com.cra.figaro.algorithm.parallel
+package com.cra.figaro.algorithm.sampling
 
-import com.cra.figaro.algorithm.BaseProbQueryAlgorithm
 import com.cra.figaro.language.Reference
 
 /**
@@ -22,11 +21,13 @@ import com.cra.figaro.language.Reference
  * of com.cra.figaro.algorithm.ProbQueryAlgorithm while leaving the mechanics of the anytime 
  * or onetime versions of the algorithms to the algorithms themselves.
  */
-trait ParProbQueryAlgorithm extends ParAlgorithm with BaseProbQueryAlgorithm[Reference] {
+trait ParProbQueryAlgorithm extends BaseProbQuerySampler[Reference] with ParSamplingAlgorithm {
   
   protected def doDistribution[T](target: Reference[T]) = computeDistribution(target)
 
   protected def doExpectation[T](target: Reference[T], function: T => Double) = computeExpectation(target, function)
 
   protected def doProbability[T](target: Reference[T], predicate: T => Boolean) = computeProbability(target, predicate)
+
+  override protected def doProjection[T](target: Reference[T]) = computeProjection(target)
 }

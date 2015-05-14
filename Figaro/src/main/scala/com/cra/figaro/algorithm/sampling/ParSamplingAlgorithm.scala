@@ -11,21 +11,21 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
-package com.cra.figaro.algorithm.parallel
+package com.cra.figaro.algorithm.sampling
 
 import scala.collection.parallel.ParSeq
 import com.cra.figaro.algorithm.Algorithm
 
 /**
- * Parallel algorithms. These algorithms have a parallel collection of algorithm instances 
+ * Parallel sampling algorithms. These algorithms have a parallel collection of algorithm instances
  * that will do their work on separate threads, over separate universes.
  */
-trait ParAlgorithm extends Algorithm {
-  
+trait ParSamplingAlgorithm extends Algorithm {
+
   protected val parAlgs: ParSeq[Algorithm]
-  
+
   private def call(func: (Algorithm) => Unit) = parAlgs foreach func
-  
+
   /**
    * Calls initialize() on all algorithms.
    */
@@ -36,11 +36,11 @@ trait ParAlgorithm extends Algorithm {
    */
   override def cleanUp(): Unit = call(_.cleanUp())
 
-  override protected[algorithm] def doStart(): Unit = call(_.doStart())
+  protected[algorithm] def doStart(): Unit = call(_.doStart())
 
-  override protected[algorithm] def doStop(): Unit = call(_.doStop())
+  protected[algorithm] def doStop(): Unit = call(_.doStop())
 
-  override protected[algorithm] def doResume(): Unit = call(_.doResume())
+  protected[algorithm] def doResume(): Unit = call(_.doResume())
 
-  override protected[algorithm] def doKill(): Unit = call(_.doKill())
+  protected[algorithm] def doKill(): Unit = call(_.doKill())
 }

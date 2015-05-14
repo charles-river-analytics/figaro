@@ -11,18 +11,18 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
-package com.cra.figaro.algorithm.parallel
+package com.cra.figaro.algorithm.sampling
 
-import scala.collection.parallel.ParSeq
 import com.cra.figaro.algorithm.Anytime
+import scala.collection.parallel.ParSeq
 
 /**
  * Parallel anytime sampling algorithms. These algorithms have a parallel collection of algorithm instances 
  * that will do their work on separate threads, over separate universes.
  */
-trait ParAnytime extends ParAlgorithm {
+trait ParAnytime extends ParSamplingAlgorithm {
   
-  override protected val parAlgs: ParSeq[Anytime]
+  protected val parAlgs: ParSeq[Anytime]
 
   /**
    * Run one step of the algorithm on each thread.
@@ -37,5 +37,11 @@ trait ParAnytime extends ParAlgorithm {
   /**
    * Release all resources from this anytime algorithm.
    */
-  def shutdown() = parAlgs foreach (_.shutdown)
+  def shutdown = parAlgs foreach (_.shutdown)
+
+  /** Specify delegation of algorithm management to ParSamplingAlgorithm **/
+  override protected[algorithm] def doStart(): Unit = super[ParSamplingAlgorithm].doStart()
+  override protected[algorithm] def doStop(): Unit = super[ParSamplingAlgorithm].doStop()
+  override protected[algorithm] def doResume(): Unit = super[ParSamplingAlgorithm].doResume()
+  override protected[algorithm] def doKill(): Unit = super[ParSamplingAlgorithm].doKill()
 }

@@ -20,7 +20,6 @@ import scala.annotation.tailrec
 import scala.collection.mutable.{ Set, Map }
 import com.cra.figaro.experimental.particlebp.AutomaticDensityEstimator
 import com.cra.figaro.algorithm.factored.ParticleGenerator
-import com.cra.figaro.algorithm.parallel.ParImportance
 
 /**
  * Importance samplers.
