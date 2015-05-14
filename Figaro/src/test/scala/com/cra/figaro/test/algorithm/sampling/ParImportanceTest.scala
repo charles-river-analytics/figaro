@@ -11,13 +11,11 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
-package com.cra.figaro.test.algorithm.parallel
+package com.cra.figaro.test.algorithm.sampling
 
 import org.scalatest._
 import org.scalatest.Matchers
 import com.cra.figaro.algorithm._
-import com.cra.figaro.algorithm.parallel._
-import com.cra.figaro.algorithm.sampling.Importance.Reject
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
@@ -25,20 +23,20 @@ import com.cra.figaro.library.atomic._
 import com.cra.figaro.library.atomic.discrete.Binomial
 import com.cra.figaro.library.compound._
 import com.cra.figaro.test._
-import com.cra.figaro.util.logSum
 import JSci.maths.statistics._
 import com.cra.figaro.test.tags.Performance
 import com.cra.figaro.test.tags.NonDeterministic
-import scala.language.reflectiveCalls
 import org.scalatest.Matchers
 import org.scalatest.{ PrivateMethodTester, WordSpec }
+import com.cra.figaro.language.Name.stringToName
+import com.cra.figaro.language.Reference.stringToReference
 class ParImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
   
   val numThreads = 3
   
   "Producing a weighted sample of an element in a universe" should {
     "with no conditions or constraints produce the same result as sampling the element individually" in {
-      val gen = () => {
+      val gen: Function0[Universe] = () => {
         val universe = Universe.createNew()
         val u = Uniform(0.2, 1.0)
         val f = Flip(u)("f", universe)
@@ -118,7 +116,7 @@ class ParImportanceTest extends WordSpec with Matchers with PrivateMethodTester 
         for (_ <- 1 to 4) { Flip(b).observe(false) }
         universe
       }
-      val alg = ParImportance(gen, numThreads, "b")
+      val alg = Importance.par(gen, numThreads, "b")
       alg.start()
       Thread.sleep(100)
       val time0 = System.currentTimeMillis()
@@ -143,7 +141,7 @@ class ParImportanceTest extends WordSpec with Matchers with PrivateMethodTester 
         for (_ <- 1 to 4) { Flip(b).observe(false) }
         universe
       }
-      val alg = ParImportance(gen, numThreads, "b")
+      val alg = Importance.par(gen, numThreads, "b")
       alg.start()
       Thread.sleep(100)
       val time0 = System.currentTimeMillis()
@@ -167,7 +165,7 @@ class ParImportanceTest extends WordSpec with Matchers with PrivateMethodTester 
         bin.observe(1600)
         universe
       }
-      val alg = ParImportance(gen, numThreads, "beta")
+      val alg = Importance.par(gen, numThreads, "beta")
       alg.start()
       Thread.sleep(1000)
       val time0 = System.currentTimeMillis()
@@ -191,7 +189,7 @@ class ParImportanceTest extends WordSpec with Matchers with PrivateMethodTester 
         bin.observe(1600)
         universe
       }
-      val alg = ParImportance(gen, numThreads, "beta")
+      val alg = Importance.par(gen, numThreads, "beta")
       alg.start()
       Thread.sleep(1000)
       val time0 = System.currentTimeMillis()
@@ -216,7 +214,7 @@ class ParImportanceTest extends WordSpec with Matchers with PrivateMethodTester 
         dist.observe(1600) // forces it to choose bin, and observation should propagate to it
         universe
       }
-      val alg = ParImportance(gen, numThreads, "beta")
+      val alg = Importance.par(gen, numThreads, "beta")
       alg.start()
       Thread.sleep(1000)
       val time0 = System.currentTimeMillis()
@@ -244,12 +242,12 @@ class ParImportanceTest extends WordSpec with Matchers with PrivateMethodTester 
         universe
       }
       
-      val i1 = ParImportance(gen(0.3), numThreads, 20000, "f")
+      val i1 = Importance.par(gen(0.3), numThreads, 20000, "f")
       i1.start()
       i1.probability("f", true) should be(0.3 +- 0.01)
       i1.kill()
       
-      val i2 = ParImportance(gen(0.3, 0.6), numThreads, 20000, "f")
+      val i2 = Importance.par(gen(0.3, 0.6), numThreads, 20000, "f")
       i2.start()
       i2.probability("f", true) should be(0.6 +- 0.01)
       i2.kill()
@@ -265,7 +263,7 @@ class ParImportanceTest extends WordSpec with Matchers with PrivateMethodTester 
         val b = Apply(a, (t: temp) => t.t1.value)("b", universe)
         universe
       }
-      val alg = ParImportance(gen, numThreads, 10000, "b")
+      val alg = Importance.par(gen, numThreads, 10000, "b")
       alg.start
       alg.probability("b", true) should be(0.9 +- .01)
       alg.kill
@@ -278,7 +276,7 @@ class ParImportanceTest extends WordSpec with Matchers with PrivateMethodTester 
         f.observe(true)
         universe
       }
-      val i = ParImportance(gen, numThreads, 1, "f")
+      val i = Importance.par(gen, numThreads, 1, "f")
       i.start
     }
 
@@ -288,7 +286,7 @@ class ParImportanceTest extends WordSpec with Matchers with PrivateMethodTester 
         val c = NonCachingChain(Uniform(0.2, 1.0), (d: Double) => Flip(d)(Name.default, universe))("c", universe)
         universe
       }
-      val i = ParImportance(gen, numThreads, 1000000, "c")
+      val i = Importance.par(gen, numThreads, 1000000, "c")
       i.start
     }
   }
@@ -317,7 +315,7 @@ class ParImportanceTest extends WordSpec with Matchers with PrivateMethodTester 
         val prob = 0.7 * 0.4
         val evidence = List(NamedEvidence("f1", Observation(true)), NamedEvidence("f2", Observation(true)))
         
-        val alg = ParImportance(gen, numThreads, 10000)
+        val alg = Importance.par(gen, numThreads, 10000)
         alg.start()
         alg.probabilityOfEvidence(evidence) should be(prob +- 0.01)
       }
@@ -432,13 +430,13 @@ class ParImportanceTest extends WordSpec with Matchers with PrivateMethodTester 
   def weightedSampleTest[T](gen: Function0[Universe], target: Reference[T], predicate: T => Boolean, prob: Double) {
     val numTrials = 100000
     val tolerance = 0.01
-    val algorithm = ParImportance(gen, numThreads, numTrials, target)
+    val algorithm = Importance.par(gen, numThreads, numTrials, target)
     algorithm.start()
     algorithm.probability(target, predicate) should be(prob +- tolerance)
   }
   
   def probEvidenceTest(gen: Function0[Universe], prob: Double, evidence: List[NamedEvidence[_]]) {
-    val alg = ParImportance(gen, numThreads, 10000)
+    val alg = Importance.par(gen, numThreads, 10000)
     alg.start()
     alg.probabilityOfEvidence(evidence) should be(prob +- 0.01)
   }
