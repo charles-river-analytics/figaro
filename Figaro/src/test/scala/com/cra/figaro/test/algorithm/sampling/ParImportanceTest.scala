@@ -124,12 +124,13 @@ class ParImportanceTest extends WordSpec with Matchers with PrivateMethodTester 
       // Uniform(0,1) is beta(1,1)
       // Result is beta(1 + 16,1 + 4)
       // Expectation is (alpha) / (alpha + beta) = 17/22
-      alg.expectation("b", (d: Double) => d) should be((17.0 / 22.0) +- 0.02)
+      val exp = alg.expectation("b", (d: Double) => d)
       val time1 = System.currentTimeMillis()
       // If likelihood weighting is working, stopping and querying the algorithm should be almost instantaneous
       // If likelihood weighting is not working, stopping and querying the algorithm requires waiting for a non-rejected sample
-      (time1 - time0) should be <= (500L)
       alg.shutdown
+      (time1 - time0) should be <= (500L)
+      exp should be((17.0 / 22.0) +- 0.02)
     }
 
     "with an observation on a parameterized flip, terminate quickly and produce the correct result" taggedAs (NonDeterministic) in {
@@ -148,12 +149,13 @@ class ParImportanceTest extends WordSpec with Matchers with PrivateMethodTester 
       alg.stop()
       // Result is beta(2 + 16,5 + 4)
       // Expectation is (alpha) / (alpha + beta) = 18/27
-      alg.expectation("b", (d: Double) => d) should be((18.0 / 27.0) +- 0.02)
+      val exp = alg.expectation("b", (d: Double) => d)
       val time1 = System.currentTimeMillis()
       // If likelihood weighting is working, stopping and querying the algorithm should be almost instantaneous
       // If likelihood weighting is not working, stopping and querying the algorithm requires waiting for a non-rejected sample
-      (time1 - time0) should be <= (500L)
       alg.shutdown
+      (time1 - time0) should be <= (500L)
+      exp should be((18.0 / 27.0) +- 0.02)
     }
 
     "with an observation on a parameterized binomial, terminate quickly and produce the correct result" in {
@@ -172,12 +174,13 @@ class ParImportanceTest extends WordSpec with Matchers with PrivateMethodTester 
       alg.stop()
       // Result is beta(2 + 1600,5 + 400)
       // Expectation is (alpha) / (alpha + beta) = 1602/2007
-      alg.expectation("beta", (d: Double) => d) should be((1602.0 / 2007.0) +- 0.02)
+      val exp = alg.expectation("beta", (d: Double) => d)
       val time1 = System.currentTimeMillis()
       // If likelihood weighting is working, stopping and querying the algorithm should be almost instantaneous
       // If likelihood weighting is not working, stopping and querying the algorithm requires waiting for a non-rejected sample
-      (time1 - time0) should be <= (500L)
       alg.shutdown
+      (time1 - time0) should be <= (500L)
+      exp should be((1602.0 / 2007.0) +- 0.02)
     }
 
     "with an observation on a chain, terminate quickly and produce the correct result" in {
@@ -197,12 +200,13 @@ class ParImportanceTest extends WordSpec with Matchers with PrivateMethodTester 
       // uniform(0,1) is beta(1,1)
       // Result is beta(1 + 1600,1 + 400)
       // Expectation is (alpha) / (alpha + beta) = 1601/2003
-      alg.expectation("beta", (d: Double) => d) should be((1601.0 / 2003.0) +- 0.02)
+      val exp = alg.expectation("beta", (d: Double) => d)
       val time1 = System.currentTimeMillis()
       // If likelihood weighting is working, stopping and querying the algorithm should be almost instantaneous
       // If likelihood weighting is not working, stopping and querying the algorithm requires waiting for a non-rejected sample
-      (time1 - time0) should be <= (500L)
       alg.shutdown
+      (time1 - time0) should be <= (500L)
+      exp should be((1601.0 / 2003.0) +- 0.02)
     }
 
     "with an observation on a dist, terminate quickly and produce the correct result" in {
@@ -221,12 +225,13 @@ class ParImportanceTest extends WordSpec with Matchers with PrivateMethodTester 
       alg.stop()
       // Result is beta(2 + 1600,5 + 400)
       // Expectation is (alpha) / (alpha + beta) = 1602/2007
-      alg.expectation("beta", (d: Double) => d) should be((1602.0 / 2007.0) +- 0.02)
+      val exp = alg.expectation("beta", (d: Double) => d)
       val time1 = System.currentTimeMillis()
       // If likelihood weighting is working, stopping and querying the algorithm should be almost instantaneous
       // If likelihood weighting is not working, stopping and querying the algorithm requires waiting for a non-rejected sample
-      (time1 - time0) should be <= (500L)
       alg.shutdown
+      (time1 - time0) should be <= (500L)
+      exp should be((1602.0 / 2007.0) +- 0.02)
     }
   }
 
