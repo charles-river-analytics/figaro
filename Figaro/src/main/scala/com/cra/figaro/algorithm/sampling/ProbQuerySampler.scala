@@ -5,10 +5,21 @@ import com.cra.figaro.language._
 import com.cra.figaro.algorithm.BaseProbQueryAlgorithm
 import scala.language.higherKinds
 
+/**
+ * Sampling algorithms that compute conditional probabilities of queries on elements,
+ * and that use the projection of all the samples of a target variable to calculate the
+ * distribution of that variable or the expectation of a function on that variable.
+ */
 trait ProbQuerySampler extends BaseProbQuerySampler[Element] {
   val universe: Universe
 }
 
+/**
+ * A base trait for sampling algorithms that compute conditional probabilities of queries,
+ * and that use the projection of all the samples of a target variable to calculate the
+ * distribution of that variable or the expectation of a function on that variable.
+ * Generic type U is either `Element` or `Reference`.
+ */
 trait BaseProbQuerySampler[U[_]] extends BaseProbQueryAlgorithm[U] {
   
   /**
