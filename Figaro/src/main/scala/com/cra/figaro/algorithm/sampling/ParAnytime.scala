@@ -38,10 +38,4 @@ trait ParAnytime extends ParSamplingAlgorithm {
    * Release all resources from this anytime algorithm.
    */
   def shutdown = parAlgs foreach (_.shutdown)
-
-  /** Specify delegation of algorithm management to ParSamplingAlgorithm **/
-  override protected[algorithm] def doStart(): Unit = super[ParSamplingAlgorithm].doStart()
-  override protected[algorithm] def doStop(): Unit = super[ParSamplingAlgorithm].doStop()
-  override protected[algorithm] def doResume(): Unit = super[ParSamplingAlgorithm].doResume()
-  override protected[algorithm] def doKill(): Unit = super[ParSamplingAlgorithm].doKill()
 }
