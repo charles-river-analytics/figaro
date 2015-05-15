@@ -58,13 +58,13 @@ class MultiDecisionTest extends WordSpec with Matchers {
         override def oneTest = {
 
           val result = doTest((e1: List[Element[Double]], e2: List[Decision[_, _]]) =>
-            MultiDecisionMetropolisHastings(200000, propmaker, 10000, e1, e2: _*))
+            MultiDecisionMetropolisHastings(300000, propmaker, 20000, e1, e2: _*))
 
           update(result(0), NDTest.BOOLEAN, "MHMulti-DecisionFound(-1)", true, .90)
           update(result(1), NDTest.BOOLEAN, "MHMulti-DecisionFound(0)", false, .90)
           update(result(2), NDTest.BOOLEAN, "MHMulti-DecisionFound(1)", true, .90)
           update(result(3), NDTest.BOOLEAN, "MHMulti-DecisionFound(2)", true, .90)
-          update(result(4), NDTest.BOOLEAN, "MHMulti-DecisionTest(0)", true, .90)
+          update(result(4), NDTest.BOOLEAN, "MHMulti-DecisionTest(0)", true, .70)
         }
       }
       ndtest.run(10)

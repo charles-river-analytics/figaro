@@ -170,7 +170,7 @@ class AnnealingTest extends WordSpec with Matchers with PrivateMethodTester {
 
     def buildComplicatedModel(): Universe = {
       val u = Universe.createNew()
-      val flips = Seq.fill(10000)(Math.pow(0.01, Random.nextDouble)).map(SwitchingFlip(_))
+      val flips = Seq.fill(1000)(Math.pow(0.01, Random.nextDouble)).map(SwitchingFlip(_))
       val ifs = for ((f, i) <- flips.zipWithIndex) yield {
         val fi = If(f, SwitchingFlip(Math.pow(0.01, Random.nextDouble)), Constant(false))(i.toString(), u)
         if (Random.nextDouble > 0.80) fi.observe(Random.nextBoolean())
@@ -185,11 +185,11 @@ class AnnealingTest extends WordSpec with Matchers with PrivateMethodTester {
         if (annealer.isActive) annealer.resume else annealer.start
         Thread.sleep(100)
         annealer.stop()
-        for (i <- 1 to 10000) {
+        for (i <- 1 to 1000) {
           if (annealer.isActive) annealer.resume else annealer.start
           Thread.sleep(25)
           annealer.stop()
-          for (i <- 0 until 10000) {
+          for (i <- 0 until 1000) {
             annealer.mostLikelyValue(u.getElementByReference[Boolean](i.toString()))
           }
         }

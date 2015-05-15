@@ -430,6 +430,17 @@ class MHTest extends WordSpec with Matchers with PrivateMethodTester {
       alg.start()
       alg.probability(a1, 1) should be(0.7 +- 0.01)
     }
+    
+    "not record invalid states" taggedAs(NonDeterministic) in {
+      Universe.createNew()
+      val c1 = Flip(0.9)
+      val a1 = If(c1, com.cra.figaro.library.atomic.discrete.Uniform(1, 2), Select(0.999 -> 2, 0.001 -> 3))      
+      a1.observe(3)
+      val alg = MetropolisHastings(10000, ProposalScheme.default, a1, c1)
+      alg.start()
+      alg.distribution(c1).toList.exists(s => s._2 == true) should be(false)
+    }
+    
   }
 
   def newState(mh: MetropolisHastings): State = {

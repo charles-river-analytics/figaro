@@ -217,37 +217,26 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
    * is not empty, we recursively update the intersecting elements. Once those updates are completed,
    * we update an element and move on to the next element in the set.
    */
-  protected def updateMany[T](state: State, toUpdate: Set[Element[_]]): State = {
-    var returnState = state
-    var updatesLeft = toUpdate
-    while (!updatesLeft.isEmpty) {
-      // Check the intersection of an element's arguments with the updates that still need to occur
-      var argsRemaining = universe.uses(updatesLeft.head).intersect(updatesLeft)
-      while (!argsRemaining.isEmpty) {
-        // update the element's arguments first
-        returnState = updateManyHelper(returnState, argsRemaining.toSet)
-        argsRemaining = argsRemaining.tail
-      }
-      // once the args are updated, update this element
-      returnState = updateOne(returnState, updatesLeft.head)
-      updatesLeft = updatesLeft.tail
-    }
-    returnState
-  }
-
-  /*
-   * A recursive function to work in conjunction with updateMany to check the order of the element
-   * updates.
-   */
   @tailrec
-  private def updateManyHelper(state: State, toUpdate: Set[Element[_]]): State = {
-    var returnState = state
-    var updatesLeft = toUpdate
-    var argsRemaining = universe.uses(updatesLeft.head).intersect(updatesLeft)
-    if (argsRemaining.isEmpty) {
-      returnState = updateOne(returnState, updatesLeft.head)
-      returnState
-    } else { updateManyHelper(returnState, argsRemaining.toSet) }
+  private def updateMany(state: State, currentStack: List[Element[_]], currentArgs: Set[Element[_]], updateQ: Set[Element[_]]): State = {
+
+    if (currentStack.isEmpty && currentArgs.isEmpty && updateQ.isEmpty) state
+
+    else if (currentStack.isEmpty && currentArgs.isEmpty && updateQ.nonEmpty) { 
+      val argsRemaining = universe.uses(updateQ.head).intersect(updateQ.tail)
+      updateMany(state, List(updateQ.head), argsRemaining.toSet, updateQ.tail -- argsRemaining)
+    } else if (currentStack.nonEmpty && currentArgs.isEmpty) { 
+      val newState = updateOne(state, currentStack.head)
+      updateMany(newState, currentStack.tail, currentArgs, updateQ)
+    } else {
+      val argsRemaining = universe.uses(currentArgs.head).intersect(currentArgs.tail)
+      if (argsRemaining.isEmpty) {
+        val newState = updateOne(state, currentArgs.head)
+        updateMany(newState, currentStack, currentArgs.tail, updateQ)
+      } else {
+        updateMany(state, currentArgs.head +: currentStack, currentArgs.tail, updateQ)
+      }
+    }
   }
 
   /*
@@ -257,7 +246,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
   protected def proposeAndUpdate(): State = {
     val state1 = runScheme()
     val updatesNeeded = state1.oldValues.keySet flatMap (elem => universe.usedBy(elem))
-    updateMany(state1, updatesNeeded.toSet)
+    updateMany(state1, List(), Set(), updatesNeeded.toSet)
   }
 
   protected var dissatisfied: Set[Element[_]] = _
@@ -365,7 +354,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
 
   protected def doInitialize(): Unit = {
     // Need to prime the universe to make sure all elements have a generated value
-    Forward(true)(universe)
+    Forward(false)(universe)
     initConstrainedValues()
     dissatisfied = universe.conditionedElements.toSet filter (!_.conditionSatisfied)
     for { i <- 1 to burnIn } mhStep()
