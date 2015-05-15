@@ -6,7 +6,7 @@ import com.cra.figaro.language._
 import com.cra.figaro.util
 
 /**
- * Parallel version of Importance sampling. Has a parallel collection of algorithm instances 
+ * Parallel version of a sampling algorithm. Has a parallel collection of algorithm instances 
  * that will do its work on separate threads, over separate universes. Uses Scala's parallel 
  * collections to divide up the work, so it will work best if told to run on a number of threads 
  * less than or equal to the number of worker threads Scala creates when operating over parallel 
