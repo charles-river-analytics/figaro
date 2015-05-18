@@ -104,7 +104,7 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
 
     if (dissatisfied.isEmpty) {
       sampleCount += 1
-      val toUpdate = if (currentEnergy > bestEnergy) {
+      val toUpdate = if (currentEnergy >= bestEnergy) {
         saveState
       } else Map[Element[_], Any]()
       (true, toUpdate)
@@ -114,7 +114,7 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
   }
 
   override def doInitialize(): Unit = {
-    Forward(true)(universe)
+    Forward(false)(universe)
     initConstrainedValues()
     dissatisfied = universe.conditionedElements.toSet filter (!_.conditionSatisfied)
     currentEnergy = universe.constrainedElements.map(_.constraintValue).sum
@@ -122,6 +122,8 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
       val nextState = mhStep()
       currentEnergy += nextState.modelProb
     }
+    initUpdates()    
+    if (dissatisfied.nonEmpty) bestEnergy = Double.MinValue else bestEnergy = currentEnergy 
   }
 
   def mostLikelyValue[T](target: Element[T]): T = {
