@@ -83,21 +83,23 @@ trait ExpectationMaximization extends Algorithm with ParameterLearner {
  */
 trait OnlineExpectationMaximization extends Online with ExpectationMaximization {
 
+  override def doStart = {}
+
   protected var lastIterationStatistics: Map[Parameter[_], Seq[Double]] = Map(targetParameters.map(p => p -> p.zeroSufficientStatistics): _*)
   override val initial: Universe
   override val transition: Function0[Universe]
   protected var currentUniverse: Universe = initial
 
-  private def updateStatistics(newStatistics:Map[Parameter[_], Seq[Double]]): Map[Parameter[_], Seq[Double]] = {
+  private def updateStatistics(newStatistics: Map[Parameter[_], Seq[Double]]): Map[Parameter[_], Seq[Double]] = {
     Map((for (p <- paramMap.keys) yield {
       val updatedStatistics = (lastIterationStatistics(p) zip newStatistics(p)).map((pair: (Double, Double)) => pair._1 + pair._2)
       (p, updatedStatistics)
-    }).toSeq:_*)
-  } 
-  
- /**
- * Observe new evidence and perform one expectation step and one maximization step
- */
+    }).toSeq: _*)
+  }
+
+  /**
+   * Observe new evidence and perform one expectation step and one maximization step
+   */
   def update(evidence: Seq[NamedEvidence[_]] = Seq()): Unit = {
     currentUniverse = transition()
     currentUniverse.assertEvidence(evidence)
@@ -124,13 +126,12 @@ class ExpectationMaximizationWithFactors(val universe: Universe, val targetParam
 
 }
 
-
 /**
  * An online EM algorithm which learns parameters using a factored algorithm
  */
 class OnlineExpectationMaximizationWithFactors(override val initial: Universe, override val transition: Function0[Universe], val targetParameters: Parameter[_]*)(val terminationCriteria: () => EMTerminationCriteria)
   extends OnlineExpectationMaximization {
-  
+
   def doExpectationStep = {
     val algorithm = SufficientStatisticsVariableElimination(paramMap)(currentUniverse)
     algorithm.start
@@ -141,12 +142,12 @@ class OnlineExpectationMaximizationWithFactors(override val initial: Universe, o
   }
 }
 
-
 /**
  * An EM algorithm which learns parameters using an inference algorithm provided as an argument
  */
 class GeneralizedEM(inferenceAlgorithmConstructor: Seq[Element[_]] => Universe => ProbQueryAlgorithm with OneTime, val universe: Universe, val targetParameters: Parameter[_]*)(val terminationCriteria: () => EMTerminationCriteria) extends ExpectationMaximization {
 
+  //Dependent universe doesn't work the same way.
   protected def doExpectationStep(): Map[Parameter[_], Seq[Double]] = {
     val inferenceTargets =
       universe.activeElements.filter(_.isInstanceOf[Parameterized[_]]).map(_.asInstanceOf[Parameterized[_]])
@@ -161,6 +162,7 @@ class GeneralizedEM(inferenceAlgorithmConstructor: Seq[Element[_]] => Universe =
       for {
         target <- universe.directlyUsedBy(parameter)
       } {
+
         val t: Parameterized[target.Value] = target.asInstanceOf[Parameterized[target.Value]]
         val distribution: Stream[(Double, target.Value)] = algorithm.distribution(t)
         val newStats = t.distributionToStatistics(parameter, distribution)
@@ -179,21 +181,27 @@ class GeneralizedEM(inferenceAlgorithmConstructor: Seq[Element[_]] => Universe =
  */
 class GeneralizedOnlineEM(inferenceAlgorithmConstructor: Seq[Element[_]] => Universe => ProbQueryAlgorithm with OneTime, override val initial: Universe, override val transition: Function0[Universe], val targetParameters: Parameter[_]*)(val terminationCriteria: () => EMTerminationCriteria) extends OnlineExpectationMaximization {
 
-  
+  protected def usesParameter(l: List[Element[_]]): Map[Parameter[_], Iterable[Parameterized[_]]] = {
+    (l.map { x => x match { case p: Parameterized[_] => { p -> p.parameters.head } } }).groupBy(_._2).mapValues(_.map(_._1))
+  }
+
   protected def doExpectationStep(): Map[Parameter[_], Seq[Double]] = {
     val inferenceTargets =
       currentUniverse.activeElements.filter(_.isInstanceOf[Parameterized[_]]).map(_.asInstanceOf[Parameterized[_]])
 
     val algorithm = inferenceAlgorithmConstructor(inferenceTargets)(currentUniverse)
     algorithm.start()
-
+    //println("universe: " + currentUniverse.hashCode)
     var result: Map[Parameter[_], Seq[Double]] = Map()
 
+    val uses = usesParameter(inferenceTargets)
+    println("built map")
     for { parameter <- targetParameters } {
       var stats = parameter.zeroSufficientStatistics
       for {
-        target <- currentUniverse.directlyUsedBy(parameter)
+        target <- uses(parameter)
       } {
+        println("found used by...")
         val t: Parameterized[target.Value] = target.asInstanceOf[Parameterized[target.Value]]
         val distribution: Stream[(Double, target.Value)] = algorithm.distribution(t)
         val newStats = t.distributionToStatistics(parameter, distribution)
@@ -208,7 +216,7 @@ class GeneralizedOnlineEM(inferenceAlgorithmConstructor: Seq[Element[_]] => Univ
 }
 
 object EMWithBP {
-  
+
   private val defaultBPIterations = 10
 
   def online(transition: () => Universe, p: Parameter[_]*)(implicit universe: Universe) = {
@@ -270,9 +278,9 @@ object EMWithBP {
 }
 
 object EMWithImportance {
-  
+
   private val defaultImportanceParticles = 100000
-  
+
   private def makeImportance(numParticles: Int, targets: Seq[Element[_]])(universe: Universe) = {
     Importance(numParticles, targets: _*)(universe)
   }
@@ -342,7 +350,7 @@ object EMWithImportance {
 object EMWithMH {
 
   private val defaultMHParticles = 100000
-  
+
   private def makeImportance(numParticles: Int, targets: Seq[Element[_]])(universe: Universe) = {
     Importance(numParticles, targets: _*)(universe)
   }
