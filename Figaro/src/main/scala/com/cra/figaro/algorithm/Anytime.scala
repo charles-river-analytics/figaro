@@ -127,7 +127,7 @@ trait Anytime extends Algorithm {
   def handle(service: Service): Response
 
 
-  protected def doStart() = {
+  protected[algorithm] def doStart() = {
     if (!running) {
     	system = ActorSystem("Anytime", ConfigFactory.load(customConf))
     	runner = system.actorOf(Props(new Runner))
@@ -138,11 +138,11 @@ trait Anytime extends Algorithm {
     runner ! "start"
   }
 
-  protected def doStop() = runner ! "stop"
+  protected[algorithm] def doStop() = runner ! "stop"
 
-  protected def doResume() = runner ! "resume"
+  protected[algorithm] def doResume() = runner ! "resume"
 
-  protected def doKill() = {
+  protected[algorithm] def doKill() = {
     shutdown
   }
 
