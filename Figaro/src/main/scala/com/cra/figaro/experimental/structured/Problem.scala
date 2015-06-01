@@ -60,6 +60,15 @@ class Problem(val collection: ComponentCollection, targets: List[Element[_]] = L
       contains(component.problem) & !targets.contains(component.element)
     }
   }
+  
+  /**
+   * Determines if a variable is in scope outside of this problem
+   */
+  def global(variable: Variable[_]): Boolean = {
+    !collection.intermediates.contains(variable) &&
+    !contains(collection.variableToComponent(variable).problem)
+  }
+  
 
   /**
    * Determines if this problem contains the given problem.

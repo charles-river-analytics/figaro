@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Figaro
 Bundle-SymbolicName: com.cra.figaro
-Bundle-Version: 3.1.0
+Bundle-Version: 3.2.0
 Export-Package: com.cra.figaro.algorithm,
  com.cra.figaro.algorithm.decision,
  com.cra.figaro.algorithm.decision.index,

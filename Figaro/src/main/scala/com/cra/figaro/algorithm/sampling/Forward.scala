@@ -80,7 +80,7 @@ object Forward {
             var argsRemaining = initialArgs 
             while (!argsRemaining.isEmpty) {
               state1 = sampleInState(argsRemaining.head, state1, universe, useObservation)
-              val newArgs = element.args.toSet -- initialArgs
+              val newArgs = element.args.filter(!initialArgs.contains(_))
               initialArgs = initialArgs ++ newArgs
               argsRemaining = argsRemaining.tail ++ newArgs
             }

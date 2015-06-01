@@ -1,13 +1,13 @@
 /*
  * MPEVariableElimination.scala
  * Variable elimination algorithm for computing most probable explanation.
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -20,10 +20,11 @@ import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.util
 import scala.collection.mutable.{ Set, Map }
 import com.cra.figaro.algorithm.lazyfactored._
+import com.cra.figaro.util.MultiSet
 
 /**
  * Variable elimination algorithm to compute the most probable explanation.
- * 
+ *
  * @param showTiming Produce timing information on steps of the algorithm
  */
 class MPEVariableElimination(override val universe: Universe)(
@@ -33,12 +34,12 @@ class MPEVariableElimination(override val universe: Universe)(
 
   override val comparator = Some((x: Double, y: Double) => x < y)
   override val semiring = MaxProductSemiring()
-  
+
   /*
    * We are trying to find a configuration of all the elements, so we must make them all starter elements for expansion.
    */
   override val starterElements = universe.activeElements
-  
+
   /**
    * Empty for MPE Algorithms.
    */
@@ -47,15 +48,15 @@ class MPEVariableElimination(override val universe: Universe)(
   private val maximizers: Map[Variable[_], Any] = Map()
 
   private def getMaximizer[T](variable: Variable[T]): T = maximizers(variable).asInstanceOf[variable.Value]
-  
+
   /*
    * Convert factors to use MaxProduct
    */
   override def getFactors(allElements: List[Element[_]], targetElements: List[Element[_]], upper: Boolean = false): List[Factor[Double]] = {
-    val factors = super.getFactors(allElements, targetElements, upper) 
+    val factors = super.getFactors(allElements, targetElements, upper)
     factors.map (_.mapTo(x => x, semiring))
   }
-  
+
   def mostLikelyValue[T](target: Element[T]): T = getMaximizer(Variable(target))
 
   private def backtrackOne[T](factor: Factor[_], variable: Variable[T]): Unit = {
@@ -64,7 +65,7 @@ class MPEVariableElimination(override val universe: Universe)(
     maximizers += variable -> factor.get(indices)
   }
 
-  def finish(factorsAfterElimination: Set[Factor[Double]], eliminationOrder: List[Variable[_]]): Unit =
+  def finish(factorsAfterElimination: MultiSet[Factor[Double]], eliminationOrder: List[Variable[_]]): Unit =
     for { (variable, factor) <- eliminationOrder.reverse.zip(recordingFactors) } { backtrackOne(factor, variable) }
 }
 

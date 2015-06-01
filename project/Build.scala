@@ -21,24 +21,11 @@ import com.typesafe.sbteclipse.plugin.EclipsePlugin.EclipseKeys
 
 object FigaroBuild extends Build {
 
-  // Copy dependency JARs to /target/<scala-version>/lib
-  // Courtesy of
-  // http://stackoverflow.com/questions/7351280/collecting-dependencies-under-sbt-0-10-putting-all-dependency-jars-to-target-sc
-  lazy val copyDependencies = TaskKey[Unit]("copy-deps")
-
-  def copyDepTask = copyDependencies <<= (update, crossTarget, scalaVersion) map {
-    (updateReport, out, scalaVer) =>
-    updateReport.allFiles foreach { srcPath =>
-      val destPath = out / "lib" / srcPath.getName
-      IO.copyFile(srcPath, destPath, preserveLastModified=true)
-    }
-  }
-
   override val settings = super.settings ++ Seq(
     organization := "com.cra.figaro",
     description := "Figaro: a language for probablistic programming",
-    version := "3.1.0.0",
-    scalaVersion := "2.11.4",
+    version := "3.2.0.0",
+    scalaVersion := "2.11.6",
     crossPaths := true,
     publishMavenStyle := true,
     pomExtra :=
@@ -101,6 +88,8 @@ object FigaroBuild extends Build {
       "com.storm-enroute" %% "scalameter" % "0.6" % "provided",
       "org.scalatest" %% "scalatest" % "2.2.4" % "provided, test"
     ))
+    // Copy all managed dependencies to \lib_managed directory
+    .settings(retrieveManaged := true)
     // Enable forking
     .settings(fork := true)
     // Increase max memory for JVM for both testing and runtime
@@ -122,8 +111,6 @@ object FigaroBuild extends Build {
 	val cp = (fullClasspath in assembly).value
 	cp filter {_.data.getName == "arpack_combined_all-0.1-javadoc.jar"}
     })
-    // Copy dependency JARs
-    .settings(copyDepTask)
     // ScalaMeter settings
     .settings(testFrameworks += new TestFramework("org.scalameter.ScalaMeterFramework"))
     .settings(logBuffered := false)
@@ -133,8 +120,6 @@ object FigaroBuild extends Build {
   lazy val examples = Project("FigaroExamples", file("FigaroExamples"))
     .dependsOn(figaro)
     .settings(packageOptions := Seq(Package.JarManifest(examplesManifest)))
-    // Copy dependency JARs
-    .settings(copyDepTask)
     // SBTEclipse settings
     .settings(EclipseKeys.eclipseOutput := Some("target/scala-2.11/classes"))
 
