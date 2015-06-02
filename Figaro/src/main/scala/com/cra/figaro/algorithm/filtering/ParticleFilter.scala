@@ -35,15 +35,14 @@ import sun.swing.AccumulativeRunnable
  * @param intitial The universe describing the initial distribution of the model.
  * @param transition The transition function that returns a new universe from a static and previous universe, respectively.
  */
-abstract class ParticleFilter(static: Universe = new Universe(), initial: Universe, transition: (Universe, Universe) => Universe, numParticles: Int)
-  extends Filtering(static, initial, transition) {
+trait ParticleFilter {
+  
+  val numParticles: Int
 
   /** The belief about the state of the system at the current point in time. */
   val beliefState: ParticleFilter.BeliefState = Array.fill(numParticles)(null)
 
   protected var logProbEvidence: Double = 0.0
-  protected var previousUniverse: Universe = _
-  protected var currentUniverse = initial
 
   /**
    * Returns the expectation of the element referred to by the reference
@@ -75,8 +74,10 @@ abstract class ParticleFilter(static: Universe = new Universe(), initial: Univer
   /*
    * Careful: makeWeightedParticle overwrites the previous state with the new state. That means we can't use it to generate another new particle from the same previous
    * state. The reason for this design is to avoid creating new snapshots and states to conserve memory.
+   * 
+   * TODO: previous state could be replaced by the static universe (or a universe window)
    */
-  protected def makeWeightedParticle(previousState: State): ParticleFilter.WeightedParticle = {
+  protected def makeWeightedParticle(previousState: State, currentUniverse: Universe): ParticleFilter.WeightedParticle = {
     Forward(currentUniverse)
     // avoiding recursion
     var satisfied = true
@@ -124,36 +125,38 @@ abstract class ParticleFilter(static: Universe = new Universe(), initial: Univer
     logProbEvidence = logProbEvidence + scala.math.log(sum / numParticles)
   }
 
-  protected def addWeightedParticle(evidence: Seq[NamedEvidence[_]], index: Int): ParticleFilter.WeightedParticle = {
+  protected def addWeightedParticle(evidence: Seq[NamedEvidence[_]], index: Int, universes: UniverseWindow): ParticleFilter.WeightedParticle = {
     val previousState = beliefState(index)
-    previousState.dynamic.restore(previousUniverse)
-    previousState.static.restore(static)
-    currentUniverse.assertEvidence(evidence)
-    val result = makeWeightedParticle(previousState)
+    previousState.dynamic.restore(universes.previous)
+    previousState.static.restore(universes.static)
+    universes.current.assertEvidence(evidence)
+    val result = makeWeightedParticle(previousState, universes.current)
     result
   }
 
-  protected def initialWeightedParticle(): ParticleFilter.WeightedParticle = {
+  protected def initialWeightedParticle(static: Universe, current: Universe): ParticleFilter.WeightedParticle = {
     Forward(static)
     val staticSnapshot = new Snapshot
     staticSnapshot.store(static)
     val state = new State(new Snapshot, staticSnapshot)
-    makeWeightedParticle(state)
+    makeWeightedParticle(state, current)
   }
 
   /*
    * Advance the universe one time step.
    * The previous universe becomes a copy of the current universe with all named elements replaced by constants.
    * This is done so we don't have to store the previous universe (and the universes previous to it), and we can release the memory.
+   * 
+   * Returns a tuple: (previous, current)
    */
-  protected def advanceUniverse() {
+  protected def advanceUniverse(universes: UniverseWindow, transition: (Universe, Universe) => Universe): UniverseWindow = {
 
-    previousUniverse = Universe.createNew()
-    for { element <- currentUniverse.activeElements.filter(!_.name.isEmpty) } {
-      new Settable(element.name.string, element.value, previousUniverse)
+    val newPrevious = Universe.createNew()
+    for { element <- universes.current.activeElements.filter(!_.name.isEmpty) } {
+      new Settable(element.name.string, element.value, newPrevious)
     }
-    currentUniverse = transition(static, previousUniverse)
-
+    val newCurrent = transition(universes.static, newPrevious)
+    new UniverseWindow(newPrevious, newCurrent, universes.static)
   }
 
   /**
@@ -181,8 +184,12 @@ abstract class ParticleFilter(static: Universe = new Universe(), initial: Univer
  * @param transition The transition model describing how the current state of the system depends on the previous
  * @param numParticles The number of particles to use at each time step
  */
-class OneTimeParticleFilter(static: Universe = new Universe(), initial: Universe, transition: (Universe, Universe) => Universe, numParticles: Int)
-  extends ParticleFilter(static, initial, transition, numParticles) with OneTimeFiltering {
+class OneTimeParticleFilter(static: Universe = new Universe(), initial: Universe, transition: (Universe, Universe) => Universe, val numParticles: Int)
+  extends Filtering(static, initial, transition) with ParticleFilter with OneTimeFiltering {
+  
+  var currentUniverse: Universe = initial
+  var previousUniverse: Universe = _
+  
   private def doTimeStep(weightedParticleCreator: Int => ParticleFilter.WeightedParticle) {
     val weightedParticles = for { i <- 0 until numParticles } yield weightedParticleCreator(i)
 
@@ -196,17 +203,19 @@ class OneTimeParticleFilter(static: Universe = new Universe(), initial: Universe
    * Begin the particle filter, determining the initial distribution.
    */
   def run(): Unit = {
-    doTimeStep((i: Int) => initialWeightedParticle())
+    doTimeStep((i: Int) => initialWeightedParticle(static, currentUniverse))
   }
 
   /**
    * Advance the filtering one time step, conditioning on the given evidence at the new time point.
    */
   def advanceTime(evidence: Seq[NamedEvidence[_]] = List()): Unit = {
-
-    advanceUniverse()
-    doTimeStep((i: Int) => addWeightedParticle(evidence, i))
-
+    
+    val currentWindow = new UniverseWindow(previousUniverse, currentUniverse, static)
+    val newWindow = advanceUniverse(currentWindow, transition)
+    doTimeStep((i: Int) => addWeightedParticle(evidence, i, newWindow))
+    previousUniverse = newWindow.previous
+    currentUniverse = newWindow.current
   }
 }
 
@@ -256,3 +265,9 @@ object ParticleFilter {
   type WeightedParticle = (Double, State)
 
 }
+
+/**
+ * A class representing a single window in time, with a current universe, a previous universe, 
+ * and a static universe.
+ */
+class UniverseWindow(val previous: Universe, val current: Universe, val static: Universe)
