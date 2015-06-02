@@ -11,7 +11,7 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
-package com.cra.figaro.algorithm.sampling
+package com.cra.figaro.algorithm.sampling.parallel
 
 import scala.collection.parallel.ParSeq
 import com.cra.figaro.algorithm.Algorithm

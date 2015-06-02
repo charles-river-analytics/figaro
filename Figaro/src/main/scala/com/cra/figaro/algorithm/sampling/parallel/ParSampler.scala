@@ -1,9 +1,10 @@
-package com.cra.figaro.algorithm.sampling
-
-import scala.collection.parallel.ParSeq
+package com.cra.figaro.algorithm.sampling.parallel
 
 import com.cra.figaro.language._
 import com.cra.figaro.util
+import com.cra.figaro.algorithm.sampling.BaseProbQuerySampler
+import com.cra.figaro.algorithm.sampling.ProbQuerySampler
+import scala.collection.parallel.ParSeq
 
 /**
  * Parallel version of a sampling algorithm. Has a parallel collection of algorithm instances 
@@ -28,8 +29,7 @@ import com.cra.figaro.util
  * taking a large number of samples.
  */
 abstract class ParSampler(algs: Seq[ProbQuerySampler], targets: Reference[_]*) 
-extends ParProbQueryAlgorithm
-{
+ extends BaseProbQuerySampler[Reference] with ParSamplingAlgorithm {
   
   /** The query targets are references in this case **/
   override val queryTargets: Seq[Reference[_]] = targets.toSeq
@@ -64,4 +64,10 @@ extends ParProbQueryAlgorithm
     }
     combinedWeights.toList
   }
+  
+  /** Methods from BaseProbQueryAlgorithm **/
+  protected def doDistribution[T](target: Reference[T]) = computeDistribution(target)
+  protected def doExpectation[T](target: Reference[T], function: T => Double) = computeExpectation(target, function)
+  protected def doProbability[T](target: Reference[T], predicate: T => Boolean) = computeProbability(target, predicate)
+  override protected def doProjection[T](target: Reference[T]) = computeProjection(target)
 }
