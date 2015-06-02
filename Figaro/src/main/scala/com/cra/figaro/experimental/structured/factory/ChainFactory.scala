@@ -43,7 +43,7 @@ object ChainFactory {
         val nestedProblem = cc.expansions((chain.chainFunction, parentVal.value))
         val outcomeElem = nestedProblem.target.asInstanceOf[Element[U]]
         val formalVar = Factory.getVariable(cc, outcomeElem)
-        val actualVar = if (nestedProblem.internal(formalVar)) Factory.makeVariable(cc, formalVar.valueSet) else formalVar
+        val actualVar = if (!nestedProblem.global(formalVar)) Factory.makeVariable(cc, formalVar.valueSet) else formalVar
         chainComp.actualSubproblemVariables += parentVal.value -> actualVar
         List(Factory.makeConditionalSelector(pairVar, parentVal, actualVar))
       }

@@ -15,6 +15,8 @@ package com.cra.figaro.experimental.structured.solver
 import com.cra.figaro.algorithm.factored.VariableElimination
 import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.experimental.structured.Problem
+import com.cra.figaro.util.HashMultiSet
+import com.cra.figaro.util.MultiSet
 
 /*
  * The score threshold is the threshold to determine whether VE or BP will be used.
@@ -33,7 +35,7 @@ extends VariableElimination[Double] {
     } else {
 //      println("Choosing VE")
       // Since we've already computed the order, we don't call doElimination but only do the steps after computing the order
-      val factorsAfterElimination = eliminateInOrder(order, scala.collection.mutable.Set(factors: _*), initialFactorMap(factors))
+      val factorsAfterElimination = eliminateInOrder(order, HashMultiSet(factors: _*), initialFactorMap(factors))
       finish(factorsAfterElimination, order)
     }
     result
@@ -43,7 +45,7 @@ extends VariableElimination[Double] {
 
   private var result: List[Factor[Double]] = _
 
-  def finish(factorsAfterElimination: scala.collection.mutable.Set[Factor[Double]], eliminationOrder: List[Variable[_]]): Unit = {
+  def finish(factorsAfterElimination: MultiSet[Factor[Double]], eliminationOrder: List[Variable[_]]): Unit = {
     result = factorsAfterElimination.toList
   }
 
