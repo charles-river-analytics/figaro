@@ -22,6 +22,8 @@ import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.library.compound._
 import scala.collection.mutable.Map
+import com.cra.figaro.library.atomic.discrete.FromRange
+import com.cra.figaro.library.atomic.discrete.Binomial
 
 class AlgorithmTest extends WordSpec with Matchers {
   "An algorithm" should {
@@ -29,10 +31,10 @@ class AlgorithmTest extends WordSpec with Matchers {
       Universe.createNew()
       val c = Flip(0.3)
       val a = new SimpleAlgorithm(c)
-      an [AlgorithmInactiveException] should be thrownBy { a.distribution(c) } 
-      an [AlgorithmInactiveException] should be thrownBy { a.expectation(c, (b: Boolean) => 1.0) }
-      an [AlgorithmInactiveException] should be thrownBy  { a.probability(c, (b: Boolean) => true) }
-      an [AlgorithmInactiveException] should be thrownBy  { a.probability(c, true) }
+      an[AlgorithmInactiveException] should be thrownBy { a.distribution(c) }
+      an[AlgorithmInactiveException] should be thrownBy { a.expectation(c, (b: Boolean) => 1.0) }
+      an[AlgorithmInactiveException] should be thrownBy { a.probability(c, (b: Boolean) => true) }
+      an[AlgorithmInactiveException] should be thrownBy { a.probability(c, true) }
     }
 
     "allow queries after starting, stopping, and resuming" in {
@@ -62,10 +64,10 @@ class AlgorithmTest extends WordSpec with Matchers {
       val a = new SimpleAlgorithm(c)
       a.start()
       a.kill()
-      an [AlgorithmInactiveException] should be thrownBy  { a.distribution(c) }
-      an [AlgorithmInactiveException] should be thrownBy  { a.expectation(c, (b: Boolean) => 1.0) }
-      an [AlgorithmInactiveException] should be thrownBy  { a.probability(c, (b: Boolean) => true) }
-      an [AlgorithmInactiveException] should be thrownBy  { a.probability(c, true) } 
+      an[AlgorithmInactiveException] should be thrownBy { a.distribution(c) }
+      an[AlgorithmInactiveException] should be thrownBy { a.expectation(c, (b: Boolean) => 1.0) }
+      an[AlgorithmInactiveException] should be thrownBy { a.probability(c, (b: Boolean) => true) }
+      an[AlgorithmInactiveException] should be thrownBy { a.probability(c, true) }
     }
 
     "not allow start after starting" in {
@@ -73,16 +75,16 @@ class AlgorithmTest extends WordSpec with Matchers {
       val c = Flip(0.3)
       val a = new SimpleAlgorithm(c)
       a.start()
-      an [AlgorithmActiveException] should be thrownBy  { a.start() }
+      an[AlgorithmActiveException] should be thrownBy { a.start() }
     }
 
     "not allow stop, resume, or kill before starting" in {
       Universe.createNew()
       val c = Flip(0.3)
       val a = new SimpleAlgorithm(c)
-      an [AlgorithmInactiveException] should be thrownBy  { a.stop() }
-      an [AlgorithmInactiveException] should be thrownBy  { a.resume() }
-      an [AlgorithmInactiveException] should be thrownBy  { a.kill() }
+      an[AlgorithmInactiveException] should be thrownBy { a.stop() }
+      an[AlgorithmInactiveException] should be thrownBy { a.resume() }
+      an[AlgorithmInactiveException] should be thrownBy { a.kill() }
     }
 
     "allow start after starting and killing" in {
@@ -143,6 +145,30 @@ class AlgorithmTest extends WordSpec with Matchers {
       a.expectation(c, (b: Boolean) => -1.0) should be > (x)
       a.kill()
     }
+
+    "block on stop, kill or queries" in {
+      Universe.createNew()
+      val num = 400
+      def makeModel(depth: Int, elems: List[Element[_]]): List[Element[_]] = {
+        if (depth > 0) {
+          val e = Chain(FromRange(2, 10), (i: Int) => Binomial(i, 0.2))
+          makeModel(depth - 1, elems :+ e)
+        } else elems
+      }
+      val l = makeModel(num, List())
+
+      for { _ <- 0 until 20 } {
+        val alg = Importance(l: _*)
+        alg.start
+        Thread.sleep(1000)
+        alg.stop
+        val init = Universe.universe.activeElements.size
+        alg.kill
+        val after = Universe.universe.activeElements.size
+        after should equal (400*3)
+      }
+
+    }
   }
 
   "A one time sampler" should {
@@ -176,7 +202,7 @@ class AlgorithmTest extends WordSpec with Matchers {
       s.probability(myFlip, (b: Boolean) => b) should be(1.0 / 3 +- 0.001)
     }
   }
-  
+
   "A probability of query algorithm" should {
     "return the correct mean of an element" in {
       Universe.createNew()
@@ -184,7 +210,7 @@ class AlgorithmTest extends WordSpec with Matchers {
       val n = Normal(u, 1)
       val imp = Importance(100000, n)
       imp.start()
-      imp.mean(n) should be (0.5 +- 0.01)
+      imp.mean(n) should be(0.5 +- 0.01)
     }
 
     "return the correct variance of an element" in {
@@ -193,10 +219,10 @@ class AlgorithmTest extends WordSpec with Matchers {
       val n = Normal(u, 1)
       val imp = Importance(100000, n)
       imp.start()
-      imp.variance(n) should be (2.0 +- 0.05)
+      imp.variance(n) should be(2.0 +- 0.05)
       imp.kill()
     }
-    
+
     "return the correct element representing the posterior probability distribution of an element" in {
       val u1 = Universe.createNew()
       val x = Flip(0.6)
@@ -209,7 +235,7 @@ class AlgorithmTest extends WordSpec with Matchers {
       alg1.kill()
       val alg2 = VariableElimination(z)
       alg2.start()
-      alg2.probability(z, true) should be (0.75 +- 0.00000001)
+      alg2.probability(z, true) should be(0.75 +- 0.00000001)
       alg2.kill()
     }
   }
@@ -217,7 +243,7 @@ class AlgorithmTest extends WordSpec with Matchers {
   class SimpleAlgorithm(val f: AtomicFlip) extends ProbQueryAlgorithm {
     lazy val universe = Universe.universe
     lazy val queryTargets = List(f)
-    
+
     val p = f.prob
 
     def doStart() = ()
@@ -245,7 +271,7 @@ class AlgorithmTest extends WordSpec with Matchers {
   class SimpleAnytime(targets: Element[_]*) extends AnytimeProbQuery {
     lazy val universe = Universe.universe
     lazy val queryTargets = targets.toList
-    
+
     var count = -1000000000
 
     override def initialize() = count = 0

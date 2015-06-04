@@ -86,7 +86,7 @@ abstract class BaseUnweightedSampler(val universe: Universe, targets: Element[_]
 
   protected def update(): Unit = {
     sampleCount += 1
-    targets.foreach(t => updateTimesSeenForTarget(t.asInstanceOf[Element[t.Value]], t.value))
+    if (allLastUpdates.nonEmpty) targets.foreach(t => updateTimesSeenForTarget(t.asInstanceOf[Element[t.Value]], t.value))    
     sampleCount -= 1
   }
 
@@ -100,8 +100,13 @@ trait UnweightedSampler extends BaseUnweightedSampler with ProbQuerySampler {
   def getTotalWeight: Double = math.log(getSampleCount)
 
   override protected[algorithm] def computeProjection[T](target: Element[T]): List[(T, Double)] = {
+    if (allLastUpdates.nonEmpty) {
     val timesSeen = allTimesSeen.find(_._1 == target).get._2.asInstanceOf[Map[T, Int]]
     timesSeen.mapValues(_ / sampleCount.toDouble).toList
+    } else {
+      println("Error: MH sampler did not accept any samples")
+      List()
+    }
   }
 
 }
