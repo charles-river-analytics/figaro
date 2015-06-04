@@ -16,7 +16,6 @@ package com.cra.figaro.algorithm.filtering
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
 import com.cra.figaro.util._
-import sun.swing.AccumulativeRunnable
 
 /**
  * An abstract class of particle filters.
@@ -257,12 +256,9 @@ object ParticleFilter {
 
   /** Weighted particles, consisting of a weight and a state. */
   type WeightedParticle = (Double, State)
-
-  /**
-   * The parallel implementation of ParticleFilter
-   */
+  
+  /** Reference to parallel implementation. */
   def par = ParParticleFilter
-
 }
 
 /**
