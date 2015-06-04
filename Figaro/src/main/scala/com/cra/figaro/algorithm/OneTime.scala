@@ -23,16 +23,16 @@ trait OneTime extends Algorithm {
    */
   def run(): Unit
 
-  protected def doStart() = {
+  protected[algorithm] def doStart() = {
     initialize()
     run()
   }
 
-  protected def doStop() = ()
+  protected[algorithm] def doStop() = ()
 
-  protected def doResume() = ()
+  protected[algorithm] def doResume() = ()
 
-  protected def doKill() = {
+  protected[algorithm] def doKill() = {
     cleanUp()
   }
 }

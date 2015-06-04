@@ -29,5 +29,7 @@ trait OneTimeProbQuery extends ProbQueryAlgorithm with OneTime {
   protected def doProbability[T](target: Element[T], predicate: T => Boolean): Double = {
     computeProbability(target, predicate)
   }
+  
+  override protected def doProjection[T](target: Element[T]): List[(T, Double)] = computeProjection(target)
     
 }

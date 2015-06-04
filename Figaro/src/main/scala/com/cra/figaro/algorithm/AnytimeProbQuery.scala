@@ -50,6 +50,14 @@ trait AnytimeProbQuery extends ProbQueryAlgorithm with Anytime {
    * A message from the handler containing the probability of the previously requested predicate and element.
    */
   case class Probability(probability: Double) extends Response
+ /**
+   * A message instructing the handler to compute the projection of the target element.
+   */
+  case class ComputeProjection[T](target: Element[T]) extends Service
+ /**
+   * A message from the handler containing the projection of the previously requested element.
+   */
+  case class Projection[T](projection: List[(T, Double)]) extends Response
 
   def handle(service: Service): Response =
     service match {
@@ -92,6 +100,17 @@ trait AnytimeProbQuery extends ProbQueryAlgorithm with Anytime {
         println(msg)
         0.0
       case _ => 0.0
+    }
+  }
+
+  protected override def doProjection[T](target: Element[T]): List[(T, Double)] = {
+    val response = runner ? Handle(ComputeProjection(target))
+    Await.result(response, timeout.duration ).asInstanceOf[Response] match {
+      case Projection(result) => result.asInstanceOf[List[(T, Double)]]
+      case ExceptionResponse(msg) =>
+        println(msg)
+        List()
+      case _ => List()
     }
   }
 }

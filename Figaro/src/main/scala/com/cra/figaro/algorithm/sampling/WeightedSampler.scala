@@ -22,7 +22,7 @@ import com.cra.figaro.util.logSum
 /**
  * Samplers that use weighted samples.
  */
-abstract class WeightedSampler(override val universe: Universe, targets: Element[_]*) extends ProbQueryAlgorithm with Sampler {
+abstract class WeightedSampler(override val universe: Universe, targets: Element[_]*) extends ProbQuerySampler with Sampler {
   lazy val queryTargets = targets.toList
   /**
    * A sample consists of a weight and a map from elements to their values.
@@ -76,24 +76,8 @@ abstract class WeightedSampler(override val universe: Universe, targets: Element
   protected def update(): Unit = {
   }
 
-  private def projection[T](target: Element[T]): List[(T, Double)] = {
+  override protected[algorithm] def computeProjection[T](target: Element[T]): List[(T, Double)] = {
     val weightSeen = allWeightsSeen.find(_._1 == target).get._2.asInstanceOf[Map[T, Double]]
     weightSeen.mapValues(s => math.exp(s - getTotalWeight)).toList
   }
-
-  /**
-   * Return an estimate of the expectation of the function under the marginal probability distribution
-   * of the target.
-   */
-  def computeExpectation[T](target: Element[T], function: T => Double) = {
-    val contributions = projection(target) map (pair => function(pair._1) * pair._2)
-    (0.0 /: contributions)(_ + _)
-  }
-
-  /**
-   * Return an estimate of the expectation of the function under the marginal probability distribution
-   * of the target.
-   */
-  def computeDistribution[T](target: Element[T]): Stream[(Double, T)] =
-    projection(target) map (_.swap) toStream
 }
