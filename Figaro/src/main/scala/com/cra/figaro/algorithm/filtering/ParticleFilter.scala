@@ -82,7 +82,7 @@ trait ParticleFilter {
     // avoiding recursion
     
     // satisfied if all conditioned elements are satisfied
-    val satisfied = !currentUniverse.conditionedElements.exists { x => !x.conditionSatisfied }
+    val satisfied = currentUniverse.conditionedElements.forall { x => x.conditionSatisfied }
     
     //multiply weights together in log space if satisfied
     val weight =
