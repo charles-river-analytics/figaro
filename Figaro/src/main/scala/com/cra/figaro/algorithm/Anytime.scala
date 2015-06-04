@@ -129,6 +129,9 @@ trait Anytime extends Algorithm {
   var runner: ActorRef = null
   var running = false;
 
+  /**
+   * default message timeout. Increase if queries to the algorithm fail due to timeout
+   */
   implicit var messageTimeout = Timeout(5000, TimeUnit.MILLISECONDS)
 
   /**
@@ -177,7 +180,12 @@ trait Anytime extends Algorithm {
     }
   }
   
-  def awaitResponse(response: Future[Any], duration: Duration): Response = {
+  /*
+   * A helper function to query the running thread and await a response.
+   * In the case that it times out, it will print a message that it timed out and return an exception response.
+   * Note, on a time, it does NOT throw an exception.
+   */
+  protected def awaitResponse(response: Future[Any], duration: Duration): Response = {
     try {
       val result = Await.result(response, duration) 
       result match {
