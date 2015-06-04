@@ -259,6 +259,7 @@ object ParticleFilter {
   
   /** Reference to parallel implementation. */
   def par = ParParticleFilter
+
 }
 
 /**
