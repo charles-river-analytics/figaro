@@ -96,6 +96,7 @@ object FigaroBuild extends Build {
     .settings(javaOptions in (Test,run) += "-Xmx8G")
     // test settings
     .settings(parallelExecution in Test := false)
+    .settings(testOptions in Test += Tests.Argument("-oD"))
     .configs(detTest)
     .settings(inConfig(detTest)(Defaults.testTasks): _*)
     .settings(testOptions in detTest := Seq(Tests.Argument("-l", "com.cra.figaro.test.nonDeterministic")))
