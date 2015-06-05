@@ -28,4 +28,7 @@ trait MPEAlgorithm extends Algorithm {
    * Returns the most likely value for the target element.
    */
   def mostLikelyValue[T](target: Element[T]): T
+  
+  // Defined in one time or anytime versions
+  protected def doMostLikelyValue[T](target: Element[T]): T
 }

@@ -37,6 +37,8 @@ import com.cra.figaro.experimental.particlebp.AutomaticDensityEstimator
 import com.cra.figaro.algorithm.sampling.ProbEvidenceSampler
 import com.cra.figaro.ndtest._
 import org.apache.commons.math3.distribution.MultivariateNormalDistribution
+import akka.util.Timeout
+import java.util.concurrent.TimeUnit
 
 class PBPTest extends WordSpec with Matchers {
 
@@ -209,7 +211,7 @@ class PBPTest extends WordSpec with Matchers {
           // U(false) = \int_{0.2}^{1.0) (1-p)
           val u1 = 0.35 * 0.96
           val u2 = 0.32
-          val result = test(f, 5000, 250, 100, 100, (b: Boolean) => b, u1 / (u1 + u2), globalTol, false)
+          val result = test(f, 5000, 500, 100, 100, (b: Boolean) => b, u1 / (u1 + u2), globalTol, false)
           update(result, NDTest.TTEST, "ConditionOnDependentElement", u1 / (u1 + u2), alpha)
         }
       }
@@ -228,7 +230,7 @@ class PBPTest extends WordSpec with Matchers {
           // U(false) = \int_{0.2}^(1.0) (2 * (1-p)) = 0.64
           val u1 = 0.85 * 0.96
           val u2 = 0.64
-          val result = test(f, 5000, 250, 100, 100, (b: Boolean) => b, u1 / (u1 + u2), globalTol, false)
+          val result = test(f, 5000, 500, 100, 100, (b: Boolean) => b, u1 / (u1 + u2), globalTol, false)
           update(result, NDTest.TTEST, "ConstraintOnDependentElement", u1 / (u1 + u2), alpha)
         }
       }
@@ -412,7 +414,9 @@ class PBPTest extends WordSpec with Matchers {
     val algorithm = if (oneTime) {
       ParticleBeliefPropagation(outer, inner, argSamples, totalSamples, target)
     } else {
-      ParticleBeliefPropagation(inner.toLong, argSamples, totalSamples, target)
+      val alg = ParticleBeliefPropagation(inner.toLong, argSamples, totalSamples, target)
+      alg.messageTimeout = Timeout(30000, TimeUnit.MILLISECONDS)
+      alg
     }
     algorithm.start()
     if (!oneTime) Thread.sleep(outer.toLong)
