@@ -73,28 +73,22 @@ trait ParticleFilter {
   /*
    * Careful: makeWeightedParticle overwrites the previous state with the new state. That means we can't use it to generate another new particle from the same previous
    * state. The reason for this design is to avoid creating new snapshots and states to conserve memory.
-   * 
+   
    * TODO: previous state could be replaced by the static universe (or a universe window)
    */
   protected def makeWeightedParticle(previousState: State, currentUniverse: Universe): ParticleFilter.WeightedParticle = {
     Forward(currentUniverse)
     // avoiding recursion
-    var satisfied = true
-    var conditionedElementsRemaining = currentUniverse.conditionedElements
-    while (!conditionedElementsRemaining.isEmpty) {
-      satisfied &= conditionedElementsRemaining.head.conditionSatisfied
-      conditionedElementsRemaining = conditionedElementsRemaining.tail
-    }
+    
+    // satisfied if all conditioned elements are satisfied
+    val satisfied = currentUniverse.conditionedElements.forall { x => x.conditionSatisfied }
+    
+    //multiply weights together in log space if satisfied
     val weight =
       if (satisfied) {
-        var w = 1.0
-        var constrainedElementsRemaining = currentUniverse.constrainedElements
-        while (!constrainedElementsRemaining.isEmpty) {
-          w *= math.exp(constrainedElementsRemaining.head.constraintValue)
-          constrainedElementsRemaining = constrainedElementsRemaining.tail
-        }
-        w
+        math.exp(currentUniverse.constrainedElements.foldLeft(0.0)((b,a) => b + a.constraintValue))
       } else 0.0
+
     val snapshot = new Snapshot
     snapshot.store(currentUniverse)
     val state = new State(snapshot, previousState.static)
