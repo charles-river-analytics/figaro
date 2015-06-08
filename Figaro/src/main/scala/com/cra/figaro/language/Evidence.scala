@@ -60,7 +60,10 @@ case class LogConstraint[T](function: T => Double) extends Evidence[T] {
 }
 
 /**
- * Evidence representing observing a particular value for the element.
+ * Evidence representing observing a particular value for the element. Note that using an Observation
+ * on a reference is not the same as calling observe on the element directly. This version applies
+ * a condition to the element, thus bypassing some specialized operations that can be accomplished
+ * by calling the observe on the element directly (such as Likelihood weighting). 
  * 
  * @param value The observed value of the element.
  */
