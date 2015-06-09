@@ -28,7 +28,7 @@ class ParParticleFilterTest extends WordSpec with PrivateMethodTester with Match
   
   val numThreads = 8
 
-  "A particle filter" when {
+  "A parallel particle filter" when {
     "constructing a belief state from a set of weighted samples" should {
       "contain a sample with fraction proportional to its weight" in {
         val numParticles = 10000
@@ -298,6 +298,83 @@ class ParParticleFilterTest extends WordSpec with PrivateMethodTester with Match
         for { i <- 1 to numSteps } {
           pf.advanceTime(List())
         }
+      }
+    }
+    
+    "splitting up the particle indices over threads" should {
+      
+      val numParticles = 1000
+      val numThreads = 7
+      val pf = ParticleFilter.par(() => new Universe(), (u) => new Universe(), numParticles, numThreads)
+      val calculateIndices = PrivateMethod[Seq[(Int, Int)]]('calculateIndices)
+      val indices = pf invokePrivate calculateIndices(numParticles, numThreads)
+      
+      "assign work to each thread" in {
+        indices.length should equal(numThreads)
+      }
+      
+      val lengths = indices map { case (start, end) => end - start + 1 }
+      
+      "assign all the indices" in {
+        lengths.sum should equal(numParticles)
+      }
+      
+      "assign the indices evenly" in {
+        (lengths.max - lengths.min) should (equal(0) or equal(1))
+      }
+    }
+    
+    "creating and running algorithm over multiple threads" should {
+      
+      val numParticles = 1000
+      val numThreads = 8
+      
+      var staticCalledCount = 0
+      val static = () => {
+        staticCalledCount += 1
+        new Universe()
+      }
+      
+      var initCalledCount = 0
+      val initial = () => {
+        initCalledCount += 1
+        new Universe()
+      }
+      
+      var transCalledCount = 0
+      val transition = (u1: Universe, u2: Universe) => {
+        transCalledCount += 1
+        new Universe()
+      }
+      val pf = ParticleFilter.par(static, initial, transition, numParticles, numThreads)
+      
+      "start with an empty belief state" in {
+        pf.beliefState.toList.count(_ == null) should equal(numParticles)
+      }
+      
+      "initialize universes for each thread when algorithm starts" in {
+        staticCalledCount should equal(0)
+        initCalledCount should equal(0)
+        transCalledCount should equal(0)
+        pf.run()
+        staticCalledCount should equal(numThreads)
+        initCalledCount should equal(numThreads)
+        transCalledCount should equal(0)
+      }
+      
+      "call transition function for each thread every time step" in {
+        val numSteps = 1000
+        for (_ <- 1 to numSteps) {
+          pf.advanceTime()
+        }
+        staticCalledCount should equal(numThreads)
+        initCalledCount should equal(numThreads)
+        transCalledCount should equal(numSteps * numThreads)
+      }
+      
+      "update belief state with particles from all threads" in {
+        pf.beliefState.length should equal(numParticles)
+        pf.beliefState.toList.count(_ == null) should equal(0)
       }
     }
   }

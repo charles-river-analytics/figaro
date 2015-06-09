@@ -2,45 +2,69 @@ package com.cra.figaro.algorithm.filtering
 
 import com.cra.figaro.language._
 import scala.collection.parallel.ParSeq
+import com.cra.figaro.algorithm.filtering.ParticleFilter.WeightedParticle
 
 /**
- * A parallel implementation of a OneTimeParticleFilter.
+ * A parallel one-time particle filter. Distributes the work of generating particles at each time step over a specified
+ * number of threads. After generating the particles, they are recombined before re-sampling occurs. Instead of accepting
+ * initial and static universes as input, this method accepts functions that return universes. This is because each 
+ * thread needs its own set of universes to work on. It is important that any elements created within those functions are
+ * explicitly assigned to the returned universe, not the implicit default universe.
+ * 
+ * @param static A function that returns a universe of elements whose values do not change over time
+ * @param initial A function that returns a universe describing the distribution over the initial state of the system
+ * @param transition The transition model describing how the current state of the system depends on the static and previous, respectively
+ * @param numParticles Number of particles to use at each time step
+ * @param numThreads The number of threads over which to distribute the work of generating the particles at each step
  */
-// TODO: could static just be a universe?
 class ParOneTimeParticleFilter(static: () => Universe, initial: () => Universe, transition: (Universe, Universe) => Universe, val numParticles: Int, numThreads: Int)
   extends ParFiltering(transition) with ParticleFilter {
   
-  // sequence of UniverseWindows -- one for each thread
-  var windows: Seq[UniverseWindow] = _
+  /** sequence of UniverseWindows -- one for each thread */
+  private var windows: Seq[UniverseWindow] = _
   
-  // (start, end) indices for each thread to divide up numParticles
-  val indices = calculateIndices(numParticles, numThreads)
+  /** (start, end) indices for each thread to divide up numParticles */
+  private val indices = calculateIndices(numParticles, numThreads)
   
-  private def doTimeStep(weightedParticles: Seq[ParticleFilter.WeightedParticle]) {
-    // compute probability of evidence here by taking the average weight of the weighted particles and store it so you can later return it as a query result
+  /** generate the initial UniverseWindows */
+  private def genInitialWindows(): Seq[UniverseWindow] = {
+    Seq.fill(numThreads)(new UniverseWindow(null, initial(), static()))
+  }
+  
+  /** apply the transition function to each of a sequence of UniverseWindows */
+  private def advanceUniverseWindows(windows: Seq[UniverseWindow]): Seq[UniverseWindow] = {
+    windows map { w => advanceUniverse(w, transition) }
+  }
+  
+  /**
+   * generate particles for each thread, in parallel, then recombine and return
+   * 
+   * @param windows the UniverseWindows to sample from
+   * @param weightedParticleCreator a function that generates a WeightedParticle, given a UniverseWindow and an index
+   */
+  private def genParticles(windows: Seq[UniverseWindow], weightedParticleCreator: (UniverseWindow, Int) => WeightedParticle): Seq[WeightedParticle] = {
+    val parWindows = windows.par
+    val particles = parWindows zip indices flatMap { case(window, (start, end)) =>
+      (start to end) map { i => weightedParticleCreator(window, i) }
+    }
+    particles.seq
+  }
+  
+  /** compute probability of evidence for the particles, and update the belief state (after re-sampling) */
+  private def doTimeStep(weightedParticles: Seq[WeightedParticle]) {
     computeProbEvidence(weightedParticles)
-
     updateBeliefState(weightedParticles)
   }
   
   def run(): Unit = {
-    windows = (1 to numThreads) map { _ => new UniverseWindow(null, initial(), static()) }
-    val particleLists = windows.par zip indices map { case(window, (start, end)) =>
-      (start to end) map { _ => initialWeightedParticle(window.static, window.current)}
-      }
-    val particles = particleLists.flatten.toList
+    windows = genInitialWindows()
+    val particles = genParticles(windows, (w, _) => initialWeightedParticle(w.static, w.current))
     doTimeStep(particles)
   }
   
   def advanceTime(evidence: Seq[NamedEvidence[_]] = List()): Unit = {
-    val newWindows = windows map { window => 
-      advanceUniverse(window, transition)
-    }
-    val particleLists = newWindows.par zip indices map { case (window, (start,end)) =>
-      (start to end) map { i => addWeightedParticle(evidence, i, window)
-      }
-    }
-    val particles = particleLists.flatten.toList
+    val newWindows = advanceUniverseWindows(windows)
+    val particles = genParticles(newWindows, (w, i) => addWeightedParticle(evidence, i, w))
     doTimeStep(particles)
     windows = newWindows
   }
@@ -58,11 +82,40 @@ class ParOneTimeParticleFilter(static: () => Universe, initial: () => Universe, 
   }
 }
 
+/**
+ * A parallel implementation of a OneTimeParticleFilter.
+ */
 object ParParticleFilter {
 
+  /**
+   * A parallel one-time particle filter. Distributes the work of generating particles at each time step over a specified
+   * number of threads. After generating the particles, they are recombined before re-sampling occurs. Instead of accepting
+   * initial and static universes as input, this method accepts functions that return universes. This is because each 
+   * thread needs its own set of universes to work on. It is important that any elements created within those functions are
+   * explicitly assigned to the returned universe, not the implicit default universe.
+   * 
+   * 
+   * @param static A function that returns a universe of elements whose values do not change over time
+   * @param initial A function that returns a universe describing the distribution over the initial state of the system
+   * @param transition The transition model describing how the current state of the system depends on the static and previous, respectively
+   * @param numParticles Number of particles to use at each time step
+   * @param numThreads The number of threads over which to distribute the work of generating the particles at each step
+   */
   def apply(static: () => Universe, initial: () => Universe, transition: (Universe, Universe) => Universe, numParticles: Int, numThreads: Int): ParOneTimeParticleFilter =
     new ParOneTimeParticleFilter(static, initial, transition, numParticles, numThreads)
 
+  /**
+   * A parallel one-time particle filter. Distributes the work of generating particles at each time step over a specified
+   * number of threads. After generating the particles, they are recombined before re-sampling occurs. Instead of accepting
+   * an initial universe as input, this method accepts a function that returns a universe. This is because each thread needs
+   * its own set of universes to work on. It is important that any elements created within that function are explicitly
+   * assigned to the returned universe, not the implicit default universe.
+   * 
+   * @param initial A function that returns a universe describing the distribution over the initial state of the system
+   * @param transition The transition model describing how the current state of the system depends on the previous
+   * @param numParticles Number of particles to use at each time step
+   * @param numThreads The number of threads over which to distribute the work of generating the particles at each step
+   */
   def apply(initial: () => Universe, transition: Universe => Universe, numParticles: Int, numThreads: Int): ParOneTimeParticleFilter =
     apply(() => new Universe(), initial, (static: Universe, previous: Universe) => transition(previous), numParticles, numThreads)
 
