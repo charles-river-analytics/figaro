@@ -316,11 +316,8 @@ class ContinuousTest extends WordSpec with Matchers {
         override def oneTest = {
           val sampleUniverse = Universe.createNew()
           val nSamples = Normal(2.5, 2.0)("", sampleUniverse)
-          val samples = for (i <- 1 to 25)
+          val samples = for (i <- 1 to 200)
             yield nSamples.generateValue(nSamples.generateRandomness())
-
-//          val samplesMean = samples.sum / samples.size
-//          val samplesVariance = samples.map(s => (s - samplesMean) * (s - samplesMean)).sum / (samples.size - 1)
 
           val universe = Universe.createNew()
           val mean = Uniform(-5, 5)("mean", universe)
@@ -330,7 +327,7 @@ class ContinuousTest extends WordSpec with Matchers {
             normal.observe(sample)
           }
 
-          val alg = Importance(20000, mean, variance)
+          val alg = Importance(2000, mean, variance)
           alg.start()
           val result1 = alg.mean(mean)
           val result2 = alg.mean(variance)
@@ -634,7 +631,7 @@ class ContinuousTest extends WordSpec with Matchers {
         override def oneTest = {
           val sampleUniverse = Universe.createNew()
           val nSamples = Exponential(2)("", sampleUniverse)
-          val samples = for (i <- 1 to 25)
+          val samples = for (i <- 1 to 200)
             yield nSamples.generateValue(nSamples.generateRandomness())
 
           val universe = Universe.createNew()
@@ -643,7 +640,7 @@ class ContinuousTest extends WordSpec with Matchers {
             val exponential = Exponential(lambda)
             exponential.observe(sample)
           }
-          val alg = Importance(20000, lambda)
+          val alg = Importance(2000, lambda)
           alg.start()
           val target = 2.0
           val result = alg.mean(lambda)
@@ -955,7 +952,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val sampleUniverse = Universe.createNew()
           val nSamples = Gamma(2, 2)("", sampleUniverse)
 
-          val samples = for (i <- 1 to 25)
+          val samples = for (i <- 1 to 200)
             yield nSamples.generateValue(nSamples.generateRandomness())
 
           val universe = Universe.createNew()
@@ -966,7 +963,7 @@ class ContinuousTest extends WordSpec with Matchers {
             gamma.observe(sample)
           }
 
-          val alg = Importance(20000, k, theta)
+          val alg = Importance(2000, k, theta)
           alg.start()
           val resultK = alg.mean(k)
           val resultTheta = alg.mean(theta)
@@ -1109,7 +1106,7 @@ class ContinuousTest extends WordSpec with Matchers {
         override def oneTest = {
           val sampleUniverse = Universe.createNew()
           val nSamples = Beta(2, 5)("", sampleUniverse)
-          val samples = for (i <- 1 to 25)
+          val samples = for (i <- 1 to 200)
             yield nSamples.generateValue(nSamples.generateRandomness())
 
           val universe = Universe.createNew()
@@ -1119,7 +1116,7 @@ class ContinuousTest extends WordSpec with Matchers {
             val beta = Beta(a, b)
             beta.observe(sample)
           }
-          val alg = Importance(40000, a, b)
+          val alg = Importance(2000, a, b)
           alg.start()
           val resultA = alg.mean(a)
           val resultB = alg.mean(b)
@@ -1293,7 +1290,7 @@ class ContinuousTest extends WordSpec with Matchers {
         override def oneTest = {
           val sampleUniverse = Universe.createNew()
           val nSamples = Dirichlet(1, 2, 3)("", sampleUniverse)
-          val samples = for (i <- 1 to 25)
+          val samples = for (i <- 1 to 200)
             yield nSamples.generateValue(nSamples.generateRandomness())
 
           val universe = Universe.createNew()
@@ -1304,7 +1301,7 @@ class ContinuousTest extends WordSpec with Matchers {
             val dirichlet = Dirichlet(alpha1, alpha2, alpha3)
             dirichlet.observe(sample)
           }
-          val alg = Importance(30000, alpha1, alpha2, alpha3)
+          val alg = Importance(2000, alpha1, alpha2, alpha3)
           alg.start()
           val resultA = alg.mean(alpha1)
           val resultB = alg.mean(alpha2)

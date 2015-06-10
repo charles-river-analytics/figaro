@@ -194,18 +194,18 @@ class GeneralizedOnlineEM(inferenceAlgorithmConstructor: Seq[Element[_]] => Univ
     //println("universe: " + currentUniverse.hashCode)
     var result: Map[Parameter[_], Seq[Double]] = Map()
 
-    val uses = usesParameter(inferenceTargets)
-    println("built map")
+    val uses = usesParameter(inferenceTargets)    
     for { parameter <- targetParameters } {
       var stats = parameter.zeroSufficientStatistics
-      for {
-        target <- uses(parameter)
-      } {
-        println("found used by...")
-        val t: Parameterized[target.Value] = target.asInstanceOf[Parameterized[target.Value]]
-        val distribution: Stream[(Double, target.Value)] = algorithm.distribution(t)
-        val newStats = t.distributionToStatistics(parameter, distribution)
-        stats = (stats.zip(newStats)).map(pair => pair._1 + pair._2)
+      if (uses.contains(parameter)) {
+        for {
+          target <- uses(parameter)
+        } {
+          val t: Parameterized[target.Value] = target.asInstanceOf[Parameterized[target.Value]]
+          val distribution: Stream[(Double, target.Value)] = algorithm.distribution(t)
+          val newStats = t.distributionToStatistics(parameter, distribution)
+          stats = (stats.zip(newStats)).map(pair => pair._1 + pair._2)
+        }
       }
       result += parameter -> stats
     }
