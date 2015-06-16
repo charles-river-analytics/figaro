@@ -163,9 +163,9 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
     throw new NoSuchElementException
   } else myDirectContextContents
 
-  private[language] def addContextContents(e: Element[_]): Unit = myDirectContextContents += e
+  private[figaro] def addContextContents(e: Element[_]): Unit = myDirectContextContents += e
 
-  private[language] def removeContextContents(e: Element[_]): Unit = myDirectContextContents -= e
+  private[figaro] def removeContextContents(e: Element[_]): Unit = myDirectContextContents -= e
 
   /**
    * Returns true if this element is temporary, that is, was created in the context of another element.

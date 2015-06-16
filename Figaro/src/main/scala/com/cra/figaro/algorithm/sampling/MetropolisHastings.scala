@@ -57,9 +57,11 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
    */
   var debug = false
 
-  private def newState: State = State(Map(), Map(), 0.0, 0.0, scala.collection.mutable.Set())
+  private def newState: State = State(Map(), Map(), 0.0, 0.0, scala.collection.mutable.Set(), List())
 
   private val fastTargets = targets.toSet
+
+  protected var chainCache: Cache = new ChainCache(universe)
 
   /*
    * We continually update the values of elements while making a proposal. In order to be able to undo it, we need to
@@ -68,33 +70,24 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
    * We keep track of which elements do not have their condition satisfied by the new proposal.
    */
   private def attemptChange[T](state: State, elem: Element[T]): State = {
-    val newValue = {
-      // Don't generate a new value for an observed element because it won't agree with the observation
-      // For a compound element we can't do this because we have to condition the arguments by the
-      // probability of generating the correct value.
-      if (elem.observation.isEmpty || !elem.isInstanceOf[Atomic[_]]) elem.generateValue(elem.randomness)
-      else elem.observation.get
-    }
+
+    // Don't generate a new value for an observed element because it won't agree with the observation
+    // For a compound element we can't do this because we have to condition the arguments by the
+    // probability of generating the correct value.
+    val newValue = if (elem.observation.isEmpty || !elem.isInstanceOf[Atomic[_]]) {
+      chainCache(elem) match {
+        case None => elem.generateValue(elem.randomness)
+        case Some(result) =>
+          if (result.value == null) result.generate
+          result.value
+      }
+    } else elem.observation.get
+    
     // if an old value is already stored, don't overwrite it
-    val newOldValues =
-      if (state.oldValues contains elem) state.oldValues; else state.oldValues + (elem -> elem.value)
-    if (elem.value != newValue) {
-      val newDissatisfied =
-        if (elem.condition(newValue)) state.dissatisfied -= elem; else state.dissatisfied += elem
-      elem.value = newValue
-      State(newOldValues, state.oldRandomness, state.proposalProb, state.modelProb, newDissatisfied)
-    } else {
-      // We need to make sure to add the element to the dissatisfied set if its condition is not satisfied,
-      // even if the value has not changed, because we compare the dissatisfied set with the old dissatisfied set
-      // when deciding whether to accept the proposal.
-      val newDissatisfied =
-        if (elem.condition(newValue)) {
-          state.dissatisfied - elem
-        } else {
-          state.dissatisfied + elem
-        }
-      State(newOldValues, state.oldRandomness, state.proposalProb, state.modelProb, newDissatisfied)
-    }
+    val newOldValues = if (state.oldValues contains elem) state.oldValues; else state.oldValues + (elem -> elem.value)
+    val newDissatisfied = if (elem.condition(newValue)) state.dissatisfied -= elem; else state.dissatisfied += elem
+    elem.value = newValue    
+    State(newOldValues, state.oldRandomness, state.proposalProb, state.modelProb, newDissatisfied, state.visitOrder :+ elem)
   }
 
   private def propose[T](state: State, elem: Element[T]): State = {
@@ -112,7 +105,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
         }
         val newProb = state.proposalProb + log(proposalProb)
         elem.randomness = randomness
-        State(state.oldValues, newOldRandomness, newProb, state.modelProb + log(modelProb), state.dissatisfied)
+        State(state.oldValues, newOldRandomness, newProb, state.modelProb + log(modelProb), state.dissatisfied, state.visitOrder)
       }
     val result = attemptChange(state1, elem)
     if (debug) println("old randomness = " + oldRandomness +
@@ -143,7 +136,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
       val newOldRandomness2 =
         if (newOldRandomness1 contains elem2) newOldRandomness1
         else newOldRandomness1 + (elem2 -> oldRandomness2)
-      State(state.oldValues, newOldRandomness2, state.proposalProb, state.modelProb, state.dissatisfied)
+      State(state.oldValues, newOldRandomness2, state.proposalProb, state.modelProb, state.dissatisfied, state.visitOrder)
     }
     val state2 = attemptChange(state1, elem1)
     val result = attemptChange(state2, elem2)
@@ -222,10 +215,10 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
 
     if (currentStack.isEmpty && currentArgs.isEmpty && updateQ.isEmpty) state
 
-    else if (currentStack.isEmpty && currentArgs.isEmpty && updateQ.nonEmpty) { 
+    else if (currentStack.isEmpty && currentArgs.isEmpty && updateQ.nonEmpty) {
       val argsRemaining = universe.uses(updateQ.head).intersect(updateQ.tail)
       updateMany(state, List(updateQ.head), argsRemaining.toSet, updateQ.tail -- argsRemaining)
-    } else if (currentStack.nonEmpty && currentArgs.isEmpty) { 
+    } else if (currentStack.nonEmpty && currentArgs.isEmpty) {
       val newState = updateOne(state, currentStack.head)
       updateMany(newState, currentStack.tail, currentArgs, updateQ)
     } else {
@@ -283,17 +276,20 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
 
   protected def undo(state: State): Unit = {
     if (debug) println("Rejecting!\n")
-    state.oldValues foreach (setValue(_))
-    state.oldRandomness foreach (setRandomness(_))
 
-    /* Have to call generateValue on chains after a rejection to restore the old resulting
-     * element. We can't do this above because we have to ensure the value of parent is restored before we
-     * do this.
-     */
-    for ((elem, value) <- state.oldValues) {
+    state.visitOrder.foreach { elem =>
       elem match {
-        case c: Chain[_, _] => c.generateValue
-        case _ =>
+        case c: Chain[_, _] => {
+          val result = 
+          chainCache(c) match {
+            case Some(result) => c.value = result.value.asInstanceOf[c.Value] 
+            case None => throw new AlgorithmException
+          }              
+        }
+        case _ => {
+          if (state.oldRandomness.contains(elem)) elem.randomness = state.oldRandomness(elem).asInstanceOf[elem.Randomness]
+          elem.value = state.oldValues(elem).asInstanceOf[elem.Value]
+        }
       }
     }
   }
@@ -322,7 +318,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
   protected def mhStep(): State = {
     val newStateUnconstrained = proposeAndUpdate()
     val newState = State(newStateUnconstrained.oldValues, newStateUnconstrained.oldRandomness,
-      newStateUnconstrained.proposalProb, newStateUnconstrained.modelProb + computeScores, newStateUnconstrained.dissatisfied)
+      newStateUnconstrained.proposalProb, newStateUnconstrained.modelProb + computeScores, newStateUnconstrained.dissatisfied, newStateUnconstrained.visitOrder)
     if (decideToAccept(newState)) {
       accepts += 1
       accept(newState)
@@ -354,7 +350,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
 
   protected def doInitialize(): Unit = {
     // Need to prime the universe to make sure all elements have a generated value
-    Forward(false)(universe)
+    chainCache = Forward(universe, chainCache)
     initConstrainedValues()
     dissatisfied = universe.conditionedElements.toSet filter (!_.conditionSatisfied)
     for { i <- 1 to burnIn } mhStep()
@@ -383,7 +379,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
     for { i <- 1 to numSamples } {
       val newStateUnconstrained = proposeAndUpdate()
       val state1 = State(newStateUnconstrained.oldValues, newStateUnconstrained.oldRandomness,
-        newStateUnconstrained.proposalProb, newStateUnconstrained.modelProb + computeScores, newStateUnconstrained.dissatisfied)
+        newStateUnconstrained.proposalProb, newStateUnconstrained.modelProb + computeScores, newStateUnconstrained.dissatisfied, newStateUnconstrained.visitOrder)
       if (decideToAccept(state1)) {
         accepts += 1
         // collect results for the new state and restore the original state
@@ -524,5 +520,6 @@ object MetropolisHastings {
     oldRandomness: Map[Element[_], Any],
     proposalProb: Double,
     modelProb: Double,
-    dissatisfied: scala.collection.mutable.Set[Element[_]])
+    dissatisfied: scala.collection.mutable.Set[Element[_]],
+    visitOrder: List[Element[_]])
 }

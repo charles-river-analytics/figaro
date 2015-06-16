@@ -32,7 +32,9 @@ import scala.collection.mutable.Set
 
 class Chain[T, U](name: Name[U], val parent: Element[T], fcn: T => Element[U], cacheSize: Int, collection: ElementCollection)
   extends Deterministic[U](name, collection) {
-  def args: List[Element[_]] = if (active && resultElement != null) List(parent) ::: List(resultElement) else List(parent)
+  
+//  def args: List[Element[_]] = if (active && resultElement != null) List(parent) ::: List(resultElement) else List(parent)
+    def args: List[Element[_]] = List(parent)
 
   protected def cpd = fcn
   
@@ -46,7 +48,7 @@ class Chain[T, U](name: Name[U], val parent: Element[T], fcn: T => Element[U], c
   /**
    * The current result element that arises from the current value of the parent.
    */
-  var resultElement: Element[U] = _
+  //var resultElement: Element[U] = _
 
   /* Data structures for the Chain. The cache stores previously generated result elements. The Context data
    * structures store the elements that were created in this context. We also stored newly created elements
@@ -56,16 +58,17 @@ class Chain[T, U](name: Name[U], val parent: Element[T], fcn: T => Element[U], c
    * contexts. When Chain gets the distribution over the child, it first pushes the context, and pops the context afterward, to mark
    * any generated elements as being generated in the context of this Chain.
    */
-  lazy private[figaro] val cache: Map[T, Element[U]] = Map()
-  lazy private[figaro] val myMappedContextContents: Map[T, Set[Element[_]]] = Map()
-  lazy private[figaro] val elemInContext: Map[Element[_], T] = Map()
+  //lazy private[figaro] val cache: Map[T, Element[U]] = Map()
+  //lazy private[figaro] val myMappedContextContents: Map[T, Set[Element[_]]] = Map()
+  //lazy private[figaro] val elemInContext: Map[Element[_], T] = Map()
 
-  private var lastParentValue: T = _
+  //private var lastParentValue: T = _
 
   /* Must override clear temporary for Chains. We can never leave the chain in an uninitialized state. That is,
    * the chain MUST ALWAYS have a valid element to return. So when clearing temporaries we clear everything
    * except the current context.
    */
+  /*
   override def clearContext() = {
     myMappedContextContents.keys.foreach(c => if (c != lastParentValue) resizeCache(c))
   }
@@ -84,12 +87,14 @@ class Chain[T, U](name: Name[U], val parent: Element[T], fcn: T => Element[U], c
     myMappedContextContents(elemInContext(e)) -= e
     elemInContext -= e
   }
+  * 
+  */
 
   def generateValue() = {
     if (parent.value == null) parent.generate()
-    val resultElem = get(parent.value)
-    if (resultElem.value == null) resultElem.generate()
-    resultElem.value
+    val resultElement = get(parent.value)
+    if (resultElement.value == null) resultElement.generate()
+    resultElement.value
   }
 
   /* Computes the new result. If the cache contains a VALID element for this parent value, then return the
@@ -103,6 +108,7 @@ class Chain[T, U](name: Name[U], val parent: Element[T], fcn: T => Element[U], c
   /**
    * Get the distribution over the result corresponding to the given parent value. Takes care of all bookkeeping including caching.
    */
+  /*
   def get(parentValue: T): Element[U] = {
     val lruParent = lastParentValue
     lastParentValue = parentValue
@@ -125,12 +131,20 @@ class Chain[T, U](name: Name[U], val parent: Element[T], fcn: T => Element[U], c
     resultElement = newResult
     newResult
   }
+  * 
+  */
+  def get(parentValue: T): Element[U] = {
+    val result = getResult(parentValue)
+    universe.registerUses(this, result)
+    result
+  }
 
   /**
    * Get the distribution over the result corresponding to the given parent value. This call is UNCACHED,
    * meaning it will not be stored in the Chain's cache, and subsequent calls using the same parentValue
    * could return different elements.
    */
+  /*
   def getUncached(parentValue: T): Element[U] = {
     if (lastParentValue == null || lastParentValue != parentValue) {
       myMappedContextContents.getOrElseUpdate(parentValue, Set())
@@ -140,6 +154,9 @@ class Chain[T, U](name: Name[U], val parent: Element[T], fcn: T => Element[U], c
     }
     resultElement
   }
+  * 
+  */
+   def getUncached(parentValue: T): Element[U] = get(parentValue)
 
   // All elements created in cpd will be created in this Chain's context with a subContext of parentValue
   private def getResult(parentValue: T): Element[U] = {
@@ -152,6 +169,7 @@ class Chain[T, U](name: Name[U], val parent: Element[T], fcn: T => Element[U], c
   /* Current replacement scheme just drops the last element in the cache. The dropped element must be deactivated,
    * and removed from the context data structures.
    */
+   /*
   protected def resizeCache(dropValue: T) = {
     cache -= dropValue
     if (myMappedContextContents.contains(dropValue)) {
@@ -160,6 +178,8 @@ class Chain[T, U](name: Name[U], val parent: Element[T], fcn: T => Element[U], c
       myMappedContextContents -= dropValue
     }
   }
+  * 
+  */
 
   override def toString = "Chain(" + parent + ", " + cpd + ")"
 }

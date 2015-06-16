@@ -91,6 +91,8 @@ class ElementsTest extends WordSpec with Matchers {
         NonCachingChain(f1, fn).toString should equal("Chain(" + f1 + ", " + fn + ")")
       }
 
+      // No more caching, removed
+      /*
       "return a cached result" in {
         var sum = 0
         def fn(b: Boolean) = {
@@ -103,7 +105,11 @@ class ElementsTest extends WordSpec with Matchers {
         c.get(true)
         sum should equal(2)
       }
+      * 
+      */
 
+      // No more caching, removed
+      /*
       "call the CPD when the cache is full" in {
         Universe.createNew()
         var sum = 0
@@ -122,9 +128,29 @@ class ElementsTest extends WordSpec with Matchers {
         // see implementation of NonCachingChain and use of oldParentValue
         sum should be > (3)
       }
+      * 
+      */
+      "call the CPD for each Chain access" in {
+        Universe.createNew()
+        var sum = 0
+        def fn(b: Int) = {
+          sum += 1
+          Constant(b)
+        }
+        val f1 = Uniform(0, 1, 2)
+        val c = NonCachingChain(f1, fn _)
+        sum = 0
+        c.get(0)
+        c.get(1)
+        c.get(2)
+        c.get(0)
+        sum should equal(4)
+      }
     }
 
-    "managing the context" should {
+    // No more local context of chains
+    /*
+    "managing the context" should {      
       "store new elements in the correct subContext" in {
         Universe.createNew()
         val c = Chain(Flip(0.5), (b: Boolean) => if (b) Constant(0) else Constant(1))
@@ -135,7 +161,7 @@ class ElementsTest extends WordSpec with Matchers {
         c.myMappedContextContents(false).size should equal(1)
         c.elemInContext(c.myMappedContextContents(false).head) should equal(false)
       }
-
+     
       "remove deactivated elements from context when resizing the cache" in {
         Universe.createNew()
         val c = NonCachingChain(Uniform(0, 1, 2), (b: Int) => Constant(b))
@@ -145,7 +171,7 @@ class ElementsTest extends WordSpec with Matchers {
         c.directContextContents.size should equal(2)
         c.elemInContext.size should equal(2)
       }
-
+    
       "remove deactivated elements from context when removing temporaries" in {
         Universe.createNew()
         val c = CachingChain(com.cra.figaro.library.atomic.discrete.Uniform(0, 10), (b: Int) => Constant(b))
@@ -156,7 +182,7 @@ class ElementsTest extends WordSpec with Matchers {
         c.directContextContents.size should equal(1)
         c.elemInContext.size should equal(1)
       }
-
+    
       "only remove elements defined in subContext" in {
         Universe.createNew()
         def fcn(b: Int) = {
@@ -176,6 +202,8 @@ class ElementsTest extends WordSpec with Matchers {
         Universe.universe.contextContents(c) forall (_.active) should equal(true)
       }
     }
+    * 
+    */
   }
 
   "A chain with two parents" when {
@@ -213,22 +241,18 @@ class ElementsTest extends WordSpec with Matchers {
       "evaluate the CPD each time get is called" in {
         Universe.createNew()
         var sum = 0
-        def fn(b: (Boolean, Boolean)) = {
+        def fn(b1: Boolean, b2: Boolean): Element[Boolean] = {
           sum += 1
-          Constant(b._1 && b._2)
+          Constant(b1 && b2)
         }
         val f1 = Flip(0.5)
         val f2 = Flip(0.5)
         f1.set(true)
         f2.set(false)
-        val c = new Chain("", ^^(f1, f2), fn, 1, Universe.universe)
-        //val c = NonCachingChain(f1, f2, fn _)
-        sum = 0
+        val c = Chain(f1, f2, fn)        
         c.get(true, true)
         c.get(false, false)
         c.get(true, true)
-        // either 3 or 4 depending on whether the value on initialization is true or false
-        // see implementation of NonCachingChain and use of oldParentValue
         sum should equal(3)
       }
     }
@@ -265,22 +289,7 @@ class ElementsTest extends WordSpec with Matchers {
         CachingChain(f1, f2, fn).toString should equal("Chain(Apply(" + f1 + ", " + f2 + ", " + fn + "), <function1>)")
       }
       //((((((((((80 * .50) * 1.08) + 82.4 * .50) * 1.08) + 84.8 * .50) * 1.08) + 87.3 * .50) * 1.08) + 89.9 * .50) * 1.08)
-      "evaluate the CPD only once for each input" in {
-        var sum = 0
-        def fn(b1: Boolean, b2: Boolean) = {
-          sum += 1
-          Constant(b1 && b2)
-        }
-        val f1 = Flip(0.5)
-        val f2 = Flip(0.5)
-        f1.set(true)
-        f2.set(true)
-        val c = CachingChain(f1, f2, fn)
-        c.get(true, true)
-        c.get(false, false)
-        c.get(true, true)
-        sum should equal(2)
-      }
+
     }
   }
 
