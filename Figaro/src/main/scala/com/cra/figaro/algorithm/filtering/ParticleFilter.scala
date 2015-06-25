@@ -42,7 +42,7 @@ trait ParticleFilter {
   val beliefState: ParticleFilter.BeliefState = Array.fill(numParticles)(null)
 
   protected var logProbEvidence: Double = 0.0
-
+  
   /**
    * Returns the expectation of the element referred to by the reference
    * under the given function at the current time point.
@@ -76,8 +76,8 @@ trait ParticleFilter {
    
    * TODO: previous state could be replaced by the static universe (or a universe window)
    */
-  protected def makeWeightedParticle(previousState: State, currentUniverse: Universe): ParticleFilter.WeightedParticle = {
-    Forward(currentUniverse)
+  protected def makeWeightedParticle(previousState: State, currentUniverse: Universe, cache: Cache): ParticleFilter.WeightedParticle = {
+    Forward(currentUniverse, cache)
     // avoiding recursion
     
     // satisfied if all conditioned elements are satisfied
@@ -91,7 +91,7 @@ trait ParticleFilter {
 
     val snapshot = new Snapshot
     snapshot.store(currentUniverse)
-    val state = new State(snapshot, previousState.static)
+    val state = new State(snapshot, previousState.static)    
     (weight, state)
   }
 
@@ -118,21 +118,21 @@ trait ParticleFilter {
     logProbEvidence = logProbEvidence + scala.math.log(sum / numParticles)
   }
 
-  protected def addWeightedParticle(evidence: Seq[NamedEvidence[_]], index: Int, universes: UniverseWindow): ParticleFilter.WeightedParticle = {
+  protected def addWeightedParticle(evidence: Seq[NamedEvidence[_]], index: Int, universes: UniverseWindow, cache: Cache): ParticleFilter.WeightedParticle = {
     val previousState = beliefState(index)
     previousState.dynamic.restore(universes.previous)
     previousState.static.restore(universes.static)
     universes.current.assertEvidence(evidence)
-    val result = makeWeightedParticle(previousState, universes.current)
+    val result = makeWeightedParticle(previousState, universes.current, cache)
     result
   }
 
-  protected def initialWeightedParticle(static: Universe, current: Universe): ParticleFilter.WeightedParticle = {
+  protected def initialWeightedParticle(static: Universe, current: Universe, cache: Cache): ParticleFilter.WeightedParticle = {
     Forward(static)
     val staticSnapshot = new Snapshot
     staticSnapshot.store(static)
     val state = new State(new Snapshot, staticSnapshot)
-    makeWeightedParticle(state, current)
+    makeWeightedParticle(state, current, cache)
   }
 
   /*
@@ -196,7 +196,8 @@ class OneTimeParticleFilter(static: Universe = new Universe(), initial: Universe
    * Begin the particle filter, determining the initial distribution.
    */
   def run(): Unit = {
-    doTimeStep((i: Int) => initialWeightedParticle(static, currentUniverse))
+    val chainCache = new ChainCache(currentUniverse)
+    doTimeStep((i: Int) => initialWeightedParticle(static, currentUniverse, chainCache))
   }
 
   /**
@@ -206,7 +207,8 @@ class OneTimeParticleFilter(static: Universe = new Universe(), initial: Universe
     
     val currentWindow = new UniverseWindow(previousUniverse, currentUniverse, static)
     val newWindow = advanceUniverse(currentWindow, transition)
-    doTimeStep((i: Int) => addWeightedParticle(evidence, i, newWindow))
+    val chainCache = new ChainCache(newWindow.current)
+    doTimeStep((i: Int) => addWeightedParticle(evidence, i, newWindow, chainCache))
     previousUniverse = newWindow.previous
     currentUniverse = newWindow.current
   }

@@ -17,6 +17,8 @@ import com.cra.figaro.algorithm._
 import com.cra.figaro.language._
 import scala.language.existentials
 import com.cra.figaro.util.logSum
+import com.cra.figaro.util.ChainCache
+import com.cra.figaro.util.Cache
 
 /**
 * Algorithm that computes probability of evidence using forward sampling.
@@ -35,12 +37,14 @@ abstract class ProbEvidenceSampler(override val universe: Universe, override val
     totalWeight = 0.0
 	
   }
+  
+  protected var chainCache: Cache = new ChainCache(universe)
 
   /*
   * To protect against underflow, the probabilities are computed in log-space.
   */
   protected def doSample(): Unit = {
-    Forward(universe)
+    Forward(universe, chainCache)
 
 	//Some values in log constraints may be negative infinity.
     val weight = universe.constrainedElements.map(_.constraintValue).sum

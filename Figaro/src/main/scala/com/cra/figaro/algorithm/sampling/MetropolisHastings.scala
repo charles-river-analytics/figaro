@@ -279,8 +279,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
 
     state.visitOrder.foreach { elem =>
       elem match {
-        case c: Chain[_, _] => {
-          val result = 
+        case c: Chain[_, _] => {          
           chainCache(c) match {
             case Some(result) => c.value = result.value.asInstanceOf[c.Value] 
             case None => throw new AlgorithmException

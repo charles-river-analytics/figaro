@@ -475,6 +475,8 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       i.kill()
     }
 
+    /* These tests are no longer valid. Since there is a hidden dependency, we can't support this */
+    /*
     "resample elements inside class defined in a chain" in {
       Universe.createNew()
       class temp {
@@ -500,6 +502,8 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       //alg.probability(b, true) should be (0.9 +- .01)
 
     }
+    * 
+    */
 
     "not suffer from stack overflow with small probability of success" taggedAs (Performance) in {
       Universe.createNew()

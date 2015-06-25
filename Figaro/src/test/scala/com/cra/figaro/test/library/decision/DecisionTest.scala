@@ -45,20 +45,6 @@ class DecisionTest extends WordSpec with Matchers {
 
   }
 
-  "A NonCachingDecision" should {
-
-    "remove previous elements when parent value changes" in {
-      val U = Universe.createNew()
-      val u1 = Uniform((0 until 5): _*)
-      val d1 = NonCachingDecision(u1, 5 until 10)
-      d1.setPolicy((i: Int) => Constant(i))
-      val prev = d1.get(u1.value)
-      val curr = d1.get((u1.value + 1) % 5)
-      U.uses(d1) should not contain (prev)
-      prev.active should be(false)
-    }
-
-  }
 
 }
 

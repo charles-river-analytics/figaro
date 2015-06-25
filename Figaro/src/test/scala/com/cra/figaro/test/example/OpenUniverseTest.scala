@@ -84,7 +84,7 @@ class OpenUniverseTest extends WordSpec with Matchers {
     val totalProbSame = (0.0 /: (1 to limitNumSources))(_ + probSame(_))
     val totalProbDifferent = (0.0 /: (1 to limitNumSources))(_ + probDifferent(_))
     val answer = totalProbSame / (totalProbSame + totalProbDifferent)
-    val alg = MetropolisHastings(2000000, chooseScheme, 50000, equal)
+    val alg = MetropolisHastings(200000, chooseScheme, 5000, equal)
     alg.start()
     alg.probability(equal, true) should be(answer +- 0.02)
     alg.kill
