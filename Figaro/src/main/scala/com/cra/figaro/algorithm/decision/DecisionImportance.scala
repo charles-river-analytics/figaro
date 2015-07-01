@@ -75,6 +75,7 @@ abstract class DecisionImportance[T, U] private (override val universe: Universe
   // override doSample so can update the local utilities
   override protected def doSample(): Unit = {
     val s = sample()
+    universe.clearTemporaries()
     totalWeight = logSum(s._1, totalWeight)
     allWeightsSeen foreach (updateWeightSeenForTarget(s, _))
     allUtilitiesSeen foreach (updateWeightSeenForTargetNoLog((math.exp(s._1) * utilitySum, s._2), _))
