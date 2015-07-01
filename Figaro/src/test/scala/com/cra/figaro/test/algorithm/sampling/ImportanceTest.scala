@@ -31,19 +31,20 @@ import com.cra.figaro.test.tags.NonDeterministic
 import scala.language.reflectiveCalls
 import org.scalatest.Matchers
 import org.scalatest.{ PrivateMethodTester, WordSpec }
+import scala.collection.mutable.Set
+
 class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
 
   "Sampling a value of a single element" should {
 
     "reject sampling process if condition violated" in {
       Universe.createNew()
-      val target = Flip(0.7)
+      val target = Flip(1.0)
       target.observe(false)
       val numTrials = 100000
       val tolerance = 0.01
       val imp = Importance(target)
-      val state = Importance.State()
-      an[RuntimeException] should be thrownBy { imp.sampleOne(state, target, Some(true)) }
+      an[RuntimeException] should be thrownBy { imp.lw.traverse(List((target, None, None)), List(), 0.0, Set()) }
 
     }
 
@@ -54,9 +55,8 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       val numTrials = 100000
       val tolerance = 0.01
       val imp = Importance(target)
-      val state = Importance.State()
-      val value = imp.sampleOne(state, target, Some(false))
-      value should equal(false)
+      imp.lw.traverse(List((target, Some(false), None)), List(), 0.0, Set())
+      target.value should equal(false)
     }
 
     "for a Constant return the constant with probability 1" in {
@@ -211,8 +211,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
         Apply(B, (b: List[List[Boolean]]) => b.head)
       })
       val alg = Importance(1, c)
-      val state = Importance.State()
-      alg.sampleOne(state, c, None)
+      alg.lw.computeWeight(List(c))      
       c.value.asInstanceOf[List[Boolean]].head should be(true || false)
     }
   }
@@ -637,9 +636,8 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
 
     def attempt(): (Double, T) = {
       try {
-        val state = Importance.State()
-        val value = imp.sampleOne(state, target, None)
-        (state.weight, value.asInstanceOf[T])
+        val weight = imp.lw.computeWeight(List(target))
+        (weight, target.value.asInstanceOf[T])
       } catch {
         case Importance.Reject => attempt()
       }

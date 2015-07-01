@@ -58,8 +58,7 @@ class OpenUniverseTest extends WordSpec with Matchers {
         (0.25, () => ProposalScheme(numSources)),
         (0.25, () => ProposalScheme(sources.items(random.nextInt(numSources.value)))),
         (0.25, () => ProposalScheme(samples(random.nextInt(numSamples)).sourceNum)),
-        (0.25, () => ProposalScheme.default))
-        //(0.25, () => ProposalScheme(samples(random.nextInt(numSamples)).position)))
+        (0.25, () => ProposalScheme(samples(random.nextInt(numSamples)).position)))
 
     sample1.position.addCondition((y: Double) => y >= 0.5 && y < 0.8)
     sample2.position.addCondition((y: Double) => y >= 0.5 && y < 0.8)

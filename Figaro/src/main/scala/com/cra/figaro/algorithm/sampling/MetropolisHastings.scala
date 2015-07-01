@@ -20,6 +20,7 @@ import scala.collection.mutable.Map
 import scala.language.existentials
 import scala.math.log
 import scala.annotation.tailrec
+import com.cra.figaro.library.cache._
 
 /**
  * Metropolis-Hastings samplers.
@@ -61,7 +62,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
 
   private val fastTargets = targets.toSet
 
-  protected var chainCache: Cache = new ChainCache(universe)
+  protected var chainCache: Cache = new MHCache(universe)
 
   /*
    * We continually update the values of elements while making a proposal. In order to be able to undo it, we need to
@@ -162,11 +163,11 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
       case FinalScheme(elem) => propose(state, elem())
       case TypedScheme(first, rest) =>
         val firstElem = first()
-        val state1 = propose(state, firstElem)
+        val state1 = propose(state, proposeChainCheck(firstElem))
         continue(state1, rest(firstElem.value))
       case UntypedScheme(first, rest) =>
         val firstElem = first()
-        val state1 = propose(state, firstElem)
+        val state1 = propose(state, proposeChainCheck(firstElem))
         continue(state1, rest)
       case ds: DisjointScheme =>
         val (probs, schemes) = ds.choices.toList.unzip
@@ -174,9 +175,14 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
         runStep(state, choice())
       case SwitchScheme(first, rest) =>
         val (elem1, elem2) = first()
-        val state1 = switch(state, elem1, elem2)
+        val state1 = switch(state, proposeChainCheck(elem1), proposeChainCheck(elem2))
         continue(state1, rest)
     }
+  
+  private def proposeChainCheck(elem: Element[_]): Element[_] = {
+    val e = chainCache(elem)
+    if (e.isEmpty) elem else e.get.asInstanceOf[Element[_]] 
+  }
 
   protected def runScheme(): State = runStep(newState, proposalScheme)
 
@@ -349,7 +355,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
 
   protected def doInitialize(): Unit = {
     // Need to prime the universe to make sure all elements have a generated value
-    chainCache = Forward(universe, chainCache)
+    Forward(universe, chainCache)
     initConstrainedValues()
     dissatisfied = universe.conditionedElements.toSet filter (!_.conditionSatisfied)
     for { i <- 1 to burnIn } mhStep()

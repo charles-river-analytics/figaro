@@ -1,39 +1,11 @@
-package com.cra.figaro.util
+package com.cra.figaro.library.cache
 
 import com.cra.figaro.language._
 import scala.collection.mutable.Map
 import scala.collection.mutable.Set
-import scala.collection.generic.Shrinkable
 
 /**
- * Abstract class to manage caching of element generation for a universe. This class can be used
- * by algorithms to manage caching of chains.
- */
-abstract class Cache(universe: Universe) extends Shrinkable[Element[_]] {
-
-  /**
-   * Return the next element from the generative process defined by element. If no process
-   * is found, return None
-   */
-  def apply[T](element: Element[T]): Option[Element[T]]
-
-  universe.register(this)
-
-  /**
-   * Clear any caching
-   */
-  def clear(): Unit
-}
-
-/** A Cache class which performs no caching */
-class NoCache(universe: Universe) extends Cache(universe) {
-  def apply[T](element: Element[T]): Option[Element[T]] = None
-  def clear() = {}
-  def -=(element: Element[_]) = this
-}
-
-/**
- * A class which implements caching for caching and non-caching chains.
+ * A class which implements caching for caching and non-caching chains, specifically designed for MH
  *
  * For caching chains, the result of the Chain's function is cached for each value of the parent element
  * that is queried. This cache is infinitely large.
@@ -44,7 +16,7 @@ class NoCache(universe: Universe) extends Cache(universe) {
  *  MH; if a proposal is rejected, we want to switch a chain back to where it was without much overhead.
  *
  */
-class ChainCache(universe: Universe) extends Cache(universe) {
+class MHCache(universe: Universe) extends Cache(universe) {
 
   /* Caching chain cache that maps from an element to a map of parent values and resulting elements */
   private[figaro] val ccCache: Map[Element[_], Map[Any, Element[_]]] = Map()
@@ -166,4 +138,3 @@ class ChainCache(universe: Universe) extends Cache(universe) {
     universe.deregister(this)
   }
 }
-

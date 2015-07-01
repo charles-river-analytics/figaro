@@ -15,16 +15,21 @@ package com.cra.figaro.test.util
 
 import org.scalatest.Matchers
 import org.scalatest.WordSpec
-import com.cra.figaro.util._
-import com.cra.figaro.language._
+
+import com.cra.figaro.language.CachingChain
+import com.cra.figaro.language.Chain
+import com.cra.figaro.language.Constant
+import com.cra.figaro.language.Flip
+import com.cra.figaro.language.Universe
 import com.cra.figaro.library.atomic.continuous.Uniform
+import com.cra.figaro.library.cache.MHCache
 import com.cra.figaro.library.compound.If
 
 class CacheTest extends WordSpec with Matchers {
-  "A chain cache" should {
+  "A MH cache" should {
     "correctly retrieve cache elements for caching chains" in {
       val u = Universe.createNew()
-      val cc = new ChainCache(u)
+      val cc = new MHCache(u)
       var sum = 0
       def fn(b: Boolean) = {
         sum += 1
@@ -40,7 +45,7 @@ class CacheTest extends WordSpec with Matchers {
 
     "keep the stack at maximum of two for non-caching chains" in {
       val u = Universe.createNew()
-      val cc = new ChainCache(u)
+      val cc = new MHCache(u)
       val f = Uniform(0.0, 1.0)
       val c = Chain(f, (d: Double) => Constant(d))
       for { _ <- 0 until 10 } {
@@ -52,7 +57,7 @@ class CacheTest extends WordSpec with Matchers {
 
     "remove deactivated elements from the cache" in {
       val u = Universe.createNew()
-      val cc = new ChainCache(u)
+      val cc = new MHCache(u)
       val a1 = Flip(0.1)
       val a2 = Flip(0.2)
       val s = Flip(0.5)
@@ -66,7 +71,7 @@ class CacheTest extends WordSpec with Matchers {
 
     "correctly clear the context of elements removed from the stack" in {
       val u = Universe.createNew()
-      val cc = new ChainCache(u)
+      val cc = new MHCache(u)
       def fn(d: Double) = {
         Flip(d); Flip(d); Flip(d)
       }      
@@ -84,7 +89,7 @@ class CacheTest extends WordSpec with Matchers {
     
     "correctly clear the caches when clearing temporaries" in {
       val u = Universe.createNew()
-      val cc = new ChainCache(u)
+      val cc = new MHCache(u)
       def fn(d: Double) = {
         Flip(d); Flip(d); Flip(d)
       }      

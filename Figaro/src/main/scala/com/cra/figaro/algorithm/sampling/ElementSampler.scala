@@ -26,6 +26,7 @@ abstract class ElementSampler(target: Element[_]) extends BaseUnweightedSampler(
 
   def sample(): (Boolean, Sample) = {
     Forward(target)    
+    universe.clearTemporaries
     (true, Map[Element[_], Any](target -> target.value))
   }
 
