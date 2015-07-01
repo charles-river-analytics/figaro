@@ -21,6 +21,8 @@ import scala.collection.mutable.{ Set, Map }
 import com.cra.figaro.experimental.particlebp.AutomaticDensityEstimator
 import com.cra.figaro.algorithm.factored.ParticleGenerator
 import com.cra.figaro.algorithm.sampling.parallel.ParImportance
+import com.cra.figaro.algorithm.sampling.LikelihoodWeighter
+import com.cra.figaro.library.cache.PermanentCache
 
 /**
  * Importance samplers.
@@ -29,55 +31,12 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
   extends WeightedSampler(universe, targets: _*) {
   import Importance.State
 
-/*
- *  Likelihood weighting works by propagating observations through Dists and Chains
- *  to the variables they depend on. If we don't make sure we sample those Dists and
- *  Chains first, we may end up sampling those other elements without the correct
- *  observations. To avoid this, we keep track of all these dependencies.
- *  The dependencies map contains all the elements that could propagate an
- *  observation to any given element.
- *  Note: the dependencies map is only concerned with active elements that are present
- *  at the beginning of sampling (even though we get a new active elements list each sample).
- *  Temporary elements will always be created after the element that could propagate
- *  an observation to them, because that propagation has to go through a permanent
- *  element.
- *  Therefore, we can generate the dependencies map once before all the samples are generated.
- */
-
-  // Calling Values on a continuous element requires that a ParticleGenerator exist in the universe.
-  // For a continuous element, we don't actually want to generate any dependencies, so we have the
-  // ParticleGenerator return zero sample.
-  ParticleGenerator(universe, new AutomaticDensityEstimator, 1, 0)
-  private val dependencies = scala.collection.mutable.Map[Element[_], Set[Element[_]]]()
-  private def makeDependencies() = {
-    for {
-      element <- universe.activeElements
-    } {
-      element match {
-        case d: Dist[_,_] =>
-          for { o <- d.outcomes } { dependencies += o -> (dependencies.getOrElse(o, Set()) + d) }
-        //In principle, we should create a dependency from the result element of a chain to
-        //the chain. If the result element is a permanent element, this could matter.
-        //However, in most relevant cases (e.g., compound versions of atomic elements), the
-        //outcome element will be temporary and automatically generated after the chain,
-        //so we don't need the dependency. On the other hand, creating the dependency requires
-        //a call to values which is slow and dangerous.
-        //
-        //Unfortunately, the above intuition doesn't hold. The EM with importance tests fail
-        //to terminate unless we add dependencies to chains. We're still searching for a better
-        //way to determine the possible outcome elements than to call values on the parent.
-        case c: CachingChain[_,_] =>
-          val outcomes = Values(universe)(c.parent).map(c.get(_))
-          for { o <- outcomes } { dependencies += o -> (dependencies.getOrElse(o, Set()) + c) }
-        case _ => ()
-      }
-    }
-  }
-  makeDependencies()
+  val lw = new LikelihoodWeighter(universe, new PermanentCache(universe))
 
   private var numRejections = 0
   private var logSuccessWeight = 0.0
   private var numSamples = 0
+  def getSamples() = numSamples
 
   override protected def resetCounts() {
     super.resetCounts()
@@ -98,15 +57,15 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
     val activeElements = universe.activeElements
     val resultOpt: Option[Sample] =
       try {
-        val state = State()
-        activeElements.foreach(e => if (e.active) sampleOne(state, e, None))
+        val weight = lw.computeWeight(activeElements)
         val bindings = targets map (elem => elem -> elem.value)
-        Some((state.weight, Map(bindings: _*)))
+        Some((weight, Map(bindings: _*)))
       } catch {
         case Importance.Reject =>
           None
       }
 
+    universe.clearTemporaries()
     resultOpt match {
       case Some(x) =>
         logSuccessWeight = logSum(logSuccessWeight, x._1)
@@ -118,150 +77,11 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
     }
   }
 
-  /*
-   * Sample the value of an element. If it has already been assigned in the state, the current assignment is
-   * used and the state is unchanged. Also, an element in a different universe is not sampled; instead its state is
-   * used directly
-   *
-   * This is made private[figaro] to allow easy testing
-   */
-  private[figaro] def sampleOne[T](state: State, element: Element[T], observation: Option[T]): T = {
-    /*
-     * We have to make sure to sample any elements this element depends on first so we can get the right
-     * observation for this element.
-     */
-    dependencies.getOrElse(element, Set()).filter(!state.assigned.contains(_)).foreach(sampleOne(state, _, None))
-    if (element.universe != universe || (state.assigned contains element)) {
-      element.value
-    }
-    else {
-      state.assigned += element
-      sampleFresh(state, element, observation)
-    }
-  }
-
-  /*
-   * Sample a fresh value of an element, assuming it has not yet been assigned a value in the state. This sampling
-   * takes into account the condition and constraint on the element. If the condition is violated, the entire sampling
-   * process is rejected. This function returns the state including the new assignment to the element with the weight
-   * of the constraint multiplied in.
-   */
-  private def sampleFresh[T](state: State, element: Element[T], observation: Option[T]): T = {
-    val fullObservation = (observation, element.observation) match {
-      case (None, None) => None
-      case (Some(obs), None) => Some(obs)
-      case (None, Some(obs)) => Some(obs)
-      case (Some(obs1), Some(obs2)) if obs1 == obs2 => Some(obs1)
-      case _ => throw Importance.Reject // incompatible observations
-    }
-    val value: T =
-      if (fullObservation.isEmpty || !element.isInstanceOf[HasDensity[_]]) {
-        val result = sampleValue(state, element, fullObservation)
-        if (!element.condition(result)) throw Importance.Reject
-        result
-      } else {
-        // Optimize the common case of an observation on an atomic element.
-        // This partially implements likelihood weighting by clamping the element to its
-        // desired value and multiplying the weight by the density of the value.
-        // This can dramatically reduce the number of rejections.
-        val obs = fullObservation.get
-
-        sampleArgs(element, state: State, Set[Element[_]](element.args:_*))
-
-        // I'm not quite sure why we have to call sampleValue here when we're about to set the value of this element to obs.
-        // If I remove this call, the test "should correctly resample an element's arguments when the arguments change during samples"
-        // fails.
-        sampleValue(state, element, Some(obs))
-        val density = element.asInstanceOf[HasDensity[T]].density(obs)
-        state.weight += math.log(density)
-        obs
-      }
-    element.value = value
-    state.weight += element.constraint(value)
-    value
-  }
-
-  /*
-   * Sample the value of an element according to its generative model, without considering the condition or constraint.
-   * Since sampling the value of this element might also involve sampling the values of related elements, the state
-   * must be updated and returned.
-   *
-   * Most elements can simply be handled by sampling values for the arguments and generating values for this
-   * element. Dist is an exception, because not all the outcomes need to be generated, but we only know which one
-   * after we have sampled the randomness of the Dist. For this reason, we write special code to handle Dists.
-   * For Chain, we also write special code to avoid calling get twice.
-   *
-   * We propagate observations on Chains and Dists to their possible outcome elements. This ensures that instead of
-   * sampling these elements and then checking whether the observation is satisfied, we set their values to the
-   * required ones. This implements likelihood weighting and leads to faster convergence of the algorithm.
-   */
-  private def sampleValue[T](state: State, element: Element[T], observation: Option[T]): T = {
-    element match {
-      case d: Dist[_, _] =>
-        d match {
-          case dc: CompoundDist[_] => dc.probs foreach (sampleOne(state, _, None))
-          case _ => ()
-        }
-        val rand = d.generateRandomness()
-        val index = d.selectIndex(rand)
-        sampleOne(state, d.outcomeArray(index), observation)
-        d.value = d.finishGeneration(index)
-        d.value
-      case c: Chain[_, _] =>
-        val parentValue = sampleOne(state, c.parent, None)
-        val next = c.get(parentValue)
-        c.value = sampleOne(state, next, observation)
-        c.value
-      case f: CompoundFlip =>
-        val probValue = sampleOne(state, f.prob, None)
-        observation match {
-          case Some(true) =>
-            state.weight += math.log(probValue)
-            true
-          case Some(false) =>
-            state.weight += math.log(1 - probValue)
-            false
-          case _ =>
-            val result = random.nextDouble() < probValue
-            f.value = result
-            result
-        }
-      case f: ParameterizedFlip =>
-        val probValue = sampleOne(state, f.parameter, None)
-
-        observation match {
-          case Some(true) =>
-            true
-          case Some(false) =>
-            false
-          case _ =>
-            val result = random.nextDouble() < probValue
-            f.value = result
-            result
-        }
-
-      case _ =>
-        val args = (element.args ::: element.elementsIAmContingentOn.toList)
-        sampleArgs(element, state: State, Set[Element[_]](args:_*))
-        element.randomness = element.generateRandomness()
-        element.value = element.generateValue(element.randomness)
-        element.value
-    }
-  }
-
-  @tailrec
-  private def sampleArgs(element: Element[_], state: State, args: Set[Element[_]]): Unit = {
-    args foreach (sampleOne(state, _, None))
-    val newArgs = element.args.filter(!state.assigned.contains(_))
-    if (newArgs.nonEmpty)
-      sampleArgs(element, state, Set[Element[_]](newArgs: _*))
-  }
-
-   /**
+  /**
    * The computed probability of evidence.
    */
   def logProbEvidence: Double = {
-	logSuccessWeight - Math.log(numSamples + numRejections)
+    logSuccessWeight - Math.log(numSamples + numRejections)
   }
 
 }
@@ -292,20 +112,20 @@ object Importance {
     new Importance(universe, targets: _*) with OneTimeProbQuerySampler with ProbEvidenceQuery {
       val numSamples = myNumSamples
 
-    /**
-      * Use one-time sampling to compute the probability of the given named evidence.
-      * Takes the conditions and constraints in the model as part of the model definition.
-      * This method takes care of creating and running the necessary algorithms.
-      */
-    override def probabilityOfEvidence(evidence: List[NamedEvidence[_]]): Double = {
-      val logPartition = logProbEvidence
-      universe.assertEvidence(evidence)
-      if (active) kill()
-      start()
-      Math.exp(logProbEvidence - logPartition)
-    }
+      /**
+       * Use one-time sampling to compute the probability of the given named evidence.
+       * Takes the conditions and constraints in the model as part of the model definition.
+       * This method takes care of creating and running the necessary algorithms.
+       */
+      override def probabilityOfEvidence(evidence: List[NamedEvidence[_]]): Double = {
+        val logPartition = logProbEvidence
+        universe.assertEvidence(evidence)
+        if (active) kill()
+        start()
+        Math.exp(logProbEvidence - logPartition)
+      }
 
-  }
+    }
 
   /**
    * Use IS to compute the probability that the given element satisfies the given predicate.

@@ -94,7 +94,7 @@ class LazyValuesTest extends WordSpec with Matchers {
       values(elem1, 1)
       values(elem1, 1)
       values(elem1, 0)
-      a should equal (1)
+      a should equal (2)
     }
     
     "use the old result when called twice on the same universe" in {
