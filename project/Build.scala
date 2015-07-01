@@ -86,6 +86,7 @@ object FigaroBuild extends Build {
       "org.scalanlp" %% "breeze" % "0.10",
       "io.argonaut" %% "argonaut" % "6.0.4",
       "com.storm-enroute" %% "scalameter" % "0.6" % "provided",
+      "org.prefuse" % "prefuse" % "beta-20071021",
       "org.scalatest" %% "scalatest" % "2.2.4" % "provided, test"
     ))
     // Copy all managed dependencies to \lib_managed directory
