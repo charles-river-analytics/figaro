@@ -50,6 +50,14 @@ trait AnytimeProbQuery extends ProbQueryAlgorithm with Anytime {
    * A message from the handler containing the probability of the previously requested predicate and element.
    */
   case class Probability(probability: Double) extends Response
+ /**
+   * A message instructing the handler to compute the projection of the target element.
+   */
+  case class ComputeProjection[T](target: Element[T]) extends Service
+ /**
+   * A message from the handler containing the projection of the previously requested element.
+   */
+  case class Projection[T](projection: List[(T, Double)]) extends Response
 
   def handle(service: Service): Response =
     service match {
@@ -60,38 +68,33 @@ trait AnytimeProbQuery extends ProbQueryAlgorithm with Anytime {
       case ComputeProbability(target, predicate) =>
         Probability(computeProbability(target, predicate))
     }
-
-  implicit val timeout = Timeout(5000, TimeUnit.MILLISECONDS)
+  
   protected def doDistribution[T](target: Element[T]): Stream[(Double, T)] = {
-    val response = runner ? Handle(ComputeDistribution(target))
-    Await.result(response, timeout.duration ).asInstanceOf[Response] match {
+    awaitResponse(runner ? Handle(ComputeDistribution(target)), messageTimeout.duration) match {
       case Distribution(result) => result.asInstanceOf[Stream[(Double, T)]]
-      case ExceptionResponse(msg) =>
-        println(msg)
-        Stream()
       case _ => Stream()
-    }
+    } 
   }
 
   protected def doExpectation[T](target: Element[T], function: T => Double): Double = {
-    val response = runner ? Handle(ComputeExpectation(target, function))
-    Await.result(response, timeout.duration ).asInstanceOf[Response] match {
+    awaitResponse(runner ? Handle(ComputeExpectation(target, function)), messageTimeout.duration) match {
       case Expectation(result) => result
-      case ExceptionResponse(msg) =>
-        println(msg)
-        0.0
       case _ => 0.0
-    }
+    }     
   }
 
   protected override def doProbability[T](target: Element[T], predicate: T => Boolean): Double = {
-    val response = runner ? Handle(ComputeProbability(target, predicate))
-    Await.result(response, timeout.duration ).asInstanceOf[Response] match {
+    awaitResponse(runner ? Handle(ComputeProbability(target, predicate)), messageTimeout.duration) match {
       case Probability(result) => result
-      case ExceptionResponse(msg) =>
-        println(msg)
-        0.0
       case _ => 0.0
-    }
+    }     
   }
+  
+  protected override def doProjection[T](target: Element[T]): List[(T, Double)] = {
+    awaitResponse(runner ? Handle(ComputeProjection(target)), messageTimeout.duration) match {
+      case Projection(result) => result.asInstanceOf[List[(T, Double)]]
+      case _ => List()
+    }     
+  }
+
 }

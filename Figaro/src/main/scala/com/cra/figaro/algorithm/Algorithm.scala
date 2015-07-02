@@ -26,7 +26,6 @@ class UnsupportedAlgorithmException(element: Element[_]) extends RuntimeExceptio
 class AlgorithmException extends RuntimeException
 class AlgorithmInactiveException extends AlgorithmException
 class AlgorithmActiveException extends AlgorithmException
-class NotATargetException[T](target: Element[T]) extends AlgorithmException
 
 /**
  * The general class of Figaro algorithms. The Algorithm class is defined to generalize both
@@ -47,22 +46,22 @@ trait Algorithm {
   /*
    * Start the algorithm. After it returns, the algorithm must be ready to provide answers.
    */
-  protected def doStart(): Unit
+  protected[algorithm] def doStart(): Unit
 
   /*
    * Stop the algorithm from computing. The algorithm is still ready to provide answers after it returns.
    */
-  protected def doStop(): Unit
+  protected[algorithm] def doStop(): Unit
 
   /*
    * Resume the computation of the algorithm, if it has been stopped.
    */
-  protected def doResume(): Unit
+  protected[algorithm] def doResume(): Unit
 
   /*
    * Kill the algorithm so that it is inactive. It will no longer be able to provide answers.
    */
-  protected def doKill(): Unit
+  protected[algorithm] def doKill(): Unit
 
   protected var active = false
 

@@ -259,6 +259,7 @@ class ElementSamplerTest extends WordSpec with Matchers with PrivateMethodTester
     val es = ElementSampler(target)
     es.start
     Thread.sleep(1000)
+    es.stop
     val predProb = es.probability(target, predicate)
     predProb should be(prob +- epsilon)
     es.kill

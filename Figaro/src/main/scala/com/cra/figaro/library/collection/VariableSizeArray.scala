@@ -21,7 +21,7 @@ import com.cra.figaro.algorithm.factored._
 /**
  * Holder for an element whose value is a fixed size array.
  */
-class FixedSizeArrayElement[Value](private val fsa: Element[FixedSizeArray[Value]])
+class FixedSizeArrayElement[Value](protected[figaro] val fsa: Element[FixedSizeArray[Value]])
 extends ContainerElement[Int, Value](fsa.asInstanceOf[Element[Container[Int, Value]]]) {
 
   /**

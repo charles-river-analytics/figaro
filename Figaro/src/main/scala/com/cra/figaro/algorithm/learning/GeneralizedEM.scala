@@ -32,25 +32,25 @@ trait ExpectationMaximization extends Algorithm with ParameterLearner {
   protected val paramMap: Map[Parameter[_], Seq[Double]] = Map(targetParameters.map(p => p -> p.zeroSufficientStatistics): _*)
   protected def doExpectationStep(): Map[Parameter[_], Seq[Double]]
 
-  protected def doStart(): Unit = {
+  protected[algorithm] def doStart(): Unit = {
     em()
   }
 
   /*
    * Stop the algorithm from computing. The algorithm is still ready to provide answers after it returns.
    */
-  protected def doStop(): Unit = {}
+  protected[algorithm] def doStop(): Unit = {}
 
   /*
    * Resume the computation of the algorithm, if it has been stopped.
    */
 
-  protected def doResume(): Unit = {}
+  protected[algorithm] def doResume(): Unit = {}
 
   /*
    * Kill the algorithm so that it is inactive. It will no longer be able to provide answers.
    */
-  protected def doKill(): Unit = {}
+  protected[algorithm] def doKill(): Unit = {}
 
   val terminationCriteria: () => EMTerminationCriteria
   val targetParameters: Seq[Parameter[_]]
@@ -194,18 +194,18 @@ class GeneralizedOnlineEM(inferenceAlgorithmConstructor: Seq[Element[_]] => Univ
     //println("universe: " + currentUniverse.hashCode)
     var result: Map[Parameter[_], Seq[Double]] = Map()
 
-    val uses = usesParameter(inferenceTargets)
-    println("built map")
+    val uses = usesParameter(inferenceTargets)    
     for { parameter <- targetParameters } {
       var stats = parameter.zeroSufficientStatistics
-      for {
-        target <- uses(parameter)
-      } {
-        println("found used by...")
-        val t: Parameterized[target.Value] = target.asInstanceOf[Parameterized[target.Value]]
-        val distribution: Stream[(Double, target.Value)] = algorithm.distribution(t)
-        val newStats = t.distributionToStatistics(parameter, distribution)
-        stats = (stats.zip(newStats)).map(pair => pair._1 + pair._2)
+      if (uses.contains(parameter)) {
+        for {
+          target <- uses(parameter)
+        } {
+          val t: Parameterized[target.Value] = target.asInstanceOf[Parameterized[target.Value]]
+          val distribution: Stream[(Double, target.Value)] = algorithm.distribution(t)
+          val newStats = t.distributionToStatistics(parameter, distribution)
+          stats = (stats.zip(newStats)).map(pair => pair._1 + pair._2)
+        }
       }
       result += parameter -> stats
     }

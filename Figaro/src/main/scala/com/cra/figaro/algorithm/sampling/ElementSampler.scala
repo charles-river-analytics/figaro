@@ -25,7 +25,7 @@ import scala.collection.mutable.Map
 abstract class ElementSampler(target: Element[_]) extends BaseUnweightedSampler(target.universe, target) {
 
   def sample(): (Boolean, Sample) = {
-    Forward(target)
+    Forward(target)    
     (true, Map[Element[_], Any](target -> target.value))
   }
 

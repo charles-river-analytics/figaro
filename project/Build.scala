@@ -24,7 +24,7 @@ object FigaroBuild extends Build {
   override val settings = super.settings ++ Seq(
     organization := "com.cra.figaro",
     description := "Figaro: a language for probablistic programming",
-    version := "3.2.0.0",
+    version := "3.2.1.0",
     scalaVersion := "2.11.6",
     crossPaths := true,
     publishMavenStyle := true,
@@ -85,6 +85,8 @@ object FigaroBuild extends Build {
       "com.typesafe.akka" %% "akka-actor" % "2.3.8",
       "org.scalanlp" %% "breeze" % "0.10",
       "io.argonaut" %% "argonaut" % "6.0.4",
+      "org.prefuse" % "prefuse" % "beta-20071021",
+      "org.scala-lang.modules" %% "scala-swing" % "1.0.1",
       "com.storm-enroute" %% "scalameter" % "0.6" % "provided",
       "org.scalatest" %% "scalatest" % "2.2.4" % "provided, test"
     ))
@@ -96,6 +98,7 @@ object FigaroBuild extends Build {
     .settings(javaOptions in (Test,run) += "-Xmx8G")
     // test settings
     .settings(parallelExecution in Test := false)
+    .settings(testOptions in Test += Tests.Argument("-oD"))
     .configs(detTest)
     .settings(inConfig(detTest)(Defaults.testTasks): _*)
     .settings(testOptions in detTest := Seq(Tests.Argument("-l", "com.cra.figaro.test.nonDeterministic")))

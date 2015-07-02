@@ -13,11 +13,12 @@
 
 package com.cra.figaro.algorithm.sampling
 
-import com.cra.figaro.algorithm._
-import com.cra.figaro.language._
 import scala.collection.mutable.Map
 import scala.language.existentials
 import scala.language.postfixOps
+
+import com.cra.figaro.algorithm._
+import com.cra.figaro.language._
 
 /**
  * Samplers that use samples without weights.
@@ -37,7 +38,7 @@ abstract class BaseUnweightedSampler(val universe: Universe, targets: Element[_]
   protected var sampleCount: Int = _
 
   /**
-   * Number of samples taken.
+   * Number of samples taken
    */
   def getSampleCount = sampleCount
 
@@ -85,33 +86,27 @@ abstract class BaseUnweightedSampler(val universe: Universe, targets: Element[_]
 
   protected def update(): Unit = {
     sampleCount += 1
-    targets.foreach(t => updateTimesSeenForTarget(t.asInstanceOf[Element[t.Value]], t.value))
+    if (allLastUpdates.nonEmpty) targets.foreach(t => updateTimesSeenForTarget(t.asInstanceOf[Element[t.Value]], t.value))    
     sampleCount -= 1
   }
 
 }
 
-trait UnweightedSampler extends BaseUnweightedSampler with ProbQueryAlgorithm {
+trait UnweightedSampler extends BaseUnweightedSampler with ProbQuerySampler {
+  
+  /**
+   * Total weight of samples taken, in log space
+   */
+  def getTotalWeight: Double = math.log(getSampleCount)
 
-  protected def projection[T](target: Element[T]): List[(T, Double)] = {
+  override protected[algorithm] def computeProjection[T](target: Element[T]): List[(T, Double)] = {
+    if (allLastUpdates.nonEmpty) {
     val timesSeen = allTimesSeen.find(_._1 == target).get._2.asInstanceOf[Map[T, Int]]
     timesSeen.mapValues(_ / sampleCount.toDouble).toList
+    } else {
+      println("Error: MH sampler did not accept any samples")
+      List()
+    }
   }
-
-  /**
-   * Return an estimate of the expectation of the function under the marginal probability distribution
-   * of the target.
-   */
-  def computeExpectation[T](target: Element[T], function: T => Double) = {
-    val contributions = projection(target) map (pair => function(pair._1) * pair._2)
-    (0.0 /: contributions)(_ + _)
-  }
-
-  /**
-   * Return an estimate of the marginal probability distribution over the target that lists each element
-   * with its probability.
-   */
-  def computeDistribution[T](target: Element[T]): Stream[(Double, T)] =
-    projection(target) map (_.swap) toStream
 
 }

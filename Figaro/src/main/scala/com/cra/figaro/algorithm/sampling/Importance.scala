@@ -20,6 +20,7 @@ import scala.annotation.tailrec
 import scala.collection.mutable.{ Set, Map }
 import com.cra.figaro.experimental.particlebp.AutomaticDensityEstimator
 import com.cra.figaro.algorithm.factored.ParticleGenerator
+import com.cra.figaro.algorithm.sampling.parallel.ParImportance
 
 /**
  * Importance samplers.
@@ -288,7 +289,7 @@ object Importance {
    * using the given number of samples.
    */
   def apply(myNumSamples: Int, targets: Element[_]*)(implicit universe: Universe) =
-    new Importance(universe, targets: _*) with OneTimeProbQuerySampler {
+    new Importance(universe, targets: _*) with OneTimeProbQuerySampler with ProbEvidenceQuery {
       val numSamples = myNumSamples
 
     /**
@@ -296,7 +297,7 @@ object Importance {
       * Takes the conditions and constraints in the model as part of the model definition.
       * This method takes care of creating and running the necessary algorithms.
       */
-    def probabilityOfEvidence(evidence: List[NamedEvidence[_]]): Double = {
+    override def probabilityOfEvidence(evidence: List[NamedEvidence[_]]): Double = {
       val logPartition = logProbEvidence
       universe.assertEvidence(evidence)
       if (active) kill()
@@ -323,4 +324,8 @@ object Importance {
   def probability[T](target: Element[T], value: T): Double =
     probability(target, (t: T) => t == value)
 
+  /**
+   * The parallel implementation of IS
+   */
+  def par = ParImportance
 }

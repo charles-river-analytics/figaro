@@ -16,6 +16,13 @@ package com.cra.figaro.algorithm
 import com.cra.figaro.language._
 import akka.actor._
 import com.typesafe.config.ConfigFactory
+import akka.util.Timeout
+import java.util.concurrent.TimeUnit
+import akka.pattern.{ ask }
+import scala.concurrent.Await
+import scala.concurrent.Future
+import java.util.concurrent.TimeoutException
+import scala.concurrent.duration.Duration
 
 /**
  * Class of services implemented by the anytime algorithm.
@@ -26,8 +33,14 @@ abstract class Service
  * Class of responses to services.
  */
 abstract class Response
+
 /**
- * General Response (String)
+ * Ack Response (String)
+ */
+case object AckResponse extends Response
+
+/**
+ * Exception Response (String)
  */
 case class ExceptionResponse(msg: String) extends Response
 
@@ -40,6 +53,9 @@ sealed abstract class Message
  */
 case class Handle(service: Service) extends Message
 
+
+class AnytimeAlgorithmException(s: String) extends RuntimeException(s)
+
 /**
  * An anytime algorithm is able to improve its estimated answers over time. Anytime algorithms run in their
  * own thread using an actor.
@@ -50,15 +66,6 @@ case class Handle(service: Service) extends Message
  */
 
 trait Anytime extends Algorithm {
-  /**
-   * Run a single step of the algorithm. The algorithm must be able to provide answers after each step.
-   */
-  def runStep(): Unit
-
-  /**
-   * Optional function to run when the algorithm is stopped (not killed). Used in samplers to update lazy values.
-   */
-  def stopUpdate(): Unit = {  }
 
   /**
    * A class representing the actor running the algorithm.
@@ -71,7 +78,8 @@ trait Anytime extends Algorithm {
         sender ! handle(service)
       case "stop" =>
         stopUpdate()
-        become (inactive)
+        sender ! AckResponse
+        become(inactive)
       case "next" =>
         runStep()
         self ! "next"
@@ -89,9 +97,11 @@ trait Anytime extends Algorithm {
       case "resume" =>
         resume()
         become(active)
-      	self ! "next"
+        self ! "next"
       case "kill" =>
-         become(shuttingDown)
+        cleanUp()
+        sender ! AckResponse
+        become(shuttingDown)
       case _ =>
         sender ! ExceptionResponse("Algorithm is stopped")
     }
@@ -102,8 +112,6 @@ trait Anytime extends Algorithm {
     }
 
     def receive = inactive
-
-
   }
 
   /**
@@ -122,27 +130,42 @@ trait Anytime extends Algorithm {
   var running = false;
 
   /**
+   * default message timeout. Increase if queries to the algorithm fail due to timeout
+   */
+  implicit var messageTimeout = Timeout(5000, TimeUnit.MILLISECONDS)
+
+  /**
+   * Run a single step of the algorithm. The algorithm must be able to provide answers after each step.
+   */
+  def runStep(): Unit
+
+  /**
+   * Optional function to run when the algorithm is stopped (not killed). Used in samplers to update lazy values.
+   */
+  def stopUpdate(): Unit = {}
+
+  /**
    * A handler of services provided by the algorithm.
    */
   def handle(service: Service): Response
 
 
-  protected def doStart() = {
+  protected[algorithm] def doStart() = {
     if (!running) {
-    	system = ActorSystem("Anytime", ConfigFactory.load(customConf))
-    	runner = system.actorOf(Props(new Runner))
-    	initialize()
-    	running = true
+      system = ActorSystem("Anytime", ConfigFactory.load(customConf))
+      runner = system.actorOf(Props(new Runner))
+      initialize()
+      running = true
     }
 
     runner ! "start"
   }
 
-  protected def doStop() = runner ! "stop"
+  protected[algorithm] def doStop() = runner ! "stop"
 
-  protected def doResume() = runner ! "resume"
+  protected[algorithm] def doResume() = runner ! "resume"
 
-  protected def doKill() = {
+  protected[algorithm] def doKill() = {
     shutdown
   }
 
@@ -150,12 +173,36 @@ trait Anytime extends Algorithm {
    * Release all resources from this anytime algorithm.
    */
   def shutdown {
-    cleanUp()
-    if (running)
-    {
-    	runner ! "kill"
-    	system.stop(runner)
-    	system.shutdown
+    if (running) {      
+      awaitResponse(runner ? "kill", messageTimeout.duration)      
+      system.stop(runner)
+      system.shutdown
     }
   }
+  
+  /*
+   * A helper function to query the running thread and await a response.
+   * In the case that it times out, it will print a message that it timed out and return an exception response.
+   * Note, on a time, it does NOT throw an exception.
+   */
+  protected def awaitResponse(response: Future[Any], duration: Duration): Response = {
+    try {
+      val result = Await.result(response, duration) 
+      result match {
+        case e: ExceptionResponse => {
+          println(e.msg)
+          e
+        }
+        case r: Response => r
+        case _ => throw new AnytimeAlgorithmException("Unknown Response")
+      }
+    } catch {
+      case to: TimeoutException => {
+        println("Error! Did not receive a response from algorithm thread - it may be hanging or taking an exceptionally long time to respond. Try increasing messageTimeout.")
+        ExceptionResponse("Timeout")
+      }
+      case e: Exception => throw e
+    } 
+  }
+  
 }

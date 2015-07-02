@@ -125,27 +125,6 @@ object ComplexFactory {
     List(factor)
   }
 
-  /**
-   * Constructor for a MakeList Element
-   */
-  def makeFactors[T](element: MakeList[T]): List[Factor[Double]] = {
-    val parentVar = Variable(element.numItems)
-    // We need to create factors for the items and the lists themselves, which are encapsulated in this MakeList
-    val regularParents = parentVar.range.filter(_.isRegular).map(_.value)
-    val maxItem = regularParents.reduce(_ max _)
-    val itemFactors = List.tabulate(maxItem)((i: Int) => Factory.make(element.items(i)))
-    val indexedResultElemsAndFactors =
-      for { i <- regularParents } yield {
-        val elem = element.embeddedInject(i)
-        val factors = Factory.make(elem)
-        (Regular(i), elem, factors)
-      }
-    val conditionalFactors =
-      parentVar.range.zipWithIndex map (pair =>
-        Factory.makeConditionalSelector(element, parentVar, pair._2, Variable(indexedResultElemsAndFactors.find(_._1 == pair._1).get._2)))
-    conditionalFactors ::: itemFactors.flatten ::: indexedResultElemsAndFactors.flatMap(_._3)
-  }
-
   // adapted from Apply1
   /**
    * Factor constructor for a MakeArray Element
