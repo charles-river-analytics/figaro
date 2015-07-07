@@ -1,11 +1,11 @@
 /*
  * Burglary.scala
- * A Bayesian network example.
+ * A Bayesian network example with visualization
  * 
- * Created By:      Avi Pfeffer (apfeffer@cra.com)
- * Creation Date:   Jan 1, 2009
+ * Created By:      Glenn Takata (gtakata@cra.com)
+ * Creation Date:   Jun 15, 2015
  * 
- * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
@@ -17,7 +17,7 @@ import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound._
 import com.cra.figaro.util.visualization.{ResultsGUI}
-import com.cra.figaro.util.visualization.results.ResultsData
+import com.cra.figaro.util.visualization.results.{DiscreteData}
 /**
  * A Bayesian network example
  */
@@ -47,7 +47,7 @@ object Burglary {
     alg.start()
     println("Probability of burglary: " + alg.probability(burglary, true))
     
-    gui.addResult(ResultsData("burglary", alg.distribution(burglary).toList))
+    gui.addResult("burglary", alg.distribution(burglary).toList)
 
     alg.kill
   }
