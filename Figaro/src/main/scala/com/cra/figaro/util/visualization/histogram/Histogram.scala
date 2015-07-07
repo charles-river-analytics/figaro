@@ -1,3 +1,15 @@
+/*
+ * Histogram.scala 
+ * Setup and display histograms based on distribution (prob, value) data
+ * 
+ * Created By:      Glenn Takata (gtakata@cra.com)
+ * Creation Date:   Apr 9, 2015
+ * 
+ * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * See http://www.cra.com or email figaro@cra.com for information.
+ * 
+ * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
 package com.cra.figaro.util.visualization.histogram
 
 import java.awt.Color
@@ -6,11 +18,9 @@ import java.awt.geom.Rectangle2D
 import java.text.NumberFormat
 import javax.swing.BorderFactory
 import javax.swing.Box
-
 import scala.collection.JavaConversions
 import scala.swing._
 import scala.swing.BorderPanel.Position._
-
 import prefuse.Constants
 import prefuse.Display
 import prefuse.Visualization
@@ -38,8 +48,8 @@ import prefuse.util.ui.JFastLabel
 import prefuse.util.ui.UILib
 import prefuse.visual.VisualItem
 import prefuse.visual.expression.VisiblePredicate
-
 import com.cra.figaro.util.visualization.ResultsGUI._
+import com.cra.figaro.util.visualization.DataView
 
 /**
  * @author Glenn Takata (gtakata@cra.com)
@@ -80,8 +90,7 @@ class Histogram(val dataview: DataView, var color: String) extends BorderPanel {
   // ensure the y-axis spans the height of the data container
 
   // set the y-axis range
-  val rangeModel = new NumberRangeModel(0, 1.0, 0, 1.0);
-  yaxis.setRangeModel(rangeModel)
+  yaxis.setRangeModel(dataview.yRangeModel)
   // add the labels to the y-axis
   val ylabels: AxisLabelLayout = new AxisLabelLayout("ylab", yaxis);
   val nf = NumberFormat.getIntegerInstance();
