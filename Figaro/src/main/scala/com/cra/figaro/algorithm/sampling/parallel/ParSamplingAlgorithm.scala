@@ -1,9 +1,9 @@
 /*
- * ParAlgorithm.scala
- * Parallel algorithms.
+ * ParSamplingAlgorithm.scala
+ * Parallel sampling algorithms.
  * 
  * Created By:      Lee Kellogg (lkellog@cra.com)
- * Creation Date:   May 11, 2015
+ * Creation Date:   June 2, 2015
  * 
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
