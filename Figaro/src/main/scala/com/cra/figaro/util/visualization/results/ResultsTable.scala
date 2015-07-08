@@ -1,7 +1,6 @@
 /*
  * ResultsTable.scala 
- * Visual element for a table to display user inputs.
- * Includes discrete (distribution List) and continuous (element)
+ * Visual element for a table to display user inputs. Includes discrete (distribution List) and continuous (element)
  * 
  * Created By:      Glenn Takata (gtakata@cra.com)
  * Creation Date:   Apr 9, 2015

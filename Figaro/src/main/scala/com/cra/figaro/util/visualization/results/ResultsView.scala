@@ -1,7 +1,6 @@
 /*
  * ResultsView.scala 
- * A visual component to display a table of user data. 
- * Includes discrete (distribution List) and continuous (element)
+ * A visual component to display a table of user data. Includes discrete (distribution List) and continuous (element)
  * 
  * Created By:      Glenn Takata (gtakata@cra.com)
  * Creation Date:   Mar 16, 2015
