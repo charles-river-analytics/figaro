@@ -44,8 +44,7 @@ import scala.collection.mutable.Set
  * noncaching uses an approximate policy algorithm (based on kNN) and should be used for continuous
  * parents or discrete parents with a very large range.
  */
-abstract class Decision[T, U](name: Name[U], parent: Element[T], private var fcn: T => Element[U], cacheSize: Int, collection: ElementCollection)
-  extends Chain(name, parent, fcn, cacheSize, collection) with PolicyMaker[T, U] {
+trait Decision[T, U] extends Chain[T, U] with PolicyMaker[T, U] {
 
   /**
    * The parent type.
@@ -57,6 +56,8 @@ abstract class Decision[T, U](name: Name[U], parent: Element[T], private var fcn
    */
   type DValue = this.Value
 
+  var fcn: T => Element[U]
+  
   /**
    * The decision function. fcn is declared as a var and can change depending on the policy.
    */
@@ -104,20 +105,20 @@ abstract class Decision[T, U](name: Name[U], parent: Element[T], private var fcn
     // Have to nullify the last result even if parents the same since the function changed
     clearContext
     // Have to clear the last element in the cache since clearTempory always leaves an element in the cache
-    if (cache.nonEmpty) resizeCache(cache.last._1)    
+    //if (cache.nonEmpty) resizeCache(cache.last._1)    
     // Have to remove the expansion of the universe since it is out of data
     LazyValues.clear(universe)
     // Must regenerate a new value since the cache should never be empty
     generateValue()
   }
-
 }
+
 
 /**
  * Abstract class for a NonCachingDecision. It is abstract because makePolicy has not been defined yet.
  */
-abstract class NonCachingDecision[T, U](name: Name[U], parent: Element[T], fcn: T => Element[U], collection: ElementCollection)
-  extends Decision(name, parent, fcn, 1, collection) {
+abstract class NonCachingDecision[T, U](name: Name[U], parent: Element[T], var fcn: T => Element[U], collection: ElementCollection)
+  extends NonCachingChain(name, parent, fcn, collection) with Decision[T, U] {
 
   override def toString = "NonCachingDecision(" + parent + ", " + this.cpd + ")"
 }
@@ -125,8 +126,8 @@ abstract class NonCachingDecision[T, U](name: Name[U], parent: Element[T], fcn: 
 /**
  * Abstract class for a CachingDecision. It is abstract because makePolicy has not been defined yet.
  */
-abstract class CachingDecision[T, U](name: Name[U], parent: Element[T], fcn: T => Element[U], collection: ElementCollection)
-  extends Decision(name, parent, fcn, 1000, collection) {
+abstract class CachingDecision[T, U](name: Name[U], parent: Element[T], var fcn: T => Element[U], collection: ElementCollection)
+  extends CachingChain(name, parent, fcn, collection) with Decision[T, U] {
 
   override def toString = "CachingDecision(" + parent + ", " + this.cpd + ")"
 }

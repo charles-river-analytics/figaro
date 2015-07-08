@@ -69,14 +69,17 @@ class CompoundTest extends WordSpec with Matchers {
     "not generate a consequent that's not needed when sampling" in {
       Universe.createNew()
       var count = 0
-      def makeElem() = {
+      def makeElem1() = {        
+        Constant(1)
+      }
+      def makeElem2() = {
         count += 1
         Constant(1)
       }
-      val e = If(Constant(true), makeElem(), makeElem())
+      val e = If(Constant(true), makeElem1(), makeElem2())
       val alg = Importance(100, e)
       alg.start()
-      count should equal (1)
+      count should equal (0)
       alg.kill()
     }
   }

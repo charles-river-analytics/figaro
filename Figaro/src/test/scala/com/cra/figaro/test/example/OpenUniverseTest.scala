@@ -58,7 +58,7 @@ class OpenUniverseTest extends WordSpec with Matchers {
         (0.25, () => ProposalScheme(numSources)),
         (0.25, () => ProposalScheme(sources.items(random.nextInt(numSources.value)))),
         (0.25, () => ProposalScheme(samples(random.nextInt(numSamples)).sourceNum)),
-        (0.25, () => ProposalScheme(samples(random.nextInt(numSamples)).position.resultElement)))
+        (0.25, () => ProposalScheme(samples(random.nextInt(numSamples)).position)))
 
     sample1.position.addCondition((y: Double) => y >= 0.5 && y < 0.8)
     sample2.position.addCondition((y: Double) => y >= 0.5 && y < 0.8)
@@ -83,7 +83,7 @@ class OpenUniverseTest extends WordSpec with Matchers {
     val totalProbSame = (0.0 /: (1 to limitNumSources))(_ + probSame(_))
     val totalProbDifferent = (0.0 /: (1 to limitNumSources))(_ + probDifferent(_))
     val answer = totalProbSame / (totalProbSame + totalProbDifferent)
-    val alg = MetropolisHastings(2000000, chooseScheme, 50000, equal)
+    val alg = MetropolisHastings(200000, chooseScheme, 5000, equal)
     alg.start()
     alg.probability(equal, true) should be(answer +- 0.02)
     alg.kill

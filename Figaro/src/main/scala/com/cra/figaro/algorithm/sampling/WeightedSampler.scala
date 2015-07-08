@@ -67,8 +67,7 @@ abstract class WeightedSampler(override val universe: Universe, targets: Element
   }
 
   protected def doSample(): Unit = {
-    val s = sample()
-    universe.clearTemporaries()
+    val s = sample()    
     totalWeight = logSum(s._1, totalWeight)
     allWeightsSeen foreach (updateWeightSeenForTarget(s, _))
   }
