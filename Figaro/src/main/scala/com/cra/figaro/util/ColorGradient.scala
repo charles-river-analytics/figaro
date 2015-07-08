@@ -1,5 +1,14 @@
-/**
- *
+/*
+ * ColorGradient.scala 
+ * A Factory for color schemes to be used in tables, charts, histograms, etc
+ * 
+ * Created By:      Glenn Takata (gtakata@cra.com)
+ * Creation Date:   Apr 9, 2015
+ * 
+ * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * See http://www.cra.com or email figaro@cra.com for information.
+ * 
+ * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 package com.cra.figaro.util
 

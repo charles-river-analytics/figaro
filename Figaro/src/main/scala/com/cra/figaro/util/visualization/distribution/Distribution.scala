@@ -1,16 +1,16 @@
 /*
- * Histogram.scala 
- * Setup and display histograms based on distribution (prob, value) data
+ * Distribution.scala 
+ * Setup and display distributions based on continuous element data
  * 
  * Created By:      Glenn Takata (gtakata@cra.com)
- * Creation Date:   Apr 9, 2015
+ * Creation Date:   Jul 6, 2015
  * 
  * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
-package com.cra.figaro.util.visualization.histogram
+package com.cra.figaro.util.visualization.distribution
 
 import java.awt.Color
 import java.awt.event._
@@ -54,11 +54,11 @@ import com.cra.figaro.util.visualization.DataView
 /**
  * @author Glenn Takata (gtakata@cra.com)
  */
-class Histogram(val dataview: DataView, var color: String) extends BorderPanel {
+class Distribution(val dataview: DataView, var color: String) extends BorderPanel {
   // fonts, colours, etc.
   UILib.setColor(peer, ColorLib.getColor(0, 0, 0), Color.BLACK);
-  val itemRenderer = new HistogramRenderer(color, dataview.nValues)
-
+  val itemRenderer = new DistributionRenderer(color, dataview)
+  
   // title
   val title = new Label(dataview.title)
   title.preferredSize = new Dimension(200, 20)
@@ -78,19 +78,15 @@ class Histogram(val dataview: DataView, var color: String) extends BorderPanel {
   // X-axis
   val xaxis: AxisLayout = new AxisLayout(dataview.name, "Value", Constants.X_AXIS, VisiblePredicate.TRUE);
 
-  // ensure the axis spans the width of the data container
-  xaxis.setDataType(Constants.NOMINAL)
-  xaxis.setRangeModel(dataview.range)
-
   // add the labels to the x-axis
-  val xlabels: AxisLabelLayout = new AxisLabelLayout("xlab", xaxis);
+  val xlabels: AxisLabelLayout = new AxisLabelLayout("xlab", xaxis)
   xlabels.setNumberFormat(nf)
   vis.putAction("xlabels", xlabels)
 
   // Y-axis
   val yaxis: AxisLayout = new AxisLayout(dataview.name, "Probability", Constants.Y_AXIS, VisiblePredicate.TRUE);
 
-  // set the y-axis range
+  // ensure the y-axis spans the height of the data container
   yaxis.setRangeModel(dataview.yRangeModel)
   // add the labels to the y-axis
   val ylabels: AxisLabelLayout = new AxisLabelLayout("ylab", yaxis);
@@ -214,7 +210,7 @@ class Histogram(val dataview: DataView, var color: String) extends BorderPanel {
     val insetHeight = insets.top + insets.bottom;
 
     val viewXOffset = 20
-    val viewYOffset = 10
+    val viewYOffset = 15
     val yAxisWidth = 5;
     val xAxisHeight = 10;
     val displayHeight = height - xAxisHeight - insetHeight - 2 * viewYOffset
@@ -222,9 +218,9 @@ class Histogram(val dataview: DataView, var color: String) extends BorderPanel {
     
     val displayWidth = math.min(data.range.getExtent * 60, maxDisplayWidth)
     
-    val dataView: Rectangle2D = new Rectangle2D.Double(insets.left + yAxisWidth + viewXOffset, insets.top + viewYOffset, displayWidth, displayHeight)
+    val dataView: Rectangle2D = new Rectangle2D.Double(insets.left + yAxisWidth + viewXOffset, insets.top, displayWidth, displayHeight)
     val xView: Rectangle2D = new Rectangle2D.Double(insets.left + yAxisWidth + viewXOffset, insets.top + displayHeight + viewYOffset , displayWidth, xAxisHeight)
-    val yView: Rectangle2D = new Rectangle2D.Double(insets.left, insets.top + viewYOffset, yAxisWidth, displayHeight)
+    val yView: Rectangle2D = new Rectangle2D.Double(insets.left, insets.top, yAxisWidth, displayHeight)
 
     // reset all the bounds
     itemRenderer.setBounds(dataView)
@@ -236,6 +232,6 @@ class Histogram(val dataview: DataView, var color: String) extends BorderPanel {
     ylabels.setLayoutBounds(yView)
 
     vis.run("update");
-    vis.run("xlabels");
+    vis.run("xlabels");    
   }
 }

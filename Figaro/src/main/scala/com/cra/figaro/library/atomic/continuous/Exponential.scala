@@ -20,7 +20,7 @@ import scala.math.{ log, exp }
 /**
  * An exponential distribution in which the parameter is a constant.
  */
-class AtomicExponential(name: Name[Double], lambda: Double, collection: ElementCollection)
+class AtomicExponential(name: Name[Double], val lambda: Double, collection: ElementCollection)
   extends Element[Double](name, collection) with Atomic[Double] {
   type Randomness = Double
 
