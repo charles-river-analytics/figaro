@@ -18,6 +18,7 @@ import com.cra.figaro.language.{Element}
 import com.cra.figaro.util.visualization.results.{ ContinuousData, DiscreteData, ResultsData, ResultsTable, ResultsView }
 import com.cra.figaro.util.visualization.histogram.{ Histogram }
 import com.cra.figaro.util.visualization.distribution.{Distribution}
+import com.cra.figaro.util.visualization.reduction.DataReduction
 import com.cra.figaro.util.ColorGradient
 import scala.swing.event.Event
 import scala.swing.event.TableRowsSelected
@@ -42,17 +43,17 @@ class EmptyTab extends BoxPanel(Orientation.Vertical) {
 }
 
 object ResultsGUI extends SimpleSwingApplication {
-  val TAB_WIDTH = 400
+  val TAB_WIDTH = 600
   val TAB_HEIGHT = 300
   
-  val TABLE_WIDTH = 400
+  val TABLE_WIDTH = 600
   val TABLE_HEIGHT = 250
   
   val results = new ResultHandler
 //  def addResult(result: ResultsData) {
   def addResult(name: String, dist: Any) {
     val result = dist match {
-      case l: List[(Double, _)] => DiscreteData(name, l) 
+      case l: List[(Double, Double)] => DiscreteData(name, DataReduction.binToDistribution(l)) 
       case e: Element[_] => ContinuousData(name, e)
     }
     results.newResult(result)

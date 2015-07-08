@@ -72,6 +72,8 @@ class Histogram(val dataview: DataView, var color: String) extends BorderPanel {
   // dynamic query based on name
   val valueQ: RangeQueryBinding = new RangeQueryBinding(visualTable, "Value");
   val filter: AndPredicate = new AndPredicate(valueQ.getPredicate());
+  val nf = NumberFormat.getIntegerInstance();
+  nf.setMaximumFractionDigits(2);
 
   // X-axis
   val xaxis: AxisLayout = new AxisLayout(dataview.name, "Value", Constants.X_AXIS, VisiblePredicate.TRUE);
@@ -82,19 +84,16 @@ class Histogram(val dataview: DataView, var color: String) extends BorderPanel {
 
   // add the labels to the x-axis
   val xlabels: AxisLabelLayout = new AxisLabelLayout("xlab", xaxis);
+  xlabels.setNumberFormat(nf)
   vis.putAction("xlabels", xlabels)
 
   // Y-axis
   val yaxis: AxisLayout = new AxisLayout(dataview.name, "Probability", Constants.Y_AXIS, VisiblePredicate.TRUE);
 
-  // ensure the y-axis spans the height of the data container
-
   // set the y-axis range
   yaxis.setRangeModel(dataview.yRangeModel)
   // add the labels to the y-axis
   val ylabels: AxisLabelLayout = new AxisLabelLayout("ylab", yaxis);
-  val nf = NumberFormat.getIntegerInstance();
-  nf.setMaximumFractionDigits(2);
   ylabels.setNumberFormat(nf);
 
   // drawing actions

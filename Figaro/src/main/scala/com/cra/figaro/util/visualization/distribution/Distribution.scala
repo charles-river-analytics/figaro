@@ -72,30 +72,24 @@ class Distribution(val dataview: DataView, var color: String) extends BorderPane
   // dynamic query based on name
   val valueQ: RangeQueryBinding = new RangeQueryBinding(visualTable, "Value");
   val filter: AndPredicate = new AndPredicate(valueQ.getPredicate());
+  val nf = NumberFormat.getIntegerInstance();
+  nf.setMaximumFractionDigits(2);
 
   // X-axis
   val xaxis: AxisLayout = new AxisLayout(dataview.name, "Value", Constants.X_AXIS, VisiblePredicate.TRUE);
 
-  // ensure the axis spans the width of the data container
-//  xaxis.setDataType(Constants.NOMINAL)
-//  xaxis.setRangeModel(dataview.range)
-
   // add the labels to the x-axis
-  val xlabels: AxisLabelLayout = new AxisLabelLayout("xlab", xaxis);
+  val xlabels: AxisLabelLayout = new AxisLabelLayout("xlab", xaxis)
+  xlabels.setNumberFormat(nf)
   vis.putAction("xlabels", xlabels)
 
   // Y-axis
   val yaxis: AxisLayout = new AxisLayout(dataview.name, "Probability", Constants.Y_AXIS, VisiblePredicate.TRUE);
 
   // ensure the y-axis spans the height of the data container
-
-  // set the y-axis range
-  // val rangeModel = new NumberRangeModel(0, .25, 0, .25);
   yaxis.setRangeModel(dataview.yRangeModel)
   // add the labels to the y-axis
   val ylabels: AxisLabelLayout = new AxisLabelLayout("ylab", yaxis);
-  val nf = NumberFormat.getIntegerInstance();
-  nf.setMaximumFractionDigits(2);
   ylabels.setNumberFormat(nf);
 
   // drawing actions

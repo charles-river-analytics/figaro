@@ -10,7 +10,6 @@
  * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
-
 package com.cra.figaro.example.visualization
 
 import com.cra.figaro.algorithm.factored._
