@@ -70,13 +70,17 @@ class ResultsView[T](data: ResultsData) extends DataView {
     }
   }
   
-  def yMax = data.distribution.reduceLeft((a, b) => if (a._1 > b._1) a else b)._1
+  def yMax = math.min(1.1 * data.distribution.reduceLeft((a, b) => if (a._1 > b._1) a else b)._1, 1.0)
   def yRangeModel = {
     data match {
-      case ContinuousData(_, _) => {
-        new NumberRangeModel(0, 1.1 * yMax, 0, 1.1 * yMax )
+      case ContinuousData(_, _) => 
+        new NumberRangeModel(0, yMax, 0, yMax )
+      case _ => {
+        if (yMax < 0.5)
+          new NumberRangeModel(0, yMax, 0, yMax)
+        else
+          new NumberRangeModel(0, 1.0, 0, 1.0)
       }
-      case _ => new NumberRangeModel(0, 1.0, 0, 1.0)
     }
   }
 }
