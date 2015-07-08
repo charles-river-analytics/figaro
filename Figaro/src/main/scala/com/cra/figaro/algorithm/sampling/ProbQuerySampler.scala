@@ -1,3 +1,16 @@
+/*
+ * ProbQuerySampler.scala
+ * Sampling algorithms that use projected samples to compute conditional probabilities.
+ * 
+ * Created By:      Lee Kellogg (lkellog@cra.com)
+ * Creation Date:   June 2, 2015
+ * 
+ * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * See http://www.cra.com or email figaro@cra.com for information.
+ * 
+ * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
+
 package com.cra.figaro.algorithm.sampling
 
 import com.cra.figaro.algorithm.ProbQueryAlgorithm
