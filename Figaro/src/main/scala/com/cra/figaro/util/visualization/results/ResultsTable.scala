@@ -1,3 +1,16 @@
+/*
+ * ResultsTable.scala 
+ * Visual element for a table to display user inputs.
+ * Includes discrete (distribution List) and continuous (element)
+ * 
+ * Created By:      Glenn Takata (gtakata@cra.com)
+ * Creation Date:   Apr 9, 2015
+ * 
+ * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * See http://www.cra.com or email figaro@cra.com for information.
+ * 
+ * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
 package com.cra.figaro.util.visualization.results
 
 import java.awt.Dimension
@@ -14,7 +27,7 @@ class ResultsTable extends BoxPanel(Orientation.Vertical) {
   
   preferredSize = new Dimension(TAB_WIDTH, TABLE_HEIGHT)
   
-  def add(result: ResultsData[_]) {
+  def add(result: ResultsData) {
     tableModel.addResult(result)
     
     table.revalidate
@@ -41,7 +54,7 @@ class ResultsTable extends BoxPanel(Orientation.Vertical) {
 class ResultsTableModel(var rowData: Array[Array[Any]], val columnNames: Seq[String]) extends AbstractTableModel {
   override def getColumnName(column: Int) = columnNames(column).toString()
 
-  var results = new mutable.ListBuffer[ResultsData[_]]()
+  var results = new mutable.ListBuffer[ResultsData]()
 
   def getRowCount() = rowData.length
   def getColumnCount() = columnNames.length
@@ -64,7 +77,7 @@ class ResultsTableModel(var rowData: Array[Array[Any]], val columnNames: Seq[Str
     rowData ++= Array(data.asInstanceOf[Array[Any]])
   }
   
-  def addResult(result: ResultsData[_]) {
+  def addResult(result: ResultsData) {
     results.append(result)
     addRow(Array[AnyRef](result.name, result.distribution))
   }

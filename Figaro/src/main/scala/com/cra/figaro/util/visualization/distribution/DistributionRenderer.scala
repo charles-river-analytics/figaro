@@ -1,16 +1,15 @@
 /*
- * HistogramRenderer.scala 
- * Renders individual bars for a histogram, taking into account color and position
+ * DistributionRenderer.scala 
+ * Display distribution elements based on position, value, color gradient
  * 
  * Created By:      Glenn Takata (gtakata@cra.com)
- * Creation Date:   Apr 9, 2015
+ * Creation Date:   Jul 6, 2015
  * 
  * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
- */
-package com.cra.figaro.util.visualization.histogram
+ */package com.cra.figaro.util.visualization.distribution
 
 import java.awt.Graphics2D
 import java.awt.Shape
@@ -23,16 +22,19 @@ import prefuse.util.GraphicsLib
 import prefuse.visual.VisualItem
 
 import com.cra.figaro.util.ColorGradient
+import com.cra.figaro.util.visualization.DataView
 
 /**
  * @author Glenn Takata
  *
  */
-class HistogramRenderer(color: String, nBars: Int = 5) extends AbstractShapeRenderer {
+class DistributionRenderer(color: String, dataview: DataView) extends AbstractShapeRenderer {
   var bounds: Rectangle2D = _
   var isVertical: Boolean = true
   var orientation = Constants.ORIENT_BOTTOM_TOP;
   var barWidth: Int = 5
+  var nBars: Int = dataview.nValues
+  var pMax: Double = dataview.yMax
   var rect = new Rectangle2D.Double();
 
   val gradient = new ColorGradient
@@ -80,9 +82,10 @@ class HistogramRenderer(color: String, nBars: Int = 5) extends AbstractShapeRend
   override def render(g: Graphics2D, item: VisualItem) {
     val shape = getShape(item);
 
-    val values = item.getSourceTuple
+    val probability = item.getSourceTuple.getFloat("Probability")
+    val value = probability / pMax
 
-    gradient.getColorAtValue(values.getFloat("Probability")) match {
+    gradient.getColorAtValue(value.floatValue()) match {
       case Some(color) =>
         item.setFillColor(ColorLib.rgba(color.red, color.green, color.blue, 1))
         GraphicsLib.paint(g, item, shape, null, AbstractShapeRenderer.RENDER_TYPE_FILL);
