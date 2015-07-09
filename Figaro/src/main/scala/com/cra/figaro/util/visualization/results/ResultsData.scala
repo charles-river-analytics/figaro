@@ -1,7 +1,6 @@
 /*
  * ResultsData.scala 
- * Trait and classes representing data input by the user. 
- * Includes discrete (distribution List) and continuous (element)
+ * Trait and classes representing data input by the user. Includes discrete (distribution List) and continuous (element)
  * 
  * Created By:      Glenn Takata (gtakata@cra.com)
  * Creation Date:   Apr 9, 2015

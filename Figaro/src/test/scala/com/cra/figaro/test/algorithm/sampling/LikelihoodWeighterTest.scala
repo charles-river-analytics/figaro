@@ -1,5 +1,5 @@
 /*
- * ImportanceTest.scala  
+ * LikelihoodWeighterTest.scala  
  * Importance sampling tests.
  * 
  * Created By:      Avi Pfeffer (apfeffer@cra.com)

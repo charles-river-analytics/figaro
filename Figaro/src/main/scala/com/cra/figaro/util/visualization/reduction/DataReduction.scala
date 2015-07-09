@@ -1,10 +1,19 @@
+/*
+ * DataReduction.scala 
+ * Setup and display distributions based on continuous element data
+ * 
+ * Created By:      Glenn Takata (gtakata@cra.com)
+ * Creation Date:   Jul 6, 2015
+ * 
+ * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * See http://www.cra.com or email figaro@cra.com for information.
+ * 
+ * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
 package com.cra.figaro.util.visualization.reduction
 
 import scala.collection._
 
-/**
- * @author gtakata
- */
 object DataReduction {
   def binToDistribution(data: List[(Double, Double)]): List[(Double, Double)] = {
     if (data.size > 50) {
