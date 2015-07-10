@@ -21,6 +21,7 @@ import com.cra.figaro.util._
 import annotation.tailrec
 import scala.collection.mutable.{ Map, Set }
 import scala.language.postfixOps
+import scala.util.control.TailCalls._
 
 /**
  * Trait of algorithms that perform variable elimination.
@@ -123,19 +124,32 @@ trait VariableElimination[T] extends FactoredAlgorithm[T] with OneTime {
     }
   }
 
-  @tailrec
-  protected final def eliminateInOrder(
+  // Wraps the TailRec class and returns the result
+  protected def eliminateInOrder(
     order: List[Variable[_]],
     factors: MultiSet[Factor[T]],
-    map: FactorMap[T]): MultiSet[Factor[T]] =
+    map: FactorMap[T]): MultiSet[Factor[T]] = {
+    callEliminateInOrder(order, factors, map).result
+  }
+
+  /*
+   *  TailRec class turns a tail-recursive method into a while loop
+   *  The result needs to be extracted explicitly
+   */
+  private def callEliminateInOrder(
+    order: List[Variable[_]],
+    factors: MultiSet[Factor[T]],
+    map: FactorMap[T]): TailRec[MultiSet[Factor[T]]] = {
     order match {
       case Nil =>
-        factors
+        done(factors)
       case first :: rest =>
         eliminate(first, factors, map)
-        eliminateInOrder(rest, factors, map)
+        tailcall(callEliminateInOrder(rest, factors, map))
     }
-
+  }
+  
+  
   private[figaro] def ve(): Unit = {
     //expand()
     val (neededElements, _) = getNeededElements(starterElements, Int.MaxValue)
