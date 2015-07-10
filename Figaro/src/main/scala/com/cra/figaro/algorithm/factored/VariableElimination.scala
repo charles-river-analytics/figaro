@@ -123,48 +123,19 @@ trait VariableElimination[T] extends FactoredAlgorithm[T] with OneTime {
     }
   }
 
-  //  protected def eliminateInOrder(
-  //    order: List[Variable[_]],
-  //    factors: MultiSet[Factor[T]],
-  //    map: FactorMap[T]): MultiSet[Factor[T]] =
-  //    order match {
-  //      case Nil =>
-  //        factors
-  //      case first :: rest =>
-  //        eliminate(first, factors, map)
-  //        eliminateInOrder(rest, factors, map)
-  //    }
-
-  import scala.util.control.TailCalls._
-  
-  // Wraps the TailRec class and returns the result
-  protected def eliminateInOrder(
+  @tailrec
+  protected final def eliminateInOrder(
     order: List[Variable[_]],
     factors: MultiSet[Factor[T]],
-    map: FactorMap[T]): MultiSet[Factor[T]] = {
-
-    callEliminateInOrder(order, factors, map).result
-  }
-
-  /*
-   *  TailRec class turns a tail-recursive method into a while loop
-   *  
-   *  The result needs to be extracted explicitly
-   */
-  private def callEliminateInOrder(
-    order: List[Variable[_]],
-    factors: MultiSet[Factor[T]],
-    map: FactorMap[T]): TailRec[MultiSet[Factor[T]]] = {
-
+    map: FactorMap[T]): MultiSet[Factor[T]] =
     order match {
       case Nil =>
-        done(factors)
+        factors
       case first :: rest =>
         eliminate(first, factors, map)
-        tailcall(callEliminateInOrder(rest, factors, map))
+        eliminateInOrder(rest, factors, map)
     }
-  }
-  
+
   private[figaro] def ve(): Unit = {
     //expand()
     val (neededElements, _) = getNeededElements(starterElements, Int.MaxValue)
@@ -227,8 +198,8 @@ class ProbQueryVariableElimination(override val universe: Universe, targets: Ele
   val showTiming: Boolean,
   val dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
   val dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double)
-    extends OneTimeProbQuery
-    with ProbabilisticVariableElimination {
+  extends OneTimeProbQuery
+  with ProbabilisticVariableElimination {
   val targetElements = targets.toList
   lazy val queryTargets = targets.toList
 
