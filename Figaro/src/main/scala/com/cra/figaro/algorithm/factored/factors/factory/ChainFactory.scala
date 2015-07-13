@@ -1,19 +1,19 @@
 /*
  * ChainFactory.scala
  * Create a factor from a Chain element.
- * 
+ *
  * Created By:      Glenn Takata (gtakata@cra.com)
  * Creation Date:   Mar 22, 2015
- * 
+ *
  * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 package com.cra.figaro.algorithm.factored.factors.factory
 
 import com.cra.figaro.algorithm.PointMapper
-import com.cra.figaro.algorithm.factored.factors.{ BasicFactor, Factor, SparseFactor, Variable, InternalVariable }
+import com.cra.figaro.algorithm.factored.factors.{ BasicFactor, Factor, SparseFactor, Variable, InternalVariable, InternalChainVariable }
 import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.language._
 import scala.collection.immutable.SortedSet
@@ -35,7 +35,7 @@ object ChainFactory {
     val parentVar = Variable(chain.parent)
 
     // create a selectionVar and Factor to take the place of the parent/output combination
-    val selectorVar = makeSelectorVariable(parentVar, outputVar)
+    val selectorVar = makeSelectorVariable(parentVar, outputVar, chain)
     val selector = new SparseFactor[Double](List(parentVar, selectorVar), List(outputVar))
     val parentSize = parentVar.range.size
 
@@ -67,11 +67,11 @@ object ChainFactory {
    * Create a temporary variable representing the combination of the parent variable and the chain
    * variable
    */
-  private def makeSelectorVariable(parent: Variable[_], overallVar: Variable[_]): Variable[Int] = {
+  private def makeSelectorVariable(parent: Variable[_], overallVar: Variable[_], chain: Chain[_, _]): Variable[Int] = {
     val selectorSize = parent.size * overallVar.size
 
     val values = SortedSet[Int]((0 until selectorSize): _*)
-    new InternalVariable(ValueSet.withoutStar(values))
+    new InternalChainVariable(ValueSet.withoutStar(values), chain)
   }
 
   /**
@@ -146,7 +146,7 @@ object ChainFactory {
       k <- 0 until chainSize
     } {
 
-      // calculate the relevant index of the selector Factor and update 
+      // calculate the relevant index of the selector Factor and update
       // current (conditional selector) Factor
       // The selector factor is sparse and needs no update
       val selectorIndex = parentIndex * chainSize + k

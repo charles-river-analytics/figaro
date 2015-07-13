@@ -1,13 +1,13 @@
 /*
  * Variable.scala
  * Variables that appear in factors.
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -37,7 +37,7 @@ class Variable[T](val valueSet: ValueSet[T]) {
    * Size of the range of the variable.
    */
   val size = range.size
-  
+
   /**
    * Override equality of Variable. Variables are the same if their id's are the same
    */
@@ -73,7 +73,7 @@ class ParameterizedVariable[T](override val element: Parameterized[T]) extends E
 
 /**
  * Variables that are internal to Factors.
- * 
+ *
  * This is the same as a temporary variable, but is more explicitly identified
  *
  * @param range The range of values of the variable
@@ -81,6 +81,8 @@ class ParameterizedVariable[T](override val element: Parameterized[T]) extends E
 class InternalVariable[T](values: ValueSet[T]) extends Variable(values) {
   override def toString = "Internal variable:" + values.toString
 }
+
+class InternalChainVariable[T](values: ValueSet[T], val chain: Chain[_, _]) extends InternalVariable(values)
 
 /* Variables generated from sufficient statistics of parameters */
 object Variable {
@@ -120,6 +122,7 @@ object Variable {
     p.universe.register(idCache)
     new ParameterizedVariable(p)
   }
+
 
   /**
    * Create the variable associated with an element. This method is memoized.
