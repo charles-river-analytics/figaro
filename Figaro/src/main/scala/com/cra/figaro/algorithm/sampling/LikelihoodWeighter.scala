@@ -186,12 +186,12 @@ class LikelihoodWeighter(universe: Universe, cache: Cache) {
     } else {
       element match {
         case f: CompoundFlip => {
-          element.value = obs.get.asInstanceOf[element.Value]
+          setObservation(element, obs)
           if (obs.get.asInstanceOf[Boolean]) currentWeight + math.log(f.prob.value)
           else currentWeight + math.log(1 - f.prob.value)
         }
         case e: HasDensity[_] => {
-          element.value = obs.get.asInstanceOf[element.Value]
+          setObservation(element, obs)
           val density = element.asInstanceOf[HasDensity[element.Value]].density(obs.asInstanceOf[Option[element.Value]].get)
           currentWeight + math.log(density)
         }
@@ -204,6 +204,8 @@ class LikelihoodWeighter(universe: Universe, cache: Cache) {
     nextWeight + element.constraint(element.value)
   }
 
+  protected def setObservation(element: Element[_], obs: Option[_]) = element.value = obs.get.asInstanceOf[element.Value]  
+  
   /* Action to take on a rejection. By default it throws an Importance.Reject exception, but this can be overriden for another behavior */
   protected def rejectionAction(): Unit = throw Importance.Reject
 

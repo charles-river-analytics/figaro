@@ -21,6 +21,7 @@ import com.cra.figaro.algorithm.sampling.LikelihoodWeighter
 
 class ForwardWeighter(universe: Universe, cache: Cache) extends LikelihoodWeighter(universe, cache) {
   override def rejectionAction() = ()
+  override def setObservation(element: Element[_], obs: Option[_]) = {}
 }
 
 /**
