@@ -67,11 +67,12 @@ object ChainFactory {
    * Create a temporary variable representing the combination of the parent variable and the chain
    * variable
    */
-  private def makeSelectorVariable(parent: Variable[_], overallVar: Variable[_], chain: Chain[_, _]): Variable[Int] = {
+  private def makeSelectorVariable(parent: Variable[_], overallVar: Variable[_], chain: Chain[_, _]): Variable[_] = {
     val selectorSize = parent.size * overallVar.size
 
-    val values = SortedSet[Int]((0 until selectorSize): _*)
-    new InternalChainVariable(ValueSet.withoutStar(values), chain)
+    //val values = SortedSet[Int]((0 until selectorSize): _*)
+    val values: List[(Extended[_], Extended[_])] = parent.range.flatMap((p: Extended[_]) => overallVar.range.map((o: Extended[_]) => (p, o)))
+    new InternalChainVariable(values.map(v => Regular(v)), chain)
   }
 
   /**
