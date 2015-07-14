@@ -382,6 +382,21 @@ class VETest extends WordSpec with Matchers {
       ve.kill
     }
 
+    "with a very wide model produce the correct result" in {
+      Universe.createNew()
+      var root = Flip(0.5)
+
+      val rand = new scala.util.Random(System.currentTimeMillis)
+      for (_ <- 0 until 1000) {
+        val v = If(root, Flip(0.5), Flip(0.5))
+        if (rand.nextBoolean) {
+          v.observe(true)
+        } else {
+          v.observe(false)
+        }
+      }
+      test(root, (r: Boolean) => r == true, 0.50)
+    }
   }
 
   "MPEVariableElimination" should {
