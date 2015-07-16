@@ -13,7 +13,7 @@
 package com.cra.figaro.algorithm.factored.factors.factory
 
 import com.cra.figaro.algorithm.PointMapper
-import com.cra.figaro.algorithm.factored.factors.{ BasicFactor, Factor, SparseFactor, Variable, InternalVariable, InternalChainVariable }
+import com.cra.figaro.algorithm.factored.factors.{ BasicFactor, Factor, SparseFactor, Variable, ElementVariable, InternalVariable, InternalChainVariable }
 import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.language._
 import scala.collection.immutable.SortedSet
@@ -35,7 +35,7 @@ object ChainFactory {
     val parentVar = Variable(chain.parent)
 
     // create a selectionVar and Factor to take the place of the parent/output combination
-    val selectorVar = makeSelectorVariable(parentVar, outputVar, chain)
+    val selectorVar = makeSelectorVariable(parentVar, outputVar)
     val selector = new SparseFactor[Double](List(parentVar, selectorVar), List(outputVar))
     val parentSize = parentVar.range.size
 
@@ -67,12 +67,11 @@ object ChainFactory {
    * Create a temporary variable representing the combination of the parent variable and the chain
    * variable
    */
-  private def makeSelectorVariable(parent: Variable[_], overallVar: Variable[_], chain: Chain[_, _]): Variable[_] = {
+  private def makeSelectorVariable[T, U](parent: Variable[T], overallVar: Variable[U]): Variable[_] = {
     val selectorSize = parent.size * overallVar.size
 
-    //val values = SortedSet[Int]((0 until selectorSize): _*)
-    val values: List[(Extended[_], Extended[_])] = parent.range.flatMap((p: Extended[_]) => overallVar.range.map((o: Extended[_]) => (p, o)))
-    new InternalChainVariable(values.map(v => Regular(v)), chain)
+    val values = parent.range.flatMap((p: Extended[T]) => overallVar.range.map((o: Extended[U]) => (p, o)))
+    new InternalChainVariable(values.map(v => Regular(v)), overallVar.asInstanceOf[ElementVariable[U]])
   }
 
   /**
