@@ -16,9 +16,10 @@ import com.cra.figaro.experimental.structured._
 import com.cra.figaro.experimental.structured.solver.Solver
 import com.cra.figaro.language.Element
 
-private[figaro] class StructuredSolver(problem: Problem, solver: Solver,
+private[figaro] class StructuredStrategy(problem: Problem, solver: Solver,
                        recursingStrategy: Strategy, rangeSizer: RangeSizer,
                        bounds: Bounds, parameterized: Boolean) {
+  
   def execute() {
     backwardChain(problem.components, Set[ProblemComponent[_]]())
     problem.solve(solver)

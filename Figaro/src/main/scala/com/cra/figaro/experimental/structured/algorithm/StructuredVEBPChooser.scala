@@ -20,7 +20,7 @@ import com.cra.figaro.language.Universe
 import com.cra.figaro.algorithm.factored.factors.Factor
 import com.cra.figaro.experimental.structured.ComponentCollection
 import com.cra.figaro.experimental.structured.Problem
-import com.cra.figaro.experimental.structured.strategy.recursiveSolver
+import com.cra.figaro.experimental.structured.strategy.recursiveStrategy
 import com.cra.figaro.experimental.structured.solver.chooseVEOrBP
 import com.cra.figaro.algorithm.factored.factors.SumProductSemiring
 import com.cra.figaro.experimental.structured.factory.Factory
@@ -39,7 +39,7 @@ extends Algorithm with OneTimeProbQuery {
     val problem = new Problem(cc, targets.toList)
     val evidenceElems = universe.conditionedElements ::: universe.constrainedElements
     evidenceElems.foreach(elem => if (!cc.contains(elem)) problem.add(elem))
-    recursiveSolver(chooseVEOrBP(scoreThreshold, BPIterations))(problem)
+    recursiveStrategy(chooseVEOrBP(scoreThreshold, BPIterations))(problem)
     val joint = problem.solution.foldLeft(Factory.unit(SumProductSemiring()))(_.product(_))
 
     def marginalizeToTarget(target: Element[_]): Unit = {

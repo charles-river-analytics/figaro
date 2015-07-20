@@ -19,7 +19,7 @@ import com.cra.figaro.language.Universe
 import com.cra.figaro.algorithm.factored.factors.Factor
 import com.cra.figaro.experimental.structured.ComponentCollection
 import com.cra.figaro.experimental.structured.Problem
-import com.cra.figaro.experimental.structured.strategy.recursiveSolver
+import com.cra.figaro.experimental.structured.strategy.recursiveStrategy
 import com.cra.figaro.experimental.structured.solver.beliefPropagation
 import com.cra.figaro.algorithm.factored.factors.SumProductSemiring
 import com.cra.figaro.experimental.structured.factory.Factory
@@ -37,7 +37,7 @@ class StructuredBP(val universe: Universe, iterations: Int, targets: Element[_]*
     val problem = new Problem(cc, targets.toList)
     val evidenceElems = universe.conditionedElements ::: universe.constrainedElements
     evidenceElems.foreach(elem => if (!cc.contains(elem)) problem.add(elem))
-    recursiveSolver(beliefPropagation(iterations))(problem)
+    recursiveStrategy(beliefPropagation(iterations))(problem)
     val joint = problem.solution.foldLeft(Factory.unit(SumProductSemiring()))(_.product(_))
 
     def marginalizeToTarget(target: Element[_]): Unit = {
