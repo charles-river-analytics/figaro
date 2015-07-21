@@ -1,9 +1,9 @@
 /*
- * StructuredSolver.scala
- * A strategy that fully expands a problem and solves the subproblems in a structured manner.
+ * FlatStrategy.scala
+ * A strategy that flattens each problem and solves the problem in a flat manner
  *
- * Created By:      Avi Pfeffer (apfeffer@cra.com)
- * Creation Date:   March 1, 2015
+ * Created By:      Brian Ruttenberg (bruttenberg@cra.com)
+ * Creation Date:   July 1, 2015
  *
  * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
@@ -28,10 +28,6 @@ private[figaro] class FlatStrategy(problem: Problem, solver: Solver,
     problem.solve(solver)
   }
 
-  private def recurse(nestedProblem: NestedProblem[_], done: Set[ProblemComponent[_]]) {
-    // This check is important and is what enables us to perform dynamic programming
-    if (!nestedProblem.solved) recursingStrategy(nestedProblem)
-  }
 
   def processChain(first: ProblemComponent[_], rest: List[ProblemComponent[_]], done: Set[ProblemComponent[_]], chainComp: ChainComponent[_, _]): Set[ProblemComponent[_]] = {
     chainComp.expand()

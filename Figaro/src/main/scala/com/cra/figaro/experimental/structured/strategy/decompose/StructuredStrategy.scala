@@ -1,5 +1,5 @@
 /*
- * StructuredSolver.scala
+ * StructuredStrategy.scala
  * A strategy that fully expands a problem and solves the subproblems in a structured manner.
  *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)

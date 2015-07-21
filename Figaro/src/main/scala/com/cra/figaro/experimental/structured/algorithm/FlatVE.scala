@@ -1,9 +1,9 @@
 /*
- * StructuredVE.scala
- * A structured variable elimination algorithm.
+ * FlatVE.scala
+ * A flat variable elimination algorithm.
  *
- * Created By:      Avi Pfeffer (apfeffer@cra.com)
- * Creation Date:   March 1, 2015
+ * Created By:      Brian Ruttenberg (bruttenberg@cra.com)
+ * Creation Date:   July 1, 2015
  *
  * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.

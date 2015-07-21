@@ -1,3 +1,15 @@
+/*
+ * BackwardChain.scala
+ * A trait for a backward chaining algorithm for decomposition strategies
+ *
+ * Created By:      Brian Ruttenberg (bruttenberg@cra.com)
+ * Creation Date:   July 1, 2015
+ *
+ * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * See http://www.cra.com or email figaro@cra.com for information.
+ *
+ * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
 package com.cra.figaro.experimental.structured.strategy.decompose
 
 import com.cra.figaro.experimental.structured._
@@ -39,15 +51,4 @@ trait BackwardChain extends DecompositionStrategy {
   
   protected def processMakeArray(first: ProblemComponent[_], rest: List[ProblemComponent[_]], done: Set[ProblemComponent[_]], maComp: MakeArrayComponent[_]): Set[ProblemComponent[_]]
   
-  
-  protected def process(comp: ProblemComponent[_]) {
-    comp.generateRange(rangeSizer(comp))
-    comp.makeNonConstraintFactors(parameterized)
-    comp.makeConstraintFactors(bounds)
-  }
-
-  protected def checkArg[T](element: Element[T]): ProblemComponent[T] = {
-    if (problem.collection.contains(element)) problem.collection(element)
-    else problem.add(element)
-  }
 }

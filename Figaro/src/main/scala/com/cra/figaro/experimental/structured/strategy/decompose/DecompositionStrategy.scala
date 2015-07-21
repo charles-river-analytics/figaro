@@ -1,3 +1,15 @@
+/*
+ * DecompositionStrategy.scala
+ * Base class for strategies that decompose a problem
+ *
+ * Created By:      Brian Ruttenberg (bruttenberg@cra.com)
+ * Creation Date:   July 1, 2015
+ *
+ * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * See http://www.cra.com or email figaro@cra.com for information.
+ *
+ * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
 package com.cra.figaro.experimental.structured.strategy.decompose
 
 import com.cra.figaro.experimental.structured._
@@ -9,12 +21,12 @@ private[figaro] abstract class DecompositionStrategy(val problem: Problem, val s
 
   def execute(): Unit
 
-  private def checkArg[T](element: Element[T]): ProblemComponent[T] = {
+  protected def checkArg[T](element: Element[T]): ProblemComponent[T] = {
     if (problem.collection.contains(element)) problem.collection(element)
     else problem.add(element)
   }
 
-  private def process(comp: ProblemComponent[_]) {
+  protected def process(comp: ProblemComponent[_]) {
     comp.generateRange(rangeSizer(comp))
     comp.makeNonConstraintFactors(parameterized)
     comp.makeConstraintFactors(bounds)
