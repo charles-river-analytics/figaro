@@ -1,6 +1,6 @@
 /*
- * StructuredBP.scala
- * A structured factored inference algorithm using belief propagation.
+ * StructuredVE.scala
+ * A structured variable elimination algorithm.
  *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   March 1, 2015
@@ -10,6 +10,7 @@
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
+
 package com.cra.figaro.experimental.structured.algorithm
 
 import com.cra.figaro.algorithm.OneTimeProbQuery
@@ -19,12 +20,13 @@ import com.cra.figaro.language.Universe
 import com.cra.figaro.algorithm.factored.factors.Factor
 import com.cra.figaro.experimental.structured.ComponentCollection
 import com.cra.figaro.experimental.structured.Problem
+import com.cra.figaro.experimental.structured.solver.variableElimination
 import com.cra.figaro.experimental.structured.strategy.decompose._
-import com.cra.figaro.experimental.structured.solver.beliefPropagation
 import com.cra.figaro.algorithm.factored.factors.SumProductSemiring
 import com.cra.figaro.experimental.structured.factory.Factory
+import com.cra.figaro.experimental.structured.Lower
 
-class StructuredBP(val universe: Universe, iterations: Int, targets: Element[_]*) extends Algorithm with OneTimeProbQuery {
+class FlatVE(val universe: Universe, targets: Element[_]*) extends Algorithm with OneTimeProbQuery {
   val queryTargets = targets
 
   var targetFactors: Map[Element[_], Factor[Double]] = _
@@ -37,7 +39,7 @@ class StructuredBP(val universe: Universe, iterations: Int, targets: Element[_]*
     val problem = new Problem(cc, targets.toList)
     val evidenceElems = universe.conditionedElements ::: universe.constrainedElements
     evidenceElems.foreach(elem => if (!cc.contains(elem)) problem.add(elem))
-    recursiveStrategy(beliefPropagation(iterations))(problem)
+    (new FlatStrategy(problem, variableElimination, null, defaultRangeSizer, Lower, false)).execute
     val joint = problem.solution.foldLeft(Factory.unit(SumProductSemiring()))(_.product(_))
 
     def marginalizeToTarget(target: Element[_]): Unit = {
@@ -50,6 +52,7 @@ class StructuredBP(val universe: Universe, iterations: Int, targets: Element[_]*
 
     targets.foreach(marginalizeToTarget(_))
   }
+
 
   /**
    * Computes the normalized distribution over a single target element.
@@ -71,37 +74,20 @@ class StructuredBP(val universe: Universe, iterations: Int, targets: Element[_]*
   }
 }
 
-/*
- * StructuredBP.scala
- * A structured belief propagation algorithm.
- *
- * Created By:      Avi Pfeffer (apfeffer@cra.com)
- * Creation Date:   March 1, 2015
- *
- * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
- * See http://www.cra.com or email figaro@cra.com for information.
- *
- * See http://www.github.com/p2t2/figaro for a copy of the software license.
- */
-
-object StructuredBP {
-  /**
-   * Create a structured belief propagation algorithm.
-   * @param iterations the number of iterations to use for each subproblem
-   * @param targets the query targets, which will all be part of the top level problem
-   */
-  def apply(iterations: Int, targets: Element[_]*) = {
+object FlatVE {
+  /** Create a structured variable elimination algorithm with the given query targets. */
+  def apply(targets: Element[_]*) = {
     if (targets.isEmpty) throw new IllegalArgumentException("Cannot run VE with no targets")
     val universes = targets.map(_.universe).toSet
     if (universes.size > 1) throw new IllegalArgumentException("Cannot have targets in different universes")
-    new StructuredBP(targets(0).universe, iterations, targets:_*)
+    new StructuredVE(targets(0).universe, targets:_*)
   }
 
   /**
-   * Use BP to compute the probability that the given element satisfies the given predicate.
+   * Use VE to compute the probability that the given element satisfies the given predicate.
    */
-  def probability[T](target: Element[T], predicate: T => Boolean, iterations: Int): Double = {
-    val alg = StructuredBP(iterations, target)
+  def probability[T](target: Element[T], predicate: T => Boolean): Double = {
+    val alg = StructuredVE(target)
     alg.start()
     val result = alg.probability(target, predicate)
     alg.kill()
@@ -109,8 +95,8 @@ object StructuredBP {
   }
 
   /**
-   * Use BP to compute the probability that the given element has the given value.
+   * Use VE to compute the probability that the given element has the given value.
    */
-  def probability[T](target: Element[T], value: T, iterations: Int = 100): Double =
-    probability(target, (t: T) => t == value, iterations)
+  def probability[T](target: Element[T], value: T): Double =
+    probability(target, (t: T) => t == value)
 }

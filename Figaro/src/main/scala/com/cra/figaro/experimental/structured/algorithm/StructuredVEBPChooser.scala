@@ -20,7 +20,7 @@ import com.cra.figaro.language.Universe
 import com.cra.figaro.algorithm.factored.factors.Factor
 import com.cra.figaro.experimental.structured.ComponentCollection
 import com.cra.figaro.experimental.structured.Problem
-import com.cra.figaro.experimental.structured.strategy.recursiveStrategy
+import com.cra.figaro.experimental.structured.strategy.decompose._
 import com.cra.figaro.experimental.structured.solver.chooseVEOrBP
 import com.cra.figaro.algorithm.factored.factors.SumProductSemiring
 import com.cra.figaro.experimental.structured.factory.Factory
