@@ -25,7 +25,7 @@ trait BackwardChain extends DecompositionStrategy {
    * all the items it depends on have already been processed. Also, we do not process
    * any items more than once.
    */
-  protected def backwardChain(toDo: List[ProblemComponent[_]], done: Set[ProblemComponent[_]]): Set[ProblemComponent[_]] = {
+  protected[figaro] def backwardChain(toDo: List[ProblemComponent[_]], done: Set[ProblemComponent[_]]): Set[ProblemComponent[_]] = {
     toDo match {
       case first :: rest =>
         // globals should have been processed before this problem

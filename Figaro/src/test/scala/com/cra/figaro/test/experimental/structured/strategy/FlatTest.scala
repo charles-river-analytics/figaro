@@ -18,15 +18,32 @@ import com.cra.figaro.library.compound.If
 import com.cra.figaro.experimental.structured.algorithm.StructuredVE
 import com.cra.figaro.algorithm.ValuesMaker
 import com.cra.figaro.algorithm.lazyfactored.ValueSet._
+import com.cra.figaro.library.atomic.discrete.Uniform
+import com.cra.figaro.experimental.structured.ComponentCollection
+import com.cra.figaro.experimental.structured.Problem
+import com.cra.figaro.experimental.structured.strategy.decompose.FlatStrategy
+import com.cra.figaro.experimental.structured.solver.variableElimination
+import com.cra.figaro.experimental.structured.strategy.decompose._
+import com.cra.figaro.experimental.structured.Lower
+import com.cra.figaro.experimental.structured.algorithm.FlatVE
 
 class FlatTest extends WordSpec with Matchers {
-  "Executing a recursive structured VE solver strategy" when {
-    "given a flat model with an atomic flip without evidence" should {
-      "produce the correct answer" in {
+  "Executing a flat strategy" when {
+    
+    "expanding the model" should {
+      "produce the correct factors" in {
         Universe.createNew()
-        val e2 = Flip(0.6)
-        val e3 = Apply(e2, (b: Boolean) => b)
-        StructuredVE.probability(e3, true) should equal (0.6)
+        val e1 = Flip(0.4)        
+        val r1 = Chain(e1, (b: Boolean) => {
+          if (b) Chain(Flip(0.2), (b: Boolean) => if (b) Uniform(1,2) else Uniform(3,4)) 
+          else Chain(Flip(0.1), (b: Boolean) => if (b) Uniform(5,6) else Uniform(7,8))
+        })        
+        val cc = new ComponentCollection
+        val problem = new Problem(cc, List(r1))
+        val fs = new FlatStrategy(problem, variableElimination, null, defaultRangeSizer, Lower, false)
+        fs.backwardChain(problem.components , Set())
+        problem.components.flatMap(_.nonConstraintFactors).size should be(16)
+        FlatVE.probability(r1, 1) should equal (0.5*0.2*.4)
       }
     }
 

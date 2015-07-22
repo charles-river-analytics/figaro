@@ -80,14 +80,14 @@ object FlatVE {
     if (targets.isEmpty) throw new IllegalArgumentException("Cannot run VE with no targets")
     val universes = targets.map(_.universe).toSet
     if (universes.size > 1) throw new IllegalArgumentException("Cannot have targets in different universes")
-    new StructuredVE(targets(0).universe, targets:_*)
+    new FlatVE(targets(0).universe, targets:_*)
   }
 
   /**
    * Use VE to compute the probability that the given element satisfies the given predicate.
    */
   def probability[T](target: Element[T], predicate: T => Boolean): Double = {
-    val alg = StructuredVE(target)
+    val alg = FlatVE(target)
     alg.start()
     val result = alg.probability(target, predicate)
     alg.kill()

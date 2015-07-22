@@ -166,6 +166,27 @@ class ExpandTest extends WordSpec with Matchers {
       tfVar should be (false)
       ffVar should be (false)
     }
+    
+    "add constraint factors to the chain" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val u1 = Uniform(1,2)
+      val u2 = Uniform(3,4)
+      val e1 = Flip(0.2)
+      def f(b: Boolean) = if (b) u1 else u2
+      val e4 = Chain(e1, f)
+      u1.observe(1)
+      pr.add(e4)
+      pr.add(e1)
+      val c4 = cc(e4)
+      process(cc(e1))
+      c4.expand()
+      c4.subproblems.foreach(f => process(cc(f._2.target)))
+      process(c4)
+      c4.raise(Lower)
+      c4.constraintFactors(Lower).size should be (1)      
+    }
 
   }
 
