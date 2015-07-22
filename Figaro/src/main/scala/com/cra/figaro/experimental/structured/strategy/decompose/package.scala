@@ -10,11 +10,13 @@
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
-package com.cra.figaro.experimental.structured
+package com.cra.figaro.experimental.structured.strategy
 
 import com.cra.figaro.experimental.structured.solver.Solver
+import com.cra.figaro.experimental.structured.strategy.decompose.StructuredStrategy
+import com.cra.figaro.experimental.structured._
 
-package object strategy {
+package object decompose {
   /**
    * A strategy takes a problem and does something useful, such as computing a solution.
    * Type-wise, a strategy simply does something with the problem.
@@ -30,10 +32,10 @@ package object strategy {
    * @param bounds lower or upper bounds
    * @param parameterized flag indicating whether parameterized elements should use their MAP value or be treated as ordinary elements
    */
-  def structuredSolver(solver: Solver, recursingStrategy: Strategy,
+  def structuredStrategy(solver: Solver, recursingStrategy: Strategy,
                        rangeSizer: RangeSizer = defaultRangeSizer, bounds: Bounds = Lower, parameterized: Boolean = false): Strategy =
     (problem: Problem) => {
-      (new StructuredSolver(problem, solver, recursingStrategy, rangeSizer, bounds, parameterized)).execute()
+      (new StructuredStrategy(problem, solver, recursingStrategy, rangeSizer, bounds, parameterized)).execute()
     }
 
   /**
@@ -43,10 +45,10 @@ package object strategy {
    * @param bounds lower or upper bounds
    * @param parameterized flag indicating whether parameterized elements should use their MAP value or be treated as ordinary elements
    */
-  def recursiveSolver(solver: Solver, rangeSizer: RangeSizer = defaultRangeSizer, bounds: Bounds = Lower, parameterized: Boolean = false): Strategy =
+  def recursiveStrategy(solver: Solver, rangeSizer: RangeSizer = defaultRangeSizer, bounds: Bounds = Lower, parameterized: Boolean = false): Strategy =
     (problem: Problem) => {
-      def recurse(problem: Problem) = recursiveSolver(solver, rangeSizer, bounds, parameterized)(problem)
-        (new StructuredSolver(problem, solver, recurse, rangeSizer, bounds, parameterized)).execute()
+      def recurse(problem: Problem) = recursiveStrategy(solver, rangeSizer, bounds, parameterized)(problem)
+        (new StructuredStrategy(problem, solver, recurse, rangeSizer, bounds, parameterized)).execute()
     }
 
   /**

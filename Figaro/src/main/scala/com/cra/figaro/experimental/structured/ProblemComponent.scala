@@ -13,14 +13,14 @@
 
 package com.cra.figaro.experimental.structured
 
-import com.cra.figaro.language.{Element, Chain}
+import com.cra.figaro.language.{ Element, Chain }
 import com.cra.figaro.algorithm.lazyfactored.ValueSet
 import com.cra.figaro.algorithm.factored.factors.Factor
 import com.cra.figaro.algorithm.factored.factors.Variable
 import com.cra.figaro.library.collection.MakeArray
 import com.cra.figaro.library.collection.FixedSizeArray
 import com.cra.figaro.algorithm.factored.ParticleGenerator
-import com.cra.figaro.experimental.structured.factory.{Factory, ConstraintFactory}
+import com.cra.figaro.experimental.structured.factory.{ Factory, ConstraintFactory }
 
 /*
 /** A component of a problem, created for a specific element. */
@@ -70,7 +70,7 @@ class ProblemComponent[Value](val problem: Problem, val element: Element[Value])
    */
   var nonConstraintFactors: List[Factor[Double]] = List()
 
-/*
+  /*
   // The current belief about this component, used for belief propagation.
   var belief: Factor[Double] = _ //StarFactory.makeStarFactor(element)(0)
 
@@ -138,14 +138,13 @@ class ProblemComponent[Value](val problem: Problem, val element: Element[Value])
  * @param element the element to which this component corresponds
  */
 abstract class ExpandableComponent[ParentValue, Value](problem: Problem, parent: Element[ParentValue], element: Element[Value])
-extends ProblemComponent(problem, element)
-{
+  extends ProblemComponent(problem, element) {
   /**
    * Expand for all values of the parent, based on the current range of the parent.
    */
   def expand() {
     if (problem.collection.contains(parent)) {
-      for { parentValue <- problem.collection(parent).range.regularValues } { expand (parentValue) }
+      for { parentValue <- problem.collection(parent).range.regularValues } { expand(parentValue) }
     }
   }
 
@@ -157,7 +156,7 @@ extends ProblemComponent(problem, element)
  * A problem component created for a chain element.
  */
 class ChainComponent[ParentValue, Value](problem: Problem, val chain: Chain[ParentValue, Value])
-extends ExpandableComponent[ParentValue, Value](problem, chain.parent, chain) {
+  extends ExpandableComponent[ParentValue, Value](problem, chain.parent, chain) {
   /**
    *  The subproblems represent nested problems from chains.
    *  They are created for particular parent values.
@@ -192,23 +191,29 @@ extends ExpandableComponent[ParentValue, Value](problem, chain.parent, chain) {
     nonConstraintFactors = subproblemFactors.toList ::: nonConstraintFactors
   }
 
-  /*
-  // Raise the given subproblem into this problem
-  def raise(subproblem: NestedProblem[Value]) {
-
+  // Raise the given subproblem into this problem. Note that factors for the chain must have been created already
+  // This probably needs some more thought!
+  def raise(parentValue: ParentValue, subproblem: NestedProblem[Value], bounds: Bounds = Lower): Unit = {
+    val comp = subproblem.collection(subproblem.target)
+    // Since we are lifting the problem, the variables between the chain and the nested problem are not matched. So we have to map
+    // the variables in subproblem factors to the variables in the chain
+    val cf = comp.constraintFactors(bounds).map(Factory.replaceVariable(_, comp.variable, actualSubproblemVariables(parentValue)))
+    val ncf = comp.nonConstraintFactors.map(Factory.replaceVariable(_, comp.variable, actualSubproblemVariables(parentValue)))
+    if (bounds == Lower) constraintLower = constraintLower ::: cf
+    else constraintUpper = constraintUpper ::: cf
+    nonConstraintFactors = nonConstraintFactors ::: ncf
   }
-
+  
   // Raise all subproblems into this problem
-  def raise() { subproblems.values.foreach(raise(_)) }
-  *
-  */
+  def raise(bounds: Bounds) { subproblems.foreach(sp => raise(sp._1, sp._2, bounds)) }
+  
 }
 
 /**
  * A problem component for a MakeArray element.
  */
 class MakeArrayComponent[Value](problem: Problem, val makeArray: MakeArray[Value])
-extends ExpandableComponent[Int, FixedSizeArray[Value]](problem, makeArray.numItems, makeArray) {
+  extends ExpandableComponent[Int, FixedSizeArray[Value]](problem, makeArray.numItems, makeArray) {
   /** The maximum number of items expanded so far. */
   var maxExpanded = 0
 
