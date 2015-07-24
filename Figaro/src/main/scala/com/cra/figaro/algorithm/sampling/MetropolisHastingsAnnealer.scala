@@ -73,7 +73,7 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
   override protected def mhStep(): State = {
     val newStateUnconstrained = proposeAndUpdate()
     val newState = State(newStateUnconstrained.oldValues, newStateUnconstrained.oldRandomness,
-      newStateUnconstrained.proposalProb, newStateUnconstrained.modelProb + computeScores, newStateUnconstrained.dissatisfied)
+      newStateUnconstrained.proposalProb, newStateUnconstrained.modelProb + computeScores, newStateUnconstrained.dissatisfied, newStateUnconstrained.visitOrder )
     if (decideToAccept(newState)) {
       accepts += 1
       accept(newState)
@@ -114,7 +114,7 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
   }
 
   override def doInitialize(): Unit = {
-    Forward(false)(universe)
+    Forward(universe, chainCache)
     initConstrainedValues()
     dissatisfied = universe.conditionedElements.toSet filter (!_.conditionSatisfied)
     currentEnergy = universe.constrainedElements.map(_.constraintValue).sum

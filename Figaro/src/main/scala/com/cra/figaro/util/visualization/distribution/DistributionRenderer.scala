@@ -9,7 +9,8 @@
  * See http://www.cra.com or email figaro@cra.com for information.
  * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
- */package com.cra.figaro.util.visualization.distribution
+ */
+package com.cra.figaro.util.visualization.distribution
 
 import java.awt.Graphics2D
 import java.awt.Shape

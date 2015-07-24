@@ -165,7 +165,7 @@ class AlgorithmTest extends WordSpec with Matchers {
         val init = Universe.universe.activeElements.size
         alg.kill
         val after = Universe.universe.activeElements.size
-        after should equal (400*3)
+        after should equal (400*2)
       }
 
     }

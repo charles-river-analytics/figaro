@@ -77,6 +77,7 @@ class OneTimeElementSampler(target: Element[_], myNumSamples: Int)
     doInitialize()
     super.run()
     update
+    universe.clearTemporaries
   }
 }
 

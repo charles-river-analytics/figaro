@@ -22,20 +22,19 @@ import scala.collection.mutable.Set
  * A Chain(parent, fcn) represents the process that first generates a value for the parent, then
  * applies fcn to get a new Element, and finally generates a value from that new Element.
  *
- * Chain is the common base class for caching and non-caching chains.
- * All chains have a cache, whose size is specified by the cacheSize argument.
- * When a parent value is encountered, first the cache is checked to see if the result element is known.
- * If it is not, the resulting element is generated from scratch by calling fcn.
+ * Chain is the common base class for caching and non-caching chains. There is no functional difference
+ * between caching and non-caching chains. Algorithms can use the distinction to implement a caching procedure.
  *
  * @param parent The parent element of the chain
  */
 
-class Chain[T, U](name: Name[U], val parent: Element[T], fcn: T => Element[U], cacheSize: Int, collection: ElementCollection)
+class Chain[T, U](name: Name[U], val parent: Element[T], fcn: T => Element[U], collection: ElementCollection)
   extends Deterministic[U](name, collection) {
-  def args: List[Element[_]] = if (active && resultElement != null) List(parent) ::: List(resultElement) else List(parent)
+
+  def args: List[Element[_]] = List(parent)
 
   protected def cpd = fcn
-  
+
   private[figaro] val chainFunction = fcn
 
   /**
@@ -43,103 +42,23 @@ class Chain[T, U](name: Name[U], val parent: Element[T], fcn: T => Element[U], c
    */
   type ParentType = T
 
-  /**
-   * The current result element that arises from the current value of the parent.
-   */
-  var resultElement: Element[U] = _
-
-  /* Data structures for the Chain. The cache stores previously generated result elements. The Context data
-   * structures store the elements that were created in this context. We also stored newly created elements
-   * in a subContext, which is based on the value of the parent.
-   * Because Elements might be stored in sets or maps by algorithms, we need a way to allow the elements to be removed
-   * from the set or map so they can be garbage collected. Universe provides a way to achieve this through the use of
-   * contexts. When Chain gets the distribution over the child, it first pushes the context, and pops the context afterward, to mark
-   * any generated elements as being generated in the context of this Chain.
-   */
-  lazy private[figaro] val cache: Map[T, Element[U]] = Map()
-  lazy private[figaro] val myMappedContextContents: Map[T, Set[Element[_]]] = Map()
-  lazy private[figaro] val elemInContext: Map[Element[_], T] = Map()
-
-  private var lastParentValue: T = _
-
-  /* Must override clear temporary for Chains. We can never leave the chain in an uninitialized state. That is,
-   * the chain MUST ALWAYS have a valid element to return. So when clearing temporaries we clear everything
-   * except the current context.
-   */
-  override def clearContext() = {
-    myMappedContextContents.keys.foreach(c => if (c != lastParentValue) resizeCache(c))
-  }
-
-  /* Override context control for chain data structures */
-  override def directContextContents: Set[Element[_]] = if (!active) {
-    throw new NoSuchElementException
-  } else Set(myMappedContextContents.values.flatten.toList: _*)
-
-  override private[figaro] def addContextContents(e: Element[_]) = {
-    myMappedContextContents(lastParentValue) += e
-    elemInContext += (e -> lastParentValue)
-  }
-
-  override private[figaro] def removeContextContents(e: Element[_]) = {
-    myMappedContextContents(elemInContext(e)) -= e
-    elemInContext -= e
-  }
-
   def generateValue() = {
     if (parent.value == null) parent.generate()
-    val resultElem = get(parent.value)
-    if (resultElem.value == null) resultElem.generate()
-    resultElem.value
+    val resultElement = get(parent.value)
+    if (resultElement.value == null) resultElement.generate()
+    resultElement.value
   }
 
-  /* Computes the new result. If the cache contains a VALID element for this parent value, then return the
-     * the element. Otherwise, we need to create one. First, we create an entry in the ContextContents since
-     * any elements created in this context will be stored in the subContext of parentValue. Then, if the cache
-     * is full, we resize the cache to make room for a new result element. Apply the function of the chain, and
-     * stored the new result in the cache. If the element created is a new element, then registers it uses
-     * in the Universe.
-     */
-
   /**
-   * Get the distribution over the result corresponding to the given parent value. Takes care of all bookkeeping including caching.
+   * Get the distribution over the result corresponding to the given parent value.
    */
   def get(parentValue: T): Element[U] = {
-    val lruParent = lastParentValue
-    lastParentValue = parentValue
-    val cacheValue = cache.get(parentValue)
-
-    val newResult =
-      if (!cacheValue.isEmpty && cacheValue.get.active) cacheValue.get
-      else {
-        myMappedContextContents += (parentValue -> Set())
-        if (cache.size >= cacheSize && cacheValue.isEmpty) {
-          val dropValue = if (cache.last._1 != lruParent) cache.last._1 else cache.head._1
-          resizeCache(dropValue)
-        }
-        val result = getResult(parentValue)
-        cache += (parentValue -> result)
-        universe.registerUses(this, result)
-        result
-      }
-
-    resultElement = newResult
-    newResult
+    val result = getResult(parentValue)
+    universe.registerUses(this, result)
+    result
   }
 
-  /**
-   * Get the distribution over the result corresponding to the given parent value. This call is UNCACHED,
-   * meaning it will not be stored in the Chain's cache, and subsequent calls using the same parentValue
-   * could return different elements.
-   */
-  def getUncached(parentValue: T): Element[U] = {
-    if (lastParentValue == null || lastParentValue != parentValue) {
-      myMappedContextContents.getOrElseUpdate(parentValue, Set())
-      lastParentValue = parentValue
-      resultElement = getResult(parentValue)
-      universe.registerUses(this, resultElement)
-    }
-    resultElement
-  }
+  private[figaro] def getUncached(parentValue: T): Element[U] = get(parentValue)
 
   // All elements created in cpd will be created in this Chain's context with a subContext of parentValue
   private def getResult(parentValue: T): Element[U] = {
@@ -148,19 +67,7 @@ class Chain[T, U](name: Name[U], val parent: Element[T], fcn: T => Element[U], c
     universe.popContext(this)
     result
   }
-
-  /* Current replacement scheme just drops the last element in the cache. The dropped element must be deactivated,
-   * and removed from the context data structures.
-   */
-  protected def resizeCache(dropValue: T) = {
-    cache -= dropValue
-    if (myMappedContextContents.contains(dropValue)) {
-      universe.deactivate(myMappedContextContents(dropValue))
-      elemInContext --= myMappedContextContents(dropValue)
-      myMappedContextContents -= dropValue
-    }
-  }
-
+  
   override def toString = "Chain(" + parent + ", " + cpd + ")"
 }
 
@@ -168,13 +75,13 @@ class Chain[T, U](name: Name[U], val parent: Element[T], fcn: T => Element[U], c
  * A NonCachingChain is an implementation of Chain with a single element cache.
  */
 class NonCachingChain[T, U](name: Name[U], parent: Element[T], cpd: T => Element[U], collection: ElementCollection)
-  extends Chain(name, parent, cpd, 2, collection)
+  extends Chain(name, parent, cpd, collection)
 
 /**
  * A CachingChain is an implementation of Chain with a 1000 element cache.
  */
 class CachingChain[T, U](name: Name[U], parent: Element[T], cpd: T => Element[U], collection: ElementCollection)
-  extends Chain(name, parent, cpd, Int.MaxValue, collection)
+  extends Chain(name, parent, cpd, collection)
 
 object NonCachingChain {
   /** Create a NonCaching chain of 1 argument. */

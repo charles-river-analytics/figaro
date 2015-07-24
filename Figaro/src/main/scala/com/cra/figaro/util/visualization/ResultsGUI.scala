@@ -1,7 +1,6 @@
 /*
  * ResultsGUI.scala 
- * The main controller for visualizations. 
- * Coordinates data input and display as well as user interaction with displays.
+ * The main controller for visualizations. Coordinates data input and display as well as user interaction with displays.
  * 
  * Created By:      Glenn Takata (gtakata@cra.com)
  * Creation Date:   Mar 16, 2015

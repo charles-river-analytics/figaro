@@ -1,8 +1,24 @@
+/*
+ * ParParticleFilter.scala
+ * A parallel one-time particle filter.
+ * 
+ * Created By:      Lee Kellogg (lkellogg@cra.com)
+ * Creation Date:   Jun 2, 2015
+ * 
+ * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * See http://www.cra.com or email figaro@cra.com for information.
+ * 
+ * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
+
 package com.cra.figaro.algorithm.filtering
 
 import com.cra.figaro.language._
 import scala.collection.parallel.ParSeq
 import com.cra.figaro.algorithm.filtering.ParticleFilter.WeightedParticle
+import com.cra.figaro.library.cache.PermanentCache
+import com.cra.figaro.library.cache.Cache
+import com.cra.figaro.algorithm.sampling.LikelihoodWeighter
 
 /**
  * A parallel one-time particle filter. Distributes the work of generating particles at each time step over a specified
@@ -42,7 +58,7 @@ class ParOneTimeParticleFilter(static: () => Universe, initial: () => Universe, 
    * @param windows the UniverseWindows to sample from
    * @param weightedParticleCreator a function that generates a WeightedParticle, given a UniverseWindow and an index
    */
-  private def genParticles(windows: Seq[UniverseWindow], weightedParticleCreator: (UniverseWindow, Int) => WeightedParticle): Seq[WeightedParticle] = {
+  private def genParticles(windows: Seq[(UniverseWindow, LikelihoodWeighter)], weightedParticleCreator: ((UniverseWindow, LikelihoodWeighter), Int) => WeightedParticle): Seq[WeightedParticle] = {
     val parWindows = windows.par
     val particles = parWindows zip indices flatMap { case(window, (start, end)) =>
       (start to end) map { i => weightedParticleCreator(window, i) }
@@ -58,13 +74,15 @@ class ParOneTimeParticleFilter(static: () => Universe, initial: () => Universe, 
   
   def run(): Unit = {
     windows = genInitialWindows()
-    val particles = genParticles(windows, (w, _) => initialWeightedParticle(w.static, w.current))
+    val windowWithCaches = windows.map(w => (w, new LikelihoodWeighter(w.current, new PermanentCache(w.current))))
+    val particles = genParticles(windowWithCaches, (w, _) => initialWeightedParticle(w._1.static, w._1.current, w._2))
     doTimeStep(particles)
   }
   
   def advanceTime(evidence: Seq[NamedEvidence[_]] = List()): Unit = {
     val newWindows = advanceUniverseWindows(windows)
-    val particles = genParticles(newWindows, (w, i) => addWeightedParticle(evidence, i, w))
+    val newWindowsWithCaches = newWindows.map(w => (w, new LikelihoodWeighter(w.current, new PermanentCache(w.current))))
+    val particles = genParticles(newWindowsWithCaches, (w, i) => addWeightedParticle(evidence, i, w._1, w._2))
     doTimeStep(particles)
     windows = newWindows
   }
