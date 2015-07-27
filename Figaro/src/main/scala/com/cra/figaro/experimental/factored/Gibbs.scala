@@ -49,11 +49,6 @@ trait Gibbs[T] extends BaseUnweightedSampler with FactoredAlgorithm[T] {
   var variables: Set[Variable[_]] = _
 
   /**
-   * Maps a factor to its variables to avoid repeated calls to Factor.variables.
-   */
-  var variableMap: scala.collection.immutable.Map[Factor[T], List[Variable[_]]] = _
-
-  /**
    * The most recent set of samples, used for sampling variables conditioned on the values of other variables.
    */
   val currentSamples: Map[Variable[_], Int] = Map()
@@ -88,6 +83,7 @@ trait ProbabilisticGibbs extends Gibbs[Double] {
   val semiring = SumProductSemiring()
 
   def getFactors(neededElements: List[Element[_]], targetElements: List[Element[_]], upperBounds: Boolean = false): List[Factor[Double]] = {
+    Factory.removeFactors()
     val thisUniverseFactors = neededElements flatMap (Factory.make(_))
     val dependentUniverseFactors =
       for { (dependentUniverse, evidence) <- dependentUniverses } yield Factory.makeDependentFactor(universe, dependentUniverse, dependentAlgorithm(dependentUniverse, evidence))
@@ -122,24 +118,6 @@ trait ProbabilisticGibbs extends Gibbs[Double] {
       sampleAllBlocks()
     }
     super.doSample()
-  }
-
-  def initializeSample(): Unit = {
-    // Initialize the variables to something within their ranges
-    // This will often put the sampler in a valid state right away when there is no hard evidence
-    variables.foreach(currentSamples(_) = 0)
-
-    // Keep sampling all blocks until a valid state is reached
-    while(factors.exists(f => {
-      val indices = variableMap(f).map(currentSamples(_))
-      f.get(indices) <= 0.0
-    })) {
-      sampleAllBlocks()
-    }
-
-    /*
-     * TODO: implement WalkSAT-like procedure?
-     */
   }
 }
 
@@ -201,17 +179,18 @@ abstract class ProbQueryGibbs(override val universe: Universe, targets: Element[
     starterVariables.map(v => expandBlock(Set(v))).toList
   }
 
-  // Get the needed elements, factors, and blocks
-  // Create the block samplers
-  // Initialize the samples to a valid state and take the burn-in samples
   override def initialize() = {
     super.initialize()
+    // Get the needed elements, factors, and blocks
     val neededElements = getNeededElements(targetElements, Int.MaxValue)._1
     factors = getFactors(neededElements, targetElements, upperBounds)
     variables = factors.flatMap(_.variables).toSet
-    variableMap = factors.map(f => (f, f.variables)).toMap
-    blockSamplers = createBlocks().map(block => blockToSampler((block, factors.filter(variableMap(_).exists(block.contains(_))), variableMap)))
-    initializeSample()
+    val blocks = createBlocks()
+    // Create block samplers
+    blockSamplers = blocks.map(block => blockToSampler((block, factors.filter(_.variables.exists(block.contains(_))))))
+    // Initialize the samples to a valid state and take the burn-in samples
+    val initialSample = WalkSAT(factors)
+    variables.foreach(v => currentSamples(v) = initialSample(v))
     for(_ <- 1 to burnIn) sampleAllBlocks()
   }
 }
@@ -220,29 +199,69 @@ abstract class ProbQueryGibbs(override val universe: Universe, targets: Element[
 
 object Gibbs {
   // Information passed to BlockSampler constructor
-  type BlockInfo = (List[Variable[_]], List[Factor[Double]], scala.collection.immutable.Map[Factor[Double], List[Variable[_]]])
+  type BlockInfo = (List[Variable[_]], List[Factor[Double]])
 
   /**
-   * Creates a One Time Gibbs sampler in the current default universe.
+   * Create a one-time Gibbs sampler using the given number of samples and target elements.
    */
-  def apply(mySamples: Int, burnIn: Int, interval: Int, targets: Element[_]*)(implicit universe: Universe) =
+  def apply(mySamples: Int, targets: Element[_]*)(implicit universe: Universe) =
     new ProbQueryGibbs(universe, targets: _*)(
       List(),
       (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u),
-      burnIn, interval, BlockSampler.default) with OneTimeProbQuerySampler {val numSamples = mySamples}
+      0, 1, BlockSampler.default) with OneTimeProbQuerySampler {val numSamples = mySamples}
 
+  /**
+   * Create a one-time Gibbs sampler using the given number of samples, the number of samples to burn in,
+   * the sampling interval, the BlockSampler generator, and target elements.
+   */
   def apply(mySamples: Int, burnIn: Int, interval: Int, blockToSampler: BlockInfo => BlockSampler, targets: Element[_]*)(implicit universe: Universe) =
     new ProbQueryGibbs(universe, targets: _*)(
       List(),
       (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u),
       burnIn, interval, blockToSampler) with OneTimeProbQuerySampler {val numSamples = mySamples}
 
-  /*/**
-   * Creates an Anytime Gibbs sampler in the current default universe.
+  /**
+   * Create a one-time Gibbs sampler using the given dependent universes and algorithm,
+   * the number of samples, the number of samples to burn in,
+   * the sampling interval, the BlockSampler generator, and target elements.
    */
-  def apply(burnIn: Int, interval: Int, targets: Element[_]*)(implicit universe: Universe) =
+  def apply(dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
+    dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double,
+    mySamples: Int, burnIn: Int, interval: Int, blockToSampler: BlockInfo => BlockSampler, targets: Element[_]*)(implicit universe: Universe) =
+    new ProbQueryGibbs(universe, targets: _*)(
+      dependentUniverses,
+      dependentAlgorithm,
+      burnIn, interval, blockToSampler) with OneTimeProbQuerySampler {val numSamples = mySamples}
+
+  /**
+   * Create an anytime Gibbs sampler using the given target elements.
+   */
+  def apply(targets: Element[_]*)(implicit universe: Universe) =
     new ProbQueryGibbs(universe, targets: _*)(
       List(),
       (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u),
-      burnIn, interval) with AnytimeProbQuerySampler*/
+      0, 1, BlockSampler.default) with AnytimeProbQuerySampler
+
+  /**
+   * Create an anytime Gibbs sampler using the given number of samples to burn in,
+   * the sampling interval, the BlockSampler generator, and target elements.
+   */
+  def apply(burnIn: Int, interval: Int, blockToSampler: BlockInfo => BlockSampler, targets: Element[_]*)(implicit universe: Universe) =
+    new ProbQueryGibbs(universe, targets: _*)(
+      List(),
+      (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u),
+      burnIn, interval, blockToSampler) with AnytimeProbQuerySampler
+
+  /**
+   * Create an anytime Gibbs sampler using the given dependent universes and algorithm,
+   * the number of samples to burn in, the sampling interval,
+   * the BlockSampler generator, and target elements.
+   */
+  def apply(dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
+    dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double,
+    burnIn: Int, interval: Int, blockToSampler: BlockInfo => BlockSampler, targets: Element[_]*)(implicit universe: Universe) =
+    new ProbQueryGibbs(universe, targets: _*)(
+      dependentUniverses,
+      dependentAlgorithm,
+      burnIn, interval, blockToSampler) with AnytimeProbQuerySampler
 }
