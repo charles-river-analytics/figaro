@@ -13,27 +13,76 @@
 
 package com.cra.figaro.experimental.factored
 
-import scala.collection.mutable.Map
-import com.cra.figaro.algorithm.factored.factors.{Factor, Variable}
+import com.cra.figaro.algorithm.factored.factors._
+import com.cra.figaro.algorithm.lazyfactored.LazyValues
 import com.cra.figaro.util._
+import com.cra.figaro.language._
 import scala.annotation.tailrec
+import scala.collection.mutable.{Map => MutableMap}
 
 class StateNotFoundException extends RuntimeException
 
-// TODO: consider turning this into a class that extends from Algorithm
-// Also consider forward sampling first if there is no hard evidence
 object WalkSAT {
   /**
    * Produce an assignment of values to variables constrained by the given factors.
-   * @param factors The factors with which to constrain the variables
+   * @param factors The factors with which to constrain the variables.
+   * @param variables The set of variables over which to compute a sample.
+   * @param semiring The semiring used in the factors.
    * @param prob The probability of reassigning a random variable in a factor instead of taking the greedy approach.
    * @param maxIterations Maximum number of iterations to run before throwing an exception for taking too long.
    */
-  def apply(factors: List[Factor[Double]], prob: Double = 0.1, maxIterations: Int = 100000): Map[Variable[_], Int] = {
-    val variables = factors.flatMap(_.variables).distinct
-    val currentSamples: Map[Variable[_], Int] = Map(variables.map(v => (v, 0)):_*)
+  def apply[T](factors: List[Factor[T]], variables: Set[Variable[_]], semiring: Semiring[T],
+    prob: Double = 0.1, maxIterations: Int = 100000): MutableMap[Variable[_], Int] = {
+    val currentSamples = MutableMap[Variable[_], Int]()
+    val nonConstraintFactors = factors.filterNot(_.isConstraint)
+    val variableParents = MutableMap[Variable[_], Set[Variable[_]]]()
 
+    // Compute the set of parents of each variable that determine its value in generative order
+    // Similar but not identical to variableParentMap used for Gibbs sampling
+    variables.foreach(_ match {
+      case ev: ElementVariable[_] => ev.element match {
+        case a: Apply[_] => variableParents(ev) = a.args.map(Variable(_)).toSet
+        case _ =>
+      }
+
+      case icv: InternalChainVariable[_, _] => {
+        val chain = icv.chain.element.asInstanceOf[Chain[_, _]]
+        val chainResults: Set[Variable[_]] = LazyValues(icv.chain.element.universe).getMap(chain).values.map(Variable(_)).toSet
+        variableParents(icv) = chainResults + Variable(chain.parent)
+        variableParents(icv.chain) = Set(icv)
+      }
+      case _ =>
+    })
+
+    pseudoForwardSample(variables)
     walkSAT(maxIterations)
+
+    @tailrec
+    def pseudoForwardSample(toSample: Set[Variable[_]]): Unit = {
+      // Look for a variable who has no parents yet to be sampled
+      val variableOption = toSample.find(variable => variableParents.getOrElse(variable, Set()).intersect(toSample).isEmpty)
+      variableOption match {
+        case Some((variableToSample)) => {
+          // Get the adjacent factors
+          val adjacentFactors = nonConstraintFactors.filter(f => f.variables.contains(variableToSample))
+          val varAndParents = variableParents.getOrElse(variableToSample, Set()) + variableToSample
+          // Marginalize to the variable and its parents
+          val parentFactors = adjacentFactors.map(_.marginalizeTo(semiring, varAndParents.toList:_*))
+          // Produce a sample
+          val sampleOption = (0 until variableToSample.size).find(sample => parentFactors.forall(factor => {
+            factor.get(factor.variables.map(currentSamples.getOrElse(_, sample))) != semiring.zero
+          }))
+          // Update and repeat until all variables are sampled
+          currentSamples(variableToSample) = sampleOption.getOrElse(0)
+          pseudoForwardSample(toSample - variableToSample)
+        }
+        case _ => {
+          // In this case toSample is either empty, or we are in an invalid state
+          // If the latter we have to set the remaining variables to something for WalkSAT
+          toSample.foreach(currentSamples(_) = 0)
+        }
+      }
+    }
 
     @tailrec
     def walkSAT(iterations: Int): Unit = {
@@ -42,7 +91,7 @@ object WalkSAT {
       // Lists of satisfied and dissatisfied factors by the current samples
       val (satisfied, dissatisfied) = factors.partition(f => {
         val indices = f.variables.map(currentSamples(_))
-        f.get(indices) > 0.0
+        f.get(indices) != semiring.zero
       })
 
       // Stop when all factors are satisfied
@@ -68,7 +117,7 @@ object WalkSAT {
                 // Count the number of previously satisfied factors that become dissatisfied
                 val count = satisfied.count(f => {
                   val indices = f.variables.map(vf => if(vf == v) index else currentSamples(vf))
-                  f.get(indices) <= 0.0
+                  f.get(indices) == semiring.zero
                 })
                 (v, index, count)
               }
