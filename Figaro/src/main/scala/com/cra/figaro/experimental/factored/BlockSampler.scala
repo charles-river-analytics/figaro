@@ -136,9 +136,10 @@ trait FactorProduct extends SimpleBlockSampler {
   lazy val mbLookupFactors = adjacentFactors.map(factor => {
     // Separate block and Markov blanket variables
     // Markov blanket consists of variables in this factor, but not in the block
-    val (blockVars, mbVars) = factor.variables.partition(block.contains(_))
-    val blockVarIndices = blockVars.map(factor.variables.indexOf)
-    val mbVarIndices = mbVars.map(factor.variables.indexOf)
+    // Note how the code below allows duplicate variables in factors
+    val (blockVarsAndIndices, mbVarsAndIndices) = factor.variables.zipWithIndex.partition(p => block.contains(p._1))
+    val (blockVars, blockVarIndices) = blockVarsAndIndices.unzip
+    val (mbVars, mbVarIndices) = mbVarsAndIndices.unzip
 
     // Collect the rows of the factor and group by Markov blanket assignments
     val mbMap = factor.getIndices.map(index => {
