@@ -18,12 +18,12 @@ import com.cra.figaro.util.MultiSet
 
 private[figaro] class VESolver(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]])
 extends com.cra.figaro.algorithm.factored.VariableElimination[Double] {
-  def go(): List[Factor[Double]] = {
+  def go(): List[Factor[Double]] = {   
     doElimination(factors, toPreserve.toList)
     result
   }
 
-  debug = false
+  debug = true
 
   val semiring: Semiring[Double] = SumProductSemiring()
 
