@@ -55,7 +55,7 @@ class GibbsTest extends WordSpec with Matchers {
       )
     }
 
-    "with a simple Chain model produce the correct result" in {
+    "with an unconstrained model produce the correct result" in {
       Universe.createNew
       val f = Flip(0.3)
       val s1 = Select(0.1 -> 1, 0.4 -> 2, 0.5 -> 3)
@@ -65,15 +65,40 @@ class GibbsTest extends WordSpec with Matchers {
       test[Int](c, _ == 2, 0.61)
     }
 
-    "with a constrained Chain model produce the correct result" in {
+    "with a constrained model produce the correct result" in {
       Universe.createNew
       val f = Flip(0.3)
       val s1 = Select(0.1 -> 1, 0.4 -> 2, 0.5 -> 3)
       val s2 = Select(0.7 -> 2, 0.1 -> 3, 0.2 -> 4)
       val c = If(f, s1, s2)
-      c.addConstraint(i => i)
+      c.addConstraint(identity)
       // 0.61 * 2 / (0.3*0.1*1 + 0.3*0.4*2 + 0.3*0.5*3 + 0.7*0.7*2 + 0.7*0.1*3 + 0.7*0.2*4)
       test[Int](c, _ == 2, 0.4939)
+    }
+
+    "with a constraint on a Chain produce the correct result for the parent" in {
+      val f = Flip(0.3)
+      val c = If(f, Flip(0.8), Constant(false))
+      c.addConstraint(b => if(b) 2.0 else 1.0)
+      // (0.3 * 0.8 * 2) / (0.3 * 0.8 * 2 + 0.3 * 0.2 + 0.7)
+      test[Boolean](c, identity, 0.3871)
+    }
+
+    "with a constraint on a Chain result correctly constrain the Chain but not the parent" in {
+      val f = Flip(0.3)
+      val r1 = Flip(0.8)
+      r1.addConstraint(b => if(b) 2.0 else 1.0)
+      val c = If(f, r1, Constant(false))
+      test[Boolean](f, identity, 0.3)
+      // r1 true with probability (0.8 * 2) / (0.8 * 2 + 0.2) = 0.8889
+      // 0.3 * 0.8889
+      test[Boolean](c, identity, 0.2667)
+    }
+
+    "with an element used multiple times use the same value each time" in {
+      val f = Flip(0.3)
+      val e = f === f
+      test[Boolean](e, identity, 1.0)
     }
 
     "not underflow" in {
@@ -82,7 +107,7 @@ class GibbsTest extends WordSpec with Matchers {
       for (i <- 0 until 10) {
         x.addConstraint((b: Boolean) => if (b) 1e-100; else 1e-120)
       }
-      test[Boolean](x, b => b, 1.0)
+      test[Boolean](x, identity, 1.0)
     }
   }
 
@@ -201,7 +226,7 @@ class GibbsTest extends WordSpec with Matchers {
   }
 
   def test[T](target: Element[T], predicate: T => Boolean, prob: Double, tol: Double = 0.025) {
-    val algorithm = Gibbs(10000, target)
+    val algorithm = Gibbs(100000, target)
     algorithm.start()
     algorithm.probability(target, predicate) should be(prob +- tol)
   }
