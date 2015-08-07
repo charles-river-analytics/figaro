@@ -194,14 +194,23 @@ class ChainComponent[ParentValue, Value](problem: Problem, val chain: Chain[Pare
   // Raise the given subproblem into this problem. Note that factors for the chain must have been created already
   // This probably needs some more thought!
   def raise(parentValue: ParentValue, subproblem: NestedProblem[Value], bounds: Bounds = Lower): Unit = {
+    
+    // First we have to raise the factors associated with the target of each subproblem
     val comp = subproblem.collection(subproblem.target)
-    // Since we are lifting the problem, the variables between the chain and the nested problem are not matched. So we have to map
+    // The variables between the chain and the nested problem are not matched. So we have to map
     // the variables in subproblem factors to the variables in the chain
-    val cf = comp.constraintFactors(bounds).map(Factory.replaceVariable(_, comp.variable, actualSubproblemVariables(parentValue)))
-    val ncf = comp.nonConstraintFactors.map(Factory.replaceVariable(_, comp.variable, actualSubproblemVariables(parentValue)))
-    if (bounds == Lower) constraintLower = constraintLower ::: cf
-    else constraintUpper = constraintUpper ::: cf
-    nonConstraintFactors = nonConstraintFactors ::: ncf
+    val targetCF = comp.constraintFactors(bounds).map(Factory.replaceVariable(_, comp.variable, actualSubproblemVariables(parentValue)))
+    val targetNCF = comp.nonConstraintFactors.map(Factory.replaceVariable(_, comp.variable, actualSubproblemVariables(parentValue)))
+    
+    /*
+     * Now we have to lift all the factors in the subproblem that are not the result variable. 
+     */ 
+    val otherCF = subproblem.components.filterNot(_ == comp).flatMap(c => c.constraintFactors(bounds))
+    val otherNCF = subproblem.components.filterNot(_ == comp).flatMap(c => nonConstraintFactors)
+        
+    if (bounds == Lower) constraintLower = constraintLower ::: targetCF ::: otherCF
+    else constraintUpper = constraintUpper ::: targetCF ::: otherCF
+    nonConstraintFactors = nonConstraintFactors ::: targetNCF ::: otherNCF
   }
   
   // Raise all subproblems into this problem

@@ -1,9 +1,9 @@
 /*
- * StructuredSolver.scala
- * A strategy that fully expands a problem and solves the subproblems in a structured manner.
+ * FlatStrategy.scala
+ * A strategy that flattens each problem and solves the problem in a flat manner
  *
- * Created By:      Avi Pfeffer (apfeffer@cra.com)
- * Creation Date:   March 1, 2015
+ * Created By:      Brian Ruttenberg (bruttenberg@cra.com)
+ * Creation Date:   July 1, 2015
  *
  * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
@@ -17,32 +17,35 @@ import com.cra.figaro.experimental.structured.solver.Solver
 import com.cra.figaro.language.Element
 import com.cra.figaro.experimental.structured.factory.Factory
 import com.cra.figaro.algorithm.factored.factors.Factor
+import com.cra.figaro.experimental.structured.strategy.solve.SolvingStrategy
 
-private[figaro] class FlatStrategy(problem: Problem, solver: Solver,
-  recursingStrategy: Strategy, rangeSizer: RangeSizer,
+/**
+ * A strategy that flattens the model and uses no structure to solve the problem
+ */
+private[figaro] class FlatStrategy(problem: Problem, solvingStrategy: SolvingStrategy, rangeSizer: RangeSizer,
   bounds: Bounds, parameterized: Boolean)
-  extends DecompositionStrategy(problem, solver, recursingStrategy, rangeSizer, bounds, parameterized) with BackwardChain {
+  extends DecompositionStrategy(problem, solvingStrategy, rangeSizer, bounds, parameterized) with BackwardChain {
 
   def execute() {
     backwardChain(problem.components, Set[ProblemComponent[_]]())
-    problem.solve(solver)
+    problem.solve(solvingStrategy)
   }
 
-  private def recurse(nestedProblem: NestedProblem[_], done: Set[ProblemComponent[_]]) {
-    // This check is important and is what enables us to perform dynamic programming
-    if (!nestedProblem.solved) recursingStrategy(nestedProblem)
-  }
+  def decompose(nestedProblem: Problem, done: Set[ProblemComponent[_]]): Unit = {}
 
   def processChain(first: ProblemComponent[_], rest: List[ProblemComponent[_]], done: Set[ProblemComponent[_]], chainComp: ChainComponent[_, _]): Set[ProblemComponent[_]] = {
     chainComp.expand()
     val results = chainComp.subproblems.values.map(_.target)
     val resultComponents = results.map(checkArg(_))
+    // backward chain on the subproblems if some have not been solved
     val done2 = if (resultComponents.exists(p => !done.contains(p))) {
       backwardChain(resultComponents.toList, done)
     } else {
       done
     }
+    // Process this chain component (make the factors)
     process(chainComp)
+    // Once the factors have been created, we raise the factors from all subproblems into this problem
     chainComp.raise(bounds)
     backwardChain(rest, done2 + chainComp)
   }

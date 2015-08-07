@@ -12,12 +12,14 @@
  */
 package com.cra.figaro.test.experimental.structured
 
-import org.scalatest.{WordSpec, Matchers}
+import org.scalatest.{ WordSpec, Matchers }
 import com.cra.figaro.experimental.structured.ComponentCollection
 import com.cra.figaro.experimental.structured.Problem
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.discrete.Uniform
 import com.cra.figaro.library.collection.MakeArray
+import com.cra.figaro.experimental.structured.ProblemComponent
+import com.cra.figaro.experimental.structured.Lower
 
 class ExpandTest extends WordSpec with Matchers {
   "Expanding a chain" should {
@@ -34,8 +36,8 @@ class ExpandTest extends WordSpec with Matchers {
       val c4 = cc(e4)
       c4.expand(false)
 
-      c4.subproblems.size should equal (1)
-      c4.subproblems(false).target should equal (e3)
+      c4.subproblems.size should equal(1)
+      c4.subproblems(false).target should equal(e3)
     }
 
     "when repeating a parent value, not create a new expansion" in {
@@ -52,7 +54,7 @@ class ExpandTest extends WordSpec with Matchers {
       c4.expand(false)
       c4.expand(false)
 
-      cc.expansions.size should equal (1)
+      cc.expansions.size should equal(1)
     }
 
     "at one parent value, not add the parent" in {
@@ -68,7 +70,7 @@ class ExpandTest extends WordSpec with Matchers {
       val c4 = cc(e4)
       c4.expand(false)
 
-      cc.contains(e1) should equal (false)
+      cc.contains(e1) should equal(false)
     }
 
     "for a full expansion with an added parent, add subproblems for all the parent values" in {
@@ -87,9 +89,9 @@ class ExpandTest extends WordSpec with Matchers {
       c1.generateRange()
       c4.expand()
 
-      c4.subproblems.size should equal (2)
-      c4.subproblems(true).target should equal (e2)
-      c4.subproblems(false).target should equal (e3)
+      c4.subproblems.size should equal(2)
+      c4.subproblems(true).target should equal(e2)
+      c4.subproblems(false).target should equal(e3)
     }
 
     "for a full expansion with an unadded parent, not expand anything or add the parent" in {
@@ -105,8 +107,8 @@ class ExpandTest extends WordSpec with Matchers {
       val c4 = cc(e4)
       c4.expand()
 
-      c4.subproblems.size should equal (0)
-      cc.contains(e1) should equal (false)
+      c4.subproblems.size should equal(0)
+      cc.contains(e1) should equal(false)
     }
 
     "if the result elements are already in the collection, not create a new component but point to the existing one in the subproblem" in {
@@ -129,9 +131,63 @@ class ExpandTest extends WordSpec with Matchers {
       c4.expand()
       c4.generateRange()
 
-      c4.range.hasStar should equal (false)
-      c4.range.regularValues should equal (Set(1, 2, 3))
+      c4.range.hasStar should equal(false)
+      c4.range.regularValues should equal(Set(1, 2, 3))
     }
+  }
+
+  def process(comp: ProblemComponent[_]) = {
+    comp.generateRange(Int.MaxValue )
+    comp.makeNonConstraintFactors(false)
+    comp.makeConstraintFactors(Lower)
+  }
+
+  "Raising a subproblem" should {
+    "add non-constraint factors to the chain" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Flip(0.2)
+      def f(b: Boolean) = if (b) Uniform(1,2) else Uniform(3,4)
+      val e4 = Chain(e1, f)
+      pr.add(e4)
+      pr.add(e1)
+      val c4 = cc(e4)
+      process(cc(e1))
+      c4.expand()
+      c4.subproblems.foreach(f => process(cc(f._2.target)))
+      process(c4)
+      c4.raise(Lower)
+      c4.nonConstraintFactors.size should be (5)
+      val tf = cc(c4.subproblems(true).target).nonConstraintFactors(0)
+      val ff = cc(c4.subproblems(false).target).nonConstraintFactors(0)
+      val tfVar = c4.nonConstraintFactors.exists(p => p.output.exists(_ == tf.variables.head) || p.parents.exists(_ == tf.variables.head))
+      val ffVar = c4.nonConstraintFactors.exists(p => p.output.exists(_ == ff.variables.head) || p.parents.exists(_ == ff.variables.head))
+      tfVar should be (false)
+      ffVar should be (false)
+    }
+    
+    "add constraint factors to the chain" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val u1 = Uniform(1,2)
+      val u2 = Uniform(3,4)
+      val e1 = Flip(0.2)
+      def f(b: Boolean) = if (b) u1 else u2
+      val e4 = Chain(e1, f)
+      u1.observe(1)
+      pr.add(e4)
+      pr.add(e1)
+      val c4 = cc(e4)
+      process(cc(e1))
+      c4.expand()
+      c4.subproblems.foreach(f => process(cc(f._2.target)))
+      process(c4)
+      c4.raise(Lower)
+      c4.constraintFactors(Lower).size should be (1)      
+    }
+
   }
 
   "Expanding a MakeArray" should {
@@ -150,8 +206,8 @@ class ExpandTest extends WordSpec with Matchers {
       val c5 = cc(e5)
       c5.expand(2)
 
-      cc.contains(e1) should equal (true)
-      cc(e1).problem should equal (pr)
+      cc.contains(e1) should equal(true)
+      cc(e1).problem should equal(pr)
     }
 
     "leave previously added items in their original problem" in {
@@ -170,8 +226,8 @@ class ExpandTest extends WordSpec with Matchers {
       val c5 = cc(e5)
       c5.expand(2)
 
-      cc(e0).problem should equal (pr1)
-      cc(e1).problem should equal (pr2)
+      cc(e0).problem should equal(pr1)
+      cc(e1).problem should equal(pr2)
     }
 
     "for a full expansion with an added numItems, add the items for the maximum parent value" in {
@@ -191,9 +247,9 @@ class ExpandTest extends WordSpec with Matchers {
       c4.generateRange()
       c5.expand()
 
-      cc.contains(e0) should equal (true)
-      cc.contains(e1) should equal (true)
-      cc.contains(e2) should equal (true)
+      cc.contains(e0) should equal(true)
+      cc.contains(e1) should equal(true)
+      cc.contains(e2) should equal(true)
     }
 
     "for a full expansion with an unadded numItems, not expand anything or add numItems" in {
@@ -210,10 +266,10 @@ class ExpandTest extends WordSpec with Matchers {
       val c5 = cc(e5)
       c5.expand()
 
-      cc.contains(e0) should equal (false)
-      cc.contains(e1) should equal (false)
-      cc.contains(e2) should equal (false)
-      cc.contains(e4) should equal (false)
+      cc.contains(e0) should equal(false)
+      cc.contains(e1) should equal(false)
+      cc.contains(e2) should equal(false)
+      cc.contains(e4) should equal(false)
     }
   }
 
@@ -229,7 +285,7 @@ class ExpandTest extends WordSpec with Matchers {
         c1.expand(2)
         c1.expand(4)
 
-        c1.maxExpanded should equal (4)
+        c1.maxExpanded should equal(4)
       }
 
       "add all and only the previously unadded items to the problem" in {
@@ -244,8 +300,8 @@ class ExpandTest extends WordSpec with Matchers {
         c1.expand(4)
         val n2 = cc.components.size
 
-        n1 should equal (3) // 1 for the MakeArray and 2 for the items
-        n2 should equal (5)
+        n1 should equal(3) // 1 for the MakeArray and 2 for the items
+        n2 should equal(5)
       }
     }
 
@@ -260,7 +316,7 @@ class ExpandTest extends WordSpec with Matchers {
         c1.expand(4)
         c1.expand(2)
 
-        c1.maxExpanded should equal (4)
+        c1.maxExpanded should equal(4)
       }
 
       "add no items to the problem" in {
@@ -275,8 +331,8 @@ class ExpandTest extends WordSpec with Matchers {
         c1.expand(2)
         val n2 = cc.components.size
 
-        n1 should equal (5)
-        n2 should equal (5)
+        n1 should equal(5)
+        n2 should equal(5)
       }
     }
 
@@ -294,7 +350,7 @@ class ExpandTest extends WordSpec with Matchers {
         c1.generateRange()
         c2.expand()
 
-        c2.maxExpanded should equal (4)
+        c2.maxExpanded should equal(4)
       }
 
       "add all the elements to the collection" in {
@@ -310,7 +366,7 @@ class ExpandTest extends WordSpec with Matchers {
         c1.generateRange()
         c2.expand()
 
-        cc.components.size should equal (6) // e1, e2, and the four items
+        cc.components.size should equal(6) // e1, e2, and the four items
       }
     }
 
