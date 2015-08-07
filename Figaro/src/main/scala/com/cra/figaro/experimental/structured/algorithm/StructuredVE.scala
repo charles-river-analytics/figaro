@@ -24,6 +24,8 @@ import com.cra.figaro.experimental.structured.solver.variableElimination
 import com.cra.figaro.experimental.structured.strategy.decompose._
 import com.cra.figaro.algorithm.factored.factors.SumProductSemiring
 import com.cra.figaro.experimental.structured.factory.Factory
+import com.cra.figaro.experimental.structured.Lower
+import com.cra.figaro.experimental.structured.strategy.solve.ConstantStrategy
 
 class StructuredVE(val universe: Universe, targets: Element[_]*) extends Algorithm with OneTimeProbQuery {
   val queryTargets = targets
@@ -38,7 +40,7 @@ class StructuredVE(val universe: Universe, targets: Element[_]*) extends Algorit
     val problem = new Problem(cc, targets.toList)
     val evidenceElems = universe.conditionedElements ::: universe.constrainedElements
     evidenceElems.foreach(elem => if (!cc.contains(elem)) problem.add(elem))
-    recursiveStrategy(variableElimination)(problem)
+    (new RecursiveStrategy(problem, new ConstantStrategy(variableElimination), defaultRangeSizer, Lower, false)).execute    
     val joint = problem.solution.foldLeft(Factory.unit(SumProductSemiring()))(_.product(_))
 
     def marginalizeToTarget(target: Element[_]): Unit = {

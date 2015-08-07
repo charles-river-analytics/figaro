@@ -39,16 +39,28 @@ trait BackwardChain extends DecompositionStrategy {
             case maComp: MakeArrayComponent[_] =>
               processMakeArray(first, rest, done1, maComp)
             case _ =>
-              process(first)
-              backwardChain(rest, done1 + first)
+              first.element match {              
+                 //If the element is decomposable, call process on it to determine how to decompose the element                 
+                case dc: Decomposable => dc.process(first, rest, done)
+                case _ =>
+                  // otherwise use the default process
+                  process(first)
+                  backwardChain(rest, done1 + first)
+              }
           }
         }
       case _ => done
     }
   }
 
+  /*
+   * Class that defines how to process Chain components
+   */
   protected def processChain(first: ProblemComponent[_], rest: List[ProblemComponent[_]], done: Set[ProblemComponent[_]], chainComp: ChainComponent[_, _]): Set[ProblemComponent[_]]
-  
+
+  /*
+   * Class that defines how to process MakeArray components. This may not be needed since MakeArrays are deprecated.
+   */
   protected def processMakeArray(first: ProblemComponent[_], rest: List[ProblemComponent[_]], done: Set[ProblemComponent[_]], maComp: MakeArrayComponent[_]): Set[ProblemComponent[_]]
-  
+
 }

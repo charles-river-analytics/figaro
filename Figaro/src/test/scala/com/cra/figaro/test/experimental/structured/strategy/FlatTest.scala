@@ -26,6 +26,7 @@ import com.cra.figaro.experimental.structured.solver.variableElimination
 import com.cra.figaro.experimental.structured.strategy.decompose._
 import com.cra.figaro.experimental.structured.Lower
 import com.cra.figaro.experimental.structured.algorithm.FlatVE
+import com.cra.figaro.experimental.structured.strategy.solve.ConstantStrategy
 
 class FlatTest extends WordSpec with Matchers {
   "Executing a flat strategy" when {
@@ -40,7 +41,7 @@ class FlatTest extends WordSpec with Matchers {
         })        
         val cc = new ComponentCollection
         val problem = new Problem(cc, List(r1))
-        val fs = new FlatStrategy(problem, variableElimination, null, defaultRangeSizer, Lower, false)
+        val fs = new FlatStrategy(problem, new ConstantStrategy(variableElimination), defaultRangeSizer, Lower, false)
         fs.backwardChain(problem.components , Set())
         problem.components.flatMap(_.nonConstraintFactors).size should be(16)
         FlatVE.probability(r1, 1) should equal (0.5*0.2*.4)
@@ -53,7 +54,7 @@ class FlatTest extends WordSpec with Matchers {
         val e1 = Select(0.25 -> 0.3, 0.25 -> 0.5, 0.25 -> 0.7, 0.25 -> 0.9)
         val e2 = Flip(e1)
         val e3 = Apply(e2, (b: Boolean) => b)
-        StructuredVE.probability(e3, true) should equal (0.6)
+        FlatVE.probability(e3, true) should equal (0.6)
       }
     }
 
@@ -64,7 +65,7 @@ class FlatTest extends WordSpec with Matchers {
         val e2 = Flip(e1)
         val e3 = Apply(e2, (b: Boolean) => b)
         e3.observe(true)
-        StructuredVE.probability(e1, 0.3) should be (0.125 +- 0.000000001)
+        FlatVE.probability(e1, 0.3) should be (0.125 +- 0.000000001)
       }
     }
 
@@ -74,7 +75,7 @@ class FlatTest extends WordSpec with Matchers {
         val e1 = Select(0.25 -> 0.3, 0.25 -> 0.5, 0.25 -> 0.7, 0.25 -> 0.9)
         val e2 = Flip(e1)
         val e3 = Apply(e2, (b: Boolean) => b)
-        val alg = StructuredVE(e2, e3)
+        val alg = FlatVE(e2, e3)
         alg.start()
         alg.probability(e2, true) should equal (0.6)
         alg.probability(e3, true) should equal (0.6)
@@ -88,7 +89,7 @@ class FlatTest extends WordSpec with Matchers {
         val e2 = Flip(e1)
         val e3 = Apply(e2, (b: Boolean) => b)
         e3.observe(true)
-        val alg = StructuredVE(e2, e1)
+        val alg = FlatVE(e2, e1)
         alg.start()
         alg.probability(e2, true) should equal (1.0)
         alg.probability(e1, 0.3) should be (0.125 +- 0.000000001)
@@ -101,7 +102,7 @@ class FlatTest extends WordSpec with Matchers {
         val e1 = Select(0.25 -> 0.3, 0.25 -> 0.5, 0.25 -> 0.7, 0.25 -> 0.9)
         val e2 = Flip(e1)
         val e3 = If(e2, Constant(true), Constant(false))
-        val alg = StructuredVE(e3)
+        val alg = FlatVE(e3)
         alg.start()
         alg.probability(e3, true) should equal (0.6)
       }
@@ -113,7 +114,7 @@ class FlatTest extends WordSpec with Matchers {
         val e1 = Select(0.25 -> 0.3, 0.25 -> 0.5, 0.25 -> 0.7, 0.25 -> 0.9)
         val e2 = Flip(e1)
         val e3 = If(e2, { val e = Flip(0.5); e.observe(true); e }, Constant(false))
-        val alg = StructuredVE(e3)
+        val alg = FlatVE(e3)
         alg.start()
         alg.probability(e3, true) should equal (0.6)
       }
@@ -125,7 +126,7 @@ class FlatTest extends WordSpec with Matchers {
         val e1 = Select(0.25 -> 0.3, 0.25 -> 0.5, 0.25 -> 0.7, 0.25 -> 0.9)
         val e2 = Flip(e1)
         val e3 = If(e2, If(Flip(0.9), Constant(true), Constant(false)), Constant(false))
-        val alg = StructuredVE(e3)
+        val alg = FlatVE(e3)
         alg.start()
         alg.probability(e3, true) should be ((0.6 * 0.9) +- 0.000000001)
       }
@@ -137,7 +138,7 @@ class FlatTest extends WordSpec with Matchers {
         val e1 = Flip(0.4)
         val e2 = Flip(0.3)
         val e3 = e1 && e2
-        StructuredVE.probability(e3, true) should be (0.12 +- 0.000000001)
+        FlatVE.probability(e3, true) should be (0.12 +- 0.000000001)
       }
     }
 
@@ -147,7 +148,7 @@ class FlatTest extends WordSpec with Matchers {
         Universe.createNew()
         val e1 = Apply(Constant(true), (b: Boolean) => { count += 1; 5 })
         val e2 = e1 === e1
-        StructuredVE.probability(e2, true) should equal (1.0)
+        FlatVE.probability(e2, true) should equal (1.0)
         count should equal (2) // One for generating the range and one for creating the non-constraint factor. Both require applying the function.
       }
     }
@@ -159,7 +160,7 @@ class FlatTest extends WordSpec with Matchers {
         val e2 = If(e1, Constant(1), Constant(2))
         val e3 = Apply(e2, e1, (i: Int, b: Boolean) => if (b) i + 1 else i + 2)
         // e3 is 2 iff e1 is true, because then e2 is 1
-        StructuredVE.probability(e3, 2) should be (0.4 +- 0.000000001)
+        FlatVE.probability(e3, 2) should be (0.4 +- 0.000000001)
       }
     }
 
@@ -173,7 +174,7 @@ class FlatTest extends WordSpec with Matchers {
         val e1 = Chain(Flip(0.5), f)
         val e2 = Chain(Flip(0.4), f)
         val e3 = e1 && e2
-        StructuredVE.probability(e3, true) should be ((0.5 * 0.4) +- 0.000000001)
+        FlatVE.probability(e3, true) should be ((0.5 * 0.4) +- 0.000000001)
         count should equal (2) // One each for p = true and p = false, but only expanded once
       }
     }
@@ -183,7 +184,7 @@ class FlatTest extends WordSpec with Matchers {
         var count = 0
         val e1 = Apply(Constant(1), (i: Int) => { count += 1; 5 })
         val e2 = Flip(0.5)
-        StructuredVE.probability(e2, true) should equal (0.5)
+        FlatVE.probability(e2, true) should equal (0.5)
         count should equal (0)
       }
     }

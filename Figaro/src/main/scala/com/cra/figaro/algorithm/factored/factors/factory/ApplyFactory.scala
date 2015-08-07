@@ -43,7 +43,7 @@ object ApplyFactory {
         // By using applyMap, we can make sure that any contained elements in the result of the apply are the same 
         // now as they were when values were computed.
         val resultVal = mapper.map(applyMap(arg1Val.value), applyValues.regularValues)
-        val resultIndex = resultVar.range.indexWhere(_.value == resultVal)        
+        val resultIndex = resultVar.range.indexWhere(v => if (v.isRegular) v.value == resultVal else false)        
         factor.set(List(arg1Index, resultIndex), 1.0)
       } else if (!arg1Val.isRegular && resultVar.range.exists(!_.isRegular)) {
         val resultIndex = resultVar.range.indexWhere(!_.isRegular) 
@@ -75,7 +75,7 @@ object ApplyFactory {
         // arg1Val.value should have been placed in applyMap at the time the values of this apply were computed.
         // By using applyMap, we can make sure that any contained elements in the result of the apply are the same now as they were when values were computed.
         val resultVal = mapper.map(applyMap((arg1Val.value, arg2Val.value)), applyValues.regularValues)
-        val resultIndex = resultVar.range.indexWhere(_.value == resultVal)        
+        val resultIndex = resultVar.range.indexWhere(v => if (v.isRegular) v.value == resultVal else false)        
         factor.set(List(arg1Index, arg2Index, resultIndex), 1.0)
       } else if ((!arg1Val.isRegular || !arg2Val.isRegular) && resultVar.range.exists(!_.isRegular)) {
         val resultIndex = resultVar.range.indexWhere(!_.isRegular) 
@@ -111,7 +111,7 @@ object ApplyFactory {
         // arg1Val.value should have been placed in applyMap at the time the values of this apply were computed.
         // By using applyMap, we can make sure that any contained elements in the result of the apply are the same now as they were when values were computed.
         val resultVal = mapper.map(applyMap((arg1Val.value, arg2Val.value, arg3Val.value)), applyValues.regularValues)
-        val resultIndex = resultVar.range.indexWhere(_.value == resultVal)        
+        val resultIndex = resultVar.range.indexWhere(v => if (v.isRegular) v.value == resultVal else false)        
         factor.set(List(arg1Index, arg2Index, arg3Index, resultIndex), 1.0)
       } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular) && resultVar.range.exists(!_.isRegular)) {
         val resultIndex = resultVar.range.indexWhere(!_.isRegular) 
@@ -149,7 +149,7 @@ object ApplyFactory {
         // arg1Val.value should have been placed in applyMap at the time the values of this apply were computed.
         // By using applyMap, we can make sure that any contained elements in the result of the apply are the same now as they were when values were computed.
         val resultVal = mapper.map(applyMap((arg1Val.value, arg2Val.value, arg3Val.value, arg4Val.value)), applyValues.regularValues)
-        val resultIndex = resultVar.range.indexWhere(_.value == resultVal)        
+        val resultIndex = resultVar.range.indexWhere(v => if (v.isRegular) v.value == resultVal else false)        
         factor.set(List(arg1Index, arg2Index, arg3Index, arg4Index, resultIndex), 1.0)
       } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular) && resultVar.range.exists(!_.isRegular)) {
         val resultIndex = resultVar.range.indexWhere(!_.isRegular) 
@@ -190,7 +190,7 @@ object ApplyFactory {
         // arg1Val.value should have been placed in applyMap at the time the values of this apply were computed.
         // By using applyMap, we can make sure that any contained elements in the result of the apply are the same now as they were when values were computed.
         val resultVal = mapper.map(applyMap((arg1Val.value, arg2Val.value, arg3Val.value, arg4Val.value, arg5Val.value)), applyValues.regularValues)
-        val resultIndex = resultVar.range.indexWhere(_.value == resultVal)        
+        val resultIndex = resultVar.range.indexWhere(v => if (v.isRegular) v.value == resultVal else false)        
         factor.set(List(arg1Index, arg2Index, arg3Index, arg4Index, arg5Index, resultIndex), 1.0)
       } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular || !arg5Val.isRegular) && resultVar.range.exists(!_.isRegular)) {
         val resultIndex = resultVar.range.indexWhere(!_.isRegular) 

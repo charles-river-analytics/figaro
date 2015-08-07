@@ -17,28 +17,35 @@ import com.cra.figaro.experimental.structured.solver.Solver
 import com.cra.figaro.language.Element
 import com.cra.figaro.experimental.structured.factory.Factory
 import com.cra.figaro.algorithm.factored.factors.Factor
+import com.cra.figaro.experimental.structured.strategy.solve.SolvingStrategy
 
-private[figaro] class FlatStrategy(problem: Problem, solver: Solver,
-  recursingStrategy: Strategy, rangeSizer: RangeSizer,
+/**
+ * A strategy that flattens the model and uses no structure to solve the problem
+ */
+private[figaro] class FlatStrategy(problem: Problem, solvingStrategy: SolvingStrategy, rangeSizer: RangeSizer,
   bounds: Bounds, parameterized: Boolean)
-  extends DecompositionStrategy(problem, solver, recursingStrategy, rangeSizer, bounds, parameterized) with BackwardChain {
+  extends DecompositionStrategy(problem, solvingStrategy, rangeSizer, bounds, parameterized) with BackwardChain {
 
   def execute() {
     backwardChain(problem.components, Set[ProblemComponent[_]]())
-    problem.solve(solver)
+    problem.solve(solvingStrategy)
   }
 
+  def decompose(nestedProblem: Problem, done: Set[ProblemComponent[_]]): Unit = {}
 
   def processChain(first: ProblemComponent[_], rest: List[ProblemComponent[_]], done: Set[ProblemComponent[_]], chainComp: ChainComponent[_, _]): Set[ProblemComponent[_]] = {
     chainComp.expand()
     val results = chainComp.subproblems.values.map(_.target)
     val resultComponents = results.map(checkArg(_))
+    // backward chain on the subproblems if some have not been solved
     val done2 = if (resultComponents.exists(p => !done.contains(p))) {
       backwardChain(resultComponents.toList, done)
     } else {
       done
     }
+    // Process this chain component (make the factors)
     process(chainComp)
+    // Once the factors have been created, we raise the factors from all subproblems into this problem
     chainComp.raise(bounds)
     backwardChain(rest, done2 + chainComp)
   }
