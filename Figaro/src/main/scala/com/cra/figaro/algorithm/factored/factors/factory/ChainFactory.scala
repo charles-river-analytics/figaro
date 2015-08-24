@@ -31,7 +31,7 @@ object ChainFactory {
    */
   def makeFactors[T, U](chain: Chain[T, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {
     val chainMap: scala.collection.mutable.Map[T, Element[U]] = LazyValues(chain.universe).getMap(chain)
-    val outputVar = Variable(chain)
+    val outputVar = Variable(chain).asInstanceOf[ElementVariable[U]]
     val parentVar = Variable(chain.parent)
 
     // create a selectionVar and Factor to take the place of the parent/output combination
@@ -67,11 +67,11 @@ object ChainFactory {
    * Create a temporary variable representing the combination of the parent variable and the chain
    * variable
    */
-  private def makeSelectorVariable[T, U](parent: Variable[T], overallVar: Variable[U]): Variable[_] = {
+  private def makeSelectorVariable[U](parent: Variable[_], overallVar: ElementVariable[U]): Variable[_] = {
     val selectorSize = parent.size * overallVar.size
 
-    val values = parent.range.flatMap((p: Extended[T]) => overallVar.range.map((o: Extended[U]) => (p, o)))
-    new InternalChainVariable(values.map(v => Regular(v)), overallVar.asInstanceOf[ElementVariable[U]])
+    val values: List[List[Extended[_]]] = parent.range.flatMap(p => overallVar.range.map(o => List(p, o)))
+    new InternalChainVariable(values.map(v => Regular(v)), overallVar)
   }
 
   /**
