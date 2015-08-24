@@ -30,6 +30,12 @@ import com.cra.figaro.algorithm.factored.factors.Variable
  * To create a new component for an element, you need to say what problem it belongs to.
  */
 class ComponentCollection {
+  /**
+   * Maps a variable to the parents needed for creating blocks using Gibbs sampling.
+   * TODO: test if this variable causes memory leaks.
+   */
+  val variableParents: Map[Variable[_], Set[Variable[_]]] = Map().withDefaultValue(Set())
+
   /** All the components in the collection, each associated with an element. */
   val components: Map[Element[_], ProblemComponent[_]] = Map()
 
