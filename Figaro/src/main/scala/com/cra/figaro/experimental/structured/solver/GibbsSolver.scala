@@ -51,7 +51,7 @@ extends BaseUnweightedSampler(null) with ProbabilisticGibbs with OneTime {
       val factorIndex = targetVars.map(currentSamples(_))
       result.set(factorIndex, result.get(factorIndex) + 1)
     }
-    List(result)
+    List(result.mapTo(_ / numSamples))
   }
 
   val dependentUniverses = null
