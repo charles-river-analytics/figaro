@@ -71,8 +71,10 @@ trait Gibbs[T] extends BaseUnweightedSampler with FactoredAlgorithm[T] {
 }
 
 /**
- * The default trait for creating blocks.
- * Works on Chain, Apply, Atomic, and Constant elements.
+ * The default trait for creating blocks. Works on Chain, Apply, Atomic, and Constant elements.
+ * Note that our choice of blocking scheme fails when the results of a Chain have disjoint ranges.
+ * We are forced to do this to prevent exponentially slow time performance on models with Chains.
+ * A more detailed explanation is available in the FactorProduct trait in BlockSampler.scala.
  */
 trait ChainApplyBlockingGibbs extends Gibbs[Double] {
   // Maps a variable to its deterministic parents
@@ -92,7 +94,7 @@ trait ChainApplyBlockingGibbs extends Gibbs[Double] {
 
     // This handles internal variables in Chains
     // We treat all of the result variables, as well as the parent variable, as deterministic parents
-    case icv: InternalChainVariable[_, _] => {
+    case icv: InternalChainVariable[_] => {
       val chain = icv.chain.element.asInstanceOf[Chain[_, _]]
       val chainResults: Set[Variable[_]] = LazyValues(universe).getMap(chain).values.map(Variable(_)).toSet
       (icv, chainResults + Variable(chain.parent))
@@ -173,7 +175,7 @@ abstract class ProbQueryGibbs(override val universe: Universe, targets: Element[
   val dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
   val dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double,
   val burnIn: Int, val interval: Int,
-  val blockToSampler: Gibbs.BlockInfo => BlockSampler, upperBounds: Boolean = false)
+  val blockToSampler: Gibbs.BlockSamplerCreator, upperBounds: Boolean = false)
   extends BaseUnweightedSampler(universe, targets:_*)
   with ProbabilisticGibbs with UnweightedSampler {
 
@@ -204,6 +206,9 @@ object Gibbs {
   // Information passed to BlockSampler constructor
   type BlockInfo = (Block, List[Factor[Double]])
 
+  // Constructor for BlockSampler
+  type BlockSamplerCreator = BlockInfo => BlockSampler
+
   /**
    * Create a one-time Gibbs sampler using the given number of samples and target elements.
    */
@@ -217,7 +222,7 @@ object Gibbs {
    * Create a one-time Gibbs sampler using the given number of samples, the number of samples to burn in,
    * the sampling interval, the BlockSampler generator, and target elements.
    */
-  def apply(mySamples: Int, burnIn: Int, interval: Int, blockToSampler: BlockInfo => BlockSampler, targets: Element[_]*)(implicit universe: Universe) =
+  def apply(mySamples: Int, burnIn: Int, interval: Int, blockToSampler: BlockSamplerCreator, targets: Element[_]*)(implicit universe: Universe) =
     new ProbQueryGibbs(universe, targets: _*)(
       List(),
       (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u),
@@ -230,7 +235,7 @@ object Gibbs {
    */
   def apply(dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
     dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double,
-    mySamples: Int, burnIn: Int, interval: Int, blockToSampler: BlockInfo => BlockSampler, targets: Element[_]*)(implicit universe: Universe) =
+    mySamples: Int, burnIn: Int, interval: Int, blockToSampler: BlockSamplerCreator, targets: Element[_]*)(implicit universe: Universe) =
     new ProbQueryGibbs(universe, targets: _*)(
       dependentUniverses,
       dependentAlgorithm,
@@ -249,7 +254,7 @@ object Gibbs {
    * Create an anytime Gibbs sampler using the given number of samples to burn in,
    * the sampling interval, the BlockSampler generator, and target elements.
    */
-  def apply(burnIn: Int, interval: Int, blockToSampler: BlockInfo => BlockSampler, targets: Element[_]*)(implicit universe: Universe) =
+  def apply(burnIn: Int, interval: Int, blockToSampler: BlockSamplerCreator, targets: Element[_]*)(implicit universe: Universe) =
     new ProbQueryGibbs(universe, targets: _*)(
       List(),
       (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u),
@@ -262,7 +267,7 @@ object Gibbs {
    */
   def apply(dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
     dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double,
-    burnIn: Int, interval: Int, blockToSampler: BlockInfo => BlockSampler, targets: Element[_]*)(implicit universe: Universe) =
+    burnIn: Int, interval: Int, blockToSampler: BlockSamplerCreator, targets: Element[_]*)(implicit universe: Universe) =
     new ProbQueryGibbs(universe, targets: _*)(
       dependentUniverses,
       dependentAlgorithm,
@@ -272,7 +277,7 @@ object Gibbs {
    * Use Gibbs sampling to compute the probability that the given element satisfies the given predicate.
    */
   def probability[T](target: Element[T], predicate: T => Boolean): Double = {
-    val alg = Gibbs(100000, target)
+    val alg = Gibbs(10000, target)
     alg.start()
     val result = alg.probability(target, predicate)
     alg.kill()

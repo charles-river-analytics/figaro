@@ -45,9 +45,9 @@ object WalkSAT {
         case _ =>
       }
 
-      case icv: InternalChainVariable[_, _] => {
+      case icv: InternalChainVariable[_] => {
         val chain = icv.chain.element.asInstanceOf[Chain[_, _]]
-        val chainResults: Set[Variable[_]] = LazyValues(icv.chain.element.universe).getMap(chain).values.map(Variable(_)).toSet
+        val chainResults: Set[Variable[_]] = LazyValues(chain.universe).getMap(chain).values.map(Variable(_)).toSet
         variableParents(icv) = chainResults + Variable(chain.parent)
         variableParents(icv.chain) = Set(icv)
       }

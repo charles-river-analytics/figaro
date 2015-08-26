@@ -15,6 +15,7 @@ package com.cra.figaro.experimental.structured
 
 import com.cra.figaro.algorithm.factored.factors.Factor
 import com.cra.figaro.algorithm.factored.factors.Variable
+import com.cra.figaro.experimental.factored._
 
 package object solver {
   /**
@@ -22,6 +23,23 @@ package object solver {
    * It returns a list of factors that mention only the preserved variables.
    */
   type Solver = (Problem, Set[Variable[_]], Set[Variable[_]], List[Factor[Double]]) => List[Factor[Double]]
+
+  /**
+   * Creates a Gibbs sampling solver.
+   * @param numSamples number of samples to take
+   * @param burnIn number of burn-in samples to throw away
+   * @param interval number of samples to throw away between recorded samples
+   * @param blockToSampler function for creating Gibbs block samplers
+   * @param problem the problem to solve
+   * @param toEliminate the variables to be eliminated
+   * @param toPreserve the variables to be preserved (not eliminated)
+   * @param factors all the factors in the problem
+   */
+  def gibbs(numSamples: Int, burnIn: Int, interval: Int, blockToSampler: Gibbs.BlockSamplerCreator)
+  (problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): List[Factor[Double]] = {
+    val gibbs = new GibbsSolver(problem, toEliminate, toPreserve, factors, numSamples, burnIn, interval, blockToSampler)
+    gibbs.go()
+  }
 
   /**
    * Creates a variable elimination solver.

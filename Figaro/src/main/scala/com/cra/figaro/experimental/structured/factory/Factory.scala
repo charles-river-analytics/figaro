@@ -128,7 +128,7 @@ object Factory {
    */
 
   def makeConditionalSelector[T,U](pairVar: Variable[List[Extended[_]]], parentXVal: Extended[T], outcomeVar: Variable[U]): Factor[Double] = {
-    val factor = new BasicFactor[Double](List(pairVar), List(outcomeVar))
+    val factor = new ConditionalSelector[Double](List(pairVar), List(outcomeVar))
     for {
       (pairXVal, pairIndex) <- pairVar.range.zipWithIndex
       (outcomeXVal, outcomeIndex) <- outcomeVar.range.zipWithIndex

@@ -30,6 +30,7 @@ object ChainFactory {
     val parentVar = Factory.getVariable(cc, chain.parent)
     val chainVar = Factory.getVariable(cc, chain)
     val (pairVar, pairFactor) = Factory.makeTupleVarAndFactor(cc, parentVar, chainVar)
+    cc.variableParents(pairVar) = Set(parentVar, chainVar)
     var tempFactors = parentVar.range.zipWithIndex flatMap (pair => {
       val (parentVal, parentIndex) = pair
       if (parentVal.isRegular) {
@@ -44,6 +45,7 @@ object ChainFactory {
         val outcomeElem = nestedProblem.target.asInstanceOf[Element[U]]
         val formalVar = Factory.getVariable(cc, outcomeElem)
         val actualVar = if (!nestedProblem.global(formalVar)) Factory.makeVariable(cc, formalVar.valueSet) else formalVar
+        cc.variableParents(chainVar) += actualVar
         chainComp.actualSubproblemVariables += parentVal.value -> actualVar
         List(Factory.makeConditionalSelector(pairVar, parentVal, actualVar))
       }

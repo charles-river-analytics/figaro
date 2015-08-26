@@ -30,6 +30,7 @@ object ApplyFactory {
   def makeFactors[T, U](cc: ComponentCollection, apply: Apply1[T, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {
     val arg1Var = Factory.getVariable(cc, apply.arg1)
     val resultVar = Factory.getVariable(cc, apply)
+    cc.variableParents(resultVar) += arg1Var
     val applyValues = cc(apply).range
     val factor = new SparseFactor[Double](List(arg1Var), List(resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
@@ -55,6 +56,7 @@ object ApplyFactory {
     val arg1Var = Factory.getVariable(cc, apply.arg1)
     val arg2Var = Factory.getVariable(cc, apply.arg2)
     val resultVar = Factory.getVariable(cc, apply)
+    cc.variableParents(resultVar) ++= Set(arg1Var, arg2Var)
     val applyValues = cc(apply).range
     val factor = new SparseFactor[Double](List(arg1Var, arg2Var), List(resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
@@ -85,6 +87,7 @@ object ApplyFactory {
     val arg2Var = Factory.getVariable(cc, apply.arg2)
     val arg3Var = Factory.getVariable(cc, apply.arg3)
     val resultVar = Factory.getVariable(cc, apply)
+    cc.variableParents(resultVar) ++= Set(arg1Var, arg2Var, arg3Var)
     val applyValues = cc(apply).range
     val factor = new SparseFactor[Double](List(arg1Var, arg2Var, arg3Var), List(resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
@@ -116,6 +119,7 @@ object ApplyFactory {
     val arg3Var = Factory.getVariable(cc, apply.arg3)
     val arg4Var = Factory.getVariable(cc, apply.arg4)
     val resultVar = Factory.getVariable(cc, apply)
+    cc.variableParents(resultVar) ++= Set(arg1Var, arg2Var, arg3Var, arg4Var)
     val applyValues = cc(apply).range
     val factor = new SparseFactor[Double](List(arg1Var, arg2Var, arg3Var, arg4Var), List(resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
@@ -150,6 +154,7 @@ object ApplyFactory {
     val arg4Var = Factory.getVariable(cc, apply.arg4)
     val arg5Var = Factory.getVariable(cc, apply.arg5)
     val resultVar = Factory.getVariable(cc, apply)
+    cc.variableParents(resultVar) ++= Set(arg1Var, arg2Var, arg3Var, arg4Var, arg5Var)
     val applyValues = cc(apply).range
     val factor = new SparseFactor[Double](List(arg1Var, arg2Var, arg3Var, arg4Var, arg5Var), List(resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex

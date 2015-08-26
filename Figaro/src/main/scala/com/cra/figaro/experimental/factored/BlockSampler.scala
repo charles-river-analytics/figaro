@@ -23,18 +23,21 @@ object BlockSampler {
   /**
    * Caches 1000 factors and uses a VE-like procedure to compute joint factors
    */
-  def default = (blockInfo: Gibbs.BlockInfo) => new SimpleBlockSampler(blockInfo) with Cached with FactorProduct
+  def default = (blockInfo: Gibbs.BlockInfo) =>
+    new SimpleBlockSampler(blockInfo) with Cached with FactorProduct
 
   /**
    * Like BlockSampler.default, but also uses Gaussian weighting scheme when there exist Element[Double]s that are results of Chains
    */
-  def continuous = (blockInfo: Gibbs.BlockInfo) => new SimpleBlockSampler(blockInfo) with Cached with GaussianWeight with FactorProduct
+  def continuous(_variance: Double) = (blockInfo: Gibbs.BlockInfo) =>
+    new SimpleBlockSampler(blockInfo) with Cached with GaussianWeight with FactorProduct { val variance = _variance }
 
   /**
    * Computes the joint distribution over the block by iterating through every combination of assignments of variables
    * Takes time exponential in the size of the block, and is only recommended for blocks with no determinism
    */
-  def joint = (blockInfo: Gibbs.BlockInfo) => new SimpleBlockSampler(blockInfo) with Cached
+  def joint = (blockInfo: Gibbs.BlockInfo) =>
+    new SimpleBlockSampler(blockInfo) with Cached
 }
 
 /**
@@ -125,12 +128,16 @@ class SimpleBlockSampler(blockInfo: Gibbs.BlockInfo)
 }
 
 /**
- * A VE-like procedure that may work well on large but highly sparse blocks. For each adjacent factor,
- * this groups the rows of the factor into sub-factors according to possible Markov blanket assignments.
- * Each of these sub-factors is accumulated into a factor over factors, which essentially maps the
- * Markov blanket of the original factor to a conditional distribution over the block. This does not
- * store any new information, but rather takes the information in each factor and stores it in an
- * easier to use format.
+ * A VE-like procedure that works well on large but highly sparse blocks. For each adjacent factor, this
+ * groups the rows of the factor into sub-factors according to possible Markov blanket assignments. Each
+ * of these sub-factors is accumulated into a factor over factors, which essentially maps the Markov
+ * blanket of the original factor to a conditional distribution over the block. This does not store any
+ * new information, but rather takes the information in each factor and stores it in an easier to use
+ * format. This trait is the reason why we currently choose ''not'' to place a Chain's parent and the
+ * Chain itself in the same block, since we cannot efficiently compute the product of the sub-factors of
+ * the adjacent ConditionalSelector factors. In other cases we can make use of a priority queue to
+ * compute the product in an efficient order. For ConditionalSelectors there is no way to keep the
+ * intermediate factors sparse, and computing this product takes exponential time.
  */
 trait FactorProduct extends SimpleBlockSampler {
   lazy val mbLookupFactors = adjacentFactors.map(factor => {
@@ -180,7 +187,7 @@ trait FactorProduct extends SimpleBlockSampler {
     /*
      * This priority queue helps ensure that all intermediate products remain sparse. Even though we know
      * the final product should be sparse, it's possible for intermediate factors to become exponentially
-     * large in the size of the block if multiplied in the wrong order
+     * large in the size of the block if multiplied in the wrong order.
      */
     val queue = PriorityQueue(toMultiply:_*)(ord)
     while(queue.length > 1) {
@@ -222,20 +229,19 @@ trait Cached extends SimpleBlockSampler {
 }
 
 /**
- * Specialized sampling for continuous (i.e. of type Double) elements in Chains
+ * Specialized sampling for continuous (i.e. of type Double) elements in Chains. This differs from the
+ * default sampler in that it can override the zero probability states in ConditionalSelector factors.
+ * The idea here is that we allow a technically inconsistent state according to the factors when the
+ * value of the Chain and result element are close. This is needed for compound continuous elements
+ * because sampling will always produce disjoint ranges for each result element of the Chain, which
+ * creates determinism issues with the way we currently block variables. This solution has not been
+ * fully tested for accuracy of results.
  */
 trait DoubleWeight extends SimpleBlockSampler {
   override val adjacentFactors = blockInfo._2.map(factor => {
     factor match {
-      /*
-       * The only difference here from the above implementation is that this changes the zero probability states in ConditionalSelector factors
-       * i.e. we only make a special case for continuous elements in Chains
-       * We technically allow states that are inconsistent according to the factor graphs
-       * This is usually not a problem because the variables are continuous, so the states can still be consistent with the model
-       * Ultimately this is just an approximation and is not always guaranteed to work
-       */
       case _: ConditionalSelector[_] => {
-        val List(selector: InternalChainVariable[_, _], result) = factor.variables
+        val List(selector, result) = factor.variables
 
         val newFactor = factor.createFactor(List(selector), List(result))
         factor.getIndices.foreach(index => {
@@ -248,8 +254,8 @@ trait DoubleWeight extends SimpleBlockSampler {
 
             (selectorExtended, resultExtended) match {
               // This pattern matching basically just ensures that both the Chain and result are Doubles
-              case (Regular((_, Regular(chainValue: Double))), Regular(resultValue: Double)) =>
-                newFactor.set(index, logWeight(chainValue, resultValue, selector.chain.asInstanceOf[Variable[Double]]))
+              case (Regular(List(_, Regular(chainValue: Double))), Regular(resultValue: Double)) =>
+                newFactor.set(index, logWeight(chainValue, resultValue))
               case _ => newFactor.set(index, semiring.zero)
             }
           }
@@ -260,36 +266,25 @@ trait DoubleWeight extends SimpleBlockSampler {
     }
   })
 
-  // Function with which to assign weights in place of zeros
-  // It is assumed that if chainValue == resultValue, the result is 0.0
-  def logWeight(chainValue: Double, resultValue: Double, chain: Variable[Double]): Double
+  /**
+   * Function with which to assign weights in place of -Infinity. It is assumed that if
+   * chainValue == resultValue, the result is 0.0. Observe that setting this function to:
+   * {{{if(chainValue == resultValue) 0.0 else Double.NegativeInfinity}}}
+   * has the same effect as not using the DoubleWeight trait at all.
+   */
+  def logWeight(chainValue: Double, resultValue: Double): Double
 }
 
 /**
- * Assigns weights to continuous variables based on a Gaussian PDF
+ * Assigns weights to continuous variables based on a Gaussian PDF with a static variance
  */
 trait GaussianWeight extends DoubleWeight {
-  lazy val varianceMap: MutableMap[Variable[_], Double] = MutableMap()
-
-  /*
-   * The standard deviation is taken to be the difference between the Chain's minimum and maximum values, divided by the size of the Chain's support
-   * This means that, for example, if the possible values of the variable are uniformly distributed accorss its support,
-   * then given a value from the variable's support, the next higher or lower value will be approximately 1 standard deviation away
-   * This enables good mixing while also making it unlikely to sample when the resultValue and chainValue are far apart
+  /**
+   * The static variance used to compute the compatibility function
    */
-  def logWeight(resultValue: Double, chainValue: Double, chain: Variable[Double]): Double = {
-    // Cache the variance because iterating through the range every time is slow and unnecessary
-    val variance = varianceMap.get(chain) match {
-      case Some(variance) => variance
-      case None => {
-        val chainMin = chain.range.foldLeft(Double.PositiveInfinity)((min, ext) => if(ext.isRegular) min.min(ext.value) else min)
-        val chainMax = chain.range.foldLeft(Double.NegativeInfinity)((max, ext) => if(ext.isRegular) max.max(ext.value) else max)
-        val sdEstimate = (chainMax - chainMin) / chain.size
-        val varianceEstimate = sdEstimate * sdEstimate
-        varianceMap += chain -> varianceEstimate
-        varianceEstimate
-      }
-    }
+  val variance: Double
+
+  def logWeight(resultValue: Double, chainValue: Double): Double = {
     val diff = resultValue - chainValue
     // No need to multiply by a constant at the front because we normalize later anyways
     // Moreover, we want this to return 0.0 when diff == 0.0

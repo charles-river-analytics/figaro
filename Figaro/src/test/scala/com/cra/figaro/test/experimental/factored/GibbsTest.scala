@@ -46,7 +46,7 @@ class GibbsTest extends WordSpec with Matchers {
       val c = If(f, u1, u2)
       val alg = Gibbs(1, c)
       alg.initialize()
-      val icv = alg.variables.find(_.isInstanceOf[InternalChainVariable[_, _]]).get
+      val icv = alg.variables.find(_.isInstanceOf[InternalChainVariable[_]]).get
       val blocks = alg.createBlocks()
       blocks.map(_.toSet) should contain theSameElementsAs(List(
           Set(Variable(f), icv),
