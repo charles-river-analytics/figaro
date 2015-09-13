@@ -15,8 +15,8 @@ package com.cra.figaro.example.visualization
 import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound._
-import com.cra.figaro.util.visualization.{ResultsGUI}
-import com.cra.figaro.util.visualization.results.{DiscreteData}
+import com.cra.figaro.util.visualization.ResultsGUI
+import com.cra.figaro.util.visualization.results.ResultsData
 /**
  * A Bayesian network example
  */
@@ -46,7 +46,7 @@ object Burglary {
     alg.start()
     println("Probability of burglary: " + alg.probability(burglary, true))
     
-    gui.addResult("burglary", alg.distribution(burglary).toList)
+    gui.addResult(ResultsData("burglary", alg.distribution(burglary).toList))
 
     alg.kill
   }
