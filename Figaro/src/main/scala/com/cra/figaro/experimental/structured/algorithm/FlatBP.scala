@@ -1,6 +1,6 @@
 /*
- * StructuredVEBPChooser.scala
- * A hybrid algorithm that chooses between variable elimination and belief propagation for each component.
+ * StructuredBP.scala
+ * A structured factored inference algorithm using belief propagation.
  *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   March 1, 2015
@@ -10,7 +10,6 @@
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
-
 package com.cra.figaro.experimental.structured.algorithm
 
 import com.cra.figaro.algorithm.OneTimeProbQuery
@@ -21,14 +20,13 @@ import com.cra.figaro.algorithm.factored.factors.Factor
 import com.cra.figaro.experimental.structured.ComponentCollection
 import com.cra.figaro.experimental.structured.Problem
 import com.cra.figaro.experimental.structured.strategy.decompose._
-import com.cra.figaro.experimental.structured.solver.chooseVEOrBP
+import com.cra.figaro.experimental.structured.solver.beliefPropagation
 import com.cra.figaro.algorithm.factored.factors.SumProductSemiring
 import com.cra.figaro.experimental.structured.factory.Factory
 import com.cra.figaro.experimental.structured.Lower
-import com.cra.figaro.experimental.structured.strategy.solve.VEBPStrategy
+import com.cra.figaro.experimental.structured.strategy.solve.ConstantStrategy
 
-class StructuredVEBPChooser(val universe: Universe, scoreThreshold: Double, BPIterations: Int, targets: Element[_]*)
-extends Algorithm with OneTimeProbQuery {
+class FlatBP(val universe: Universe, iterations: Int, targets: Element[_]*) extends Algorithm with OneTimeProbQuery {
   val queryTargets = targets
 
   var targetFactors: Map[Element[_], Factor[Double]] = _
@@ -41,7 +39,7 @@ extends Algorithm with OneTimeProbQuery {
     val problem = new Problem(cc, targets.toList)
     val evidenceElems = universe.conditionedElements ::: universe.constrainedElements
     evidenceElems.foreach(elem => if (!cc.contains(elem)) problem.add(elem))
-    (new RecursiveStrategy(problem, new VEBPStrategy(scoreThreshold, BPIterations), defaultRangeSizer, Lower, false)).execute        
+    (new FlatStrategy(problem, new ConstantStrategy(beliefPropagation(iterations)), defaultRangeSizer, Lower, false)).execute    
     val joint = problem.solution.foldLeft(Factory.unit(SumProductSemiring()))(_.product(_))
 
     def marginalizeToTarget(target: Element[_]): Unit = {
@@ -54,7 +52,6 @@ extends Algorithm with OneTimeProbQuery {
 
     targets.foreach(marginalizeToTarget(_))
   }
-
 
   /**
    * Computes the normalized distribution over a single target element.
@@ -76,26 +73,37 @@ extends Algorithm with OneTimeProbQuery {
   }
 }
 
-object StructuredVEBPChooser {
+/*
+ * StructuredBP.scala
+ * A structured belief propagation algorithm.
+ *
+ * Created By:      Avi Pfeffer (apfeffer@cra.com)
+ * Creation Date:   March 1, 2015
+ *
+ * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * See http://www.cra.com or email figaro@cra.com for information.
+ *
+ * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
+
+object FlatBP {
   /**
-   * Create a hybrid algorithm that chooses between variable elimination and belief propagation on each subproblem.
-   * @param scoreThreshold The minimum value of the increase in score caused by eliminating a variable that causes the hybrid algorithm to
-   * choose BP for a subproblem.
-   * @param bpIterations The number of iterations to use when BP is chosen for a subproblem.
-   * @param targets The query targets
+   * Create a structured belief propagation algorithm.
+   * @param iterations the number of iterations to use for each subproblem
+   * @param targets the query targets, which will all be part of the top level problem
    */
-  def apply(scoreThreshold: Double, BPIterations: Int, targets: Element[_]*) = {
+  def apply(iterations: Int, targets: Element[_]*) = {
     if (targets.isEmpty) throw new IllegalArgumentException("Cannot run VE with no targets")
     val universes = targets.map(_.universe).toSet
     if (universes.size > 1) throw new IllegalArgumentException("Cannot have targets in different universes")
-    new StructuredVEBPChooser(targets(0).universe, scoreThreshold, BPIterations, targets:_*)
+    new FlatBP(targets(0).universe, iterations, targets:_*)
   }
 
   /**
-   * Use the hybrid algorithm to compute the probability that the given element satisfies the given predicate.
+   * Use BP to compute the probability that the given element satisfies the given predicate.
    */
-  def probability[T](target: Element[T], predicate: T => Boolean, threshold: Double, iterations: Int): Double = {
-    val alg = StructuredVEBPChooser(threshold, iterations, target)
+  def probability[T](target: Element[T], predicate: T => Boolean, iterations: Int): Double = {
+    val alg = FlatBP(iterations, target)
     alg.start()
     val result = alg.probability(target, predicate)
     alg.kill()
@@ -103,8 +111,8 @@ object StructuredVEBPChooser {
   }
 
   /**
-   * Use the hybrid algorithm to compute the probability that the given element has the given value.
+   * Use BP to compute the probability that the given element has the given value.
    */
-  def probability[T](target: Element[T], value: T, threshold: Double = 0.0, iterations: Int = 100): Double =
-    probability(target, (t: T) => t == value, threshold, iterations)
+  def probability[T](target: Element[T], value: T, iterations: Int = 100): Double =
+    probability(target, (t: T) => t == value, iterations)
 }

@@ -82,6 +82,7 @@ trait ChainApplyBlockingGibbs extends Gibbs[Double] {
     case ev: ElementVariable[_] => ev.element match {
       // For Chain, we treat all of the result variables as deterministic parents
       case c: Chain[_, _] => {
+        
         val chainResults: Set[Variable[_]] = LazyValues(universe).getMap(c).values.map(Variable(_)).toSet
         (ev, chainResults)
       }
@@ -96,6 +97,9 @@ trait ChainApplyBlockingGibbs extends Gibbs[Double] {
     // We treat all of the result variables, as well as the parent variable, as deterministic parents
     case icv: InternalChainVariable[_] => {
       val chain = icv.chain.element.asInstanceOf[Chain[_, _]]
+      /*
+         *  **** This will not work with SFI, needs to be changed ****
+         */
       val chainResults: Set[Variable[_]] = LazyValues(universe).getMap(chain).values.map(Variable(_)).toSet
       (icv, chainResults + Variable(chain.parent))
     }
