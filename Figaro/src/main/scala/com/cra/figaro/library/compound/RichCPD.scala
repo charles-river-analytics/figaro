@@ -38,7 +38,7 @@ class RichCPD2[T1, T2, U](
   clauses: Seq[((CPDCase[T1], CPDCase[T2]), Element[U])],
   collection: ElementCollection) extends CachingChain[(T1, T2), U](
   name,
-  ^^(arg1, arg2),
+  ^^(arg1, arg2)("", collection),
   (p: (T1, T2)) => RichCPD.getMatch(clauses, p._1, p._2),
   collection)
 
@@ -53,7 +53,7 @@ class RichCPD3[T1, T2, T3, U](
   clauses: Seq[((CPDCase[T1], CPDCase[T2], CPDCase[T3]), Element[U])],
   collection: ElementCollection) extends CachingChain[(T1, T2, T3), U](
   name,
-  ^^(arg1, arg2, arg3),
+  ^^(arg1, arg2, arg3)("", collection),
   (p: (T1, T2, T3)) => RichCPD.getMatch(clauses, p._1, p._2, p._3),
   collection)
 
@@ -69,7 +69,7 @@ class RichCPD4[T1, T2, T3, T4, U](
   clauses: Seq[((CPDCase[T1], CPDCase[T2], CPDCase[T3], CPDCase[T4]), Element[U])],
   collection: ElementCollection) extends CachingChain[(T1, T2, T3, T4), U](
   name,
-  ^^(arg1, arg2, arg3, arg4),
+  ^^(arg1, arg2, arg3, arg4)("", collection),
   (p: (T1, T2, T3, T4)) => RichCPD.getMatch(clauses, p._1, p._2, p._3, p._4),
   collection)
 
@@ -86,7 +86,7 @@ class RichCPD5[T1, T2, T3, T4, T5, U](
   clauses: Seq[((CPDCase[T1], CPDCase[T2], CPDCase[T3], CPDCase[T4], CPDCase[T5]), Element[U])],
   collection: ElementCollection) extends CachingChain[(T1, T2, T3, T4, T5), U](
   name,
-  ^^(arg1, arg2, arg3, arg4, arg5),
+  ^^(arg1, arg2, arg3, arg4, arg5)("", collection),
   (p: (T1, T2, T3, T4, T5)) => RichCPD.getMatch(clauses, p._1, p._2, p._3, p._4, p._5),
   collection)
 
