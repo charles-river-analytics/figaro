@@ -26,7 +26,7 @@ import com.cra.figaro.experimental.structured.strategy.solve.SolvingStrategy
  * The targets are elements that appear in this problem that are visible outside.
  * They might be newly defined in this problem or they might be defined previously, but either way, they should not be eliminated.
  */
-class Problem(val collection: ComponentCollection, targets: List[Element[_]] = List()) {
+class Problem(val collection: ComponentCollection, val targets: List[Element[_]] = List()) {
   /**
    *  Components outside of this problem that appear in the solution to this problem.
    */
@@ -66,8 +66,9 @@ class Problem(val collection: ComponentCollection, targets: List[Element[_]] = L
    * Determines if a variable is in scope outside of this problem
    */
   def global(variable: Variable[_]): Boolean = {
-    !collection.intermediates.contains(variable) &&
-    !contains(collection.variableToComponent(variable).problem)
+    val a = !collection.intermediates.contains(variable)
+    val b = !contains(collection.variableToComponent(variable).problem)
+    a && b
   }
   
 
@@ -85,13 +86,14 @@ class Problem(val collection: ComponentCollection, targets: List[Element[_]] = L
     otherProblem == this || components.exists(componentContains(_))
   }
 
+
   /**
    * Solve the problem defined by all the components' current factors.
    * This will also set the globals accordingly.
    * All components in this problem and contained subproblems should be eliminated in the solution.
    */
-  def solve(strategy: SolvingStrategy, bounds: Bounds = Lower) {
-    val targetComponents = targets.map(collection(_))
+  def solve( strategy: SolvingStrategy, bounds: Bounds = Lower) {
+    val targetComponents = targets.map(collection(_))    
     val allFactors = components.flatMap(c => c.nonConstraintFactors ::: c.constraintFactors(bounds))
     val allVariables = (Set[Variable[_]]() /: allFactors)(_ ++ _.variables)
     val (toEliminate, toPreserve) = allVariables.partition(internal(_))

@@ -10,12 +10,9 @@
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
-package com.cra.figaro.experimental.structured.algorithm
+package com.cra.figaro.experimental.structured.algorithm.flat
 
-import com.cra.figaro.algorithm.OneTimeProbQuery
-import com.cra.figaro.algorithm.Algorithm
-import com.cra.figaro.language.Element
-import com.cra.figaro.language.Universe
+import com.cra.figaro.language._
 import com.cra.figaro.algorithm.factored.factors.Factor
 import com.cra.figaro.experimental.structured.ComponentCollection
 import com.cra.figaro.experimental.structured.Problem
@@ -25,66 +22,24 @@ import com.cra.figaro.algorithm.factored.factors.SumProductSemiring
 import com.cra.figaro.experimental.structured.factory.Factory
 import com.cra.figaro.experimental.structured.Lower
 import com.cra.figaro.experimental.structured.strategy.solve.ConstantStrategy
+import com.cra.figaro.experimental.structured.algorithm.StructuredAlgorithm
 
-class FlatBP(val universe: Universe, iterations: Int, targets: Element[_]*) extends Algorithm with OneTimeProbQuery {
-  val queryTargets = targets
+class FlatBP(universe: Universe, iterations: Int, targets: Element[_]*) extends StructuredAlgorithm(universe, targets:_*) {
 
-  var targetFactors: Map[Element[_], Factor[Double]] = _
-
-  var cc: ComponentCollection = _
-
-  def run() {
-    cc = new ComponentCollection
-    targetFactors = Map()
+  val semiring = SumProductSemiring()
+  
+  def run() {    
     val problem = new Problem(cc, targets.toList)
     val evidenceElems = universe.conditionedElements ::: universe.constrainedElements
     evidenceElems.foreach(elem => if (!cc.contains(elem)) problem.add(elem))
-    (new FlatStrategy(problem, new ConstantStrategy(beliefPropagation(iterations)), defaultRangeSizer, Lower, false)).execute    
-    val joint = problem.solution.foldLeft(Factory.unit(SumProductSemiring()))(_.product(_))
-
-    def marginalizeToTarget(target: Element[_]): Unit = {
-      val targetVar = cc(target).variable
-      val unnormalizedTargetFactor = joint.marginalizeTo(SumProductSemiring(), targetVar)
-      val z = unnormalizedTargetFactor.foldLeft(0.0, _ + _)
-      val targetFactor = unnormalizedTargetFactor.mapTo((d: Double) => d / z)
-      targetFactors += target -> targetFactor
-    }
-
-    targets.foreach(marginalizeToTarget(_))
+    val strategy = DecompositionStrategy.recursiveFlattenStrategy(problem, new ConstantStrategy(beliefPropagation(iterations)), defaultRangeSizer, Lower, false)
+    strategy.execute
+    val joint = problem.solution.foldLeft(Factory.unit(SumProductSemiring()))(_.product(_))  
+    targets.foreach(t => marginalizeToTarget(t, joint))
   }
 
-  /**
-   * Computes the normalized distribution over a single target element.
-   */
-  def computeDistribution[T](target: Element[T]): Stream[(Double, T)] = {
-    val factor = targetFactors(target)
-    val targetVar = cc(target).variable
-    val dist = factor.getIndices.filter(f => targetVar.range(f.head).isRegular).map(f => (factor.get(f), targetVar.range(f.head).value))
-    // normalization is unnecessary here because it is done in marginalizeTo
-    dist.toStream
-  }
-
- /**
-   * Computes the expectation of a given function for single target element.
-   */
-  def computeExpectation[T](target: Element[T], function: T => Double): Double = {
-    def get(pair: (Double, T)) = pair._1 * function(pair._2)
-    (0.0 /: computeDistribution(target))(_ + get(_))
-  }
+  
 }
-
-/*
- * StructuredBP.scala
- * A structured belief propagation algorithm.
- *
- * Created By:      Avi Pfeffer (apfeffer@cra.com)
- * Creation Date:   March 1, 2015
- *
- * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
- * See http://www.cra.com or email figaro@cra.com for information.
- *
- * See http://www.github.com/p2t2/figaro for a copy of the software license.
- */
 
 object FlatBP {
   /**

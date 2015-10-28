@@ -32,11 +32,11 @@ private[figaro] abstract class DecompositionStrategy(val problem: Problem, val s
    * Executes (i.e., solves) the problem
    */
   def execute(): Unit
-  
+
   /**
    * Decomposes a nested problem
    */
-  def decompose(nestedProblem: Problem, done: Set[ProblemComponent[_]]): Unit
+  def decompose(nestedProblem: Problem, done: Set[ProblemComponent[_]]): Option[DecompositionStrategy]
 
   protected def checkArg[T](element: Element[T]): ProblemComponent[T] = {
     if (problem.collection.contains(element)) problem.collection(element)
@@ -50,6 +50,29 @@ private[figaro] abstract class DecompositionStrategy(val problem: Problem, val s
     comp.generateRange(rangeSizer(comp))
     comp.makeNonConstraintFactors(parameterized)
     comp.makeConstraintFactors(bounds)
+  }
+
+}
+
+object DecompositionStrategy {
+
+  def recursiveStructuredStrategy(problem: Problem, solvingStrategy: SolvingStrategy, rangeSizer: RangeSizer,
+    bounds: Bounds, parameterized: Boolean) = new RecursiveStructuredStrategy(problem, solvingStrategy, rangeSizer, bounds, parameterized)
+
+  def recursiveFlattenStrategy(problem: Problem, solvingStrategy: SolvingStrategy, rangeSizer: RangeSizer,
+    bounds: Bounds, parameterized: Boolean) = new RecursiveFlattenStrategy(problem, solvingStrategy, rangeSizer, bounds, parameterized) {
+    override def execute() = {
+      backwardChain(problem.components, Set[ProblemComponent[_]]())
+      problem.solve(solvingStrategy, bounds)
+    }
+  }
+  
+  def recursiveRaisingStrategy(problem: Problem, solvingStrategy: SolvingStrategy, raisingCriteria: (Problem, Problem) => Boolean, rangeSizer: RangeSizer,
+    bounds: Bounds, parameterized: Boolean) = new RecursiveRaisingStrategy(problem, solvingStrategy, raisingCriteria, rangeSizer, bounds, parameterized) {
+    override def execute() = {
+      backwardChain(problem.components, Set[ProblemComponent[_]]())
+      problem.solve(solvingStrategy, bounds)
+    }
   }
 
 }

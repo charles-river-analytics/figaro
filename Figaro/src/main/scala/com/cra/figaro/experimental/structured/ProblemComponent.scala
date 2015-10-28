@@ -157,6 +157,12 @@ abstract class ExpandableComponent[ParentValue, Value](problem: Problem, parent:
  */
 class ChainComponent[ParentValue, Value](problem: Problem, val chain: Chain[ParentValue, Value])
   extends ExpandableComponent[ParentValue, Value](problem, chain.parent, chain) {
+  
+
+  type T = ParentValue
+  type V = Value
+
+  
   /**
    *  The subproblems represent nested problems from chains.
    *  They are created for particular parent values.
@@ -183,39 +189,51 @@ class ChainComponent[ParentValue, Value](problem: Problem, val chain: Chain[Pare
    */
   override def makeNonConstraintFactors(parameterized: Boolean = false) {
     super.makeNonConstraintFactors(parameterized)
-    val subproblemFactors =
       for {
-        (parentValue, subproblem) <- subproblems
-        factor <- subproblem.solution
-      } yield Factory.replaceVariable(factor, problem.collection(subproblem.target).variable, actualSubproblemVariables(parentValue))
-    nonConstraintFactors = subproblemFactors.toList ::: nonConstraintFactors
+        (parentValue, subproblem) <- subproblems        
+      } {
+        raiseSubproblemSolution(parentValue, subproblem)
+      }
   }
 
-  // Raise the given subproblem into this problem. Note that factors for the chain must have been created already
-  // This probably needs some more thought!
-  def raise(parentValue: ParentValue, subproblem: NestedProblem[Value], bounds: Bounds = Lower): Unit = {
-    
-    // First we have to raise the factors associated with the target of each subproblem
-    val comp = subproblem.collection(subproblem.target)
-    // The variables between the chain and the nested problem are not matched. So we have to map
-    // the variables in subproblem factors to the variables in the chain
-    val targetCF = comp.constraintFactors(bounds).map(Factory.replaceVariable(_, comp.variable, actualSubproblemVariables(parentValue)))
-    val targetNCF = comp.nonConstraintFactors.map(Factory.replaceVariable(_, comp.variable, actualSubproblemVariables(parentValue)))
-    
-    /*
-     * Now we have to lift all the factors in the subproblem that are not the result variable. 
-     */ 
-    val otherCF = subproblem.components.filterNot(_ == comp).flatMap(c => c.constraintFactors(bounds))
-    val otherNCF = subproblem.components.filterNot(_ == comp).flatMap(c => nonConstraintFactors)
-        
-    if (bounds == Lower) constraintLower = constraintLower ::: targetCF ::: otherCF
-    else constraintUpper = constraintUpper ::: targetCF ::: otherCF
-    nonConstraintFactors = nonConstraintFactors ::: targetNCF ::: otherNCF
+  def raiseSubproblemSolution(parentValue: ParentValue, subproblem: NestedProblem[Value]): Unit = {
+   val factors = for {
+        factor <- subproblem.solution
+      } yield Factory.replaceVariable(factor, problem.collection(subproblem.target).variable, actualSubproblemVariables(parentValue))
+   nonConstraintFactors = factors.toList ::: nonConstraintFactors
   }
   
+  // Raise the given subproblem into this problem. Note that factors for the chain must have been created already
+  // This probably needs some more thought!
+  def raise(parentValue: ParentValue, bounds: Bounds = Lower): Unit = {
+
+    if (subproblems.contains(parentValue) && !subproblems(parentValue).solved ) {
+
+      val subproblem = subproblems(parentValue)
+      // First we have to raise the factors associated with the target of each subproblem
+      val comp = subproblem.collection(subproblem.target)
+      // The variables between the chain and the nested problem are not matched. So we have to map
+      // the variables in subproblem factors to the variables in the chain
+      //val targetCF = comp.constraintFactors(bounds).map(Factory.replaceVariable(_, comp.variable, actualSubproblemVariables(parentValue)))
+      //val targetNCF = comp.nonConstraintFactors.map(Factory.replaceVariable(_, comp.variable, actualSubproblemVariables(parentValue)))
+
+      /*
+     * Now we have to lift all the factors in the subproblem that are not the result variable. 
+     */
+      //val otherCF = subproblem.components.filterNot(_ == comp).flatMap(c => c.constraintFactors(bounds))
+      //val otherNCF = subproblem.components.filterNot(_ == comp).flatMap(c => nonConstraintFactors)
+      val CF = subproblem.components.flatMap(c => c.constraintFactors(bounds).map(Factory.replaceVariable(_, comp.variable, actualSubproblemVariables(parentValue))))
+      val NCF = subproblem.components.flatMap(c => c.nonConstraintFactors.map(Factory.replaceVariable(_, comp.variable, actualSubproblemVariables(parentValue))))
+
+      if (bounds == Lower) constraintLower = constraintLower ::: CF
+      else constraintUpper = constraintUpper ::: CF
+      nonConstraintFactors = nonConstraintFactors ::: NCF
+    }
+  }
+
   // Raise all subproblems into this problem
-  def raise(bounds: Bounds) { subproblems.foreach(sp => raise(sp._1, sp._2, bounds)) }
-  
+  def raise(bounds: Bounds) { subproblems.foreach(sp => raise(sp._1, bounds)) }
+
 }
 
 /**
