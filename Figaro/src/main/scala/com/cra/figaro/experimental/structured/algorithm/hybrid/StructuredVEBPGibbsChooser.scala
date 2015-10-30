@@ -31,11 +31,8 @@ class StructuredVEBPGibbsChooser(universe: Universe, scoreThreshold: Double, det
   val semiring = SumProductSemiring()
 
   def run() {
-    val problem = new Problem(cc, targets.toList)
-    val evidenceElems = universe.conditionedElements ::: universe.constrainedElements
-    evidenceElems.foreach(elem => if (!cc.contains(elem)) problem.add(elem))
     val strategy = DecompositionStrategy.recursiveStructuredStrategy(problem, new VEBPGibbsStrategy(scoreThreshold, determThreshold, bpIters, numSamples, burnIn, interval, blockToSampler), defaultRangeSizer, Lower, false)
-    strategy.execute
+    strategy.execute(initialComponents)
     val joint = problem.solution.foldLeft(Factory.unit(SumProductSemiring()))(_.product(_))
     targets.foreach(t => marginalizeToTarget(t, joint))
   }

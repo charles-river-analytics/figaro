@@ -33,15 +33,15 @@ private[figaro] class RaisingStrategy(problem: Problem, solvingStrategy: Solving
   bounds: Bounds, parameterized: Boolean)
   extends StructuredStrategy(problem, solvingStrategy, recursingStrategy, rangeSizer, bounds, parameterized) with BackwardChain {
 
-  override def execute() {
-    backwardChain(problem.components, Set[ProblemComponent[_]]())
-    //if (!raised) problem.solve(solvingStrategy)
+  override def execute(components: List[ProblemComponent[_]]) {
+    backwardChain(components, Set[ProblemComponent[_]]())
+    if (problem.componentsToVisit.nonEmpty) backwardChain(problem.componentsToVisit.toList, Set[ProblemComponent[_]]())
   }
   
   def typedProcessChain[ParentValue, Value](first: ProblemComponent[_], rest: List[ProblemComponent[_]], done: Set[ProblemComponent[_]], chainComp: ChainComponent[ParentValue, Value]): Set[ProblemComponent[_]] = {
     chainComp.expand()
     val subStrategies = chainComp.subproblems.map(v => (v._1, v._2, decompose(v._2, done)))
-    subStrategies.foreach(ds => if (ds._3.nonEmpty) ds._3.get.execute)
+    subStrategies.foreach(ds => if (ds._3.nonEmpty) ds._3.get.execute())
     process(chainComp)
     subStrategies.foreach(ds => {
       val (parentValue, subproblem, strategy) = ds

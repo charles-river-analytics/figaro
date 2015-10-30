@@ -18,6 +18,13 @@ abstract class StructuredAlgorithm(val universe: Universe, val queryTargets: Ele
 
   val cc: ComponentCollection = new ComponentCollection
 
+  val problem = new Problem(cc, queryTargets.toList)
+  // We have to add all active elements to the problem since these elements, if they are every used, need to have components created at the top level problem
+  universe.permanentElements.foreach(problem.add(_))
+  val evidenceElems = universe.conditionedElements ::: universe.constrainedElements
+  
+  def initialComponents() = (problem.targets ++ evidenceElems).distinct.map(cc(_))
+
   protected def marginalizeToTarget(target: Element[_], jointFactor: Factor[Double]): Unit = {
     val targetVar = cc(target).variable
     val unnormalizedTargetFactor = jointFactor.marginalizeTo(semiring, targetVar)

@@ -31,11 +31,8 @@ class StructuredGibbs(universe: Universe, numSamples: Int, burnIn: Int, interval
     val semiring = SumProductSemiring()
 
   def run() {
-    val problem = new Problem(cc, targets.toList)
-    val evidenceElems = universe.conditionedElements ::: universe.constrainedElements
-    evidenceElems.foreach(elem => if (!cc.contains(elem)) problem.add(elem))
     val strategy = DecompositionStrategy.recursiveStructuredStrategy(problem, new ConstantStrategy(gibbs(numSamples, burnIn, interval, blockToSampler)), defaultRangeSizer, Lower, false)
-    strategy.execute
+    strategy.execute(initialComponents)
     val joint = problem.solution.foldLeft(Factory.unit(SumProductSemiring()))(_.product(_))
     targets.foreach(t => marginalizeToTarget(t, joint))
   }

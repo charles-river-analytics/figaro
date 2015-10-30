@@ -181,12 +181,15 @@ class FlatTest extends WordSpec with Matchers {
     }
 
     "given a problem with unneeded elements in the universe" should {
-      "not process the unneeded elements" in {
+      "not create factors for the unneeded elements" in {
         var count = 0
         val e1 = Apply(Constant(1), (i: Int) => { count += 1; 5 })
         val e2 = Flip(0.5)
-        FlatVE.probability(e2, true) should equal (0.5)
-        count should equal (0)
+        val alg = FlatVE(e2)
+        alg.start
+        alg.probability(e2, true) should equal (0.5)
+        alg.problem.collection(e1).nonConstraintFactors.isEmpty should be (true)
+        //count should equal (0)
       }
     }
   }

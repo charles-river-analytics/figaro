@@ -46,6 +46,8 @@ class Problem(val collection: ComponentCollection, val targets: List[Element[_]]
    * A flag indicating whether the problem has been solved.
    */
   var solved: Boolean = false
+  
+  val componentsToVisit: scala.collection.mutable.Set[ProblemComponent[_]] = scala.collection.mutable.Set()
 
   /**
    * Add a component for the given element to this problem.
@@ -66,9 +68,8 @@ class Problem(val collection: ComponentCollection, val targets: List[Element[_]]
    * Determines if a variable is in scope outside of this problem
    */
   def global(variable: Variable[_]): Boolean = {
-    val a = !collection.intermediates.contains(variable)
-    val b = !contains(collection.variableToComponent(variable).problem)
-    a && b
+    !collection.intermediates.contains(variable) && 
+    !contains(collection.variableToComponent(variable).problem)
   }
   
 

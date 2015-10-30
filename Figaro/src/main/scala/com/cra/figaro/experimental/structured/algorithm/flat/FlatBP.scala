@@ -29,11 +29,8 @@ class FlatBP(universe: Universe, iterations: Int, targets: Element[_]*) extends 
   val semiring = SumProductSemiring()
   
   def run() {    
-    val problem = new Problem(cc, targets.toList)
-    val evidenceElems = universe.conditionedElements ::: universe.constrainedElements
-    evidenceElems.foreach(elem => if (!cc.contains(elem)) problem.add(elem))
     val strategy = DecompositionStrategy.recursiveFlattenStrategy(problem, new ConstantStrategy(beliefPropagation(iterations)), defaultRangeSizer, Lower, false)
-    strategy.execute
+    strategy.execute(initialComponents)
     val joint = problem.solution.foldLeft(Factory.unit(SumProductSemiring()))(_.product(_))  
     targets.foreach(t => marginalizeToTarget(t, joint))
   }

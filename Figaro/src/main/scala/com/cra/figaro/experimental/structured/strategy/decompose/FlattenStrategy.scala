@@ -26,14 +26,15 @@ private[figaro] class FlattenStrategy(problem: Problem, solvingStrategy: Solving
   bounds: Bounds, parameterized: Boolean)
   extends StructuredStrategy(problem, solvingStrategy, recursingStrategy, rangeSizer, bounds, parameterized) with BackwardChain {
 
-  override def execute() {
-    backwardChain(problem.components, Set[ProblemComponent[_]]())   
+  override def execute(components: List[ProblemComponent[_]]) {
+    backwardChain(components, Set[ProblemComponent[_]]())
+    if (problem.componentsToVisit.nonEmpty) backwardChain(problem.componentsToVisit.toList, Set[ProblemComponent[_]]())
   }
   
   override def processChain(first: ProblemComponent[_], rest: List[ProblemComponent[_]], done: Set[ProblemComponent[_]], chainComp: ChainComponent[_, _]): Set[ProblemComponent[_]] = {
     chainComp.expand()
     val subStrategies = chainComp.subproblems.values.map(decompose(_, done))
-    subStrategies.foreach(ds => if (ds.nonEmpty) ds.get.execute)
+    subStrategies.foreach(ds => if (ds.nonEmpty) ds.get.execute())
     process(chainComp)
     chainComp.raise(bounds)
     backwardChain(rest, done + chainComp)
