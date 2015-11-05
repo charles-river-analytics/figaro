@@ -148,7 +148,7 @@ object SelectFactory {
   private def intermedAndClauseFactors[U, T](cc: ComponentCollection, dist: Dist[U, T]): (Variable[Int], List[Factor[Double]]) = {
     val intermed = Factory.makeVariable(cc, ValueSet.withoutStar((0 until dist.clauses.size).toSet))
     val distVar = Factory.getVariable(cc, dist)
-    val (pairVar, pairFactor) = Factory.makeTupleVarAndFactor(cc, intermed, distVar)
+    val (pairVar, pairFactor) = Factory.makeTupleVarAndFactor(cc, None, intermed, distVar)
     val clauseFactors = dist.outcomes.zipWithIndex map (pair =>
       Factory.makeConditionalSelector(pairVar, Regular(pair._2), Factory.getVariable(cc, pair._1)))
     (intermed, pairFactor :: clauseFactors)

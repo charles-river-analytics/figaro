@@ -45,7 +45,7 @@ class FlatTest extends WordSpec with Matchers {
         val factors =problem.components.flatMap(_.nonConstraintFactors) 
         factors.foreach(f => println(f.toReadableString))
         factors.size should be(16)
-        FlatVE.probability(r1, 1) should equal (0.5*0.2*.4)
+        FlatVE.probability(r1, 1) should equal (0.5*0.2*.4 +- 0.000001)
       }
     }
 

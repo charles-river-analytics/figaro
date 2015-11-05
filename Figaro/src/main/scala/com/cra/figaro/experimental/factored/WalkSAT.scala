@@ -31,7 +31,7 @@ object WalkSAT {
    * @param prob The probability of reassigning a random variable in a factor instead of taking the greedy approach.
    * @param maxIterations Maximum number of iterations to run before throwing an exception for taking too long.
    */
-  def apply[T](factors: List[Factor[T]], variables: Set[Variable[_]], semiring: Semiring[T],
+  def apply[T](factors: List[Factor[T]], variables: Set[Variable[_]], semiring: Semiring[T], chainMapper: Chain[_,_] => Set[Variable[_]],
     prob: Double = 0.1, maxIterations: Int = 100000): MutableMap[Variable[_], Int] = {
     val currentSamples = MutableMap[Variable[_], Int]()
     val nonConstraintFactors = factors.filterNot(_.isConstraint)
@@ -46,10 +46,11 @@ object WalkSAT {
       }
 
       case icv: InternalChainVariable[_] => {
-        val chain = icv.chain.element.asInstanceOf[Chain[_, _]]
-        val chainResults: Set[Variable[_]] = LazyValues(chain.universe).getMap(chain).values.map(Variable(_)).toSet
+        val chain = icv.chain.asInstanceOf[Chain[_, _]]
+        val chainResults: Set[Variable[_]] = chainMapper(chain)
+        //val chainResults: Set[Variable[_]] = LazyValues(chain.universe).getMap(chain).values.map(Variable(_)).toSet
         variableParents(icv) = chainResults + Variable(chain.parent)
-        variableParents(icv.chain) = Set(icv)
+        variableParents(icv.chainVar) = Set(icv)
       }
       case _ =>
     })

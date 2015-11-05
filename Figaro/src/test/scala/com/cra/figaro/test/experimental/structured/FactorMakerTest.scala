@@ -47,7 +47,7 @@ class FactorMakerTest extends WordSpec with Matchers {
       c2.generateRange()
       val v1 = c1.variable
       val v2 = c2.variable
-      val (tupleVar, tupleFactor) = makeTupleVarAndFactor(cc, v1, v2)
+      val (tupleVar, tupleFactor) = makeTupleVarAndFactor(cc, None, v1, v2)
 
       val vars = tupleFactor.variables
       vars.size should equal (3)
@@ -75,7 +75,7 @@ class FactorMakerTest extends WordSpec with Matchers {
       c3.generateRange()
       val v1 = c1.variable
       val v3 = c3.variable
-      val (tupleVar, tupleFactor) = makeTupleVarAndFactor(cc, v1, v3)
+      val (tupleVar, tupleFactor) = makeTupleVarAndFactor(cc, None, v1, v3)
 
       val vs = tupleVar.valueSet
       vs.hasStar should equal (false)
@@ -112,7 +112,7 @@ class FactorMakerTest extends WordSpec with Matchers {
       c3.generateRange()
       val v1 = c1.variable
       val v3 = c3.variable
-      val (tupleVar, tupleFactor) = makeTupleVarAndFactor(cc, v1, v3)
+      val (tupleVar, tupleFactor) = makeTupleVarAndFactor(cc, None, v1, v3)
 
       tupleFactor.contents.size should equal (4)
       val v1IndexT = v1.range.indexOf(Regular(true))
@@ -161,7 +161,7 @@ class FactorMakerTest extends WordSpec with Matchers {
       val v1 = c1.variable
       val v2 = c2.variable
       val v3 = c3.variable
-      val (tupleVar, tupleFactor) = makeTupleVarAndFactor(cc, v1, v2)
+      val (tupleVar, tupleFactor) = makeTupleVarAndFactor(cc, None, v1, v2)
       val selector = makeConditionalSelector(tupleVar, Regular(true), v3)
 
       selector.variables should equal (List(tupleVar, v3))
@@ -186,7 +186,7 @@ class FactorMakerTest extends WordSpec with Matchers {
       val v1 = c1.variable
       val v2 = c2.variable
       val v3 = c3.variable
-      val (tupleVar, tupleFactor) = makeTupleVarAndFactor(cc, v1, v2)
+      val (tupleVar, tupleFactor) = makeTupleVarAndFactor(cc, None, v1, v2)
       val selector = makeConditionalSelector(tupleVar, Regular(true), v3)
 
       val ctIndexT2 = tupleVar.range.indexOf(Regular(List(Regular(true), Regular(2))))
@@ -234,7 +234,7 @@ class FactorMakerTest extends WordSpec with Matchers {
       val v1 = c1.variable
       val v2 = c2.variable
       val v3 = c3.variable
-      val (tupleVar, tupleFactor) = makeTupleVarAndFactor(cc, v1, v2)
+      val (tupleVar, tupleFactor) = makeTupleVarAndFactor(cc, None, v1, v2)
 
       val c1IndexStar = v1.range.indexWhere(!_.isRegular)
       val c1Star = v1.range(c1IndexStar)

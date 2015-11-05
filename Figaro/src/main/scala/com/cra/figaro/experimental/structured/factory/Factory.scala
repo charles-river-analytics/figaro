@@ -53,6 +53,12 @@ object Factory {
     cc.intermediates += v
     v
   }
+  
+  def makeVariable[T](cc: ComponentCollection, valueSet: ValueSet[T], chain: Chain[_,_]): Variable[T] = {
+    val v = new InternalChainVariable(valueSet, chain, getVariable(cc, chain))
+    cc.intermediates += v
+    v
+  }
 
   /**
    * Create a new factor in which one variable is replaced with another.
@@ -86,13 +92,13 @@ object Factory {
    * and create the factor mapping the inputs to their tuple.
    * @param inputs the variables to be formed into a tuple
    */
-  def makeTupleVarAndFactor(cc: ComponentCollection, inputs: Variable[_]*): (Variable[List[Extended[_]]], Factor[Double]) = {
+  def makeTupleVarAndFactor(cc: ComponentCollection, chain: Option[Chain[_,_]], inputs: Variable[_]*): (Variable[List[Extended[_]]], Factor[Double]) = {
     val inputList: List[Variable[_]] = inputs.toList
     // Subtlety alert: In the tuple, we can't just map inputs with * to *. We need to remember which input was *.
     // Therefore, instead, we make the value a regular value consisting of a list of extended values.
     val tupleRangeRegular: List[List[_]] = cartesianProduct(inputList.map(_.range): _*)
     val tupleVS: ValueSet[List[Extended[_]]] = withoutStar(tupleRangeRegular.map(_.asInstanceOf[List[Extended[_]]]).toSet)
-    val tupleVar: Variable[List[Extended[_]]] = Factory.makeVariable(cc, tupleVS)
+    val tupleVar: Variable[List[Extended[_]]] = if (chain.nonEmpty) Factory.makeVariable(cc, tupleVS, chain.get) else Factory.makeVariable(cc, tupleVS)
     val tupleFactor = new SparseFactor[Double](inputList, List(tupleVar))
     for { pair <- tupleVar.range.zipWithIndex } {
       val tupleVal: List[Extended[_]] = pair._1.value

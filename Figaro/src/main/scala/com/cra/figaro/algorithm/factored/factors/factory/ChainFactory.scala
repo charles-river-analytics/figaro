@@ -12,14 +12,20 @@
  */
 package com.cra.figaro.algorithm.factored.factors.factory
 
-import com.cra.figaro.algorithm.PointMapper
-import com.cra.figaro.algorithm.factored.factors.{ BasicFactor, Factor, SparseFactor, Variable, ElementVariable, InternalVariable, InternalChainVariable }
-import com.cra.figaro.algorithm.lazyfactored._
-import com.cra.figaro.language._
-import scala.collection.immutable.SortedSet
 import scala.collection.mutable.ListBuffer
 import scala.reflect.runtime.universe
+import com.cra.figaro.algorithm.PointMapper
+import com.cra.figaro.algorithm.factored.factors.BasicFactor
 import com.cra.figaro.algorithm.factored.factors.ConditionalSelector
+import com.cra.figaro.algorithm.factored.factors.ElementVariable
+import com.cra.figaro.algorithm.factored.factors.Factor
+import com.cra.figaro.algorithm.factored.factors.InternalChainVariable
+import com.cra.figaro.algorithm.factored.factors.SparseFactor
+import com.cra.figaro.algorithm.factored.factors.Variable
+import com.cra.figaro.algorithm.lazyfactored._
+import com.cra.figaro.language._
+import com.cra.figaro.algorithm.factored.factors.Factory
+import com.cra.figaro.util._
 /**
  * @author Glenn Takata Mar 22, 2015
  *
@@ -71,7 +77,11 @@ object ChainFactory {
     val selectorSize = parent.size * overallVar.size
 
     val values: List[List[Extended[_]]] = parent.range.flatMap(p => overallVar.range.map(o => List(p, o)))
-    new InternalChainVariable(values.map(v => Regular(v)), overallVar)
+    
+    val tupleRangeRegular: List[List[_]] = cartesianProduct(List(parent, overallVar).map(_.range): _*)
+    val tupleVS: ValueSet[List[Extended[_]]] = ValueSet.withoutStar(tupleRangeRegular.map(_.asInstanceOf[List[Extended[_]]]).toSet)
+    
+    new InternalChainVariable(tupleVS, overallVar.element.asInstanceOf[Chain[_,U]], overallVar.asInstanceOf[Variable[U]])
   }
 
   /**

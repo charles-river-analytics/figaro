@@ -17,6 +17,11 @@ import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.lazyfactored.ValueSet
 import com.cra.figaro.language._
 import com.cra.figaro.experimental.structured.ComponentCollection
+import scala.collection.mutable.ListBuffer
+import com.cra.figaro.algorithm.lazyfactored.Regular
+import com.cra.figaro.algorithm.lazyfactored.Extended
+import com.cra.figaro.algorithm.lazyfactored.LazyValues
+import com.cra.figaro.util._
 /**
  * @author Glenn Takata Feb 19, 2015
  *
@@ -25,11 +30,12 @@ object ChainFactory {
   /**
    * Make the factors associated with a chain element.
    */
+  
   def makeFactors[T, U](cc: ComponentCollection, chain: Chain[T, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {
     val chainComp = cc(chain)
     val parentVar = Factory.getVariable(cc, chain.parent)
     val chainVar = Factory.getVariable(cc, chain)
-    val (pairVar, pairFactor) = Factory.makeTupleVarAndFactor(cc, parentVar, chainVar)
+    val (pairVar, pairFactor) = Factory.makeTupleVarAndFactor(cc, Some(chain), parentVar, chainVar)
     cc.variableParents(pairVar) = Set(parentVar, chainVar)
     var tempFactors = parentVar.range.zipWithIndex flatMap (pair => {
       val (parentVal, parentIndex) = pair
@@ -59,5 +65,5 @@ object ChainFactory {
     })
     pairFactor :: tempFactors
   }
-
+  
 }

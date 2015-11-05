@@ -21,7 +21,6 @@ import com.cra.figaro.experimental.factored.Gibbs
 import com.cra.figaro.algorithm.factored.factors.InternalChainVariable
 import com.cra.figaro.algorithm.UnsupportedAlgorithmException
 import com.cra.figaro.language._
-import com.cra.figaro.algorithm.lazyfactored.LazyValues
 import com.cra.figaro.algorithm.factored.factors.ElementVariable
 
 /**

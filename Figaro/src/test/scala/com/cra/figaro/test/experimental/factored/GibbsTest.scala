@@ -14,7 +14,7 @@
 package com.cra.figaro.test.experimental.factored
 
 import com.cra.figaro.algorithm.factored.factors._
-import com.cra.figaro.algorithm.lazyfactored.{LazyValues, ValueSet}
+import com.cra.figaro.algorithm.lazyfactored.{ LazyValues, ValueSet }
 import com.cra.figaro.experimental.factored._
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.discrete.Uniform
@@ -32,10 +32,9 @@ class GibbsTest extends WordSpec with Matchers {
       val alg = Gibbs(1, a)
       alg.initialize()
       val blocks = alg.createBlocks()
-      blocks.map(_.toSet) should contain theSameElementsAs(List(
-          Set(Variable(u1), Variable(a)),
-          Set(Variable(u2), Variable(a)))
-      )
+      blocks.map(_.toSet) should contain theSameElementsAs (List(
+        Set(Variable(u1), Variable(a)),
+        Set(Variable(u2), Variable(a))))
     }
 
     "block Chain elements" in {
@@ -48,11 +47,10 @@ class GibbsTest extends WordSpec with Matchers {
       alg.initialize()
       val icv = alg.variables.find(_.isInstanceOf[InternalChainVariable[_]]).get
       val blocks = alg.createBlocks()
-      blocks.map(_.toSet) should contain theSameElementsAs(List(
-          Set(Variable(f), icv),
-          Set(Variable(u1), Variable(c), icv),
-          Set(Variable(u2), Variable(c), icv))
-      )
+      blocks.map(_.toSet) should contain theSameElementsAs (List(
+        Set(Variable(f), icv),
+        Set(Variable(u1), Variable(c), icv),
+        Set(Variable(u2), Variable(c), icv)))
     }
 
     "with an unconstrained model produce the correct result" in {
@@ -79,7 +77,7 @@ class GibbsTest extends WordSpec with Matchers {
     "with a constraint on a Chain produce the correct result for the parent" in {
       val f = Flip(0.3)
       val c = If(f, Flip(0.8), Constant(false))
-      c.addConstraint(b => if(b) 2.0 else 1.0)
+      c.addConstraint(b => if (b) 2.0 else 1.0)
       // (0.3 * 0.8 * 2) / (0.3 * 0.8 * 2 + 0.3 * 0.2 + 0.7)
       test[Boolean](c, identity, 0.3871)
     }
@@ -87,7 +85,7 @@ class GibbsTest extends WordSpec with Matchers {
     "with a constraint on a Chain result correctly constrain the Chain but not the parent" in {
       val f = Flip(0.3)
       val r1 = Flip(0.8)
-      r1.addConstraint(b => if(b) 2.0 else 1.0)
+      r1.addConstraint(b => if (b) 2.0 else 1.0)
       val c = If(f, r1, Constant(false))
       test[Boolean](f, identity, 0.3)
       // r1 true with probability (0.8 * 2) / (0.8 * 2 + 0.2) = 0.8889
@@ -113,6 +111,8 @@ class GibbsTest extends WordSpec with Matchers {
 
   "WalkSAT" should {
     "return the correct state on a conditioned model" in {
+      def chainMapper(chain: Chain[_, _]): Set[Variable[_]] = LazyValues(chain.universe).getMap(chain).values.map(Variable(_)).toSet
+
       Universe.createNew()
       val x = Flip(0.5)
       val y = Flip(0.5)
@@ -122,7 +122,7 @@ class GibbsTest extends WordSpec with Matchers {
       result.observe(true)
       val factors = makeFactors()
       val variables = factors.flatMap(_.variables).toSet
-      val state = WalkSAT(factors, variables, SumProductSemiring())
+      val state = WalkSAT(factors, variables, SumProductSemiring(), chainMapper)
       List((x, true), (y, false), (z, true)).foreach(pair => {
         val (elem, value) = pair
         val variable = Variable(elem)
@@ -131,6 +131,8 @@ class GibbsTest extends WordSpec with Matchers {
     }
 
     "fail on a contradictory model" in {
+      def chainMapper(chain: Chain[_, _]): Set[Variable[_]] = LazyValues(chain.universe).getMap(chain).values.map(Variable(_)).toSet
+
       Universe.createNew()
       val x = Flip(0.5)
       val y = Flip(0.5)
@@ -138,7 +140,7 @@ class GibbsTest extends WordSpec with Matchers {
       result.observe(true)
       val factors = makeFactors()
       val variables = factors.flatMap(_.variables).toSet
-      a [StateNotFoundException] should be thrownBy(WalkSAT(factors, variables, SumProductSemiring()))
+      a[StateNotFoundException] should be thrownBy (WalkSAT(factors, variables, SumProductSemiring(), chainMapper))
     }
   }
 
