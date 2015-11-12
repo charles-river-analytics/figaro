@@ -29,7 +29,7 @@ trait BackwardChain extends DecompositionStrategy {
     toDo match {
       case first :: rest =>
         // globals should have been processed before this problem
-        if (done.contains(first) || !problem.contains(first.problem)) backwardChain(rest, done)
+        if (done.contains(first)) backwardChain(rest, done)
         else {
           val argComponents = first.element.args.map(checkArg(_))
           val done1 = if (argComponents.nonEmpty) backwardChain(argComponents, done) else done

@@ -53,7 +53,7 @@ object ComplexFactory {
           // - get the factors associated with restVar by calling make(firstCollection, restVar, restRef)
           // - use a conditional selector to select thos factors appropriately
           // Then we take all of the factors for all first element collections.
-          val (pairVar, pairFactor) = Factory.makeTupleVarAndFactor(cc, firstVar, startVar)
+          val (pairVar, pairFactor) = Factory.makeTupleVarAndFactor(cc, None, firstVar, startVar)
           val selectedFactors =
             for {
               (firstXValue, firstIndex) <- firstVar.range.zipWithIndex
@@ -148,7 +148,7 @@ object ComplexFactory {
             // When the reference is indirect, we get all factors associated with all values of the first name in the reference.
             // Each first value is either a single element collection, in which case we recurse simply, just like for a single-valued reference.
             // Otherwise, the first value is a traversable of element collections, in which case see below.
-            val (pairVar, pairFactor) = Factory.makeTupleVarAndFactor(cc, firstVar, startVar)
+            val (pairVar, pairFactor) = Factory.makeTupleVarAndFactor(cc, None, firstVar, startVar)
             val selectionFactors: List[List[Factor[Double]]] = {
               val selectedFactors =
                 for {

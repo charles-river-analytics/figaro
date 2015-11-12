@@ -15,7 +15,7 @@ package com.cra.figaro.test.experimental.structured.strategy
 import org.scalatest.{WordSpec, Matchers}
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound.If
-import com.cra.figaro.experimental.structured.algorithm.StructuredVE
+import com.cra.figaro.experimental.structured.algorithm.structured.StructuredVE
 import com.cra.figaro.algorithm.ValuesMaker
 import com.cra.figaro.algorithm.lazyfactored.ValueSet._
 

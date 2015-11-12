@@ -10,7 +10,7 @@
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
-package com.cra.figaro.experimental.structured.algorithm
+package com.cra.figaro.experimental.structured.algorithm.structured
 
 
 import com.cra.figaro.algorithm._
@@ -21,56 +21,20 @@ import com.cra.figaro.experimental.structured.Lower
 import com.cra.figaro.experimental.structured.Problem
 import com.cra.figaro.experimental.structured.factory.Factory
 import com.cra.figaro.experimental.structured.solver.gibbs
-import com.cra.figaro.experimental.structured.strategy.decompose.RecursiveStrategy
-import com.cra.figaro.experimental.structured.strategy.decompose.defaultRangeSizer
+import com.cra.figaro.experimental.structured.strategy.decompose._
 import com.cra.figaro.experimental.structured.strategy.solve.ConstantStrategy
 import com.cra.figaro.language._
+import com.cra.figaro.experimental.structured.algorithm.StructuredAlgorithm
 
-class StructuredGibbs(val universe: Universe, numSamples: Int, burnIn: Int, interval: Int, blockToSampler: Gibbs.BlockSamplerCreator, targets: Element[_]*)
-  extends Algorithm with OneTimeProbQuery {
-  val queryTargets = targets
-
-  var targetFactors: Map[Element[_], Factor[Double]] = _
-
-  var cc: ComponentCollection = _
+class StructuredGibbs(universe: Universe, numSamples: Int, burnIn: Int, interval: Int, blockToSampler: Gibbs.BlockSamplerCreator, targets: Element[_]*)
+  extends StructuredAlgorithm(universe, targets: _*) {
+    val semiring = SumProductSemiring()
 
   def run() {
-    cc = new ComponentCollection
-    targetFactors = Map()
-    val problem = new Problem(cc, targets.toList)
-    val evidenceElems = universe.conditionedElements ::: universe.constrainedElements
-    evidenceElems.foreach(elem => if (!cc.contains(elem)) problem.add(elem))
-    (new RecursiveStrategy(problem, new ConstantStrategy(gibbs(numSamples, burnIn, interval, blockToSampler)), defaultRangeSizer, Lower, false)).execute
+    val strategy = DecompositionStrategy.recursiveStructuredStrategy(problem, new ConstantStrategy(gibbs(numSamples, burnIn, interval, blockToSampler)), defaultRangeSizer, Lower, false)
+    strategy.execute(initialComponents)
     val joint = problem.solution.foldLeft(Factory.unit(SumProductSemiring()))(_.product(_))
-
-    def marginalizeToTarget(target: Element[_]): Unit = {
-      val targetVar = cc(target).variable
-      val unnormalizedTargetFactor = joint.marginalizeTo(SumProductSemiring(), targetVar)
-      val z = unnormalizedTargetFactor.foldLeft(0.0, _ + _)
-      val targetFactor = unnormalizedTargetFactor.mapTo((d: Double) => d / z)
-      targetFactors += target -> targetFactor
-    }
-
-    targets.foreach(marginalizeToTarget(_))
-  }
-
-  /**
-   * Computes the normalized distribution over a single target element.
-   */
-  def computeDistribution[T](target: Element[T]): Stream[(Double, T)] = {
-    val factor = targetFactors(target)
-    val targetVar = cc(target).variable
-    val dist = factor.getIndices.filter(f => targetVar.range(f.head).isRegular).map(f => (factor.get(f), targetVar.range(f.head).value))
-    // normalization is unnecessary here because it is done in marginalizeTo
-    dist.toStream
-  }
-
- /**
-   * Computes the expectation of a given function for single target element.
-   */
-  def computeExpectation[T](target: Element[T], function: T => Double): Double = {
-    def get(pair: (Double, T)) = pair._1 * function(pair._2)
-    (0.0 /: computeDistribution(target))(_ + get(_))
+    targets.foreach(t => marginalizeToTarget(t, joint))
   }
 }
 

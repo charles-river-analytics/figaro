@@ -15,17 +15,16 @@ package com.cra.figaro.test.experimental.structured.strategy
 import org.scalatest.{WordSpec, Matchers}
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound.If
-import com.cra.figaro.experimental.structured.algorithm.StructuredVE
+import com.cra.figaro.experimental.structured.algorithm.structured.StructuredVE
 import com.cra.figaro.algorithm.ValuesMaker
 import com.cra.figaro.algorithm.lazyfactored.ValueSet._
 import com.cra.figaro.library.atomic.discrete.Uniform
 import com.cra.figaro.experimental.structured.ComponentCollection
 import com.cra.figaro.experimental.structured.Problem
-import com.cra.figaro.experimental.structured.strategy.decompose.FlatStrategy
 import com.cra.figaro.experimental.structured.solver.variableElimination
 import com.cra.figaro.experimental.structured.strategy.decompose._
 import com.cra.figaro.experimental.structured.Lower
-import com.cra.figaro.experimental.structured.algorithm.FlatVE
+import com.cra.figaro.experimental.structured.algorithm.flat.FlatVE
 import com.cra.figaro.experimental.structured.strategy.solve.ConstantStrategy
 
 class FlatTest extends WordSpec with Matchers {
@@ -41,10 +40,12 @@ class FlatTest extends WordSpec with Matchers {
         })        
         val cc = new ComponentCollection
         val problem = new Problem(cc, List(r1))
-        val fs = new FlatStrategy(problem, new ConstantStrategy(variableElimination), defaultRangeSizer, Lower, false)
+        val fs = DecompositionStrategy.recursiveFlattenStrategy(problem, new ConstantStrategy(variableElimination), defaultRangeSizer, Lower, false)
         fs.backwardChain(problem.components , Set())
-        problem.components.flatMap(_.nonConstraintFactors).size should be(16)
-        FlatVE.probability(r1, 1) should equal (0.5*0.2*.4)
+        val factors =problem.components.flatMap(_.nonConstraintFactors) 
+        factors.foreach(f => println(f.toReadableString))
+        factors.size should be(16)
+        FlatVE.probability(r1, 1) should equal (0.5*0.2*.4 +- 0.000001)
       }
     }
 
@@ -180,12 +181,15 @@ class FlatTest extends WordSpec with Matchers {
     }
 
     "given a problem with unneeded elements in the universe" should {
-      "not process the unneeded elements" in {
+      "not create factors for the unneeded elements" in {
         var count = 0
         val e1 = Apply(Constant(1), (i: Int) => { count += 1; 5 })
         val e2 = Flip(0.5)
-        FlatVE.probability(e2, true) should equal (0.5)
-        count should equal (0)
+        val alg = FlatVE(e2)
+        alg.start
+        alg.probability(e2, true) should equal (0.5)
+        alg.problem.collection(e1).nonConstraintFactors.isEmpty should be (true)
+        //count should equal (0)
       }
     }
   }

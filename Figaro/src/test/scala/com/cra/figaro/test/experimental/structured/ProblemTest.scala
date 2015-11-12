@@ -65,15 +65,6 @@ class ProblemTest extends WordSpec with Matchers {
       c1.maxExpanded should equal (0)
     }
 
-    "when adding an element twice, throw an exception" in {
-      Universe.createNew()
-      val cc = new ComponentCollection
-      val pr = new Problem(cc)
-      val e1 = Flip(0.1)
-      pr.add(e1)
-
-      an [Exception] should be thrownBy pr.add(e1)
-    }
   }
 
   "Checking for the presence of a component" should {

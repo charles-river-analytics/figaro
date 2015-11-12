@@ -14,13 +14,13 @@
 package com.cra.figaro.experimental.structured.solver
 
 import scala.annotation.tailrec
-
 import com.cra.figaro.algorithm.OneTime
 import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.sampling.BaseUnweightedSampler
 import com.cra.figaro.experimental.factored._
 import com.cra.figaro.experimental.structured.Problem
 import com.cra.figaro.language.Element
+import com.cra.figaro.language.Chain
 
 private[figaro] class GibbsSolver(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], _factors: List[Factor[Double]],
     val numSamples: Int, val burnIn: Int, val interval: Int, val blockToSampler: Gibbs.BlockSamplerCreator)
@@ -33,11 +33,13 @@ extends BaseUnweightedSampler(null) with ProbabilisticGibbs with OneTime {
     // Create block samplers
     blockSamplers = blocks.map(block => blockToSampler((block, factors.filter(_.variables.exists(block.contains(_))))))
     // Initialize the samples to a valid state and take the burn-in samples
-    val initialSample = WalkSAT(factors, variables, semiring)
+    val initialSample = WalkSAT(factors, variables, semiring, chainMapper)
     variables.foreach(v => currentSamples(v) = initialSample(v))
     for(_ <- 1 to burnIn) sampleAllBlocks()
   }
 
+  def chainMapper(chain: Chain[_,_]): Set[Variable[_]] = problem.collection(chain).actualSubproblemVariables.values.toSet
+  
   def run = {}
 
   def go(): List[Factor[Double]] = {
@@ -59,9 +61,6 @@ extends BaseUnweightedSampler(null) with ProbabilisticGibbs with OneTime {
   val dependentAlgorithm = null
 
   val targetElements = null
-
-  def computeDistribution[T](target: Element[T]): Stream[(Double, T)] = ???
-  def computeExpectation[T](target: Element[T], function: T => Double): Double = ???
 
   def createBlocks(): List[Gibbs.Block] = {
     val variables = factors.flatMap(_.variables).toSet

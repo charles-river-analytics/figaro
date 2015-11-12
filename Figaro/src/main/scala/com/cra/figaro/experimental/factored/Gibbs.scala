@@ -16,12 +16,12 @@ package com.cra.figaro.experimental.factored
 import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.lazyfactored._
-import com.cra.figaro.algorithm.{AlgorithmException, UnsupportedAlgorithmException}
+import com.cra.figaro.algorithm.{ AlgorithmException, UnsupportedAlgorithmException }
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
 import com.cra.figaro.util._
 import scala.annotation.tailrec
-import scala.collection.mutable.{Map => MutableMap}
+import scala.collection.mutable.{ Map => MutableMap }
 
 trait Gibbs[T] extends BaseUnweightedSampler with FactoredAlgorithm[T] {
   /**
@@ -82,7 +82,9 @@ trait ChainApplyBlockingGibbs extends Gibbs[Double] {
     case ev: ElementVariable[_] => ev.element match {
       // For Chain, we treat all of the result variables as deterministic parents
       case c: Chain[_, _] => {
-        
+      /*
+       * Must ensure this code is not called in SFI!
+       */
         val chainResults: Set[Variable[_]] = LazyValues(universe).getMap(c).values.map(Variable(_)).toSet
         (ev, chainResults)
       }
@@ -96,10 +98,10 @@ trait ChainApplyBlockingGibbs extends Gibbs[Double] {
     // This handles internal variables in Chains
     // We treat all of the result variables, as well as the parent variable, as deterministic parents
     case icv: InternalChainVariable[_] => {
-      val chain = icv.chain.element.asInstanceOf[Chain[_, _]]
+      val chain = icv.chain.asInstanceOf[Chain[_, _]]
       /*
-         *  **** This will not work with SFI, needs to be changed ****
-         */
+       * Must ensure this code is not called in SFI!
+       */
       val chainResults: Set[Variable[_]] = LazyValues(universe).getMap(chain).values.map(Variable(_)).toSet
       (icv, chainResults + Variable(chain.parent))
     }
@@ -118,10 +120,9 @@ trait ChainApplyBlockingGibbs extends Gibbs[Double] {
     // Start with the purely stochastic variables with no parents
     val starterVariables = variables.filter(variableParents(_).isEmpty)
 
-    @tailrec
-    // Recursively add deterministic children to the block
+    @tailrec // Recursively add deterministic children to the block
     def expandBlock(expand: Set[Variable[_]], block: Set[Variable[_]] = Set()): Gibbs.Block = {
-      if(expand.isEmpty) block.toList
+      if (expand.isEmpty) block.toList
       else {
         val expandNext = expand.flatMap(variableChildren(_))
         expandBlock(expandNext, block ++ expand)
@@ -160,15 +161,15 @@ trait ProbabilisticGibbs extends Gibbs[Double] {
       val variable = Variable(e)
       val extended = variable.range(currentSamples(variable))
       // Accept the sample unless it is star
-      if(extended.isRegular) (e, extended.value)
+      if (extended.isRegular) (e, extended.value)
       else throw new StarSampleException(e)
     })
-    (true, MutableMap(result:_*))
+    (true, MutableMap(result: _*))
   }
 
   protected override def doSample() = {
     // This takes care of the thinning defined by interval
-    for(i <- 1 until interval) {
+    for (i <- 1 until interval) {
       sampleAllBlocks()
     }
     super.doSample()
@@ -180,7 +181,7 @@ abstract class ProbQueryGibbs(override val universe: Universe, targets: Element[
   val dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double,
   val burnIn: Int, val interval: Int,
   val blockToSampler: Gibbs.BlockSamplerCreator, upperBounds: Boolean = false)
-  extends BaseUnweightedSampler(universe, targets:_*)
+  extends BaseUnweightedSampler(universe, targets: _*)
   with ProbabilisticGibbs with UnweightedSampler {
 
   val targetElements = targets.toList
@@ -195,13 +196,13 @@ abstract class ProbQueryGibbs(override val universe: Universe, targets: Element[
     // Create block samplers
     blockSamplers = blocks.map(block => blockToSampler((block, factors.filter(_.variables.exists(block.contains(_))))))
     // Initialize the samples to a valid state and take the burn-in samples
-    val initialSample = WalkSAT(factors, variables, semiring)
+    val initialSample = WalkSAT(factors, variables, semiring, chainMapper)
     variables.foreach(v => currentSamples(v) = initialSample(v))
-    for(_ <- 1 to burnIn) sampleAllBlocks()
+    for (_ <- 1 to burnIn) sampleAllBlocks()
   }
+  
+  def chainMapper(chain: Chain[_,_]): Set[Variable[_]] = LazyValues(chain.universe).getMap(chain).values.map(Variable(_)).toSet
 }
-
-
 
 object Gibbs {
   // A block is just a list of variables
@@ -220,7 +221,7 @@ object Gibbs {
     new ProbQueryGibbs(universe, targets: _*)(
       List(),
       (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u),
-      0, 1, BlockSampler.default) with OneTimeProbQuerySampler with ChainApplyBlockingGibbs {val numSamples = mySamples}
+      0, 1, BlockSampler.default) with OneTimeProbQuerySampler with ChainApplyBlockingGibbs { val numSamples = mySamples }
 
   /**
    * Create a one-time Gibbs sampler using the given number of samples, the number of samples to burn in,
@@ -230,7 +231,7 @@ object Gibbs {
     new ProbQueryGibbs(universe, targets: _*)(
       List(),
       (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u),
-      burnIn, interval, blockToSampler) with OneTimeProbQuerySampler with ChainApplyBlockingGibbs {val numSamples = mySamples}
+      burnIn, interval, blockToSampler) with OneTimeProbQuerySampler with ChainApplyBlockingGibbs { val numSamples = mySamples }
 
   /**
    * Create a one-time Gibbs sampler using the given dependent universes and algorithm,
@@ -243,7 +244,7 @@ object Gibbs {
     new ProbQueryGibbs(universe, targets: _*)(
       dependentUniverses,
       dependentAlgorithm,
-      burnIn, interval, blockToSampler) with OneTimeProbQuerySampler with ChainApplyBlockingGibbs {val numSamples = mySamples}
+      burnIn, interval, blockToSampler) with OneTimeProbQuerySampler with ChainApplyBlockingGibbs { val numSamples = mySamples }
 
   /**
    * Create an anytime Gibbs sampler using the given target elements.

@@ -39,7 +39,7 @@ extends com.cra.figaro.algorithm.factored.beliefpropagation.OneTimeProbabilistic
   // We then run BP as usual.
   // At the end, we sum the tuple variable out of this factor to obtain the solution.
 
-  val (tupleVar, tupleFactor): (Variable[_], Factor[Double]) = makeTupleVarAndFactor(problem.collection, toPreserve.toList:_*)
+  val (tupleVar, tupleFactor): (Variable[_], Factor[Double]) = makeTupleVarAndFactor(problem.collection, None, toPreserve.toList:_*)
 
   def generateGraph() = {
     val allFactors = tupleFactor :: factors

@@ -21,6 +21,7 @@ import com.cra.figaro.library.collection.MakeArray
 import com.cra.figaro.library.collection.FixedSizeArray
 import com.cra.figaro.algorithm.factored.ParticleGenerator
 import com.cra.figaro.experimental.structured.factory.{ Factory, ConstraintFactory }
+import com.cra.figaro.language.Constant
 
 /*
 /** A component of a problem, created for a specific element. */
@@ -94,8 +95,11 @@ class ProblemComponent[Value](val problem: Problem, val element: Element[Value])
    *
    */
   def generateRange(numValues: Int = ParticleGenerator.defaultTotalSamples) {
-    range = Range(this, numValues)
-    setVariable(new Variable(range))
+    val newRange = Range(this, numValues)
+    if ((newRange.hasStar ^ range.hasStar) || (newRange.regularValues != range.regularValues)) {
+      range = newRange
+      setVariable(new Variable(range))
+    }
   }
 
   /**
@@ -150,6 +154,8 @@ abstract class ExpandableComponent[ParentValue, Value](problem: Problem, parent:
 
   /** Expand for a particular parent value. */
   def expand(parentValue: ParentValue): Unit
+  
+  val expandFunction: (ParentValue) => Element[Value] 
 }
 
 /**
@@ -157,6 +163,11 @@ abstract class ExpandableComponent[ParentValue, Value](problem: Problem, parent:
  */
 class ChainComponent[ParentValue, Value](problem: Problem, val chain: Chain[ParentValue, Value])
   extends ExpandableComponent[ParentValue, Value](problem, chain.parent, chain) {
+
+  val elementsCreated: scala.collection.mutable.Set[Element[_]] = scala.collection.mutable.Set() ++ chain.universe.contextContents(chain)
+
+  val expandFunction = chain.get _
+  
   /**
    *  The subproblems represent nested problems from chains.
    *  They are created for particular parent values.
@@ -174,7 +185,11 @@ class ChainComponent[ParentValue, Value](problem: Problem, val chain: Chain[Pare
    *  Memoized.
    */
   def expand(parentValue: ParentValue) {
-    val subproblem = problem.collection.expansion(chain.chainFunction, parentValue)
+    val subproblem = problem.collection.expansion(this, chain.chainFunction, parentValue)
+    val chainContextElements = chain.universe.contextContents(chain)
+    val remainingElements = chainContextElements.filter(!elementsCreated.contains(_))
+    remainingElements.foreach(subproblem.add(_))
+    elementsCreated ++= remainingElements
     subproblems += parentValue -> subproblem
   }
 
@@ -183,39 +198,40 @@ class ChainComponent[ParentValue, Value](problem: Problem, val chain: Chain[Pare
    */
   override def makeNonConstraintFactors(parameterized: Boolean = false) {
     super.makeNonConstraintFactors(parameterized)
-    val subproblemFactors =
-      for {
-        (parentValue, subproblem) <- subproblems
-        factor <- subproblem.solution
-      } yield Factory.replaceVariable(factor, problem.collection(subproblem.target).variable, actualSubproblemVariables(parentValue))
-    nonConstraintFactors = subproblemFactors.toList ::: nonConstraintFactors
+    for {
+      (parentValue, subproblem) <- subproblems
+    } {
+      raiseSubproblemSolution(parentValue, subproblem)
+    }
+  }
+
+  def raiseSubproblemSolution(parentValue: ParentValue, subproblem: NestedProblem[Value]): Unit = {
+    val factors = for {
+      factor <- subproblem.solution
+    } yield Factory.replaceVariable(factor, problem.collection(subproblem.target).variable, actualSubproblemVariables(parentValue))
+    nonConstraintFactors = factors.toList ::: nonConstraintFactors
   }
 
   // Raise the given subproblem into this problem. Note that factors for the chain must have been created already
   // This probably needs some more thought!
-  def raise(parentValue: ParentValue, subproblem: NestedProblem[Value], bounds: Bounds = Lower): Unit = {
-    
-    // First we have to raise the factors associated with the target of each subproblem
-    val comp = subproblem.collection(subproblem.target)
-    // The variables between the chain and the nested problem are not matched. So we have to map
-    // the variables in subproblem factors to the variables in the chain
-    val targetCF = comp.constraintFactors(bounds).map(Factory.replaceVariable(_, comp.variable, actualSubproblemVariables(parentValue)))
-    val targetNCF = comp.nonConstraintFactors.map(Factory.replaceVariable(_, comp.variable, actualSubproblemVariables(parentValue)))
-    
-    /*
-     * Now we have to lift all the factors in the subproblem that are not the result variable. 
-     */ 
-    val otherCF = subproblem.components.filterNot(_ == comp).flatMap(c => c.constraintFactors(bounds))
-    val otherNCF = subproblem.components.filterNot(_ == comp).flatMap(c => nonConstraintFactors)
-        
-    if (bounds == Lower) constraintLower = constraintLower ::: targetCF ::: otherCF
-    else constraintUpper = constraintUpper ::: targetCF ::: otherCF
-    nonConstraintFactors = nonConstraintFactors ::: targetNCF ::: otherNCF
+  def raise(parentValue: ParentValue, bounds: Bounds = Lower): Unit = {
+
+    if (subproblems.contains(parentValue) && !subproblems(parentValue).solved) {
+
+      val subproblem = subproblems(parentValue)
+      val comp = subproblem.collection(subproblem.target)
+      val CF = subproblem.components.flatMap(c => c.constraintFactors(bounds).map(Factory.replaceVariable(_, comp.variable, actualSubproblemVariables(parentValue))))
+      val NCF = subproblem.components.flatMap(c => c.nonConstraintFactors.map(Factory.replaceVariable(_, comp.variable, actualSubproblemVariables(parentValue))))
+
+      if (bounds == Lower) constraintLower = constraintLower ::: CF
+      else constraintUpper = constraintUpper ::: CF
+      nonConstraintFactors = nonConstraintFactors ::: NCF
+    }
   }
-  
+
   // Raise all subproblems into this problem
-  def raise(bounds: Bounds) { subproblems.foreach(sp => raise(sp._1, sp._2, bounds)) }
-  
+  def raise(bounds: Bounds) { subproblems.foreach(sp => raise(sp._1, bounds)) }
+
 }
 
 /**
@@ -226,6 +242,9 @@ class MakeArrayComponent[Value](problem: Problem, val makeArray: MakeArray[Value
   /** The maximum number of items expanded so far. */
   var maxExpanded = 0
 
+  // This isn't really needed in MakeArray since the main expand function won't call this.
+  val expandFunction = (i: Int) => Constant(makeArray.makeValues(i).regularValues.head)
+  
   /**
    * Ensure that the given number of items is expanded.
    */

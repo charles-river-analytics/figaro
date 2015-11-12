@@ -82,8 +82,10 @@ class InternalVariable[T](values: ValueSet[T]) extends Variable(values) {
   override def toString = "Internal variable:" + values.toString
 }
 
-class InternalChainVariable[U](override val range: List[Extended[List[Extended[_]]]], val chain: ElementVariable[U])
-  extends InternalVariable(new ValueSet(range.toSet))
+class InternalChainVariable[U](values: ValueSet[U], val chain: Chain[_,_], val chainVar: Variable[_])
+  extends InternalVariable(values) {
+}
+
 
 /* Variables generated from sufficient statistics of parameters */
 object Variable {

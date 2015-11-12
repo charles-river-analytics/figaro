@@ -31,22 +31,24 @@ private[figaro] class StructuredStrategy(problem: Problem, solvingStrategy: Solv
   bounds: Bounds, parameterized: Boolean)
   extends DecompositionStrategy(problem, solvingStrategy, rangeSizer, bounds, parameterized) with BackwardChain {
 
-  def execute() {
-    backwardChain(problem.components, Set[ProblemComponent[_]]())
-    problem.solve(solvingStrategy)
+  def execute(components: List[ProblemComponent[_]]) {
+    backwardChain(components, Set[ProblemComponent[_]]())
+    if (problem.componentsToVisit.nonEmpty) backwardChain(problem.componentsToVisit.toList, Set[ProblemComponent[_]]())
+    problem.solve(solvingStrategy, bounds)
   }
-
+  
   /**
    * For the structured strategy, if the problem is not solved the recursing strategy is invoked
    */
-  def decompose(nestedProblem: Problem, done: Set[ProblemComponent[_]]) {
+  def decompose(nestedProblem: Problem, done: Set[ProblemComponent[_]]): Option[DecompositionStrategy] = {
     // This check is important and is what enables us to perform dynamic programming
-    if (!nestedProblem.solved) recursingStrategy(nestedProblem).execute()
+    if (!nestedProblem.solved) Some(recursingStrategy(nestedProblem)) else None
   }
 
   def processChain(first: ProblemComponent[_], rest: List[ProblemComponent[_]], done: Set[ProblemComponent[_]], chainComp: ChainComponent[_, _]): Set[ProblemComponent[_]] = {
     chainComp.expand()
-    chainComp.subproblems.values.foreach(decompose(_, done))
+    val subStrategies = chainComp.subproblems.values.map(decompose(_, done))
+    subStrategies.foreach(ds => if (ds.nonEmpty) ds.get.execute())
     process(chainComp)
     backwardChain(rest, done + chainComp)
   }

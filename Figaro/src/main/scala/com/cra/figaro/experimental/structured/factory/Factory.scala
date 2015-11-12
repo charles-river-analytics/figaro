@@ -24,7 +24,7 @@ import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.library.compound._
 import com.cra.figaro.library.collection._
 import com.cra.figaro.library.atomic.discrete._
-import scala.reflect.runtime.universe.{typeTag, TypeTag}
+import scala.reflect.runtime.universe.{ typeTag, TypeTag }
 import com.cra.figaro.experimental.structured.ComponentCollection
 import com.cra.figaro.experimental.structured.ProblemComponent
 
@@ -53,20 +53,29 @@ object Factory {
     cc.intermediates += v
     v
   }
+  
+  def makeVariable[T](cc: ComponentCollection, valueSet: ValueSet[T], chain: Chain[_,_]): Variable[T] = {
+    val v = new InternalChainVariable(valueSet, chain, getVariable(cc, chain))
+    cc.intermediates += v
+    v
+  }
 
   /**
    * Create a new factor in which one variable is replaced with another.
    */
   def replaceVariable[T](factor: Factor[Double], oldVariable: Variable[T], newVariable: Variable[T]): Factor[Double] = {
     if (oldVariable.range != newVariable.range) throw new IllegalArgumentException("Replacing variable with variable with different range")
-    val newVariables = factor.variables.map(v => if (v == oldVariable) newVariable else v)
-    val newFactor =
-      factor match {
-        case s: SparseFactor[Double] => new SparseFactor[Double](newVariables, List())
-        case b: BasicFactor[Double] => new BasicFactor[Double](newVariables, List())
-      }
-    for { indices <- factor.getIndices } { newFactor.set(indices, factor.get(indices)) }
-    newFactor
+    if (!factor.variables.contains(oldVariable)) factor
+    else {
+      val newVariables = factor.variables.map(v => if (v == oldVariable) newVariable else v)
+      val newFactor =
+        factor match {
+          case s: SparseFactor[Double] => new SparseFactor[Double](newVariables, List())
+          case b: BasicFactor[Double] => new BasicFactor[Double](newVariables, List())
+        }
+      for { indices <- factor.getIndices } { newFactor.set(indices, factor.get(indices)) }
+      newFactor
+    }
   }
 
   /**
@@ -83,13 +92,13 @@ object Factory {
    * and create the factor mapping the inputs to their tuple.
    * @param inputs the variables to be formed into a tuple
    */
-  def makeTupleVarAndFactor(cc: ComponentCollection, inputs: Variable[_]*): (Variable[List[Extended[_]]], Factor[Double]) = {
+  def makeTupleVarAndFactor(cc: ComponentCollection, chain: Option[Chain[_,_]], inputs: Variable[_]*): (Variable[List[Extended[_]]], Factor[Double]) = {
     val inputList: List[Variable[_]] = inputs.toList
     // Subtlety alert: In the tuple, we can't just map inputs with * to *. We need to remember which input was *.
     // Therefore, instead, we make the value a regular value consisting of a list of extended values.
-    val tupleRangeRegular: List[List[_]] = cartesianProduct(inputList.map(_.range):_*)
+    val tupleRangeRegular: List[List[_]] = cartesianProduct(inputList.map(_.range): _*)
     val tupleVS: ValueSet[List[Extended[_]]] = withoutStar(tupleRangeRegular.map(_.asInstanceOf[List[Extended[_]]]).toSet)
-    val tupleVar: Variable[List[Extended[_]]] = Factory.makeVariable(cc, tupleVS)
+    val tupleVar: Variable[List[Extended[_]]] = if (chain.nonEmpty) Factory.makeVariable(cc, tupleVS, chain.get) else Factory.makeVariable(cc, tupleVS)
     val tupleFactor = new SparseFactor[Double](inputList, List(tupleVar))
     for { pair <- tupleVar.range.zipWithIndex } {
       val tupleVal: List[Extended[_]] = pair._1.value
@@ -105,7 +114,7 @@ object Factory {
    * Create a BasicFactor from the supplied parent and children variables
    */
   def defaultFactor[T: TypeTag](parents: List[Variable[_]], children: List[Variable[_]]) =
-      new BasicFactor[T](parents, children)
+    new BasicFactor[T](parents, children)
 
   private def makeFactors[T](cc: ComponentCollection, const: Constant[T]): List[Factor[Double]] = {
     val factor = new BasicFactor[Double](List(), List(getVariable(cc, const)))
@@ -127,7 +136,7 @@ object Factory {
    * parent element, one of the result elements, and the overall chain element.
    */
 
-  def makeConditionalSelector[T,U](pairVar: Variable[List[Extended[_]]], parentXVal: Extended[T], outcomeVar: Variable[U]): Factor[Double] = {
+  def makeConditionalSelector[T, U](pairVar: Variable[List[Extended[_]]], parentXVal: Extended[T], outcomeVar: Variable[U]): Factor[Double] = {
     val factor = new ConditionalSelector[Double](List(pairVar), List(outcomeVar))
     for {
       (pairXVal, pairIndex) <- pairVar.range.zipWithIndex
@@ -232,7 +241,7 @@ object Factory {
       //case m: MakeList[_] => ComplexFactory.makeFactors(cc, m)
       case m: MakeArray[_] => ComplexFactory.makeFactors(cc, m)
       case f: FoldLeft[_, _] => ComplexFactory.makeFactors(cc, f)
-//      case f: FactorMaker[_] => f.makeFactors
+      //      case f: FactorMaker[_] => f.makeFactors
       case a: Atomic[_] => makeFactors(cc, a)
 
       case _ => throw new UnsupportedAlgorithmException(elem)

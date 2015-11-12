@@ -18,11 +18,28 @@ import com.cra.figaro.language.Element
 import com.cra.figaro.experimental.structured.strategy.solve.SolvingStrategy
 
 /**
- * A recursive strategy that applies the same decomposition strategy at every decomposition
+ * A recursive strategy that applies the structured strategy at every decomposition
  */
-private[figaro] class RecursiveStrategy(problem: Problem, solvingStrategy: SolvingStrategy,
+private[figaro] class RecursiveStructuredStrategy(problem: Problem, solvingStrategy: SolvingStrategy,
   rangeSizer: RangeSizer, bounds: Bounds, parameterized: Boolean)
   extends StructuredStrategy(problem, solvingStrategy, 
-      (p: Problem) => new RecursiveStrategy(p, solvingStrategy, rangeSizer, bounds, parameterized), rangeSizer, bounds, parameterized) {
-  
+      (p: Problem) => new RecursiveStructuredStrategy(p, solvingStrategy, rangeSizer, bounds, parameterized), rangeSizer, bounds, parameterized) { 
+}
+
+/**
+ * A recursive strategy that applies the flatten strategy at every decomposition.
+ */
+private[figaro] class RecursiveFlattenStrategy(problem: Problem, solvingStrategy: SolvingStrategy,
+  rangeSizer: RangeSizer, bounds: Bounds, parameterized: Boolean)
+  extends FlattenStrategy(problem, solvingStrategy, 
+      (p: Problem) => new RecursiveFlattenStrategy(p, solvingStrategy, rangeSizer, bounds, parameterized), rangeSizer, bounds, parameterized) { 
+}
+
+/**
+ * A recursive strategy that applies the Raising strategy at every decomposition. 
+ */
+private[figaro] class RecursiveRaisingStrategy(problem: Problem, solvingStrategy: SolvingStrategy, raisingCriteria: (Problem, Problem) => Boolean,
+  rangeSizer: RangeSizer, bounds: Bounds, parameterized: Boolean)
+  extends RaisingStrategy(problem, solvingStrategy, 
+      (p: Problem) => new RecursiveRaisingStrategy(p, solvingStrategy, raisingCriteria, rangeSizer, bounds, parameterized), raisingCriteria, rangeSizer, bounds, parameterized) { 
 }
