@@ -136,7 +136,7 @@ object Factory {
    * parent element, one of the result elements, and the overall chain element.
    */
 
-  def makeConditionalSelector[T, U](pairVar: Variable[List[Extended[_]]], parentXVal: Extended[T], outcomeVar: Variable[U]): Factor[Double] = {
+  def makeConditionalSelector[T, U](pairVar: Variable[List[Extended[_]]], parentXVal: Extended[T], outcomeVar: Variable[U], choices: Set[U])(implicit mapper: PointMapper[U]): Factor[Double] = {
     val factor = new ConditionalSelector[Double](List(pairVar), List(outcomeVar))
     for {
       (pairXVal, pairIndex) <- pairVar.range.zipWithIndex
@@ -148,7 +148,7 @@ object Factory {
       val entry =
         if (selectXVal.isRegular && parentXVal.isRegular) {
           if (selectXVal.value == parentXVal.value) {
-            if (overallXVal == outcomeXVal || (!overallXVal.isRegular && !outcomeXVal.isRegular)) 1.0 else 0.0
+            if ((!overallXVal.isRegular && !outcomeXVal.isRegular) || overallXVal.value == mapper.map(outcomeXVal.value, choices)) 1.0 else 0.0
           } else 1.0
         } else if (selectXVal.isRegular || parentXVal.isRegular) 1.0 // they are different
         else if (!overallXVal.isRegular) 1.0 // if parentXVal is *, the only possible outcomeXVal is *
@@ -289,5 +289,26 @@ object Factory {
         case Some(abstraction) => makeAbstract(cc, elem, abstraction)
       }
     }
+  }
+  
+    /**
+   * Create the probabilistic factor encoding the probability of evidence in the dependent universe as a function of the
+   * values of variables in the parent universe. The third argument is the the function to use for computing
+   * probability of evidence in the dependent universe. It is assumed that the definition of this function will already contain the
+   * right evidence.
+   */
+  def makeDependentFactor(cc: ComponentCollection, parentUniverse: Universe,
+    dependentUniverse: Universe,
+    probEvidenceComputer: () => Double): Factor[Double] = {
+    val uses = dependentUniverse.parentElements filter (_.universe == parentUniverse)
+    def rule(values: List[Any]) = {
+      for { (elem, value) <- uses zip values } { elem.value = value.asInstanceOf[Regular[elem.Value]].value }
+      val result = probEvidenceComputer()
+      result
+    }
+    val variables = uses map (cc(_).variable)
+    val factor = new BasicFactor[Double](variables, List())
+    factor.fillByRule(rule _)
+    factor
   }
 }

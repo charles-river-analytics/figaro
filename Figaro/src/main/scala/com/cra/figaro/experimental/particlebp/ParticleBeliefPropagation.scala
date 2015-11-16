@@ -103,7 +103,7 @@ trait ParticleBeliefPropagation extends FactoredAlgorithm[Double] with InnerBPHa
     dependentElems.foreach(Factory.removeFactors(_))
 
     // Clear the variable and values caches
-    Variable.clearCache
+    Variable.clearCache()
     LazyValues.clear(universe)
 
     // Create BP.

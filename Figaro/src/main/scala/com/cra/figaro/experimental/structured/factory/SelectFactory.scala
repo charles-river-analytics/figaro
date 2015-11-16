@@ -150,7 +150,7 @@ object SelectFactory {
     val distVar = Factory.getVariable(cc, dist)
     val (pairVar, pairFactor) = Factory.makeTupleVarAndFactor(cc, None, intermed, distVar)
     val clauseFactors = dist.outcomes.zipWithIndex map (pair =>
-      Factory.makeConditionalSelector(pairVar, Regular(pair._2), Factory.getVariable(cc, pair._1)))
+      Factory.makeConditionalSelector(pairVar, Regular(pair._2), Factory.getVariable(cc, pair._1), Set()))
     (intermed, pairFactor :: clauseFactors)
   }
 

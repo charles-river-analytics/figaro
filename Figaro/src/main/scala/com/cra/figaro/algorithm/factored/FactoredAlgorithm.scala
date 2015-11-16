@@ -23,12 +23,19 @@ import scala.collection._
 import com.cra.figaro.algorithm.lazyfactored._
 import scala.collection.immutable.Set
 import com.cra.figaro.algorithm.UnsupportedAlgorithmException
+import com.cra.figaro.experimental.structured.Problem
+import com.cra.figaro.experimental.structured.ComponentCollection
+import com.cra.figaro.experimental.structured.ProblemComponent
+import com.cra.figaro.experimental.structured.NestedProblem
+import com.cra.figaro.experimental.structured.Lower
+import com.cra.figaro.experimental.structured.Upper
+import com.cra.figaro.library.collection.MakeArray
 
 /**
  * Trait for algorithms that use factors.
  */
 trait FactoredAlgorithm[T] extends Algorithm {
-    
+ 
   /**
    * Get the elements that are needed by the query target variables and the evidence variables. Also compute the values
    * of those variables to the given depth. 
@@ -110,14 +117,19 @@ trait FactoredAlgorithm[T] extends Algorithm {
     
     // We only include elements from other universes if they are specified in the starter elements.
     val resultElements = values.expandedElements.toList ::: starterElements.filter(_.universe != universe)
-    
-    /* We support non caching chains now using sampling 
-    * resultElements.foreach(p => p match {
-    *   case n: NonCachingChain[_,_] => throw new UnsupportedAlgorithmException(n)
-    *   case _ => 
-    }* )
-    * 
-    */
+
+    resultElements.foreach{e =>      
+      e match {
+        case c: Chain[_,_] => {
+          val chainMap = LazyValues(e.universe).getMap(c)
+          chainMap.foreach(f => {
+            val subproblem = new NestedProblem(Variable.cc, f._2)
+            Variable.cc.expansions += (c.chainFunction, f._1) -> subproblem        
+          })          
+        }
+        case _ => ()
+      }
+    }
         
     // Only conditions and constraints produce distinct lower and upper bounds for *. So, if there are not such elements with * as one
     // of their values, we don't need to compute bounds and can save computation.
@@ -125,7 +137,42 @@ trait FactoredAlgorithm[T] extends Algorithm {
     // We make sure to clear the variable cache now, once all values have been computed.
     // This ensures that any created variables will be consistent with the computed values.
     Variable.clearCache()
+    
+    // Even though we just cleared the variables, we regenerate all the variables so we can create the factors
+    resultElements.foreach(Variable(_))
+    
     (resultElements, boundsNeeded)
+  }
+  
+  /**
+   * Make factors for a particular element. This function wraps the SFI method of creating factors using component collections
+   */
+  def makeFactorsForElement(elem: Element[_], upper: Boolean = false, parameterized: Boolean = false) = {
+      val comp = Variable.cc(elem)
+      elem match {
+    	// If the element is a chain, we need to create subproblems for each value of the chain
+    	// to create factors accordingly
+        case c: Chain[_,_] => {
+          val chainMap = LazyValues(elem.universe).getMap(c)
+          chainMap.foreach(f => {
+            val subproblem = new NestedProblem(Variable.cc, f._2)
+            Variable.cc.expansions += (c.chainFunction, f._1) -> subproblem        
+          })          
+        }
+        // If the element is a MakeArray, we need mark that it has been expanded. Note that
+        // the normal Values call will expand the MakeArray, we are just setting the max expansion here
+        case ma: MakeArray[_] => {
+          val maC = Variable.cc(ma)
+          maC.maxExpanded = Variable.cc(ma.numItems).range.regularValues.max
+        }
+        case _ => ()
+      }
+      // Make the constraint and non-constraint factors for the element by calling the
+      // component factor makers
+      if (upper) comp.makeConstraintFactors(Upper) else comp.makeConstraintFactors(Lower)
+      comp.makeNonConstraintFactors( parameterized)
+      val constraint = if (upper) comp.constraintFactors(Upper) else comp.constraintFactors(Lower)
+      constraint ::: comp.nonConstraintFactors 
   }
   
   /**

@@ -162,7 +162,7 @@ class FactorMakerTest extends WordSpec with Matchers {
       val v2 = c2.variable
       val v3 = c3.variable
       val (tupleVar, tupleFactor) = makeTupleVarAndFactor(cc, None, v1, v2)
-      val selector = makeConditionalSelector(tupleVar, Regular(true), v3)
+      val selector = makeConditionalSelector(tupleVar, Regular(true), v3, Set())
 
       selector.variables should equal (List(tupleVar, v3))
     }
@@ -187,7 +187,7 @@ class FactorMakerTest extends WordSpec with Matchers {
       val v2 = c2.variable
       val v3 = c3.variable
       val (tupleVar, tupleFactor) = makeTupleVarAndFactor(cc, None, v1, v2)
-      val selector = makeConditionalSelector(tupleVar, Regular(true), v3)
+      val selector = makeConditionalSelector(tupleVar, Regular(true), v3, Set())
 
       val ctIndexT2 = tupleVar.range.indexOf(Regular(List(Regular(true), Regular(2))))
       val ctIndexF2 = tupleVar.range.indexOf(Regular(List(Regular(false), Regular(2))))
@@ -240,8 +240,8 @@ class FactorMakerTest extends WordSpec with Matchers {
       val c1Star = v1.range(c1IndexStar)
       val c3IndexStar = v1.range.indexWhere(!_.isRegular)
       val c3Star = v3.range(c3IndexStar)
-      val selectorF = makeConditionalSelector(tupleVar, Regular(false), v3)
-      val selectorStar = makeConditionalSelector(tupleVar, c1Star, v3)
+      val selectorF = makeConditionalSelector(tupleVar, Regular(false), v3, Set())
+      val selectorStar = makeConditionalSelector(tupleVar, c1Star, v3, Set())
       val ctIndexStar2 = tupleVar.range.indexOf(Regular(List(c1Star, Regular(2))))
       val ctIndexF2 = tupleVar.range.indexOf(Regular(List(Regular(false), Regular(2))))
       val ctIndexStar3 = tupleVar.range.indexOf(Regular(List(c1Star, Regular(3))))
