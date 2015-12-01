@@ -17,6 +17,7 @@ import com.cra.figaro.algorithm._
 import com.cra.figaro.language._
 import scala.collection.mutable.Map
 import com.cra.figaro.algorithm.lazyfactored.{ LazyValues, Extended, ValueSet }
+import scala.collection.mutable.HashMap
 
 /**
  * Variables that appear in factors.
@@ -90,10 +91,14 @@ class InternalChainVariable[U](values: ValueSet[U], val chain: Chain[_,_], val c
 /* Variables generated from sufficient statistics of parameters */
 object Variable {
   // An element should always map to the same variable
-  private val memoMake: Map[Element[_], Variable[_]] = Map()
+  private val memoMake : Map[Element[_], Variable[_]] = new HashMap[Element[_], Variable[_]]() {
+    override def hashCode = 1
+  }
 
   // Make sure to register this map (or replace the memoMake)
-  private val idCache: Map[Element[_], Int] = Map()
+  private val idCache: Map[Element[_], Int] = new HashMap[Element[_], Int]() {
+    override def hashCode = 2
+  }
 
   private var idState: Int = 0
 
