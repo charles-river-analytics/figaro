@@ -125,6 +125,8 @@ object FigaroBuild extends Build {
     .settings(packageOptions := Seq(Package.JarManifest(examplesManifest)))
     // SBTEclipse settings
     .settings(EclipseKeys.eclipseOutput := Some("target/scala-2.11/classes"))
+    // Copy all managed dependencies to \lib_managed directory
+    .settings(retrieveManaged := true)
 
   lazy val detTest = config("det") extend(Test)
   lazy val nonDetTest = config("nonDet") extend(Test)
