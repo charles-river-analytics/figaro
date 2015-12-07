@@ -13,8 +13,7 @@
 
 import sbt._
 import Keys._
-import sbtassembly.Plugin._
-import AssemblyKeys._
+import sbtassembly.AssemblyPlugin.autoImport._
 import sbt.Package.ManifestAttributes
 import scoverage.ScoverageSbtPlugin._
 import com.typesafe.sbteclipse.plugin.EclipsePlugin.EclipseKeys
@@ -25,7 +24,7 @@ object FigaroBuild extends Build {
     organization := "com.cra.figaro",
     description := "Figaro: a language for probablistic programming",
     version := "4.0.0.0",
-    scalaVersion := "2.11.6",
+    scalaVersion := "2.11.7",
     crossPaths := true,
     publishMavenStyle := true,
     pomExtra :=
@@ -82,12 +81,12 @@ object FigaroBuild extends Build {
       "asm" % "asm" % "3.3.1",
       "org.apache.commons" % "commons-math3" % "3.3",
       "net.sf.jsci" % "jsci" % "1.2",
-      "com.typesafe.akka" %% "akka-actor" % "2.3.8",
+      "com.typesafe.akka" %% "akka-actor" % "2.3.14",
       "org.scalanlp" %% "breeze" % "0.10",
       "io.argonaut" %% "argonaut" % "6.0.4",
       "org.prefuse" % "prefuse" % "beta-20071021",
       "org.scala-lang.modules" %% "scala-swing" % "1.0.1",
-      "com.storm-enroute" %% "scalameter" % "0.6" % "provided",
+      "com.storm-enroute" %% "scalameter" % "0.7" % "provided",
       "org.scalatest" %% "scalatest" % "2.2.4" % "provided, test"
     ))
     // Copy all managed dependencies to \lib_managed directory
@@ -106,9 +105,8 @@ object FigaroBuild extends Build {
     .settings(inConfig(nonDetTest)(Defaults.testTasks): _*)
     .settings(testOptions in nonDetTest := Seq(Tests.Argument("-n", "com.cra.figaro.test.nonDeterministic")))
     // sbt-assembly settings
-    .settings(assemblySettings: _*)
     .settings(test in assembly := {})
-    .settings(jarName in assembly := "figaro_" + scalaMajorMinor + "-" + version.value + "-fat.jar")
+    .settings(assemblyJarName in assembly := "figaro_" + scalaMajorMinor + "-" + version.value + "-fat.jar")
     .settings(assemblyOption in assembly ~= { _.copy(includeScala = false) })
     .settings(excludedJars in assembly := {
 	val cp = (fullClasspath in assembly).value
