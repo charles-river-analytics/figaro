@@ -15,9 +15,9 @@ package com.cra.figaro.experimental.structured.factory
 
 import com.cra.figaro.algorithm.PointMapper
 import com.cra.figaro.algorithm.factored.factors._
-//import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.language._
 import com.cra.figaro.experimental.structured.ComponentCollection
+import com.cra.figaro.experimental.structured.ApplyComponent
 
 /**
  * A Sub-Factory for Apply Elements
@@ -31,14 +31,16 @@ object ApplyFactory {
     val arg1Var = Factory.getVariable(cc, apply.arg1)
     val resultVar = Factory.getVariable(cc, apply)
     cc.variableParents(resultVar) += arg1Var
-    val applyValues = cc(apply).range
+    val applyComponent = cc(apply)
+    val applyMap = applyComponent.getMap
+    val applyValues = applyComponent.range
     val factor = new SparseFactor[Double](List(arg1Var), List(resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
     for {
       (arg1Val, arg1Index) <- arg1Indices
     } {
       if (arg1Val.isRegular) {
-        val resultVal = mapper.map(apply.fn(arg1Val.value), applyValues.regularValues)
+        val resultVal = mapper.map(applyMap(arg1Val.value), applyValues.regularValues)
         val resultIndex = resultVar.range.indexWhere(xval => xval.isRegular && xval.value == resultVal)
         factor.set(List(arg1Index, resultIndex), 1.0)
       } else if (!arg1Val.isRegular && resultVar.range.exists(!_.isRegular)) {
@@ -57,6 +59,8 @@ object ApplyFactory {
     val arg2Var = Factory.getVariable(cc, apply.arg2)
     val resultVar = Factory.getVariable(cc, apply)
     cc.variableParents(resultVar) ++= Set(arg1Var, arg2Var)
+    val applyComponent = cc(apply)
+    val applyMap = applyComponent.getMap
     val applyValues = cc(apply).range
     val factor = new SparseFactor[Double](List(arg1Var, arg2Var), List(resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
@@ -67,7 +71,7 @@ object ApplyFactory {
       (arg2Val, arg2Index) <- arg2Indices
     } {
       if (arg1Val.isRegular && arg2Val.isRegular) {
-        val resultVal = mapper.map(apply.fn(arg1Val.value, arg2Val.value), applyValues.regularValues)
+        val resultVal = mapper.map(applyMap((arg1Val.value, arg2Val.value)), applyValues.regularValues)
         val resultIndex = resultVar.range.indexWhere(xval => xval.isRegular && xval.value == resultVal)
         factor.set(List(arg1Index, arg2Index, resultIndex), 1.0)
       } else if ((!arg1Val.isRegular || !arg2Val.isRegular) && resultVar.range.exists(!_.isRegular)) {
@@ -88,6 +92,8 @@ object ApplyFactory {
     val arg3Var = Factory.getVariable(cc, apply.arg3)
     val resultVar = Factory.getVariable(cc, apply)
     cc.variableParents(resultVar) ++= Set(arg1Var, arg2Var, arg3Var)
+    val applyComponent = cc(apply)
+    val applyMap = applyComponent.getMap
     val applyValues = cc(apply).range
     val factor = new SparseFactor[Double](List(arg1Var, arg2Var, arg3Var), List(resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
@@ -99,7 +105,7 @@ object ApplyFactory {
       (arg3Val, arg3Index) <- arg3Indices
     } {
       if (arg1Val.isRegular && arg2Val.isRegular && arg3Val.isRegular) {
-        val resultVal = mapper.map(apply.fn(arg1Val.value, arg2Val.value, arg3Val.value), applyValues.regularValues)
+        val resultVal = mapper.map(applyMap((arg1Val.value, arg2Val.value, arg3Val.value)), applyValues.regularValues)
         val resultIndex = resultVar.range.indexWhere(xval => xval.isRegular && xval.value == resultVal)
         factor.set(List(arg1Index, arg2Index, arg3Index, resultIndex), 1.0)
       } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular) && resultVar.range.exists(!_.isRegular)) {
@@ -120,6 +126,8 @@ object ApplyFactory {
     val arg4Var = Factory.getVariable(cc, apply.arg4)
     val resultVar = Factory.getVariable(cc, apply)
     cc.variableParents(resultVar) ++= Set(arg1Var, arg2Var, arg3Var, arg4Var)
+    val applyComponent = cc(apply)
+    val applyMap = applyComponent.getMap
     val applyValues = cc(apply).range
     val factor = new SparseFactor[Double](List(arg1Var, arg2Var, arg3Var, arg4Var), List(resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
@@ -132,8 +140,8 @@ object ApplyFactory {
       (arg3Val, arg3Index) <- arg3Indices
       (arg4Val, arg4Index) <- arg4Indices
     } {
-     if (arg1Val.isRegular && arg2Val.isRegular && arg3Val.isRegular && arg4Val.isRegular) {
-       val resultVal = mapper.map(apply.fn(arg1Val.value, arg2Val.value, arg3Val.value, arg4Val.value), applyValues.regularValues)
+      if (arg1Val.isRegular && arg2Val.isRegular && arg3Val.isRegular && arg4Val.isRegular) {
+        val resultVal = mapper.map(applyMap((arg1Val.value, arg2Val.value, arg3Val.value, arg4Val.value)), applyValues.regularValues)
         val resultIndex = resultVar.range.indexWhere(xval => xval.isRegular && xval.value == resultVal)
         factor.set(List(arg1Index, arg2Index, arg3Index, arg4Index, resultIndex), 1.0)
       } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular) && resultVar.range.exists(!_.isRegular)) {
@@ -155,6 +163,8 @@ object ApplyFactory {
     val arg5Var = Factory.getVariable(cc, apply.arg5)
     val resultVar = Factory.getVariable(cc, apply)
     cc.variableParents(resultVar) ++= Set(arg1Var, arg2Var, arg3Var, arg4Var, arg5Var)
+    val applyComponent = cc(apply)
+    val applyMap = applyComponent.getMap
     val applyValues = cc(apply).range
     val factor = new SparseFactor[Double](List(arg1Var, arg2Var, arg3Var, arg4Var, arg5Var), List(resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
@@ -172,7 +182,7 @@ object ApplyFactory {
       (resultVal, resultIndex) <- resultIndices
     } {
       if (arg1Val.isRegular && arg2Val.isRegular && arg3Val.isRegular && arg4Val.isRegular && arg5Val.isRegular) {
-        val resultVal = mapper.map(apply.fn(arg1Val.value, arg2Val.value, arg3Val.value, arg4Val.value, arg5Val.value), applyValues.regularValues)
+        val resultVal = mapper.map(applyMap((arg1Val.value, arg2Val.value, arg3Val.value, arg4Val.value, arg5Val.value)), applyValues.regularValues)
         val resultIndex = resultVar.range.indexWhere(xval => xval.isRegular && xval.value == resultVal)
         factor.set(List(arg1Index, arg2Index, arg3Index, arg4Index, arg5Index, resultIndex), 1.0)
       } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular || !arg5Val.isRegular) && resultVar.range.exists(!_.isRegular)) {

@@ -30,6 +30,7 @@ import com.cra.figaro.experimental.structured.NestedProblem
 import com.cra.figaro.experimental.structured.Lower
 import com.cra.figaro.experimental.structured.Upper
 import com.cra.figaro.library.collection.MakeArray
+import com.cra.figaro.experimental.structured.ApplyComponent
 
 /**
  * Trait for algorithms that use factors.
@@ -118,6 +119,7 @@ trait FactoredAlgorithm[T] extends Algorithm {
     // We only include elements from other universes if they are specified in the starter elements.
     val resultElements = values.expandedElements.toList ::: starterElements.filter(_.universe != universe)
 
+    /*
     resultElements.foreach{e =>      
       e match {
         case c: Chain[_,_] => {
@@ -130,6 +132,8 @@ trait FactoredAlgorithm[T] extends Algorithm {
         case _ => ()
       }
     }
+    * 
+    */
         
     // Only conditions and constraints produce distinct lower and upper bounds for *. So, if there are not such elements with * as one
     // of their values, we don't need to compute bounds and can save computation.
@@ -138,7 +142,7 @@ trait FactoredAlgorithm[T] extends Algorithm {
     // This ensures that any created variables will be consistent with the computed values.
     Variable.clearCache()
     
-    // Even though we just cleared the variables, we regenerate all the variables so we can create the factors
+    // Even though we just cleared the variables, we generate all the variables so we can create the factors
     resultElements.foreach(Variable(_))
     
     (resultElements, boundsNeeded)
@@ -147,7 +151,7 @@ trait FactoredAlgorithm[T] extends Algorithm {
   /**
    * Make factors for a particular element. This function wraps the SFI method of creating factors using component collections
    */
-  def makeFactorsForElement(elem: Element[_], upper: Boolean = false, parameterized: Boolean = false) = {
+  def makeFactorsForElement[Value](elem: Element[_], upper: Boolean = false, parameterized: Boolean = false) = {
       val comp = Variable.cc(elem)
       elem match {
     	// If the element is a chain, we need to create subproblems for each value of the chain
@@ -164,6 +168,12 @@ trait FactoredAlgorithm[T] extends Algorithm {
         case ma: MakeArray[_] => {
           val maC = Variable.cc(ma)
           maC.maxExpanded = Variable.cc(ma.numItems).range.regularValues.max
+        }
+        // If the element is an apply, we need to populate the Apply map used by the factor creation
+        case a: Apply[Value] => {
+          val applyComp = comp.asInstanceOf[ApplyComponent[Value]]
+          val applyMap = LazyValues(elem.universe).getMap(a)
+          applyComp.setMap(applyMap)          
         }
         case _ => ()
       }

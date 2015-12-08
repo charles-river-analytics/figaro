@@ -13,16 +13,16 @@
 
 package com.cra.figaro.experimental.structured
 
-import com.cra.figaro.algorithm.lazyfactored.{ValueSet, Star}
+import com.cra.figaro.algorithm.lazyfactored.{ ValueSet, Star }
 import com.cra.figaro.algorithm.lazyfactored.ValueSet._
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound.FastIf
-import com.cra.figaro.util.{MultiSet, homogeneousCartesianProduct}
+import com.cra.figaro.util.{ MultiSet, homogeneousCartesianProduct }
 import com.cra.figaro.util.HashMultiSet
 import com.cra.figaro.algorithm.factored.ParticleGenerator
 import com.cra.figaro.library.collection.MakeArray
 import com.cra.figaro.library.collection.FixedSizeArray
-import com.cra.figaro.library.atomic.discrete.{AtomicBinomial, ParameterizedBinomialFixedNumTrials}
+import com.cra.figaro.library.atomic.discrete.{ AtomicBinomial, ParameterizedBinomialFixedNumTrials }
 import com.cra.figaro.library.compound.FoldLeft
 import com.cra.figaro.library.compound.IntSelector
 
@@ -104,7 +104,7 @@ object Range {
           if (hs) hasStar = true
           subTargetSet.toList
         }
-      val combinations: List[List[List[Element[V]]]] = homogeneousCartesianProduct(subTargetSets:_*)
+      val combinations: List[List[List[Element[V]]]] = homogeneousCartesianProduct(subTargetSets: _*)
       val targetSets = combinations.map(_.flatten).toSet
       (targetSets, hasStar)
     }
@@ -112,7 +112,7 @@ object Range {
     def getMultiSetPossibilities(targetSet: List[Element[V]]): ValueSet[MultiSet[V]] = {
       val ranges: List[ValueSet[V]] = targetSet.map(getRange(cc, _))
       val regularRanges: List[List[V]] = ranges.map(_.regularValues.toList)
-      val possibilities: List[List[V]] = homogeneousCartesianProduct(regularRanges:_*)
+      val possibilities: List[List[V]] = homogeneousCartesianProduct(regularRanges: _*)
       val multiSets: List[MultiSet[V]] =
         for {
           possibility <- possibilities
@@ -134,7 +134,7 @@ object Range {
     multiSetPossibilities.foldLeft(starter)(_ ++ _)
   }
 
-  def getRangeOfFold[T,U](cc: ComponentCollection, fold: FoldLeft[T,U]): ValueSet[U] = {
+  def getRangeOfFold[T, U](cc: ComponentCollection, fold: FoldLeft[T, U]): ValueSet[U] = {
     def helper(currentAccum: ValueSet[U], remainingElements: Seq[Element[T]]): ValueSet[U] = {
       if (remainingElements.isEmpty) currentAccum
       else {
@@ -155,8 +155,9 @@ object Range {
 
   def apply[V](component: ProblemComponent[V], numValues: Int): ValueSet[V] = {
     component match {
-      case cc: ChainComponent[_,V] => chainRange(cc)
+      case cc: ChainComponent[_, V] => chainRange(cc)
       case mc: MakeArrayComponent[V] => makeArrayRange(mc)
+      case ac: ApplyComponent[V] => applyRange(ac)
       case _ => otherRange(component, numValues)
     }
   }
@@ -196,6 +197,86 @@ object Range {
     }
   }
 
+  private def applyRange[V](component: ApplyComponent[V]): ValueSet[V] = {
+    val collection = component.problem.collection
+    val applyMap = component.getMap()
+    component.element match {
+
+      case i: FastIf[_] =>
+        if (getRange(collection, i.test).hasStar) withStar(Set(i.thn, i.els)) else withoutStar(Set(i.thn, i.els))
+
+      case a: Apply1[_, V] =>
+        val vs1 = getRange(collection, a.arg1)
+        val resultsSet =
+          for {
+            arg1Val <- vs1.regularValues
+          } yield {
+            applyMap.getOrElseUpdate(arg1Val, a.fn(arg1Val))
+          }
+        if (vs1.hasStar) withStar(resultsSet); else withoutStar(resultsSet)
+
+      case a: Apply2[_, _, _] =>
+        val vs1 = getRange(collection, a.arg1)
+        val vs2 = getRange(collection, a.arg2)
+        val resultSet =
+          for {
+            v1 <- vs1.regularValues
+            v2 <- vs2.regularValues
+          } yield {
+            applyMap.getOrElseUpdate((v1, v2), a.fn(v1, v2))
+          }
+        if (vs1.hasStar || vs2.hasStar) withStar(resultSet) else withoutStar(resultSet)
+
+      case a: Apply3[_, _, _, _] =>
+        val vs1 = getRange(collection, a.arg1)
+        val vs2 = getRange(collection, a.arg2)
+        val vs3 = getRange(collection, a.arg3)
+        val resultSet =
+          for {
+            v1 <- vs1.regularValues
+            v2 <- vs2.regularValues
+            v3 <- vs3.regularValues
+          } yield {
+            applyMap.getOrElseUpdate((v1, v2, v3), a.fn(v1, v2, v3))
+          }
+        if (vs1.hasStar || vs2.hasStar || vs3.hasStar) withStar(resultSet) else withoutStar(resultSet)
+
+      case a: Apply4[_, _, _, _, _] =>
+        val vs1 = getRange(collection, a.arg1)
+        val vs2 = getRange(collection, a.arg2)
+        val vs3 = getRange(collection, a.arg3)
+        val vs4 = getRange(collection, a.arg4)
+        val resultSet =
+          for {
+            v1 <- vs1.regularValues
+            v2 <- vs2.regularValues
+            v3 <- vs3.regularValues
+            v4 <- vs4.regularValues
+          } yield {
+            applyMap.getOrElseUpdate((v1, v2, v3, v4), a.fn(v1, v2, v3, v4))
+          }
+        if (vs1.hasStar || vs2.hasStar || vs3.hasStar || vs4.hasStar) withStar(resultSet) else withoutStar(resultSet)
+
+      case a: Apply5[_, _, _, _, _, _] =>
+        val vs1 = getRange(collection, a.arg1)
+        val vs2 = getRange(collection, a.arg2)
+        val vs3 = getRange(collection, a.arg3)
+        val vs4 = getRange(collection, a.arg4)
+        val vs5 = getRange(collection, a.arg5)
+        val resultSet =
+          for {
+            v1 <- vs1.regularValues
+            v2 <- vs2.regularValues
+            v3 <- vs3.regularValues
+            v4 <- vs4.regularValues
+            v5 <- vs5.regularValues
+          } yield {
+            applyMap.getOrElseUpdate((v1, v2, v3, v4, v5), a.fn(v1, v2, v3, v4, v5))
+          }
+        if (vs1.hasStar || vs2.hasStar || vs3.hasStar || vs4.hasStar || vs5.hasStar) withStar(resultSet) else withoutStar(resultSet)
+    }
+  }
+
   private def otherRange[V](component: ProblemComponent[V], numValues: Int): ValueSet[V] = {
     val collection = component.problem.collection
     component.element match {
@@ -230,172 +311,15 @@ object Range {
         val values = componentSets.reduce(_ ++ _)
         if (d.probs.map(getRange(collection, _)).exists(_.hasStar)) values ++ withStar(Set()) else values
 
-      case i: FastIf[_] =>
-        if (getRange(collection, i.test).hasStar) withStar(Set(i.thn, i.els)) else withoutStar(Set(i.thn, i.els))
-
-      case a: Apply1[_, _] =>
-        val vs1 = getRange(collection, a.arg1)
-        vs1.map(a.fn)
-//        val applyMap = getMap(a)
-//        val vs1 = LazyValues(a.arg1.universe).storedValues(a.arg1)
-//        val resultsSet =
-//          for {
-//            arg1Val <- vs1.regularValues
-//          } yield {
-//            getOrElseInsert(applyMap, arg1Val, a.fn(arg1Val))
-//          }
-//        if (vs1.hasStar) withStar(resultsSet); else withoutStar(resultsSet)
-
-      case a: Apply2[_, _, _] =>
-        val vs1 = getRange(collection, a.arg1)
-        val vs2 = getRange(collection, a.arg2)
-        val resultSet =
-          for {
-            v1 <- vs1.regularValues
-            v2 <- vs2.regularValues
-          } yield a.fn(v1, v2)
-        if (vs1.hasStar || vs2.hasStar) withStar(resultSet) else withoutStar(resultSet)
-//        val applyMap = getMap(a)
-//        val vs1 = LazyValues(a.arg1.universe).storedValues(a.arg1)
-//        val vs2 = LazyValues(a.arg2.universe).storedValues(a.arg2)
-//        val choices = cartesianProduct(vs1.xvalues.toList, vs2.xvalues.toList).asInstanceOf[List[List[Extended[_]]]]
-//        val resultsList =
-//          for {
-//            List(arg1, arg2) <- choices
-//            if (arg1.isRegular && arg2.isRegular)
-//          } yield {
-//            val arg1Val = arg1.value.asInstanceOf[a.Arg1Type]
-//            val arg2Val = arg2.value.asInstanceOf[a.Arg2Type]
-//            getOrElseInsert(applyMap, (arg1Val, arg2Val), a.fn(arg1Val, arg2Val))
-//          }
-//        if (vs1.hasStar || vs2.hasStar) withStar(resultsList.toSet); else withoutStar(resultsList.toSet)
-
-      case a: Apply3[_, _, _, _] =>
-        val vs1 = getRange(collection, a.arg1)
-        val vs2 = getRange(collection, a.arg2)
-        val vs3 = getRange(collection, a.arg3)
-        val resultSet =
-          for {
-            v1 <- vs1.regularValues
-            v2 <- vs2.regularValues
-            v3 <- vs3.regularValues
-          } yield a.fn(v1, v2, v3)
-        if (vs1.hasStar || vs2.hasStar || vs3.hasStar) withStar(resultSet) else withoutStar(resultSet)
-//        val applyMap = getMap(a)
-//        val vs1 = LazyValues(a.arg1.universe).storedValues(a.arg1)
-//        val vs2 = LazyValues(a.arg2.universe).storedValues(a.arg2)
-//        val vs3 = LazyValues(a.arg3.universe).storedValues(a.arg3)
-//        val choices = cartesianProduct(vs1.xvalues.toList, vs2.xvalues.toList, vs3.xvalues.toList).asInstanceOf[List[List[Extended[_]]]]
-//        val resultsList =
-//          for {
-//            List(arg1, arg2, arg3) <- choices
-//            if (arg1.isRegular && arg2.isRegular && arg3.isRegular)
-//          } yield {
-//            val arg1Val = arg1.value.asInstanceOf[a.Arg1Type]
-//            val arg2Val = arg2.value.asInstanceOf[a.Arg2Type]
-//            val arg3Val = arg3.value.asInstanceOf[a.Arg3Type]
-//            getOrElseInsert(applyMap, (arg1Val, arg2Val, arg3Val), a.fn(arg1Val, arg2Val, arg3Val))
-//          }
-//        if (vs1.hasStar || vs2.hasStar || vs3.hasStar) withStar(resultsList.toSet); else withoutStar(resultsList.toSet)
-
-      case a: Apply4[_, _, _, _, _] =>
-        val vs1 = getRange(collection, a.arg1)
-        val vs2 = getRange(collection, a.arg2)
-        val vs3 = getRange(collection, a.arg3)
-        val vs4 = getRange(collection, a.arg4)
-        val resultSet =
-          for {
-            v1 <- vs1.regularValues
-            v2 <- vs2.regularValues
-            v3 <- vs3.regularValues
-            v4 <- vs4.regularValues
-          } yield a.fn(v1, v2, v3, v4)
-        if (vs1.hasStar || vs2.hasStar || vs3.hasStar || vs4.hasStar) withStar(resultSet) else withoutStar(resultSet)
-//        val applyMap = getMap(a)
-//        val vs1 = LazyValues(a.arg1.universe).storedValues(a.arg1)
-//        val vs2 = LazyValues(a.arg2.universe).storedValues(a.arg2)
-//        val vs3 = LazyValues(a.arg3.universe).storedValues(a.arg3)
-//        val vs4 = LazyValues(a.arg4.universe).storedValues(a.arg4)
-//        val choices = cartesianProduct(vs1.xvalues.toList, vs2.xvalues.toList, vs3.xvalues.toList, vs4.xvalues.toList).asInstanceOf[List[List[Extended[_]]]]
-//        val resultsList =
-//          for {
-//            List(arg1, arg2, arg3, arg4) <- choices
-//            if (arg1.isRegular && arg2.isRegular && arg3.isRegular && arg4.isRegular)
-//          } yield {
-//            val arg1Val = arg1.value.asInstanceOf[a.Arg1Type]
-//            val arg2Val = arg2.value.asInstanceOf[a.Arg2Type]
-//            val arg3Val = arg3.value.asInstanceOf[a.Arg3Type]
-//            val arg4Val = arg4.value.asInstanceOf[a.Arg4Type]
-//            getOrElseInsert(applyMap, (arg1Val, arg2Val, arg3Val, arg4Val), a.fn(arg1Val, arg2Val, arg3Val, arg4Val))
-//          }
-//        if (vs1.hasStar || vs2.hasStar || vs3.hasStar || vs4.hasStar) withStar(resultsList.toSet); else withoutStar(resultsList.toSet)
-
-      case a: Apply5[_, _, _, _, _, _] =>
-        val vs1 = getRange(collection, a.arg1)
-        val vs2 = getRange(collection, a.arg2)
-        val vs3 = getRange(collection, a.arg3)
-        val vs4 = getRange(collection, a.arg4)
-        val vs5 = getRange(collection, a.arg5)
-        val resultSet =
-          for {
-            v1 <- vs1.regularValues
-            v2 <- vs2.regularValues
-            v3 <- vs3.regularValues
-            v4 <- vs4.regularValues
-            v5 <- vs5.regularValues
-          } yield a.fn(v1, v2, v3, v4, v5)
-        if (vs1.hasStar || vs2.hasStar || vs3.hasStar || vs4.hasStar || vs5.hasStar) withStar(resultSet) else withoutStar(resultSet)
-//        val applyMap = getMap(a)
-//        val vs1 = LazyValues(a.arg1.universe).storedValues(a.arg1)
-//        val vs2 = LazyValues(a.arg2.universe).storedValues(a.arg2)
-//        val vs3 = LazyValues(a.arg3.universe).storedValues(a.arg3)
-//        val vs4 = LazyValues(a.arg4.universe).storedValues(a.arg4)
-//        val vs5 = LazyValues(a.arg5.universe).storedValues(a.arg5)
-//        val choices = cartesianProduct(vs1.xvalues.toList, vs2.xvalues.toList, vs3.xvalues.toList, vs4.xvalues.toList, vs5.xvalues.toList).asInstanceOf[List[List[Extended[_]]]]
-//        val resultsList =
-//          for {
-//            List(arg1, arg2, arg3, arg4, arg5) <- choices
-//            if (arg1.isRegular && arg2.isRegular && arg3.isRegular && arg4.isRegular && arg5.isRegular)
-//          } yield {
-//            val arg1Val = arg1.value.asInstanceOf[a.Arg1Type]
-//            val arg2Val = arg2.value.asInstanceOf[a.Arg2Type]
-//            val arg3Val = arg3.value.asInstanceOf[a.Arg3Type]
-//            val arg4Val = arg4.value.asInstanceOf[a.Arg4Type]
-//            val arg5Val = arg5.value.asInstanceOf[a.Arg5Type]
-//            getOrElseInsert(applyMap, (arg1Val, arg2Val, arg3Val, arg4Val, arg5Val), a.fn(arg1Val, arg2Val, arg3Val, arg4Val, arg5Val))
-//          }
-//        if (vs1.hasStar || vs2.hasStar || vs3.hasStar || vs4.hasStar || vs5.hasStar) withStar(resultsList.toSet); else withoutStar(resultsList.toSet)
+      //case i: FastIf[_] =>
+      //  if (getRange(collection, i.test).hasStar) withStar(Set(i.thn, i.els)) else withoutStar(Set(i.thn, i.els))
 
       case c: Chain[_, _] =>
         throw new RuntimeException("This shouldn't be called") // The other version of apply should always be called for a chain
-//        def findChainValues[T, U](chain: Chain[T, U], cmap: Map[T, Element[U]], pVals: ValueSet[T], samples: Int): Set[ValueSet[U]] = {
-//          val chainVals = pVals.regularValues.map { parentVal =>
-//            val resultElem = getOrElseInsert(cmap, parentVal, chain.getUncached(parentVal))
-//            val result = LazyValues(resultElem.universe)(resultElem, depth - 1, samples, samples)
-//            usedBy(resultElem) = usedBy.getOrElse(resultElem, Set()) + element
-//            result
-//          }
-//          val newParentVals = LazyValues(chain.parent.universe).storedValues(chain.parent)
-//          if (newParentVals == pVals) {
-//            chainVals
-//          } else {
-//            findChainValues(chain, cmap, newParentVals, samples)
-//          }
-//        }
-//
-//        val chainMap = getMap(c)
-//        val parentVS = LazyValues(c.parent.universe).storedValues(c.parent)
-//        val samplesPerValue = math.max(1, (numTotalSamples.toDouble/parentVS.regularValues.size).toInt)
-//
-//        val resultVSs = findChainValues(c, chainMap, parentVS, samplesPerValue)
-//
-//        val startVS: ValueSet[c.Value] =
-//          if (parentVS.hasStar) withStar[c.Value](Set()); else withoutStar[c.Value](Set())
-//        resultVSs.foldLeft(startVS)(_ ++ _)
 
       case i: Inject[_] =>
         val argVSs = i.args.map(getRange(collection, _))
-//        val elementVSs = i.args.map(arg => LazyValues(arg.universe).storedValues(arg))
+        //        val elementVSs = i.args.map(arg => LazyValues(arg.universe).storedValues(arg))
         val incomplete = argVSs.exists(_.hasStar)
         val elementValues = argVSs.toList.map(_.regularValues.toList)
         val resultValues = homogeneousCartesianProduct(elementValues: _*).toSet.asInstanceOf[Set[i.Value]]
@@ -414,19 +338,19 @@ object Range {
 
       case r: MultiValuedReferenceElement[_] => getRangeOfMultiValuedReference(collection, r.collection, r.reference)
 
-      case a: Aggregate[_,_] =>
+      case a: Aggregate[_, _] =>
         val inputs = getRange(collection, a.mvre)
         val resultValues = inputs.regularValues.map(a.aggregate(_))
         if (inputs.hasStar) withStar(resultValues); else withoutStar(resultValues)
 
-      case f: FoldLeft[_,_] => getRangeOfFold(collection, f)
+      case f: FoldLeft[_, _] => getRangeOfFold(collection, f)
 
       case i: IntSelector =>
         val counterValues = getRange(collection, i.counter)
         if (counterValues.regularValues.nonEmpty) {
           val maxCounter = counterValues.regularValues.max
-//          val all = List.tabulate(maxCounter)(i => i).toSet
-          val all = Set((0 until maxCounter):_*)
+          //          val all = List.tabulate(maxCounter)(i => i).toSet
+          val all = Set((0 until maxCounter): _*)
           if (counterValues.hasStar) ValueSet.withStar(all); else ValueSet.withoutStar(all)
         } else { ValueSet.withStar(Set()) }
 

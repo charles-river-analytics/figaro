@@ -19,6 +19,7 @@ import com.cra.figaro.library.collection.MakeArray
 import com.cra.figaro.library.collection.FixedSizeArray
 import scala.collection.mutable.Map
 import com.cra.figaro.algorithm.factored.factors.Variable
+import com.cra.figaro.language.Apply
 
 /**
  * A collection of problem components. This data structure manages all the components being used in the solution of a top-level
@@ -85,6 +86,13 @@ class ComponentCollection {
    *  Throws an exception if the element is not associated with any component.
    */
   def apply[P, T](chain: Chain[P, T]): ChainComponent[P, T] = components(chain).asInstanceOf[ChainComponent[P, T]]
+  
+    /**
+   *  Get the component associated with this element in this collection.
+   *  Throws an exception if the element is not associated with any component.
+   */
+  def apply[T](apply: Apply[T]): ApplyComponent[T] = components(apply).asInstanceOf[ApplyComponent[T]]
+  
   /**
    *  Get the component associated with this element in this collection.
    *  Throws an exception if the element is not associated with any component.
@@ -104,7 +112,8 @@ class ComponentCollection {
       val component: ProblemComponent[T] =
         element match {
           case chain: Chain[_, T] => new ChainComponent(problem, chain)
-          case makeArray: MakeArray[_] => new MakeArrayComponent(problem, makeArray).asInstanceOf[ProblemComponent[T]]
+          case makeArray: MakeArray[_] => new MakeArrayComponent(problem, makeArray)
+          case apply: Apply[_] => new ApplyComponent(problem, apply)
           case _ => new ProblemComponent(problem, element)
         }
       components += element -> component

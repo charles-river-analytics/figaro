@@ -132,7 +132,8 @@ class StructuredGibbsTest extends WordSpec with Matchers {
         val e1 = Apply(Constant(true), (b: Boolean) => { count += 1; 5 })
         val e2 = e1 === e1
         StructuredGibbs.probability(e2, true) should equal (1.0)
-        count should equal (2) // One for generating the range and one for creating the non-constraint factor. Both require applying the function.
+        count should equal (1)
+        // Note that this should now only expand once since Apply Maps have been added to Components
       }
     }
 

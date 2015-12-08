@@ -24,6 +24,7 @@ import com.cra.figaro.library.compound._
 import com.cra.figaro.library.collection._
 import com.cra.figaro.library.atomic.discrete._
 import scala.reflect.runtime.universe.{typeTag, TypeTag}
+import scala.collection.mutable.HashMap
 
 /**
  * A trait for elements that are able to construct their own Factor.
@@ -432,8 +433,9 @@ object Factory {
     resultFactor
   }
 
-  private val factorCache = scala.collection.mutable.Map[Element[_], List[Factor[Double]]]()
-
+  private val factorCache = new HashMap[Element[_], List[Factor[Double]]]() {
+    override def hashCode = 3
+  }
   /**
    * Construct a Factor without constraints.
    */

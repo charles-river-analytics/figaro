@@ -38,6 +38,11 @@ import JSci.maths.ExtraMath.binomial
 class SufficientStatisticsFactor(parameterMap: immutable.Map[Parameter[_], Seq[Double]]) {
   val semiring = new SufficientStatisticsSemiring(parameterMap)
 
+  def convertFactor[T](factor: Factor[Double]): Factor[(Double, Map[Parameter[_], Seq[Double]])] = {
+    def doubleToParam(d: Double) = (d, Map(parameterMap.toSeq: _*))
+    factor.mapTo(doubleToParam, semiring)     
+  }
+  
   private def makeFactors[T](const: Constant[T]): List[Factor[(Double, Map[Parameter[_], Seq[Double]])]] = {
     val factor = Factory.defaultFactor[(Double, Map[Parameter[_], Seq[Double]])](List(), List(Variable(const)), semiring)
     val mapping = mutable.Map(parameterMap.toSeq: _*)

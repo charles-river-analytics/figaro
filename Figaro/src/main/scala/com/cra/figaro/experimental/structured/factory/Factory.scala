@@ -148,7 +148,7 @@ object Factory {
       val entry =
         if (selectXVal.isRegular && parentXVal.isRegular) {
           if (selectXVal.value == parentXVal.value) {
-            if ((!overallXVal.isRegular && !outcomeXVal.isRegular) || overallXVal.value == mapper.map(outcomeXVal.value, choices)) 1.0 else 0.0
+            if ((!overallXVal.isRegular && !outcomeXVal.isRegular) || (overallXVal.isRegular && outcomeXVal.isRegular && overallXVal.value == mapper.map(outcomeXVal.value, choices))) 1.0 else 0.0
           } else 1.0
         } else if (selectXVal.isRegular || parentXVal.isRegular) 1.0 // they are different
         else if (!overallXVal.isRegular) 1.0 // if parentXVal is *, the only possible outcomeXVal is *

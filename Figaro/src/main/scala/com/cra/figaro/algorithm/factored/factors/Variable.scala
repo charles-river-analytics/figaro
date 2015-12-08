@@ -23,6 +23,8 @@ import com.cra.figaro.library.collection.MakeArray
 import com.cra.figaro.experimental.structured.ChainComponent
 import com.cra.figaro.experimental.structured.ProblemComponent
 import com.cra.figaro.experimental.structured.MakeArrayComponent
+import scala.collection.mutable.HashMap
+import com.cra.figaro.experimental.structured.ApplyComponent
 
 /**
  * Variables that appear in factors.
@@ -88,9 +90,7 @@ class InternalVariable[T](values: ValueSet[T]) extends Variable(values) {
   override def toString = "Internal variable:" + values.toString
 }
 
-class InternalChainVariable[U](values: ValueSet[U], val chain: Chain[_, _], val chainVar: Variable[_])
-  extends InternalVariable(values) {
-}
+class InternalChainVariable[U](values: ValueSet[U], val chain: Chain[_, _], val chainVar: Variable[_]) extends InternalVariable(values) 
 
 object Variable {
 
@@ -103,11 +103,14 @@ object Variable {
   private def makeComponent[T](elem: Element[T]): ProblemComponent[T] = elem match {
     case chain: Chain[_, T] => new ChainComponent(problem, chain)
     case makeArray: MakeArray[_] => new MakeArrayComponent(problem, makeArray).asInstanceOf[ProblemComponent[T]]
+    case apply: Apply[_] => new ApplyComponent(problem, apply)
     case _ => new ProblemComponent(problem, elem)
   }
 
   // Make sure to register this map (or replace the memoMake)
-  private val idCache: Map[Element[_], Int] = Map()
+  private val idCache: Map[Element[_], Int] = new HashMap[Element[_], Int]() {
+    override def hashCode = 2
+  }
 
   private var idState: Int = 0
 

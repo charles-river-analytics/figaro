@@ -61,7 +61,7 @@ class ContainerElementTest extends WordSpec with Matchers {
 
     "map a function through all possible values correctly" in {
       Universe.createNew()
-      val contElem = create()
+      val contElem = create()      
       VariableElimination.probability(contElem.map(!_)(0), false) should be ((0.5 * 0.1 + 0.5 * 0.3) +- 0.0000000001)
     }
 
