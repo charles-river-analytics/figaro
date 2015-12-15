@@ -210,7 +210,7 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
   def getFactors(neededElements: List[Element[_]], targetElements: List[Element[_]], upperBounds: Boolean = false): List[Factor[Double]] = {
 
     //val thisUniverseFactors = (neededElements flatMap (BoundedProbFactor.make(_, upperBounds))).filterNot(_.isEmpty)
-    val thisUniverseFactors = (neededElements flatMap (makeFactorsForElement(_, upperBounds, true))).filterNot(_.isEmpty)
+    val thisUniverseFactors = (neededElements flatMap (Factory.makeFactorsForElement(_, upperBounds, true))).filterNot(_.isEmpty)
     val dependentUniverseFactors =
       for { (dependentUniverse, evidence) <- dependentUniverses } yield Factory.makeDependentFactor(Variable.cc, universe, dependentUniverse, dependentAlgorithm(dependentUniverse, evidence))
     val factors = dependentUniverseFactors ::: thisUniverseFactors

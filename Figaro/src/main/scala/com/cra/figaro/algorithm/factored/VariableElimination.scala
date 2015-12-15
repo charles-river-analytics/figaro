@@ -201,7 +201,7 @@ trait ProbabilisticVariableElimination extends VariableElimination[Double] {
         println(Variable(element).id + "(" + element.name.string + "@" + element.hashCode + ")" + ": " + element + ": " + Variable(element).range.mkString(","))
       }
     }
-    val thisUniverseFactors = allElements flatMap(makeFactorsForElement(_))
+    val thisUniverseFactors = allElements flatMap(Factory.makeFactorsForElement(_))
     val dependentUniverseFactors =
       for { (dependentUniverse, evidence) <- dependentUniverses } yield Factory.makeDependentFactor(Variable.cc, universe, dependentUniverse, dependentAlgorithm(dependentUniverse, evidence))
     dependentUniverseFactors ::: thisUniverseFactors

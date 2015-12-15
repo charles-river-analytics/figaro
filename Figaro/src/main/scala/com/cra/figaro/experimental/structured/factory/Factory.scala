@@ -27,6 +27,10 @@ import com.cra.figaro.library.atomic.discrete._
 import scala.reflect.runtime.universe.{ typeTag, TypeTag }
 import com.cra.figaro.experimental.structured.ComponentCollection
 import com.cra.figaro.experimental.structured.ProblemComponent
+import com.cra.figaro.experimental.structured.Lower
+import com.cra.figaro.experimental.structured.ApplyComponent
+import com.cra.figaro.experimental.structured.NestedProblem
+import com.cra.figaro.experimental.structured.Upper
 
 /**
  * Methods for creating probabilistic factors associated with elements.
@@ -82,7 +86,7 @@ object Factory {
    * The mutliplicative identity factor.
    */
   def unit[T: TypeTag](semiring: Semiring[T]): Factor[T] = {
-    val result = new BasicFactor[T](List(), List())
+    val result = new BasicFactor[T](List(), List(), semiring)
     result.set(List(), semiring.one)
     result
   }
@@ -113,8 +117,8 @@ object Factory {
   /**
    * Create a BasicFactor from the supplied parent and children variables
    */
-  def defaultFactor[T: TypeTag](parents: List[Variable[_]], children: List[Variable[_]]) =
-    new BasicFactor[T](parents, children)
+  def defaultFactor[T: TypeTag](parents: List[Variable[_]], children: List[Variable[_]], _semiring: Semiring[T] = SumProductSemiring().asInstanceOf[Semiring[T]]) =
+    new BasicFactor[T](parents, children, _semiring)
 
   private def makeFactors[T](cc: ComponentCollection, const: Constant[T]): List[Factor[Double]] = {
     val factor = new BasicFactor[Double](List(), List(getVariable(cc, const)))
@@ -310,5 +314,42 @@ object Factory {
     val factor = new BasicFactor[Double](variables, List())
     factor.fillByRule(rule _)
     factor
+  }
+  
+  /**
+   * Make factors for a particular element. This function wraps the SFI method of creating factors using component collections
+   */
+  def makeFactorsForElement[Value](elem: Element[_], upper: Boolean = false, parameterized: Boolean = false) = {
+      val comp = Variable.cc(elem)
+      elem match {
+    	// If the element is a chain, we need to create subproblems for each value of the chain
+    	// to create factors accordingly
+        case c: Chain[_,_] => {
+          val chainMap = LazyValues(elem.universe).getMap(c)
+          chainMap.foreach(f => {
+            val subproblem = new NestedProblem(Variable.cc, f._2)
+            Variable.cc.expansions += (c.chainFunction, f._1) -> subproblem        
+          })          
+        }
+        // If the element is a MakeArray, we need mark that it has been expanded. Note that
+        // the normal Values call will expand the MakeArray, we are just setting the max expansion here
+        case ma: MakeArray[_] => {
+          val maC = Variable.cc(ma)
+          maC.maxExpanded = Variable.cc(ma.numItems).range.regularValues.max
+        }
+        // If the element is an apply, we need to populate the Apply map used by the factor creation
+        case a: Apply[Value] => {
+          val applyComp = comp.asInstanceOf[ApplyComponent[Value]]
+          val applyMap = LazyValues(elem.universe).getMap(a)
+          applyComp.setMap(applyMap)          
+        }
+        case _ => ()
+      }
+      // Make the constraint and non-constraint factors for the element by calling the
+      // component factor makers
+      if (upper) comp.makeConstraintFactors(Upper) else comp.makeConstraintFactors(Lower)
+      comp.makeNonConstraintFactors( parameterized)
+      val constraint = if (upper) comp.constraintFactors(Upper) else comp.constraintFactors(Lower)
+      constraint ::: comp.nonConstraintFactors 
   }
 }

@@ -118,22 +118,6 @@ trait FactoredAlgorithm[T] extends Algorithm {
     
     // We only include elements from other universes if they are specified in the starter elements.
     val resultElements = values.expandedElements.toList ::: starterElements.filter(_.universe != universe)
-
-    /*
-    resultElements.foreach{e =>      
-      e match {
-        case c: Chain[_,_] => {
-          val chainMap = LazyValues(e.universe).getMap(c)
-          chainMap.foreach(f => {
-            val subproblem = new NestedProblem(Variable.cc, f._2)
-            Variable.cc.expansions += (c.chainFunction, f._1) -> subproblem        
-          })          
-        }
-        case _ => ()
-      }
-    }
-    * 
-    */
         
     // Only conditions and constraints produce distinct lower and upper bounds for *. So, if there are not such elements with * as one
     // of their values, we don't need to compute bounds and can save computation.
@@ -148,43 +132,7 @@ trait FactoredAlgorithm[T] extends Algorithm {
     (resultElements, boundsNeeded)
   }
   
-  /**
-   * Make factors for a particular element. This function wraps the SFI method of creating factors using component collections
-   */
-  def makeFactorsForElement[Value](elem: Element[_], upper: Boolean = false, parameterized: Boolean = false) = {
-      val comp = Variable.cc(elem)
-      elem match {
-    	// If the element is a chain, we need to create subproblems for each value of the chain
-    	// to create factors accordingly
-        case c: Chain[_,_] => {
-          val chainMap = LazyValues(elem.universe).getMap(c)
-          chainMap.foreach(f => {
-            val subproblem = new NestedProblem(Variable.cc, f._2)
-            Variable.cc.expansions += (c.chainFunction, f._1) -> subproblem        
-          })          
-        }
-        // If the element is a MakeArray, we need mark that it has been expanded. Note that
-        // the normal Values call will expand the MakeArray, we are just setting the max expansion here
-        case ma: MakeArray[_] => {
-          val maC = Variable.cc(ma)
-          maC.maxExpanded = Variable.cc(ma.numItems).range.regularValues.max
-        }
-        // If the element is an apply, we need to populate the Apply map used by the factor creation
-        case a: Apply[Value] => {
-          val applyComp = comp.asInstanceOf[ApplyComponent[Value]]
-          val applyMap = LazyValues(elem.universe).getMap(a)
-          applyComp.setMap(applyMap)          
-        }
-        case _ => ()
-      }
-      // Make the constraint and non-constraint factors for the element by calling the
-      // component factor makers
-      if (upper) comp.makeConstraintFactors(Upper) else comp.makeConstraintFactors(Lower)
-      comp.makeNonConstraintFactors( parameterized)
-      val constraint = if (upper) comp.constraintFactors(Upper) else comp.constraintFactors(Lower)
-      constraint ::: comp.nonConstraintFactors 
-  }
-  
+    
   /**
    * All implementations of factored algorithms must specify a way to get the factors from the given universe and
    * dependent universes.
