@@ -392,6 +392,7 @@ class VESolverTest extends WordSpec with Matchers {
       val ca = cc(a)
       cu.generateRange()
       cf.generateRange()
+      ca.expand()
       ca.generateRange()
       cu.makeNonConstraintFactors()
       cf.makeNonConstraintFactors()

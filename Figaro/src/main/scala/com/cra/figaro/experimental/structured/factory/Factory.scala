@@ -57,8 +57,8 @@ object Factory {
     cc.intermediates += v
     v
   }
-  
-  def makeVariable[T](cc: ComponentCollection, valueSet: ValueSet[T], chain: Chain[_,_]): Variable[T] = {
+
+  def makeVariable[T](cc: ComponentCollection, valueSet: ValueSet[T], chain: Chain[_, _]): Variable[T] = {
     val v = new InternalChainVariable(valueSet, chain, getVariable(cc, chain))
     cc.intermediates += v
     v
@@ -96,7 +96,7 @@ object Factory {
    * and create the factor mapping the inputs to their tuple.
    * @param inputs the variables to be formed into a tuple
    */
-  def makeTupleVarAndFactor(cc: ComponentCollection, chain: Option[Chain[_,_]], inputs: Variable[_]*): (Variable[List[Extended[_]]], Factor[Double]) = {
+  def makeTupleVarAndFactor(cc: ComponentCollection, chain: Option[Chain[_, _]], inputs: Variable[_]*): (Variable[List[Extended[_]]], Factor[Double]) = {
     val inputList: List[Variable[_]] = inputs.toList
     // Subtlety alert: In the tuple, we can't just map inputs with * to *. We need to remember which input was *.
     // Therefore, instead, we make the value a regular value consisting of a list of extended values.
@@ -294,8 +294,8 @@ object Factory {
       }
     }
   }
-  
-    /**
+
+  /**
    * Create the probabilistic factor encoding the probability of evidence in the dependent universe as a function of the
    * values of variables in the parent universe. The third argument is the the function to use for computing
    * probability of evidence in the dependent universe. It is assumed that the definition of this function will already contain the
@@ -315,41 +315,47 @@ object Factory {
     factor.fillByRule(rule _)
     factor
   }
-  
+
   /**
    * Make factors for a particular element. This function wraps the SFI method of creating factors using component collections
    */
   def makeFactorsForElement[Value](elem: Element[_], upper: Boolean = false, parameterized: Boolean = false) = {
-      val comp = Variable.cc(elem)
-      elem match {
-    	// If the element is a chain, we need to create subproblems for each value of the chain
-    	// to create factors accordingly
-        case c: Chain[_,_] => {
-          val chainMap = LazyValues(elem.universe).getMap(c)
-          chainMap.foreach(f => {
-            val subproblem = new NestedProblem(Variable.cc, f._2)
-            Variable.cc.expansions += (c.chainFunction, f._1) -> subproblem        
-          })          
-        }
-        // If the element is a MakeArray, we need mark that it has been expanded. Note that
-        // the normal Values call will expand the MakeArray, we are just setting the max expansion here
-        case ma: MakeArray[_] => {
-          val maC = Variable.cc(ma)
-          maC.maxExpanded = Variable.cc(ma.numItems).range.regularValues.max
-        }
-        // If the element is an apply, we need to populate the Apply map used by the factor creation
-        case a: Apply[Value] => {
-          val applyComp = comp.asInstanceOf[ApplyComponent[Value]]
-          val applyMap = LazyValues(elem.universe).getMap(a)
-          applyComp.setMap(applyMap)          
-        }
-        case _ => ()
+    Variable(elem)
+    val comp = Variable.cc(elem)
+    elem match {
+      // If the element is a chain, we need to create subproblems for each value of the chain
+      // to create factors accordingly
+      case c: Chain[_, _] => {
+        val chainMap = LazyValues(elem.universe).getMap(c)
+        chainMap.foreach(f => {
+          val subproblem = new NestedProblem(Variable.cc, f._2)
+          Variable.cc.expansions += (c.chainFunction, f._1) -> subproblem
+        })
       }
-      // Make the constraint and non-constraint factors for the element by calling the
-      // component factor makers
-      if (upper) comp.makeConstraintFactors(Upper) else comp.makeConstraintFactors(Lower)
-      comp.makeNonConstraintFactors( parameterized)
-      val constraint = if (upper) comp.constraintFactors(Upper) else comp.constraintFactors(Lower)
-      constraint ::: comp.nonConstraintFactors 
+      // If the element is a MakeArray, we need mark that it has been expanded. Note that
+      // the normal Values call will expand the MakeArray, we are just setting the max expansion here
+      case ma: MakeArray[_] => {
+        val maC = Variable.cc(ma)
+        maC.maxExpanded = Variable.cc(ma.numItems).range.regularValues.max
+      }
+      // If the element is an apply, we need to populate the Apply map used by the factor creation
+      case a: Apply[Value] => {
+        val applyComp = comp.asInstanceOf[ApplyComponent[Value]]
+        val applyMap = LazyValues(elem.universe).getMap(a)
+        applyComp.setMap(applyMap)
+      }
+      case _ => ()
+    }
+    // Make the constraint and non-constraint factors for the element by calling the
+    // component factor makers    
+    val constraint = if (upper) {
+      comp.makeConstraintFactors(Upper)
+      comp.constraintFactors(Upper)
+    } else {
+      comp.makeConstraintFactors(Lower)
+      comp.constraintFactors(Lower)
+    }
+    comp.makeNonConstraintFactors(parameterized)
+    constraint ::: comp.nonConstraintFactors
   }
 }

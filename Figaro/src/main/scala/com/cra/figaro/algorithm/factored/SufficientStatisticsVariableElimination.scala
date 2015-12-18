@@ -42,7 +42,7 @@ class SufficientStatisticsVariableElimination(
    */
   val showTiming = false
 
-  protected val statFactor = new SufficientStatisticsFactorNew(parameterMap)
+  protected val statFactor = new SufficientStatisticsFactor(parameterMap)
 
   /**
    * Clear the sufficient statistics factors used by this algorithm.

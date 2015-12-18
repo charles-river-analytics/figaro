@@ -37,10 +37,11 @@ trait FactorMaker[T] {
   def makeFactors[T]: List[Factor[Double]]
 }
 
+
 /**
  * Methods for creating probabilistic factors associated with elements.
  */
-object Factory {
+object FactoryOld {
 
   /**
    * The mutliplicative identity factor.

@@ -18,6 +18,7 @@ import com.cra.figaro.language._
 import com.cra.figaro.library.compound._
 import com.cra.figaro.algorithm.factored.factors._
 
+
 /**
  * A Sub-Factory for Complex Elements
  */
@@ -48,7 +49,7 @@ object ComplexFactory {
             firstCollection = firstXvalue.value.asInstanceOf[ElementCollection]
             restElement = element.embeddedElements(firstCollection)
           } yield {
-            Factory.makeConditionalSelector(element, firstVar, firstIndex, Variable(restElement)) :: makeFactors(restElement)
+            FactoryOld.makeConditionalSelector(element, firstVar, firstIndex, Variable(restElement)) :: makeFactors(restElement)
           }
         selectedFactors.flatten
     }
@@ -82,7 +83,7 @@ object ComplexFactory {
                 case firstCollection: ElementCollection =>
                   val restElement = element.embeddedElements(firstCollection)
                   val result: List[Factor[Double]] =
-                    Factory.makeConditionalSelector(element, firstVar, firstIndex, Variable(restElement)) :: Factory.make(restElement)
+                    FactoryOld.makeConditionalSelector(element, firstVar, firstIndex, Variable(restElement)) :: FactoryOld.make(restElement)
                   result
                 case cs: Traversable[_] =>
                   // Create a multi-valued reference element (MVRE) for each collection in the value of the first name.
@@ -96,8 +97,8 @@ object ComplexFactory {
                   val combination = element.embeddedInject(collections)
                   val setMaker = element.embeddedApply(collections)
                   val result: List[Factor[Double]] =
-                    Factory.makeConditionalSelector(element, firstVar, firstIndex, Variable(setMaker)) :: Factory.make(combination) :::
-                      Factory.make(setMaker)
+                    FactoryOld.makeConditionalSelector(element, firstVar, firstIndex, Variable(setMaker)) :: FactoryOld.make(combination) :::
+                      FactoryOld.make(setMaker)
                   result
               }
             } else StarFactory.makeStarFactor(element)
@@ -203,3 +204,4 @@ object ComplexFactory {
     makeFactorSequence(startVar, fold.elements)
   }
 }
+

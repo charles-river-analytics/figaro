@@ -15,6 +15,7 @@ package com.cra.figaro.experimental.factored
 
 import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.algorithm.factored.factors._
+import com.cra.figaro.experimental.structured.factory._
 import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.algorithm.{ AlgorithmException, UnsupportedAlgorithmException }
 import com.cra.figaro.algorithm.sampling._
@@ -139,11 +140,10 @@ trait ProbabilisticGibbs extends Gibbs[Double] {
 
   protected var blockSamplers: List[BlockSampler] = _
 
-  def getFactors(neededElements: List[Element[_]], targetElements: List[Element[_]], upperBounds: Boolean = false): List[Factor[Double]] = {
-    Factory.removeFactors()
-    val thisUniverseFactors = neededElements flatMap (Factory.make(_))
+  def getFactors(neededElements: List[Element[_]], targetElements: List[Element[_]], upperBounds: Boolean = false): List[Factor[Double]] = {      
+    val thisUniverseFactors = neededElements flatMap(Factory.makeFactorsForElement(_))
     val dependentUniverseFactors =
-      for { (dependentUniverse, evidence) <- dependentUniverses } yield Factory.makeDependentFactor(universe, dependentUniverse, dependentAlgorithm(dependentUniverse, evidence))
+      for { (dependentUniverse, evidence) <- dependentUniverses } yield Factory.makeDependentFactor(Variable.cc, universe, dependentUniverse, dependentAlgorithm(dependentUniverse, evidence))
     // Make logarithmic to prevent underflow in product computations
     (dependentUniverseFactors ::: thisUniverseFactors).map(_.mapTo(Math.log, LogSumProductSemiring()))
   }
