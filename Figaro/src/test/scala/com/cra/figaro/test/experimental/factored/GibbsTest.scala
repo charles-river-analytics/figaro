@@ -225,6 +225,7 @@ class GibbsTest extends WordSpec with Matchers {
 
   def makeFactors(): List[Factor[Double]] = {
     LazyValues(Universe.universe).expandAll(Universe.universe.activeElements.toSet.map((elem: Element[_]) => ((elem, Integer.MAX_VALUE))))
+    Universe.universe.activeElements.foreach(Variable(_))
     Universe.universe.activeElements flatMap (Factory.makeFactorsForElement(_))
   }
 
