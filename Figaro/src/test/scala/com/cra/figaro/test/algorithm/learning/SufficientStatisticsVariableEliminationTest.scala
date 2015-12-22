@@ -56,7 +56,7 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               val one = (1.0, emptyMap)
 
               val algorithm = SufficientStatisticsVariableElimination(paramMap)
-              val elements = List(f1,f2,p1,f3)
+              val (elements, _) = algorithm.getNeededElements(List(f1,f2,p1,f3), Int.MaxValue) 
               val values = Values(universe)
               values(f1)
               values(f2)
@@ -101,7 +101,7 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               val one = (1.0, emptyMap)
 
               val algorithm = SufficientStatisticsVariableElimination(paramMap)
-              val elements = List(f1,f2,f3,p1)
+              val (elements, _) = algorithm.getNeededElements(List(f1,f2,p1,f3), Int.MaxValue) 
               val values = Values(universe)
               values(f1)
               values(f2)
@@ -147,7 +147,7 @@ class SufficientStatisticsVariableEliminationTest extends WordSpec with PrivateM
               val one = (1.0, emptyMap)
 
               val algorithm = SufficientStatisticsVariableElimination(paramMap)
-              val elements = List(f1,f2,f3,p1)
+              val (elements, _) = algorithm.getNeededElements(List(f1,f2,p1,f3), Int.MaxValue) 
               val values = Values(universe)
               values(f1)
               values(f2)

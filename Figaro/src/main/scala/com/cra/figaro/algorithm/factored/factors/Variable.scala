@@ -17,7 +17,14 @@ import com.cra.figaro.algorithm._
 import com.cra.figaro.language._
 import scala.collection.mutable.Map
 import com.cra.figaro.algorithm.lazyfactored.{ LazyValues, Extended, ValueSet }
+import com.cra.figaro.experimental.structured.ComponentCollection
+import com.cra.figaro.experimental.structured.Problem
+import com.cra.figaro.library.collection.MakeArray
+import com.cra.figaro.experimental.structured.ChainComponent
+import com.cra.figaro.experimental.structured.ProblemComponent
+import com.cra.figaro.experimental.structured.MakeArrayComponent
 import scala.collection.mutable.HashMap
+import com.cra.figaro.experimental.structured.ApplyComponent
 
 /**
  * Variables that appear in factors.
@@ -83,16 +90,21 @@ class InternalVariable[T](values: ValueSet[T]) extends Variable(values) {
   override def toString = "Internal variable:" + values.toString
 }
 
-class InternalChainVariable[U](values: ValueSet[U], val chain: Chain[_,_], val chainVar: Variable[_])
-  extends InternalVariable(values) {
-}
+class InternalChainVariable[U](values: ValueSet[U], val chain: Chain[_, _], val chainVar: Variable[_]) extends InternalVariable(values) 
 
-
-/* Variables generated from sufficient statistics of parameters */
 object Variable {
-  // An element should always map to the same variable
-  private val memoMake : Map[Element[_], Variable[_]] = new HashMap[Element[_], Variable[_]]() {
-    override def hashCode = 1
+
+  // The global component collection to support legacy factor creation with SFI factor generation
+  private[figaro] var cc: ComponentCollection = new ComponentCollection
+  private[figaro] var problem = new Problem(cc, List())
+
+  private def variableExists(elem: Element[_]) = cc.contains(elem) && (cc(elem).variable != null)
+
+  private def makeComponent[T](elem: Element[T]): ProblemComponent[T] = elem match {
+    case chain: Chain[_, T] => new ChainComponent(problem, chain)
+    case makeArray: MakeArray[_] => new MakeArrayComponent(problem, makeArray).asInstanceOf[ProblemComponent[T]]
+    case apply: Apply[_] => new ApplyComponent(problem, apply)
+    case _ => new ProblemComponent(problem, elem)
   }
 
   // Make sure to register this map (or replace the memoMake)
@@ -118,40 +130,61 @@ object Variable {
   }
 
   private def make[T](elem: Element[T]): Variable[T] = {
-    // Make sure that the element will be removed from the memoMake map when it is inactivated
-    elem.universe.register(memoMake)
+    // Make sure that the element will be removed from the cc.components map when it is inactivated
+    elem.universe.register(cc.components)
     elem.universe.register(idCache)
-    new ElementVariable(elem)
+    elem match {
+    	case p: Parameterized[T] => new ParameterizedVariable(p)
+    	case _ => new ElementVariable(elem)
+    }
   }
 
   private def make[T](p: Parameterized[T]): Variable[T] = {
     // Make sure that the element will be removed from the memoMake map when it is inactivated
-    p.universe.register(memoMake)
+    //p.universe.register(memoMake)
+    p.universe.register(cc.components)
     p.universe.register(idCache)
     new ParameterizedVariable(p)
   }
-
 
   /**
    * Create the variable associated with an element. This method is memoized.
    */
   def apply[T](elem: Element[T]): Variable[T] =
-    memoMake.get(elem) match {
-      case Some(v) => v.asInstanceOf[Variable[T]]
-      case None =>
-        val result = make(elem)
-        memoMake += elem -> result
-        result
+    if (variableExists(elem)) {
+      cc(elem).variable
+    } else {
+      val result = make(elem)
+      val comp = makeComponent(elem)
+      comp.setVariable(result)
+      comp.range = result.valueSet 
+      cc.components += elem -> comp
+      result
     }
 
+  /**
+   * Create the variable associated with a parame. This method is memoized.
+   */
   def apply[T](elem: Parameterized[T]): Variable[T] =
-    memoMake.get(elem) match {
-      case Some(v) => v.asInstanceOf[Variable[T]]
-      case None =>
-        val result = make(elem)
-        memoMake += elem -> result
-        result
+    if (variableExists(elem)) {
+      cc(elem).variable
+    } else {
+      val result = make(elem)
+      val comp = makeComponent(elem)
+      comp.setVariable(result)
+      comp.range = result.valueSet 
+      cc.components += elem -> comp
+      result
     }
 
-  def clearCache() { memoMake.clear() }
+  /**
+   * Clear the variable cache
+   */
+  def clearCache() { 
+    cc.components.foreach{c => c._1.universe.deregister(cc.components)}
+    cc = new ComponentCollection
+    problem = new Problem(cc, List())
+  }
+
+
 }

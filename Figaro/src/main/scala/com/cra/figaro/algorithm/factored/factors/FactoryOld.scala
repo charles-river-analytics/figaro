@@ -25,6 +25,10 @@ import com.cra.figaro.library.collection._
 import com.cra.figaro.library.atomic.discrete._
 import scala.reflect.runtime.universe.{typeTag, TypeTag}
 import scala.collection.mutable.HashMap
+import com.cra.figaro.experimental.structured.Lower
+import com.cra.figaro.experimental.structured.ApplyComponent
+import com.cra.figaro.experimental.structured.NestedProblem
+import com.cra.figaro.experimental.structured.Upper
 
 /**
  * A trait for elements that are able to construct their own Factor.
@@ -33,10 +37,11 @@ trait FactorMaker[T] {
   def makeFactors[T]: List[Factor[Double]]
 }
 
+
 /**
  * Methods for creating probabilistic factors associated with elements.
  */
-object Factory {
+object FactoryOld {
 
   /**
    * The mutliplicative identity factor.
@@ -500,4 +505,5 @@ object Factory {
     factor.fillByRule(rule _)
     factor
   }
+    
 }

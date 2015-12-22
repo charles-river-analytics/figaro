@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.algorithm.factored
 
-import scala.collection.Map
+import scala.collection.immutable.Map
 import scala.collection.Seq
 import scala.collection.mutable
 
@@ -135,25 +135,24 @@ class SemiringTest extends WordSpec with Matchers with PrivateMethodTester {
       "handle zero values in weighted multiplication without crashing" in
         {
           val numberOfParameters = 1
-          val param = Dirichlet(1, 1, 1)
-          val parameterMap = mutable.Map.empty[Parameter[_], Seq[Double]]
-          parameterMap += param -> Seq(0.0, 0.0, 0.0)
+          val param: Parameter[_] = Dirichlet(1, 1, 1)
+          val parameterMap = Map.empty[Parameter[_], Seq[Double]] + (param -> Seq(0.0, 0.0, 0.0))
 
-          val semiring = new SufficientStatisticsSemiring(parameterMap.toMap)
+          val semiring = new SufficientStatisticsSemiring(parameterMap)
 
-          val allZeros = semiring.sum((0.50, mutable.Map(param -> Seq(0.0, 0.0, 0.0))), (0.50, mutable.Map(param -> Seq(0.0, 0.0, 0.0))))
+          val allZeros = semiring.sum((0.50, Map(param -> Seq(0.0, 0.0, 0.0))), (0.50, Map(param -> Seq(0.0, 0.0, 0.0))))
 
           allZeros._2(param)(0) should be(0.0 +- 0.001)
           allZeros._2(param)(1) should be(0.0 +- 0.001)
           allZeros._2(param)(2) should be(0.0 +- 0.001)
 
-          val leftZeros = semiring.sum((0.50, mutable.Map(param -> Seq(0.0, 0.0, 0.0))), (0.50, mutable.Map(param -> Seq(0.2, 0.6, 0.4))))
+          val leftZeros = semiring.sum((0.50, Map(param -> Seq(0.0, 0.0, 0.0))), (0.50, Map(param -> Seq(0.2, 0.6, 0.4))))
 
           leftZeros._2(param)(0) should be(0.1 +- 0.001)
           leftZeros._2(param)(1) should be(0.3 +- 0.001)
           leftZeros._2(param)(2) should be(0.2 +- 0.001)
 
-          val rightZeros = semiring.sum((0.50, mutable.Map(param -> Seq(0.3, 0.4, 0.5))), (0.50, mutable.Map(param -> Seq(0.0, 0.0, 0.0))))
+          val rightZeros = semiring.sum((0.50, Map(param -> Seq(0.3, 0.4, 0.5))), (0.50, Map(param -> Seq(0.0, 0.0, 0.0))))
 
           rightZeros._2(param)(0) should be(0.15 +- 0.001)
           rightZeros._2(param)(1) should be(0.2 +- 0.001)
@@ -168,7 +167,7 @@ class SemiringTest extends WordSpec with Matchers with PrivateMethodTester {
 
           val semiring = SufficientStatisticsSemiring(parameterMap.toMap)
 
-          val result = semiring.product((0.50, mutable.Map(param -> Seq(0.3, 0.4, 0.5))), (0.50, mutable.Map(param -> Seq(0.8, 0.432, 0.0))))
+          val result = semiring.product((0.50, Map(param -> Seq(0.3, 0.4, 0.5))), (0.50, Map(param -> Seq(0.8, 0.432, 0.0))))
           result._1 should equal(0.25)
           //The simple product is used in the multiplication step.
           result._2(param)(0) should be(1.1 +- 0.001)
@@ -185,7 +184,7 @@ class SemiringTest extends WordSpec with Matchers with PrivateMethodTester {
 
           val semiring = SufficientStatisticsSemiring(parameterMap.toMap)
 
-          val result = semiring.sum((0.50, mutable.Map(param -> Seq(0.3, 0.4, 0.5))), (0.50, mutable.Map(param -> Seq(0.8, 0.432, 0.0))))
+          val result = semiring.sum((0.50, Map(param -> Seq(0.3, 0.4, 0.5))), (0.50, Map(param -> Seq(0.8, 0.432, 0.0))))
           result._1 should be(1.0 +- 0.001)
           //(.5*.3 + .5*.8)/1 = 0.15 + .4 = .55
           result._2(param)(0) should be(0.55 +- 0.001)
@@ -246,7 +245,7 @@ class SemiringTest extends WordSpec with Matchers with PrivateMethodTester {
               p += 1
             }
 
-            def randomParameterMap(): mutable.Map[Parameter[_], Seq[Double]] =
+            def randomParameterMap(): Map[Parameter[_], Seq[Double]] =
               {
 
                 val paramMap = mutable.Map.empty[Parameter[_], Seq[Double]]
@@ -256,7 +255,7 @@ class SemiringTest extends WordSpec with Matchers with PrivateMethodTester {
                     (paramMap(p))(index).+(random.nextDouble())
                   }
                 }
-                paramMap
+                paramMap.toMap
               }
 
             def create(): (Double, Map[Parameter[_], Seq[Double]]) =

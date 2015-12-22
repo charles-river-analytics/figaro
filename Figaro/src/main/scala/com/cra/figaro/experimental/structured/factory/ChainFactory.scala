@@ -53,14 +53,14 @@ object ChainFactory {
         val actualVar = if (!nestedProblem.global(formalVar)) Factory.makeVariable(cc, formalVar.valueSet) else formalVar
         cc.variableParents(chainVar) += actualVar
         chainComp.actualSubproblemVariables += parentVal.value -> actualVar
-        List(Factory.makeConditionalSelector(pairVar, parentVal, actualVar))
+        List(Factory.makeConditionalSelector(pairVar, parentVal, actualVar, chainComp.range.regularValues)(mapper))
       }
       else {
         // We create a dummy variable for the outcome variable whose value is always star.
         // We create a dummy factor for that variable.
         // Then we use makeConditionalSelector with the dummy variable
         val dummy = Factory.makeVariable(cc, ValueSet.withStar[U](Set()))
-        List(Factory.makeConditionalSelector(pairVar, parentVal, dummy))
+        List(Factory.makeConditionalSelector(pairVar, parentVal, dummy, chainComp.range.regularValues))
       }
     })
     pairFactor :: tempFactors

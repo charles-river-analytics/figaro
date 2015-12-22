@@ -16,6 +16,7 @@ package com.cra.figaro.test.experimental.factored
 import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.lazyfactored.{ LazyValues, ValueSet }
 import com.cra.figaro.experimental.factored._
+import com.cra.figaro.experimental.structured.factory._
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.discrete.Uniform
 import com.cra.figaro.library.compound.If
@@ -224,7 +225,8 @@ class GibbsTest extends WordSpec with Matchers {
 
   def makeFactors(): List[Factor[Double]] = {
     LazyValues(Universe.universe).expandAll(Universe.universe.activeElements.toSet.map((elem: Element[_]) => ((elem, Integer.MAX_VALUE))))
-    Universe.universe.activeElements flatMap (Factory.make(_))
+    Universe.universe.activeElements.foreach(Variable(_))
+    Universe.universe.activeElements flatMap (Factory.makeFactorsForElement(_))
   }
 
   def test[T](target: Element[T], predicate: T => Boolean, prob: Double, tol: Double = 0.025) {

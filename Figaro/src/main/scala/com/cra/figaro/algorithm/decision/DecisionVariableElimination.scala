@@ -16,7 +16,7 @@ package com.cra.figaro.algorithm.decision
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.algorithm.factored.factors._
-import com.cra.figaro.algorithm.factored.factors.factory._
+import com.cra.figaro.experimental.structured.factory._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
 import com.cra.figaro.library.decision._
@@ -71,13 +71,12 @@ trait ProbabilisticVariableEliminationDecision extends VariableElimination[(Doub
       }
     }
 
-    Factory.removeFactors()
-    val thisUniverseFactorsExceptUtil = neededElements flatMap (Factory.make(_))
+    val thisUniverseFactorsExceptUtil = neededElements flatMap (Factory.makeFactorsForElement(_))
     // Make special utility factors for utility elements
     val thisUniverseFactorsUtil = getUtilityNodes map (makeUtilFactor(_))
 
     val dependentUniverseFactors =
-      for { (dependentUniverse, evidence) <- dependentUniverses } yield Factory.makeDependentFactor(universe, dependentUniverse, dependentAlgorithm(dependentUniverse, evidence))
+      for { (dependentUniverse, evidence) <- dependentUniverses } yield Factory.makeDependentFactor(Variable.cc, universe, dependentUniverse, dependentAlgorithm(dependentUniverse, evidence))
 
     // Convert all non-utility factors from standard factors to decision factors, ie, factors are now tuples of (Double, _)
     val thisUniverseFactorsExceptUtil_conv = thisUniverseFactorsExceptUtil.map(s => convert(s, false))

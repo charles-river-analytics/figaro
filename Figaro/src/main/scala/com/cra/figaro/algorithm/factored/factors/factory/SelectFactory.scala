@@ -18,7 +18,7 @@ import com.cra.figaro.language._
 import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.library.compound._
 import com.cra.figaro.util._
-import com.cra.figaro.algorithm.factored.factors.Factory
+import com.cra.figaro.algorithm.factored.factors.FactoryOld
 
 /**
  * A Sub-Factory for Select or Dist Elements
@@ -129,7 +129,7 @@ object SelectFactory {
   private def intermedAndClauseFactors[U, T](dist: Dist[U, T]): (Variable[Int], List[Factor[Double]]) = {
     val intermed = new Variable(ValueSet.withoutStar((0 until dist.clauses.size).toSet))
     val clauseFactors = dist.outcomes.zipWithIndex map (pair =>
-      Factory.makeConditionalSelector(dist, intermed, pair._2, Variable(pair._1)))
+      FactoryOld.makeConditionalSelector(dist, intermed, pair._2, Variable(pair._1)))
     (intermed, clauseFactors)
   }
 

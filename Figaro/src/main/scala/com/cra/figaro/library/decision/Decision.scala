@@ -101,7 +101,7 @@ trait Decision[T, U] extends Chain[T, U] with PolicyMaker[T, U] {
     fcn = new_fcn
 
     // Remove all factors since the old factors are now out of date
-    Factory.removeFactors
+    Variable.clearCache
     // Have to nullify the last result even if parents the same since the function changed
     clearContext
     // Have to clear the last element in the cache since clearTempory always leaves an element in the cache

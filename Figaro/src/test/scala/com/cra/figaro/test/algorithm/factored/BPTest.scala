@@ -18,6 +18,7 @@ import org.scalatest.WordSpec
 import org.scalatest.Matchers
 import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.algorithm.factored.factors._
+import com.cra.figaro.experimental.structured.factory._
 import com.cra.figaro.algorithm.factored.beliefpropagation._
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound.If
@@ -39,7 +40,8 @@ class BPTest extends WordSpec with Matchers {
       val a = If(f, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
       val semiring = SumProductSemiring()
       LazyValues(Universe.universe).expandAll(Universe.universe.activeElements.toSet.map((elem: Element[_]) => ((elem, Integer.MAX_VALUE))))
-      val factors = Universe.universe.activeElements flatMap (Factory.make(_))
+      Universe.universe.activeElements.foreach(Variable(_))
+      val factors = Universe.universe.activeElements flatMap (Factory.makeFactorsForElement(_))
       val graph = new BasicFactorGraph(factors, semiring)
       val fn = graph.adjacencyList.filter(p => { p._1 match { case fn: FactorNode => true; case _ => false; } })
       val vn = graph.adjacencyList.filter(p => { p._1 match { case vn: VariableNode => true; case _ => false; } })
@@ -55,7 +57,8 @@ class BPTest extends WordSpec with Matchers {
       val a = If(f, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
       val semiring = SumProductSemiring()
       LazyValues(Universe.universe).expandAll(Universe.universe.activeElements.toSet.map((elem: Element[_]) => ((elem, Integer.MAX_VALUE))))
-      val factors = Universe.universe.activeElements flatMap (Factory.make(_))
+      Universe.universe.activeElements.foreach(Variable(_))
+      val factors = Universe.universe.activeElements flatMap (Factory.makeFactorsForElement(_))
       val graph = new BasicFactorGraph(factors, semiring)
       val fn = graph.adjacencyList.filter(p => { p._1 match { case fn: FactorNode => true; case _ => false; } })
       val vn = graph.adjacencyList.filter(p => { p._1 match { case vn: VariableNode => true; case _ => false; } })

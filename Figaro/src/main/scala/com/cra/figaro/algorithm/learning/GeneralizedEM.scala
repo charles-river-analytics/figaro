@@ -14,14 +14,15 @@
 package com.cra.figaro.algorithm.learning
 
 import com.cra.figaro.language._
-
 import com.cra.figaro.algorithm.{ Algorithm, ParameterLearner, ProbQueryAlgorithm, OneTime }
 import com.cra.figaro.algorithm.factored.beliefpropagation.BeliefPropagation
 import com.cra.figaro.algorithm.sampling.{ Importance, MetropolisHastings, ProposalScheme }
-import com.cra.figaro.algorithm.factored.factors.Factory
+import com.cra.figaro.experimental.structured.factory.Factory
 import com.cra.figaro.patterns.learning.ModelParameters
 import com.cra.figaro.algorithm.factored.SufficientStatisticsVariableElimination
 import com.cra.figaro.algorithm.online.Online
+import com.cra.figaro.algorithm.factored.VariableElimination
+import com.cra.figaro.algorithm.factored.factors.Variable
 
 /**
  * Expectation maximization iteratively produces an estimate of sufficient statistics for learnable parameters,
@@ -228,7 +229,7 @@ object EMWithBP {
   }
 
   private def makeBP(numIterations: Int, targets: Seq[Element[_]])(universe: Universe) = {
-    Factory.removeFactors()
+    Variable.clearCache
     BeliefPropagation(numIterations, targets: _*)(universe)
   }
   /**
@@ -438,12 +439,12 @@ object EMWithVE {
    * An expectation maximization algorithm which will run for the default of 10 iterations.
    */
   def apply(p: Parameter[_]*)(implicit universe: Universe) =
-    new ExpectationMaximizationWithFactors(universe, p: _*)(EMTerminationCriteria.maxIterations(10))
+    new ExpectationMaximizationWithFactors(universe, p: _*)(EMTerminationCriteria.maxIterations(10))     
   /**
    * An expectation maximization algorithm which will run for the default of 10 iterations.
    */
   def apply(p: ModelParameters)(implicit universe: Universe) =
-    new ExpectationMaximizationWithFactors(universe, p.convertToParameterList: _*)(EMTerminationCriteria.maxIterations(10))
+    new ExpectationMaximizationWithFactors(universe, p.convertToParameterList: _*)(EMTerminationCriteria.maxIterations(10))    
 
   def online(transition: () => Universe, p: Parameter[_]*)(implicit universe: Universe) = {
     new OnlineExpectationMaximizationWithFactors(universe, transition, p: _*)(EMTerminationCriteria.maxIterations(10))

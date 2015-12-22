@@ -27,6 +27,10 @@ import com.cra.figaro.library.atomic.discrete._
 import scala.reflect.runtime.universe.{ typeTag, TypeTag }
 import com.cra.figaro.experimental.structured.ComponentCollection
 import com.cra.figaro.experimental.structured.ProblemComponent
+import com.cra.figaro.experimental.structured.Lower
+import com.cra.figaro.experimental.structured.ApplyComponent
+import com.cra.figaro.experimental.structured.NestedProblem
+import com.cra.figaro.experimental.structured.Upper
 
 /**
  * Methods for creating probabilistic factors associated with elements.
@@ -53,8 +57,8 @@ object Factory {
     cc.intermediates += v
     v
   }
-  
-  def makeVariable[T](cc: ComponentCollection, valueSet: ValueSet[T], chain: Chain[_,_]): Variable[T] = {
+
+  def makeVariable[T](cc: ComponentCollection, valueSet: ValueSet[T], chain: Chain[_, _]): Variable[T] = {
     val v = new InternalChainVariable(valueSet, chain, getVariable(cc, chain))
     cc.intermediates += v
     v
@@ -82,7 +86,7 @@ object Factory {
    * The mutliplicative identity factor.
    */
   def unit[T: TypeTag](semiring: Semiring[T]): Factor[T] = {
-    val result = new BasicFactor[T](List(), List())
+    val result = new BasicFactor[T](List(), List(), semiring)
     result.set(List(), semiring.one)
     result
   }
@@ -92,7 +96,7 @@ object Factory {
    * and create the factor mapping the inputs to their tuple.
    * @param inputs the variables to be formed into a tuple
    */
-  def makeTupleVarAndFactor(cc: ComponentCollection, chain: Option[Chain[_,_]], inputs: Variable[_]*): (Variable[List[Extended[_]]], Factor[Double]) = {
+  def makeTupleVarAndFactor(cc: ComponentCollection, chain: Option[Chain[_, _]], inputs: Variable[_]*): (Variable[List[Extended[_]]], Factor[Double]) = {
     val inputList: List[Variable[_]] = inputs.toList
     // Subtlety alert: In the tuple, we can't just map inputs with * to *. We need to remember which input was *.
     // Therefore, instead, we make the value a regular value consisting of a list of extended values.
@@ -113,8 +117,8 @@ object Factory {
   /**
    * Create a BasicFactor from the supplied parent and children variables
    */
-  def defaultFactor[T: TypeTag](parents: List[Variable[_]], children: List[Variable[_]]) =
-    new BasicFactor[T](parents, children)
+  def defaultFactor[T: TypeTag](parents: List[Variable[_]], children: List[Variable[_]], _semiring: Semiring[T] = SumProductSemiring().asInstanceOf[Semiring[T]]) =
+    new BasicFactor[T](parents, children, _semiring)
 
   private def makeFactors[T](cc: ComponentCollection, const: Constant[T]): List[Factor[Double]] = {
     val factor = new BasicFactor[Double](List(), List(getVariable(cc, const)))
@@ -136,7 +140,7 @@ object Factory {
    * parent element, one of the result elements, and the overall chain element.
    */
 
-  def makeConditionalSelector[T, U](pairVar: Variable[List[Extended[_]]], parentXVal: Extended[T], outcomeVar: Variable[U]): Factor[Double] = {
+  def makeConditionalSelector[T, U](pairVar: Variable[List[Extended[_]]], parentXVal: Extended[T], outcomeVar: Variable[U], choices: Set[U])(implicit mapper: PointMapper[U]): Factor[Double] = {
     val factor = new ConditionalSelector[Double](List(pairVar), List(outcomeVar))
     for {
       (pairXVal, pairIndex) <- pairVar.range.zipWithIndex
@@ -148,7 +152,7 @@ object Factory {
       val entry =
         if (selectXVal.isRegular && parentXVal.isRegular) {
           if (selectXVal.value == parentXVal.value) {
-            if (overallXVal == outcomeXVal || (!overallXVal.isRegular && !outcomeXVal.isRegular)) 1.0 else 0.0
+            if ((!overallXVal.isRegular && !outcomeXVal.isRegular) || (overallXVal.isRegular && outcomeXVal.isRegular && overallXVal.value == mapper.map(outcomeXVal.value, choices))) 1.0 else 0.0
           } else 1.0
         } else if (selectXVal.isRegular || parentXVal.isRegular) 1.0 // they are different
         else if (!overallXVal.isRegular) 1.0 // if parentXVal is *, the only possible outcomeXVal is *
@@ -289,5 +293,69 @@ object Factory {
         case Some(abstraction) => makeAbstract(cc, elem, abstraction)
       }
     }
+  }
+
+  /**
+   * Create the probabilistic factor encoding the probability of evidence in the dependent universe as a function of the
+   * values of variables in the parent universe. The third argument is the the function to use for computing
+   * probability of evidence in the dependent universe. It is assumed that the definition of this function will already contain the
+   * right evidence.
+   */
+  def makeDependentFactor(cc: ComponentCollection, parentUniverse: Universe,
+    dependentUniverse: Universe,
+    probEvidenceComputer: () => Double): Factor[Double] = {
+    val uses = dependentUniverse.parentElements filter (_.universe == parentUniverse)
+    def rule(values: List[Any]) = {
+      for { (elem, value) <- uses zip values } { elem.value = value.asInstanceOf[Regular[elem.Value]].value }
+      val result = probEvidenceComputer()
+      result
+    }
+    val variables = uses map (cc(_).variable)
+    val factor = new BasicFactor[Double](variables, List())
+    factor.fillByRule(rule _)
+    factor
+  }
+
+  /**
+   * Make factors for a particular element. This function wraps the SFI method of creating factors using component collections
+   */
+  def makeFactorsForElement[Value](elem: Element[_], upper: Boolean = false, parameterized: Boolean = false) = {
+    Variable(elem)
+    val comp = Variable.cc(elem)
+    elem match {
+      // If the element is a chain, we need to create subproblems for each value of the chain
+      // to create factors accordingly
+      case c: Chain[_, _] => {
+        val chainMap = LazyValues(elem.universe).getMap(c)
+        chainMap.foreach(f => {
+          val subproblem = new NestedProblem(Variable.cc, f._2)
+          Variable.cc.expansions += (c.chainFunction, f._1) -> subproblem
+        })
+      }
+      // If the element is a MakeArray, we need mark that it has been expanded. Note that
+      // the normal Values call will expand the MakeArray, we are just setting the max expansion here
+      case ma: MakeArray[_] => {
+        val maC = Variable.cc(ma)
+        maC.maxExpanded = Variable.cc(ma.numItems).range.regularValues.max
+      }
+      // If the element is an apply, we need to populate the Apply map used by the factor creation
+      case a: Apply[Value] => {
+        val applyComp = comp.asInstanceOf[ApplyComponent[Value]]
+        val applyMap = LazyValues(elem.universe).getMap(a)
+        applyComp.setMap(applyMap)
+      }
+      case _ => ()
+    }
+    // Make the constraint and non-constraint factors for the element by calling the
+    // component factor makers    
+    val constraint = if (upper) {
+      comp.makeConstraintFactors(Upper)
+      comp.constraintFactors(Upper)
+    } else {
+      comp.makeConstraintFactors(Lower)
+      comp.constraintFactors(Lower)
+    }
+    comp.makeNonConstraintFactors(parameterized)
+    constraint ::: comp.nonConstraintFactors
   }
 }

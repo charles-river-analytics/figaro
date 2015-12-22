@@ -24,7 +24,7 @@ import com.cra.figaro.algorithm.factored.factors.SparseFactor
 import com.cra.figaro.algorithm.factored.factors.Variable
 import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.language._
-import com.cra.figaro.algorithm.factored.factors.Factory
+import com.cra.figaro.algorithm.factored.factors.FactoryOld
 import com.cra.figaro.util._
 /**
  * @author Glenn Takata Mar 22, 2015

@@ -16,10 +16,14 @@ package com.cra.figaro.algorithm.factored
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.learning._
 import com.cra.figaro.language._
-import com.cra.figaro.algorithm.factored.factors._
+import com.cra.figaro.experimental.structured.factory._
 import scala.collection._
-import scala.collection.mutable.{ Map, Set }
+import scala.collection.mutable.{ Set }
+import scala.collection.immutable.Map
 import com.cra.figaro.util.MultiSet
+import com.cra.figaro.algorithm.factored.factors.SufficientStatisticsSemiring
+import com.cra.figaro.algorithm.factored.factors.Factor
+import com.cra.figaro.algorithm.factored.factors.Variable
 
 /**
  * Variable elimination for sufficient statistics factors.
@@ -44,13 +48,13 @@ class SufficientStatisticsVariableElimination(
    * Clear the sufficient statistics factors used by this algorithm.
    */
   private def removeFactors() {
-    statFactor.removeFactors
+    Variable.clearCache
   }
 
   /**
    *  Particular implementations of probability of evidence algorithms must define the following method.
    */
-  def getFactors(neededElements: List[Element[_]], targetElements: List[Element[_]], upper: Boolean = false): List[Factor[(Double, mutable.Map[Parameter[_], Seq[Double]])]] = {
+  def getFactors(neededElements: List[Element[_]], targetElements: List[Element[_]], upper: Boolean = false): List[Factor[(Double, Map[Parameter[_], Seq[Double]])]] = {
     val allElements = neededElements.filter(p => p.isInstanceOf[Parameter[_]] == false)
     if (debug) {
       println("Elements appearing in factors and their ranges:")
@@ -58,11 +62,10 @@ class SufficientStatisticsVariableElimination(
         println(Variable(element).id + "(" + element.name.string + "@" + element.hashCode + ")" + ": " + element + ": " + Variable(element).range.mkString(","))
       }
     }
-
-    Factory.removeFactors()
+    
     val thisUniverseFactors = allElements flatMap (statFactor.make(_))
     val dependentUniverseFactors =
-      for { (dependentUniverse, evidence) <- dependentUniverses } yield statFactor.makeDependentFactor(universe, dependentUniverse, dependentAlgorithm(dependentUniverse, evidence))
+      for { (dependentUniverse, evidence) <- dependentUniverses } yield statFactor.makeDependentFactor(Variable.cc, universe, dependentUniverse, dependentAlgorithm(dependentUniverse, evidence))
 
     dependentUniverseFactors ::: thisUniverseFactors
   }
@@ -94,8 +97,7 @@ class SufficientStatisticsVariableElimination(
 
   val semiring = SufficientStatisticsSemiring(parameterMap)
 
-  override def cleanUp() = {
-    statFactor.removeFactors
+  override def cleanUp() = {    
     super.cleanUp()
   }
 

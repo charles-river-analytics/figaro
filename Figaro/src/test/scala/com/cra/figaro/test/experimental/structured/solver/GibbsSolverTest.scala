@@ -14,6 +14,7 @@ package com.cra.figaro.test.experimental.structured.solver
 
 import org.scalatest.{WordSpec, Matchers}
 import com.cra.figaro.algorithm.factored.factors._
+import com.cra.figaro.experimental.structured.factory._
 import com.cra.figaro.algorithm.lazyfactored.Regular
 import com.cra.figaro.experimental.factored.BlockSampler
 import com.cra.figaro.experimental.structured._
@@ -495,6 +496,7 @@ class GibbsSolverTest extends WordSpec with Matchers {
       val ca = cc(a)
       cu.generateRange()
       cf.generateRange()
+      ca.expand()
       ca.generateRange()
       cu.makeNonConstraintFactors()
       cf.makeNonConstraintFactors()

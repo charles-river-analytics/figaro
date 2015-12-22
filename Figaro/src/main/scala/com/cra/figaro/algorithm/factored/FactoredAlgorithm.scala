@@ -23,12 +23,20 @@ import scala.collection._
 import com.cra.figaro.algorithm.lazyfactored._
 import scala.collection.immutable.Set
 import com.cra.figaro.algorithm.UnsupportedAlgorithmException
+import com.cra.figaro.experimental.structured.Problem
+import com.cra.figaro.experimental.structured.ComponentCollection
+import com.cra.figaro.experimental.structured.ProblemComponent
+import com.cra.figaro.experimental.structured.NestedProblem
+import com.cra.figaro.experimental.structured.Lower
+import com.cra.figaro.experimental.structured.Upper
+import com.cra.figaro.library.collection.MakeArray
+import com.cra.figaro.experimental.structured.ApplyComponent
 
 /**
  * Trait for algorithms that use factors.
  */
 trait FactoredAlgorithm[T] extends Algorithm {
-    
+ 
   /**
    * Get the elements that are needed by the query target variables and the evidence variables. Also compute the values
    * of those variables to the given depth. 
@@ -110,14 +118,6 @@ trait FactoredAlgorithm[T] extends Algorithm {
     
     // We only include elements from other universes if they are specified in the starter elements.
     val resultElements = values.expandedElements.toList ::: starterElements.filter(_.universe != universe)
-    
-    /* We support non caching chains now using sampling 
-    * resultElements.foreach(p => p match {
-    *   case n: NonCachingChain[_,_] => throw new UnsupportedAlgorithmException(n)
-    *   case _ => 
-    }* )
-    * 
-    */
         
     // Only conditions and constraints produce distinct lower and upper bounds for *. So, if there are not such elements with * as one
     // of their values, we don't need to compute bounds and can save computation.
@@ -125,9 +125,14 @@ trait FactoredAlgorithm[T] extends Algorithm {
     // We make sure to clear the variable cache now, once all values have been computed.
     // This ensures that any created variables will be consistent with the computed values.
     Variable.clearCache()
+    
+    // Even though we just cleared the variables, we generate all the variables so we can create the factors
+    resultElements.foreach(Variable(_))
+    
     (resultElements, boundsNeeded)
   }
   
+    
   /**
    * All implementations of factored algorithms must specify a way to get the factors from the given universe and
    * dependent universes.

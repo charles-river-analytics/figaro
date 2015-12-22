@@ -64,10 +64,10 @@ object ComplexFactory {
                 val restVar: Variable[T] = Factory.makeVariable(cc, restRange)
                 val restFactors = make(firstCollection, restVar, restRef)
 
-                Factory.makeConditionalSelector(pairVar, firstXValue, restVar) :: restFactors
+                Factory.makeConditionalSelector(pairVar, firstXValue, restVar, Set()) :: restFactors
               } else {
                 val dummy = Factory.makeVariable(cc, ValueSet.withStar[T](Set()))
-                List(Factory.makeConditionalSelector(pairVar, firstXValue, dummy))
+                List(Factory.makeConditionalSelector(pairVar, firstXValue, dummy, Set()))
               }
             }
         pairFactor :: selectedFactors.flatten
@@ -156,7 +156,7 @@ object ComplexFactory {
                 } yield {
                   if (!firstXvalue.isRegular) {
                     val dummy = Factory.makeVariable(cc, ValueSet.withStar[MultiSet[T]](Set()))
-                    List(Factory.makeConditionalSelector(pairVar, firstXvalue, dummy))
+                    List(Factory.makeConditionalSelector(pairVar, firstXvalue, dummy, Set()))
                   }
                   else {
                     firstXvalue.value match {
@@ -164,7 +164,7 @@ object ComplexFactory {
                         val restRange = Range.getRangeOfMultiValuedReference(cc, firstCollection, restRef)
                         val restVar: Variable[MultiSet[T]] = Factory.makeVariable(cc, restRange)
                         val restFactors = make(firstCollection, restVar, restRef)
-                        Factory.makeConditionalSelector(pairVar, firstXvalue, restVar) :: restFactors
+                        Factory.makeConditionalSelector(pairVar, firstXvalue, restVar, Set()) :: restFactors
                       case cs: Traversable[_] =>
                         // If the first value consists of multiple element collections, we first get a list of distinct collections.
                         // This is because multi-valued references use set semantics, whereby if an element is pointed to more than once,
@@ -188,7 +188,7 @@ object ComplexFactory {
                         val (injectVar, injectFactor) = makeEmbeddedInject(factorsForCollections.map(_._1))
                         val (applyVar, applyFactor) = makeEmbeddedApply(injectVar)
                         val valueFactors = applyFactor :: injectFactor :: factorsForCollections.map(_._2).flatten
-                        Factory.makeConditionalSelector(pairVar, firstXvalue, applyVar) :: valueFactors
+                        Factory.makeConditionalSelector(pairVar, firstXvalue, applyVar, Set()) :: valueFactors
                     }
                   }
               }

@@ -136,6 +136,12 @@ class ProblemComponent[Value](val problem: Problem, val element: Element[Value])
   */
 }
 
+class ApplyComponent[Value](problem: Problem, element: Element[Value]) extends ProblemComponent(problem, element) {
+  private var applyMap = scala.collection.mutable.Map[Any, Value]()
+  def getMap() = applyMap
+  def setMap(m: scala.collection.mutable.Map[Any, Value]) = applyMap = m
+}
+
 /**
  * A problem component that provides an expand method.
  * @param parent the element according to whose values this component should be expanded
