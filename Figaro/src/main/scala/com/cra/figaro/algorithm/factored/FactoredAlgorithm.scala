@@ -94,7 +94,8 @@ trait FactoredAlgorithm[T] extends Algorithm {
      * 
      * */
     val newlyNeededElements = 
-      Element.closeUnderContingencies(starterElements.toSet).map((elem: Element[_]) => (elem, depth))
+      Element.closeUnderContingencies(starterElements.toSet ++ boundsInducingElements.toSet).map((elem: Element[_]) => (elem, depth))
+      
     
     @tailrec
     def expandElements(curr: Set[(Element[_], Int)]): Unit = {
