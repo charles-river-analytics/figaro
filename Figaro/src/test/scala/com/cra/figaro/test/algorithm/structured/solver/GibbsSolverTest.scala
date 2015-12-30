@@ -23,9 +23,7 @@ import com.cra.figaro.algorithm.factored.factors.factory.Factory
 import com.cra.figaro.algorithm.structured.strategy.solve._
 import com.cra.figaro.algorithm.structured._
 import com.cra.figaro.algorithm.structured.solver._
-import com.cra.figaro.language.Name.stringToName
-import com.cra.figaro.language.Reference.stringToReference
-import scala.reflect.runtime.universe
+
 
 class GibbsSolverTest extends WordSpec with Matchers {
   "Running a Gibbs solver" should {

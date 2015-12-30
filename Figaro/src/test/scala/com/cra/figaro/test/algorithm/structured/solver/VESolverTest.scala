@@ -22,9 +22,7 @@ import com.cra.figaro.algorithm.lazyfactored.Regular
 import com.cra.figaro.algorithm.structured.strategy.solve._
 import com.cra.figaro.algorithm.structured._
 import com.cra.figaro.algorithm.structured.solver._
-import com.cra.figaro.language.Name.stringToName
-import com.cra.figaro.language.Reference.stringToReference
-import scala.reflect.runtime.universe
+
 
 class VESolverTest extends WordSpec with Matchers {
   "Running VariableElimination without *" when {
