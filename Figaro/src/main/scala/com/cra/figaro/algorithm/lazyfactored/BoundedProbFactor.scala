@@ -19,7 +19,7 @@ import com.cra.figaro.util._
 import annotation.tailrec
 import scala.language.existentials
 import com.cra.figaro.algorithm.factored.factors._
-import com.cra.figaro.algorithm.factored.factors.FactoryOld
+import com.cra.figaro.algorithm.lazyfactored.factory.Factory
 
 /**
  * Methods for creating lower and upper bound probability factors.
@@ -41,7 +41,7 @@ object BoundedProbFactor {
 
   private def makeUncontingentConstraintFactor[T](elem: Element[T], constraint: T => Double, upper: Boolean): Factor[Double] = {
     val elemVar = Variable(elem)
-    val factor = FactoryOld.make(elem)(0)
+    val factor = Factory.make(elem)(0)
     for { (elemVal, index) <- elemVar.range.zipWithIndex } {
       val entry = if (elemVal.isRegular) {
         val c = math.exp(constraint(elemVal.value))
@@ -69,7 +69,7 @@ object BoundedProbFactor {
     val firstValues = firstVar.range
     val numFirstValues = firstValues.size
     val matchingIndex: Int = firstValues.indexOf(Regular(firstValue))
-    val resultFactor = FactoryOld.defaultFactor[Double](firstVar :: baseFactor.parents, baseFactor.output)
+    val resultFactor = Factory.defaultFactor[Double](firstVar :: baseFactor.parents, baseFactor.output)
     for { factorIndices <- baseFactor.getIndices } {
       val factorValue = baseFactor.get(factorIndices)
       for { firstIndex <- 0 until numFirstValues } {
@@ -86,7 +86,7 @@ object BoundedProbFactor {
    */
   def make(elem: Element[_], upper: Boolean): List[Factor[Double]] = {
     val constraintFactors = makeConditionAndConstraintFactors(elem, upper)
-    constraintFactors ::: FactoryOld.makeNonConstraintFactors(elem)
+    constraintFactors ::: Factory.makeNonConstraintFactors(elem)
   }
 
   /**
@@ -108,9 +108,9 @@ object BoundedProbFactor {
       }
     }
     val variables = uses map (Variable(_))
-    val lb = FactoryOld.defaultFactor[Double](variables, List())
+    val lb = Factory.defaultFactor[Double](variables, List())
     lb.fillByRule(rule(false))
-    val ub = FactoryOld.defaultFactor[Double](variables, List())
+    val ub = Factory.defaultFactor[Double](variables, List())
     ub.fillByRule(rule(true))
     (lb, ub)
   }

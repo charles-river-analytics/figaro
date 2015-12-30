@@ -16,7 +16,6 @@ package com.cra.figaro.algorithm.learning
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.library.atomic.discrete._
-import com.cra.figaro.experimental.structured.factory._
 import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.library.decision._
 import com.cra.figaro.language._
@@ -28,11 +27,9 @@ import scala.collection.mutable.{ Set }
 import scala.collection.immutable.Map
 import scala.math.{ floor, pow }
 import JSci.maths.ExtraMath.binomial
-import com.cra.figaro.algorithm.factored.factors.SufficientStatisticsSemiring
-import com.cra.figaro.algorithm.factored.factors.ParameterizedVariable
-import com.cra.figaro.algorithm.factored.factors.Factor
-import com.cra.figaro.algorithm.factored.factors.Variable
-import com.cra.figaro.experimental.structured.ComponentCollection
+import com.cra.figaro.algorithm.factored.factors._
+import com.cra.figaro.algorithm.structured.ComponentCollection
+import com.cra.figaro.algorithm.factored.factors.factory.Factory
 
 /**
  * Methods for creating probabilistic factors associated with elements and their sufficient statistics.

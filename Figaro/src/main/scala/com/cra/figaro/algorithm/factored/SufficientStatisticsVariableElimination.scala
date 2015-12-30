@@ -16,14 +16,12 @@ package com.cra.figaro.algorithm.factored
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.learning._
 import com.cra.figaro.language._
-import com.cra.figaro.experimental.structured.factory._
 import scala.collection._
 import scala.collection.mutable.{ Set }
 import scala.collection.immutable.Map
 import com.cra.figaro.util.MultiSet
-import com.cra.figaro.algorithm.factored.factors.SufficientStatisticsSemiring
-import com.cra.figaro.algorithm.factored.factors.Factor
-import com.cra.figaro.algorithm.factored.factors.Variable
+import com.cra.figaro.algorithm.factored.factors._
+import com.cra.figaro.algorithm.factored.factors.factory.Factory
 
 /**
  * Variable elimination for sufficient statistics factors.

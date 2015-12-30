@@ -17,7 +17,7 @@ import com.cra.figaro.language._
 import com.cra.figaro.algorithm.{ Algorithm, ParameterLearner, ProbQueryAlgorithm, OneTime }
 import com.cra.figaro.algorithm.factored.beliefpropagation.BeliefPropagation
 import com.cra.figaro.algorithm.sampling.{ Importance, MetropolisHastings, ProposalScheme }
-import com.cra.figaro.experimental.structured.factory.Factory
+import com.cra.figaro.algorithm.factored.factors.factory.Factory
 import com.cra.figaro.patterns.learning.ModelParameters
 import com.cra.figaro.algorithm.factored.SufficientStatisticsVariableElimination
 import com.cra.figaro.algorithm.online.Online

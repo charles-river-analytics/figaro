@@ -14,28 +14,17 @@
 package com.cra.figaro.experimental.particlebp
 
 import com.cra.figaro.language._
-import com.cra.figaro.algorithm.factored.FactoredAlgorithm
 import com.cra.figaro.algorithm.factored.factors.{ DivideableSemiRing, Factor, LogSumProductSemiring, Variable }
-import com.cra.figaro.experimental.structured.factory._
 import com.cra.figaro.algorithm.lazyfactored.LazyValues
-import com.cra.figaro.algorithm.OneTime
-import com.cra.figaro.algorithm.Anytime
-import com.cra.figaro.algorithm.ProbQueryAlgorithm
-import com.cra.figaro.algorithm.OneTimeProbQuery
+import com.cra.figaro.algorithm._
 import scala.collection.immutable.Set
 import scala.collection.mutable.Map
-import com.cra.figaro.algorithm.factored.beliefpropagation.InnerBPHandler
-import com.cra.figaro.algorithm.factored.beliefpropagation.OneTimeInnerBPHandler
-import com.cra.figaro.algorithm.factored.beliefpropagation.VariableNode
-import com.cra.figaro.algorithm.factored.ParticleGenerator
-import com.cra.figaro.algorithm.factored.DensityEstimator
-import com.cra.figaro.algorithm.AnytimeProbQuery
-import com.cra.figaro.algorithm.factored.beliefpropagation.AnytimeInnerBPHandler
-import com.cra.figaro.algorithm.factored.beliefpropagation.FactorNode
-import com.cra.figaro.algorithm.factored.beliefpropagation.Node
+import com.cra.figaro.algorithm.factored.beliefpropagation._
+import com.cra.figaro.algorithm.factored._
 import breeze.linalg.normalize
 import com.cra.figaro.algorithm.UnsupportedAlgorithmException
 import com.cra.figaro.algorithm.sampling.ProbEvidenceSampler
+import com.cra.figaro.algorithm.factored.factors.factory.Factory
 
 /**
  * Trait for performing particle belief propagation.

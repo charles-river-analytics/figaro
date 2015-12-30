@@ -18,32 +18,15 @@ import org.scalatest.PrivateMethodTester
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm.Values
 import com.cra.figaro.algorithm.factored.factors.{ SumProductSemiring, Semiring, Variable }
-import com.cra.figaro.algorithm.lazyfactored.LazyValues
-import com.cra.figaro.algorithm.lazyfactored.Regular
-import com.cra.figaro.algorithm.lazyfactored.ValueSet
+import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.algorithm.sampling.ProbEvidenceSampler
-import com.cra.figaro.language.Apply
-import com.cra.figaro.language.Apply3
-import com.cra.figaro.language.Apply4
-import com.cra.figaro.language.Apply5
-import com.cra.figaro.language.CachingChain
-import com.cra.figaro.language.Chain
-import com.cra.figaro.language.Condition
-import com.cra.figaro.language.Constant
-import com.cra.figaro.language.Dist
-import com.cra.figaro.language.Flip
-import com.cra.figaro.language.Inject
-import com.cra.figaro.language.Name.stringToName
-import com.cra.figaro.language.NamedEvidence
-import com.cra.figaro.language.Reference.stringToReference
-import com.cra.figaro.language.Select
-import com.cra.figaro.language.Universe
+import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous.Normal
 import com.cra.figaro.library.atomic.continuous.Uniform
 import com.cra.figaro.library.compound.CPD
 import com.cra.figaro.algorithm.factored.ParticleGenerator
-import com.cra.figaro.experimental.structured.factory._
 import com.cra.figaro.algorithm.lazyfactored.Extended
+import com.cra.figaro.algorithm.factored.factors.factory.Factory
 
 class ChainFactorTest extends WordSpec with Matchers with PrivateMethodTester {
 
