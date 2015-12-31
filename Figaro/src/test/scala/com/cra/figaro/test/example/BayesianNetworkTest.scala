@@ -21,10 +21,11 @@ import com.cra.figaro.library.compound._
 import com.cra.figaro.language._
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
-import com.cra.figaro.experimental.factored._
 import com.cra.figaro.test._
 import com.cra.figaro.test.tags.Example
 import com.cra.figaro.test.tags.NonDeterministic
+import com.cra.figaro.algorithm.factored.gibbs.Gibbs
+import com.cra.figaro.algorithm.factored.gibbs.BlockSampler
 
 class BayesianNetworkTest extends WordSpec with Matchers {
   "A simple Bayesian network" should {

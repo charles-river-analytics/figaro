@@ -18,7 +18,7 @@ import org.scalatest.WordSpec
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.algorithm.factored._
-import com.cra.figaro.experimental.factored.Gibbs
+import com.cra.figaro.algorithm.factored.gibbs.Gibbs
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound._
 import com.cra.figaro.test._

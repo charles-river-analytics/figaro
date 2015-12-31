@@ -23,14 +23,8 @@ import scala.collection._
 import com.cra.figaro.algorithm.lazyfactored._
 import scala.collection.immutable.Set
 import com.cra.figaro.algorithm.UnsupportedAlgorithmException
-import com.cra.figaro.experimental.structured.Problem
-import com.cra.figaro.experimental.structured.ComponentCollection
-import com.cra.figaro.experimental.structured.ProblemComponent
-import com.cra.figaro.experimental.structured.NestedProblem
-import com.cra.figaro.experimental.structured.Lower
-import com.cra.figaro.experimental.structured.Upper
+import com.cra.figaro.algorithm.structured._
 import com.cra.figaro.library.collection.MakeArray
-import com.cra.figaro.experimental.structured.ApplyComponent
 
 /**
  * Trait for algorithms that use factors.
@@ -94,7 +88,8 @@ trait FactoredAlgorithm[T] extends Algorithm {
      * 
      * */
     val newlyNeededElements = 
-      Element.closeUnderContingencies(starterElements.toSet).map((elem: Element[_]) => (elem, depth))
+      Element.closeUnderContingencies(starterElements.toSet ++ boundsInducingElements.toSet).map((elem: Element[_]) => (elem, depth))
+      
     
     @tailrec
     def expandElements(curr: Set[(Element[_], Int)]): Unit = {
@@ -104,12 +99,13 @@ trait FactoredAlgorithm[T] extends Algorithm {
         val (uni, set) = pair
         val values = LazyValues(uni)
         values.expandAll(set)
-        val currentlyExpanded = values.expandedElements.toSet
-        val currentDepths = currentlyExpanded.map(d => (d, values.expandedDepth(d).getOrElse(0)))
-        val others = currentDepths.flatMap(e => chaseDown(e._1, e._2, currentlyExpanded))
-        val filteredElements = others.filter(o => boundsInducingElements.contains(o._1))
-        val neededElements = filteredElements.flatMap(f => (f._1.elementsIAmContingentOn + f._1).map((_, f._2)))
-        neededElements
+        //val currentlyExpanded = values.expandedElements.toSet
+        //val currentDepths = currentlyExpanded.map(d => (d, values.expandedDepth(d).getOrElse(0)))
+        //val others = currentDepths.flatMap(e => chaseDown(e._1, e._2, currentlyExpanded))
+        //val filteredElements = others.filter(o => boundsInducingElements.contains(o._1))
+        //val neededElements = filteredElements.flatMap(f => (f._1.elementsIAmContingentOn + f._1).map((_, f._2)))
+        //neededElements
+        List()
       })
       expandElements(allNeededElements.toSet)
     }

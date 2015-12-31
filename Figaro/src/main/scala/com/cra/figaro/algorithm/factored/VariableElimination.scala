@@ -16,18 +16,14 @@ package com.cra.figaro.algorithm.factored
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
-import com.cra.figaro.experimental.structured.factory._
-import com.cra.figaro.algorithm.factored.factors.Factor
-import com.cra.figaro.algorithm.factored.factors.Variable
+import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.util._
 import annotation.tailrec
 import scala.collection.mutable.{ Map, Set }
 import scala.language.postfixOps
 import scala.util.control.TailCalls._
-import com.cra.figaro.experimental.structured.Lower
-import com.cra.figaro.experimental.structured.Upper
-import com.cra.figaro.algorithm.factored.factors.SumProductSemiring
-import com.cra.figaro.algorithm.factored.factors.Semiring
+import com.cra.figaro.algorithm.structured._
+import com.cra.figaro.algorithm.factored.factors.factory.Factory
 
 /**
  * Trait of algorithms that perform variable elimination.

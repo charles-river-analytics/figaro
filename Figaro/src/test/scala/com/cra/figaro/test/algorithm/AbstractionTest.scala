@@ -18,12 +18,12 @@ import org.scalatest.WordSpec
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.algorithm.factored.factors._
-import com.cra.figaro.experimental.structured.factory._
 import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.library.compound._
 import com.cra.figaro.test.tags.NonDeterministic
+import com.cra.figaro.algorithm.factored.factors.factory.Factory
 
 class AbstractionTest extends WordSpec with Matchers {
   "A regular discretization" should {

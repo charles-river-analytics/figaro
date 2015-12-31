@@ -18,7 +18,6 @@ import org.scalatest.PrivateMethodTester
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm.Values
 import com.cra.figaro.algorithm.factored.factors._
-import com.cra.figaro.experimental.structured.factory._
 import com.cra.figaro.algorithm.lazyfactored.LazyValues
 import com.cra.figaro.algorithm.lazyfactored.Regular
 import com.cra.figaro.algorithm.lazyfactored.ValueSet
@@ -31,6 +30,7 @@ import com.cra.figaro.algorithm.factored.ParticleGenerator
 import com.cra.figaro.library.compound.If
 import com.cra.figaro.algorithm.factored.VariableElimination
 import scala.collection.mutable.ListBuffer
+import com.cra.figaro.algorithm.factored.factors.factory.Factory
 
 class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
 

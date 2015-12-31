@@ -30,7 +30,10 @@ class Inject[T](name: Name[List[T]], val xs: Seq[Element[T]], collection: Elemen
 
   def args = xs.toList
 
-  def generateValue() = (xs map (_.value)).toList
+  def generateValue() = {
+    xs foreach (x => if (x.value == null) x.generate())
+    (xs map (_.value)).toList
+  }
 
   override def toString = "Inject(" + xs.mkString(", ") + ")"
 }

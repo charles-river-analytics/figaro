@@ -18,7 +18,6 @@ import org.scalatest.WordSpec
 import org.scalatest.Matchers
 import com.cra.figaro.algorithm.factored._
 import com.cra.figaro.algorithm.factored.factors._
-import com.cra.figaro.experimental.structured.factory._
 import com.cra.figaro.algorithm.factored.beliefpropagation._
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound.If
@@ -27,6 +26,7 @@ import com.cra.figaro.library.atomic.continuous.{Uniform => CUniform}
 import com.cra.figaro.library.compound.IntSelector
 import com.cra.figaro.algorithm.lazyfactored.LazyValues
 import com.cra.figaro.algorithm.UnsupportedAlgorithmException
+import com.cra.figaro.algorithm.factored.factors.factory.Factory
 
 class BPTest extends WordSpec with Matchers {
 

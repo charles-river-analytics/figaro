@@ -17,14 +17,9 @@ import com.cra.figaro.algorithm._
 import com.cra.figaro.language._
 import scala.collection.mutable.Map
 import com.cra.figaro.algorithm.lazyfactored.{ LazyValues, Extended, ValueSet }
-import com.cra.figaro.experimental.structured.ComponentCollection
-import com.cra.figaro.experimental.structured.Problem
+import com.cra.figaro.algorithm.structured._
 import com.cra.figaro.library.collection.MakeArray
-import com.cra.figaro.experimental.structured.ChainComponent
-import com.cra.figaro.experimental.structured.ProblemComponent
-import com.cra.figaro.experimental.structured.MakeArrayComponent
 import scala.collection.mutable.HashMap
-import com.cra.figaro.experimental.structured.ApplyComponent
 
 /**
  * Variables that appear in factors.

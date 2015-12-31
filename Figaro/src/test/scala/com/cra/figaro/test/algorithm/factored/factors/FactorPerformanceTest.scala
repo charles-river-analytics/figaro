@@ -18,12 +18,12 @@ import org.scalatest.PrivateMethodTester
 import org.scalatest.WordSpec
 import com.cra.figaro.language._
 import com.cra.figaro.algorithm.factored.factors._
-import com.cra.figaro.experimental.structured.factory._
 import com.cra.figaro.library.atomic.discrete.FromRange
 import com.cra.figaro.util._
 import com.cra.figaro.algorithm.lazyfactored.LazyValues
 import com.cra.figaro.language.Element.toIntElement
 import scala.reflect.runtime.universe
+import com.cra.figaro.algorithm.factored.factors.factory.Factory
 
 class FactorPerformanceTest extends WordSpec with Matchers with PrivateMethodTester {
 

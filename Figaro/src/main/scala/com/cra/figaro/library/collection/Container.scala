@@ -13,15 +13,11 @@
 
 package com.cra.figaro.library.collection
 
-import com.cra.figaro.language._
 import scala.language.implicitConversions
-import com.cra.figaro.library.compound.{FoldLeft, FoldRight, Reduce}
-import com.cra.figaro.algorithm.{Values, ValuesMaker}
-import com.cra.figaro.algorithm.factored.factors.FactorMaker
-import com.cra.figaro.algorithm.factored.factors.Variable
-import com.cra.figaro.algorithm.factored.factors.Factor
-import com.cra.figaro.algorithm.lazyfactored.ValueSet
+
+import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.discrete.FromRange
+import com.cra.figaro.library.compound._
 
 /**
  * A Container is a Process with a defined sequence of indices.

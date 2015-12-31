@@ -18,7 +18,6 @@ import org.scalatest.PrivateMethodTester
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm.Values
 import com.cra.figaro.algorithm.factored.factors._
-import com.cra.figaro.experimental.structured.factory._
 import com.cra.figaro.algorithm.lazyfactored.LazyValues
 import com.cra.figaro.algorithm.lazyfactored.Regular
 import com.cra.figaro.algorithm.lazyfactored.ValueSet
@@ -28,6 +27,7 @@ import com.cra.figaro.library.atomic.continuous.Normal
 import com.cra.figaro.library.atomic.continuous.Uniform
 import com.cra.figaro.library.compound.CPD
 import com.cra.figaro.algorithm.factored.ParticleGenerator
+import com.cra.figaro.algorithm.factored.factors.factory.Factory
 
 class SparseFactorTest extends WordSpec with Matchers with PrivateMethodTester {
 

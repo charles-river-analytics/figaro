@@ -17,7 +17,7 @@ import com.cra.figaro.algorithm.{LazyAlgorithm, ProbQueryAlgorithm}
 import com.cra.figaro.algorithm.factored.{FactoredAlgorithm, VEGraph}
 import com.cra.figaro.language.{Element, Universe}
 import com.cra.figaro.algorithm.factored.factors._
-import com.cra.figaro.algorithm.factored.factors.FactoryOld
+import com.cra.figaro.algorithm.lazyfactored.factory.Factory
 import scala.annotation.tailrec
 import com.cra.figaro.util._
 import scala.collection.mutable.{Map, Set}
@@ -65,15 +65,15 @@ with LazyAlgorithm {
     val (includedElements, needsBounds) = getNeededElements(targetElements.toList, depth)
     val targetVariables = targetElements.map(Variable(_))
     if (needsBounds) {
-      FactoryOld.removeFactors()
+      Factory.removeFactors()
       val lowerFactors = getFactors(includedElements, targetElements.toList, false)
-      FactoryOld.removeFactors()
+      Factory.removeFactors()
       val upperFactors = getFactors(includedElements, targetElements.toList, true)
       val lowerFactorsAfterElimination = doElimination(lowerFactors, targetVariables)
       val upperFactorsAfterElimination = doElimination(upperFactors, targetVariables)
       currentResult = finishWithBounds(lowerFactorsAfterElimination, upperFactorsAfterElimination)
     } else {
-      FactoryOld.removeFactors()
+      Factory.removeFactors()
       val allFactors = getFactors(includedElements, targetElements.toList)
       val factorsAfterElimination = doElimination(allFactors, targetVariables)
       currentResult = finishNoBounds(factorsAfterElimination)
@@ -158,7 +158,7 @@ with LazyAlgorithm {
     /*
      * First, we compute the sum of unnormalized lower and upper bounds.
      */
-    val result = FactoryOld.defaultFactor[(Double, Double)](lowerFactor.parents, lowerFactor.output)
+    val result = Factory.defaultFactor[(Double, Double)](lowerFactor.parents, lowerFactor.output)
     var lowerTotal = 0.0
     var upperTotal = 0.0
     var starTotal = 0.0
@@ -231,7 +231,7 @@ with LazyAlgorithm {
   def finishNoBounds(factorsAfterElimination: Set[Factor[Double]]): Factor[(Double, Double)] = {
     // It is possible that there are no factors (this will happen if there is no evidence).
     // Therefore, we start with the unit factor and use foldLeft, instead of simply reducing the factorsAfterElimination.
-    val multiplied = factorsAfterElimination.foldLeft(FactoryOld.unit[Double](semiring.asInstanceOf[Semiring[Double]]))(_.product(_))
+    val multiplied = factorsAfterElimination.foldLeft(Factory.unit[Double](semiring.asInstanceOf[Semiring[Double]]))(_.product(_))
     val normalized = normalizeAndAbsorbNoBounds(multiplied)
     normalized
   }
@@ -245,8 +245,8 @@ with LazyAlgorithm {
   def finishWithBounds(lowerFactors: Set[Factor[Double]], upperFactors: Set[Factor[Double]]): Factor[(Double, Double)] = {
     // It is possible that there are no factors (this will happen if there is no evidence).
     // Therefore, we start with the unit factor and use foldLeft, instead of simply reducing the factorsAfterElimination.
-    val lowerMultiplied = lowerFactors.foldLeft(FactoryOld.unit[Double](semiring.asInstanceOf[Semiring[Double]]))(_.product(_))
-    val upperMultiplied = upperFactors.foldLeft(FactoryOld.unit[Double](semiring.asInstanceOf[Semiring[Double]]))(_.product(_))
+    val lowerMultiplied = lowerFactors.foldLeft(Factory.unit[Double](semiring.asInstanceOf[Semiring[Double]]))(_.product(_))
+    val upperMultiplied = upperFactors.foldLeft(Factory.unit[Double](semiring.asInstanceOf[Semiring[Double]]))(_.product(_))
     val normalized = normalizeAndAbsorbWithBounds(lowerMultiplied, upperMultiplied)
     normalized
   }

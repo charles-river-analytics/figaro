@@ -21,20 +21,14 @@ import com.cra.figaro.util._
 import annotation.tailrec
 import com.cra.figaro.algorithm.OneTimeProbQuery
 import com.cra.figaro.algorithm.ProbQueryAlgorithm
-import com.cra.figaro.experimental.structured.factory._
 import com.cra.figaro.algorithm.factored._
-import com.cra.figaro.algorithm.factored.factors.Factor
-import com.cra.figaro.algorithm.factored.factors.Variable
+import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.sampling.ProbEvidenceSampler
-import com.cra.figaro.language.Element
-import com.cra.figaro.language.Universe
+import com.cra.figaro.language._
 import com.cra.figaro.algorithm.lazyfactored.LazyValues
 import com.cra.figaro.algorithm.lazyfactored.BoundedProbFactor
 import scala.collection.mutable.Map
-import com.cra.figaro.algorithm.factored.factors.LogSumProductSemiring
-import com.cra.figaro.algorithm.factored.factors.DivideableSemiRing
-import com.cra.figaro.algorithm.factored.factors.ElementVariable
-import com.cra.figaro.algorithm.factored.factors.SumProductSemiring
+import com.cra.figaro.algorithm.factored.factors.factory.Factory
 
 /**
  * Trait for performing belief propagation.
