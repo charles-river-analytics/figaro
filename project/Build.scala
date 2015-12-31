@@ -13,7 +13,8 @@
 
 import sbt._
 import Keys._
-import sbtassembly.AssemblyPlugin.autoImport._
+import sbtassembly.Plugin._
+import AssemblyKeys._
 import sbt.Package.ManifestAttributes
 import scoverage.ScoverageSbtPlugin._
 import com.typesafe.sbteclipse.plugin.EclipsePlugin.EclipseKeys
@@ -105,8 +106,9 @@ object FigaroBuild extends Build {
     .settings(inConfig(nonDetTest)(Defaults.testTasks): _*)
     .settings(testOptions in nonDetTest := Seq(Tests.Argument("-n", "com.cra.figaro.test.nonDeterministic")))
     // sbt-assembly settings
+    .settings(assemblySettings: _*)
     .settings(test in assembly := {})
-    .settings(assemblyJarName in assembly := "figaro_" + scalaMajorMinor + "-" + version.value + "-fat.jar")
+    .settings(jarName in assembly := "figaro_" + scalaMajorMinor + "-" + version.value + "-fat.jar")
     .settings(assemblyOption in assembly ~= { _.copy(includeScala = false) })
     .settings(excludedJars in assembly := {
 	val cp = (fullClasspath in assembly).value
