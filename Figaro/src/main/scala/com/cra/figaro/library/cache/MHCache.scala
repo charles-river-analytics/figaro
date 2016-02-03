@@ -135,7 +135,7 @@ class MHCache(universe: Universe) extends Cache(universe) {
     ccCache -= element
     nccCache -= element
     val invertValue = ccInvertedCache.get(element)
-    if (invertValue.nonEmpty) invertValue.get.foreach(e => ccCache(e._1) -= e._2)
+    if (invertValue.nonEmpty) invertValue.get.foreach(e => if (ccCache.contains(e._1)) ccCache(e._1) -= e._2)
     ccInvertedCache -= element
     this
   }
