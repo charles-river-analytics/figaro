@@ -1,5 +1,5 @@
 /*
- * VETest.scala
+ * FactoredAlgorithmTest.scala
  * Variable elimination tests.
  *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)

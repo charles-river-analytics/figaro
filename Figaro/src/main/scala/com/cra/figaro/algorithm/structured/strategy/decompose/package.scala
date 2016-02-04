@@ -1,4 +1,3 @@
-
 /*
  * package.scala
  * Definitions of expansion and solution strategies.

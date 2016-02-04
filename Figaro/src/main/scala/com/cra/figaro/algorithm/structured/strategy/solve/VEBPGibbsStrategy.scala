@@ -1,5 +1,5 @@
 /*
- * VEGibbsStrategy.scala
+ * VEBPGibbsStrategy.scala
  * Strategy that chooses to solve a problem with either VE or Gibbs.
  *
  * Created By:      William Kretschmer (kretsch@mit.edu)

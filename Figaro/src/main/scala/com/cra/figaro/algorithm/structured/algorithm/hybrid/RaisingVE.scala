@@ -1,5 +1,5 @@
 /*
- * FlatVE.scala
+ * RaisingVE.scala
  * A flat variable elimination algorithm.
  *
  * Created By:      Brian Ruttenberg (bruttenberg@cra.com)
