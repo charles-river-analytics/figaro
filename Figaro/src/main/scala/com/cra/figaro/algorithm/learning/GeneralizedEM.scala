@@ -23,6 +23,7 @@ import com.cra.figaro.algorithm.factored.SufficientStatisticsVariableElimination
 import com.cra.figaro.algorithm.online.Online
 import com.cra.figaro.algorithm.factored.VariableElimination
 import com.cra.figaro.algorithm.factored.factors.Variable
+import com.cra.figaro.algorithm.sampling.Forward
 
 /**
  * Expectation maximization iteratively produces an estimate of sufficient statistics for learnable parameters,
@@ -149,7 +150,7 @@ class OnlineExpectationMaximizationWithFactors(override val initial: Universe, o
 class GeneralizedEM(inferenceAlgorithmConstructor: Seq[Element[_]] => Universe => ProbQueryAlgorithm with OneTime, val universe: Universe, val targetParameters: Parameter[_]*)(val terminationCriteria: () => EMTerminationCriteria) extends ExpectationMaximization {
 
   //Dependent universe doesn't work the same way.
-  protected def doExpectationStep(): Map[Parameter[_], Seq[Double]] = {
+  protected def doExpectationStep(): Map[Parameter[_], Seq[Double]] = {    
     val inferenceTargets =
       universe.activeElements.filter(_.isInstanceOf[Parameterized[_]]).map(_.asInstanceOf[Parameterized[_]])
 
@@ -165,9 +166,11 @@ class GeneralizedEM(inferenceAlgorithmConstructor: Seq[Element[_]] => Universe =
       } {
 
         val t: Parameterized[target.Value] = target.asInstanceOf[Parameterized[target.Value]]
-        val distribution: Stream[(Double, target.Value)] = algorithm.distribution(t)
-        val newStats = t.distributionToStatistics(parameter, distribution)
-        stats = (stats.zip(newStats)).map(pair => pair._1 + pair._2)
+        if (inferenceTargets.contains(t)) {
+          val distribution: Stream[(Double, target.Value)] = algorithm.distribution(t)
+          val newStats = t.distributionToStatistics(parameter, distribution)
+          stats = (stats.zip(newStats)).map(pair => pair._1 + pair._2)
+        }
       }
       result += parameter -> stats
     }
@@ -195,7 +198,7 @@ class GeneralizedOnlineEM(inferenceAlgorithmConstructor: Seq[Element[_]] => Univ
     //println("universe: " + currentUniverse.hashCode)
     var result: Map[Parameter[_], Seq[Double]] = Map()
 
-    val uses = usesParameter(inferenceTargets)    
+    val uses = usesParameter(inferenceTargets)
     for { parameter <- targetParameters } {
       var stats = parameter.zeroSufficientStatistics
       if (uses.contains(parameter)) {
@@ -203,9 +206,11 @@ class GeneralizedOnlineEM(inferenceAlgorithmConstructor: Seq[Element[_]] => Univ
           target <- uses(parameter)
         } {
           val t: Parameterized[target.Value] = target.asInstanceOf[Parameterized[target.Value]]
-          val distribution: Stream[(Double, target.Value)] = algorithm.distribution(t)
-          val newStats = t.distributionToStatistics(parameter, distribution)
-          stats = (stats.zip(newStats)).map(pair => pair._1 + pair._2)
+          if (inferenceTargets.contains(t)) {
+            val distribution: Stream[(Double, target.Value)] = algorithm.distribution(t)
+            val newStats = t.distributionToStatistics(parameter, distribution)
+            stats = (stats.zip(newStats)).map(pair => pair._1 + pair._2)
+          }
         }
       }
       result += parameter -> stats
@@ -439,12 +444,12 @@ object EMWithVE {
    * An expectation maximization algorithm which will run for the default of 10 iterations.
    */
   def apply(p: Parameter[_]*)(implicit universe: Universe) =
-    new ExpectationMaximizationWithFactors(universe, p: _*)(EMTerminationCriteria.maxIterations(10))     
+    new ExpectationMaximizationWithFactors(universe, p: _*)(EMTerminationCriteria.maxIterations(10))
   /**
    * An expectation maximization algorithm which will run for the default of 10 iterations.
    */
   def apply(p: ModelParameters)(implicit universe: Universe) =
-    new ExpectationMaximizationWithFactors(universe, p.convertToParameterList: _*)(EMTerminationCriteria.maxIterations(10))    
+    new ExpectationMaximizationWithFactors(universe, p.convertToParameterList: _*)(EMTerminationCriteria.maxIterations(10))
 
   def online(transition: () => Universe, p: Parameter[_]*)(implicit universe: Universe) = {
     new OnlineExpectationMaximizationWithFactors(universe, transition, p: _*)(EMTerminationCriteria.maxIterations(10))
