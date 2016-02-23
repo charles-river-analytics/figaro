@@ -166,7 +166,8 @@ trait VariableElimination[T] extends FactoredAlgorithm[T] with OneTime {
       println("*****************\nStarting factors\n")
       allFactors.foreach((f: Factor[_]) => println(f.toReadableString))
     }
-    val (_, order) = optionallyShowTiming(VariableElimination.eliminationOrder(allFactors, targetVariables), "Computing elimination order")
+    val (score, order) = optionallyShowTiming(VariableElimination.eliminationOrder(allFactors, targetVariables), "Computing elimination order")
+    if (debug) println("***************** Eliminition Score: " + score)
     val factorsAfterElimination =
       optionallyShowTiming(eliminateInOrder(order, HashMultiSet(allFactors: _*), initialFactorMap(allFactors)), "Elimination")
     if (debug) println("*****************")
