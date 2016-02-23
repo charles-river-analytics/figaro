@@ -16,6 +16,7 @@ package com.cra.figaro.algorithm.structured.strategy
 import com.cra.figaro.algorithm.structured.strategy.decompose.StructuredStrategy
 import com.cra.figaro.algorithm.structured.Problem
 import com.cra.figaro.algorithm.structured.ProblemComponent
+import com.cra.figaro.algorithm.factored.ParticleGenerator
 
 
 package object decompose {
@@ -30,5 +31,5 @@ package object decompose {
    */
   type RangeSizer = ProblemComponent[_] => Int
 
-  def defaultRangeSizer(pc: ProblemComponent[_]) = Int.MaxValue
+  def defaultRangeSizer(pc: ProblemComponent[_]) = ParticleGenerator.defaultTotalSamples
 }
