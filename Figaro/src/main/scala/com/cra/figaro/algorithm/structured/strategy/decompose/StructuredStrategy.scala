@@ -44,9 +44,9 @@ private[figaro] class StructuredStrategy(problem: Problem, solvingStrategy: Solv
   }
 
   def processChain(first: ProblemComponent[_], rest: List[ProblemComponent[_]], done: Set[ProblemComponent[_]], chainComp: ChainComponent[_, _]): Set[ProblemComponent[_]] = {
-    chainComp.expand()
+    chainComp.expand()    
     val subStrategies = chainComp.subproblems.values.map(decompose(_, done))
-    subStrategies.foreach(ds => if (ds.nonEmpty) ds.get.execute())
+    subStrategies.foreach(ds => if (ds.nonEmpty) ds.get.execute())    
     process(chainComp)
     backwardChain(rest, done + chainComp)
   }
@@ -55,7 +55,7 @@ private[figaro] class StructuredStrategy(problem: Problem, solvingStrategy: Solv
     maComp.expand()
     val items = maComp.makeArray.items.take(maComp.maxExpanded).toList
     val itemComponents = items.map(checkArg(_))
-    val done2 = backwardChain(itemComponents ::: List(first) ::: rest, done)
+    val done2 = backwardChain(itemComponents, done)
     process(maComp)
     backwardChain(rest, done2 + maComp)
   }

@@ -243,44 +243,52 @@ object EMWithBP {
    * @param params parameters to target with EM algorithm
    */
   def apply(params: ModelParameters)(implicit universe: Universe) = {
+    println("Warning: Using BP with EM can have produce unpredictable behavior if parameterized elements are created inside a Chain.")
     val parameters = params.convertToParameterList
     new GeneralizedEM((targets: Seq[Element[_]]) => (universe: Universe) => makeBP(defaultBPIterations, targets)(universe), universe, parameters: _*)(EMTerminationCriteria.maxIterations(10))
   }
   /**
-   * An expectation maximization algorithm using Belief Propagation sampling for inference.
+   * An expectation maximization algorithm using Belief Propagation for inference.
    * @param emIterations number of iterations of the EM algorithm
    * @param bpIterations number of iterations of the BP algorithm
    * @param params parameters to target with EM algorithm
    */
   def apply(emIterations: Int, bpIterations: Int, p: ModelParameters)(implicit universe: Universe) = {
+    println("Warning: Using BP with EM can have produce unpredictable behavior if parameterized elements are created inside a Chain.")
     val parameters = p.convertToParameterList
     new GeneralizedEM((targets: Seq[Element[_]]) => (universe: Universe) => makeBP(bpIterations, targets)(universe), universe, parameters: _*)(EMTerminationCriteria.maxIterations(emIterations))
   }
 
   /**
-   * An expectation maximization algorithm using Belief Propagation sampling for inference.
+   * An expectation maximization algorithm using Belief Propagation for inference.
    * @param params parameters to target with EM algorithm
    */
-  def apply(params: Parameter[_]*)(implicit universe: Universe) =
+  def apply(params: Parameter[_]*)(implicit universe: Universe) = {
+    println("Warning: Using BP with EM can have produce unpredictable behavior if parameterized elements are created inside a Chain.")
     new GeneralizedEM((targets: Seq[Element[_]]) => (universe: Universe) => makeBP(defaultBPIterations, targets)(universe), universe, params: _*)(EMTerminationCriteria.maxIterations(10))
+  }
 
   /**
-   * An expectation maximization algorithm using importance sampling for inference.
+   * An expectation maximization algorithm using Belief Propagation for inference.
    * @param emIterations number of iterations of the EM algorithm
    * @param bpIterations number of iterations of the BP algorithm
    * @param params parameters to target with EM algorithm
    */
-  def apply(emIterations: Int, bpIterations: Int, params: Parameter[_]*)(implicit universe: Universe) =
+  def apply(emIterations: Int, bpIterations: Int, params: Parameter[_]*)(implicit universe: Universe) = {
+    println("Warning: Using BP with EM can have produce unpredictable behavior if parameterized elements are created inside a Chain.")
     new GeneralizedEM((targets: Seq[Element[_]]) => (universe: Universe) => makeBP(bpIterations, targets)(universe), universe, params: _*)(EMTerminationCriteria.maxIterations(emIterations))
+  }
 
   /**
-   * An expectation maximization algorithm using importance sampling for inference.
+   * An expectation maximization algorithm using Belief Propagation for inference.
    * @param terminationCriteria criteria for stopping the EM algorithm
    * @param bpIterations number of iterations of the BP algorithm
    * @param params parameters to target with EM algorithm
    */
-  def apply(terminationCriteria: () => EMTerminationCriteria, bpIterations: Int, params: Parameter[_]*)(implicit universe: Universe) =
+  def apply(terminationCriteria: () => EMTerminationCriteria, bpIterations: Int, params: Parameter[_]*)(implicit universe: Universe) = {
+    println("Warning: Using BP with EM can have produce unpredictable behavior if parameterized elements are created inside a Chain.")
     new GeneralizedEM((targets: Seq[Element[_]]) => (universe: Universe) => makeBP(bpIterations, targets)(universe), universe, params: _*)(terminationCriteria)
+  }
 }
 
 object EMWithImportance {
