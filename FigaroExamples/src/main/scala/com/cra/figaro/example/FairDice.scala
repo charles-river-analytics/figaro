@@ -20,6 +20,7 @@ import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.patterns.learning.ParameterCollection
 import com.cra.figaro.patterns.learning.ModelParameters
 import com.cra.figaro.language.Select
+import com.cra.figaro.algorithm.factored.VariableElimination
 /**
  * A model for learning fairness of three dice. In each trial, choose two die randomly and their sum is observed.
  * This model will learn the fairness of each die.
@@ -89,15 +90,19 @@ object FairDice {
     val d2 = Select(params.posteriorParameters.get("fairness2"), outcomes:_*)
     val d3 = Select(params.posteriorParameters.get("fairness3"), outcomes:_*)
 
-    val probsAndSides1 = d1.probs zip outcomes
-    probsAndSides1.map(a => println("\t" + a._1 + " -> " + a._2))
+    val ve = VariableElimination(d1,d2,d3)
+    ve.start()
+    ve.stop()
+    
+    println("\nThe probabilities of seeing each side of d_1 are: ")
+    outcomes.foreach { o => println("\t" + ve.probability(d1, (i: Int) => i == o) + " -> " + o) }
     println("\nThe probabilities of seeing each side of d_2 are: ")
-    val probsAndSides2 = d2.probs zip outcomes
-    probsAndSides2.map(a => println("\t" + a._1 + " -> " + a._2))
+    outcomes.foreach { o => println("\t" + ve.probability(d2, (i: Int) => i == o) + " -> " + o) }
     println("\nThe probabilities of seeing each side of d_3 are: ")
-    val probsAndSides3 = d3.probs zip outcomes
-    probsAndSides3.map(a => println("\t" + a._1 + " -> " + a._2))
+    outcomes.foreach { o => println("\t" + ve.probability(d3, (i: Int) => i == o) + " -> " + o) }
 
+
+    ve.kill()
     algorithm.kill
   }
 
