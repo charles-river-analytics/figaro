@@ -58,11 +58,11 @@ object ProbabilityOfEvidence {
 
 class ProbabilityOfEvidenceTest extends WordSpec with Matchers {
   "Probability of Evidence" should {
-    "produce a probability of evidence sampling = 0.001 +- 0.001" taggedAs (BookExample, NonDeterministic) in {
-      ProbEvidenceSampler.computeProbEvidence(100000, ProbabilityOfEvidence.evidence) should be (0.001 +- 0.001)
+    "produce a probability of evidence sampling = 0.002 +- 0.001" taggedAs (BookExample, NonDeterministic) in {
+      ProbEvidenceSampler.computeProbEvidence(100000, ProbabilityOfEvidence.evidence) should be (0.002 +- 0.001)
     }
-    "produce a probability of evidence belief propagation = 4.676522804 +- 0.0000000001" taggedAs (BookExample, NonDeterministic) in {
-      ProbEvidenceBeliefPropagation.computeProbEvidence(20, ProbabilityOfEvidence.evidence) should be(4.676522804 +- 0.0000000001)
+    "produce a probability of evidence belief propagation = 4.676522804 +- 0.000000001" taggedAs (BookExample, NonDeterministic) in {
+      ProbEvidenceBeliefPropagation.computeProbEvidence(20, ProbabilityOfEvidence.evidence) should be(4.676522804 +- 0.000000001)
     }
   }
 }
