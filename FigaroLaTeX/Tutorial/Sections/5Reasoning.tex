@@ -149,7 +149,7 @@ To use lazy variable elimination, create an instance of \texttt{LazyVariable\-El
 
 \section{Importance sampling}
 
-Figaro's importance sampling algorithm is actually a combination of importance and rejection sampling. It uses a simple forward sampling approach. When it encounters a condition, it checks to see if the condition is satisfied and rejects if it is not. When it encounters a constraint, it multiplies the weight of the sample by the value of the constraint.
+Figaro's importance sampling algorithm is actually a combination of likelihood weighting and rejection sampling. When Figaro's Importance sampling encounters a condition, it attempts to push the condition through any Chains in the model and weight the sample by the probability of the condition. However, it is not always possible to do this (especially when it encounters an Apply), so in that case it will reject a sample if it does not match the constraint. When it encounters a constraint, it multiplies the weight of the sample by the value of the constraint.
 
 Unlike variable elimination, this algorithm can be applied to models whose expansion produces an infinite number of elements, provided any particular possible world only requires a finite number of elements to be generated. Also, this algorithm works for atomic continuous models. In addition, as an approximate algorithm, it can produce reasonably accurate answers much more quickly than the exact variable elimination.
 
@@ -318,7 +318,35 @@ To use a one-time (i.e., non-anytime) Gibbs sampling algorithm, simply provide t
 
 \section{Structured Factored Inference}
 
+Figaro also contains a set of algorithms known as structured factored inference (SFI) algorithms. These are not new algorithms per se, but rather a method of decomposing a model into a set of smaller sub--models that are solved recursively (i.e., structured) using one of Figaro's three existing factored algorithms (VE, BP, and Gibbs sampling). There is a rich and extensible library of the different strategies that can be applied to model that guide how a model is decomposed, and which algorithms are applied to the generated sub--models. However, we provide a base set of structured algorithms.
 
+The basic structured algorithm will decompose a model based on Chains. That is, every Chain defined in the model creates at most \textit{n} sub--models, one for each value of the parent of the Chain. Each of these sub--models is recursively decomposed. When a sub--model can no longer be decomposed, a solving strategy is applied to the sub--model. Figaro comes with a set of strategies that either applies the same algorithm to each model or chooses to apply either VE, BP, or Gibbs sampling based on some heuristics.
+
+To create an SFI algorithm that uses the same algorithm for each sub--model, use:
+
+\begin{flushleft}
+\texttt{import com.cra.figaro.language.\_
+\newline import com.cra.figaro.algorithm.structured.algorithm.structured.\_
+\newline 
+\newline val e1 = Select(0.25 -> 0.3, 0.25 -> 0.5, 0.25 -> 0.7, 0.25 -> 0.9)
+\newline val e2 = Flip(e1)
+\newline val e3 = If(e2, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
+\newline e3.setCondition((i: Int) => i == 2)
+\newline 
+\newline val sve = StructuredVE(e2)
+}
+\end{flushleft}
+
+The algorithm can them be used like a normal Figaro algorithm. There are also structured BP and Gibbs algorithms. To use a strategy that automatically chooses between VE, BP, and Gibbs sampling, use:
+
+\begin{flushleft}
+\texttt{
+\newline import com.cra.figaro.algorithm.structured.algorithm.hybrid.\_
+\newline val structAlg = StructuredVEBPGibbsChooser(0.0, 0.5, 100, 1000, e2)
+}
+\end{flushleft}
+
+Where the first argument is the threshold that determines when VE is run (e.g., the cost of running VE is less than the threshold). The second argument controls when to choose between BP and Gibbs sampling. If the fraction of the model that is deterministic is greater than the second argument, then BP is run, otherwise Gibbs is run. The following arguments are the number of BP and Gibbs iterations to perform, and the final argument is the query target.
 
 \section{Probability of evidence algorithms}
 
