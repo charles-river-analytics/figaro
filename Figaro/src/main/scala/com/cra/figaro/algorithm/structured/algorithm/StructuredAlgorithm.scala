@@ -1,3 +1,16 @@
+/*
+ * StructuredAlgorithm.scala
+ * An abstract class that defines the set of algorithms that solves a problem in a structured manner.
+ *
+ * Created By:      Brian Ruttenberg (bruttenberg@cra.com)
+ * Creation Date:   June 1, 2015
+ *
+ * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * See http://www.cra.com or email figaro@cra.com for information.
+ *
+ * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
+
 package com.cra.figaro.algorithm.structured.algorithm
 
 import com.cra.figaro.algorithm.OneTimeProbQuery

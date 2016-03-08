@@ -1,6 +1,6 @@
 /*
  * DistributionFactory.scala
- * Description needed
+ * Methods to create factors for simple distributions for lazy algorithms
  * 
  * Created By:      Glenn Takata (gtakata@cra.com)
  * Creation Date:   Dec 15, 2014

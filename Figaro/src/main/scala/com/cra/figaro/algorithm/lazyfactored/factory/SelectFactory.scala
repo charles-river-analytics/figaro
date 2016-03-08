@@ -1,6 +1,6 @@
 /*
  * SelectFactory.scala
- * Description needed
+ * Methods to create factors for Select and Dist elements for lazy algorithms
  * 
  * Created By:      Glenn Takata (gtakata@cra.com)
  * Creation Date:   Dec 15, 2014

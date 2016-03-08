@@ -1,6 +1,6 @@
 /*
  * StarFactory.scala
- * Description needed
+ * The default factor over an element whose only value is Star (for lazy algorithms)
  * 
  * Created By:      Glenn Takata (gtakata@cra.com)
  * Creation Date:   Dec 15, 2014

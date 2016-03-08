@@ -1,6 +1,6 @@
 /*
  * NormalKernelDensityEstimator.scala
- * Trait to TBD
+ * A density estimator using a normal kernel
  * 
  * Created By:      Brian Ruttenberg (bruttenberg@cra.com)
  * Creation Date:   Oct 20, 2014
