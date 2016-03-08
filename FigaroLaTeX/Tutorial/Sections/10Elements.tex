@@ -4,7 +4,7 @@
 
 \label{Creating a new element class} % For referencing the chapter elsewhere, use 
 
-For many applications, Figaro's built-in element classes will suffice. However, if you do need a new element class, it is usually not hard to create one. The easiest way to create a new class is to inherit from an existing class. We describe how to do this for atomic and compound classes. Then we describe how to create an atomic or compound class without inheritance. After that, we describe how to make a class usable by range computation and variable elimination. Next, an explanation is given on how to create parameters and parameterized elements suitable for use with expectation maximization or other learning algorithms. Finally, we show how to create a class with special behavior under Metropolis-Hastings.
+For many applications, Figaro's built-in element classes will suffice. However, if you do need a new element class, it is usually not hard to create one. The easiest way to create a new class is to inherit from an existing class. We describe how to do this for atomic and compound classes. Then we describe how to create an atomic or compound class without inheritance. After that, we describe how to make a class usable by range computation and factored algorithms. Next, an explanation is given on how to create parameters and parameterized elements suitable for use with expectation maximization or other learning algorithms. Finally, we show how to create a class with special behavior under Metropolis-Hastings.
 
 More examples of element classes can be found under \texttt{com.cra.fig\-aro.library}. If you do create a new element class and think it might be generally useful, we would appreciate if you would consider sharing it, either as a library or possibly as part of a future Figaro release.
 
@@ -173,7 +173,7 @@ For example, \texttt{Apply1} is defined by:
 
 For non-deterministic classes, you need to define the additional elements \texttt{Randomness}, \texttt{generateRandomness}, and \texttt{density}, as before.
 
-\section{Making a class usable by variable elimination}
+\section{Making a class usable by factored algorithms}
 
 Certain algorithms rely on element classes being able to support specific functionality. For example, computing ranges requires that it be possible to enumerate the values of every element in the universe. One way to make a new element class support value enumeration would be to modify the code that enumerates values in \texttt{Values.scala}, This approach would not be modular; it is undesirable for a user to have to modify library code.
 
@@ -186,10 +186,10 @@ Figaro provides a different solution. There is a trait called \texttt{ValuesMa\-
 The \texttt{makeValues} method returns a set of values. For a binomial, this is simply all the integers from
 0 to the number of trials. This set is computed through a for comprehension whose result is turned into a set. We also make \texttt{AtomicBinomial} extend \texttt{ValuesMaker}.
 
-Similarly, variable elimination requires both that it be possible to enumerate the values of an element and that it be possible to turn into a set of factors. To specify that it has the latter capability, you make it
-extend \texttt{ProbFactorMaker} and implement the \texttt{makeFactors} method. Factors are parameterized by the type of values they contain; in this case, since we are creating a factor representing probabilities, we make a \texttt{Factor[Double]}.
+Similarly, factored algorithms like variable elimination requires both that it be possible to enumerate the values of an element and that it be possible to turn into a set of factors. To specify that it has the latter capability, you make it
+extend \texttt{FactorMaker} and implement the \texttt{makeFactors} method. Factors are parameterized by the type of values they contain; in this case, since we are creating a factor representing probabilities, we make a \texttt{Factor[Double]}.
 
-For example, the \texttt{AtomicBinomial} class extends \texttt{ProbFactorMaker} and includes the following code:
+For example, the one could extend the \texttt{AtomicBinomial} class to extend \texttt{FactorMaker} and include the following code to generate factors:
 
 \begin{flushleft}
 \texttt{def makeFactors(binomial: AtomicBinomial): List[Factor[Double]] = \{
@@ -202,6 +202,7 @@ For example, the \texttt{AtomicBinomial} class extends \texttt{ProbFactorMaker} 
 \newline \}
 }
 \end{flushleft}
+(Note that the \texttt{AtomicBinomial} class is included in Figaro and thus its factor creation is defined in the language, not in the element itself.)
 
 The \texttt{makeFactors} method returns a list of factors. A factor is a table defined over a set of \emph{variables}. To create a variable out of an element, use \texttt{Variable}. For example, the \texttt{Variable(binomial)} line above creates a variable out of this atomic binomial element. Creating variables is memoized, so you can be sure that every time you call \texttt{Variable} on an element you get the same variable. This is important if an element participates in multiple factors. To create a factor, you pass it an array of its variables.
 
@@ -216,7 +217,7 @@ Each row in a factor associates a value with a set of indices into the variable'
 
 The first line uses a for comprehension to get at pairs of values of the binomial variable together with their index into the range. The standard Scala library method \texttt{zipWithIndex} takes a list and associates each element of the list with its index in the list. For example, \texttt{List("a", "b").zipWithIndex} is \texttt{List(("a", 0), ("b", 1))}. The first argument to \texttt{factor.set} is an list of indices into the ranges of the variables, in the same order as the array used to create the factor. The second argument is the value to associate with those indices.
 
-At the end, \texttt{makeFactors} returns a list consisting of this single factor. This is the basic principle behind creating factors. You can find a variety of more complex examples, including some with multiple variables, in  \texttt{ProbFactor.scala} For atomic elements, the process should usually be similarly simple to that for binomials.
+At the end, \texttt{makeFactors} returns a list consisting of this single factor. This is the basic principle behind creating factors. You can find a variety of more complex examples, including some with multiple variables, in  \texttt{Factory.scala}. For atomic elements, the process should usually be similarly simple to that for binomials.
 
 \section{Making parameters and parameterized elements}
 

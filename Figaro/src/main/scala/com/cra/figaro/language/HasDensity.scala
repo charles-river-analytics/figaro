@@ -1,6 +1,6 @@
 /*
  * HasDensity.scala
- * Trait for TBD
+ * Trait elements that have a density defined.
  *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jun 10, 2014

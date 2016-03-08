@@ -240,7 +240,7 @@ object Factory {
       //case m: MakeList[_] => ComplexFactory.makeFactors(cc, m)
       case m: MakeArray[_] => ComplexFactory.makeFactors(cc, m)
       case f: FoldLeft[_, _] => ComplexFactory.makeFactors(cc, f)
-      //      case f: FactorMaker[_] => f.makeFactors
+      case f: FactorMaker[_] => f.makeFactors
       case a: Atomic[_] => makeFactors(cc, a)
 
       case _ => throw new UnsupportedAlgorithmException(elem)

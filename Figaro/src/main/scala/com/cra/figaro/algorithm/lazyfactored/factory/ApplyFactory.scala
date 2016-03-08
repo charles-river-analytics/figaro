@@ -1,6 +1,6 @@
 /*
  * ApplyFactory.scala
- * Description needed
+ * Methods to create factors associated with Apply elements for lazy algorithms
  * 
  * Created By:      Glenn Takata (gtakata@cra.com)
  * Creation Date:   Dec 15, 2014

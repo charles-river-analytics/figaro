@@ -1,6 +1,6 @@
 /*
  * Fold.scala
- * Class for TBD
+ * An element that folds an operation through a sequence of elements
  *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Nov 27, 2014

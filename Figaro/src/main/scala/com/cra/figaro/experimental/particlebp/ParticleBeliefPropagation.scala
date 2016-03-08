@@ -1,6 +1,6 @@
 /*
  * ParticleBeliefPropagation.scala
- * Trait to TBD
+ * A particle belief propagation algorithm
  * 
  * Created By:      Brian Ruttenberg (bruttenberg@cra.com)
  * Creation Date:   Oct 20, 2014

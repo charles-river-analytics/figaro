@@ -64,6 +64,8 @@ returns the probability that the element named "f1" is true after two time steps
 
 There are a couple of implementation notes about particle filtering that a user should be aware of. First, since particle filtering estimates probabilities of elements using many particles, it can get expensive (memory wise) to store the state estimates for every element in the model. Therefore, the states of only \emph{named} elements are tracked through time. This means that queries to filter for an element probability or expectation must be on named elements. In addition, because filtering tracks estimates through time, we want to free up memory from old universes that are no longer used. To accomplish this, when \texttt{advanceTime} is called, all named elements from the previous universe are copied as constants to a new, temporary universe. The temporary universe is then used in the transition function, allowing the real previous universe to be freed while still letting the new universe use the correct values from the old universe.
 
+There is also a parallel version of particle filtering that uses Scala's built in parallel collections. The interface to use parallel particle filtering is similar to the original algorithm with a few exceptions. First, this version uses a model generator, which is a function that produces a universe (particle filtering is run in parallel on separate but identical universes). Second, the user must indicate the number of threads to use. 
+
 \subsection{Factored frontier}
 
 Factored frontier is a dynamic reasoning algorithm that uses factors instead of sampling. To create an instance of factored frontier, use:

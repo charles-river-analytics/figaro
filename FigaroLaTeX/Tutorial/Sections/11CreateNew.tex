@@ -49,13 +49,13 @@ Extra support is provided for sampling algorithms in the form of \texttt{Unweigh
 A useful operation is to expand all chains in a universe to obtain the complete set of elements in the universe. This is achieved using the syntax:
 
 \begin{flushleft}
-\texttt{Expand(universe).expand()}
+\texttt{LazyValues(universe).expandAll(universe.activeElements)}
 \end{flushleft}
 
 As usual, the \texttt{universe} argument can be omitted, using the current default universe. Support is provided for algorithms that are based on factors. Variable elimination is one example, but there are many other such algorithms. To create all the factors for an element, use:
 
 \begin{flushleft}
-\texttt{ProbFactor.make(element)}
+\texttt{Factory.make(element)}
 \end{flushleft}
 
 The standard procedure to turn a universe into a list of factors is to:
