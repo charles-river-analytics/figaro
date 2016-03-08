@@ -1,6 +1,6 @@
 /*
  * StructuredAlgorithm.scala
- * TBD
+ * Abstract class for algorithms that are structured
  *
  * Created By:      Brian Ruttenberg (bruttenberg@cra.com)
  * Creation Date:   December 30, 2015
