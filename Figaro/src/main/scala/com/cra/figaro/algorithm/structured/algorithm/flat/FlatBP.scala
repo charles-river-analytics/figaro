@@ -1,5 +1,5 @@
 /*
- * StructuredBP.scala
+ * FlatBP.scala
  * A structured factored inference algorithm using belief propagation.
  *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)

@@ -1,5 +1,5 @@
 /*
- * FlatStrategy.scala
+ * FlattenStrategy.scala
  * A strategy that flattens each problem and solves the problem in a flat manner
  *
  * Created By:      Brian Ruttenberg (bruttenberg@cra.com)
