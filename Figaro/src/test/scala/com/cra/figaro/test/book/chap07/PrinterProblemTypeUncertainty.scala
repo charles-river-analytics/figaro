@@ -139,6 +139,7 @@ object PrinterProblemTypeUncertainty extends ElementCollection {
 }
 
 class PrinterProblemTypeUncertaintyTest extends WordSpec with Matchers {
+  Universe.createNew()
   val summary = PrinterProblemTypeUncertainty.get[Symbol]("print experience.summary")
   summary.observe('none)
   

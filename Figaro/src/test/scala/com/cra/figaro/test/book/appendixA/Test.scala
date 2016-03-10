@@ -29,6 +29,7 @@ object Test {
 }
 
 class Test extends WordSpec with Matchers {
+  Universe.createNew()
   "AppendixA Importance value" should {
     "equal 1.0" taggedAs (BookExample) in {
         val test = Constant("Test")

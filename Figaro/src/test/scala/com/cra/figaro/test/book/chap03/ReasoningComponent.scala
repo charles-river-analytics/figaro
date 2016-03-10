@@ -23,6 +23,7 @@ import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.test.tags.BookExample
 
+// MXR (10-MAR-2016): some println statements commented out to minimize testing output
 object ReasoningComponent {
   def loadResults(fileName: String) = {
     val source = Source.fromFile(fileName)
@@ -84,7 +85,7 @@ object ReasoningComponent {
     val algorithm = VariableElimination(model.isSpam)
     algorithm.start()
     val isSpamProbability = algorithm.probability(model.isSpam, true)
-    println("Spam probability: " + isSpamProbability)
+    // println("Spam probability: " + isSpamProbability)
     algorithm.kill()
     isSpamProbability
   }
@@ -99,6 +100,7 @@ object ReasoningComponent {
 }
 
 class ReasoningComponentTest extends WordSpec with Matchers {
+  Universe.createNew()
   val emailFileName = "src/test/resources/BookData/Test/TestEmail_9.txt"
   val learningFileName = "src/test/resources/BookData/LearnedModel.txt"
   

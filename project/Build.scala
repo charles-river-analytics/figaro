@@ -95,7 +95,7 @@ object FigaroBuild extends Build {
     // Enable forking
     .settings(fork := true)
     // Increase max memory for JVM for both testing and runtime
-    .settings(javaOptions in (Test,run) += "-Xmx8G")
+    .settings(javaOptions in (Test,run) += "-Xmx6G")
     // test settings
     .settings(parallelExecution in Test := false)
     .settings(testOptions in Test += Tests.Argument("-oD"))

@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.book.chap06
 
-import com.cra.figaro.language.{Flip, Constant}
+import com.cra.figaro.language.{Flip, Constant, Universe}
 import com.cra.figaro.library.atomic.continuous.{Uniform, Beta}
 import com.cra.figaro.library.compound.If
 import com.cra.figaro.algorithm.sampling.Importance
@@ -60,6 +60,7 @@ object HierarchicalContainers {
 }
 
 class HierarchicalContainersTest extends WordSpec with Matchers {
+  Universe.createNew()
   "Hierarchical Containers" should {
     val initialTosses : Array[String] = Array("0","1","0","1","0","1","0","1","0","1","0","1","0","1","0","1","0","1","0","1","0","1","0","1","0","1","0","1","0","1")
     val numCoins = initialTosses.length

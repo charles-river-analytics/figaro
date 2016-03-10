@@ -170,6 +170,7 @@ object PrinterProblem {
 }
 
 class PrinterProblemTest extends WordSpec with Matchers {
+  Universe.createNew()
   "Printer Problem" should {
     "answerWithNoEvidence equals 0.95" taggedAs (BookExample) in {
       PrinterProblem.step1() should be(0.95)

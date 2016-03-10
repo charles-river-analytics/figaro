@@ -13,6 +13,7 @@
 
 package com.cra.figaro.test.book.chap03
 
+import com.cra.figaro.language.Universe
 import java.io.File
 import scala.io.Source
 import org.scalatest.Matchers
@@ -70,6 +71,7 @@ object Email {
 }
 
 class EmailTest extends WordSpec with Matchers {
+  Universe.createNew()
   val email = new Email(new File("src/test/resources/BookData/Test/TestEmail_9.txt"))
 
   "Email" should {

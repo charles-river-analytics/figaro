@@ -23,6 +23,7 @@ import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.test.tags.BookExample
 
+// MXR (10-MAR-2016): some println statements commented out to minimize testing output
 object LearningComponent {
 
   def readEmails(directoryName: String): Map[String, Email] = {
@@ -33,7 +34,7 @@ object LearningComponent {
     while (directoryIterator.hasNext()) {
       val nextFile = directoryIterator.next().toFile()
       val fileName = nextFile.getName
-      println("Reading " + fileName)
+      // println("Reading " + fileName)
       result += fileName ->  new Email(nextFile)
     }
     result
@@ -144,6 +145,7 @@ println("Training time: " + ((time1 - time0) / 1000.0))
 }
 
 class LearningComponentTest extends WordSpec with Matchers {
+  Universe.createNew()
   val trainingDirectoryName = "src/test/resources/BookData/Training"
   val labelFileName = "src/test/resources/BookData/Labels.txt"
   val learningFileName = "src/test/resources/BookData/LearnedModel.txt"

@@ -13,6 +13,7 @@
 
 package com.cra.figaro.test.book.chap06
 
+import com.cra.figaro.language.Universe
 import com.cra.figaro.library.atomic.continuous.Beta
 import com.cra.figaro.language.Flip
 import com.cra.figaro.algorithm.sampling.Importance
@@ -50,6 +51,7 @@ object CoinTosses {
 }
 
 class CoinTossesTest extends WordSpec with Matchers {
+  Universe.createNew()
   "Coin Tosses" should {
     val outcomes = "10"
     val numTosses = outcomes.length

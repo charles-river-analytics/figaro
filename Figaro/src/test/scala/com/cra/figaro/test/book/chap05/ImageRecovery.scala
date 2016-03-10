@@ -78,6 +78,7 @@ object ImageRecovery {
 }
 
 class ImageRecoveryTest extends WordSpec with Matchers {
+  Universe.createNew()
   "Image Recovery" should {
     "produce the correct results" taggedAs (BookExample, NonDeterministic) in {
       val pixels = Array.fill(10, 10)(Flip(0.4))

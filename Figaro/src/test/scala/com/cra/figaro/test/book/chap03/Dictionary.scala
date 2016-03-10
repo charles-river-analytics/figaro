@@ -13,6 +13,7 @@
 
 package com.cra.figaro.test.book.chap03
 
+import com.cra.figaro.language.Universe
 import scala.collection.mutable.Map
 import org.scalatest.Matchers
 import org.scalatest.WordSpec
@@ -73,6 +74,7 @@ object Dictionary {
 }
 
 class DictionaryTest extends WordSpec with Matchers {
+  Universe.createNew()
   val emails = LearningComponent.readEmails("src/test/resources/BookData/Test")
   val dict = Dictionary.fromEmails(emails.map(_._2))
 

@@ -73,6 +73,7 @@ object MPE {
 }
 
 class MPETest extends WordSpec with Matchers {
+  Universe.createNew()
   "MPE" should {
     "produce the correct result with Variable Elimination" taggedAs (BookExample, NonDeterministic) in {
       MPE.run(MPEVariableElimination())

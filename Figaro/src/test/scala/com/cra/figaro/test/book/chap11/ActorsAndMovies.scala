@@ -83,6 +83,7 @@ object ActorsAndMovies {
 }
 
 class ActorsAndMoviesTest extends WordSpec with Matchers {
+  Universe.createNew()
   ActorsAndMovies.appearances(0).actor.famous.observe(true)
   ActorsAndMovies.appearances(0).movie.quality.observe('high)
 

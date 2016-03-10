@@ -67,6 +67,7 @@ object DynamicBayesianNetwork {
 }
 
 class DynamicBayesianNetworkTest extends WordSpec with Matchers {
+  Universe.createNew()
   val prior = VariableElimination.probability(DynamicBayesianNetwork.scoreDifferential(DynamicBayesianNetwork.length - 1), (i: Int) => i > 0)
   DynamicBayesianNetwork.ourPossession(4).observe(true)
   DynamicBayesianNetwork.goal(4).observe(true)

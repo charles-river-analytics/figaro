@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.book.chap12
 
-import com.cra.figaro.language.{Element, Flip}
+import com.cra.figaro.language.{Element, Flip, Universe}
 import com.cra.figaro.library.atomic.discrete.Uniform
 import com.cra.figaro.library.compound.{If, ^^}
 import com.cra.figaro.algorithm.factored.VariableElimination
@@ -54,6 +54,7 @@ object JointDistribution {
 }
 
 class JointDistributionTest extends WordSpec with Matchers {
+  Universe.createNew()
   val salesPair = ^^(JointDistribution.sales(0), JointDistribution.sales(1))
   val ve = VariableElimination(JointDistribution.sales(0), JointDistribution.sales(1), salesPair)
   ve.start()

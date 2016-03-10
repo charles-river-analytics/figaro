@@ -64,6 +64,7 @@ object Evaluator {
 }
 
 class EvaluatorTest extends WordSpec with Matchers {
+  Universe.createNew()
   val testDirectoryName = "src/test/resources/BookData/Test"
   val labelFileName = "src/test/resources/BookData/Labels.txt"
   val kbFileName = "src/test/resources/BookData/LearnedModel.txt"
@@ -79,7 +80,6 @@ class EvaluatorTest extends WordSpec with Matchers {
   var trueNegatives = 0
   
   for { (fileName, email) <- emails } {
-    println(fileName)
     Universe.createNew()
     val isSpamProbability = ReasoningComponent.classify(dictionary, learningResults, testDirectoryName + "/" + fileName)
     val prediction = isSpamProbability >= threshold

@@ -50,6 +50,7 @@ object HiddenMarkovModel {
 }
 
 class HiddenMarkovModelTest extends WordSpec with Matchers {
+  Universe.createNew()
   val prior = VariableElimination.probability(HiddenMarkovModel.confident(2), true)
   HiddenMarkovModel.ourPossession(2).observe(true)
   val posStep2 = VariableElimination.probability(HiddenMarkovModel.confident(2), true)
@@ -63,8 +64,8 @@ class HiddenMarkovModelTest extends WordSpec with Matchers {
   val posStep4 = VariableElimination.probability(HiddenMarkovModel.confident(2), true)
     
   "Hidden Markov Model" should {
-    "produce a prior probability we are confident at time step 2: 0.42600000000000005" taggedAs (BookExample) in {
-      prior should be(0.42600000000000005)
+    "produce a prior probability we are confident at time step 2: 0.426 +- .001" taggedAs (BookExample) in {
+      prior should be(0.426 +- .001)
     }
     "after observing current possession at time step 2: 0.6339285714285714" taggedAs (BookExample) in {
       posStep2 should be(0.6339285714285714)

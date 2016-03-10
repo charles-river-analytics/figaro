@@ -76,12 +76,13 @@ object ProductDistribution {
 }
 
 class ProductDistributionTest extends WordSpec with Matchers {
+  Universe.createNew()
   "Product Distribution" should {
     "produce the correct results at each step" taggedAs (BookExample, NonDeterministic) in {
       ProductDistribution.predict(100, 0.5, 0.5) should be(2.0259999999999976 +- 1.0)
       ProductDistribution.predict(100, 0.5, 0.9) should be(3.562999999999997 +- 1.0)
       ProductDistribution.predict(100, 0.9, 0.5) should be(29.016999999999967 +- 1.0)
-      ProductDistribution.predict(100, 0.9, 0.9) should be(52.58599999999993 +- 1.0)
+      ProductDistribution.predict(100, 0.9, 0.9) should be(52.58599999999993 +- 2.0)
       ProductDistribution.predict(10, 0.5, 0.5) should be(0.8219999999999981 +- 1.0)
       ProductDistribution.predict(10, 0.5, 0.9) should be(1.3489999999999978 +- 1.0)
       ProductDistribution.predict(10, 0.9, 0.5) should be(3.385999999999989 +- 1.0)

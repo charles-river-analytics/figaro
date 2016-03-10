@@ -13,6 +13,7 @@
 
 package com.cra.figaro.test.book.chap13
 
+import com.cra.figaro.language.Universe
 import com.cra.figaro.library.atomic.continuous.Beta
 import com.cra.figaro.language.Flip
 import com.cra.figaro.library.compound.If
@@ -82,13 +83,18 @@ object MAPLearning {
     for { word <- featureWords } {
       futureModel.hasWord(word).observe(futureEmail.text.contains(word))
     }
+    
+    learningAlg.stop()
 
     val result = VariableElimination.probability(futureModel.isSpam, true)
     println("Probability new email is spam = " + result)
+
+    learningAlg.kill()  
   }
 }
 
 class MAPLearningTest extends WordSpec with Matchers {
+  Universe.createNew()
   val learningAlg = EMWithVE(10, MAPLearning.params)
   learningAlg.start()
 
@@ -97,9 +103,13 @@ class MAPLearningTest extends WordSpec with Matchers {
   for { word <- MAPLearning.featureWords } {
     futureModel.hasWord(word).observe(futureEmail.text.contains(word))
   }
+  
+  learningAlg.stop()
 
   val result = VariableElimination.probability(futureModel.isSpam, true)
   println("Probability new email is spam = " + result)
+  
+  learningAlg.kill()
   
   "MAP Learning" should {
     "produce a probability new email is spam = 0.2171438039742 +- 0.0000000000001" taggedAs (BookExample) in {

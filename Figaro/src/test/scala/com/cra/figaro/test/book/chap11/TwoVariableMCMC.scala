@@ -13,6 +13,7 @@
 
 package com.cra.figaro.test.book.chap11
 
+import com.cra.figaro.language.Universe
 import com.cra.figaro.library.atomic.continuous.Normal
 import com.cra.figaro.library.compound.^^
 import com.cra.figaro.algorithm.sampling.MetropolisHastings
@@ -33,6 +34,7 @@ object TwoVariableMCMC {
 }
 
 class TwoVariableMCMCTest extends WordSpec with Matchers {
+  Universe.createNew()
   val x = Normal(0.75, 0.2)
   val y = Normal(0.4, 0.2)
   x.setCondition((d: Double) => d > 0 && d < 1)

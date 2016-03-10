@@ -13,6 +13,7 @@
 
 package com.cra.figaro.test.book.chap13
 
+import com.cra.figaro.language.Universe
 import com.cra.figaro.library.atomic.continuous.Beta
 import com.cra.figaro.language.Flip
 import com.cra.figaro.library.compound.If
@@ -81,6 +82,7 @@ object BayesianLearning {
 }
 
 class BayesianLearningTest extends WordSpec with Matchers {
+  Universe.createNew()
   val futureEmail = new BayesianLearning.Email(List("Feel free to reply if you have any ideas."), "unknown")
   val futureModel = new BayesianLearning.EmailModel
   for { word <- BayesianLearning.featureWords } {
@@ -93,8 +95,8 @@ class BayesianLearningTest extends WordSpec with Matchers {
   alg.kill()
   
   "Bayesian Learning" should {
-    "produce a probability new email is spam = 0.25 +- 0.02" taggedAs (BookExample, NonDeterministic) in {
-      result should be (0.25 +- 0.02)
+    "produce a probability new email is spam = 0.25 +- 0.03" taggedAs (BookExample, NonDeterministic) in {
+      result should be (0.25 +- 0.03)
     }
   }
 }

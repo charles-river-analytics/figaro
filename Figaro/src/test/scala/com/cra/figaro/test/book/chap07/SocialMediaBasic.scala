@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.book.chap07
 
-import com.cra.figaro.language.Flip
+import com.cra.figaro.language.{Flip, Universe}
 import com.cra.figaro.library.atomic.discrete.Uniform
 import com.cra.figaro.library.compound.{If, ^^}
 import com.cra.figaro.algorithm.factored.VariableElimination
@@ -78,6 +78,7 @@ object SocialMediaBasic {
 }
 
 class SocialMediaBasicTest extends WordSpec with Matchers {
+  Universe.createNew()
   val connection = memo(SocialMediaBasic.generateConnection _)
   
   val amy = new SocialMediaBasic.Person()

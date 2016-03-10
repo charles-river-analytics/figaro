@@ -13,6 +13,7 @@
 
 package com.cra.figaro.test.book.chap06
 
+import com.cra.figaro.language.Universe
 import com.cra.figaro.library.atomic.continuous.Beta
 import com.cra.figaro.language.Flip
 import com.cra.figaro.algorithm.sampling.Importance
@@ -62,6 +63,7 @@ object Sales {
 }
 
 class SalesTest extends WordSpec with Matchers {
+  Universe.createNew()
   "Sales" should {
     val products : Array[String] = Array("A","B","C","D","E")
     val numProducts = products.length

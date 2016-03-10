@@ -50,13 +50,14 @@ object ProbabilityOfEvidence {
 
   def main(args: Array[String]) {
     println("Probability of evidence sampling")
-    println()
+    println(ProbEvidenceSampler.computeProbEvidence(100000, evidence))
     println("Probability of evidence belief propagation")
     println(ProbEvidenceBeliefPropagation.computeProbEvidence(20, evidence))
   }
 }
 
 class ProbabilityOfEvidenceTest extends WordSpec with Matchers {
+  Universe.createNew()
   "Probability of Evidence" should {
     "produce a probability of evidence sampling = 0.002 +- 0.001" taggedAs (BookExample, NonDeterministic) in {
       ProbEvidenceSampler.computeProbEvidence(100000, ProbabilityOfEvidence.evidence) should be (0.002 +- 0.001)

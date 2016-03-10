@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.book.chap07
 
-import com.cra.figaro.language.{Flip, Chain}
+import com.cra.figaro.language.{Flip, Chain, Universe}
 import com.cra.figaro.library.atomic.discrete.Uniform
 import com.cra.figaro.library.compound.{If, ^^}
 import com.cra.figaro.algorithm.factored.VariableElimination
@@ -80,6 +80,7 @@ object SocialMediaMultipleInterests {
 }
 
 class SocialMediaMultipleInterestsTest extends WordSpec with Matchers {
+  Universe.createNew()
   val topics = List("sports", "politics", "movies")
   val connection = memo(SocialMediaMultipleInterests.generateConnection _)
   

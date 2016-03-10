@@ -44,6 +44,7 @@ object MarkovChain {
 }
 
 class MarkovChainTest extends WordSpec with Matchers {
+  Universe.createNew()
   val prior = VariableElimination.probability(MarkovChain.ourPossession(5), true)
   MarkovChain.ourPossession(4).observe(true)
   val posStep2 = VariableElimination.probability(MarkovChain.ourPossession(5), true)
@@ -61,8 +62,8 @@ class MarkovChainTest extends WordSpec with Matchers {
     "after observing that we have possession at time step 4: 0.6" taggedAs (BookExample) in {
       posStep2 should be(0.6)
     }
-    "after observing that we have possession at time step 3: 0.6000000000000001" taggedAs (BookExample) in {
-      posStep1 should be(0.6000000000000001)
+    "after observing that we have possession at time step 3: 0.600 +- 0.001" taggedAs (BookExample) in {
+      posStep1 should be(0.600 +- 0.001)
     }
     "after observing that we have possession at time step 6: 0.75" taggedAs (BookExample) in {
       posStep0 should be(0.75)

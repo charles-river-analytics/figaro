@@ -114,6 +114,7 @@ object PrinterProblemOO {
 }
 
 class PrinterProblemOOTest extends WordSpec with Matchers {
+  Universe.createNew()
   val myPrinter = new PrinterProblemOO.Printer //#D
   val mySoftware = new PrinterProblemOO.Software //#D
   val myNetwork = new PrinterProblemOO.Network //#D

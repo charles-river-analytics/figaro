@@ -13,7 +13,7 @@
 
 package com.cra.figaro.test.book.chap06
 
-import com.cra.figaro.language.{Flip, Constant} //#A
+import com.cra.figaro.language.{Flip, Constant, Universe} //#A
 import com.cra.figaro.library.atomic.continuous.{Uniform, Beta} //#A
 import com.cra.figaro.library.compound.If //#A
 import com.cra.figaro.algorithm.sampling.Importance //#A
@@ -66,6 +66,7 @@ object Hierarchical {
 }
 
 class HierarchicalTest extends WordSpec with Matchers {
+  Universe.createNew()
   "Hierarchical" should {
     val initialTosses : Array[String] = Array("010101010101010101010101010101")
     val numCoins = initialTosses.length

@@ -13,6 +13,7 @@
 
 package com.cra.figaro.test.book.chap01
 
+import com.cra.figaro.language.Universe
 import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.test.tags.BookExample
@@ -62,6 +63,7 @@ object HelloWorldFigaro {
 }
 
 class HelloWorldTest extends WordSpec with Matchers {
+  Universe.createNew()
   "Chap01 Variable Elimination value" should {
     "equal 0.27999999999999997 when predicted" taggedAs (BookExample) in {
         HelloWorldFigaro.predict() should be(0.27999999999999997)							//#I

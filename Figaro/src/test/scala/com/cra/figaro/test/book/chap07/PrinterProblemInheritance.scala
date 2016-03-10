@@ -148,6 +148,7 @@ object PrinterProblemInheritance {
 }
 
 class PrinterProblemInheritanceTest extends WordSpec with Matchers {
+  Universe.createNew()
   val myLaserPrinter = new PrinterProblemInheritance.LaserPrinter
   val myInkjetPrinter = new PrinterProblemInheritance.InkjetPrinter
   val mySoftware = new PrinterProblemInheritance.Software

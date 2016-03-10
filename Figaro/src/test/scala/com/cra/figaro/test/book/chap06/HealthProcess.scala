@@ -73,6 +73,7 @@ object HealthProcess extends Process[Double, Boolean] {
 }
 
 class HealthProcessTest extends WordSpec with Matchers {
+  Universe.createNew()
   "Health Process" should {
     val healthyPrior = Uniform((0.05 to 0.95 by 0.1):_*)
     val healthChangeRate = Uniform((0.001 to 0.1 by 0.002):_*)
