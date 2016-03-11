@@ -23,7 +23,11 @@ import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.test.tags.BookExample
 
-// MXR (10-MAR-2016): some println statements commented out to minimize testing output
+// MXR (10-MAR-2016):
+//  Some println statements commented out to minimize testing output
+// MXR (11-MAR-2016):
+//  Calls to saveResults() were commented out to preserve the integrity
+//  of the LearnedModels.txt file, which is used by other tests.
 object LearningComponent {
 
   def readEmails(directoryName: String): Map[String, Email] = {
@@ -139,7 +143,7 @@ println("Training time: " + ((time1 - time0) / 1000.0))
       }
 
     val results = learnMAP(params)
-    saveResults(learningFileName, dictionary, results)
+    // saveResults(learningFileName, dictionary, results)
     println("Done!")
   }
 }
@@ -166,7 +170,8 @@ class LearningComponentTest extends WordSpec with Matchers {
         }
     
       val results = LearningComponent.learnMAP(params)
-      LearningComponent.saveResults(learningFileName, dictionary, results)
+      results should not be(null)
+      // LearningComponent.saveResults(learningFileName, dictionary, results)
     }
   }
 }
