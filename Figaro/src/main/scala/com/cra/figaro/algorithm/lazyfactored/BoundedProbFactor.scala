@@ -19,7 +19,7 @@ import com.cra.figaro.util._
 import annotation.tailrec
 import scala.language.existentials
 import com.cra.figaro.algorithm.factored.factors._
-import com.cra.figaro.algorithm.factored.factors.Factory
+import com.cra.figaro.algorithm.lazyfactored.factory.Factory
 
 /**
  * Methods for creating lower and upper bound probability factors.

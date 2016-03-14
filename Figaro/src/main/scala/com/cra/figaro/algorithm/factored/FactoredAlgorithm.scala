@@ -23,12 +23,14 @@ import scala.collection._
 import com.cra.figaro.algorithm.lazyfactored._
 import scala.collection.immutable.Set
 import com.cra.figaro.algorithm.UnsupportedAlgorithmException
+import com.cra.figaro.algorithm.structured._
+import com.cra.figaro.library.collection.MakeArray
 
 /**
  * Trait for algorithms that use factors.
  */
 trait FactoredAlgorithm[T] extends Algorithm {
-    
+ 
   /**
    * Get the elements that are needed by the query target variables and the evidence variables. Also compute the values
    * of those variables to the given depth. 
@@ -86,7 +88,8 @@ trait FactoredAlgorithm[T] extends Algorithm {
      * 
      * */
     val newlyNeededElements = 
-      Element.closeUnderContingencies(starterElements.toSet).map((elem: Element[_]) => (elem, depth))
+      Element.closeUnderContingencies(starterElements.toSet ++ boundsInducingElements.toSet).map((elem: Element[_]) => (elem, depth))
+      
     
     @tailrec
     def expandElements(curr: Set[(Element[_], Int)]): Unit = {
@@ -96,12 +99,13 @@ trait FactoredAlgorithm[T] extends Algorithm {
         val (uni, set) = pair
         val values = LazyValues(uni)
         values.expandAll(set)
-        val currentlyExpanded = values.expandedElements.toSet
-        val currentDepths = currentlyExpanded.map(d => (d, values.expandedDepth(d).getOrElse(0)))
-        val others = currentDepths.flatMap(e => chaseDown(e._1, e._2, currentlyExpanded))
-        val filteredElements = others.filter(o => boundsInducingElements.contains(o._1))
-        val neededElements = filteredElements.flatMap(f => (f._1.elementsIAmContingentOn + f._1).map((_, f._2)))
-        neededElements
+        //val currentlyExpanded = values.expandedElements.toSet
+        //val currentDepths = currentlyExpanded.map(d => (d, values.expandedDepth(d).getOrElse(0)))
+        //val others = currentDepths.flatMap(e => chaseDown(e._1, e._2, currentlyExpanded))
+        //val filteredElements = others.filter(o => boundsInducingElements.contains(o._1))
+        //val neededElements = filteredElements.flatMap(f => (f._1.elementsIAmContingentOn + f._1).map((_, f._2)))
+        //neededElements
+        List()
       })
       expandElements(allNeededElements.toSet)
     }
@@ -110,14 +114,6 @@ trait FactoredAlgorithm[T] extends Algorithm {
     
     // We only include elements from other universes if they are specified in the starter elements.
     val resultElements = values.expandedElements.toList ::: starterElements.filter(_.universe != universe)
-    
-    /* We support non caching chains now using sampling 
-    * resultElements.foreach(p => p match {
-    *   case n: NonCachingChain[_,_] => throw new UnsupportedAlgorithmException(n)
-    *   case _ => 
-    }* )
-    * 
-    */
         
     // Only conditions and constraints produce distinct lower and upper bounds for *. So, if there are not such elements with * as one
     // of their values, we don't need to compute bounds and can save computation.
@@ -125,9 +121,14 @@ trait FactoredAlgorithm[T] extends Algorithm {
     // We make sure to clear the variable cache now, once all values have been computed.
     // This ensures that any created variables will be consistent with the computed values.
     Variable.clearCache()
+    
+    // Even though we just cleared the variables, we generate all the variables so we can create the factors
+    resultElements.foreach(Variable(_))
+    
     (resultElements, boundsNeeded)
   }
   
+    
   /**
    * All implementations of factored algorithms must specify a way to get the factors from the given universe and
    * dependent universes.

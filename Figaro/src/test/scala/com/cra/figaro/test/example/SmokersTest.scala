@@ -1,13 +1,13 @@
 /*
- * SmokersTest.scala  
+ * SmokersTest.scala
  * Friends and smokes example tests.
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -18,6 +18,7 @@ import org.scalatest.WordSpec
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.algorithm.factored._
+import com.cra.figaro.algorithm.factored.gibbs.Gibbs
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound._
 import com.cra.figaro.test._
@@ -36,6 +37,10 @@ class SmokersTest extends WordSpec with Matchers {
 
     "produce the correct answer under variable elimination" taggedAs (Example, NonDeterministic) in {
       test((e: Element[Boolean]) => VariableElimination(e))
+    }
+
+    "produce the correct answer under Gibbs sampling" taggedAs (Example, NonDeterministic) in {
+      test((e: Element[Boolean]) => Gibbs(20000, e))
     }
   }
 

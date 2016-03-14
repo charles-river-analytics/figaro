@@ -22,26 +22,12 @@ import com.cra.figaro.algorithm.lazyfactored.LazyValues
 import com.cra.figaro.algorithm.lazyfactored.Regular
 import com.cra.figaro.algorithm.lazyfactored.ValueSet
 import com.cra.figaro.algorithm.sampling.ProbEvidenceSampler
-import com.cra.figaro.language.Apply
-import com.cra.figaro.language.Apply3
-import com.cra.figaro.language.Apply4
-import com.cra.figaro.language.Apply5
-import com.cra.figaro.language.CachingChain
-import com.cra.figaro.language.Chain
-import com.cra.figaro.language.Condition
-import com.cra.figaro.language.Constant
-import com.cra.figaro.language.Dist
-import com.cra.figaro.language.Flip
-import com.cra.figaro.language.Inject
-import com.cra.figaro.language.Name.stringToName
-import com.cra.figaro.language.NamedEvidence
-import com.cra.figaro.language.Reference.stringToReference
-import com.cra.figaro.language.Select
-import com.cra.figaro.language.Universe
+import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous.Normal
 import com.cra.figaro.library.atomic.continuous.Uniform
 import com.cra.figaro.library.compound.CPD
 import com.cra.figaro.algorithm.factored.ParticleGenerator
+import com.cra.figaro.algorithm.factored.factors.factory.Factory
 
 class SparseFactorTest extends WordSpec with Matchers with PrivateMethodTester {
 
@@ -111,7 +97,7 @@ class SparseFactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val v2 = Variable(e2)
         val v3 = Variable(e3)
         val v4 = Variable(e4)
-        val f = Factory.simpleMake[Double](List(v1, v2, v3))
+        val f = Factory.defaultFactor[Double](List(v1, v2, v3), List())
         val g = new SparseFactor[Double](List(v4), List(v3))
         f.set(List(0, 0, 0), 0.0)
         f.set(List(1, 0, 0), 0.1)
@@ -159,7 +145,7 @@ class SparseFactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val v3 = Variable(e3)
         val v4 = Variable(e4)
         val f = new SparseFactor[Double](List(v1, v2), List(v3))
-        val g = Factory.simpleMake[Double](List(v4, v3))
+        val g = Factory.defaultFactor[Double](List(v4, v3), List())
         f.set(List(0, 0, 0), 0.0)
         f.set(List(1, 0, 0), 0.1)
         f.set(List(2, 0, 0), 0.2)
@@ -197,8 +183,8 @@ class SparseFactorTest extends WordSpec with Matchers with PrivateMethodTester {
         Values()(f)
         Values()(e)
         val vf = Variable(f)
-        val f1 = Factory.make(f)
-        val f2 = Factory.make(e)
+        val f1 = Factory.makeFactorsForElement(f)
+        val f2 = Factory.makeFactorsForElement(e)
         val result21 = f2(0).product(f1(0)/*, SumProductSemiring*/)
         val sum21 = result21.sumOver(vf/*, SumProductSemiring*/)
 

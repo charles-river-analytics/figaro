@@ -22,6 +22,8 @@ import annotation.tailrec
 import scala.collection.mutable.{ Map, Set }
 import scala.language.postfixOps
 import scala.util.control.TailCalls._
+import com.cra.figaro.algorithm.structured._
+import com.cra.figaro.algorithm.factored.factors.factory.Factory
 
 /**
  * Trait of algorithms that perform variable elimination.
@@ -164,7 +166,8 @@ trait VariableElimination[T] extends FactoredAlgorithm[T] with OneTime {
       println("*****************\nStarting factors\n")
       allFactors.foreach((f: Factor[_]) => println(f.toReadableString))
     }
-    val (_, order) = optionallyShowTiming(VariableElimination.eliminationOrder(allFactors, targetVariables), "Computing elimination order")
+    val (score, order) = optionallyShowTiming(VariableElimination.eliminationOrder(allFactors, targetVariables), "Computing elimination order")
+    if (debug) println("***************** Eliminition Score: " + score)
     val factorsAfterElimination =
       optionallyShowTiming(eliminateInOrder(order, HashMultiSet(allFactors: _*), initialFactorMap(allFactors)), "Elimination")
     if (debug) println("*****************")
@@ -195,10 +198,9 @@ trait ProbabilisticVariableElimination extends VariableElimination[Double] {
         println(Variable(element).id + "(" + element.name.string + "@" + element.hashCode + ")" + ": " + element + ": " + Variable(element).range.mkString(","))
       }
     }
-    Factory.removeFactors()
-    val thisUniverseFactors = allElements flatMap (Factory.make(_))
+    val thisUniverseFactors = allElements flatMap(Factory.makeFactorsForElement(_))
     val dependentUniverseFactors =
-      for { (dependentUniverse, evidence) <- dependentUniverses } yield Factory.makeDependentFactor(universe, dependentUniverse, dependentAlgorithm(dependentUniverse, evidence))
+      for { (dependentUniverse, evidence) <- dependentUniverses } yield Factory.makeDependentFactor(Variable.cc, universe, dependentUniverse, dependentAlgorithm(dependentUniverse, evidence))
     dependentUniverseFactors ::: thisUniverseFactors
   }
 

@@ -24,8 +24,8 @@ object FigaroBuild extends Build {
   override val settings = super.settings ++ Seq(
     organization := "com.cra.figaro",
     description := "Figaro: a language for probablistic programming",
-    version := "3.3.0.0",
-    scalaVersion := "2.11.6",
+    version := "4.0.0.0",
+    scalaVersion := "2.11.7",
     crossPaths := true,
     publishMavenStyle := true,
     pomExtra :=
@@ -82,12 +82,12 @@ object FigaroBuild extends Build {
       "asm" % "asm" % "3.3.1",
       "org.apache.commons" % "commons-math3" % "3.3",
       "net.sf.jsci" % "jsci" % "1.2",
-      "com.typesafe.akka" %% "akka-actor" % "2.3.8",
+      "com.typesafe.akka" %% "akka-actor" % "2.3.14",
       "org.scalanlp" %% "breeze" % "0.10",
       "io.argonaut" %% "argonaut" % "6.0.4",
       "org.prefuse" % "prefuse" % "beta-20071021",
       "org.scala-lang.modules" %% "scala-swing" % "1.0.1",
-      "com.storm-enroute" %% "scalameter" % "0.6" % "provided",
+      "com.storm-enroute" %% "scalameter" % "0.7" % "provided",
       "org.scalatest" %% "scalatest" % "2.2.4" % "provided, test"
     ))
     // Copy all managed dependencies to \lib_managed directory
@@ -95,7 +95,7 @@ object FigaroBuild extends Build {
     // Enable forking
     .settings(fork := true)
     // Increase max memory for JVM for both testing and runtime
-    .settings(javaOptions in (Test,run) += "-Xmx8G")
+    .settings(javaOptions in (Test,run) += "-Xmx6G")
     // test settings
     .settings(parallelExecution in Test := false)
     .settings(testOptions in Test += Tests.Argument("-oD"))
@@ -125,6 +125,8 @@ object FigaroBuild extends Build {
     .settings(packageOptions := Seq(Package.JarManifest(examplesManifest)))
     // SBTEclipse settings
     .settings(EclipseKeys.eclipseOutput := Some("target/scala-2.11/classes"))
+    // Copy all managed dependencies to \lib_managed directory
+    .settings(retrieveManaged := true)
 
   lazy val detTest = config("det") extend(Test)
   lazy val nonDetTest = config("nonDet") extend(Test)

@@ -1,6 +1,6 @@
 /*
  * ParticleBeliefPropagation.scala
- * Trait to TBD
+ * A particle belief propagation algorithm
  * 
  * Created By:      Brian Ruttenberg (bruttenberg@cra.com)
  * Creation Date:   Oct 20, 2014
@@ -14,27 +14,17 @@
 package com.cra.figaro.experimental.particlebp
 
 import com.cra.figaro.language._
-import com.cra.figaro.algorithm.factored.FactoredAlgorithm
-import com.cra.figaro.algorithm.factored.factors.{ Factory, DivideableSemiRing, Factor, LogSumProductSemiring, Variable }
+import com.cra.figaro.algorithm.factored.factors.{ DivideableSemiRing, Factor, LogSumProductSemiring, Variable }
 import com.cra.figaro.algorithm.lazyfactored.LazyValues
-import com.cra.figaro.algorithm.OneTime
-import com.cra.figaro.algorithm.Anytime
-import com.cra.figaro.algorithm.ProbQueryAlgorithm
-import com.cra.figaro.algorithm.OneTimeProbQuery
+import com.cra.figaro.algorithm._
 import scala.collection.immutable.Set
 import scala.collection.mutable.Map
-import com.cra.figaro.algorithm.factored.beliefpropagation.InnerBPHandler
-import com.cra.figaro.algorithm.factored.beliefpropagation.OneTimeInnerBPHandler
-import com.cra.figaro.algorithm.factored.beliefpropagation.VariableNode
-import com.cra.figaro.algorithm.factored.ParticleGenerator
-import com.cra.figaro.algorithm.factored.DensityEstimator
-import com.cra.figaro.algorithm.AnytimeProbQuery
-import com.cra.figaro.algorithm.factored.beliefpropagation.AnytimeInnerBPHandler
-import com.cra.figaro.algorithm.factored.beliefpropagation.FactorNode
-import com.cra.figaro.algorithm.factored.beliefpropagation.Node
+import com.cra.figaro.algorithm.factored.beliefpropagation._
+import com.cra.figaro.algorithm.factored._
 import breeze.linalg.normalize
 import com.cra.figaro.algorithm.UnsupportedAlgorithmException
 import com.cra.figaro.algorithm.sampling.ProbEvidenceSampler
+import com.cra.figaro.algorithm.factored.factors.factory.Factory
 
 /**
  * Trait for performing particle belief propagation.
@@ -100,10 +90,10 @@ trait ParticleBeliefPropagation extends FactoredAlgorithm[Double] with InnerBPHa
     currentUniverse = universe
 
     // Remove factors on all elements that can possibly change during resampluing
-    dependentElems.foreach(Factory.removeFactors(_))
+    //dependentElems.foreach(Factory.removeFactors(_))    
 
     // Clear the variable and values caches
-    Variable.clearCache
+    Variable.clearCache()
     LazyValues.clear(universe)
 
     // Create BP.
@@ -163,7 +153,7 @@ trait ParticleBeliefPropagation extends FactoredAlgorithm[Double] with InnerBPHa
     val singleFactor = if (singleFactorIndex >= 0) lastMessages(singleFactorIndex)
     else throw new UnsupportedAlgorithmException(elem)
     // Get the original factor for this element
-    val originalFactor = Factory.makeNonConstraintFactors(elem)
+    val originalFactor = Factory.makeFactorsForElement(elem)
     if (originalFactor.size > 1) throw new UnsupportedAlgorithmException(elem)
     // Take the single factor, and divide out the original factor. We do this since the single factor in the graph
     // can have evidence multiplied in, so we only want to remove the original factor for it. We will use the original

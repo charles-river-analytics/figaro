@@ -15,17 +15,17 @@ package com.cra.figaro.test.example
 
 import org.scalatest.Matchers
 import org.scalatest.WordSpec
-import com.cra.figaro.algorithm._
-import com.cra.figaro.algorithm.sampling._
-import com.cra.figaro.algorithm.factored._
-import com.cra.figaro.algorithm.learning._
-import com.cra.figaro.library.compound._
-import com.cra.figaro.library.atomic.continuous._
-import com.cra.figaro.language._
-import com.cra.figaro.test._
-import com.cra.figaro.test.tags.Example
+
+import com.cra.figaro.algorithm.factored.VariableElimination
+import com.cra.figaro.algorithm.learning.EMWithBP
+import com.cra.figaro.language.Apply
+import com.cra.figaro.language.Name.stringToName
+import com.cra.figaro.language.Select
+import com.cra.figaro.language.Universe
+import com.cra.figaro.library.atomic.continuous.Dirichlet
 import com.cra.figaro.patterns.learning.ModelParameters
 import com.cra.figaro.patterns.learning.ParameterCollection
+import com.cra.figaro.test.tags.Example
 
 class FairDiceTest extends WordSpec with Matchers {
   "A simple FairDiceTest" should {
@@ -97,19 +97,22 @@ class FairDiceTest extends WordSpec with Matchers {
     val d2 = Select(params.posteriorParameters.get("fairness2"), outcomes: _*)
     val d3 = Select(params.posteriorParameters.get("fairness3"), outcomes: _*)
 
-    val probsAndSides1 = d1.probs zip outcomes
-    probsAndSides1.map(a => println("\t" + a._1 + " -> " + a._2))
+    val ve = VariableElimination(d1,d2,d3)
+    ve.start()
+    ve.stop()
+    
+    println("\nThe probabilities of seeing each side of d_1 are: ")
+    outcomes.foreach { o => println("\t" + ve.probability(d1, (i: Int) => i == o) + " -> " + o) }
     println("\nThe probabilities of seeing each side of d_2 are: ")
-    val probsAndSides2 = d2.probs zip outcomes
-    probsAndSides2.map(a => println("\t" + a._1 + " -> " + a._2))
+    outcomes.foreach { o => println("\t" + ve.probability(d2, (i: Int) => i == o) + " -> " + o) }
     println("\nThe probabilities of seeing each side of d_3 are: ")
-    val probsAndSides3 = d3.probs zip outcomes
-    probsAndSides3.map(a => println("\t" + a._1 + " -> " + a._2))
+    outcomes.foreach { o => println("\t" + ve.probability(d3, (i: Int) => i == o) + " -> " + o) }
 
-    (d1.probs(0) > .8) should be(true)
-    (d2.probs(1) > .8) should be(true)
-    (d3.probs(5) > .8) should be(true)
+    (ve.probability(d1, (i: Int) => i == outcomes(0)) > .8) should be(true)
+    (ve.probability(d2, (i: Int) => i == outcomes(1)) > .8) should be(true)
+    (ve.probability(d3, (i: Int) => i == outcomes(5)) > .8) should be(true)
 
+    ve.kill()
     algorithm.kill
   }
 }

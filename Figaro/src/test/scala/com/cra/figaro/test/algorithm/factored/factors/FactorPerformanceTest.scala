@@ -23,6 +23,7 @@ import com.cra.figaro.util._
 import com.cra.figaro.algorithm.lazyfactored.LazyValues
 import com.cra.figaro.language.Element.toIntElement
 import scala.reflect.runtime.universe
+import com.cra.figaro.algorithm.factored.factors.factory.Factory
 
 class FactorPerformanceTest extends WordSpec with Matchers with PrivateMethodTester {
 
@@ -40,9 +41,9 @@ class FactorPerformanceTest extends WordSpec with Matchers with PrivateMethodTes
       val p2v = Variable(p2)
       val sumv = Variable(sum)
 
-      val p1Factor = Factory.make(p1).head
-      val p2Factor = Factory.make(p2).head
-      val sumSparseFactor = Factory.make(sum).head
+      val p1Factor = Factory.makeFactorsForElement(p1).head
+      val p2Factor = Factory.makeFactorsForElement(p2).head
+      val sumSparseFactor = Factory.makeFactorsForElement(sum).head
 
       val sumBasicFactor = new BasicFactor[Double](sumSparseFactor.parents, sumSparseFactor.output)
       val arg1Indices = sumSparseFactor.parents(0).range.zipWithIndex
@@ -81,7 +82,7 @@ class FactorPerformanceTest extends WordSpec with Matchers with PrivateMethodTes
       val p2v = Variable(p2)
       val sumv = Variable(sum)
 
-      val sumSparseFactor = Factory.make(sum).head
+      val sumSparseFactor = Factory.makeFactorsForElement(sum).head
       val sumBasicFactor = new BasicFactor[Double](sumSparseFactor.parents, sumSparseFactor.output)
       val arg1Indices = sumSparseFactor.parents(0).range.zipWithIndex
       val arg2Indices = sumSparseFactor.parents(1).range.zipWithIndex

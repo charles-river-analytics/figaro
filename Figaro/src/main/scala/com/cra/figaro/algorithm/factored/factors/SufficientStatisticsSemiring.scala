@@ -15,7 +15,7 @@ package com.cra.figaro.algorithm.factored.factors
 
 import com.cra.figaro.language._
 import scala.collection._
-import scala.collection.mutable.{ Set, Map }
+import scala.collection.immutable.{ Set, Map }
 
 /**
  * Sum and product operations defined for sufficient statistics. 
@@ -25,19 +25,19 @@ import scala.collection.mutable.{ Set, Map }
  *  Maximization determines the parameterMap automatically from the parameters. 
  */
 class SufficientStatisticsSemiring(parameterMap: immutable.Map[Parameter[_], Seq[Double]])
-  extends Semiring[(Double, mutable.Map[Parameter[_], Seq[Double]])] {
+  extends Semiring[(Double, immutable.Map[Parameter[_], Seq[Double]])] {
   
   /**
    * 0 probability and a vector of zeros for all parameters. The vector for a parameter
    * must be of length equal to number of possible observations of the parameter.
    */
-  val zero = (0.0, mutable.Map(parameterMap.toSeq: _*))
+  val zero = (0.0, immutable.Map(parameterMap.toSeq: _*))
   
   /**
    * 1 probability and a vector of zeros for all parameters. The vector for a parameter
    * must be of length equal to number of possible observations of the parameter.
    */
-  val one = (1.0, mutable.Map(parameterMap.toSeq: _*))
+  val one = (1.0, immutable.Map(parameterMap.toSeq: _*))
 
   /**
    * Probabilities are multiplied using standard multiplication. 
@@ -57,22 +57,17 @@ class SufficientStatisticsSemiring(parameterMap: immutable.Map[Parameter[_], Seq
   }
 
   private def mapSum(xVector: (Double, Map[Parameter[_], Seq[Double]]), yVector: (Double, Map[Parameter[_], Seq[Double]])): Map[Parameter[_], Seq[Double]] = {
-    require(xVector._2.size == yVector._2.size)
-    val result: Map[Parameter[_], Seq[Double]] = Map()
-    for (x <- xVector._2.keys) {
-      result += x -> weightedComponentSum(xVector._2(x), yVector._2(x), xVector._1, yVector._1)
-    }
-    result
+    require(xVector._2.size == yVector._2.size)    
+    Map() ++ {for (x <- xVector._2.keys)  yield {
+      x -> weightedComponentSum(xVector._2(x), yVector._2(x), xVector._1, yVector._1)
+    }}
   }
 
-  private def mapProduct(xVector: (Double, Map[Parameter[_], Seq[Double]]), yVector: (Double, Map[Parameter[_], Seq[Double]])): Map[Parameter[_], Seq[Double]] = {
-    val result: Map[Parameter[_], Seq[Double]] = Map()
+  private def mapProduct(xVector: (Double, Map[Parameter[_], Seq[Double]]), yVector: (Double, Map[Parameter[_], Seq[Double]])): Map[Parameter[_], Seq[Double]] = {    
     require(xVector._2.size == yVector._2.size)
-    for (x <- xVector._2.keys) {
-      result += x -> simpleComponentSum(xVector._2(x), yVector._2(x))
-    }
-    result
-
+    Map() ++ {for (x <- xVector._2.keys) yield {
+      x -> simpleComponentSum(xVector._2(x), yVector._2(x))
+    }}    
   }
 
   private def simpleComponentSum(xVector: Seq[Double], yVector: Seq[Double]): Seq[Double] = {

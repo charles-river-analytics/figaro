@@ -15,7 +15,6 @@ package com.cra.figaro.test.util
 
 import org.scalatest.Matchers
 import org.scalatest.WordSpec
-
 import com.cra.figaro.language.CachingChain
 import com.cra.figaro.language.Chain
 import com.cra.figaro.language.Constant
@@ -24,6 +23,7 @@ import com.cra.figaro.language.Universe
 import com.cra.figaro.library.atomic.continuous.Uniform
 import com.cra.figaro.library.cache.MHCache
 import com.cra.figaro.library.compound.If
+import com.cra.figaro.library.cache.PermanentCache
 
 class CacheTest extends WordSpec with Matchers {
   "A MH cache" should {
@@ -74,25 +74,25 @@ class CacheTest extends WordSpec with Matchers {
       val cc = new MHCache(u)
       def fn(d: Double) = {
         Flip(d); Flip(d); Flip(d)
-      }      
-      val f = Uniform(0.0, 1.0)            
+      }
+      val f = Uniform(0.0, 1.0)
       val c = Chain(f, fn)
-      
+
       f.generate; cc(c)
       c.directContextContents.size should equal(3)
       f.generate; cc(c)
       c.directContextContents.size should equal(6)
       f.generate; cc(c)
-      c.directContextContents.size should equal(6) 
+      c.directContextContents.size should equal(6)
       u.activeElements.size should equal(8)
     }
-    
+
     "correctly clear the caches when clearing temporaries" in {
       val u = Universe.createNew()
       val cc = new MHCache(u)
       def fn(d: Double) = {
         Flip(d); Flip(d); Flip(d)
-      }      
+      }
       val f = Uniform(0.0, 1.0)
       val perm = Constant(false)
       val fl = Flip(0.5)
@@ -102,16 +102,35 @@ class CacheTest extends WordSpec with Matchers {
           Flip(f)
         }
       })
-      
-      for {_ <- 0 until 100} {
+
+      for { _ <- 0 until 100 } {
         f.generate
-        fl.generate       
+        fl.generate
         cc(c2)
-      }      
-      u.clearTemporaries 
+      }
+      u.clearTemporaries
       u.activeElements.size should equal(4)
       cc.ccCache(c2).size should equal(1)
-      cc.ccInvertedCache(perm).size should equal (1)      
+      cc.ccInvertedCache(perm).size should equal(1)
     }
   }
+
+  "A Permanent cache" should {
+    "not throw an exception if something is already removed" in {
+      val f1 = Flip(0.1)
+      val f2 = Flip(0.3)
+      val s = Flip(0.5)
+      val c = Chain(s, (b: Boolean) => if (b) f1 else f2)
+
+      s.generate
+      f1.generate
+      f2.generate
+      val cache = new PermanentCache(Universe.universe)
+      val r = cache(c)
+      cache -= c
+      cache -= f1
+      cache -= f2
+    }
+  }
+
 }

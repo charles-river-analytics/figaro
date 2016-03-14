@@ -350,6 +350,13 @@ class LazyValues(universe: Universe) {
   /**
    * Gets the mapping from apply arguments to values.
    */
+  def getMap[U](apply: Apply[U]): Map[Any, U] = {
+    getOrElseInsert(applyMaps, apply, Map[Any, Any]()).asInstanceOf[Map[Any, U]]
+  }
+  
+  /**
+   * Gets the mapping from apply arguments to values.
+   */
   def getMap[T1, U](apply: Apply1[T1, U]): Map[T1, U] = {
     getOrElseInsert(applyMaps, apply, Map[Any, Any]()).asInstanceOf[Map[T1, U]]
   }

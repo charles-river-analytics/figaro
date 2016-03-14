@@ -23,6 +23,7 @@ import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.library.compound._
 import com.cra.figaro.test.tags.NonDeterministic
+import com.cra.figaro.algorithm.factored.factors.factory.Factory
 
 class AbstractionTest extends WordSpec with Matchers {
   "A regular discretization" should {
@@ -46,7 +47,7 @@ class AbstractionTest extends WordSpec with Matchers {
       u.addPragma(a)
       assert(u.pragmas contains a)
     }
-    
+
     "not have a pragma after adding and removing it" in {
       Universe.createNew()
       val u = Uniform(0.0, 1.0)
@@ -85,7 +86,7 @@ class AbstractionTest extends WordSpec with Matchers {
 
   "Computing the values of an abstract element" when {
     "given an atomic element using a regular discretization scheme" should {
-      "produce an sequence of the correct size of uniformly distributed values" taggedAs(NonDeterministic) in {
+      "produce an sequence of the correct size of uniformly distributed values" taggedAs (NonDeterministic) in {
         Universe.createNew()
         val u = Uniform(0.0, 1.0)
         u.addPragma(Abstraction(100)(AbstractionScheme.RegularDiscretization))
@@ -141,14 +142,15 @@ class AbstractionTest extends WordSpec with Matchers {
         val uniform = Uniform(0.0, max)
         uniform.addPragma(Abstraction(numBins)(AbstractionScheme.RegularDiscretization))
         Values()(uniform)
-        val factors = Factory.make(uniform)
+        Variable(uniform)
+        val factors = Factory.makeFactorsForElement(uniform)
         factors.size should equal(1)
         val factor = factors(0)
         val variable = Variable(uniform)
         factor.variables should equal(List(variable))
- 
+
         factor.getIndices.foldLeft(0)((sum, _) => sum + 1) should equal(numBins)
-        for { indices <- factor.getIndices} {
+        for { indices <- factor.getIndices } {
           factor.get(indices) should be(1.0 / max +- 0.000001) // constant density of Uniform(0, max)
         }
       }
@@ -165,7 +167,9 @@ class AbstractionTest extends WordSpec with Matchers {
         val apply = Apply(uniform, (d: Double) => d * d)
         apply.addPragma(Abstraction(numBinsApply)(AbstractionScheme.RegularDiscretization))
         Values()(apply)
-        val factors = Factory.make(apply)
+        Variable(apply)
+        Variable(uniform)
+        val factors = Factory.makeFactorsForElement(apply)
         factors.size should equal(1)
         val factor = factors(0)
         val uniformVariable = Variable(uniform)
@@ -204,12 +208,12 @@ class AbstractionTest extends WordSpec with Matchers {
         val apply = Apply(uniform1, uniform2, (d1: Double, d2: Double) => d1 * d2)
         apply.addPragma(Abstraction(numBinsApply)(AbstractionScheme.RegularDiscretization))
         Values()(apply)
-        val factors = Factory.make(apply)
-        factors.size should equal(1)
-        val factor = factors(0)
         val uniform1Variable = Variable(uniform1)
         val uniform2Variable = Variable(uniform2)
         val applyVariable = Variable(apply)
+        val factors = Factory.makeFactorsForElement(apply)
+        factors.size should equal(1)
+        val factor = factors(0)
         factor.variables should equal(List(uniform1Variable, uniform2Variable, applyVariable))
         // No longer true for sparse factors
         // factor.getIndices.foldLeft(0)((sum, _) => sum + 1) should equal(numBinsUniform * numBinsUniform * numBinsApply)
@@ -249,13 +253,13 @@ class AbstractionTest extends WordSpec with Matchers {
         val apply = Apply(uniform1, uniform2, uniform3, (d1: Double, d2: Double, d3: Double) => d1 * d2 * d3)
         apply.addPragma(Abstraction(numBinsApply)(AbstractionScheme.RegularDiscretization))
         Values()(apply)
-        val factors = Factory.make(apply)
-        factors.size should equal(1)
-        val factor = factors(0)
         val uniform1Variable = Variable(uniform1)
         val uniform2Variable = Variable(uniform2)
         val uniform3Variable = Variable(uniform3)
         val applyVariable = Variable(apply)
+        val factors = Factory.makeFactorsForElement(apply)
+        factors.size should equal(1)
+        val factor = factors(0)
         factor.variables should equal(List(uniform1Variable, uniform2Variable, uniform3Variable, applyVariable))
         // No longer true for sparse factors
         // factor.getIndices.foldLeft(0)((sum, _) => sum + 1) should equal(numBinsUniform * numBinsUniform * numBinsUniform * numBinsApply)
@@ -296,15 +300,15 @@ class AbstractionTest extends WordSpec with Matchers {
         val chain = Chain(flip, (b: Boolean) => if (b) uniform1; else uniform2)
         chain.addPragma(Abstraction(numBinsChain)(AbstractionScheme.RegularDiscretization))
         Values()(chain)
-        val factors = Factory.make(chain)
-        factors.size should equal(3) // 1 for selection variable; 2 for the conditional selectors
-        val List(factor1, factor2, factor3) = factors
-        val selectorVar = factor1.variables(1)
         val flipVariable = Variable(flip)
         val uniform1Variable = Variable(uniform1)
         val uniform2Variable = Variable(uniform2)
         val chainVariable = Variable(chain)
-        factor1.variables should equal(List(flipVariable, selectorVar, chainVariable))
+        val factors = Factory.makeFactorsForElement(chain)
+        factors.size should equal(3) // 1 for selection variable; 2 for the conditional selectors
+        val List(factor1, factor2, factor3) = factors
+        val selectorVar = factor1.variables(2)
+        factor1.variables should equal(List(flipVariable, chainVariable, selectorVar))
         factor2.variables should equal(List(selectorVar, uniform1Variable))
         factor2.getIndices.foldLeft(0)((sum, _) => sum + 1) should equal(2 * numBinsChain * numBinsUniform)
         factor3.variables should equal(List(selectorVar, uniform2Variable))
@@ -313,6 +317,7 @@ class AbstractionTest extends WordSpec with Matchers {
         val uniform1Values: List[Double] = uniform1Variable.range.map(_.value)
         val uniform2Values: List[Double] = uniform2Variable.range.map(_.value)
         val chainValues: List[Double] = chainVariable.range.map(_.value)
+        val selectorValues: List[List[Any]] = selectorVar.range.map(_.value.asInstanceOf[List[Any]])
         def closest(chainValue: Double, uniformValue: Double): Boolean = {
           def minDiff: Double =
             (Double.MaxValue /: chainValues)((d1: Double, d2: Double) => d1 min math.abs(uniformValue - d2))
@@ -327,17 +332,20 @@ class AbstractionTest extends WordSpec with Matchers {
           j <- 0 until numBinsUniform
           k <- 0 until numBinsChain
         } {
-          val selectorBin = i * numBinsChain + k
+          val selectorBin = selectorValues.indexWhere(l => {
+            l(0).asInstanceOf[Regular[Boolean]].value == flipValues(i) && l(1).asInstanceOf[Regular[Double]].value == chainValues(k)
+          })
           if (check1(flipValues(i), uniform1Values(j), chainValues(k))) { factor2.get(List(selectorBin, j)) should equal(1.0) }
-          else { factor1.get(List(selectorBin, j)) should equal(0.0) }
+          else { factor2.get(List(selectorBin, j)) should equal(0.0) }
         }
         for {
           i <- 0 to 1
           j <- 0 until numBinsUniform
           k <- 0 until numBinsChain
         } {
-          val selectorBin = i * numBinsChain + k
-
+          val selectorBin = selectorValues.indexWhere(l => {
+            l(0).asInstanceOf[Regular[Boolean]].value == flipValues(i) && l(1).asInstanceOf[Regular[Double]].value == chainValues(k)
+          })
           if (check2(flipValues(i), uniform2Values(j), chainValues(k))) { factor3.get(List(selectorBin, j)) should equal(1.0) }
           else { factor3.get(List(selectorBin, j)) should equal(0.0) }
         }
@@ -346,7 +354,7 @@ class AbstractionTest extends WordSpec with Matchers {
   }
 
   "Running variable elimination on a model with multiple discretized elements" should {
-    "produce the correct answer" taggedAs(NonDeterministic) in {
+    "produce the correct answer" taggedAs (NonDeterministic) in {
       Universe.createNew()
       val flip = Flip(0.5)
       val uniform1 = Uniform(0.0, 1.0)

@@ -149,7 +149,7 @@ To use lazy variable elimination, create an instance of \texttt{LazyVariable\-El
 
 \section{Importance sampling}
 
-Figaro's importance sampling algorithm is actually a combination of importance and rejection sampling. It uses a simple forward sampling approach. When it encounters a condition, it checks to see if the condition is satisfied and rejects if it is not. When it encounters a constraint, it multiplies the weight of the sample by the value of the constraint.
+Figaro's importance sampling algorithm is actually a combination of likelihood weighting and rejection sampling. When Figaro's Importance sampling encounters a condition, it attempts to push the condition through any Chains in the model and weight the sample by the probability of the condition. However, it is not always possible to do this (especially when it encounters an Apply), so in that case it will reject a sample if it does not match the constraint. When it encounters a constraint, it multiplies the weight of the sample by the value of the constraint.
 
 Unlike variable elimination, this algorithm can be applied to models whose expansion produces an infinite number of elements, provided any particular possible world only requires a finite number of elements to be generated. Also, this algorithm works for atomic continuous models. In addition, as an approximate algorithm, it can produce reasonably accurate answers much more quickly than the exact variable elimination.
 
@@ -184,7 +184,9 @@ Two additional methods are provided in the interface. \texttt{imp.stop()} stops 
 
 Importance sampling also provides a one-line query shortcut.
 
-\section{Markov chain Monte Carlo}
+There is also a parallel version of Importance sampling that uses Scala's built in parallel collections. The interface to use parallel Importance sampling is similar to the original algorithm with a few exceptions. First, this version sampling uses a model generator, which is a function that produces a universe (Importance sampling is run in parallel on separate but identical universes). Second, the user must indicate the number of threads to use. Finally, instead of taking a set of elements to query, the algorithm takes in a set of references, where each reference refers to the same element on each of the parallel universes.
+
+\section{Metropolis-Hastings Markov chain Monte Carlo}
 
 Figaro provides a Metropolis-Hastings Markov chain Monte Carlo algorithm. Metropolis-Hastings uses a proposal distribution to propose a new state at each step of the algorithm, and either accepts or rejects the proposal. In Figaro, a proposal involves proposing new randomnesses for any number of elements. After proposing these new randomnesses, any element that depends on those randomnesses must have its value updated. Recall that the value of an element is a deterministic function of its randomness and the values of its arguments, so this update process is a deterministic result of the randomness proposal.
 
@@ -268,17 +270,18 @@ In general, the proposal scheme argument of \texttt{MetropolisHastings} is actua
 
 In some cases, it might be useful to have the decision as to which later elements to propose depend on the proposed values of earlier elements. \texttt{TypedScheme} is provided for this purpose. It has a type parameter \texttt{T} which is the value type of the first element to be proposed. The first argument to \texttt{TypedScheme} is a function of zero arguments that returns an \texttt{Element[T]}. The second argument is a function from a value of type \texttt{T} to an \texttt{Option[ProposalScheme]}. An \texttt{Option[Proposal\-Scheme]}, as its name implies, is an optional proposal scheme. It can take the value \texttt{None}, meaning that there is no proposal scheme, or the value \texttt{Some(ps)}, where \texttt{ps} is a proposal scheme. This allows the proposed value of the first element to determine, first of all, whether there will be any more proposals, and if there will be more proposals, what the subsequent proposal scheme will be.
 
-\subsection{Chains and Metropolis-Hastings}
-
-In designing a Metropolis-Hastings algorithm using chains, there are design considerations of the model that can affect the run-time and memory performance of the algorithm. Chains contain an internal cache of previously generated elements from different combinations of its argument values. When a chain's function is invoked on an argument to produce a result element, the cache is first checked to determine if there exists an entry for the argument value. If an entry does exist, the cached element is retrieved and used to determine the value of the chain. If no entry exists, then the chain's function is invoked, an element is returned from the function and placed in the cache. The cache also contains a maximum capacity; once the capacity of the cache is reached, a random element is selected in the cache and discarded. The capacity of the cache can significantly impact the performance of the Metropolis-Hastings algorithm. 
-
-The standard advantage of a large cache capacity is that it can save significant time if the function is executed repeatedly on a finite set of argument values. In Metropolis-Hastings, there is an important additional advantage. After an element is created, it may go through a sequence of proposals and eventually reach a region of high probability. Large capacity caches increases the chance that this work is saved and reused every time the parent of the chain returns to the same value. With a small capacity
-cache, elements can be evicted if there are many different parent values. If at a later stage the parent returns to the same original value, it may have been evicted from the cache and we'll need to begin the
-search process from scratch.
-
-However, the standard disadvantage of large caches is that they use more memory. In particular, a different element is stored for every value of the parent that has been seen, and may never be released if the cache is large enough. If the parent can have a large or infinite number of possible values, this can lead to exhausting the memory of the machine.
-
-Fortunately, most of the cache management is automatically handled internally by Figaro. There are two types of chains defined in Figaro: \texttt{CachingChain} and \texttt{NonCachingChain}. \texttt{CachingChain} by default instantiates a chain with a cache capacity of 1000, whereas a \texttt{NonCachi\-ngChain} instantiates a chain with a capacity of 1. In general, a \texttt{Caching\-Chain} is usually better for elements with discrete parents with relatively few values, and a \texttt{NonCachingChain} is better for elements with continuous parents. When a user creates a new \texttt{Chain} class, Figaro attempts to determine the best chain to use given the parents of the chain. In most cases, the cache capacity selected by Figaro will be adequate to use the model efficiently in a Metropolis-Hastings algorithm. However, should you need to ensure the efficiency of the model in a Metropolis-Hastings algorithm, the user can still explicitly instantiate a \texttt{Chain} class with specific cache capacity.
+% Removed 3/4/16 by Brian - this is no longer relevant since Caching is handled inside algorithms and has no impact on the user.
+%\subsection{Chains and Metropolis-Hastings}
+%
+%In designing a Metropolis-Hastings algorithm using chains, there are design considerations of the model that can affect the run-time and memory performance of the algorithm. Chains contain an internal cache of previously generated elements from different combinations of its argument values. When a chain's function is invoked on an argument to produce a result element, the cache is first checked to determine if there exists an entry for the argument value. If an entry does exist, the cached element is retrieved and used to determine the value of the chain. If no entry exists, then the chain's function is invoked, an element is returned from the function and placed in the cache. The cache also contains a maximum capacity; once the capacity of the cache is reached, a random element is selected in the cache and discarded. The capacity of the cache can significantly impact the performance of the Metropolis-Hastings algorithm. 
+%
+%The standard advantage of a large cache capacity is that it can save significant time if the function is executed repeatedly on a finite set of argument values. In Metropolis-Hastings, there is an important additional advantage. After an element is created, it may go through a sequence of proposals and eventually reach a region of high probability. Large capacity caches increases the chance that this work is saved and reused every time the parent of the chain returns to the same value. With a small capacity
+%cache, elements can be evicted if there are many different parent values. If at a later stage the parent returns to the same original value, it may have been evicted from the cache and we'll need to begin the
+%search process from scratch.
+%
+%However, the standard disadvantage of large caches is that they use more memory. In particular, a different element is stored for every value of the parent that has been seen, and may never be released if the cache is large enough. If the parent can have a large or infinite number of possible values, this can lead to exhausting the memory of the machine.
+%
+%Fortunately, most of the cache management is automatically handled internally by Figaro. There are two types of chains defined in Figaro: \texttt{CachingChain} and \texttt{NonCachingChain}. \texttt{CachingChain} by default instantiates a chain with a cache capacity of 1000, whereas a \texttt{NonCachi\-ngChain} instantiates a chain with a capacity of 1. In general, a \texttt{Caching\-Chain} is usually better for elements with discrete parents with relatively few values, and a \texttt{NonCachingChain} is better for elements with continuous parents. When a user creates a new \texttt{Chain} class, Figaro attempts to determine the best chain to use given the parents of the chain. In most cases, the cache capacity selected by Figaro will be adequate to use the model efficiently in a Metropolis-Hastings algorithm. However, should you need to ensure the efficiency of the model in a Metropolis-Hastings algorithm, the user can still explicitly instantiate a \texttt{Chain} class with specific cache capacity.
 
 \subsection{Debugging Metropolis-Hastings}
 
@@ -287,6 +290,63 @@ Designing good proposal schemes is more of an art than a science and can be quit
 The \texttt{Metropolis-Hastings} class has a \texttt{debug} variable, which by default is set to false. If you set it to true, you get debugging output when you run the algorithm. This includes every element that is proposed or updated and whether each proposal is accepted or rejected. The debugging output uses the names of elements, so to make use of it, you need to give the elements you are interested in a name. 
 
 In addition, if you have a \texttt{Metropolis-Hastings} object \texttt{mh}, you can define an initial state by setting the values of elements. Then call \texttt{mh.test} and provide it a number of samples to generate. It will repeatedly propose a new state from the initial state and either accept or reject it, restoring to the original state each time. You can provide a sequence of predicates, and it will report how often each predicate was satisfied after one step of Metropolis-Hastings from the initial state. You can also provide a sequence of elements to track, and it will report how often each element is proposed. For example, in the movies example, you could set the initial state to be one in which exactly one appearance is awarded and test the fraction of times this condition holds after one step.
+
+\section{Gibbs Sampling Markov chain Monte Carlo}
+
+Figaro also provides another Markov chain Monte Carlo algorithm known as Gibbs sampling. Gibbs sampling is an algorithm that traditionally will iterate through all the variables in the model, and sample each variable conditioned on the rest of the model (or the Markov blanket, as that is all that is needed). By successively sampling variables in the model in this manner, the Markov chain eventually reaches convergence, and subsequent samples from the model are from the joint distribution defined by the model.
+
+Figaro's Gibbs sampling is similar to traditional implementations of Gibbs sampling except for two key differences: It is implemented on a factor graph, and blocks of variables are sampled at each iteration instead of a single variable (this is required because of chains). This means that when Gibbs sampling is run, factors are generated based on the model; continuous variables are sampled into factors. Hence, Gibbs samples in Figaro is really a mix between a factored algorithm and a sampling algorithm.
+
+To create an anytime Gibbs sampling algorithm, use:
+
+\begin{flushleft}
+\texttt{import com.cra.figaro.language.\_
+\newline import com.cra.figaro.algorithm.factored.gibbs.\_
+\newline 
+\newline val e1 = Select(0.25 -> 0.3, 0.25 -> 0.5, 0.25 -> 0.7, 0.25 -> 0.9)
+\newline val e2 = Flip(e1)
+\newline val e3 = If(e2, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
+\newline e3.setCondition((i: Int) => i == 2)
+\newline 
+\newline val gs = Gibbs(e2)
+}
+\end{flushleft}
+
+Gibbs sampling takes three additional optional arguments. The first represents the burn-in, which is the number of steps the algorithm goes through before collecting samples, the second is the number of steps between samples, and the final is the method of creating blocks (which most people do not need to change). The default burn-in is 0, while the default interval is 1. These arguments appear before the query elements.
+
+To use a one-time (i.e., non-anytime) Gibbs sampling algorithm, simply provide the number of samples as the first argument. Gibbs sampling also provides a one-line query shortcut.
+
+\section{Structured Factored Inference}
+
+Figaro also contains a set of algorithms known as structured factored inference (SFI) algorithms. These are not new algorithms per se, but rather a method of decomposing a model into a set of smaller sub--models that are solved recursively (i.e., structured) using one of Figaro's three existing factored algorithms (VE, BP, and Gibbs sampling). There is a rich and extensible library of the different strategies that can be applied to model that guide how a model is decomposed, and which algorithms are applied to the generated sub--models. However, we provide a base set of structured algorithms.
+
+The basic structured algorithm will decompose a model based on Chains. That is, every Chain defined in the model creates at most \textit{n} sub--models, one for each value of the parent of the Chain. Each of these sub--models is recursively decomposed. When a sub--model can no longer be decomposed, a solving strategy is applied to the sub--model. Figaro comes with a set of strategies that either applies the same algorithm to each model or chooses to apply either VE, BP, or Gibbs sampling based on some heuristics.
+
+To create an SFI algorithm that uses the same algorithm for each sub--model, use:
+
+\begin{flushleft}
+\texttt{import com.cra.figaro.language.\_
+\newline import com.cra.figaro.algorithm.structured.algorithm.structured.\_
+\newline 
+\newline val e1 = Select(0.25 -> 0.3, 0.25 -> 0.5, 0.25 -> 0.7, 0.25 -> 0.9)
+\newline val e2 = Flip(e1)
+\newline val e3 = If(e2, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
+\newline e3.setCondition((i: Int) => i == 2)
+\newline 
+\newline val sve = StructuredVE(e2)
+}
+\end{flushleft}
+
+The algorithm can them be used like a normal Figaro algorithm. There are also structured BP and Gibbs algorithms. To use a strategy that automatically chooses between VE, BP, and Gibbs sampling, use:
+
+\begin{flushleft}
+\texttt{
+\newline import com.cra.figaro.algorithm.structured.algorithm.hybrid.\_
+\newline val structAlg = StructuredVEBPGibbsChooser(0.0, 0.5, 100, 1000, e2)
+}
+\end{flushleft}
+
+Where the first argument is the threshold that determines when VE is run (e.g., the cost of running VE is less than the threshold). The second argument controls when to choose between BP and Gibbs sampling. If the fraction of the model that is deterministic is greater than the second argument, then BP is run, otherwise Gibbs is run. The following arguments are the number of BP and Gibbs iterations to perform, and the final argument is the query target.
 
 \section{Probability of evidence algorithms}
 
@@ -647,3 +707,4 @@ All elements in Figaro use the same random number generator to retrieve random v
 \end{flushleft}
 
 To reproduce the results of an inference algorithm, you must set the seed in the random number generator. Repeated runs of the same algorithm with the same seed will then be identical, making debugging much easier since errors can be tracked between runs. To set the seed, you import the util package, and simply call \texttt{setSeed(s: Long)}. To retrieve the current random number generator seed, one calls \texttt{getSeed()}.
+

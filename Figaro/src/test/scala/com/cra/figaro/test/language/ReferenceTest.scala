@@ -24,6 +24,7 @@ import com.cra.figaro.library.atomic.continuous._
 import com.cra.figaro.library.atomic.discrete
 import com.cra.figaro.util._
 import scala.math.log
+import com.cra.figaro.algorithm.factored.beliefpropagation.BeliefPropagation
 
 class ReferenceTest extends WordSpec with PrivateMethodTester with Matchers {
   "A Reference" when {
@@ -592,7 +593,7 @@ class ReferenceTest extends WordSpec with PrivateMethodTester with Matchers {
       }
       val w = Select(0.1 -> List(new C4), 0.9 -> List(new C4, new C4))("w", u)
       val a = u.getAggregate((s: MultiSet[Int]) => (0 /: s)(_ + _))("w.y.x.s")
-      val alg = VariableElimination(a)
+      val alg = BeliefPropagation(100, a) //VariableElimination.debugged(a)
       alg.start()
       // C3(0) could be (1) (prob 0.2 * 0.2), (2) (prob 0.2 * 0.3), (3) (prob 0.2 * 0.5), () (prob 0.8)
       // C3(1) could be (1,1) (prob 0.2 * 0.2 * 0.2), (1,2) or (2,1) (prob 0.2 * 0.2 * 0.3 * 2), (1,3) or (3,1) (prob 0.2 * 0.2 * 0.5 * 2),

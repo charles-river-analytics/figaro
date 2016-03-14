@@ -17,7 +17,7 @@ import com.cra.figaro.algorithm.ValuesMaker
 import com.cra.figaro.algorithm.lazyfactored._
 import ValueSet._
 import com.cra.figaro.algorithm.factored.factors._
-import com.cra.figaro.algorithm.factored.factors.Factory
+import com.cra.figaro.algorithm.factored.factors.factory.Factory
 import com.cra.figaro.util._
 import scala.collection.mutable.Map
 import scala.language.existentials

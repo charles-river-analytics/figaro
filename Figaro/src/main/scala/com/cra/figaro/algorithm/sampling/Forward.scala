@@ -54,11 +54,13 @@ object Forward {
   def apply[T](element: Element[T]): Double = {
     val noCache = new NoCache(element.universe)
     val lw = new ForwardWeighter(element.universe, noCache)
-    try {
+    val weight = try {
       lw.computeWeight(List(element))
     } catch {
       case Importance.Reject => Double.NegativeInfinity 
-    } 
+    }
+    element.universe.deregister(noCache)
+    weight
   }
   
 }

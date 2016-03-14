@@ -529,6 +529,21 @@ class CompoundTest extends WordSpec with Matchers {
         +- 0.00000000001)
     }
   }
+  
+    "A Rich CPD using an implicit universe" should {
+    "should add elements automatically to implicit universe instead of default" in {
+      Universe.createNew()
+      val otherUniverse = new Universe
+      implicit val implicitUniverse: Universe = otherUniverse
+      val x = Constant(true)
+      val y = Constant(true)
+      val z: Element[Boolean] = RichCPD(x, y,
+        (OneOf(true), *) -> Constant(true),
+        (OneOf(false), *) -> Constant(false))
+        Universe.universe.activeElements.size should be(0)
+        otherUniverse.activeElements.size should be(6)
+    }
+  }
 
   "A MakeList" should {
     "have the number of items be distributed according to the first argument" in {

@@ -21,15 +21,14 @@ import com.cra.figaro.util._
 import annotation.tailrec
 import com.cra.figaro.algorithm.OneTimeProbQuery
 import com.cra.figaro.algorithm.ProbQueryAlgorithm
-import com.cra.figaro.algorithm.factored.factors._
-import com.cra.figaro.algorithm.factored.factors.factory._
 import com.cra.figaro.algorithm.factored._
+import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.sampling.ProbEvidenceSampler
-import com.cra.figaro.language.Element
-import com.cra.figaro.language.Universe
+import com.cra.figaro.language._
 import com.cra.figaro.algorithm.lazyfactored.LazyValues
 import com.cra.figaro.algorithm.lazyfactored.BoundedProbFactor
 import scala.collection.mutable.Map
+import com.cra.figaro.algorithm.factored.factors.factory.Factory
 
 /**
  * Trait for performing belief propagation.
@@ -204,9 +203,10 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
    */
   def getFactors(neededElements: List[Element[_]], targetElements: List[Element[_]], upperBounds: Boolean = false): List[Factor[Double]] = {
 
-    val thisUniverseFactors = (neededElements flatMap (BoundedProbFactor.make(_, upperBounds))).filterNot(_.isEmpty)
+    //val thisUniverseFactors = (neededElements flatMap (BoundedProbFactor.make(_, upperBounds))).filterNot(_.isEmpty)
+    val thisUniverseFactors = (neededElements flatMap (Factory.makeFactorsForElement(_, upperBounds, true))).filterNot(_.isEmpty)
     val dependentUniverseFactors =
-      for { (dependentUniverse, evidence) <- dependentUniverses } yield Factory.makeDependentFactor(universe, dependentUniverse, dependentAlgorithm(dependentUniverse, evidence))
+      for { (dependentUniverse, evidence) <- dependentUniverses } yield Factory.makeDependentFactor(Variable.cc, universe, dependentUniverse, dependentAlgorithm(dependentUniverse, evidence))
     val factors = dependentUniverseFactors ::: thisUniverseFactors
     // To prevent underflow, we do all computation in log space
     factors.map(makeLogarithmic(_))
