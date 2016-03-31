@@ -40,7 +40,14 @@ class Problem(val collection: ComponentCollection, val targets: List[Element[_]]
    *  Factors over globals produced by solving the problem.
    */
   var solution: List[Factor[Double]] = List()
-
+  
+  /**
+   *  A map for each variable that indicates the value of the variable that is maximal for each possible value of the interface
+   *  The support of each factor is over the product of the supports of the interface variables
+   *  
+   */
+  var recordingFactors: Map[Variable[_], Factor[_]] = Map()
+  
   /**
    * A flag indicating whether the problem has been solved.
    */
@@ -98,13 +105,12 @@ class Problem(val collection: ComponentCollection, val targets: List[Element[_]]
     val allVariables = (Set[Variable[_]]() /: allFactors)(_ ++ _.variables)
     val (toEliminate, toPreserve) = allVariables.partition(internal(_))
     globals = toPreserve.map(collection.variableToComponent(_))
-    solution = strategy.solve(this, toEliminate, toPreserve, allFactors)
+    val (solution, recordingFactors) = strategy.solve(this, toEliminate, toPreserve, allFactors)
+    this.solution = solution
+    this.recordingFactors = recordingFactors
     solved = true
     toEliminate.foreach((v: Variable[_]) => {
       if (collection.intermediates.contains(v)) collection.intermediates -= v
-      // It's unsafe to remove the component for the element because it might appear in a reused
-      // version of the nested subproblem.
-//      else collection.remove(collection.variableToComponent(v).element)
     })
   }
 

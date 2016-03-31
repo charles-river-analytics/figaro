@@ -25,10 +25,10 @@ import com.cra.figaro.algorithm.structured.solver
  */
 class VEBPGibbsStrategy(val scoreThreshold: Double, val determThreshold: Double, val bpIters: Int, val numSamples: Int, val burnIn: Int, val interval: Int, val blockToSampler: Gibbs.BlockSamplerCreator) extends SolvingStrategy {
 
-  def solve(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): List[Factor[Double]] = {
+  def solve(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): (List[Factor[Double]], Map[Variable[_], Factor[_]]) = {
     val (score, order) = VariableElimination.eliminationOrder(factors, toPreserve)
     if (score <= scoreThreshold) {
-      solver.variableElimination(problem, toEliminate, toPreserve, factors)
+      solver.marginalVariableElimination(problem, toEliminate, toPreserve, factors)
     } else {
       /*
        *  Choose between BP and Gibbs.
@@ -42,9 +42,9 @@ class VEBPGibbsStrategy(val scoreThreshold: Double, val determThreshold: Double,
       val totalVars = toEliminate.size + toPreserve.size
 
       if ((numDeterministicVars.toDouble / totalVars) > determThreshold) {        
-        solver.beliefPropagation(bpIters)(problem, toEliminate, toPreserve, factors)
+        solver.marginalBeliefPropagation(bpIters)(problem, toEliminate, toPreserve, factors)
       } else {
-        solver.gibbs(numSamples, burnIn, interval, blockToSampler)(problem, toEliminate, toPreserve, factors)
+        solver.marginalGibbs(numSamples, burnIn, interval, blockToSampler)(problem, toEliminate, toPreserve, factors)
       }
     }
   }

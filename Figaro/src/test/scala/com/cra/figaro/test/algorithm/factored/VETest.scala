@@ -29,6 +29,7 @@ import scala.collection.mutable.Map
 import com.cra.figaro.test.tags.Performance
 import com.cra.figaro.test.tags.NonDeterministic
 import com.cra.figaro.algorithm.factored.factors.factory.Factory
+import com.cra.figaro.algorithm.structured.algorithm.structured.StructuredMPEVE
 
 class VETest extends WordSpec with Matchers {
   "A VEGraph" when {
@@ -414,7 +415,7 @@ class VETest extends WordSpec with Matchers {
       // p(e1=F,e2=T,e3=T) = 0.25 * 0.9 * 0.4 = .09
       // p(e1=F,e2=F,e3=F) = 0.25 * 0.1 * 0.6 = .015
       // MPE: e1=T,e2=F,e3=F,e4=T
-      val alg = MPEVariableElimination()
+      val alg = MPEVariableElimination()      
       alg.start
       alg.mostLikelyValue(e1) should equal(true)
       alg.mostLikelyValue(e2) should equal(false)

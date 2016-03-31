@@ -26,14 +26,14 @@ import com.cra.figaro.algorithm.factored.gibbs.Gibbs
 import com.cra.figaro.algorithm.factored.gibbs.BlockSampler
 
 class StructuredVEBPGibbsChooser(universe: Universe, scoreThreshold: Double, determThreshold: Double, bpIters: Int, numSamples: Int, burnIn: Int, interval: Int, blockToSampler: Gibbs.BlockSamplerCreator, targets: Element[_]*)
-  extends StructuredAlgorithm(universe, targets: _*) {
+  extends StructuredProbQueryAlgorithm(universe, targets: _*) {
 
   val semiring = SumProductSemiring()
 
   def run() {
     val strategy = DecompositionStrategy.recursiveStructuredStrategy(problem, new VEBPGibbsStrategy(scoreThreshold, determThreshold, bpIters, numSamples, burnIn, interval, blockToSampler), defaultRangeSizer, Lower, false)
     strategy.execute(initialComponents)
-    val joint = problem.solution.foldLeft(Factory.unit(SumProductSemiring()))(_.product(_))
+    val joint = problem.solution.foldLeft(Factory.unit(semiring))(_.product(_))
     targets.foreach(t => marginalizeToTarget(t, joint))
   }
 
