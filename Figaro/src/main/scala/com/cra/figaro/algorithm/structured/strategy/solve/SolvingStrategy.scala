@@ -25,6 +25,6 @@ abstract class SolvingStrategy {
    * Solve the given problem with the indicated preserve and eliminate variables, and return a list of factors representing
    * the joint distribution over the preserved variables.
    */
-  def solve(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): List[Factor[Double]]
+  def solve(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): (List[Factor[Double]], Map[Variable[_], Factor[_]])
   
 }

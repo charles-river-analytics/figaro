@@ -21,7 +21,7 @@ import com.cra.figaro.algorithm.factored.factors.Semiring
 import com.cra.figaro.algorithm.structured.Problem
 import com.cra.figaro.algorithm.structured.ComponentCollection
 
-abstract class StructuredAlgorithm(val universe: Universe, val queryTargets: Element[_]*) extends Algorithm with OneTimeProbQuery {
+abstract class StructuredProbQueryAlgorithm(val universe: Universe, val queryTargets: Element[_]*) extends Algorithm with OneTimeProbQuery {
 
   def run(): Unit
 

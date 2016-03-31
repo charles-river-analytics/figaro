@@ -161,6 +161,12 @@ abstract class ExpandableComponent[ParentValue, Value](problem: Problem, parent:
   def expand(parentValue: ParentValue): Unit
   
   val expandFunction: (ParentValue) => Element[Value] 
+  
+  /**
+   *  The subproblems nested inside this expandable component. 
+   *  They are created for particular parent values.
+   */
+  var subproblems: Map[ParentValue, NestedProblem[Value]] = Map()
 }
 
 /**
@@ -173,12 +179,6 @@ class ChainComponent[ParentValue, Value](problem: Problem, val chain: Chain[Pare
 
   val expandFunction = chain.get _
   
-  /**
-   *  The subproblems represent nested problems from chains.
-   *  They are created for particular parent values.
-   */
-  var subproblems: Map[ParentValue, NestedProblem[Value]] = Map()
-
   /**
    *  The subproblems are defined in terms of formal variables.
    *  We need to create actual variables for each of the subproblems to replace the formal variables with in their solutions.
