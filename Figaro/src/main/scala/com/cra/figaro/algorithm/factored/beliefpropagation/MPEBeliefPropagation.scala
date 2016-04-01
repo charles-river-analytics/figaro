@@ -29,7 +29,7 @@ abstract class MPEBeliefPropagation(override val universe: Universe)(
   val dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double)
   extends MPEAlgorithm with ProbabilisticBeliefPropagation {
 
-  override val semiring = LogMaxProductSemiring()
+  override val semiring = MaxProductSemiring()
   /*
    * Empty for MPE Algorithms
    */
@@ -37,8 +37,7 @@ abstract class MPEBeliefPropagation(override val universe: Universe)(
 
   override def initialize() = {
     val (neededElements, _) = getNeededElements(universe.activeElements, Int.MaxValue)
-
-    factorGraph = new BasicFactorGraph(getFactors(neededElements, targetElements), semiring): FactorGraph[Double]
+    factorGraph = new BasicFactorGraph(getFactors(neededElements, targetElements), logSpaceSemiring()): FactorGraph[Double]
     super.initialize
   }
 
@@ -46,8 +45,10 @@ abstract class MPEBeliefPropagation(override val universe: Universe)(
    * Convert factors to use MaxProduct
    */
   override def getFactors(allElements: List[Element[_]], targetElements: List[Element[_]], upper: Boolean = false): List[Factor[Double]] = {
-    val factors = super.getFactors(allElements, targetElements, upper) 
-    factors.map (_.mapTo(x => x, semiring))
+    val factors = super.getFactors(allElements, targetElements, upper)
+    // Not needed since BP now converts factors to log space of the defined semiring
+    //factors.map (_.mapTo(x => x, logSpaceSemiring()))
+    factors
   }
 
   def mostLikelyValue[T](target: Element[T]): T = {

@@ -79,8 +79,22 @@ package object solver {
    */
   def marginalBeliefPropagation(iterations: Int = 100)(problem: Problem, toEliminate: Set[Variable[_]],
     toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): (List[Factor[Double]], Map[Variable[_], Factor[_]]) = {
-    val bp = new BPSolver(problem, toEliminate, toPreserve, factors, iterations)
-    (bp.go(), Map())
+    val bp = new BPSolver(problem, toEliminate, toPreserve, factors, iterations, SumProductSemiring())
+    bp.go()
+  }
+  
+    /**
+   * Creates an MPE belief propagation solver.
+   * @param iterations number of iterations of BP to run
+   * @param problem the problem to solve
+   * @param toEliminate the variables to be eliminated
+   * @param toPreserve the variables to be preserved (not eliminated)
+   * @param factors all the factors in the problem
+   */
+  def mpeBeliefPropagation(iterations: Int = 100)(problem: Problem, toEliminate: Set[Variable[_]],
+    toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): (List[Factor[Double]], Map[Variable[_], Factor[_]]) = {
+    val bp = new BPSolver(problem, toEliminate, toPreserve, factors, iterations, MaxProductSemiring())
+    bp.go()
   }
 
 }

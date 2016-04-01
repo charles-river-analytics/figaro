@@ -33,13 +33,13 @@ import scala.collection.mutable.Map
 
 trait ProbEvidenceBeliefPropagation extends ProbabilisticBeliefPropagation with ProbEvidenceAlgorithm  {
     
-  private def logFcn: (Double => Double) = (semiring: DivideableSemiRing[Double]) match {
+  private def logFcn: (Double => Double) = (logSpaceSemiring(): DivideableSemiRing[Double]) match {
     case LogSumProductSemiring() => (d: Double) => d
     case SumProductSemiring() => (d: Double) => if (d == semiring.zero) Double.NegativeInfinity else math.log(d)
   }
   
-  private def probFcn: (Double => Double) = (semiring: DivideableSemiRing[Double]) match {
-    case LogSumProductSemiring() => (d: Double) => if (d == semiring.zero) 0 else math.exp(d)
+  private def probFcn: (Double => Double) = (logSpaceSemiring(): DivideableSemiRing[Double]) match {
+    case LogSumProductSemiring() => (d: Double) => if (d == logSpaceSemiring().zero) 0 else math.exp(d)
     case SumProductSemiring() => (d: Double) => d
   }
 

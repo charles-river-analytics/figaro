@@ -56,6 +56,18 @@ trait DivideableSemiRing[T] extends Semiring[T] {
   def divide(x: T, y: T): T
 }
 
+trait LogConvertibleSemiRing[T] extends DivideableSemiRing[T] {
+  /**
+   * Is true if this semiring is in log space
+   */
+  def isLog(): Boolean
+  /**
+   * Converts this semiring into its log inverse
+   * For non-log space semirings, converts to log, and for log semirings exponentiates
+   */
+  def convert(): LogConvertibleSemiRing[T]
+}
+
 case class SumProductUtilitySemiring() extends DivideableSemiRing[(Double, Double)] {
   /**
    * Decision joint factor combination.
@@ -102,7 +114,7 @@ case class BooleanSemiring() extends Semiring[Boolean] {
   val one = true
 }
 
-case class SumProductSemiring() extends DivideableSemiRing[Double] {
+case class SumProductSemiring() extends DivideableSemiRing[Double] with LogConvertibleSemiRing[Double] {
   /**
    * Standard multiplication
    */
@@ -125,12 +137,16 @@ case class SumProductSemiring() extends DivideableSemiRing[Double] {
    * 1
    */
   val one = 1.0
+  
+  val isLog = false
+  
+  def convert() = LogSumProductSemiring()
 }
 
 /**
  * Semiring for computing sums and products with log probabilities.
  */
-case class LogSumProductSemiring() extends DivideableSemiRing[Double] {
+case class LogSumProductSemiring() extends DivideableSemiRing[Double] with LogConvertibleSemiRing[Double] {
   val zero = Double.NegativeInfinity
 
   val one = 0.0
@@ -150,12 +166,16 @@ case class LogSumProductSemiring() extends DivideableSemiRing[Double] {
   }
 
   def sum(x: Double, y: Double) = sumMany(List(x, y))
+  
+  val isLog = true
+  
+  def convert() = SumProductSemiring()
 }
 
 /**
  * Semiring for computing maxs and products with log probabilities.
  */
-case class LogMaxProductSemiring() extends DivideableSemiRing[Double] {
+case class LogMaxProductSemiring() extends DivideableSemiRing[Double] with LogConvertibleSemiRing[Double] {
   val zero = Double.NegativeInfinity
 
   val one = 0.0
@@ -165,6 +185,10 @@ case class LogMaxProductSemiring() extends DivideableSemiRing[Double] {
   def divide(x: Double, y: Double) = if (y == zero) zero else x - y
 
   def sum(x: Double, y: Double) = x max y
+  
+  val isLog = true
+  
+  def convert() = MaxProductSemiring()
 }
 
 /**
@@ -194,7 +218,8 @@ case class BoundsSumProductSemiring() extends DivideableSemiRing[(Double, Double
   val one = (1.0, 1.0)
 }
 
-case class MaxProductSemiring() extends DivideableSemiRing[Double] {
+case class MaxProductSemiring() extends DivideableSemiRing[Double] with LogConvertibleSemiRing[Double] {
+   
   /**
    * Standard multiplication
    */
@@ -218,5 +243,9 @@ case class MaxProductSemiring() extends DivideableSemiRing[Double] {
    * 1
    */
   val one = 1.0
+  
+  val isLog = false
+  
+  def convert() = LogMaxProductSemiring()
 }
 
