@@ -165,3 +165,12 @@ trait BaseProbQueryAlgorithm[U[_]]
     doProbability(target, (t: T) => t == value)
   }
 }
+
+
+trait StreamableProbQueryAlgorithm extends ProbQueryAlgorithm {
+	/**
+	 * Sample an value from the posterior of this element
+	 */
+	def sampleFromPosterior[T](element: Element[T]): Stream[T]
+}
+
