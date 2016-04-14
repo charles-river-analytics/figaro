@@ -211,7 +211,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
         Apply(B, (b: List[List[Boolean]]) => b.head)
       })
       val alg = Importance(1, c)
-      alg.lw.computeWeight(List(c))      
+      alg.lw.computeWeight(List(c))
       c.value.asInstanceOf[List[Boolean]].head should be(true || false)
     }
   }
@@ -617,6 +617,44 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
         def condition(d: Double) = d < 0.5
         probEvidenceTest(0.25, List(NamedEvidence("a", Condition(condition))))
       }
+    }
+
+    "Sampling the posterior" should {
+      "produce the correct answer for marginals" in {
+        Universe.createNew()
+        val u = Uniform(0.2, 1.0)
+        val f = Flip(u)
+        val a = If(f, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
+        a.setConstraint((i: Int) => i.toDouble)
+        // U(true) = \int_{0.2}^{1.0} (0.3 + 2 * 0.7) p = 0.85 * 0.96
+        // U(false) = \int_{0.2}^(1.0) (2 * (1-p)) = 0.64
+        val u1 = 0.85 * 0.96
+        val u2 = 0.64
+        val pos = Importance.sampleJointPosterior(f)
+        val probTrue = (pos.take(1000).toList.map(t => t(0).asInstanceOf[Boolean])).count(p => p)
+        probTrue.toDouble / 1000.0 should be(u1 / (u1 + u2) +- .01)
+      }
+
+      "produce the correct answer for joint" in {
+        Universe.createNew()
+        val u = Uniform(0.2, 1.0)
+        val f = Flip(u)
+        val a = If(f, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
+        a.setConstraint((i: Int) => i.toDouble)
+        val pair = ^^(f,a)
+        val alg = Importance(20000, pair)    
+        alg.start()
+        
+        val pos = Importance.sampleJointPosterior(f, a)
+        val samples = pos.take(5000).toList.map(t => (t(0).asInstanceOf[Boolean], t(1).asInstanceOf[Int]))
+        
+        val probTrueTwo = samples.count(p => p._1 == true && p._2 == 2).toDouble/5000.0 should be(alg.probability(pair, (true, 2)) +- .01)
+        val probTrueOne = samples.count(p => p._1 == true && p._2 == 1).toDouble/5000.0 should be(alg.probability(pair, (true, 1)) +- .01)
+        val probFalseTwo = samples.count(p => p._1 == false && p._2 == 2).toDouble/5000.0 should be(alg.probability(pair, (false, 2)) +- .01)
+        val probFalseOne = samples.count(p => p._1 == false && p._2 == 1).toDouble/5000.0 should be(alg.probability(pair, (false, 1)) +- .01)
+        alg.kill()
+      }
+
     }
 
   }

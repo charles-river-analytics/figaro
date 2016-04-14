@@ -19,6 +19,7 @@ import scala.language.postfixOps
 
 import com.cra.figaro.algorithm._
 import com.cra.figaro.language._
+import com.cra.figaro.util._
 
 /**
  * Samplers that use samples without weights.
@@ -77,7 +78,7 @@ abstract class BaseUnweightedSampler(val universe: Universe, targets: Element[_]
     val s = sample()
     if (sampleCount == 0 && s._1) {
       initUpdates
-    }    
+    }
     if (s._1) {
       sampleCount += 1
       s._2 foreach (t => updateTimesSeenForTarget(t._1.asInstanceOf[Element[t._1.Value]], t._2.asInstanceOf[t._1.Value]))
@@ -86,14 +87,14 @@ abstract class BaseUnweightedSampler(val universe: Universe, targets: Element[_]
 
   protected def update(): Unit = {
     sampleCount += 1
-    if (allLastUpdates.nonEmpty) targets.foreach(t => updateTimesSeenForTarget(t.asInstanceOf[Element[t.Value]], t.value))    
+    if (allLastUpdates.nonEmpty) targets.foreach(t => updateTimesSeenForTarget(t.asInstanceOf[Element[t.Value]], t.value))
     sampleCount -= 1
   }
 
 }
 
-trait UnweightedSampler extends BaseUnweightedSampler with ProbQuerySampler {
-  
+trait UnweightedSampler extends BaseUnweightedSampler with ProbQuerySampler with StreamableProbQueryAlgorithm {
+
   /**
    * Total weight of samples taken, in log space
    */
@@ -101,11 +102,27 @@ trait UnweightedSampler extends BaseUnweightedSampler with ProbQuerySampler {
 
   override protected[algorithm] def computeProjection[T](target: Element[T]): List[(T, Double)] = {
     if (allLastUpdates.nonEmpty) {
-    val timesSeen = allTimesSeen.find(_._1 == target).get._2.asInstanceOf[Map[T, Int]]
-    timesSeen.mapValues(_ / sampleCount.toDouble).toList
+      val timesSeen = allTimesSeen.find(_._1 == target).get._2.asInstanceOf[Map[T, Int]]
+      timesSeen.mapValues(_ / sampleCount.toDouble).toList
     } else {
       println("Error: MH sampler did not accept any samples")
       List()
+    }
+  }
+  
+  def sampleFromPosterior[T](element: Element[T]): Stream[T] = {
+    def nextSample(posterior: List[(Double, T)]): Stream[T] = sampleMultinomial(posterior) #:: nextSample(posterior)
+
+    if (!allTimesSeen.contains(element)) {
+      throw new NotATargetException(element)
+    } else {
+      val (values, weights) = allTimesSeen(element).toList.unzip
+      if (values.isEmpty) throw new NotATargetException(element)
+
+      if (sampleCount == 0) throw new ZeroTotalUnnormalizedProbabilityException
+
+      val weightedValues = weights.map(w => w.toDouble/sampleCount.toDouble).zip(values.asInstanceOf[List[T]])
+      nextSample(weightedValues)
     }
   }
 
