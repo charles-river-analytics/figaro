@@ -24,7 +24,7 @@ import com.cra.figaro.algorithm.factored.gibbs.ProbabilisticGibbs
 import com.cra.figaro.algorithm.factored.gibbs.Gibbs
 import com.cra.figaro.algorithm.factored.gibbs.WalkSAT
 
-private[figaro] class GibbsSolver(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], _factors: List[Factor[Double]],
+class GibbsSolver(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], _factors: List[Factor[Double]],
     val numSamples: Int, val burnIn: Int, val interval: Int, val blockToSampler: Gibbs.BlockSamplerCreator)
 extends BaseUnweightedSampler(null) with ProbabilisticGibbs with OneTime {
   override def initialize() = {

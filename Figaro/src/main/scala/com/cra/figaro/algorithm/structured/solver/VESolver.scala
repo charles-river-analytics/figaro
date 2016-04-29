@@ -19,7 +19,7 @@ import com.cra.figaro.algorithm.factored.factors.Semiring
 import com.cra.figaro.util
 import com.cra.figaro.algorithm.lazyfactored._
 
-private[figaro] class VESolver(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]], val semiring: Semiring[Double])
+class VESolver(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]], val semiring: Semiring[Double])
   extends com.cra.figaro.algorithm.factored.VariableElimination[Double] {
 
   debug = false
