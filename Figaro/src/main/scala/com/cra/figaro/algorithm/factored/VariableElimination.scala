@@ -269,29 +269,32 @@ object VariableElimination {
    * minimizes the number of extra factor entries that would be created when it is eliminated.
    * Override this method if you want a different rule.
    *
-   * Returns the score of the ordering as well as the ordering.
+   * Returns the score of the ordering as well as the ordering. If useBestScore is set to false, then it returns the total score of the 
+   * entire eliminiation operation
    */
-  def eliminationOrder[T](factors: Traversable[Factor[T]], toPreserve: Traversable[Variable[_]]): (Double, List[Variable[_]]) = {
+  def eliminationOrder[T](factors: Traversable[Factor[T]], toPreserve: Traversable[Variable[_]], useBestScore: Boolean = true): (Double, List[Variable[_]]) = {
     val eliminableVars = (Set[Variable[_]]() /: factors)(_ ++ _.variables) -- toPreserve
     var initialGraph = new VEGraph(factors)
     val candidates = new HeapPriorityMap[Variable[_], Double]
     eliminableVars foreach (v => candidates += v -> initialGraph.score(v))
-    eliminationOrderHelper(candidates, toPreserve, initialGraph, Double.NegativeInfinity, List())
+    val initScore = if (useBestScore) Double.NegativeInfinity else 0.0
+    eliminationOrderHelper(candidates, toPreserve, initialGraph, initScore, List(), useBestScore)
   }
 
   @tailrec private def eliminationOrderHelper(candidates: PriorityMap[Variable[_], Double],
     toPreserve: Traversable[Variable[_]],
     graph: VEGraph,
     currentScore: Double,
-    accum: List[Variable[_]]): (Double, List[Variable[_]]) = {
+    accum: List[Variable[_]], useBestScore: Boolean): (Double, List[Variable[_]]) = {
     if (candidates.isEmpty) (currentScore, accum.reverse)
     else {
       val (best, bestScore) = candidates.extractMin()
       // do not read the best variable after it has been removed, and do not add the preserved variables
       val touched = graph.info(best).neighbors - best -- toPreserve
-      val nextGraph = graph.eliminate(best)
+      val (nextGraph, newCost) = graph.eliminate(best)
       touched foreach (v => candidates += v -> graph.score(v))
-      eliminationOrderHelper(candidates, toPreserve, nextGraph, bestScore max currentScore, best :: accum)
+      val nextScore = if (useBestScore) bestScore max currentScore else newCost+currentScore
+      eliminationOrderHelper(candidates, toPreserve, nextGraph, nextScore, best :: accum, useBestScore)
     }
   }
 

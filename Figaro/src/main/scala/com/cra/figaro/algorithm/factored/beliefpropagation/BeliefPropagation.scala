@@ -313,7 +313,7 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
  * Trait for One Time BP algorithms.
  */
 trait OneTimeProbabilisticBeliefPropagation extends ProbabilisticBeliefPropagation with OneTime {
-  val iterations: Int
+  def iterations: Int
   def run() = {
     if (debug) {
       val varNodes = factorGraph.getNodes.filter(_.isInstanceOf[VariableNode])

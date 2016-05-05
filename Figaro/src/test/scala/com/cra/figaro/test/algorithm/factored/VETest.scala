@@ -147,7 +147,7 @@ class VETest extends WordSpec with Matchers {
           val g = Factory.defaultFactor[Double](List(v5, v3, v2, v6), List())
           val h = Factory.defaultFactor[Double](List(v1, v7), List())
           val graph1 = new VEGraph(List(f, g, h))
-          val graph2 = graph1.eliminate(v3)
+          val (graph2, _) = graph1.eliminate(v3)
           val VariableInfo(v1Factors, v1Neighbors) = graph2.info(v1)
           v1Factors.size should equal(2) // h and the new factor
           assert(v1Factors exists ((factor: AbstractFactor) => factor.variables.size == 5)) // all except v3 and v7
@@ -173,7 +173,7 @@ class VETest extends WordSpec with Matchers {
         val g = Factory.defaultFactor[Double](List(v5, v3, v2, v6), List())
         val h = Factory.defaultFactor[Double](List(v1, v7), List())
         val graph1 = new VEGraph(List(f, g, h))
-        val graph2 = graph1.eliminate(v3)
+        val (graph2, _) = graph1.eliminate(v3)
         val VariableInfo(v1Factors, v1Neighbors) = graph2.info(v1)
         v1Neighbors should not contain (v3)
       }
