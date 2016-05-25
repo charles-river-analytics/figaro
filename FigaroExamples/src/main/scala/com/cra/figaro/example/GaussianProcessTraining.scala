@@ -1,6 +1,6 @@
 /*
  * GaussianProcessTraining.scala
- * Demonstrates use of the TrainableModel trait.
+ * Demonstrates use of externally trained models in Figaro.
  * 
  * Created By:      Dan Garant (dgarant@cra.com)
  * Creation Date:   May 20, 2016
@@ -13,7 +13,6 @@
 
 package com.cra.figaro.example
 
-import com.cra.figaro.patterns.learning.TrainableModel
 import org.apache.commons.math3.linear._
 import com.cra.figaro.language._
 import com.cra.figaro.util.random
@@ -82,8 +81,7 @@ class GaussianCovarianceFunction(var gamma: Double) extends CovarianceFunction[D
  * @param covarianceFunction Defines the inner product between feature vectors
  * @param noiseVariance Prior variance of noise at design points
  */
-class GaussianProcess[Input](var covarianceFunction: CovarianceFunction[Input], noiseVariance: Double = 0.001)
-    extends TrainableModel[Input, Double] {
+class GaussianProcess[Input](var covarianceFunction: CovarianceFunction[Input], noiseVariance: Double = 0.001) {
 
   var priorMean: Double = 0
   var covarianceInverse: RealMatrix = null
