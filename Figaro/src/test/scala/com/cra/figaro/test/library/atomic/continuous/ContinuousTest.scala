@@ -24,6 +24,7 @@ import JSci.maths.SpecialMath.gamma
 import org.apache.commons.math3.distribution.MultivariateNormalDistribution
 import com.cra.figaro.test.tags.NonDeterministic
 import com.cra.figaro.ndtest._
+import scala.collection.mutable.ArrayBuffer
 
 class ContinuousTest extends WordSpec with Matchers {
 
@@ -428,6 +429,58 @@ class ContinuousTest extends WordSpec with Matchers {
     }
   }
 
+  "A KernelDensity" should {
+    "have the correct density" in {
+      Universe.createNew()
+      
+      val bandwidth = 2.0
+      val data = Seq(1.0, 2.0, 3.0)
+      val dataDistrs = data.map(d => new NormalDistribution(d, bandwidth))
+      
+      val elem = KernelDensity(data, bandwidth)
+      val result = elem.density(2.5)
+      val target = dataDistrs.map(dist => dist.probability(2.5)).sum / 3.0
+      result should be(target +- 1e-6)
+    }
+
+    "produce samples centered at an input point" taggedAs (NonDeterministic) in {
+      val ndtest = new NDTest {
+        override def oneTest = {
+          Universe.createNew()
+          // this gives get three disjoint normals, simplifying testing
+          val data = Seq(1.0, 100, 200)
+          // choosing a weird bandwidth to make sure it's actually getting used
+          val elem = KernelDensity(data, 2.3)
+
+          val deviations = ArrayBuffer[Double]()
+          val selectedIndices = ArrayBuffer[Int]()
+          for (i <- 0 to 1000) {
+            val rand = elem.generateRandomness()
+            val value = elem.generateValue(rand)
+            val selectedInfo = data.zipWithIndex.map(v => (Math.pow(v._1 - value, 2), v._2)).sortBy(v => v._1).head
+            deviations += selectedInfo._1
+            selectedIndices += selectedInfo._2
+          }
+          val sampleStdDev = deviations.sum / (deviations.length - 1)
+          // selected indices should be uniform
+          val indDistr = selectedIndices.groupBy(d=>d).mapValues(s => 1.0 * s.length / selectedIndices.length)
+
+          update(sampleStdDev, NDTest.TTEST, "KernelDensityTestResultsStdDev", 2.3, alpha)
+          update(indDistr(0), NDTest.TTEST, "KernelDensityTestResultsSampleDistr1", 0.33, alpha)
+          update(indDistr(1), NDTest.TTEST, "KernelDensityTestResultsSampleDistr2", 0.33, alpha)
+          update(indDistr(2), NDTest.TTEST, "KernelDensityTestResultsSampleDistr3", 0.33, alpha)
+        }
+      }
+
+      ndtest.run(10)
+    }
+
+    "convert to the correct string" in {
+      Universe.createNew()
+      KernelDensity(Seq(1, 2, 3), 2.0).toString should equal("KernelDensity(bandwidth=" + 2.0 + ")")
+    }
+  }  
+  
   "An AtomicMultivariateNormal" should {
     val means = List(1.0, 2.0)
     val covariances = List(List(.25, .15), List(.15, .25))
