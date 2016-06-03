@@ -18,8 +18,8 @@ import com.cra.figaro.library.compound.If
 import com.cra.figaro.algorithm.structured.algorithm.structured.StructuredBP
 import com.cra.figaro.algorithm.lazyfactored.ValueSet._
 import com.cra.figaro.language.Element.toBooleanElement
-import com.cra.figaro.algorithm.structured.algorithm.structured.StructuredMPEVE
 import com.cra.figaro.algorithm.structured.algorithm.structured.StructuredMPEBP
+import com.cra.figaro.algorithm.structured.algorithm.structured.StructuredMarginalMAPBP
 
 class StructuredBPTest extends WordSpec with Matchers {
   "Executing a recursive structured BP solver strategy" when {
@@ -176,7 +176,7 @@ class StructuredBPTest extends WordSpec with Matchers {
     }
   }
 
-  "BP VE" when {
+  "MPE BP" when {
     "given a flat model without evidence should produce the right answer" in {
       Universe.createNew()
       val e1 = Select(0.75 -> 0.2, 0.25 -> 0.3)
@@ -250,6 +250,116 @@ class StructuredBPTest extends WordSpec with Matchers {
       alg.mostLikelyValue(e3) should equal(false)
       alg.mostLikelyValue(e4) should equal(true)
       alg.kill
+    }
+  }
+  
+  "Marginal MAP BP" when {
+    "given a structured model without temporary elements" should {
+      "produce the right answer without evidence" in {
+        Universe.createNew()
+        val a = Flip(0.8)
+        val b11 = Flip(0.7)
+        val b12 = Flip(0.6)
+        val b1 = b11 && b12
+        val b2 = Constant(false)
+        val b = If(a, b1, b2)
+        // Even though b is a Chain, the result elements of b are permanent
+        // This should produce the same result as an MPE query\
+        
+        // p(a=T,b11=T,b12=T) = 0.8 * 0.7 * 0.6 = 0.336
+        // p(a=T,b11=T,b12=F) = 0.8 * 0.7 * 0.4 = 0.224
+        // p(a=T,b11=F,b12=T) = 0.8 * 0.3 * 0.6 = 0.144
+        // p(a=T,b11=F,b12=F) = 0.8 * 0.3 * 0.4 = 0.096
+        // p(a=F,b11=T,b12=T) = 0.2 * 0.7 * 0.6 = 0.084
+        // p(a=F,b11=T,b12=F) = 0.2 * 0.7 * 0.4 = 0.054
+        // p(a=F,b11=F,b12=T) = 0.2 * 0.3 * 0.6 = 0.036
+        // p(a=F,b11=F,b12=F) = 0.2 * 0.3 * 0.4 = 0.024
+        // MAP: a=T,b11=T,b12=T which implies b1=T,b2=F,b=T
+        val alg = StructuredMarginalMAPBP(20)
+        alg.start
+        alg.mostLikelyValue(a) should equal(true)
+        alg.mostLikelyValue(b11) should equal(true)
+        alg.mostLikelyValue(b12) should equal(true)
+        alg.mostLikelyValue(b1) should equal(true)
+        alg.mostLikelyValue(b2) should equal(false)
+        alg.mostLikelyValue(b) should equal(true)
+        alg.kill
+      }
+      
+      "produce the right answer with evidence" in {
+        Universe.createNew()
+        val a = Flip(0.8)
+        val b11 = Flip(0.7)
+        val b12 = Flip(0.6)
+        val b1 = b11 && b12
+        val b2 = Constant(false)
+        val b = If(a, b1, b2)
+        b.observe(false)
+        // Even though b is a Chain, the result elements of b are permanent
+        // This should produce the same result as an MPE query
+        
+        // These weights are not normalized
+        // p(a=T,b11=T,b12=T) = 0
+        // p(a=T,b11=T,b12=F) = 0.8 * 0.7 * 0.4 = 0.224
+        // p(a=T,b11=F,b12=T) = 0.8 * 0.3 * 0.6 = 0.144
+        // p(a=T,b11=F,b12=F) = 0.8 * 0.3 * 0.4 = 0.096
+        // p(a=F,b11=T,b12=T) = 0.2 * 0.7 * 0.6 = 0.084
+        // p(a=F,b11=T,b12=F) = 0.2 * 0.7 * 0.4 = 0.054
+        // p(a=F,b11=F,b12=T) = 0.2 * 0.3 * 0.6 = 0.036
+        // p(a=F,b11=F,b12=F) = 0.2 * 0.3 * 0.4 = 0.024
+        // MAP: a=T,b11=T,b12=F which implies b1=F,b2=F,b=F
+        val alg = StructuredMarginalMAPBP(20)
+        alg.start
+        alg.mostLikelyValue(a) should equal(true)
+        alg.mostLikelyValue(b11) should equal(true)
+        alg.mostLikelyValue(b12) should equal(false)
+        alg.mostLikelyValue(b1) should equal(false)
+        alg.mostLikelyValue(b2) should equal(false)
+        alg.mostLikelyValue(b) should equal(false)
+        alg.kill
+      }
+    }
+    
+    "given a structured model with temporary elements" should {
+      "produce the right answer without evidence" in {
+        Universe.createNew()
+        val a = Flip(0.6)
+        val b = If(a, Flip(0.3) && Flip(0.5), Flip(0.4))
+        // The result elements of b are temporary and therefore marginalized
+        // Then, the first result element of b is effectively a Flip(0.15)
+        
+        // p(a=T,b=T) = 0.6 * 0.15 = 0.09
+        // p(a=T,b=F) = 0.6 * 0.85 = 0.51
+        // p(a=F,b=T) = 0.4 * 0.4 = 0.16
+        // p(a=F,b=F) = 0.4 * 0.6 = 0.24
+        // MAP: a=T,b=F
+        val alg = StructuredMarginalMAPBP(20)
+        alg.start
+        alg.mostLikelyValue(a) should equal(true)
+        alg.mostLikelyValue(b) should equal(false)
+        alg.kill
+      }
+      
+      "produce the right answer with evidence" in {
+        Universe.createNew()
+        val a = Flip(0.6)
+        val b = If(a, Flip(0.3) && Flip(0.5), Flip(0.4))
+        b.observe(true)
+        // The result elements of b are temporary and therefore marginalized
+        // Then, the first result element of b is effectively a Flip(0.15)
+        
+        // These weights are not normalized
+        // p(a=T,b=T) = 0.6 * 0.15 = 0.09
+        // p(a=T,b=F) = 0
+        // p(a=F,b=T) = 0.4 * 0.4 = 0.16
+        // p(a=F,b=F) = 0
+        // MAP: a=F,b=T
+        val alg = StructuredMarginalMAPBP(20)
+        alg.start
+        alg.mostLikelyValue(a) should equal(false)
+        alg.mostLikelyValue(b) should equal(true)
+        alg.kill
+      }
     }
   }
 }
