@@ -27,8 +27,6 @@ abstract class StructuredMarginalMAPAlgorithm(val universe: Universe, val mapEle
 
   def run(): Unit
 
-  val semiring: Semiring[Double]
-
   val cc: ComponentCollection = new ComponentCollection
 
   val problem = new Problem(cc, List())

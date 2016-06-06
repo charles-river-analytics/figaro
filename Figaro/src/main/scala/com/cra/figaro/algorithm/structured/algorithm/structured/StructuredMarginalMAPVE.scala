@@ -31,8 +31,6 @@ import com.cra.figaro.algorithm.factored.factors.MaxProductSemiring
  */
 class StructuredMarginalMAPVE(universe: Universe) extends StructuredMarginalMAPAlgorithm(universe, universe.permanentElements) {
 
-  val semiring = MaxProductSemiring()
-
   def run() {    
     val strategy = DecompositionStrategy.recursiveStructuredStrategy(problem, new MarginalMAPVEStrategy, defaultRangeSizer, Lower, false)
     strategy.execute(initialComponents)    
