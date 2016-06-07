@@ -22,6 +22,11 @@ import com.cra.figaro.algorithm.structured.ComponentCollection
 import com.cra.figaro.algorithm.OneTimeMarginalMAP
 import com.cra.figaro.algorithm.AlgorithmException
 
+/**
+ * A structured marginal MAP algorithm.
+ * @param universe Universe on which to perform inference.
+ * @param mapElements Elements for which to compute MAP queries. Elements not in this list are summed over.
+ */
 abstract class StructuredMarginalMAPAlgorithm(val universe: Universe, val mapElements: List[Element[_]])
   extends Algorithm with OneTimeMarginalMAP {
 
@@ -29,15 +34,18 @@ abstract class StructuredMarginalMAPAlgorithm(val universe: Universe, val mapEle
 
   val cc: ComponentCollection = new ComponentCollection
 
-  val problem = new Problem(cc, List())
+  // Targets are our MAP elements, since the first step is to eliminate the other elements
+  val problem = new Problem(cc, mapElements)
+  
   // We have to add all active elements to the problem since these elements, if they are every used, need to have components created at the top level problem
   universe.permanentElements.foreach(problem.add(_))
   val evidenceElems = universe.conditionedElements ::: universe.constrainedElements
 
-  def initialComponents() = (universe.permanentElements ++ evidenceElems).distinct.map(cc(_))
+  def initialComponents() = (problem.targets ++ evidenceElems).distinct.map(cc(_))
 
   /**
    * Returns the most likely value for the target element.
+   * @param target An element in the list of MAP elements supplied to this algorithm.
    */
   def mostLikelyValue[T](target: Element[T]): T = {
     val targetVar = cc(target).variable

@@ -24,12 +24,12 @@ import com.cra.figaro.algorithm.factored.factors.factory._
 import com.cra.figaro.algorithm.factored.factors.MaxProductSemiring
 
 /**
- * A structured marginal MAP algorithm that computes MAP values for permanent elements,
- * and marginalizes over temporary elements. Temporary elements are generally result
- * elements of a Chain. Note that result elements of a Chain can be permanent elements
- * if these elements are specified elsewhere in the model.
+ * A structured marginal MAP algorithm that uses VE to compute MAP queries.
+ * @param universe Universe on which to perform inference.
+ * @param mapElements Elements for which to compute MAP queries. Elements not in this list are summed over.
  */
-class StructuredMarginalMAPVE(universe: Universe) extends StructuredMarginalMAPAlgorithm(universe, universe.permanentElements) {
+class StructuredMarginalMAPVE(universe: Universe, mapElements: List[Element[_]])
+  extends StructuredMarginalMAPAlgorithm(universe, mapElements) {
 
   def run() {    
     val strategy = DecompositionStrategy.recursiveStructuredStrategy(problem, new MarginalMAPVEStrategy, defaultRangeSizer, Lower, false)
@@ -40,20 +40,32 @@ class StructuredMarginalMAPVE(universe: Universe) extends StructuredMarginalMAPA
 object StructuredMarginalMAPVE {
   /**
    * Create a structured variable elimination algorithm with the given query targets.
-   * This algorithm computes MAP queries for permanent elements in the universe, and
-   * marginalizes over all temporary elements in the universe.
+   * @param mapElements Elements for which to compute MAP queries. Elements not in this list are summed over,
+   * and cannot be queried.
    */
-  def apply()(implicit universe: Universe) = {        
-    new StructuredMarginalMAPVE(universe)
+  def apply(mapElements: List[Element[_]])(implicit universe: Universe) = {        
+    new StructuredMarginalMAPVE(universe, mapElements)
   }
 
   /**
    * Use variable elimination to compute the most likely value of the given element.
-   * This algorithm computes MAP queries for permanent elements in the universe, and
-   * marginalizes over all temporary elements in the universe.
+   * @param target Element for which to compute MAP value.
+   * @param mapElements Additional elements to MAP. Elements not in this list are summed over.
+   */
+  def mostLikelyValue[T](target: Element[T], mapElements: List[Element[_]]): T = {
+    val alg = new StructuredMarginalMAPVE(target.universe, (target :: mapElements).distinct)
+    alg.start()
+    val result = alg.mostLikelyValue(target)
+    alg.kill()
+    result
+  }
+  
+    /**
+   * Use variable elimination to compute the most likely value of the given element.
+   * @param target Element for which to compute MAP value. All other elements in the universe are summed over.
    */
   def mostLikelyValue[T](target: Element[T]): T = {
-    val alg = new StructuredMarginalMAPVE(target.universe)
+    val alg = new StructuredMarginalMAPVE(target.universe, List(target))
     alg.start()
     val result = alg.mostLikelyValue(target)
     alg.kill()

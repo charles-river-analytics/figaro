@@ -255,7 +255,7 @@ class StructuredVETest extends WordSpec with Matchers {
   }
   
   "Marginal MAP VE" when {
-    "given a structured model without temporary elements" should {
+    "given a model with only MAP queries" should {
       "produce the right answer without evidence" in {
         Universe.createNew()
         val a = Flip(0.8)
@@ -264,8 +264,8 @@ class StructuredVETest extends WordSpec with Matchers {
         val b1 = b11 && b12
         val b2 = Constant(false)
         val b = If(a, b1, b2)
-        // Even though b is a Chain, the result elements of b are permanent
-        // This should produce the same result as an MPE query\
+        // Even though b is a Chain, the result elements of b are MAP elements
+        // This should produce the same result as an MPE query
         
         // p(a=T,b11=T,b12=T) = 0.8 * 0.7 * 0.6 = 0.336
         // p(a=T,b11=T,b12=F) = 0.8 * 0.7 * 0.4 = 0.224
@@ -276,7 +276,7 @@ class StructuredVETest extends WordSpec with Matchers {
         // p(a=F,b11=F,b12=T) = 0.2 * 0.3 * 0.6 = 0.036
         // p(a=F,b11=F,b12=F) = 0.2 * 0.3 * 0.4 = 0.024
         // MAP: a=T,b11=T,b12=T which implies b1=T,b2=F,b=T
-        val alg = StructuredMarginalMAPVE()
+        val alg = StructuredMarginalMAPVE(List(a, b11, b12, b1, b2, b))
         alg.start
         alg.mostLikelyValue(a) should equal(true)
         alg.mostLikelyValue(b11) should equal(true)
@@ -296,7 +296,7 @@ class StructuredVETest extends WordSpec with Matchers {
         val b2 = Constant(false)
         val b = If(a, b1, b2)
         b.observe(false)
-        // Even though b is a Chain, the result elements of b are permanent
+        // Even though b is a Chain, the result elements of b are MAP elements
         // This should produce the same result as an MPE query
         
         // These weights are not normalized
@@ -309,7 +309,7 @@ class StructuredVETest extends WordSpec with Matchers {
         // p(a=F,b11=F,b12=T) = 0.2 * 0.3 * 0.6 = 0.036
         // p(a=F,b11=F,b12=F) = 0.2 * 0.3 * 0.4 = 0.024
         // MAP: a=T,b11=T,b12=F which implies b1=F,b2=F,b=F
-        val alg = StructuredMarginalMAPVE()
+        val alg = StructuredMarginalMAPVE(List(a, b11, b12, b1, b2, b))
         alg.start
         alg.mostLikelyValue(a) should equal(true)
         alg.mostLikelyValue(b11) should equal(true)
@@ -321,12 +321,12 @@ class StructuredVETest extends WordSpec with Matchers {
       }
     }
     
-    "given a structured model with temporary elements" should {
+    "given a model with some MAP queries" should {
       "produce the right answer without evidence" in {
         Universe.createNew()
         val a = Flip(0.6)
         val b = If(a, Flip(0.3) && Flip(0.5), Flip(0.4))
-        // The result elements of b are temporary and therefore marginalized
+        // The result elements of b are marginalized
         // Then, the first result element of b is effectively a Flip(0.15)
         
         // p(a=T,b=T) = 0.6 * 0.15 = 0.09
@@ -334,7 +334,7 @@ class StructuredVETest extends WordSpec with Matchers {
         // p(a=F,b=T) = 0.4 * 0.4 = 0.16
         // p(a=F,b=F) = 0.4 * 0.6 = 0.24
         // MAP: a=T,b=F
-        val alg = StructuredMarginalMAPVE()
+        val alg = StructuredMarginalMAPVE(List(a, b))
         alg.start
         alg.mostLikelyValue(a) should equal(true)
         alg.mostLikelyValue(b) should equal(false)
@@ -346,7 +346,7 @@ class StructuredVETest extends WordSpec with Matchers {
         val a = Flip(0.6)
         val b = If(a, Flip(0.3) && Flip(0.5), Flip(0.4))
         b.observe(true)
-        // The result elements of b are temporary and therefore marginalized
+        // The result elements of b are marginalized
         // Then, the first result element of b is effectively a Flip(0.15)
         
         // These weights are not normalized
@@ -355,7 +355,7 @@ class StructuredVETest extends WordSpec with Matchers {
         // p(a=F,b=T) = 0.4 * 0.4 = 0.16
         // p(a=F,b=F) = 0
         // MAP: a=F,b=T
-        val alg = StructuredMarginalMAPVE()
+        val alg = StructuredMarginalMAPVE(List(a, b))
         alg.start
         alg.mostLikelyValue(a) should equal(false)
         alg.mostLikelyValue(b) should equal(true)
