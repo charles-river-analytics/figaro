@@ -20,6 +20,7 @@ import com.cra.figaro.algorithm.structured.NestedProblem
 
 /**
  * A solving strategy that uses MPE VE to solve non-nested problems, and performs the MAP step at the top level.
+ * It is assumed that at the top level, "toPreserve" elements are the MAP elements.
  */
 class MarginalMAPVEStrategy extends SolvingStrategy {
 
