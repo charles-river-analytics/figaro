@@ -721,7 +721,7 @@ class VESolverTest extends WordSpec with Matchers {
   }
 
   "Running MPE VariableElimination" when {
-    "given a target should produce the most likely factor over the target" should {
+    "given a target should produce the most likely factor over the target" in {
       Universe.createNew()
       val cc = new ComponentCollection
       val e1 = Select(0.75 -> 0.2, 0.25 -> 0.3)
