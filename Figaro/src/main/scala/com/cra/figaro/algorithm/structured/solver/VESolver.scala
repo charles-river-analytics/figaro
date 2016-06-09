@@ -64,7 +64,7 @@ class VESolver(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[
      *  Otherwise, we assume that the eliminated varaibles are internal and therefore are not queryable
      *  When we have non-chain decompositions, this may not hold anymore
      */
-    if (factorsAfterElimination.size == 1 && factorsAfterElimination.head.size == 1 && factorsAfterElimination.head.numVars == 0) {
+    if (factorsAfterElimination.forall(f => f.size == 1 && f.numVars == 0)) {
       for { (variable, factor) <- eliminationOrder.reverse.zip(recordingFactors) } { backtrackOne(factor, variable) }
     }
   }

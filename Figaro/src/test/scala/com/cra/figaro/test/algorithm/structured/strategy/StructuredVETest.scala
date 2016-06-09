@@ -177,6 +177,17 @@ class StructuredVETest extends WordSpec with Matchers {
   }
 
   "MPE VE" when {
+    "given a disconnected model should produce the right answer" in {
+      Universe.createNew()
+      val e1 = Flip(0.4)
+      val e2 = Flip(0.6)
+      val alg = StructuredMPEVE()
+      alg.start
+      alg.mostLikelyValue(e1) should equal(false)
+      alg.mostLikelyValue(e2) should equal(true)
+      alg.kill
+    }
+    
     "given a flat model without evidence should produce the right answer" in {
       Universe.createNew()
       val e1 = Select(0.75 -> 0.2, 0.25 -> 0.3)
