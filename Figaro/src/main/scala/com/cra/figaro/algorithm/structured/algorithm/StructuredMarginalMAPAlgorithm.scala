@@ -5,7 +5,7 @@
  * Created By:      William Kretschmer (kretsch@mit.edu)
  * Creation Date:   Jun 3, 2016
  *
- * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2016 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
@@ -43,11 +43,7 @@ abstract class StructuredMarginalMAPAlgorithm(val universe: Universe, val mapEle
 
   def initialComponents() = (problem.targets ++ evidenceElems).distinct.map(cc(_))
 
-  /**
-   * Returns the most likely value for the target element.
-   * @param target An element in the list of MAP elements supplied to this algorithm.
-   */
-  def mostLikelyValue[T](target: Element[T]): T = {
+  def computeMostLikelyValue[T](target: Element[T]): T = {
     val targetVar = cc(target).variable
     val factor = problem.recordingFactors(targetVar).asInstanceOf[Factor[T]]
     if (factor.size != 1) throw new AlgorithmException//("Final factor for most likely value has more than one entry")
