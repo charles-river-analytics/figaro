@@ -43,8 +43,8 @@ object StructuredMarginalMAPVE {
    * @param mapElements Elements for which to compute MAP queries. Elements not in this list are summed over,
    * and cannot be queried.
    */
-  def apply(mapElements: List[Element[_]])(implicit universe: Universe) = {        
-    new StructuredMarginalMAPVE(universe, mapElements)
+  def apply(mapElements: Element[_]*)(implicit universe: Universe) = {        
+    new StructuredMarginalMAPVE(universe, mapElements.toList)
   }
 
   /**

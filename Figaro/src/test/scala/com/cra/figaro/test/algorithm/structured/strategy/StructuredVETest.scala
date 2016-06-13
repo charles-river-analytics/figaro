@@ -21,6 +21,8 @@ import com.cra.figaro.language.Element.toBooleanElement
 import com.cra.figaro.algorithm.structured.algorithm.structured.StructuredMPEVE
 import com.cra.figaro.algorithm.factored.MPEVariableElimination
 import com.cra.figaro.algorithm.structured.algorithm.structured.StructuredMarginalMAPVE
+import com.cra.figaro.library.atomic.discrete.Uniform
+import com.cra.figaro.library.collection.Container
 
 class StructuredVETest extends WordSpec with Matchers {
   "Executing a recursive structured VE solver strategy" when {
@@ -266,7 +268,7 @@ class StructuredVETest extends WordSpec with Matchers {
   }
   
   "Marginal MAP VE" when {
-    "given a model with only MAP queries" should {
+    "given a model with MAP queries on all elements" should {
       "produce the right answer without evidence" in {
         Universe.createNew()
         val a = Flip(0.8)
@@ -287,7 +289,7 @@ class StructuredVETest extends WordSpec with Matchers {
         // p(a=F,b11=F,b12=T) = 0.2 * 0.3 * 0.6 = 0.036
         // p(a=F,b11=F,b12=F) = 0.2 * 0.3 * 0.4 = 0.024
         // MAP: a=T,b11=T,b12=T which implies b1=T,b2=F,b=T
-        val alg = StructuredMarginalMAPVE(List(a, b11, b12, b1, b2, b))
+        val alg = StructuredMarginalMAPVE(a, b11, b12, b1, b2, b)
         alg.start
         alg.mostLikelyValue(a) should equal(true)
         alg.mostLikelyValue(b11) should equal(true)
@@ -320,7 +322,7 @@ class StructuredVETest extends WordSpec with Matchers {
         // p(a=F,b11=F,b12=T) = 0.2 * 0.3 * 0.6 = 0.036
         // p(a=F,b11=F,b12=F) = 0.2 * 0.3 * 0.4 = 0.024
         // MAP: a=T,b11=T,b12=F which implies b1=F,b2=F,b=F
-        val alg = StructuredMarginalMAPVE(List(a, b11, b12, b1, b2, b))
+        val alg = StructuredMarginalMAPVE(a, b11, b12, b1, b2, b)
         alg.start
         alg.mostLikelyValue(a) should equal(true)
         alg.mostLikelyValue(b11) should equal(true)
@@ -332,7 +334,7 @@ class StructuredVETest extends WordSpec with Matchers {
       }
     }
     
-    "given a model with some MAP queries" should {
+    "given a model with MAP queries on all permanent elements" should {
       "produce the right answer without evidence" in {
         Universe.createNew()
         val a = Flip(0.6)
@@ -345,7 +347,7 @@ class StructuredVETest extends WordSpec with Matchers {
         // p(a=F,b=T) = 0.4 * 0.4 = 0.16
         // p(a=F,b=F) = 0.4 * 0.6 = 0.24
         // MAP: a=T,b=F
-        val alg = StructuredMarginalMAPVE(List(a, b))
+        val alg = StructuredMarginalMAPVE(a, b)
         alg.start
         alg.mostLikelyValue(a) should equal(true)
         alg.mostLikelyValue(b) should equal(false)
@@ -366,11 +368,36 @@ class StructuredVETest extends WordSpec with Matchers {
         // p(a=F,b=T) = 0.4 * 0.4 = 0.16
         // p(a=F,b=F) = 0
         // MAP: a=F,b=T
-        val alg = StructuredMarginalMAPVE(List(a, b))
+        val alg = StructuredMarginalMAPVE(a, b)
         alg.start
         alg.mostLikelyValue(a) should equal(false)
         alg.mostLikelyValue(b) should equal(true)
         alg.kill
+      }
+    }
+    
+    "given a model with MAP queries on a strict subset of the permanent elements" should {
+      "produce the right answer without evidence" in {
+        Universe.createNew()
+        val rolls = for { i <- 1 to 10 } yield Uniform(1,2,3,4)
+        val c = Container(rolls: _*)
+        val num4 = c.count(_ == 4)
+        
+        // num4 is effectively a binomial distribution with n=10, p=0.25
+        // The mode is floor(p*(n+1))=2
+        StructuredMarginalMAPVE.mostLikelyValue(num4) should equal(2)
+      }
+      
+      "produce the right answer with evidence" in {
+        val rolls = for { i <- 1 to 10 } yield Uniform(1,2,3,4)
+        val c = Container(rolls: _*)
+        val num4 = c.count(_ == 4)
+        
+        num4.addCondition(_ >= 5)
+        
+        // Since the pmf of a binomial distribution is strictly decreasing past the mode,
+        // the most likely value should be the least possible value given the evidence
+        StructuredMarginalMAPVE.mostLikelyValue(num4) should equal(5)
       }
     }
   }
