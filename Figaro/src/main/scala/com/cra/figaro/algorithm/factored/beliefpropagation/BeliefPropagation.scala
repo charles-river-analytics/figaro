@@ -104,7 +104,7 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
    * messages from all other Nodes (except the destination node), 
    * marginalized over all variables except the variable:
    */
-  private def getNewMessageFactorToVar(fn: FactorNode, vn: VariableNode) = {
+  protected def getNewMessageFactorToVar(fn: FactorNode, vn: VariableNode) = {
     val vnFactor = factorGraph.getLastMessage(vn, fn)
 
     val total = beliefMap(fn).combination(vnFactor, logSpaceSemiring().divide)
@@ -116,7 +116,7 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
    * all other neighboring factor Nodes (except the recipient; alternatively one can say the
    * recipient sends the message "1"):
    */
-  private def getNewMessageVarToFactor(vn: VariableNode, fn: FactorNode) = {
+  protected def getNewMessageVarToFactor(vn: VariableNode, fn: FactorNode) = {
     val fnFactor = factorGraph.getLastMessage(fn, vn)
 
     val total = beliefMap(vn).combination(fnFactor, logSpaceSemiring().divide)
