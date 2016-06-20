@@ -49,7 +49,9 @@ abstract class MarginalMAPBeliefPropagation(override val universe: Universe, tar
       val beliefOverMaxVars = beliefMap(fn).marginalizeTo(LogSumProductSemiring(), fn.variables.filter(maxVariables.contains).toSeq:_*)
       val maxBelief = beliefOverMaxVars.contents.maxBy(_._2)._2
       // Filter the indices that maximize the  belief over the max variables in this factor
-      val argMaxIndicator = beliefOverMaxVars.mapTo(d => if(d == maxBelief) 1.0 else 0.0, LogSumProductSemiring())
+      val argMaxIndicator = beliefOverMaxVars.mapTo(d =>
+        if(d == maxBelief) LogSumProductSemiring().one
+        else LogSumProductSemiring().zero, LogSumProductSemiring())
       
       // Now the total includes the indicator function
       val total = beliefMap(fn).combination(vnFactor, LogSumProductSemiring().divide).product(argMaxIndicator)
@@ -76,7 +78,7 @@ abstract class MarginalMAPBeliefPropagation(override val universe: Universe, tar
     val (neededElements, _) = getNeededElements(universe.activeElements, Int.MaxValue)
     factorGraph = new BasicFactorGraph(getFactors(neededElements, targetElements), logSpaceSemiring())
     maxVariables = factorGraph.getNodes.flatMap(filterMaxVariables).toSet
-    super.initialize
+    super.initialize()
   }
 
   def computeMostLikelyValue[T](target: Element[T]): T = {
@@ -98,7 +100,7 @@ object MarginalMAPBeliefPropagation {
 
   /**
    * Creates a One Time marginal MAP belief propagation computer in the current default universe.
-   * @param dependendUniverses Dependent universes for this algorithm.
+   * @param dependentUniverses Dependent universes for this algorithm.
    * @param myIterations Iterations of BP to run.
    * @param targets MAP elements, which can be queried. Elements not supplied here are summed over.
    */
@@ -109,8 +111,8 @@ object MarginalMAPBeliefPropagation {
 
   /**
    * Creates a One Time marginal MAP belief propagation computer in the current default universe.
-   * @param dependendUniverses Dependent universes for this algorithm.
-   * @param dependendAlgorithm Used to determine algorithm for computing probability of evidence in dependent universes.
+   * @param dependentUniverses Dependent universes for this algorithm.
+   * @param dependentAlgorithm Used to determine algorithm for computing probability of evidence in dependent universes.
    * @param myIterations Iterations of BP to run.
    * @param targets MAP elements, which can be queried. Elements not supplied here are summed over.
    */
