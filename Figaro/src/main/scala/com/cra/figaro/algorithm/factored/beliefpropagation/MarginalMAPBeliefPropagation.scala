@@ -71,9 +71,8 @@ abstract class MarginalMAPBeliefPropagation(override val universe: Universe, tar
   }
 
   /*
-   * For now, we use sum product by default and switch to max product when needed.
+   * We use sum product by default and switch to max product only when needed.
    * Notably, we only use the sum operation through getNewMessageFactorToVar.
-   * TODO: look into better ways to do this.
    */
   val semiring = SumProductSemiring()
 
@@ -98,7 +97,7 @@ abstract class MarginalMAPBeliefPropagation(override val universe: Universe, tar
 object MarginalMAPBeliefPropagation {
   /**
    * Creates a One Time marginal MAP belief propagation computer in the current default universe.
-   * @param myIterations Iterations of BP to run.
+   * @param myIterations Iterations of mixed-product BP to run.
    * @param targets MAP elements, which can be queried. Elements not supplied here are summed over.
    */
   def apply(myIterations: Int, targets: Element[_]*)(implicit universe: Universe) =
@@ -109,7 +108,7 @@ object MarginalMAPBeliefPropagation {
   /**
    * Creates a One Time marginal MAP belief propagation computer in the current default universe.
    * @param dependentUniverses Dependent universes for this algorithm.
-   * @param myIterations Iterations of BP to run.
+   * @param myIterations Iterations of mixed-product BP to run.
    * @param targets MAP elements, which can be queried. Elements not supplied here are summed over.
    */
   def apply(dependentUniverses: List[(Universe, List[NamedEvidence[_]])], myIterations: Int, targets: Element[_]*)(implicit universe: Universe) =
@@ -121,7 +120,7 @@ object MarginalMAPBeliefPropagation {
    * Creates a One Time marginal MAP belief propagation computer in the current default universe.
    * @param dependentUniverses Dependent universes for this algorithm.
    * @param dependentAlgorithm Used to determine algorithm for computing probability of evidence in dependent universes.
-   * @param myIterations Iterations of BP to run.
+   * @param myIterations Iterations of mixed-product BP to run.
    * @param targets MAP elements, which can be queried. Elements not supplied here are summed over.
    */
   def apply(
@@ -136,23 +135,12 @@ object MarginalMAPBeliefPropagation {
   
   /**
    * Use variable elimination to compute the most likely value of the given element.
+   * Runs 10 iterations of mixed-product BP.
    * @param target Element for which to compute MAP value.
    * @param mapElements Additional elements to MAP. Elements not in this list are summed over.
    */
-  def mostLikelyValue[T](target: Element[T], mapElements: List[Element[_]]): T = {
-    val alg = MarginalMAPBeliefPropagation(10, (target :: mapElements).distinct:_*)
-    alg.start()
-    val result = alg.mostLikelyValue(target)
-    alg.kill()
-    result
-  }
-  
-    /**
-   * Use marginal MAP belief propagation to compute the most likely value of the given element.
-   * @param target Element for which to compute MAP value. All other elements in the universe are summed over.
-   */
-  def mostLikelyValue[T](target: Element[T]): T = {
-    val alg = MarginalMAPBeliefPropagation(10, target)
+  def mostLikelyValue[T](target: Element[T], mapElements: Element[_]*): T = {
+    val alg = MarginalMAPBeliefPropagation(10, (target +: mapElements).distinct:_*)
     alg.start()
     val result = alg.mostLikelyValue(target)
     alg.kill()

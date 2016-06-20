@@ -15,13 +15,9 @@ package com.cra.figaro.algorithm.structured.algorithm.structured
 
 import com.cra.figaro.language._
 import com.cra.figaro.algorithm.structured._
-import com.cra.figaro.algorithm.structured.strategy._
-import com.cra.figaro.algorithm.structured.solver._
 import com.cra.figaro.algorithm.structured.strategy.solve.MarginalMAPVEStrategy
 import com.cra.figaro.algorithm.structured.algorithm._
 import com.cra.figaro.algorithm.structured.strategy.decompose._
-import com.cra.figaro.algorithm.factored.factors.factory._
-import com.cra.figaro.algorithm.factored.factors.MaxProductSemiring
 
 /**
  * A structured marginal MAP algorithm that uses VE to compute MAP queries.
@@ -52,20 +48,8 @@ object StructuredMarginalMAPVE {
    * @param target Element for which to compute MAP value.
    * @param mapElements Additional elements to MAP. Elements not in this list are summed over.
    */
-  def mostLikelyValue[T](target: Element[T], mapElements: List[Element[_]]): T = {
-    val alg = new StructuredMarginalMAPVE(target.universe, (target :: mapElements).distinct)
-    alg.start()
-    val result = alg.mostLikelyValue(target)
-    alg.kill()
-    result
-  }
-  
-    /**
-   * Use variable elimination to compute the most likely value of the given element.
-   * @param target Element for which to compute MAP value. All other elements in the universe are summed over.
-   */
-  def mostLikelyValue[T](target: Element[T]): T = {
-    val alg = new StructuredMarginalMAPVE(target.universe, List(target))
+  def mostLikelyValue[T](target: Element[T], mapElements: Element[_]*): T = {
+    val alg = StructuredMarginalMAPVE((target +: mapElements).distinct:_*)
     alg.start()
     val result = alg.mostLikelyValue(target)
     alg.kill()

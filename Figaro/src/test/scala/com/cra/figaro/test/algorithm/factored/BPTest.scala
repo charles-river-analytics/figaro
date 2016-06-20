@@ -460,7 +460,7 @@ class BPTest extends WordSpec with Matchers {
       }
     }
     
-    "given a model with MAP queries on a strict subset of the permanent elements" should {
+    "given a model with MAP queries on a single element" should {
       "produce the right answer without evidence" in {
         Universe.createNew()
         val rolls = for { i <- 1 to 10 } yield Uniform(1,2,3,4)
@@ -488,6 +488,83 @@ class BPTest extends WordSpec with Matchers {
         alg.start
         alg.mostLikelyValue(num4) should equal(5)
         alg.kill
+      }
+    }
+
+    "given a model with MAP queries on more than one element" should {
+      "produce the right answer without evidence" in {
+        Universe.createNew()
+        val a = Flip(0.6)
+        val b = If(a, Flip(0.7), Flip(0.4))
+        val c = If(a, Flip(0.6), Flip(0.1))
+        val d = If(b, Flip(0.1), Flip(0.6))
+
+        // p(a=T,b=T,c=T,d=T)=0.6*0.7*0.6*0.1=0.0252
+        // p(a=T,b=T,c=T,d=F)=0.6*0.7*0.6*0.9=0.2268
+        // p(a=T,b=T,c=F,d=T)=0.6*0.7*0.4*0.1=0.0168
+        // p(a=T,b=T,c=F,d=F)=0.6*0.7*0.4*0.9=0.1512
+        // p(a=T,b=F,c=T,d=T)=0.6*0.3*0.6*0.6=0.0648
+        // p(a=T,b=F,c=T,d=F)=0.6*0.3*0.6*0.4=0.0432
+        // p(a=T,b=F,c=F,d=T)=0.6*0.3*0.4*0.6=0.0432
+        // p(a=T,b=F,c=F,d=F)=0.6*0.3*0.4*0.4=0.0288
+        // p(a=F,b=T,c=T,d=T)=0.4*0.4*0.1*0.1=0.0016
+        // p(a=F,b=T,c=T,d=F)=0.4*0.4*0.1*0.9=0.0144
+        // p(a=F,b=T,c=F,d=T)=0.4*0.4*0.9*0.1=0.0144
+        // p(a=F,b=T,c=F,d=F)=0.4*0.4*0.9*0.9=0.1296
+        // p(a=F,b=F,c=T,d=T)=0.4*0.6*0.1*0.6=0.0144
+        // p(a=F,b=F,c=T,d=F)=0.4*0.6*0.1*0.4=0.0096
+        // p(a=F,b=F,c=F,d=T)=0.4*0.6*0.9*0.6=0.1296
+        // p(a=F,b=F,c=F,d=F)=0.4*0.6*0.9*0.4=0.0864
+
+        // p(c=T,d=T)=0.0252+0.0648+0.0016+0.0144=0.106
+        // p(c=T,d=F)=0.2268+0.0432+0.0144+0.0096=0.294
+        // p(c=F,d=T)=0.0168+0.0432+0.0144+0.1296=0.204
+        // p(c=F,d=F)=0.1512+0.0288+0.1296+0.0864=0.396 -> MAP
+
+        val alg = MarginalMAPBeliefPropagation(10, c, d)
+        alg.start()
+        alg.mostLikelyValue(c) should equal(false)
+        alg.mostLikelyValue(d) should equal(false)
+        alg.kill()
+      }
+
+      "produce the right answer with evidence" in {
+        Universe.createNew()
+        val a = Flip(0.6)
+        val b = If(a, Flip(0.7), Flip(0.4))
+        val c = If(a, Flip(0.6), Flip(0.1))
+        val d = If(b, Flip(0.1), Flip(0.6))
+
+        // p(a=T,b=T,c=T,d=T)=0.6*0.7*0.6*0.1=0.0252
+        // p(a=T,b=T,c=T,d=F)=0.6*0.7*0.6*0.9=0.2268
+        // p(a=T,b=T,c=F,d=T)=0.6*0.7*0.4*0.1=0.0168
+        // p(a=T,b=T,c=F,d=F)=0.6*0.7*0.4*0.9=0.1512
+        // p(a=T,b=F,c=T,d=T)=0.6*0.3*0.6*0.6=0.0648
+        // p(a=T,b=F,c=T,d=F)=0.6*0.3*0.6*0.4=0.0432
+        // p(a=T,b=F,c=F,d=T)=0.6*0.3*0.4*0.6=0.0432
+        // p(a=T,b=F,c=F,d=F)=0.6*0.3*0.4*0.4=0.0288
+        // p(a=F,b=T,c=T,d=T)=0.4*0.4*0.1*0.1=0.0016
+        // p(a=F,b=T,c=T,d=F)=0.4*0.4*0.1*0.9=0.0144
+        // p(a=F,b=T,c=F,d=T)=0.4*0.4*0.9*0.1=0.0144
+        // p(a=F,b=T,c=F,d=F)=0.4*0.4*0.9*0.9=0.1296
+        // p(a=F,b=F,c=T,d=T)=0.4*0.6*0.1*0.6=0.0144
+        // p(a=F,b=F,c=T,d=F)=0.4*0.6*0.1*0.4=0.0096
+        // p(a=F,b=F,c=F,d=T)=0.4*0.6*0.9*0.6=0.1296
+        // p(a=F,b=F,c=F,d=F)=0.4*0.6*0.9*0.4=0.0864
+
+        // These weights are not normalized
+        // p(c=T,d=T)=0.0252+0.0648+0.0016+0.0144=0.106
+        // p(c=T,d=F)=0.2268+0.0432+0.0144+0.0096=0.294 -> MAP
+        // p(c=F,d=T)=0.0168+0.0432+0.0144+0.1296=0.204
+        // p(c=F,d=F)=0
+
+        (c || d).observe(true)
+
+        val alg = MarginalMAPBeliefPropagation(10, c, d)
+        alg.start()
+        alg.mostLikelyValue(c) should equal(true)
+        alg.mostLikelyValue(d) should equal(false)
+        alg.kill()
       }
     }
   }
