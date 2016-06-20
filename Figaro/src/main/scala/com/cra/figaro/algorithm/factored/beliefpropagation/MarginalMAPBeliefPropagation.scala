@@ -27,8 +27,17 @@ abstract class MarginalMAPBeliefPropagation(override val universe: Universe, tar
   val targetElements = targets.toList
   
   val mapElements = targetElements
-  
+
+  /*
+   * Variables corresponding to MAP elements. This is set in the initialize() method.
+   */
   var maxVariables: Set[Variable[_]] = _
+
+  /**
+   * Value used to compute arg max messages. This could be thought of as an inverse
+   * "temperature", but here it is a large fixed value.
+   */
+  val argMaxFactor = 1e5
   
   override protected def getNewMessageFactorToVar(fn: FactorNode, vn: VariableNode) = {
     val vnFactor = factorGraph.getLastMessage(vn, fn)
@@ -47,9 +56,10 @@ abstract class MarginalMAPBeliefPropagation(override val universe: Universe, tar
       val beliefOverMaxVars = beliefMap(fn).marginalizeTo(fn.variables.intersect(maxVariables).toSeq:_*)
       val maxBelief = beliefOverMaxVars.foldLeft(LogSumProductSemiring().zero, _ max _)
       // Filter the indices that maximize the  belief over the max variables in this factor
-      val argMaxIndicator = beliefOverMaxVars.mapTo(d =>
-        if(d == maxBelief) LogSumProductSemiring().one
-        else LogSumProductSemiring().zero, LogSumProductSemiring())
+      // This approximation of the "indicator function" is used for two reasons:
+      // 1) To prevent division by zero when we divide the belief map by the last message
+      // 2) To give nonzero weight to values close to the arg max that differ due to floating point errors
+      val argMaxIndicator = beliefOverMaxVars.mapTo(d => (d - maxBelief) * argMaxFactor)
       
       // Now the total includes the indicator function
       val total = beliefMap(fn).combination(vnFactor, LogSumProductSemiring().divide).product(argMaxIndicator)
