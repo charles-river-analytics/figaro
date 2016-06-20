@@ -882,52 +882,54 @@ class BPSolverTest extends WordSpec with Matchers {
   }
 
   "Running MPE VariableElimination" when {
-    "given a target should produce the most likely factor over the target" should {
-      Universe.createNew()
-      val cc = new ComponentCollection
-      val e1 = Select(0.75 -> 0.2, 0.25 -> 0.3)
-      val e2 = Flip(e1)
-      val e3 = Flip(e1)
-      val e4 = e2 === e3
-      val pr = new Problem(cc, List(e1))
-      pr.add(e1)
-      pr.add(e2)
-      pr.add(e3)
-      pr.add(e4)
-      val c1 = cc(e1)
-      val c2 = cc(e2)
-      val c3 = cc(e3)
-      val c4 = cc(e4)
-      c1.generateRange()
-      c2.generateRange()
-      c3.generateRange()
-      c4.generateRange()
-      c1.makeNonConstraintFactors()
-      c2.makeNonConstraintFactors()
-      c3.makeNonConstraintFactors()
-      c4.makeNonConstraintFactors()
-      // p(e1=.2,e2=T,e3=T,e4=T) = 0.75 * 0.2 * 0.2 = .03
-      // p(e1=.2,e2=F,e3=F,e4=T) = 0.75 * 0.8 * 0.8 = .48
-      // p(e1=.3,e2=T,e3=T,e4=T) = 0.25 * 0.3 * 0.3 = .0225
-      // p(e1=.3,e2=F,e3=F,e4=T) = 0.25 * 0.7 * 0.7 = .1225     
-      // p(e1=.2,e2=T,e3=F,e4=F) = 0.75 * 0.2 * 0.8 = .12
-      // p(e1=.2,e2=F,e3=T,e4=F) = 0.75 * 0.8 * 0.2 = .12
-      // p(e1=.3,e2=T,e3=F,e4=F) = 0.25 * 0.3 * 0.7 = .0525
-      // p(e1=.3,e2=F,e3=T,e4=F) = 0.25 * 0.7 * 0.3 = .0525
-      // MPE: e1=.2,e2=F,e3=F,e4=T
-      // If we leave e1 un-eliminated, we should end up with a factor that has e1=.2 at .48 and e1=.3 at .1225 
-      // However, since BP normalizes according to a MaxProduct semiring, the values are not normalized, so we look at the ratio
-      pr.solve(new ConstantStrategy(mpeBeliefPropagation(20)))
-      val f = pr.solution reduceLeft (_.product(_))
-      f.numVars should equal(1)
-      if (f.get(List(0)) > f.get(List(1))) {
-        f.get(List(0)) / f.get(List(1)) should be(0.48 / 0.1225 +- 0.000001)
-      } else {
-        f.get(List(1)) / f.get(List(0)) should be(0.48 / 0.1225 +- 0.000001)
+    "given a target" should {
+      "produce the most likely factor over the target" in {
+        Universe.createNew()
+        val cc = new ComponentCollection
+        val e1 = Select(0.75 -> 0.2, 0.25 -> 0.3)
+        val e2 = Flip(e1)
+        val e3 = Flip(e1)
+        val e4 = e2 === e3
+        val pr = new Problem(cc, List(e1))
+        pr.add(e1)
+        pr.add(e2)
+        pr.add(e3)
+        pr.add(e4)
+        val c1 = cc(e1)
+        val c2 = cc(e2)
+        val c3 = cc(e3)
+        val c4 = cc(e4)
+        c1.generateRange()
+        c2.generateRange()
+        c3.generateRange()
+        c4.generateRange()
+        c1.makeNonConstraintFactors()
+        c2.makeNonConstraintFactors()
+        c3.makeNonConstraintFactors()
+        c4.makeNonConstraintFactors()
+        // p(e1=.2,e2=T,e3=T,e4=T) = 0.75 * 0.2 * 0.2 = .03
+        // p(e1=.2,e2=F,e3=F,e4=T) = 0.75 * 0.8 * 0.8 = .48
+        // p(e1=.3,e2=T,e3=T,e4=T) = 0.25 * 0.3 * 0.3 = .0225
+        // p(e1=.3,e2=F,e3=F,e4=T) = 0.25 * 0.7 * 0.7 = .1225
+        // p(e1=.2,e2=T,e3=F,e4=F) = 0.75 * 0.2 * 0.8 = .12
+        // p(e1=.2,e2=F,e3=T,e4=F) = 0.75 * 0.8 * 0.2 = .12
+        // p(e1=.3,e2=T,e3=F,e4=F) = 0.25 * 0.3 * 0.7 = .0525
+        // p(e1=.3,e2=F,e3=T,e4=F) = 0.25 * 0.7 * 0.3 = .0525
+        // MPE: e1=.2,e2=F,e3=F,e4=T
+        // If we leave e1 un-eliminated, we should end up with a factor that has e1=.2 at .48 and e1=.3 at .1225
+        // However, since BP normalizes according to a MaxProduct semiring, the values are not normalized, so we look at the ratio
+        pr.solve(new ConstantStrategy(mpeBeliefPropagation(20)))
+        val f = pr.solution reduceLeft (_.product(_))
+        f.numVars should equal(1)
+        if (f.get(List(0)) > f.get(List(1))) {
+          f.get(List(0)) / f.get(List(1)) should be(0.48 / 0.1225 +- 0.000001)
+        } else {
+          f.get(List(1)) / f.get(List(0)) should be(0.48 / 0.1225 +- 0.000001)
+        }
       }
     }
 
-    "given a flat model should" should {
+    "given a flat model" should {
       "produce the correct most likely values for all elements with no conditions or constraints" in {
         Universe.createNew()
         val cc = new ComponentCollection

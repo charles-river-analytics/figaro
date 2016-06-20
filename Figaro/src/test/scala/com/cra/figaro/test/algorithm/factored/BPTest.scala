@@ -350,8 +350,8 @@ class BPTest extends WordSpec with Matchers {
         
 
   }
-  
-    "Marginal MAP BP" when {
+
+  "Marginal MAP BP" when {
     "given a model with MAP queries on all elements" should {
       "produce the right answer without evidence" in {
         Universe.createNew()
