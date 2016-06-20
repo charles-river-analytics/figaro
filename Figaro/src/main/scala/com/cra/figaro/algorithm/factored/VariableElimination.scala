@@ -222,7 +222,7 @@ class ProbQueryVariableElimination(override val universe: Universe, targets: Ele
   val semiring = SumProductSemiring()
 
   private def marginalizeToTarget(factor: Factor[Double], target: Element[_]): Unit = {
-    val unnormalizedTargetFactor = factor.marginalizeTo(semiring.asInstanceOf[Semiring[Double]], Variable(target))
+    val unnormalizedTargetFactor = factor.marginalizeTo(Variable(target))
     val z = unnormalizedTargetFactor.foldLeft(semiring.zero, _ + _)
     //val targetFactor = Factory.make[Double](unnormalizedTargetFactor.variables)
     val targetFactor = unnormalizedTargetFactor.mapTo((d: Double) => d / z)

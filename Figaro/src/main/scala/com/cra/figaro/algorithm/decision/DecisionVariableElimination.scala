@@ -137,7 +137,7 @@ class ProbQueryVariableEliminationDecision[T, U](override val universe: Universe
    *
    */
   private def marginalizeToTarget(factor: Factor[(Double, Double)], target: Element[_]): Unit = {
-    val unnormalizedTargetFactor = factor.marginalizeTo(semiring, Variable(target))
+    val unnormalizedTargetFactor = factor.marginalizeTo(Variable(target))
     val z = unnormalizedTargetFactor.foldLeft(semiring.zero, (x: (Double, Double), y: (Double, Double)) => (x._1 + y._1, 0.0))
    //val targetFactor = Factory.make[(Double, Double)](unnormalizedTargetFactor.variables)
     val targetFactor = unnormalizedTargetFactor.mapTo((d: (Double, Double)) => (d._1 / z._1, d._2))

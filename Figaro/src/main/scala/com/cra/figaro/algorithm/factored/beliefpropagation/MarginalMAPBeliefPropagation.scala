@@ -37,17 +37,15 @@ abstract class MarginalMAPBeliefPropagation(override val universe: Universe, tar
       val total = beliefMap(fn).combination(vnFactor, LogSumProductSemiring().divide)
       
       // Use sum-product to sum over sum variables
-      val sumOverSumVars = total.marginalizeTo(LogSumProductSemiring(), fn.variables.filter(maxVariables.contains).toSeq:_*)
+      val sumOverSumVars = total.marginalizeTo(fn.variables.intersect(maxVariables).toSeq:_*)
       // Use max-product to sum over max variables except vn.variable
-      val sumOverMaxVars = sumOverSumVars.mapTo(d => d, LogMaxProductSemiring())
-                                         .marginalizeTo(LogMaxProductSemiring(), vn.variable)
-                                         .mapTo(d => d, LogSumProductSemiring())
+      val sumOverMaxVars = sumOverSumVars.marginalizeToWithSum(LogMaxProductSemiring().sum, vn.variable)
       sumOverMaxVars
     }
     else {
-      // Note that we don't divide by the last message here
-      val beliefOverMaxVars = beliefMap(fn).marginalizeTo(LogSumProductSemiring(), fn.variables.filter(maxVariables.contains).toSeq:_*)
-      val maxBelief = beliefOverMaxVars.contents.maxBy(_._2)._2
+      // Use sum-product to sum over sum variables, note that we don't divide by the last message here
+      val beliefOverMaxVars = beliefMap(fn).marginalizeTo(fn.variables.intersect(maxVariables).toSeq:_*)
+      val maxBelief = beliefOverMaxVars.foldLeft(LogSumProductSemiring().zero, _ max _)
       // Filter the indices that maximize the  belief over the max variables in this factor
       val argMaxIndicator = beliefOverMaxVars.mapTo(d =>
         if(d == maxBelief) LogSumProductSemiring().one
@@ -57,7 +55,7 @@ abstract class MarginalMAPBeliefPropagation(override val universe: Universe, tar
       val total = beliefMap(fn).combination(vnFactor, LogSumProductSemiring().divide).product(argMaxIndicator)
       
       // Use sum-product to sum over all variables except vn.variable
-      val sumOverAllVars = total.marginalizeTo(LogSumProductSemiring(), vn.variable)
+      val sumOverAllVars = total.marginalizeTo(vn.variable)
       sumOverAllVars
     }
   }

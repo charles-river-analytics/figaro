@@ -40,7 +40,7 @@ abstract class StructuredProbQueryAlgorithm(val universe: Universe, val queryTar
 
   protected def marginalizeToTarget(target: Element[_], jointFactor: Factor[Double]): Unit = {
     val targetVar = cc(target).variable
-    val unnormalizedTargetFactor = jointFactor.marginalizeTo(semiring, targetVar)
+    val unnormalizedTargetFactor = jointFactor.marginalizeTo(targetVar)
     val z = unnormalizedTargetFactor.foldLeft(0.0, _ + _)
     val targetFactor = unnormalizedTargetFactor.mapTo((d: Double) => d / z)
     targetFactors += target -> targetFactor

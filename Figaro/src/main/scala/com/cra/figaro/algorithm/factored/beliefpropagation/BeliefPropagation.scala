@@ -108,7 +108,7 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
     val vnFactor = factorGraph.getLastMessage(vn, fn)
 
     val total = beliefMap(fn).combination(vnFactor, logSpaceSemiring().divide)
-    total.marginalizeTo(logSpaceSemiring(), vn.variable)
+    total.marginalizeTo(vn.variable)
   }
 
   /*
