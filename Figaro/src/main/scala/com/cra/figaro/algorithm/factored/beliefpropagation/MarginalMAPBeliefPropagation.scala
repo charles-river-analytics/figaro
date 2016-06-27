@@ -15,7 +15,7 @@ package com.cra.figaro.algorithm.factored.beliefpropagation
 
 import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.sampling.ProbEvidenceSampler
-import com.cra.figaro.algorithm.{MarginalMAPAlgorithm, OneTimeMarginalMAP}
+import com.cra.figaro.algorithm.{AnytimeMarginalMAP, MarginalMAPAlgorithm, OneTimeMarginalMAP}
 import com.cra.figaro.language._
 
 abstract class MarginalMAPBeliefPropagation(override val universe: Universe, targets: Element[_]*)(
@@ -31,7 +31,7 @@ abstract class MarginalMAPBeliefPropagation(override val universe: Universe, tar
   /*
    * Variables corresponding to MAP elements. This is set in the initialize() method.
    */
-  var maxVariables: Set[Variable[_]] = _
+  protected var maxVariables: Set[Variable[_]] = _
 
   /**
    * Value used to compute arg max messages. This could be thought of as an inverse
@@ -102,8 +102,17 @@ object MarginalMAPBeliefPropagation {
    */
   def apply(myIterations: Int, targets: Element[_]*)(implicit universe: Universe) =
     new MarginalMAPBeliefPropagation(universe, targets: _*)(
-      List(),
-      (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u)) with OneTimeProbabilisticBeliefPropagation with OneTimeMarginalMAP { val iterations = myIterations }
+      List(), (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u))
+      with OneTimeProbabilisticBeliefPropagation with OneTimeMarginalMAP { val iterations = myIterations }
+
+  /**
+   * Creates an Anytime marginal MAP belief propagation computer in the current default universe.
+   * @param targets MAP elements, which can be queried. Elements not supplied here are summed over.
+   */
+  def apply(targets: Element[_]*)(implicit universe: Universe) =
+    new MarginalMAPBeliefPropagation(universe, targets: _*)(
+      List(), (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u))
+      with AnytimeProbabilisticBeliefPropagation with AnytimeMarginalMAP
 
   /**
    * Creates a One Time marginal MAP belief propagation computer in the current default universe.
@@ -113,8 +122,18 @@ object MarginalMAPBeliefPropagation {
    */
   def apply(dependentUniverses: List[(Universe, List[NamedEvidence[_]])], myIterations: Int, targets: Element[_]*)(implicit universe: Universe) =
     new MarginalMAPBeliefPropagation(universe, targets: _*)(
-      dependentUniverses,
-      (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u)) with OneTimeProbabilisticBeliefPropagation with OneTimeMarginalMAP { val iterations = myIterations }
+      dependentUniverses, (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u))
+      with OneTimeProbabilisticBeliefPropagation with OneTimeMarginalMAP { val iterations = myIterations }
+
+  /**
+   * Creates an Anytime marginal MAP belief propagation computer in the current default universe.
+   * @param dependentUniverses Dependent universes for this algorithm.
+   * @param targets MAP elements, which can be queried. Elements not supplied here are summed over.
+   */
+  def apply(dependentUniverses: List[(Universe, List[NamedEvidence[_]])], targets: Element[_]*)(implicit universe: Universe) =
+    new MarginalMAPBeliefPropagation(universe, targets: _*)(
+      dependentUniverses, (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u))
+      with AnytimeProbabilisticBeliefPropagation with AnytimeMarginalMAP
 
   /**
    * Creates a One Time marginal MAP belief propagation computer in the current default universe.
@@ -128,13 +147,25 @@ object MarginalMAPBeliefPropagation {
     dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double,
     myIterations: Int, targets: Element[_]*)(implicit universe: Universe) =
     new MarginalMAPBeliefPropagation(universe, targets: _*)(
-      dependentUniverses,
-      dependentAlgorithm) with OneTimeProbabilisticBeliefPropagation with OneTimeMarginalMAP { val iterations = myIterations }
+      dependentUniverses, dependentAlgorithm)
+      with OneTimeProbabilisticBeliefPropagation with OneTimeMarginalMAP { val iterations = myIterations }
 
-  // TODO Anytime versions
+  /**
+   * Creates an Anytime marginal MAP belief propagation computer in the current default universe.
+   * @param dependentUniverses Dependent universes for this algorithm.
+   * @param dependentAlgorithm Used to determine algorithm for computing probability of evidence in dependent universes.
+   * @param targets MAP elements, which can be queried. Elements not supplied here are summed over.
+   */
+  def apply(
+    dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
+    dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double,
+    targets: Element[_]*)(implicit universe: Universe) =
+    new MarginalMAPBeliefPropagation(universe, targets: _*)(
+      dependentUniverses, dependentAlgorithm)
+      with AnytimeProbabilisticBeliefPropagation with AnytimeMarginalMAP
   
   /**
-   * Use variable elimination to compute the most likely value of the given element.
+   * Use belief propagation to compute the most likely value of the given element.
    * Runs 10 iterations of mixed-product BP.
    * @param target Element for which to compute MAP value.
    * @param mapElements Additional elements to MAP. Elements not in this list are summed over.
