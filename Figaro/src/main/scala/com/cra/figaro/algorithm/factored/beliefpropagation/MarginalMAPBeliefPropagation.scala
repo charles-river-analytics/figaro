@@ -77,14 +77,11 @@ abstract class MarginalMAPBeliefPropagation(override val universe: Universe, tar
   val semiring = SumProductSemiring()
 
   override def initialize() = {
-    def filterMaxVariables(node: Node): Option[Variable[_]] = node match {
-      case VariableNode(ev: ElementVariable[_]) => if(mapElements.contains(ev.element)) Some(ev) else None
-      case _ => None
-    }
-    
     val (neededElements, _) = getNeededElements(universe.activeElements, Int.MaxValue)
     factorGraph = new BasicFactorGraph(getFactors(neededElements, targetElements), logSpaceSemiring())
-    maxVariables = factorGraph.getNodes.flatMap(filterMaxVariables).toSet
+    maxVariables = factorGraph.getNodes.collect {
+      case VariableNode(ev: ElementVariable[_]) if mapElements.contains(ev.element) => ev
+    }.toSet
     super.initialize()
   }
 
