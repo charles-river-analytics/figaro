@@ -118,10 +118,10 @@ class BPTest extends WordSpec with Matchers {
       val e2_3 = 0.33333333 * (0 + 0 + 0.25)
 
       val tol = 0.000001
-      bp.probability(e2, (i: Int) => i == 0) should be(e2_0 +- tol)
-      bp.probability(e2, (i: Int) => i == 1) should be(e2_1 +- tol)
-      bp.probability(e2, (i: Int) => i == 2) should be(e2_2 +- tol)
-      bp.probability(e2, (i: Int) => i == 3) should be(e2_3 +- tol)
+      bp.probability(e2)(_ == 0) should be(e2_0 +- tol)
+      bp.probability(e2)(_ == 1) should be(e2_1 +- tol)
+      bp.probability(e2)(_ == 2) should be(e2_2 +- tol)
+      bp.probability(e2)(_ == 3) should be(e2_3 +- tol)
     }
 
     "with no conditions or constraints produce the correct result" in {
@@ -190,7 +190,7 @@ class BPTest extends WordSpec with Matchers {
       val tolerance = 0.0000001
       val algorithm = BeliefPropagation(10, f)(u1)
       algorithm.start()
-      algorithm.probability(f, (b: Boolean) => b) should be(0.6 +- globalTol)
+      algorithm.probability(f)(b => b) should be(0.6 +- globalTol)
       algorithm.kill()
     }
 
