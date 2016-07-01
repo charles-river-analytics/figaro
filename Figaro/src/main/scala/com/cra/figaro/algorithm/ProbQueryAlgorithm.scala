@@ -155,6 +155,18 @@ trait BaseProbQueryAlgorithm[U[_]]
   }
 
   /**
+    * Return an estimate of the probability of the predicate under the marginal probability distribution
+    * of the target.
+    * Throws NotATargetException if called on a target that is not in the list of
+    * targets of the algorithm.
+    * Throws AlgorithmInactiveException if the algorithm is inactive.
+    */
+  def probability[T](target: U[T])(predicate: T => Boolean, c: Any = DummyImplicit): Double = {
+    probability(target, predicate)
+  }
+
+
+  /**
    * Return an estimate of the probability that the target produces the value.
    * Throws NotATargetException if called on a target that is not in the list of
    * targets of the algorithm.
