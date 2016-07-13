@@ -118,9 +118,9 @@ class BPTest extends WordSpec with Matchers {
       val e2_3 = 0.33333333 * (0 + 0 + 0.25)
 
       val tol = 0.000001
-      bp.probability(e2)(_ == 0) should be(e2_0 +- tol)
+      bp.probability(e2, (i: Int) => i == 0) should be(e2_0 +- tol)
       bp.probability(e2)(_ == 1) should be(e2_1 +- tol)
-      bp.probability(e2)(_ == 2) should be(e2_2 +- tol)
+      bp.probability(e2, (i: Int) => i == 2) should be(e2_2 +- tol)
       bp.probability(e2)(_ == 3) should be(e2_3 +- tol)
     }
 
