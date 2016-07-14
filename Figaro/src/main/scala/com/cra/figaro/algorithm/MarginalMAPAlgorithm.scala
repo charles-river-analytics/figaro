@@ -22,12 +22,12 @@ import com.cra.figaro.language.Universe
 trait MarginalMAPAlgorithm extends Algorithm {
   class NotATargetException[T](target: Element[T]) extends AlgorithmException
   
-  val universe: Universe
+  def universe: Universe
   
   /**
    * Elements for which to perform MAP queries. This algorithm marginalizes over elements not in this list.
    */
-  val mapElements: Seq[Element[_]]
+  def mapElements: Seq[Element[_]]
   
   /*
    * Particular implementations of algorithm must provide the following method.
