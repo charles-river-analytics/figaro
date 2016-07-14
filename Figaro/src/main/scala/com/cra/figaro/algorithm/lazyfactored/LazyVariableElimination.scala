@@ -206,7 +206,7 @@ with LazyAlgorithm {
   var targetFactors: Map[Element[_], Factor[(Double, Double)]] = Map()
 
   private def marginalizeToTarget(factor: Factor[(Double, Double)], target: Element[_]): Unit = {
-    val targetFactor = factor.marginalizeTo(BoundsSumProductSemiring(), Variable(target))
+    val targetFactor = factor.marginalizeToWithSum(BoundsSumProductSemiring().sum, Variable(target))
     targetFactors += target -> targetFactor
   }
 

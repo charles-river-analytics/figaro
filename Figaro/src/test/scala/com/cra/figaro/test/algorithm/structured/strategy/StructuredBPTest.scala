@@ -18,7 +18,6 @@ import com.cra.figaro.library.compound.If
 import com.cra.figaro.algorithm.structured.algorithm.structured.StructuredBP
 import com.cra.figaro.algorithm.lazyfactored.ValueSet._
 import com.cra.figaro.language.Element.toBooleanElement
-import com.cra.figaro.algorithm.structured.algorithm.structured.StructuredMPEVE
 import com.cra.figaro.algorithm.structured.algorithm.structured.StructuredMPEBP
 
 class StructuredBPTest extends WordSpec with Matchers {
@@ -176,7 +175,7 @@ class StructuredBPTest extends WordSpec with Matchers {
     }
   }
 
-  "BP VE" when {
+  "MPE BP" when {
     "given a flat model without evidence should produce the right answer" in {
       Universe.createNew()
       val e1 = Select(0.75 -> 0.2, 0.25 -> 0.3)

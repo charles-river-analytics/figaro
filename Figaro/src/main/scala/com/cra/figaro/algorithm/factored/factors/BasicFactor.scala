@@ -36,10 +36,6 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
   override def createFactor[T](parents: List[Variable[_]], output: List[Variable[_]], _semiring: Semiring[T] = semiring): Factor[T] =
     new BasicFactor[T](parents, output, _semiring)
 
-  override def convert[U](semiring: Semiring[U]): Factor[U] = {
-    createFactor[U](parents, output, semiring)
-  }
-
   /**
    * Get the value associated with a row. The row is identified by an list of indices
    * into the ranges of the variables over which the factor is defined.
@@ -116,7 +112,8 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
     that: Factor[T],
     op: (T, T) => T): Factor[T] = {
     that match {
-      case _:SparseFactor[T] => that.combination(this, op)
+      // Switch the order of op because it might not be commutative
+      case _:SparseFactor[T] => that.combination(this, (a,b) => op(b, a))
       case _ => {
         val (allParents, allChildren, indexMap1, indexMap2) = unionVars(that)
         val result: Factor[T] = that.createFactor(allParents, allChildren)
@@ -135,21 +132,9 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
     }
   }
 
-  private def computeSum(
-    resultIndices: List[Int],
-    summedVariable: Variable[_],
-    summedVariableIndices: List[Int],
-    semiring: Semiring[T]): T = {
-    val values =
-      for { i <- 0 until summedVariable.size } yield {
-        val sourceIndices = insertAtIndices(resultIndices, summedVariableIndices, i)
-        get(sourceIndices)
-      }
-    semiring.sumMany(values)
-  }
-
   override def sumOver(
-    variable: Variable[_]): Factor[T] = {
+    variable: Variable[_],
+    sum: (T, T) => T = semiring.sum): Factor[T] = {
     if (variables contains variable) {
       // The summed over variable does not necessarily appear exactly once in the factor.
       val indicesOfSummedVariable = indices(variables, variable)
@@ -174,7 +159,7 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
           val value = get(index)
           val newIndices: List[Int] = indexMap map (index(_))
           val oldValue = result.get(newIndices)
-          result.set(newIndices, semiring.sum(oldValue, value))
+          result.set(newIndices, sum(oldValue, value))
         }
       }
       result
@@ -226,13 +211,13 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
     result
   }
 
-  override def marginalizeTo(
-    semiring: Semiring[T],
+  override def marginalizeToWithSum(
+    sum: (T, T) => T,
     targets: Variable[_]*): Factor[T] = {
     val marginalized =
       (this.asInstanceOf[Factor[T]] /: variables)((factor: Factor[T], variable: Variable[_]) =>
         if (targets contains variable) factor
-        else factor.sumOver(variable))
+        else factor.sumOver(variable, sum))
     // It's possible that the target variable appears more than once in this factor. If so, we need to reduce it to
     // one column by eliminating any rows in which the target variable values do not agree.
     deDuplicate(marginalized)
