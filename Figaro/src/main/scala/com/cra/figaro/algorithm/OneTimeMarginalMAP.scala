@@ -13,7 +13,7 @@
 
 package com.cra.figaro.algorithm
 
-import com.cra.figaro.language.Element
+import com.cra.figaro.language._
 
 /**
  * One-time algorithms that compute the most likely values of some elements, and marginalize over others.

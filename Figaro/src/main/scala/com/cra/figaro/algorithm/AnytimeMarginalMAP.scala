@@ -14,7 +14,7 @@
 package com.cra.figaro.algorithm
 
 import akka.pattern.ask
-import com.cra.figaro.language.Element
+import com.cra.figaro.language._
 
 /**
  * Anytime algorithms that compute most likely values of some elements, and marginalize over all other elements.

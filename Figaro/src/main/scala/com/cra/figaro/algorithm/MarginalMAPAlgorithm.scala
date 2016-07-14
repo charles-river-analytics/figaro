@@ -13,8 +13,7 @@
 
 package com.cra.figaro.algorithm
 
-import com.cra.figaro.language.Element
-import com.cra.figaro.language.Universe
+import com.cra.figaro.language._
 
 /**
  * Algorithms that compute max a posteriori (MAP) values of some elements, and marginalize over all other elements.
