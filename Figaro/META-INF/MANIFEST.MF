@@ -21,9 +21,8 @@ Bundle-Vendor: Charles River Analytics
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Require-Bundle: org.scala-lang.scala-library,
  org.scala-lang.scala-reflect,
- com.typesafe.akka.actor;bundle-version="2.3.3",
- com.typesafe.config;bundle-version="1.2.1",
- org.scalatest;bundle-version="2.1.6"
+ com.typesafe.config,
+ com.typesafe.akka.actor
 Import-Package: org.apache.commons.math3.distribution;version="3.3.0"
 
 
