@@ -61,7 +61,7 @@ object Restaurant {
   def main(args: Array[String]) {
     val alg = Importance(10000, waiting(numSteps - 1))
     alg.start()
-    println(alg.probability(waiting(numSteps - 1), (i: Int) => i > 4))
+    println(alg.probability(waiting(numSteps - 1))(_ > 4))
     alg.kill()
   }
 }
@@ -72,7 +72,7 @@ class RestaurantTest extends WordSpec with Matchers {
     "produce a probability = 0.465 +- 0.01" taggedAs (BookExample, NonDeterministic) in {
       val alg = Importance(10000, Restaurant.waiting(Restaurant.numSteps - 1))
       alg.start()
-      val prob = alg.probability(Restaurant.waiting(Restaurant.numSteps - 1), (i: Int) => i > 4)
+      val prob = alg.probability(Restaurant.waiting(Restaurant.numSteps - 1))(_ > 4)
       alg.kill()
 
       prob should be(0.465 +- 0.01)

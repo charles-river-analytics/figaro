@@ -257,7 +257,7 @@ class MHTest extends WordSpec with Matchers with PrivateMethodTester {
       try {
         mh.start()
         mh.stop()
-        mh.probability(f1, (b: Boolean) => b) should be(p1 / (p1 + p2) +- tolerance)
+        mh.probability(f1)(b => b) should be(p1 / (p1 + p2) +- tolerance)
       } finally {
         mh.kill()
       }
@@ -276,7 +276,7 @@ class MHTest extends WordSpec with Matchers with PrivateMethodTester {
         alg.stop()
         val p1 = 0.2 * 0.7
         val p2 = 0.8 * 0.4
-        alg.probability(elem1, (b: Boolean) => b) should be(p1 / (p1 + p2) +- tolerance)
+        alg.probability(elem1)(b => b) should be(p1 / (p1 + p2) +- tolerance)
       } finally {
         alg.kill()
       }
@@ -293,7 +293,7 @@ class MHTest extends WordSpec with Matchers with PrivateMethodTester {
       try {
         alg.start()
         alg.stop()
-        alg.probability(elem2, (d: Double) => 1.4 < d && d < 1.6) should be(1.0 +- tolerance)
+        alg.probability(elem2)(d => 1.4 < d && d < 1.6) should be(1.0 +- tolerance)
       } finally {
         alg.kill()
       }
@@ -361,7 +361,7 @@ class MHTest extends WordSpec with Matchers with PrivateMethodTester {
       try {
         mh.start()
         mh.stop()
-        mh.probability(f1, (b: Boolean) => b) should be(p1 / (p1 + p2) +- tolerance)
+        mh.probability(f1)(b => b) should be(p1 / (p1 + p2) +- tolerance)
       } finally {
         mh.kill()
       }

@@ -116,9 +116,9 @@ class PBPTest extends WordSpec with Matchers {
 
       val b = bp.distribution(ep).toList
       bp.probability(e2, (i: Int) => i == 0) should be(e2_0 +- tol)
-      bp.probability(e2, (i: Int) => i == 1) should be(e2_1 +- tol)
+      bp.probability(e2)(_ == 1) should be(e2_1 +- tol)
       bp.probability(e2, (i: Int) => i == 2) should be(e2_2 +- tol)
-      bp.probability(e2, (i: Int) => i == 3) should be(e2_3 +- tol)
+      bp.probability(e2)(_ == 3) should be(e2_3 +- tol)
     }
 
     "correctly retrieve the last messages to recompute sample densities" in {
@@ -270,7 +270,7 @@ class PBPTest extends WordSpec with Matchers {
           Universe.createNew()
           val algorithm = ParticleBeliefPropagation(1, 20, 100, 100, f)(u1)
           algorithm.start()
-          val result = algorithm.probability(f, (b: Boolean) => b)
+          val result = algorithm.probability(f)(b => b)
           algorithm.kill()
           update(result, NDTest.TTEST, "DifferentUniverse", 0.6, alpha)
         }

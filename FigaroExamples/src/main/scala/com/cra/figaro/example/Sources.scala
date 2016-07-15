@@ -77,7 +77,7 @@ object Sources {
     def peAlg(universe: Universe, evidence: List[NamedEvidence[_]]) = () => ProbEvidenceSampler.computeProbEvidence(100000, evidence)(universe)
     val alg = VariableElimination(List(ue1, ue2, ue3, ue4), peAlg _, sample1.fromSource)
     alg.start()
-    val result = alg.probability(sample1.fromSource, (s: Source) => s == source1)
+    val result = alg.probability(sample1.fromSource)(_ == source1)
     println("Probability of Source 1: " + result)
     alg.kill()
 

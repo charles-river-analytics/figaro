@@ -317,7 +317,7 @@ class VETest extends WordSpec with Matchers {
       val tolerance = 0.0000001
       val algorithm = VariableElimination(f)(u1)
       algorithm.start()
-      algorithm.probability(f, (b: Boolean) => b) should be(0.6 +- tolerance)
+      algorithm.probability(f)(b => b) should be(0.6 +- tolerance)
       algorithm.kill()
     }
 

@@ -102,15 +102,15 @@ class FairDiceTest extends WordSpec with Matchers {
     ve.stop()
     
     println("\nThe probabilities of seeing each side of d_1 are: ")
-    outcomes.foreach { o => println("\t" + ve.probability(d1, (i: Int) => i == o) + " -> " + o) }
+    outcomes.foreach { o => println("\t" + ve.probability(d1)(_ == o) + " -> " + o) }
     println("\nThe probabilities of seeing each side of d_2 are: ")
-    outcomes.foreach { o => println("\t" + ve.probability(d2, (i: Int) => i == o) + " -> " + o) }
+    outcomes.foreach { o => println("\t" + ve.probability(d2)(_ == o) + " -> " + o) }
     println("\nThe probabilities of seeing each side of d_3 are: ")
-    outcomes.foreach { o => println("\t" + ve.probability(d3, (i: Int) => i == o) + " -> " + o) }
+    outcomes.foreach { o => println("\t" + ve.probability(d3)(_ == o) + " -> " + o) }
 
-    (ve.probability(d1, (i: Int) => i == outcomes(0)) > .8) should be(true)
-    (ve.probability(d2, (i: Int) => i == outcomes(1)) > .8) should be(true)
-    (ve.probability(d3, (i: Int) => i == outcomes(5)) > .8) should be(true)
+    (ve.probability(d1)(_ == outcomes(0)) > .8) should be(true)
+    (ve.probability(d2)(_ == outcomes(1)) > .8) should be(true)
+    (ve.probability(d3)(_ == outcomes(5)) > .8) should be(true)
 
     ve.kill()
     algorithm.kill
