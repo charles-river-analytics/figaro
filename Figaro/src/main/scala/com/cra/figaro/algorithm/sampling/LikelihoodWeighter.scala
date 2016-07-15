@@ -40,6 +40,13 @@ class LikelihoodWeighter(universe: Universe, cache: Cache) {
   universe.register(dependencies)
 
   /**
+   * Clear the cache
+   */
+  def clearCache() = {
+    cache.clear
+  }
+
+  /**
    * Sample each element in the list of elements and compute their likelihood weight
    */
   def computeWeight(elementsToVisit: List[Element[_]]): Double = {

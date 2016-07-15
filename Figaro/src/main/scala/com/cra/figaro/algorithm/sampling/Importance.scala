@@ -46,6 +46,11 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
     numSamples = 0
   }
 
+  override def kill () {
+    super.kill()
+    lw.clearCache()
+  }
+
   /*
    * Produce one weighted sample of the given element. weightedSample takes into account conditions and constraints
    * on all elements in the Universe, including those that depend on this element.
