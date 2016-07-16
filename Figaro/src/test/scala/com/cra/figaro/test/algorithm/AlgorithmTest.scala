@@ -48,12 +48,12 @@ class AlgorithmTest extends WordSpec with Matchers {
       a.probability(c, true)
       a.stop()
       a.distribution(c)
-      a.expectation(c, (b: Boolean) => 1.0)
+      a.expectation(c)(b => 1.0)
       a.probability(c)(b => true)
       a.probability(c, true)
       a.resume()
       a.distribution(c)
-      a.expectation(c, (b: Boolean) => 1.0)
+      a.expectation(c)(b => 1.0)
       a.probability(c)(b => true)
       a.probability(c, true)
     }
@@ -129,7 +129,7 @@ class AlgorithmTest extends WordSpec with Matchers {
       val a = new SimpleAnytime(c)
       a.start()
       a.stop()
-      val x = a.expectation(c, (b: Boolean) => -1.0)
+      val x = a.expectation(c)(b => -1.0)
       a.expectation(c, (b: Boolean) => -1.0) should equal(x)
       a.kill()
     }
@@ -142,7 +142,7 @@ class AlgorithmTest extends WordSpec with Matchers {
       a.stop()
       a.resume()
       val x = a.expectation(c, (b: Boolean) => -1.0)
-      a.expectation(c, (b: Boolean) => -1.0) should be > (x)
+      a.expectation(c)(b => -1.0) should be > (x)
       a.kill()
     }
 

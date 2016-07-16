@@ -127,6 +127,18 @@ trait BaseProbQueryAlgorithm[U[_]]
   }
 
   /**
+    * Return an estimate of the expectation of the function under the marginal probability distribution
+    * of the target.
+    * Throws NotATargetException if called on a target that is not in the list of
+    * targets of the algorithm.
+    * Throws AlgorithmInactiveException if the algorithm is inactive.
+    */
+  def expectation[T](target: U[T])(function: T => Double, c: Any = DummyImplicit): Double = {
+    check(target)
+    doExpectation(target, function)
+  }
+
+  /**
    * Return the mean of the probability density function for the given continuous element.
    */
   def mean(target: U[Double]): Double = {
