@@ -49,6 +49,7 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
   override def kill () {
     super.kill()
     lw.clearCache()
+    lw.deregisterDependencies()
   }
 
   /*

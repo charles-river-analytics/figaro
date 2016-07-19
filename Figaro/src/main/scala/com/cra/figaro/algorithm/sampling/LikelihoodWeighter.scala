@@ -46,6 +46,13 @@ class LikelihoodWeighter(universe: Universe, cache: Cache) {
     cache.clear
   }
 
+  /** 
+   * Deregister the map of dependencies between elements
+   */  
+   def deregisterDependencies() = {
+    universe.deregister(dependencies)
+  }
+
   /**
    * Sample each element in the list of elements and compute their likelihood weight
    */
