@@ -80,6 +80,7 @@ class GibbsTest extends WordSpec with Matchers {
     }
 
     "with a constraint on a Chain produce the correct result for the parent" in {
+      Universe.createNew
       val f = Flip(0.3)
       val c = If(f, Flip(0.8), Constant(false))
       c.addConstraint(b => if (b) 2.0 else 1.0)
@@ -88,6 +89,7 @@ class GibbsTest extends WordSpec with Matchers {
     }
 
     "with a constraint on a Chain result correctly constrain the Chain but not the parent" in {
+      Universe.createNew
       val f = Flip(0.3)
       val r1 = Flip(0.8)
       r1.addConstraint(b => if (b) 2.0 else 1.0)
@@ -99,6 +101,7 @@ class GibbsTest extends WordSpec with Matchers {
     }
 
     "with an element used multiple times use the same value each time" in {
+      Universe.createNew
       val f = Flip(0.3)
       val e = f === f
       test[Boolean](e, identity, 1.0)
@@ -151,6 +154,7 @@ class GibbsTest extends WordSpec with Matchers {
 
   "A default block sampler" should {
     "produce sub-factors on initialization" in {
+      Universe.createNew
       val v1 = new Variable(ValueSet.withoutStar(Set(0, 1, 2, 3)))
       val v2 = new Variable(ValueSet.withoutStar(Set(0, 1)))
       val semiring = LogSumProductSemiring()
@@ -171,6 +175,7 @@ class GibbsTest extends WordSpec with Matchers {
     }
 
     "normalize and make un-logarithmic a factor" in {
+      Universe.createNew
       val v1 = new Variable(ValueSet.withoutStar(Set(0, 1)))
       val v2 = new Variable(ValueSet.withoutStar(Set(0, 1)))
       val semiring = LogSumProductSemiring()
@@ -188,6 +193,7 @@ class GibbsTest extends WordSpec with Matchers {
     }
 
     "compute a sampling factor" in {
+      Universe.createNew
       val v1 = new Variable(ValueSet.withoutStar(Set(0, 1)))
       val v2 = new Variable(ValueSet.withoutStar(Set(0, 1)))
       val v3 = new Variable(ValueSet.withoutStar(Set(0, 1)))
@@ -211,6 +217,7 @@ class GibbsTest extends WordSpec with Matchers {
     }
 
     "cache recent sampling factors" in {
+      Universe.createNew
       val v1 = new Variable(ValueSet.withoutStar(Set(0, 1)))
       val v2 = new Variable(ValueSet.withoutStar(Set(0, 1)))
       val semiring = LogSumProductSemiring()
