@@ -37,13 +37,13 @@ object JointDistribution {
     val imp = Importance(10000, totalSales)
     imp.start()
     println("Probability first sales will be less than 100 = " +
-      ve.probability(sales(0), (i: Int) => i < 100))
+      ve.probability(sales(0))(_ < 100))
     println("Probability second sales will be less than 100 = " +
-      ve.probability(sales(1), (i: Int) => i < 100))
+      ve.probability(sales(1))(_ < 100))
     println("Probability both sales will be less than 100 = " +
-      ve.probability(salesPair, (pair: (Int, Int)) => pair._1 < 100 && pair._2 < 100))
+      ve.probability(salesPair)(pair => pair._1 < 100 && pair._2 < 100))
     println("Probability total sales are less than 2000 = " +
-      imp.probability(totalSales, (i: Int) => i < 2000))
+      imp.probability(totalSales)(_ < 2000))
     println("Mean individual sales = " +
       ve.expectation(sales(0), (i: Int) => i.toDouble))
     println("Mean total sales = " +
@@ -61,9 +61,9 @@ class JointDistributionTest extends WordSpec with Matchers {
   val imp = Importance(10000, JointDistribution.totalSales)
   imp.start()
   val firstSales = ve.probability(JointDistribution.sales(0), (i: Int) => i < 100)
-  val secondSales = ve.probability(JointDistribution.sales(1), (i: Int) => i < 100)
+  val secondSales = ve.probability(JointDistribution.sales(1))(_ < 100)
   val bothSales = ve.probability(salesPair, (pair: (Int, Int)) => pair._1 < 100 && pair._2 < 100)
-  val totalSales = imp.probability(JointDistribution.totalSales, (i: Int) => i < 2000)
+  val totalSales = imp.probability(JointDistribution.totalSales)(_ < 2000)
   val meanIndSales = ve.expectation(JointDistribution.sales(0), (i: Int) => i.toDouble)
   val meanTotSales = imp.expectation(JointDistribution.totalSales, (i: Int) => i.toDouble)
   ve.kill()

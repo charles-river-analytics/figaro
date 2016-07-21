@@ -39,7 +39,7 @@ class FlatTest extends WordSpec with Matchers {
         })        
         val cc = new ComponentCollection
         val problem = new Problem(cc, List(r1))
-        val fs = DecompositionStrategy.recursiveFlattenStrategy(problem, new ConstantStrategy(variableElimination), defaultRangeSizer, Lower, false)
+        val fs = DecompositionStrategy.recursiveFlattenStrategy(problem, new ConstantStrategy(marginalVariableElimination), defaultRangeSizer, Lower, false)
         fs.backwardChain(problem.components , Set())
         val factors =problem.components.flatMap(_.nonConstraintFactors) 
         factors.foreach(f => println(f.toReadableString))

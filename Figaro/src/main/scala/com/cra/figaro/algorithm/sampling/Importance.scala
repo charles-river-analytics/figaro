@@ -23,6 +23,7 @@ import com.cra.figaro.algorithm.factored.ParticleGenerator
 import com.cra.figaro.algorithm.sampling.parallel.ParImportance
 import com.cra.figaro.algorithm.sampling.LikelihoodWeighter
 import com.cra.figaro.library.cache.PermanentCache
+import com.cra.figaro.library.collection.Container
 
 /**
  * Importance samplers.
@@ -130,8 +131,8 @@ object Importance {
   /**
    * Use IS to compute the probability that the given element satisfies the given predicate.
    */
-  def probability[T](target: Element[T], predicate: T => Boolean): Double = {
-    val alg = Importance(10000, target)
+  def probability[T](target: Element[T], predicate: T => Boolean)(implicit universe: Universe): Double = {
+    val alg = Importance(10000, target)(universe)
     alg.start()
     val result = alg.probability(target, predicate)
     alg.kill()
@@ -141,11 +142,24 @@ object Importance {
   /**
    * Use IS to compute the probability that the given element has the given value.
    */
-  def probability[T](target: Element[T], value: T): Double =
-    probability(target, (t: T) => t == value)
+  def probability[T](target: Element[T], value: T)(implicit universe: Universe): Double =
+    probability(target, (t: T) => t == value)(universe)
+
+    /**
+     * Use IS to sample the joint posterior distribution of several variables
+     */
+  def sampleJointPosterior(targets: Element[_]*)(implicit universe: Universe): Stream[List[Any]] = {
+    val jointElement = Container(targets: _*).foldLeft(List[Any]())((l: List[Any], i: Any) => l :+ i)
+    val alg = Importance(10000, jointElement)(universe)
+    alg.start()
+    val posterior = alg.sampleFromPosterior(jointElement)
+    alg.kill()
+    posterior
+  }
 
   /**
    * The parallel implementation of IS
    */
   def par = ParImportance
+
 }

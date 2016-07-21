@@ -344,7 +344,7 @@ class SparseFactorTest extends WordSpec with Matchers with PrivateMethodTester {
         f.set(List(0, 0, 1), 0.3)
         f.set(List(1, 0, 1), 0.4)
         f.set(List(2, 0, 1), 0.5)
-        val g = f.marginalizeTo(SumProductSemiring(), v3)
+        val g = f.marginalizeTo(v3)
         g.variables should equal(List(v3))
         val p1 = 0.0 + 0.1 + 0.2
         val p2 = 0.3 + 0.4 + 0.5
@@ -379,7 +379,7 @@ class SparseFactorTest extends WordSpec with Matchers with PrivateMethodTester {
       f.set(List(0, 1, 1), 0.15)
       f.set(List(1, 1, 1), 0.2)
       f.set(List(2, 1, 1), 0.25)
-      val g = f.marginalizeTo(SumProductSemiring(), v1, v3)
+      val g = f.marginalizeTo(v1, v3)
       g.variables should equal(List(v1, v3))
       g.get(List(0, 0)) should be(0.0 +- 0.000001)
       g.get(List(1, 0)) should be(0.1 +- 0.000001)

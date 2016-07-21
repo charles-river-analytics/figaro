@@ -24,6 +24,7 @@ import JSci.maths.SpecialMath.gamma
 import org.apache.commons.math3.distribution.MultivariateNormalDistribution
 import com.cra.figaro.test.tags.NonDeterministic
 import com.cra.figaro.ndtest._
+import scala.collection.mutable.ArrayBuffer
 
 class ContinuousTest extends WordSpec with Matchers {
 
@@ -50,7 +51,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val elem = Uniform(0.0, 2.0)
           val alg = Importance(20000, elem)
           alg.start()
-          val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+          val result = alg.probability(elem)(d => 0.7 <= d && d < 1.2)
           alg.stop()
           alg.kill
           update(result, NDTest.TTEST, "AtomicUniformTestResults", target, alpha)
@@ -68,7 +69,7 @@ class ContinuousTest extends WordSpec with Matchers {
           val elem = Uniform(0.0, 2.0)
           val alg = MetropolisHastings(20000, ProposalScheme.default, elem)
           alg.start()
-          val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+          val result = alg.probability(elem)(d => 0.7 <= d && d < 1.2)
           alg.stop()
           alg.kill
           update(result, NDTest.TTEST, "AtomicUniformTestResults", target, alpha)
@@ -109,7 +110,7 @@ class ContinuousTest extends WordSpec with Matchers {
           alg.start()
           // p(1.25 < x < 1.5 | lower = l) = 0.25 / (2-l)
           // Expectation of l = \int_{0}^{1} 1 / (2-l) dl = 0.25(-ln(2-1) + ln(2-0)) = 0.1733
-          val result = alg.probability(uniformComplex, (d: Double) => 1.25 <= d && d < 1.5)
+          val result = alg.probability(uniformComplex)(d => 1.25 <= d && d < 1.5)
           alg.stop()
           alg.kill
           update(result, NDTest.TTEST, "CompoundUniformTestResults", target, alpha)
@@ -137,7 +138,7 @@ class ContinuousTest extends WordSpec with Matchers {
           alg.start()
           val dist = new NormalDistribution(1.0, 2.0)
           val target = dist.cumulative(1.2) - dist.cumulative(0.7)
-          val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+          val result = alg.probability(elem)(d => 0.7 <= d && d < 1.2)
           alg.stop()
           alg.kill
           update(result - target, NDTest.TTEST, "AtomicNormalTestResults", 0.0, alpha)
@@ -156,7 +157,7 @@ class ContinuousTest extends WordSpec with Matchers {
           alg.start()
           val dist = new NormalDistribution(1.0, 2.0)
           val target = dist.cumulative(1.2) - dist.cumulative(0.7)
-          val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+          val result = alg.probability(elem)(d => 0.7 <= d && d < 1.2)
           alg.stop()
           alg.kill
           update(result - target, NDTest.TTEST, "AtomicNormalTestResults", 0.0, alpha)
@@ -194,7 +195,7 @@ class ContinuousTest extends WordSpec with Matchers {
             val dist2 = new NormalDistribution(1.0, 2.0)
             def getProb(dist: ProbabilityDistribution) = dist.cumulative(1.2) - dist.cumulative(0.7)
             val target = 0.5 * getProb(dist1) + 0.5 * getProb(dist2)
-            val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+            val result = alg.probability(elem)(d => 0.7 <= d && d < 1.2)
             alg.stop()
             alg.kill
             update(result - target, NDTest.TTEST, "CompoundNormalMeanResultsDiff", 0.0, alpha)
@@ -225,7 +226,7 @@ class ContinuousTest extends WordSpec with Matchers {
             val dist2 = new NormalDistribution(2.0, 3.0)
             def getProb(dist: ProbabilityDistribution) = dist.cumulative(1.2) - dist.cumulative(0.7)
             val targetProb = 0.5 * getProb(dist1) + 0.5 * getProb(dist2)
-            val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+            val result = alg.probability(elem)(d => 0.7 <= d && d < 1.2)
             alg.stop()
             alg.kill
             update(result, NDTest.TTEST, "CompoundNormalMeanTestResults", targetProb, alpha)
@@ -257,7 +258,7 @@ class ContinuousTest extends WordSpec with Matchers {
             val dist4 = new NormalDistribution(1.0, 3.0)
             def getProb(dist: ProbabilityDistribution) = dist.cumulative(1.2) - dist.cumulative(0.7)
             val target = 0.25 * getProb(dist1) + 0.25 * getProb(dist2) + 0.25 * getProb(dist3) + 0.25 * getProb(dist4)
-            val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+            val result = alg.probability(elem)(d => 0.7 <= d && d < 1.2)
             alg.stop()
             alg.kill
             update(result - target, NDTest.TTEST, "CompoundNormalTestResults", 0.0, alpha)
@@ -428,6 +429,58 @@ class ContinuousTest extends WordSpec with Matchers {
     }
   }
 
+  "A KernelDensity" should {
+    "have the correct density" in {
+      Universe.createNew()
+      
+      val bandwidth = 2.0
+      val data = Seq(1.0, 2.0, 3.0)
+      val dataDistrs = data.map(d => new NormalDistribution(d, bandwidth))
+      
+      val elem = KernelDensity(data, bandwidth)
+      val result = elem.density(2.5)
+      val target = dataDistrs.map(dist => dist.probability(2.5)).sum / 3.0
+      result should be(target +- 1e-6)
+    }
+
+    "produce samples centered at an input point" taggedAs (NonDeterministic) in {
+      val ndtest = new NDTest {
+        override def oneTest = {
+          Universe.createNew()
+          // this gives get three disjoint normals, simplifying testing
+          val data = Seq(1.0, 100, 200)
+          // choosing a weird bandwidth to make sure it's actually getting used
+          val elem = KernelDensity(data, 2.3)
+
+          val deviations = ArrayBuffer[Double]()
+          val selectedIndices = ArrayBuffer[Int]()
+          for (i <- 0 to 1000) {
+            val rand = elem.generateRandomness()
+            val value = elem.generateValue(rand)
+            val selectedInfo = data.zipWithIndex.map(v => (Math.pow(v._1 - value, 2), v._2)).sortBy(v => v._1).head
+            deviations += selectedInfo._1
+            selectedIndices += selectedInfo._2
+          }
+          val sampleStdDev = deviations.sum / (deviations.length - 1)
+          // selected indices should be uniform
+          val indDistr = selectedIndices.groupBy(d=>d).mapValues(s => 1.0 * s.length / selectedIndices.length)
+
+          update(sampleStdDev, NDTest.TTEST, "KernelDensityTestResultsStdDev", 2.3, alpha)
+          update(indDistr(0), NDTest.TTEST, "KernelDensityTestResultsSampleDistr1", 0.33, alpha)
+          update(indDistr(1), NDTest.TTEST, "KernelDensityTestResultsSampleDistr2", 0.33, alpha)
+          update(indDistr(2), NDTest.TTEST, "KernelDensityTestResultsSampleDistr3", 0.33, alpha)
+        }
+      }
+
+      ndtest.run(10)
+    }
+
+    "convert to the correct string" in {
+      Universe.createNew()
+      KernelDensity(Seq(1, 2, 3), 2.0).toString should equal("KernelDensity(bandwidth=" + 2.0 + ")")
+    }
+  }  
+  
   "An AtomicMultivariateNormal" should {
     val means = List(1.0, 2.0)
     val covariances = List(List(.25, .15), List(.15, .25))
@@ -523,7 +576,7 @@ class ContinuousTest extends WordSpec with Matchers {
           alg.start()
           val dist = new ExponentialDistribution(2.0)
           val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
-          val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+          val result = alg.probability(elem)(d => 0.7 <= d && d < 1.2)
           alg.stop()
           alg.kill
           update(result, NDTest.TTEST, "AtomicExponentialTestResults", targetProb, alpha)
@@ -542,7 +595,7 @@ class ContinuousTest extends WordSpec with Matchers {
           alg.start()
           val dist = new ExponentialDistribution(2.0)
           val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
-          val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+          val result = alg.probability(elem)(d => 0.7 <= d && d < 1.2)
           alg.stop()
           alg.kill
           update(result, NDTest.TTEST, "AtomicExponentialTestResults", targetProb, alpha)
@@ -580,7 +633,7 @@ class ContinuousTest extends WordSpec with Matchers {
             val dist2 = new ExponentialDistribution(2.0)
             def getProb(dist: ProbabilityDistribution) = dist.cumulative(1.2) - dist.cumulative(0.7)
             val targetProb = 0.5 * getProb(dist1) + 0.5 * getProb(dist2)
-            val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+            val result = alg.probability(elem)(d => 0.7 <= d && d < 1.2)
             alg.stop()
             alg.kill
             update(result, NDTest.TTEST, "CompoundExponentialTestResults", targetProb, alpha)
@@ -666,7 +719,7 @@ class ContinuousTest extends WordSpec with Matchers {
             alg.start()
             val dist = new GammaDistribution(k)
             val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
-            val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+            val result = alg.probability(elem)(d => 0.7 <= d && d < 1.2)
             alg.stop()
             alg.kill
             update(result, NDTest.TTEST, "AtomicGammaTestResults", targetProb, alpha)
@@ -686,7 +739,7 @@ class ContinuousTest extends WordSpec with Matchers {
             alg.start()
             val dist = new GammaDistribution(k)
             val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
-            val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+            val result = alg.probability(elem)(d => 0.7 <= d && d < 1.2)
             alg.stop()
             alg.kill
             update(result, NDTest.TTEST, "AtomicGammaTestResults", targetProb, alpha)
@@ -722,7 +775,7 @@ class ContinuousTest extends WordSpec with Matchers {
             // Using the fact that for Gamma(1,theta), the CDF is given by F(x) = 1 - exp(-x/theta)
             def cdf(x: Double) = 1 - exp(-x / theta)
             val targetProb = cdf(1.2) - cdf(0.7)
-            val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+            val result = alg.probability(elem)(d => 0.7 <= d && d < 1.2)
             alg.stop()
             alg.kill
             update(result, NDTest.TTEST, "AtomicGammaTestResults", targetProb, alpha)
@@ -743,7 +796,7 @@ class ContinuousTest extends WordSpec with Matchers {
             // Using the fact that for Gamma(1,theta), the CDF is given by F(x) = 1 - exp(-x/theta)
             def cdf(x: Double) = 1 - exp(-x / theta)
             val targetProb = cdf(1.2) - cdf(0.7)
-            val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+            val result = alg.probability(elem)(d => 0.7 <= d && d < 1.2)
             alg.stop()
             alg.kill
             update(result, NDTest.TTEST, "AtomicGammaTestResults", targetProb, alpha)
@@ -780,7 +833,7 @@ class ContinuousTest extends WordSpec with Matchers {
             alg.start()
             val dist = new GammaDistribution(k)
             val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
-            val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+            val result = alg.probability(elem)(d => 0.7 <= d && d < 1.2)
             alg.stop()
             alg.kill
             update(result, NDTest.TTEST, "AtomicGammaTestResults", targetProb, alpha)
@@ -800,7 +853,7 @@ class ContinuousTest extends WordSpec with Matchers {
             alg.start()
             val dist = new GammaDistribution(k)
             val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
-            val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+            val result = alg.probability(elem)(d => 0.7 <= d && d < 1.2)
             alg.stop()
             alg.kill
             update(result, NDTest.TTEST, "AtomicGammaTestResults", targetProb, alpha)
@@ -822,7 +875,7 @@ class ContinuousTest extends WordSpec with Matchers {
             alg.start()
             val dist = new GammaDistribution(k)
             val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
-            val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+            val result = alg.probability(elem)(d => 0.7 <= d && d < 1.2)
             alg.stop()
             alg.kill
             update(result, NDTest.TTEST, "AtomicGammaTestResults", targetProb, alpha)
@@ -842,7 +895,7 @@ class ContinuousTest extends WordSpec with Matchers {
             alg.start()
             val dist = new GammaDistribution(k)
             val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
-            val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+            val result = alg.probability(elem)(d => 0.7 <= d && d < 1.2)
             alg.stop()
             alg.kill
             update(result, NDTest.TTEST, "AtomicGammaTestResults", targetProb, alpha)
@@ -867,7 +920,7 @@ class ContinuousTest extends WordSpec with Matchers {
             val dist2 = new GammaDistribution(3.0)
             def getProb(dist: ProbabilityDistribution) = dist.cumulative(1.2) - dist.cumulative(0.7)
             val targetProb = 0.5 * getProb(dist1) + 0.5 * getProb(dist2)
-            val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+            val result = alg.probability(elem)(d => 0.7 <= d && d < 1.2)
             alg.stop()
             alg.kill
             update(result, NDTest.TTEST, "CompoundGammaKTestResults", targetProb, alpha)
@@ -897,7 +950,7 @@ class ContinuousTest extends WordSpec with Matchers {
             val dist2 = new GammaDistribution(1.0)
             def getProb(dist: ProbabilityDistribution) = dist.cumulative(1.2) - dist.cumulative(0.7)
             val targetProb = 0.5 * getProb(dist1) + 0.5 * getProb(dist2)
-            val result = alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2)
+            val result = alg.probability(elem)(d => 0.7 <= d && d < 1.2)
             alg.stop()
             alg.kill
             update(result, NDTest.TTEST, "CompoundGammaTestResults", targetProb, alpha)
@@ -990,7 +1043,7 @@ class ContinuousTest extends WordSpec with Matchers {
           alg.start()
           val dist = new BetaDistribution(a, b)
           val targetProb = dist.cumulative(0.3) - dist.cumulative(0.2)
-          val result = alg.probability(elem, (d: Double) => 0.2 <= d && d < 0.3)
+          val result = alg.probability(elem)(d => 0.2 <= d && d < 0.3)
           alg.stop()
           alg.kill
           update(result, NDTest.TTEST, "AtomicBetaTestResults", targetProb, alpha)
@@ -1011,7 +1064,7 @@ class ContinuousTest extends WordSpec with Matchers {
           alg.start()
           val dist = new BetaDistribution(a, b)
           val targetProb = dist.cumulative(0.3) - dist.cumulative(0.2)
-          val result = alg.probability(elem, (d: Double) => 0.2 <= d && d < 0.3)
+          val result = alg.probability(elem)(d => 0.2 <= d && d < 0.3)
           alg.stop()
           alg.kill
           update(result, NDTest.TTEST, "AtomicBetaTestResults", targetProb, alpha)
@@ -1052,7 +1105,7 @@ class ContinuousTest extends WordSpec with Matchers {
             val dist4 = new BetaDistribution(1.0, 3.0)
             def getProb(dist: ProbabilityDistribution) = dist.cumulative(0.3) - dist.cumulative(0.2)
             val targetProb = 0.25 * getProb(dist1) + 0.25 * getProb(dist2) + 0.25 * getProb(dist3) + 0.25 * getProb(dist4)
-            val result = alg.probability(elem, (d: Double) => 0.2 <= d && d < 0.3)
+            val result = alg.probability(elem)(d => 0.2 <= d && d < 0.3)
             alg.stop()
             alg.kill
             update(result, NDTest.TTEST, "CompoundBetaTestResults", targetProb, alpha)
@@ -1148,7 +1201,7 @@ class ContinuousTest extends WordSpec with Matchers {
             val r = ds(0) / (ds(0) + ds(1))
             0.2 <= r && r < 0.3
           }
-          val result = alg.probability(elem, (ds: Array[Double]) => check(ds))
+          val result = alg.probability(elem)(ds => check(ds))
           alg.stop()
           alg.kill
           update(result, NDTest.TTEST, "AtomicDirichletTestResults", targetProb, alpha)
@@ -1173,7 +1226,7 @@ class ContinuousTest extends WordSpec with Matchers {
             val r = ds(0) / (ds(0) + ds(1))
             0.2 <= r && r < 0.3
           }
-          val result = alg.probability(elem, (ds: Array[Double]) => check(ds))
+          val result = alg.probability(elem)(ds => check(ds))
           alg.stop()
           alg.kill
           update(result, NDTest.TTEST, "AtomicDirichletTestResults", targetProb, alpha)
@@ -1223,7 +1276,7 @@ class ContinuousTest extends WordSpec with Matchers {
               val r = ds(0) / (ds(0) + ds(1))
               0.2 <= r && r < 0.3
             }
-            val result = alg.probability(elem, (ds: Array[Double]) => check(ds))
+            val result = alg.probability(elem)(ds => check(ds))
             alg.stop()
             alg.kill
             update(result, NDTest.TTEST, "CompoundDirichletTestResults", targetProb, alpha)

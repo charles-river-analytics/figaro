@@ -24,32 +24,41 @@ import com.cra.figaro.algorithm.factored.gibbs.ProbabilisticGibbs
 import com.cra.figaro.algorithm.factored.gibbs.Gibbs
 import com.cra.figaro.algorithm.factored.gibbs.WalkSAT
 
-private[figaro] class GibbsSolver(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], _factors: List[Factor[Double]],
-    val numSamples: Int, val burnIn: Int, val interval: Int, val blockToSampler: Gibbs.BlockSamplerCreator)
-extends BaseUnweightedSampler(null) with ProbabilisticGibbs with OneTime {
-  override def initialize() = {
-    super.initialize
+class GibbsSolver(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], _factors: List[Factor[Double]],
+   _numSamples: Int,  _burnIn: Int,  _interval: Int, val blockToSampler: Gibbs.BlockSamplerCreator)
+  extends BaseUnweightedSampler(null) with ProbabilisticGibbs with OneTime {
+
+  def numSamples() = _numSamples
+  def burnIn() = _burnIn
+  def interval() = _interval 
+  
+  def initializeBlocks() = {
     factors = _factors.map(_.mapTo(math.log, semiring))
     variables = factors.flatMap(_.variables).toSet
     val blocks = createBlocks()
     // Create block samplers
     blockSamplers = blocks.map(block => blockToSampler((block, factors.filter(_.variables.exists(block.contains(_))))))
+  }
+
+  override def initialize() = {
+    super.initialize
+    if (blockSamplers == null) initializeBlocks()
     // Initialize the samples to a valid state and take the burn-in samples
     val initialSample = WalkSAT(factors, variables, semiring, chainMapper)
     variables.foreach(v => currentSamples(v) = initialSample(v))
-    for(_ <- 1 to burnIn) sampleAllBlocks()
+    for (_ <- 1 to burnIn) sampleAllBlocks()
   }
 
-  def chainMapper(chain: Chain[_,_]): Set[Variable[_]] = problem.collection(chain).actualSubproblemVariables.values.toSet
-  
+  def chainMapper(chain: Chain[_, _]): Set[Variable[_]] = problem.collection(chain).actualSubproblemVariables.values.toSet
+
   def run = {}
 
   def go(): List[Factor[Double]] = {
     initialize()
     val targetVars = toPreserve.toList
     val result = new SparseFactor[Double](targetVars, List())
-    for(_ <- 0 until numSamples) {
-      for(_ <- 0 until interval) {
+    for (_ <- 0 until numSamples) {
+      for (_ <- 0 until interval) {
         sampleAllBlocks()
       }
       val factorIndex = targetVars.map(currentSamples(_))
@@ -74,10 +83,9 @@ extends BaseUnweightedSampler(null) with ProbabilisticGibbs with OneTime {
     // Start with the purely stochastic variables with no parents
     val starterVariables = variables.filter(variableParents(_).isEmpty)
 
-    @tailrec
-    // Recursively add deterministic children to the block
+    @tailrec // Recursively add deterministic children to the block
     def expandBlock(expand: Set[Variable[_]], block: Set[Variable[_]] = Set()): Gibbs.Block = {
-      if(expand.isEmpty) block.toList
+      if (expand.isEmpty) block.toList
       else {
         val expandNext = expand.flatMap(variableChildren(_))
         expandBlock(expandNext, block ++ expand)

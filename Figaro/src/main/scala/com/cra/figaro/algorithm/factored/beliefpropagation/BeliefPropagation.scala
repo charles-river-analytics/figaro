@@ -55,8 +55,18 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
 
   /**
    * Since BP uses division to compute messages, the semiring has to have a division function defined
+   * and must be log convertable.
+   * Note that BP operates in log space and any semiring must be log convertible
+   * If you define a non-log semiring, it will automatically convert, and convert it back to normal space at the end
+   * If you define a log semiring, it won't convert to log or convert from log.
+   * In other words, it outputs the answer in the space specified by the semiring
    */
-  override val semiring: DivideableSemiRing[T]
+  override val semiring: LogConvertibleSemiRing[T]
+
+  /**
+   * Returns the log space version of the semiring (or the semiring if already in log space)
+   */
+  protected def logSpaceSemiring(): LogConvertibleSemiRing[T] = if (semiring.isLog) semiring else semiring.convert
 
   /**
    * Elements towards which queries are directed. By default, these are the target elements.
@@ -94,11 +104,11 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
    * messages from all other Nodes (except the destination node), 
    * marginalized over all variables except the variable:
    */
-  private def getNewMessageFactorToVar(fn: FactorNode, vn: VariableNode) = {
+  protected def getNewMessageFactorToVar(fn: FactorNode, vn: VariableNode) = {
     val vnFactor = factorGraph.getLastMessage(vn, fn)
 
-    val total = beliefMap(fn).combination(vnFactor, semiring.divide)
-    total.marginalizeTo(semiring, vn.variable)
+    val total = beliefMap(fn).combination(vnFactor, logSpaceSemiring().divide)
+    total.marginalizeTo(vn.variable)
   }
 
   /*
@@ -106,10 +116,10 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
    * all other neighboring factor Nodes (except the recipient; alternatively one can say the
    * recipient sends the message "1"):
    */
-  private def getNewMessageVarToFactor(vn: VariableNode, fn: FactorNode) = {
+  protected def getNewMessageVarToFactor(vn: VariableNode, fn: FactorNode) = {
     val fnFactor = factorGraph.getLastMessage(fn, vn)
 
-    val total = beliefMap(vn).combination(fnFactor, semiring.divide)
+    val total = beliefMap(vn).combination(fnFactor, logSpaceSemiring().divide)
     total
   }
 
@@ -121,7 +131,7 @@ trait BeliefPropagation[T] extends FactoredAlgorithm[T] {
 
     if (messageList.isEmpty) {
       source match {
-        case fn: FactorNode => factorGraph.getFactorForNode(fn)//factorGraph.uniformFactor(fn.variables.toList)
+        case fn: FactorNode => factorGraph.getFactorForNode(fn) //factorGraph.uniformFactor(fn.variables.toList)
         case vn: VariableNode => factorGraph.uniformFactor(List(vn.variable))
       }
     } else {
@@ -184,9 +194,9 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
    *  Normalize a factor.
    */
   def normalize(factor: Factor[Double]): Factor[Double] = {
-    val z = semiring.sumMany(factor.contents.values)
+    val z = logSpaceSemiring().sumMany(factor.contents.values)
     // Since we're in log space, d - z = log(exp(d)/exp(z))
-    factor.mapTo((d: Double) => if (z != semiring.zero) d - z else semiring.zero)
+    factor.mapTo((d: Double) => if (z != logSpaceSemiring().zero) d - z else logSpaceSemiring().zero)
   }
 
   /*
@@ -202,22 +212,46 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
    * for all elements in the universe.
    */
   def getFactors(neededElements: List[Element[_]], targetElements: List[Element[_]], upperBounds: Boolean = false): List[Factor[Double]] = {
-
-    //val thisUniverseFactors = (neededElements flatMap (BoundedProbFactor.make(_, upperBounds))).filterNot(_.isEmpty)
     val thisUniverseFactors = (neededElements flatMap (Factory.makeFactorsForElement(_, upperBounds, true))).filterNot(_.isEmpty)
     val dependentUniverseFactors =
       for { (dependentUniverse, evidence) <- dependentUniverses } yield Factory.makeDependentFactor(Variable.cc, universe, dependentUniverse, dependentAlgorithm(dependentUniverse, evidence))
     val factors = dependentUniverseFactors ::: thisUniverseFactors
-    // To prevent underflow, we do all computation in log space
-    factors.map(makeLogarithmic(_))
+    // To prevent underflow, we do all computation in log space    
+    convertFactors(factors)
+  }
+
+  /*
+   * Convert factors to log space if necessary
+   */
+  protected def convertFactors(factors: List[Factor[Double]]) = {
+    if (factors.size == 0) {
+      factors
+    } else {
+      if (factors.head.semiring == semiring && semiring.isLog == false) {
+        // semiring in factors matches semiring for BP, and not in log space so need to convert
+        factors.map(makeLogarithmic(_))
+      } else if (factors.head.semiring == semiring && semiring.isLog == true) {
+        // semiring in factors matches semiring for BP, and already in log space so no need to convert
+        factors
+      } else if (factors.head.semiring == semiring.convert() && semiring.isLog == false) {
+        // semiring in factors matches the converted semiring, and not in log space. But the factors are already in log space so no need to convert
+        factors
+      } else if (factors.head.semiring == semiring.convert() && semiring.isLog == true) {
+        // semiring in factors matches the converted semiring, and in log space. Need to convert
+        factors.map(makeLogarithmic(_))
+      } else {
+        // Incompatible case. This might cause a problem if they are not converted eventually
+        factors.map(makeLogarithmic(_))
+      }
+    }
   }
 
   private[figaro] def makeLogarithmic(factor: Factor[Double]): Factor[Double] = {
-    factor.mapTo((d: Double) => Math.log(d), LogSumProductSemiring())
+    factor.mapTo((d: Double) => Math.log(d), logSpaceSemiring())
   }
 
   private[figaro] def unmakeLogarithmic(factor: Factor[Double]): Factor[Double] = {
-    factor.mapTo((d: Double) => Math.exp(d), SumProductSemiring())
+    factor.mapTo((d: Double) => Math.exp(d), logSpaceSemiring().convert)
   }
 
   /**
@@ -259,7 +293,11 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
 
     val variable = factor.variables(0)
     val ff = normalize(factor)
-    ff.getIndices.filter(f => variable.range(f.head).isRegular).map(f => (Math.exp(ff.get(f)), variable.range(f.head).value)).toList
+    val inOriginalSpace = semiring.isLog match {
+      case true => ff
+      case false => unmakeLogarithmic(ff)
+    }
+    inOriginalSpace.getIndices.filter(f => variable.range(f.head).isRegular).map(f => (inOriginalSpace.get(f), variable.range(f.head).value)).toList
   }
 
   /**
@@ -275,7 +313,7 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
  * Trait for One Time BP algorithms.
  */
 trait OneTimeProbabilisticBeliefPropagation extends ProbabilisticBeliefPropagation with OneTime {
-  val iterations: Int
+  def iterations: Int
   def run() = {
     if (debug) {
       val varNodes = factorGraph.getNodes.filter(_.isInstanceOf[VariableNode])
@@ -328,7 +366,7 @@ abstract class ProbQueryBeliefPropagation(override val universe: Universe, targe
 
   val queryTargets = targetElements
 
-  val semiring = LogSumProductSemiring()
+  val semiring = SumProductSemiring()
 
   var neededElements: List[Element[_]] = _
   var needsBounds: Boolean = _
@@ -345,7 +383,7 @@ abstract class ProbQueryBeliefPropagation(override val universe: Universe, targe
       getFactors(neededElements, targetElements)
     }
 
-    factorGraph = new BasicFactorGraph(factors, semiring): FactorGraph[Double]
+    factorGraph = new BasicFactorGraph(factors, logSpaceSemiring()): FactorGraph[Double]
   }
 
   override def initialize() = {
