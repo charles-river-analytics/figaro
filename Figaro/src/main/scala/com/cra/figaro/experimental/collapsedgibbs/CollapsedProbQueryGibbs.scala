@@ -123,11 +123,9 @@ trait CollapsedProbabilisticGibbs extends ProbabilisticGibbs {
    * Source paper is somewhat ambiguous on whether this should be added or net. 
    */  
   def graphTerm[T](var1: Variable[T]):Double = {
-    val updatedGraph = globalGraph.eliminate(var1)
-    val graphTerm = (variables.filter(x => x != var1).toList.map(varT => 
-    	updatedGraph.info(varT).neighbors.toList.length - 1 ).sum/2
-      - variables.filter(x => x != var1).toList.map(varT => 
-      	(globalGraph.info(varT).neighbors.filter(x => x != var1).toList.length - 1) ).sum/2)
+    val (updatedGraph, trash) = globalGraph.eliminate(var1)
+    val graphTerm = (variables.filter(x => x != var1).toList.map(varT => updatedGraph.info(varT).neighbors.toList.length - 1 ).sum/2  
+      - variables.filter(x => x != var1).toList.map(varT => (globalGraph.info(varT).neighbors.filter(x => x != var1).toList.length - 1) ).sum/2)
     graphTerm
   }
 
@@ -176,7 +174,7 @@ trait CollapsedProbabilisticGibbs extends ProbabilisticGibbs {
     	//flatten all of varFactors into one factor
       val productFactor = varFactors reduceLeft (_.product(_))
       //marginalize that factor to all variables other than variable
-      val resultFactor = productFactor.marginalizeTo(semiring, 
+      val resultFactor = productFactor.marginalizeTo( 
       	productFactor.variables.filter(_ != variable): _*)
       //update our multiset of factors, and our map variables ->: factors
       varFactors.foreach(factors.removeOne(_))
@@ -192,7 +190,7 @@ trait CollapsedProbabilisticGibbs extends ProbabilisticGibbs {
    * Marginalize a factor to a particular variable. 
    */
   def marginalizeToTarget(factor: Factor[Double], target: Variable[_]) = {
-    val unnormalizedTargetFactor = factor.marginalizeTo(semiring, target)
+    val unnormalizedTargetFactor = factor.marginalizeTo(target)
     val z = unnormalizedTargetFactor.foldLeft(semiring.zero, _ + _)
     //val targetFactor = Factory.make[Double](unnormalizedTargetFactor.variables)
     val targetFactor = unnormalizedTargetFactor.mapTo((d: Double) => d )
