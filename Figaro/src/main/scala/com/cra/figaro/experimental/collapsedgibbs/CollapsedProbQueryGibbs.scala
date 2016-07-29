@@ -123,7 +123,8 @@ trait CollapsedProbabilisticGibbs extends ProbabilisticGibbs {
    * Source paper is somewhat ambiguous on whether this should be added or net. 
    */  
   def graphTerm[T](var1: Variable[T]):Double = {
-    val (updatedGraph, trash) = globalGraph.eliminate(var1)
+    //val (updatedGraph, trash) = globalGraph.eliminate(var1)
+    val updatedGraph = globalGraph.eliminate(var1)._1
     val graphTerm = (variables.filter(x => x != var1).toList.map(varT => updatedGraph.info(varT).neighbors.toList.length - 1 ).sum/2  
       - variables.filter(x => x != var1).toList.map(varT => (globalGraph.info(varT).neighbors.filter(x => x != var1).toList.length - 1) ).sum/2)
     graphTerm
