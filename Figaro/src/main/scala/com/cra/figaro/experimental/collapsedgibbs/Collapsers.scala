@@ -42,6 +42,7 @@ trait HeuristicCollapseStrategy extends CollapsedProbabilisticGibbs {
   var marginals: MutableMap[Int,MutableMap[Int,Double]] = MutableMap()
   var pairwiseMarignals: MutableMap[(Int, Int), MutableMap[(Int, Int), Double]] = MutableMap()
   var hellingerDistances: MutableMap[(Int, Int), Double] = MutableMap()
+  // trackingSamples is the number of initial samples we take to estimate correlation bewteen variables. 
   val trackingSamples = 200
 
   override def initialize() = {

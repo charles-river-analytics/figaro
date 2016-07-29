@@ -164,6 +164,11 @@ object CollapsedGibbs {
     dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double,
     mySamples: Int, burnIn: Int, interval: Int, blockToSampler: BlockSamplerCreator, targets: Element[_]*)(implicit universe: Universe) =
     strategy match {
+        /* 
+         * In all the constructors below:
+         * alpha is the maximum degree of any variable to eliminate.
+         * gamma is the maximum number of edges we are allowed to add while eliminating variavles
+         */ 
     	case "SIMPLE" =>  {
     		val Seq(alpha, gamma) = collapseParameters
     		new CollapsedProbQueryGibbs(universe, targets: _*)(
@@ -173,6 +178,8 @@ object CollapsedGibbs {
 	      val numSamples = mySamples }
 	    }
     	case "FACTOR" => {
+        //factorThresh is the maximum total cost of all variables eliminated.
+        //when we exceed this value, collapsing stops, even if there are still candidates.
     		val Seq(alpha, gamma, factorThresh) = collapseParameters
     		new CollapsedProbQueryGibbs(universe, targets: _*)(
 	      dependentUniverses,
@@ -193,6 +200,8 @@ object CollapsedGibbs {
 	      val numSamples = mySamples }
 	    }
     	case "RECURR" => {
+        //sampleResetFrequency is the frequency with which we reset and re-collapse the model.
+        //sampleSaveFrequency is the frequency with which we store a sample to use in our marginal estimates.
     		val Seq(alpha, gamma, sampleResetFrequency, sampleSaveFrequency) = collapseParameters
     		new CollapsedProbQueryGibbs(universe, targets: _*)(
 	      dependentUniverses,
@@ -330,6 +339,11 @@ object CollapsedGibbs {
     dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double,
     burnIn: Int, interval: Int, blockToSampler: BlockSamplerCreator, targets: Element[_]*)(implicit universe: Universe) =
     strategy match {
+        /* 
+         * In all the constructors below:
+         * alpha is the maximum degree of any variable to eliminate.
+         * gamma is the maximum number of edges we are allowed to add while eliminating variavles
+         */ 
     	case "SIMPLE" =>  {
     		val Seq(alpha, gamma) = collapseParameters
     		new CollapsedProbQueryGibbs(universe, targets: _*)(
@@ -337,6 +351,8 @@ object CollapsedGibbs {
 	      dependentAlgorithm,
 	      burnIn, interval, blockToSampler, alpha, gamma) with AnytimeProbQuerySampler with ChainApplyBlockingGibbs
 	    }
+      //factorThresh is the maximum total cost of all variables eliminated.
+      //when we exceed this value, collapsing stops, even if there are still candidates.
     	case "FACTOR" => {
     		val Seq(alpha, gamma, factorThresh) = collapseParameters
     		new CollapsedProbQueryGibbs(universe, targets: _*)(
@@ -356,6 +372,8 @@ object CollapsedGibbs {
 	      with DeterministicCollapseStrategy
 	    }
     	case "RECURR" => {
+        //sampleResetFrequency is the frequency with which we reset and re-collapse the model.
+        //sampleSaveFrequency is the frequency with which we store a sample to use in our marginal estimates.
     		val Seq(alpha, gamma, sampleResetFrequency, sampleSaveFrequency) = collapseParameters
     		new CollapsedProbQueryGibbs(universe, targets: _*)(
 	      dependentUniverses,
