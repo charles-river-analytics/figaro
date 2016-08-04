@@ -58,14 +58,7 @@ class UniverseStateTest extends WordSpec with Matchers {
         e2.value should not equal 0.5
       }
 
-      "restore previous evidence" when {
-        /*
-         * Test for:
-         *   Conditions, constraints, observations
-         *   Contingent and non-contingent evidence
-         *   Adding and removing evidence
-         */
-
+      "restore previous evidence with and without contingencies" when {
         "conditions are changed" in {
           val universe = Universe.createNew()
           val e1 = Uniform(0.0, 1.0)
@@ -81,7 +74,7 @@ class UniverseStateTest extends WordSpec with Matchers {
 
           state.restore()
           e1.allConditions should contain theSameElementsAs e1Conditions
-          e2.allConditions shouldBe empty
+          e2.allConditions should be(empty)
           universe.conditionedElements should contain theSameElementsAs List(e1)
         }
 
@@ -100,7 +93,7 @@ class UniverseStateTest extends WordSpec with Matchers {
 
           state.restore()
           e1.allConstraints should contain theSameElementsAs e1Constraints
-          e2.allConstraints shouldBe empty
+          e2.allConstraints should be(empty)
           universe.constrainedElements should contain theSameElementsAs List(e1)
         }
 
@@ -257,12 +250,105 @@ class UniverseStateTest extends WordSpec with Matchers {
       }
 
       "repopulate uses and usedBy" when {
-        "elements in the maps are deactivated" in {
+        "registered uses are changed manually" in {
+          val universe = Universe.createNew()
+          val e1 = Constant(8)
+          val e2 = Constant(7)
+          val e3 = Constant(6)
+          val e4 = Constant(5)
+          // e1 -> e2, e2 -> e3, e1 -> e4, e2 -> e4
+          universe.registerUses(e2, e1)
+          universe.registerUses(e3, e2)
+          universe.registerUses(e4, e1)
+          universe.registerUses(e4, e2)
+          val state = new UniverseState(universe)
 
+          universe.deregisterUses(e2, e1)
+          universe.deregisterUses(e3, e2)
+          universe.registerUses(e3, e1)
+
+          state.restore()
+          universe.uses(e1) should be(empty)
+          universe.usedBy(e1) should equal(Set(e2, e3, e4))
+          universe.directlyUsedBy(e1) should equal(Set(e2, e4))
+          universe.uses(e2) should equal(Set(e1))
+          universe.usedBy(e2) should equal(Set(e3, e4))
+          universe.directlyUsedBy(e2) should equal(Set(e3, e4))
+          universe.uses(e3) should equal(Set(e1, e2))
+          universe.usedBy(e3) should be(empty)
+          universe.directlyUsedBy(e3) should be(empty)
+          universe.uses(e4) should equal(Set(e1, e2))
+          universe.usedBy(e4) should be(empty)
+          universe.directlyUsedBy(e4) should be(empty)
         }
 
-        "new uses are registered" in {
+        "elements are added to the model" in {
+          val universe = Universe.createNew()
+          val e1 = Constant(8)
+          val e2 = -e1
+          val state = new UniverseState(universe)
 
+          val e3 = e1 ++ e2
+          val e4 = -e3
+
+          state.restore()
+          universe.uses(e1) should be(empty)
+          universe.usedBy(e1) should equal(Set(e2))
+          universe.directlyUsedBy(e1) should equal(Set(e2))
+          universe.uses(e2) should equal(Set(e1))
+          universe.usedBy(e2) should be(empty)
+          universe.directlyUsedBy(e2) should be(empty)
+          universe.uses(e3) should be(empty)
+          universe.usedBy(e3) should be(empty)
+          universe.directlyUsedBy(e3) should be(empty)
+          universe.uses(e4) should be(empty)
+          universe.usedBy(e4) should be(empty)
+          universe.directlyUsedBy(e4) should be(empty)
+        }
+
+        "elements are activated or deactivated" in {
+          val universe = Universe.createNew()
+          val e1 = Constant(8)
+          val e2 = -e1
+          val e3 = -e2
+          e3.deactivate()
+          val state = new UniverseState(universe)
+          val a = state.myUses(e2)
+
+          e3.activate()
+          e2.deactivate()
+
+          val b = state.myUses(e2)
+
+          state.restore()
+          universe.uses(e1) should be(empty)
+          universe.usedBy(e1) should equal(Set(e2))
+          universe.directlyUsedBy(e1) should equal(Set(e2))
+          universe.uses(e2) should equal(Set(e1))
+          universe.usedBy(e2) should be(empty)
+          universe.directlyUsedBy(e2) should be(empty)
+          universe.uses(e3) should be(empty)
+          universe.usedBy(e3) should be(empty)
+          universe.directlyUsedBy(e3) should be(empty)
+        }
+
+        "contingent evidence changes" in {
+          val universe = Universe.createNew()
+          val e1 = Flip(0.2)
+          val e2 = Flip(0.3)
+          e1.addCondition((b: Boolean) => b, List(ElemVal(e2, false)))
+          val state = new UniverseState(universe)
+
+          e1.removeConditions()
+          e2.addConstraint((b: Boolean) => if(b) 2.0 else 1.0, List(ElemVal(e1, true)))
+
+          state.restore()
+          universe.uses(e1) should equal(Set(e2))
+          universe.usedBy(e1) should be(empty)
+          universe.directlyUsedBy(e1) should be(empty)
+          universe.uses(e2) should be(empty)
+          universe.usedBy(e2) should equal(Set(e1))
+          universe.directlyUsedBy(e2) should equal(Set(e1))
         }
       }
 
@@ -283,13 +369,26 @@ class UniverseStateTest extends WordSpec with Matchers {
           universe.registerAlgorithm(alg2)
 
           state.restore()
-          universe.clear() // Kills registered algorithms (i.e. alg2 because state shouldn't modify them)
+          universe.clear() // Kills registered algorithms (i.e. alg2)
           alg1Killed should be(false)
           alg2Killed should be(true)
         }
 
         "registered element maps change" in {
+          val universe = Universe.createNew()
+          val e1 = Flip(0.2)
+          val set1: mutable.Set[Element[_]] = mutable.Set(e1)
+          val set2: mutable.Set[Element[_]] = mutable.Set(e1)
+          universe.register(set1)
+          val state = new UniverseState(universe)
 
+          universe.deregister(set1)
+          universe.register(set2)
+
+          state.restore()
+          universe.clear() // Clears registered element maps (i.e. set2)
+          set1 should equal(Set(e1))
+          set2 should be(empty)
         }
 
         "registered universe maps change" in {
@@ -303,9 +402,9 @@ class UniverseStateTest extends WordSpec with Matchers {
           universe.registerUniverse(map2)
 
           state.restore()
-          universe.clear() // Removes universe from registered maps (i.e. map2 because state shouldn't modify them)
-          map1 should contain key universe
-          map2 should not contain key(universe)
+          universe.clear() // Removes universe from registered maps (i.e. map2)
+          map1 should equal(Map(universe -> 1))
+          map2 should be(empty)
         }
       }
     }
