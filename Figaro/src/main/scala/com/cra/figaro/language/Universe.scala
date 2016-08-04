@@ -143,7 +143,7 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
   }
 
   /**
-   * Returns the set of elements that are directly used by the given element, without recursing.
+   * Returns the set of elements that use the given element in their generation, without recursing.
    */
   def directlyUsedBy(elem: Element[_]): Set[Element[_]] = myUsedBy.getOrElse(elem, Set())
 
