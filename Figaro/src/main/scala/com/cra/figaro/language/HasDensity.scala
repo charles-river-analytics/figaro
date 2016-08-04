@@ -19,4 +19,31 @@ package com.cra.figaro.language
 trait HasDensity[T] extends Element[T] {
   /** The probability density of a value. */
   def density(t: T): Double
+
+  /**
+   * Generate the next randomness given the current randomness.
+   * Returns three values: The next randomness, the Metropolis-Hastings proposal probability
+   * ratio, which is:
+   *
+   * P(new -> old) / P(old -> new)
+   *
+   * and the model probability ratio, which is:
+   *
+   * P(new) / P(old)
+   *
+   * This implementation produces a sample using generateRandomness, which means that:
+   *
+   * P(new -> old) / P(old -> new) = P(old) / P(new)
+   *
+   * We use the fact that this element can compute densities for values to compute P(new) and
+   * P(old) explicitly. Note that the two returned ratios will still multiply to 1. This does
+   * not affect normal Metropolis-Hastings, but helps the Metropolis-Hastings annealer find
+   * maxima.
+   */
+  override def nextRandomness(oldRandomness: Randomness): (Randomness, Double, Double) = {
+    val newRandomness = generateRandomness()
+    val pOld = density(generateValue(oldRandomness))
+    val pNew = density(generateValue(newRandomness))
+    (newRandomness, pOld / pNew, pNew / pOld)
+  }
 }
