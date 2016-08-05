@@ -406,6 +406,15 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
     proposalCounts = savedProposalCounts
     (acceptanceRatio, successResults, proposalResults)
   }
+
+  /**
+   * Clean up the sampler, freeing memory.
+   */
+  override def cleanUp(): Unit = {
+    super.cleanUp()
+    universe.clearTemporaries()
+    chainCache.clear()
+  }
 }
 
 /**
@@ -425,14 +434,6 @@ class AnytimeMetropolisHastings(universe: Universe,
   override def initialize(): Unit = {
     super.initialize()
     doInitialize()
-  }
-
-  /**
-   * Clean up the sampler, freeing memory.
-   */
-  override def cleanUp(): Unit = {
-    universe.clearTemporaries()
-    super.cleanUp()
   }
 }
 
