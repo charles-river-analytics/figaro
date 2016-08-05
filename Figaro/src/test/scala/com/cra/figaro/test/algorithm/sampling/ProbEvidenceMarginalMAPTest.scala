@@ -98,9 +98,9 @@ class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
         // p(a=F,b=T) = 0.4 * 0.4 = 0.16
         // p(a=F,b=F) = 0.4 * 0.6 = 0.24
         // MAP: a=T,b=F
-        val alg = ProbEvidenceMarginalMAP(100, ProposalScheme.default, Schedule.default(), a, b)
+        val alg = ProbEvidenceMarginalMAP(200, a, b)
         alg.start()
-        Thread.sleep(2500)
+        Thread.sleep(5000)
         alg.stop()
         alg.mostLikelyValue(a) should equal(true)
         alg.mostLikelyValue(b) should equal(false)
@@ -121,9 +121,9 @@ class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
         // p(a=F,b=T) = 0.4 * 0.4 = 0.16
         // p(a=F,b=F) = 0
         // MAP: a=F,b=T
-        val alg = ProbEvidenceMarginalMAP(100, ProposalScheme.default, Schedule.default(), a, b)
+        val alg = ProbEvidenceMarginalMAP(200, a, b)
         alg.start()
-        Thread.sleep(2500)
+        Thread.sleep(5000)
         alg.stop()
         alg.mostLikelyValue(a) should equal(false)
         alg.mostLikelyValue(b) should equal(true)
@@ -161,9 +161,9 @@ class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
         // p(c=F,d=T)=0.0168+0.0432+0.0144+0.1296=0.204
         // p(c=F,d=F)=0.1512+0.0288+0.1296+0.0864=0.396 -> MAP
 
-        val alg = ProbEvidenceMarginalMAP(100, ProposalScheme.default, Schedule.default(), c, d)
+        val alg = ProbEvidenceMarginalMAP(50, c, d)
         alg.start()
-        Thread.sleep(2500)
+        Thread.sleep(5000)
         alg.stop()
         alg.mostLikelyValue(c) should equal(false)
         alg.mostLikelyValue(d) should equal(false)
@@ -202,9 +202,9 @@ class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
 
         (c || d).observe(true)
 
-        val alg = ProbEvidenceMarginalMAP(100, ProposalScheme.default, Schedule.default(), c, d)
+        val alg = ProbEvidenceMarginalMAP(50, c, d)
         alg.start()
-        Thread.sleep(2500)
+        Thread.sleep(5000)
         alg.stop()
         alg.mostLikelyValue(c) should equal(true)
         alg.mostLikelyValue(d) should equal(false)
@@ -233,7 +233,7 @@ class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
         val meanEstimate = (parameterMean / parameterVariance + observations.sum / variance) /
           (1.0 / parameterVariance + observations.length / variance)
 
-        val alg = ProbEvidenceMarginalMAP(1000, 1, ProposalScheme(parameter), Schedule.default(), parameter)
+        val alg = ProbEvidenceMarginalMAP(10000, 1, ProposalScheme(parameter), Schedule.default(), parameter)
         alg.start()
         alg.mostLikelyValue(parameter) should equal(meanEstimate +- 0.01)
         alg.kill()
@@ -254,7 +254,7 @@ class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
         // p(a=F,b=T) = 0.4 * 0.4 = 0.16
         // p(a=F,b=F) = 0.4 * 0.6 = 0.24
         // MAP: a=T,b=F
-        val alg = ProbEvidenceMarginalMAP(100, 100, ProposalScheme.default, Schedule.default(), a, b)
+        val alg = ProbEvidenceMarginalMAP(2000, 200, a, b)
         alg.start()
         alg.mostLikelyValue(a) should equal(true)
         alg.mostLikelyValue(b) should equal(false)
@@ -275,7 +275,7 @@ class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
         // p(a=F,b=T) = 0.4 * 0.4 = 0.16
         // p(a=F,b=F) = 0
         // MAP: a=F,b=T
-        val alg = ProbEvidenceMarginalMAP(100, 100, ProposalScheme.default, Schedule.default(), a, b)
+        val alg = ProbEvidenceMarginalMAP(2000, 200, a, b)
         alg.start()
         alg.mostLikelyValue(a) should equal(false)
         alg.mostLikelyValue(b) should equal(true)
@@ -313,7 +313,7 @@ class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
         // p(c=F,d=T)=0.0168+0.0432+0.0144+0.1296=0.204
         // p(c=F,d=F)=0.1512+0.0288+0.1296+0.0864=0.396 -> MAP
 
-        val alg = ProbEvidenceMarginalMAP(100, 100, ProposalScheme.default, Schedule.default(), c, d)
+        val alg = ProbEvidenceMarginalMAP(2000, 50, c, d)
         alg.start()
         alg.mostLikelyValue(c) should equal(false)
         alg.mostLikelyValue(d) should equal(false)
@@ -352,7 +352,7 @@ class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
 
         (c || d).observe(true)
 
-        val alg = ProbEvidenceMarginalMAP(100, 100, ProposalScheme.default, Schedule.default(), c, d)
+        val alg = ProbEvidenceMarginalMAP(2000, 50, c, d)
         alg.start()
         alg.mostLikelyValue(c) should equal(true)
         alg.mostLikelyValue(d) should equal(false)
