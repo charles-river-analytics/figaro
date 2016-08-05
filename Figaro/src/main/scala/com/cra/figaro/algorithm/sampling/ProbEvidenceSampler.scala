@@ -26,8 +26,8 @@ import com.cra.figaro.library.cache.PermanentCache
 */
 abstract class ProbEvidenceSampler(override val universe: Universe, override val evidence: List[NamedEvidence[_]] = List[NamedEvidence[_]](), partition: Double = 1.0)
   extends ProbEvidenceAlgorithm with Sampler {
-  private var successWeight: Double = _
-  private var totalWeight: Double = _
+  protected var successWeight: Double = _
+  protected var totalWeight: Double = _
   
   //Logarithmic versions.
   
@@ -68,6 +68,14 @@ abstract class ProbEvidenceSampler(override val universe: Universe, override val
    override def logProbEvidence: Double = {
     if (!active) throw new AlgorithmInactiveException
     logComputedResult
+  }
+
+  override def cleanUp(): Unit = {
+    // Prevent memory leaks for when we run multiple ProbEvidenceSamplers in the same universe
+    super.cleanUp()
+    lw.clearCache()
+    lw.deregisterDependencies()
+    universe.deregisterAlgorithm(this)
   }
   
 }
