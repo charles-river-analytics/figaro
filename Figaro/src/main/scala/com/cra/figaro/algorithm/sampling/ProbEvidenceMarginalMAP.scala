@@ -28,7 +28,8 @@ import scala.collection.mutable
  * @param proposalScheme Scheme for proposing new values. This can propose any element in the universe, but updates to
  * non-MAP elements are only used for generating new values for MAP elements.
  * @param schedule Schedule that produces an increasing temperature for simulated annealing.
- * @param mapElements List of elements over which to perform marginal MAP.
+ * @param mapElements List of elements over which to perform marginal MAP. These elements must not have evidence on them
+ * that is contingent on the values of non-MAP elements.
  */
 abstract class ProbEvidenceMarginalMAP(universe: Universe,
                                        samplesPerIteration: Int,
@@ -58,11 +59,15 @@ abstract class ProbEvidenceMarginalMAP(universe: Universe,
   def computeLogProbEvidence(): Double = {
     // Record the state of the universe, since changing it would break MH
     val state = new UniverseState(universe)
+
     // While running probability of evidence sampling, don't deactivate temporary elements in the MH cache
     val preserve = universe.activeElements.toSet
 
     for(elem <- mapElements) {
-      elem.observe(elem.value)
+      // We can't just call elem.observe(elem.value) because elem.observe regenerates part of the model, so it might
+      // change the values of other MAP elements. Fortunately, we have already recorded the state, giving us a fixed
+      // value for each element.
+      elem.observe(state.elementStates(elem).value.asInstanceOf[elem.Value])
     }
 
     val algorithm = new ProbEvidenceSampler(universe) with OneTimeProbEvidenceSampler {
