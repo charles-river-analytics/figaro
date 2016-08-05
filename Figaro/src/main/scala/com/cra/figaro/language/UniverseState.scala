@@ -39,7 +39,7 @@ class UniverseState(universe: Universe) {
   val myRecursiveUsedBy = makeImmutable(universe.myRecursiveUsedBy)
 
   // States over elements
-  val elementStates = myActiveElements.map(new ElementState(_))
+  val elementStates: Map[Element[_], ElementState] = myActiveElements.map(e => (e, new ElementState(e))).toMap
 
   /**
    * Restores the universe to its state at the time of construction of this class. In general, this means that any calls
@@ -75,7 +75,7 @@ class UniverseState(universe: Universe) {
     replace(universe.myRecursiveUsedBy, myRecursiveUsedBy)
 
     // Element states update on their own
-    elementStates.foreach(_.restore())
+    elementStates.values.foreach(_.restore())
   }
 
   /**
