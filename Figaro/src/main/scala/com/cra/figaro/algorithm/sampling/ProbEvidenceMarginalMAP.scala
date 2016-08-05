@@ -15,28 +15,26 @@ package com.cra.figaro.algorithm.sampling
 
 import com.cra.figaro.algorithm.{AnytimeMarginalMAP, MarginalMAPAlgorithm, OneTimeMarginalMAP}
 import com.cra.figaro.language._
+import com.cra.figaro.util._
 
 import scala.collection.mutable
 
 /**
  * An algorithm for marginal MAP. This algorithm works by searching for the assignment to the MAP elements that
- * maximizes the probability of evidence of observing that assignment. The maximization is done by simulated annealing.
+ * maximizes the probability of evidence of observing that assignment. Uses one time probability of evidence sampling at
+ * each iteration for the given number of samples. The maximization is done by simulated annealing.
  * @param universe Universe on which to run the algorithm.
+ * @param samplesPerIteration Number of probability of evidence samples to take per simulated annealing iteration.
  * @param proposalScheme Scheme for proposing new values. This can propose any element in the universe, but updates to
  * non-MAP elements are only used for generating new values for MAP elements.
  * @param schedule Schedule that produces an increasing temperature for simulated annealing.
- * @param logProbEvidenceComputer A function that given a list of elements, computes the log probability of evidence of
- * observing the values of those elements, ignoring any other evidence on those elements.
- *
- * Generally, this works by observing the values, running a probability of evidence sampler, then unobserving the values.
- * However, this is intentionally kept flexible; if there is a more efficient or precise way to compute the probability
- * of evidence for a specific model, the user can provide such a function.
- *
- * When the function returns, the values of the given elements and any evidence on them should be unchanged.
  * @param mapElements List of elements over which to perform marginal MAP.
  */
-abstract class ProbEvidenceMarginalMAP(universe: Universe, proposalScheme: ProposalScheme, schedule: Schedule,
-                                       logProbEvidenceComputer: List[Element[_]] => Double, val mapElements: List[Element[_]])
+abstract class ProbEvidenceMarginalMAP(universe: Universe,
+                                       samplesPerIteration: Int,
+                                       proposalScheme: ProposalScheme,
+                                       schedule: Schedule,
+                                       val mapElements: List[Element[_]])
   extends MetropolisHastings(universe, proposalScheme, 0, 1, mapElements:_*) with MarginalMAPAlgorithm {
   import MetropolisHastings._
 
@@ -51,6 +49,48 @@ abstract class ProbEvidenceMarginalMAP(universe: Universe, proposalScheme: Propo
    * Get the current temperature. Used for debugging.
    */
   def getTemperature = temperature
+
+  /**
+   * Computes the log probability of evidence of observing the current values of the MAP elements, using a one time
+   * probability of evidence sampler. Does not change the state of the universe,
+   * @return The log probability of observing the current values of the MAP elements.
+   */
+  def computeLogProbEvidence(): Double = {
+    // Record the state of the universe, since changing it would break MH
+    val state = new UniverseState(universe)
+    // While running probability of evidence sampling, don't deactivate temporary elements in the MH cache
+    val preserve = universe.activeElements.toSet
+
+    for(elem <- mapElements) {
+      elem.observe(elem.value)
+    }
+
+    val algorithm = new ProbEvidenceSampler(universe) with OneTimeProbEvidenceSampler {
+      val numSamples = samplesPerIteration
+
+      // Override this method so we don't call universe.clearTemporaries() after each sample
+      override protected def doSample(): Unit = {
+        totalWeight += 1
+
+        try {
+          val weight = lw.computeWeight(universe.activeElements)
+          successWeight = logSum(successWeight, weight)
+        } catch {
+          case Importance.Reject => ()
+        }
+
+        // Deactivate only the temporary elements created for probability of evidence sampling
+        universe.activeElements.filterNot(preserve.contains).foreach(_.deactivate())
+      }
+    }
+    algorithm.start()
+    val result = algorithm.logProbEvidence
+    algorithm.kill()
+
+    state.restore()
+
+    result
+  }
 
   override protected def initConstrainedValues() = {
     // We only initialize constraints for MAP elements
@@ -75,7 +115,7 @@ abstract class ProbEvidenceMarginalMAP(universe: Universe, proposalScheme: Propo
 
     // Compute the new log probability of evidence, increment the temperature, and use these to compute the model
     // probability ratio
-    val newStateLogProbEvidence = logProbEvidenceComputer(mapElements)
+    val newStateLogProbEvidence = computeLogProbEvidence()
     temperature = schedule.temperature(temperature, sampleCount)
     val modelProb = (newStateLogProbEvidence - logProbEvidence) * temperature
     // Include constraints in the model probability ratio, and ignore any dissatisfied non-MAP elements
@@ -147,11 +187,11 @@ abstract class ProbEvidenceMarginalMAP(universe: Universe, proposalScheme: Propo
 }
 
 class AnytimeProbEvidenceMarginalMAP(universe: Universe,
+                                     samplesPerIteration: Int,
                                      proposalScheme: ProposalScheme,
                                      schedule: Schedule,
-                                     logProbEvidenceComputer: List[Element[_]] => Double,
                                      mapElements: List[Element[_]])
-  extends ProbEvidenceMarginalMAP(universe, proposalScheme, schedule, logProbEvidenceComputer, mapElements)
+  extends ProbEvidenceMarginalMAP(universe, samplesPerIteration, proposalScheme, schedule, mapElements)
     with AnytimeSampler with AnytimeMarginalMAP {
   /**
    * Initialize the algorithm.
@@ -164,11 +204,11 @@ class AnytimeProbEvidenceMarginalMAP(universe: Universe,
 
 class OneTimeProbEvidenceMarginalMAP(val numSamples: Int,
                                      universe: Universe,
+                                     samplesPerIteration: Int,
                                      proposalScheme: ProposalScheme,
                                      schedule: Schedule,
-                                     logProbEvidenceComputer: List[Element[_]] => Double,
                                      mapElements: List[Element[_]])
-  extends ProbEvidenceMarginalMAP(universe, proposalScheme, schedule, logProbEvidenceComputer, mapElements)
+  extends ProbEvidenceMarginalMAP(universe, samplesPerIteration, proposalScheme, schedule, mapElements)
     with OneTimeSampler with OneTimeMarginalMAP {
 
   /**
@@ -182,47 +222,28 @@ class OneTimeProbEvidenceMarginalMAP(val numSamples: Int,
 
 object ProbEvidenceMarginalMAP {
   /**
-   * Run a one time log probability of evidence sampler.
-   * @param universe Universe over which to run probability of evidence sampling.
-   * @param samples Number of samples to take.
-   * @param targets Elements whose values should be observed for the computation.
-   * @return The result of the sampler after observing the current values in `targets`. When viewed as a partially
-   * applied function of `targets`, this is a valid log probability of evidence computer for `ProbEvidenceMarginalMAP`.
+   * Creates a one time marginal MAP algorithm using probability of evidence.
+   * Uses the default proposal scheme and schedule.
+   * @param iterations Iterations of simulated annealing to run.
+   * @param samplesPerIteration Number of probability of evidence samples to take per iteration.
+   * @param mapElements List of elements over which to perform marginal MAP.
    */
-  def logProbEvidence(universe: Universe, samples: Int)(targets: List[Element[_]]): Double = {
-    val conditions: Map[Element[_], List[(_ => Boolean, Element.Contingency)]] =
-      targets.map(elem => (elem, elem.allConditions)).toMap
-    val constraints: Map[Element[_], List[(_ => Double, Element.Contingency)]] =
-      targets.map(elem => (elem, elem.allConstraints)).toMap
-
-    for(elem <- targets){
-      elem.removeConditions()
-      elem.removeConstraints()
-      elem.observe(elem.value)
-    }
-
-    val peAlg = new ProbEvidenceSampler(universe) with OneTimeProbEvidenceSampler { val numSamples = samples }
-    peAlg.start()
-    val result = peAlg.logProbEvidence
-    peAlg.kill()
-
-    for(elem <- targets){
-      // We would call elem.unobserve, but we don't want to regenerate the value of the element
-      elem.removeConditions()
-      for((condition, contingency) <- conditions(elem)){
-        elem.addCondition(condition.asInstanceOf[elem.Condition], contingency)
-      }
-      for((constraint, contingency) <- constraints(elem)){
-        elem.addConstraint(constraint.asInstanceOf[elem.Constraint], contingency)
-      }
-    }
-
-    result
-  }
+  def apply(iterations: Int, samplesPerIteration: Int, mapElements: Element[_]*)(implicit universe: Universe) =
+    new OneTimeProbEvidenceMarginalMAP(iterations, universe, samplesPerIteration, ProposalScheme.default(universe),
+      Schedule.default(), mapElements.toList)
 
   /**
-   * Creates a one time marginal MAP algorithm that maximizes according to probability of evidence computations.
-   * Runs one time probability of evidence sampling at each iteration.
+   * Creates an anytime marginal MAP algorithm using probability of evidence.
+   * Uses the default proposal scheme and schedule.
+   * @param samplesPerIteration Number of probability of evidence samples to take per iteration.
+   * @param mapElements List of elements over which to perform marginal MAP.
+   */
+  def apply(samplesPerIteration: Int, mapElements: Element[_]*)(implicit universe: Universe) =
+    new AnytimeProbEvidenceMarginalMAP(universe, samplesPerIteration, ProposalScheme.default(universe),
+      Schedule.default(), mapElements.toList)
+
+  /**
+   * Creates a one time marginal MAP algorithm using probability of evidence.
    * @param iterations Iterations of simulated annealing to run.
    * @param samplesPerIteration Number of probability of evidence samples to take per iteration.
    * @param proposalScheme Scheme for proposing new values for MAP elements.
@@ -231,12 +252,10 @@ object ProbEvidenceMarginalMAP {
    */
   def apply(iterations: Int, samplesPerIteration: Int, proposalScheme: ProposalScheme, schedule: Schedule,
             mapElements: Element[_]*)(implicit universe: Universe) =
-    new OneTimeProbEvidenceMarginalMAP(iterations, universe, proposalScheme, schedule,
-      logProbEvidence(universe, samplesPerIteration), mapElements.toList)
+    new OneTimeProbEvidenceMarginalMAP(iterations, universe, samplesPerIteration, proposalScheme, schedule, mapElements.toList)
 
   /**
-   * Creates an anytime marginal MAP algorithm that maximizes according to probability of evidence computations.
-   * Runs one time probability of evidence sampling at each iteration.
+   * Creates an anytime marginal MAP algorithm using probability of evidence.
    * @param samplesPerIteration Number of probability of evidence samples to take per iteration.
    * @param proposalScheme Scheme for proposing new values for MAP elements.
    * @param schedule Schedule that produces an increasing temperature for simulated annealing.
@@ -244,32 +263,5 @@ object ProbEvidenceMarginalMAP {
    */
   def apply(samplesPerIteration: Int, proposalScheme: ProposalScheme, schedule: Schedule,
             mapElements: Element[_]*)(implicit universe: Universe) =
-  new AnytimeProbEvidenceMarginalMAP(universe, proposalScheme, schedule,
-    logProbEvidence(universe, samplesPerIteration), mapElements.toList)
-
-  /**
-   * Creates a one time marginal MAP algorithm that maximizes according to probability of evidence computations.
-   * @param iterations Iterations of simulated annealing to run.
-   * @param proposalScheme Scheme for proposing new values for MAP elements.
-   * @param schedule Schedule that produces an increasing temperature for simulated annealing.
-   * @param logProbEvidence Function for computing log probability of evidence. See `ProbEvidenceMarginalMAP` abstract
-   * class for more details.
-   * @param mapElements List of elements over which to perform marginal MAP.
-   */
-  def apply(iterations: Int, proposalScheme: ProposalScheme, schedule: Schedule, logProbEvidence: List[Element[_]] => Double,
-            mapElements: Element[_]*)(implicit universe: Universe) =
-  new OneTimeProbEvidenceMarginalMAP(iterations, universe, proposalScheme, schedule, logProbEvidence, mapElements.toList)
-
-  /**
-   * Creates an anytime marginal MAP algorithm that maximizes according to probability of evidence computations.
-   * Runs one time probability of evidence sampling at each iteration.
-   * @param proposalScheme Scheme for proposing new values for MAP elements/
-   * @param schedule Schedule that produces an increasing temperature for simulated annealing.
-   * @param logProbEvidence Function for computing log probability of evidence. See `ProbEvidenceMarginalMAP` abstract
-   * class for more details.
-   * @param mapElements List of elements over which to perform marginal MAP.
-   */
-  def apply(proposalScheme: ProposalScheme, schedule: Schedule, logProbEvidence: List[Element[_]] => Double,
-            mapElements: Element[_]*)(implicit universe: Universe) =
-  new AnytimeProbEvidenceMarginalMAP(universe, proposalScheme, schedule, logProbEvidence, mapElements.toList)
+  new AnytimeProbEvidenceMarginalMAP(universe, samplesPerIteration, proposalScheme, schedule, mapElements.toList)
 }
