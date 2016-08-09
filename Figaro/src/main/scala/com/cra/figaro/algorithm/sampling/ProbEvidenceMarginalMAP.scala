@@ -85,7 +85,11 @@ abstract class ProbEvidenceMarginalMAP(universe: Universe,
         }
 
         // Deactivate only the temporary elements created for probability of evidence sampling
-        universe.activeElements.filterNot(preserve.contains).foreach(_.deactivate())
+        for(elem <- universe.activeElements) {
+          // Since an element deactivates its direct context contents when deactivated, it's possible that an element
+          // in the list will be deactivated before we reach it, so we have to check again that it is active
+          if(!preserve.contains(elem) && elem.active) elem.deactivate()
+        }
       }
     }
     algorithm.start()
