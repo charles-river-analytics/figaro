@@ -11,13 +11,11 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
-package com.cra.figaro.algorithm.structured.algorithm.structured
+package com.cra.figaro.experimental.marginalmap
 
-import com.cra.figaro.language._
 import com.cra.figaro.algorithm.structured._
-import com.cra.figaro.algorithm.structured.strategy.solve.MarginalMAPVEStrategy
-import com.cra.figaro.algorithm.structured.algorithm._
 import com.cra.figaro.algorithm.structured.strategy.decompose._
+import com.cra.figaro.language._
 
 /**
  * A structured marginal MAP algorithm that uses VE to compute MAP queries.

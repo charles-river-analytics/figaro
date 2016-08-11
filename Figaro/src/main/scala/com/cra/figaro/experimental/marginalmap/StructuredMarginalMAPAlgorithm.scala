@@ -10,17 +10,12 @@
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
-package com.cra.figaro.algorithm.structured.algorithm
+package com.cra.figaro.experimental.marginalmap
 
-import com.cra.figaro.algorithm.Algorithm
-import com.cra.figaro.language._
-import scala.collection.mutable.Map
+import com.cra.figaro.algorithm.{Algorithm, AlgorithmException}
 import com.cra.figaro.algorithm.factored.factors.Factor
-import com.cra.figaro.algorithm.factored.factors.Semiring
-import com.cra.figaro.algorithm.structured.Problem
-import com.cra.figaro.algorithm.structured.ComponentCollection
-import com.cra.figaro.algorithm.OneTimeMarginalMAP
-import com.cra.figaro.algorithm.AlgorithmException
+import com.cra.figaro.algorithm.structured.{ComponentCollection, Problem}
+import com.cra.figaro.language._
 
 /**
  * A structured marginal MAP algorithm.
