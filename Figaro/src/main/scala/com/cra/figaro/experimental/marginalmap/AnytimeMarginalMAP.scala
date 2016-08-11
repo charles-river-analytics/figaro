@@ -11,10 +11,11 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
-package com.cra.figaro.algorithm
+package com.cra.figaro.experimental.marginalmap
 
-import akka.pattern.ask
+import com.cra.figaro.algorithm._
 import com.cra.figaro.language._
+import akka.pattern.ask
 
 /**
  * Anytime algorithms that compute most likely values of some elements, and marginalize over all other elements.
