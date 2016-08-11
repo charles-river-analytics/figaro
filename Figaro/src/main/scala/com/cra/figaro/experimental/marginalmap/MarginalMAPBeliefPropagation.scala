@@ -1,21 +1,21 @@
 /*
- * MarginalMAPBeliefPropagation.scala  
+ * MarginalMAPBeliefPropagation.scala
  * A marginal MAP belief propagation algorithm. Based on the algorithm by Liu and Ihler (2013).
- * 
+ *
  * Created By:      William Kretschmer (kretsch@mit.edu)
  * Creation Date:   Jun 10, 2016
- * 
+ *
  * Copyright 2016 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
-package com.cra.figaro.algorithm.factored.beliefpropagation
+package com.cra.figaro.experimental.marginalmap
 
+import com.cra.figaro.algorithm.factored.beliefpropagation._
 import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.sampling.ProbEvidenceSampler
-import com.cra.figaro.algorithm.{AnytimeMarginalMAP, MarginalMAPAlgorithm, OneTimeMarginalMAP}
 import com.cra.figaro.language._
 
 abstract class MarginalMAPBeliefPropagation(override val universe: Universe, targets: Element[_]*)(
