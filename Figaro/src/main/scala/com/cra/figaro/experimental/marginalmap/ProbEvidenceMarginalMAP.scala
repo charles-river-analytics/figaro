@@ -11,9 +11,9 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
-package com.cra.figaro.algorithm.sampling
+package com.cra.figaro.experimental.marginalmap
 
-import com.cra.figaro.algorithm.{AnytimeMarginalMAP, MarginalMAPAlgorithm, OneTimeMarginalMAP}
+import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.language._
 import com.cra.figaro.util._
 

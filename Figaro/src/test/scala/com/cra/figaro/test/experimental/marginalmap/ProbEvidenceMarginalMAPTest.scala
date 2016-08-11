@@ -11,9 +11,10 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
-package com.cra.figaro.test.algorithm.sampling
+package com.cra.figaro.test.experimental.marginalmap
 
 import com.cra.figaro.algorithm.sampling._
+import com.cra.figaro.experimental.marginalmap.ProbEvidenceMarginalMAP
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous.Normal
 import com.cra.figaro.library.compound.If
