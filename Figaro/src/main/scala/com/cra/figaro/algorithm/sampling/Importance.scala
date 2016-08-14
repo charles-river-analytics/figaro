@@ -46,6 +46,12 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
   }
 
   /*
+   * Return number of samples. Came up during PPAML session. 
+   * Simple getter 
+   */
+  def sampleCount = numSamples
+
+  /*
    * Produce one weighted sample of the given element. weightedSample takes into account conditions and constraints
    * on all elements in the Universe, including those that depend on this element.
    */
