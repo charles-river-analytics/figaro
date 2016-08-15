@@ -29,7 +29,10 @@ import scala.collection.mutable
  * non-MAP elements are only used for generating new values for MAP elements.
  * @param schedule Schedule that produces an increasing temperature for simulated annealing.
  * @param mapElements List of elements over which to perform marginal MAP. These elements must not have evidence on them
- * that is contingent on the values of non-MAP elements.
+ * that is contingent on the values of non-MAP elements. Additionally, these elements must be "observable", in the sense
+ * that observing values for these elements and computing the probability of evidence of those observations should not
+ * uniquely return zero. Typically, this is satisfiable by elements that are not both continuous and deterministic. The
+ * algorithm will still run if this condition is not satisfied, but it will not converge.
  */
 abstract class ProbEvidenceMarginalMAP(universe: Universe,
                                        samplesPerIteration: Int,
@@ -54,7 +57,6 @@ abstract class ProbEvidenceMarginalMAP(universe: Universe,
   /**
    * Computes the log probability of evidence of observing the current values of the MAP elements, using a one time
    * probability of evidence sampler. Does not change the state of the universe,
-   * @return The log probability of observing the current values of the MAP elements.
    */
   def computeLogProbEvidence(): Double = {
     // Record the state of the universe, since changing it would break MH
