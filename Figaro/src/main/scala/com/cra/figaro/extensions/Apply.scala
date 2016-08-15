@@ -1,11 +1,13 @@
-package com.cra.figaro.language
+package com.cra.figaro.extensions
+
+import com.cra.figaro.language._
 
 /**
   * This class is a workaround for adding easier type inference to Apply class
   * Since Apply object is already using apply method with different number of arguments
   * it is not easy to find a workaround adding currying support to apply methods in Apply class
   */
-object ApplyC {
+object Apply {
   /**
     * Application of a function to one argument.
     */
