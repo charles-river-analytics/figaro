@@ -122,9 +122,9 @@ class SalesPredictionTest extends WordSpec with Matchers {
     algorithm.stop()
 
     val hiresProd0 = algorithm.expectation(numHiresByProduct(0), (n: Int) => n.toDouble)
-    val hiresProd1 = algorithm.expectation(numHiresByProduct(1), (n: Int) => n.toDouble)
+    val hiresProd1 = algorithm.expectation(numHiresByProduct(1))(n => n.toDouble)
     val hiresProd2 = algorithm.expectation(numHiresByProduct(2), (n: Int) => n.toDouble)    
-    val hiresProd3 = algorithm.expectation(numHiresByProduct(3), (n: Int) => n.toDouble)
+    val hiresProd3 = algorithm.expectation(numHiresByProduct(3))(n => n.toDouble)
     val hiresProd4 = algorithm.expectation(numHiresByProduct(4), (n: Int) => n.toDouble)
 
     algorithm.kill()
