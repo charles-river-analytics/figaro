@@ -311,6 +311,25 @@ class ElementsTest extends WordSpec with Matchers {
     }
   }
 
+  "An ApplyC with one argument" should {
+    "have value equal to its function applied to its argument" in {
+      Universe.createNew()
+      val u = Uniform(0.0, 2.0)
+      val a = ApplyC(u)(_ + 1.0)
+      u.value = 1.3
+      a.generate()
+      a.value should equal(2.3)
+    }
+
+    "convert to the correct string" in {
+      Universe.createNew()
+      val u = Uniform(0.0, 2.0)
+      val f = (d: Double) => d + 1.0
+      ApplyC(u)(f).toString should equal("Apply(" + u + ", " + f + ")")
+    }
+
+  }
+
   "An Apply with two arguments" should {
     "have value equal to its function applied to its arguments" in {
       Universe.createNew()
@@ -328,6 +347,26 @@ class ElementsTest extends WordSpec with Matchers {
       val v = Constant(1.0)
       val f = (d1: Double, d2: Double) => d1 + d2 + 1.0
       Apply(u, v, f).toString should equal("Apply(" + u + ", " + v + ", " + f + ")")
+    }
+  }
+
+  "An ApplyC with two arguments" should {
+    "have value equal to its function applied to its arguments" in {
+      Universe.createNew()
+      val u = Uniform(0.0, 2.0)
+      val v = Constant(1.0)
+      val a = ApplyC(u, v)( _ + _ + 1.0)
+      u.value = 1.3
+      v.value = 1.0
+      a.generate()
+      a.value should equal(3.3)
+    }
+
+    "convert to the correct string" in {
+      val u = Uniform(0.0, 2.0)
+      val v = Constant(1.0)
+      val f = (d1: Double, d2: Double) => d1 + d2 + 1.0
+      ApplyC(u, v)(f).toString should equal("Apply(" + u + ", " + v + ", " + f + ")")
     }
   }
 
@@ -356,6 +395,30 @@ class ElementsTest extends WordSpec with Matchers {
     }
   }
 
+  "An ApplyC with three arguments" should {
+    "have value equal to its function applied to its arguments" in {
+      Universe.createNew()
+      val u = Uniform(0.0, 2.0)
+      val v = Constant(1.0)
+      val w = Select(0.5 -> 0.0, 0.5 -> 5.0)
+      val a = ApplyC(u, v, w)(_ + _ + _ + 1.0)
+      u.value = 1.3
+      v.value = 1.0
+      w.value = 5.0
+      a.generate()
+      a.value should equal(8.3)
+    }
+
+    "convert to the correct string" in {
+      val u = Uniform(0.0, 2.0)
+      val v = Constant(1.0)
+      val w = Select(0.5 -> 0.0, 0.5 -> 5.0)
+      val f = (d1: Double, d2: Double, d3: Double) => d1 + d2 + d3 + 1.0
+      ApplyC(u, v, w)(f).toString should equal(
+        "Apply(" + u + ", " + v + ", " + w + ", " + f + ")")
+    }
+  }
+
 
   "An Apply with four arguments" should {
     "have value equal to its function applied to its arguments" in {
@@ -380,6 +443,33 @@ class ElementsTest extends WordSpec with Matchers {
       val x = Constant(-2.0)
       val f = (d1: Double, d2: Double, d3: Double, d4: Double) => d1 + d2 + d3 + d4 + 1.0
       Apply(u, v, w, x, f).toString should equal(
+        "Apply(" + u + ", " + v + ", " + w + ", " + x + ", " + f + ")")
+    }
+  }
+
+  "An ApplyC with four arguments" should {
+    "have value equal to its function applied to its arguments" in {
+      Universe.createNew()
+      val u = Uniform(0.0, 2.0)
+      val v = Constant(1.0)
+      val w = Select(0.5 -> 0.0, 0.5 -> 5.0)
+      val x = Constant(-2.0)
+      val a = ApplyC(u, v, w, x)(_ + _ + _ + _ + 1.0)
+      u.value = 1.3
+      v.value = 1.0
+      w.value = 5.0
+      x.value = -2.0
+      a.generate()
+      a.value should equal(6.3)
+    }
+
+    "convert to the correct string" in {
+      val u = Uniform(0.0, 2.0)
+      val v = Constant(1.0)
+      val w = Select(0.5 -> 0.0, 0.5 -> 5.0)
+      val x = Constant(-2.0)
+      val f = (d1: Double, d2: Double, d3: Double, d4: Double) => d1 + d2 + d3 + d4 + 1.0
+      ApplyC(u, v, w, x)(f).toString should equal(
         "Apply(" + u + ", " + v + ", " + w + ", " + x + ", " + f + ")")
     }
   }
@@ -414,6 +504,38 @@ class ElementsTest extends WordSpec with Matchers {
       val f =
         (d1: Double, d2: Double, d3: Double, d4: Double, d5: Double) => d1 + d2 + d3 + d4 + d5 + 1.0
       Apply(u, v, w, x, y, f).toString should equal(
+        "Apply(" + u + ", " + v + ", " + w + ", " + x + ", " + y + ", " + f + ")")
+    }
+  }
+
+  "An ApplyC with five arguments" should {
+    "have value equal to its function applied to its arguments" in {
+      Universe.createNew()
+      val u = Uniform(0.0, 2.0)
+      val v = Constant(1.0)
+      val w = Select(0.5 -> 0.0, 0.5 -> 5.0)
+      val x = Constant(-2.0)
+      val y = Constant(0.5)
+      val a =
+        ApplyC(u, v, w, x, y)(_ + _ + _ + _ + _ + 1.0)
+      u.value = 1.3
+      v.value = 1.0
+      w.value = 5.0
+      x.value = -2.0
+      y.value = 0.5
+      a.generate()
+      a.value should equal(6.8)
+    }
+
+    "convert to the correct string" in {
+      val u = Uniform(0.0, 2.0)
+      val v = Constant(1.0)
+      val w = Select(0.5 -> 0.0, 0.5 -> 5.0)
+      val x = Constant(-2.0)
+      val y = Constant(0.5)
+      val f =
+        (d1: Double, d2: Double, d3: Double, d4: Double, d5: Double) => d1 + d2 + d3 + d4 + d5 + 1.0
+      ApplyC(u, v, w, x, y)(f).toString should equal(
         "Apply(" + u + ", " + v + ", " + w + ", " + x + ", " + y + ", " + f + ")")
     }
   }
