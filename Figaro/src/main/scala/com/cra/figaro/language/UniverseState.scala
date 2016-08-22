@@ -47,7 +47,7 @@ class UniverseState(universe: Universe) {
    * regardless of what calls to the API were made since instantiation.
    *
    * There are subtle exceptions to this rule. In particular, registered universe maps, element maps, and universe maps
-   * will not be changed.
+   * will not be changed. Additionally, `myElementMap` from `ElementCollection` will not be changed.
    *
    * Note that classes that extend functionality of `Element` and `Universe` with additional mutability may have
    * undefined behavior with respect to this mutable information. For example, parameters that store learned values will
@@ -95,13 +95,15 @@ class UniverseState(universe: Universe) {
    */
   private def replace[T](toReplace: mutable.Map[T, mutable.Set[T]], replaceWith: Map[T, Set[T]]): Unit = {
     toReplace.clear()
-    toReplace ++= replaceWith.mapValues(set => mutable.Set() ++ set)
+    for((key, value) <- replaceWith) {
+      toReplace(key) = mutable.Set() ++ value
+    }
   }
 
   private def makeImmutable[T](map: mutable.Map[T, mutable.Set[T]]): Map[T, Set[T]] = {
     // map.toMap.mapValues(_.toSet)
     // Wait! Calling mapValues returns a VIEW into the original map, which we don't want because the underlying sets are
-    // mutable. See scala issues SI-4776.
+    // mutable. See Scala issues SI-4776.
     map.map{ case (key, value) => (key, value.toSet) }.toMap
   }
 }
