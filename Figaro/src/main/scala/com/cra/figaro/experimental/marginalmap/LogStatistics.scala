@@ -72,3 +72,47 @@ object LogStatistics {
     }
   }
 }
+
+/**
+ * Trait for computing mean in variance in log space in an online fashion.
+ */
+trait OnlineLogStatistics {
+
+  // Fields for recording the mean and variance across runs. See Wikipedia, "Algorithms for calculating variance".
+  // Modified to work in log space to prevent underflow.
+  // Number of samples taken
+  protected var count = 0
+  // Log of mean of samples taken so far
+  protected var logMean = Double.NegativeInfinity
+  // Log of variance of samples taken so far, multiplied by (count - 1)
+  protected var logM2 = Double.NegativeInfinity
+
+  /**
+   * Record the weight in the rolling mean and variance computation.
+   * @param logWeight Log of the weight to record.
+   */
+  def observe(logWeight: Double) = {
+    // Online variance algorithm from Wikipedia
+    count += 1
+    if(logWeight >= logMean) {
+      val logDelta = logDiff(logWeight, logMean)
+      logMean = logSum(logMean, logDelta - math.log(count))
+      // assert(logMean >= logWeight)
+      logM2 = logSum(logM2, logDelta + logDiff(logWeight, logMean))
+    }
+    else {
+      val logNegativeDelta = logDiff(logMean, logWeight)
+      logMean = logDiff(logMean, logNegativeDelta - math.log(count))
+      // assert(logMean < logWeight)
+      // The negatives cancel in the right hand size
+      logM2 = logSum(logM2, logNegativeDelta + logDiff(logMean, logWeight))
+    }
+  }
+
+  /**
+   * Return the combined statistics for the log probability of evidence over all runs of this sampler.
+   * If the number of observations is 0, the returned log mean is -Infinity.
+   * If the number of observations is 0 or 1, the returned log variance is NaN.
+   */
+  def totalLogStatistics = LogStatistics(logMean, logM2 - math.log(count - 1), count)
+}

@@ -13,11 +13,14 @@
 
 package com.cra.figaro.test.experimental.marginalmap
 
-import com.cra.figaro.experimental.marginalmap.LogStatistics
+import com.cra.figaro.experimental.marginalmap.{LogStatistics, OnlineLogStatistics}
 import com.cra.figaro.experimental.marginalmap.LogStatistics.oneSidedTTest
 import org.scalatest.{Matchers, WordSpec}
 
 class LogStatisticsTest extends WordSpec with Matchers {
+  // Used to test underflow/overflow
+  val logOffset = 100000
+
   "Running a one-sided t-test" should {
     "throw an exception" when {
       "one of the counts is less than 2" in {
@@ -102,17 +105,98 @@ class LogStatisticsTest extends WordSpec with Matchers {
 
     "remain stable in log space" when {
       "exponentiation could underflow" in {
-        val v1 = LogStatistics(0.0, 0.0, 20).multiplyByConstant(-100000)
-        val v2 = LogStatistics(0.1, 0.1, 30).multiplyByConstant(-100000)
+        val v1 = LogStatistics(0.0, 0.0, 20).multiplyByConstant(-logOffset)
+        val v2 = LogStatistics(0.1, 0.1, 30).multiplyByConstant(-logOffset)
 
         oneSidedTTest(v1, v2) should be (0.36147 +- 1E-5)
       }
 
       "exponentiation could overflow" in {
-        val v1 = LogStatistics(0.0, 0.0, 20).multiplyByConstant(100000)
-        val v2 = LogStatistics(0.1, 0.1, 30).multiplyByConstant(100000)
+        val v1 = LogStatistics(0.0, 0.0, 20).multiplyByConstant(logOffset)
+        val v2 = LogStatistics(0.1, 0.1, 30).multiplyByConstant(logOffset)
 
         oneSidedTTest(v1, v2) should be (0.36147 +- 1E-5)
+      }
+    }
+  }
+
+  "Running online log statistics" should {
+    "handle 0 observations" when {
+      "all of the observations are 0" in {
+        val ols = new OnlineLogStatistics {}
+        val numObservations = 100
+        for(_ <- 1 to numObservations) ols.observe(Double.NegativeInfinity)
+
+        val logStats = ols.totalLogStatistics
+        logStats.logMean should be (Double.NegativeInfinity)
+        logStats.logVariance should be (Double.NegativeInfinity)
+        logStats.count should be (numObservations)
+      }
+
+      "some of the observations are 0" in {
+        val ols = new OnlineLogStatistics {}
+        val observations = List(Double.NegativeInfinity, 0.0, -0.5, Double.NegativeInfinity, -2.2, 0.1)
+        observations.foreach(ols.observe)
+
+        val logStats = ols.totalLogStatistics
+        logStats.logMean should be (-0.75413 +- 1E-5)
+        logStats.logVariance should be (-1.3674 +- 1E-4)
+      }
+    }
+
+    "compute the correct result" when {
+      "given no observations" in {
+        val ols = new OnlineLogStatistics {}
+
+        val logStats = ols.totalLogStatistics
+        logStats.logMean should be (Double.NegativeInfinity)
+        logStats.logVariance.isNaN should be (true)
+        logStats.count should be (0)
+      }
+
+      "given one observation" in {
+        val ols = new OnlineLogStatistics {}
+        ols.observe(1.5)
+
+        val logStats = ols.totalLogStatistics
+        logStats.logMean should be (1.5 +- 1E-4)
+        logStats.logVariance.isNaN should be (true)
+        logStats.count should be (1)
+      }
+
+      "given several observations" in {
+        val ols = new OnlineLogStatistics {}
+        val observations = List(-3.7, 2.1, 0.8, 1.2, 0.8, -0.5)
+        observations.foreach(ols.observe)
+
+        val logStats = ols.totalLogStatistics
+        logStats.logMean should be (1.0158 +- 1E-4)
+        logStats.logVariance should be (2.1337 +- 1E-4)
+        logStats.count should be (observations.length)
+      }
+    }
+
+    "remain stable in log space" when {
+      "exponentiation could underflow" in {
+        val ols = new OnlineLogStatistics {}
+        val observations = List(-3.7, 2.1, 0.8, 1.2, 0.8, -0.5).map(_ - logOffset)
+        observations.foreach(ols.observe)
+
+        val logStats = ols.totalLogStatistics.multiplyByConstant(logOffset)
+        logStats.logMean should be (1.0158 +- 1E-4)
+        logStats.logVariance should be (2.1337 +- 1E-4)
+        logStats.count should be (observations.length)
+      }
+
+      "exponentiation could overflow" in {
+        val ols = new OnlineLogStatistics {}
+        val observations = List(-3.7, 2.1, 0.8, 1.2, 0.8, -0.5).map(_ + logOffset)
+        observations.foreach(ols.observe)
+
+        val logStats = ols.totalLogStatistics.multiplyByConstant(-logOffset)
+        logStats.logMean should be (1.0158 +- 1E-4)
+        logStats.logVariance should be (2.1337 +- 1E-4)
+        logStats.count should be (observations.length)
       }
     }
   }
