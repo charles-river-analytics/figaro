@@ -64,7 +64,7 @@ class JointDistributionTest extends WordSpec with Matchers {
   val secondSales = ve.probability(JointDistribution.sales(1))(_ < 100)
   val bothSales = ve.probability(salesPair, (pair: (Int, Int)) => pair._1 < 100 && pair._2 < 100)
   val totalSales = imp.probability(JointDistribution.totalSales)(_ < 2000)
-  val meanIndSales = ve.expectation(JointDistribution.sales(0), (i: Int) => i.toDouble)
+  val meanIndSales = ve.expectation(JointDistribution.sales(0))(i => i.toDouble)
   val meanTotSales = imp.expectation(JointDistribution.totalSales, (i: Int) => i.toDouble)
   ve.kill()
   imp.kill()

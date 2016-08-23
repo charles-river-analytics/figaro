@@ -331,7 +331,7 @@ class PBPTest extends WordSpec with Matchers {
       })
       val algorithm = ParticleBeliefPropagation(10, 4, 15, 15, loc, locX, locY)
       algorithm.start()
-      val locE = algorithm.expectation(loc, (d: (Double, Double)) => d._1 * d._2)
+      val locE = algorithm.expectation(loc)(d => d._1 * d._2)
       val cov = locE - algorithm.mean(locX) * algorithm.mean(locY)
 
       ParticleGenerator.clear

@@ -57,7 +57,7 @@ object ProductDistribution {
     val model = new Model(targetPopularity, productQuality, affordability)
     val algorithm = Importance(1000, model.numberBuy)
     algorithm.start()
-    val result = algorithm.expectation(model.numberBuy, (i: Int) => i.toDouble)
+    val result = algorithm.expectation(model.numberBuy)(i=> i.toDouble)
     algorithm.kill()
     result
   }

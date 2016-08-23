@@ -326,7 +326,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       // Uniform(0,1) is beta(1,1)
       // Result is beta(1 + 16,1 + 4)
       // Expectation is (alpha) / (alpha + beta) = 17/22
-      alg.expectation(b, (d: Double) => d) should be((17.0 / 22.0) +- 0.02)
+      alg.expectation(b)(d => d) should be((17.0 / 22.0) +- 0.02)
       val time1 = System.currentTimeMillis()
       // If likelihood weighting is working, stopping and querying the algorithm should be almost instantaneous
       // If likelihood weighting is not working, stopping and querying the algorithm requires waiting for a non-rejected sample
@@ -428,7 +428,7 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       // uniform(0,1) is beta(1,1)
       // Result is beta(1 + 1600,1 + 400)
       // Expectation is (alpha) / (alpha + beta) = 1601/2003
-      alg.expectation(beta, (d: Double) => d) should be((1601.0 / 2003.0) +- 0.02)
+      alg.expectation(beta)(d => d) should be((1601.0 / 2003.0) +- 0.02)
       val time1 = System.currentTimeMillis()
       // If likelihood weighting is working, stopping and querying the algorithm should be almost instantaneous
       // If likelihood weighting is not working, stopping and querying the algorithm requires waiting for a non-rejected sample
