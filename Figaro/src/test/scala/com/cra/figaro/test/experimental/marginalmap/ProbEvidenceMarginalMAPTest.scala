@@ -21,12 +21,14 @@ import com.cra.figaro.library.compound.If
 import org.scalatest.{Matchers, WordSpec}
 
 class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
+  // TODO: tests ensuring that conditions and constraints on MAP elements are taken into account
+
   "Marginal MAP using probability of evidence" should {
     "increase temperature with additional iterations" in {
       Universe.createNew()
       val elem = Flip(0.6)
 
-      val alg = ProbEvidenceMarginalMAP(1, ProposalScheme(elem), Schedule.default(), elem)
+      val alg = ProbEvidenceMarginalMAP(1, 0.05, 100, ProposalScheme(elem), Schedule.default(), elem)
       alg.start()
       val temp1 = alg.getTemperature
       Thread.sleep(500)
@@ -41,13 +43,13 @@ class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
       val elem = Flip(0.6)
 
       // k = 2.0
-      val alg1 = ProbEvidenceMarginalMAP(100, 1, ProposalScheme(elem), Schedule.default(2.0), elem)
+      val alg1 = ProbEvidenceMarginalMAP(100, 1, 0.05, 100, ProposalScheme(elem), Schedule.default(2.0), elem)
       alg1.start()
       val temp1 = alg1.getTemperature
       alg1.kill()
 
       // k = 4.0
-      val alg2 = ProbEvidenceMarginalMAP(100, 1, ProposalScheme(elem), Schedule.default(4.0), elem)
+      val alg2 = ProbEvidenceMarginalMAP(100, 1, 0.05, 100, ProposalScheme(elem), Schedule.default(4.0), elem)
       alg2.start()
       val temp2 = alg2.getTemperature
       alg2.kill()
@@ -76,7 +78,7 @@ class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
         val meanEstimate = (parameterMean / parameterVariance + observations.sum / variance) /
           (1.0 / parameterVariance + observations.length / variance)
 
-        val alg = ProbEvidenceMarginalMAP(1, ProposalScheme(parameter), Schedule.default(), parameter)
+        val alg = ProbEvidenceMarginalMAP(1, 0.05, 100, ProposalScheme(parameter), Schedule.default(), parameter)
         alg.start()
         Thread.sleep(2500)
         alg.stop()
@@ -234,7 +236,7 @@ class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
         val meanEstimate = (parameterMean / parameterVariance + observations.sum / variance) /
           (1.0 / parameterVariance + observations.length / variance)
 
-        val alg = ProbEvidenceMarginalMAP(10000, 1, ProposalScheme(parameter), Schedule.default(), parameter)
+        val alg = ProbEvidenceMarginalMAP(10000, 1, 0.05, 100, ProposalScheme(parameter), Schedule.default(), parameter)
         alg.start()
         alg.mostLikelyValue(parameter) should equal(meanEstimate +- 0.01)
         alg.kill()
@@ -255,7 +257,7 @@ class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
         // p(a=F,b=T) = 0.4 * 0.4 = 0.16
         // p(a=F,b=F) = 0.4 * 0.6 = 0.24
         // MAP: a=T,b=F
-        val alg = ProbEvidenceMarginalMAP(2000, 200, a, b)
+        val alg = ProbEvidenceMarginalMAP(2000, a, b)
         alg.start()
         alg.mostLikelyValue(a) should equal(true)
         alg.mostLikelyValue(b) should equal(false)
@@ -276,7 +278,7 @@ class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
         // p(a=F,b=T) = 0.4 * 0.4 = 0.16
         // p(a=F,b=F) = 0
         // MAP: a=F,b=T
-        val alg = ProbEvidenceMarginalMAP(2000, 200, a, b)
+        val alg = ProbEvidenceMarginalMAP(2000, a, b)
         alg.start()
         alg.mostLikelyValue(a) should equal(false)
         alg.mostLikelyValue(b) should equal(true)
@@ -314,7 +316,7 @@ class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
         // p(c=F,d=T)=0.0168+0.0432+0.0144+0.1296=0.204
         // p(c=F,d=F)=0.1512+0.0288+0.1296+0.0864=0.396 -> MAP
 
-        val alg = ProbEvidenceMarginalMAP(2000, 50, c, d)
+        val alg = ProbEvidenceMarginalMAP(2000, c, d)
         alg.start()
         alg.mostLikelyValue(c) should equal(false)
         alg.mostLikelyValue(d) should equal(false)
@@ -353,7 +355,7 @@ class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
 
         (c || d).observe(true)
 
-        val alg = ProbEvidenceMarginalMAP(2000, 50, c, d)
+        val alg = ProbEvidenceMarginalMAP(2000, c, d)
         alg.start()
         alg.mostLikelyValue(c) should equal(true)
         alg.mostLikelyValue(d) should equal(false)
