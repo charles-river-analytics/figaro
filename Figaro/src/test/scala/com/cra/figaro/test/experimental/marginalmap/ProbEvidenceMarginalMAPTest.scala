@@ -17,18 +17,28 @@ import com.cra.figaro.algorithm.sampling._
 import com.cra.figaro.experimental.marginalmap.ProbEvidenceMarginalMAP
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous.Normal
+import com.cra.figaro.library.atomic.discrete.{Uniform, Util}
+import com.cra.figaro.library.collection.Container
 import com.cra.figaro.library.compound.If
 import org.scalatest.{Matchers, WordSpec}
 
 class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
-  // TODO: tests ensuring that conditions and constraints on MAP elements are taken into account
+  // For testing, it's more efficient to use a linear schedule on simple models where we just want quick convergence,
+  // rather than exploration of a large state space
+  val linearSchedule = Schedule((temp, iter) => iter)
+
+  def anytime(elems: Element[_]*) =
+    ProbEvidenceMarginalMAP(100, 0.05, 100, ProposalScheme.default, linearSchedule, elems:_*)
+
+  def oneTime(elems: Element[_]*) =
+    ProbEvidenceMarginalMAP(2000, 100, 0.05, 100, ProposalScheme.default, linearSchedule, elems:_*)
 
   "Marginal MAP using probability of evidence" should {
     "increase temperature with additional iterations" in {
       Universe.createNew()
       val elem = Flip(0.6)
 
-      val alg = ProbEvidenceMarginalMAP(1, 0.05, 100, ProposalScheme(elem), Schedule.default(), elem)
+      val alg = ProbEvidenceMarginalMAP(elem)
       alg.start()
       val temp1 = alg.getTemperature
       Thread.sleep(500)
@@ -43,13 +53,13 @@ class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
       val elem = Flip(0.6)
 
       // k = 2.0
-      val alg1 = ProbEvidenceMarginalMAP(100, 1, 0.05, 100, ProposalScheme(elem), Schedule.default(2.0), elem)
+      val alg1 = ProbEvidenceMarginalMAP(100, 2, 0.05, 100, ProposalScheme(elem), Schedule.default(2.0), elem)
       alg1.start()
       val temp1 = alg1.getTemperature
       alg1.kill()
 
       // k = 4.0
-      val alg2 = ProbEvidenceMarginalMAP(100, 1, 0.05, 100, ProposalScheme(elem), Schedule.default(4.0), elem)
+      val alg2 = ProbEvidenceMarginalMAP(100, 2, 0.05, 100, ProposalScheme(elem), Schedule.default(4.0), elem)
       alg2.start()
       val temp2 = alg2.getTemperature
       alg2.kill()
@@ -78,60 +88,14 @@ class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
         val meanEstimate = (parameterMean / parameterVariance + observations.sum / variance) /
           (1.0 / parameterVariance + observations.length / variance)
 
-        val alg = ProbEvidenceMarginalMAP(1, 0.05, 100, ProposalScheme(parameter), Schedule.default(), parameter)
+        val alg = ProbEvidenceMarginalMAP(2, 0.05, 1, ProposalScheme(parameter), linearSchedule, parameter)
         alg.start()
         Thread.sleep(2500)
         alg.stop()
-        alg.mostLikelyValue(parameter) should equal(meanEstimate +- 0.01)
+        alg.mostLikelyValue(parameter) should equal(meanEstimate +- 0.05)
         alg.kill()
       }
 
-    }
-
-    "given a model with MAP queries on all permanent elements" should {
-      "produce the right answer without evidence" in {
-        Universe.createNew()
-        val a = Flip(0.6)
-        val b = If(a, Flip(0.3) && Flip(0.5), Flip(0.4))
-        // The result elements of b are marginalized
-        // Then, the first result element of b is effectively a Flip(0.15)
-
-        // p(a=T,b=T) = 0.6 * 0.15 = 0.09
-        // p(a=T,b=F) = 0.6 * 0.85 = 0.51
-        // p(a=F,b=T) = 0.4 * 0.4 = 0.16
-        // p(a=F,b=F) = 0.4 * 0.6 = 0.24
-        // MAP: a=T,b=F
-        val alg = ProbEvidenceMarginalMAP(200, a, b)
-        alg.start()
-        Thread.sleep(5000)
-        alg.stop()
-        alg.mostLikelyValue(a) should equal(true)
-        alg.mostLikelyValue(b) should equal(false)
-        alg.kill()
-      }
-
-      "produce the right answer with evidence" in {
-        Universe.createNew()
-        val a = Flip(0.6)
-        val b = If(a, Flip(0.3) && Flip(0.5), Flip(0.4))
-        b.observe(true)
-        // The result elements of b are marginalized
-        // Then, the first result element of b is effectively a Flip(0.15)
-
-        // These weights are not normalized
-        // p(a=T,b=T) = 0.6 * 0.15 = 0.09
-        // p(a=T,b=F) = 0
-        // p(a=F,b=T) = 0.4 * 0.4 = 0.16
-        // p(a=F,b=F) = 0
-        // MAP: a=F,b=T
-        val alg = ProbEvidenceMarginalMAP(200, a, b)
-        alg.start()
-        Thread.sleep(5000)
-        alg.stop()
-        alg.mostLikelyValue(a) should equal(false)
-        alg.mostLikelyValue(b) should equal(true)
-        alg.kill()
-      }
     }
 
     "given a model with MAP queries on more than one element" should {
@@ -164,9 +128,9 @@ class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
         // p(c=F,d=T)=0.0168+0.0432+0.0144+0.1296=0.204
         // p(c=F,d=F)=0.1512+0.0288+0.1296+0.0864=0.396 -> MAP
 
-        val alg = ProbEvidenceMarginalMAP(50, c, d)
+        val alg = anytime(c, d)
         alg.start()
-        Thread.sleep(5000)
+        Thread.sleep(2500)
         alg.stop()
         alg.mostLikelyValue(c) should equal(false)
         alg.mostLikelyValue(d) should equal(false)
@@ -205,12 +169,51 @@ class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
 
         (c || d).observe(true)
 
-        val alg = ProbEvidenceMarginalMAP(50, c, d)
+        val alg = anytime(c, d)
         alg.start()
-        Thread.sleep(5000)
+        Thread.sleep(2500)
         alg.stop()
         alg.mostLikelyValue(c) should equal(true)
         alg.mostLikelyValue(d) should equal(false)
+        alg.kill()
+      }
+    }
+
+    "given evidence on MAP elements" should {
+      "produce the right answer with a condition" in {
+        Universe.createNew()
+        val rolls = for { i <- 1 to 10 } yield Uniform(1,2,3,4)
+        val c = Container(rolls: _*)
+        val num4 = c.count(_ == 4)
+
+        num4.addCondition(_ >= 5)
+
+        // Since the pmf of a binomial distribution is strictly decreasing past the mode,
+        // the most likely value should be the least possible value given the evidence
+        val alg = anytime(num4)
+        alg.start()
+        Thread.sleep(5000)
+        alg.stop()
+        alg.mostLikelyValue(num4) should equal(5)
+        alg.kill()
+      }
+
+      "produce the right answer with a constraint" in {
+        Universe.createNew()
+        val rolls = for { i <- 1 to 10 } yield Uniform(1,2,3,4)
+        val c = Container(rolls: _*)
+        val num4 = c.count(_ == 4)
+
+        val constraint = (x: Int) => math.exp(- (x - 6) * (x - 6))
+        num4.addConstraint(constraint)
+        val max = (0 to 10).maxBy(x => Util.binomialDensity(10, 0.25, x) * constraint(x))
+        max should equal(5)
+
+        val alg = anytime(num4)
+        alg.start()
+        Thread.sleep(5000)
+        alg.stop()
+        alg.mostLikelyValue(num4) should equal(max)
         alg.kill()
       }
     }
@@ -236,54 +239,12 @@ class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
         val meanEstimate = (parameterMean / parameterVariance + observations.sum / variance) /
           (1.0 / parameterVariance + observations.length / variance)
 
-        val alg = ProbEvidenceMarginalMAP(10000, 1, 0.05, 100, ProposalScheme(parameter), Schedule.default(), parameter)
+        val alg = ProbEvidenceMarginalMAP(1000, 2, 0.05, 1, ProposalScheme(parameter), linearSchedule, parameter)
         alg.start()
-        alg.mostLikelyValue(parameter) should equal(meanEstimate +- 0.01)
+        alg.mostLikelyValue(parameter) should equal(meanEstimate +- 0.05)
         alg.kill()
       }
 
-    }
-
-    "given a model with MAP queries on all permanent elements" should {
-      "produce the right answer without evidence" in {
-        Universe.createNew()
-        val a = Flip(0.6)
-        val b = If(a, Flip(0.3) && Flip(0.5), Flip(0.4))
-        // The result elements of b are marginalized
-        // Then, the first result element of b is effectively a Flip(0.15)
-
-        // p(a=T,b=T) = 0.6 * 0.15 = 0.09
-        // p(a=T,b=F) = 0.6 * 0.85 = 0.51
-        // p(a=F,b=T) = 0.4 * 0.4 = 0.16
-        // p(a=F,b=F) = 0.4 * 0.6 = 0.24
-        // MAP: a=T,b=F
-        val alg = ProbEvidenceMarginalMAP(2000, a, b)
-        alg.start()
-        alg.mostLikelyValue(a) should equal(true)
-        alg.mostLikelyValue(b) should equal(false)
-        alg.kill()
-      }
-
-      "produce the right answer with evidence" in {
-        Universe.createNew()
-        val a = Flip(0.6)
-        val b = If(a, Flip(0.3) && Flip(0.5), Flip(0.4))
-        b.observe(true)
-        // The result elements of b are marginalized
-        // Then, the first result element of b is effectively a Flip(0.15)
-
-        // These weights are not normalized
-        // p(a=T,b=T) = 0.6 * 0.15 = 0.09
-        // p(a=T,b=F) = 0
-        // p(a=F,b=T) = 0.4 * 0.4 = 0.16
-        // p(a=F,b=F) = 0
-        // MAP: a=F,b=T
-        val alg = ProbEvidenceMarginalMAP(2000, a, b)
-        alg.start()
-        alg.mostLikelyValue(a) should equal(false)
-        alg.mostLikelyValue(b) should equal(true)
-        alg.kill()
-      }
     }
 
     "given a model with MAP queries on more than one element" should {
@@ -316,7 +277,7 @@ class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
         // p(c=F,d=T)=0.0168+0.0432+0.0144+0.1296=0.204
         // p(c=F,d=F)=0.1512+0.0288+0.1296+0.0864=0.396 -> MAP
 
-        val alg = ProbEvidenceMarginalMAP(2000, c, d)
+        val alg = oneTime(c, d)
         alg.start()
         alg.mostLikelyValue(c) should equal(false)
         alg.mostLikelyValue(d) should equal(false)
@@ -355,10 +316,45 @@ class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
 
         (c || d).observe(true)
 
-        val alg = ProbEvidenceMarginalMAP(2000, c, d)
+        val alg = oneTime(c, d)
         alg.start()
         alg.mostLikelyValue(c) should equal(true)
         alg.mostLikelyValue(d) should equal(false)
+        alg.kill()
+      }
+    }
+
+    "given evidence on MAP elements" should {
+      "produce the right answer with a condition" in {
+        Universe.createNew()
+        val rolls = for { i <- 1 to 10 } yield Uniform(1,2,3,4)
+        val c = Container(rolls: _*)
+        val num4 = c.count(_ == 4)
+
+        num4.addCondition(_ >= 5)
+
+        // Since the pmf of a binomial distribution is strictly decreasing past the mode,
+        // the most likely value should be the least possible value given the evidence
+        val alg = oneTime(num4)
+        alg.start()
+        alg.mostLikelyValue(num4) should equal(5)
+        alg.kill()
+      }
+
+      "produce the right answer with a constraint" in {
+        Universe.createNew()
+        val rolls = for { i <- 1 to 10 } yield Uniform(1,2,3,4)
+        val c = Container(rolls: _*)
+        val num4 = c.count(_ == 4)
+
+        val constraint = (x: Int) => math.exp(- (x - 6) * (x - 6))
+        num4.addConstraint(constraint)
+        val max = (0 to 10).maxBy(x => Util.binomialDensity(10, 0.25, x) * constraint(x))
+        max should equal(5)
+
+        val alg = oneTime(num4)
+        alg.start()
+        alg.mostLikelyValue(num4) should equal(max)
         alg.kill()
       }
     }
