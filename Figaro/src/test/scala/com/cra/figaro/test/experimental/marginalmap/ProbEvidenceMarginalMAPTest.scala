@@ -28,10 +28,10 @@ class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
   val linearSchedule = Schedule((temp, iter) => iter)
 
   def anytime(elems: Element[_]*) =
-    ProbEvidenceMarginalMAP(100, 0.05, 100, ProposalScheme.default, linearSchedule, elems:_*)
+    ProbEvidenceMarginalMAP(0.05, 100, 100, ProposalScheme.default, linearSchedule, elems:_*)
 
   def oneTime(elems: Element[_]*) =
-    ProbEvidenceMarginalMAP(2000, 100, 0.05, 100, ProposalScheme.default, linearSchedule, elems:_*)
+    ProbEvidenceMarginalMAP(2000, 0.05, 100, 100, ProposalScheme.default, linearSchedule, elems:_*)
 
   "Marginal MAP using probability of evidence" should {
     "increase temperature with additional iterations" in {
@@ -53,13 +53,13 @@ class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
       val elem = Flip(0.6)
 
       // k = 2.0
-      val alg1 = ProbEvidenceMarginalMAP(100, 2, 0.05, 100, ProposalScheme(elem), Schedule.default(2.0), elem)
+      val alg1 = ProbEvidenceMarginalMAP(100, 0.05, 2, 100, ProposalScheme(elem), Schedule.default(2.0), elem)
       alg1.start()
       val temp1 = alg1.getTemperature
       alg1.kill()
 
       // k = 4.0
-      val alg2 = ProbEvidenceMarginalMAP(100, 2, 0.05, 100, ProposalScheme(elem), Schedule.default(4.0), elem)
+      val alg2 = ProbEvidenceMarginalMAP(100, 0.05, 2, 100, ProposalScheme(elem), Schedule.default(4.0), elem)
       alg2.start()
       val temp2 = alg2.getTemperature
       alg2.kill()
@@ -88,7 +88,7 @@ class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
         val meanEstimate = (parameterMean / parameterVariance + observations.sum / variance) /
           (1.0 / parameterVariance + observations.length / variance)
 
-        val alg = ProbEvidenceMarginalMAP(2, 0.05, 1, ProposalScheme(parameter), linearSchedule, parameter)
+        val alg = ProbEvidenceMarginalMAP(0.05, 2, 1, ProposalScheme(parameter), linearSchedule, parameter)
         alg.start()
         Thread.sleep(2500)
         alg.stop()
@@ -192,7 +192,7 @@ class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
         // the most likely value should be the least possible value given the evidence
         val alg = anytime(num4)
         alg.start()
-        Thread.sleep(5000)
+        Thread.sleep(10000)
         alg.stop()
         alg.mostLikelyValue(num4) should equal(5)
         alg.kill()
@@ -211,7 +211,7 @@ class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
 
         val alg = anytime(num4)
         alg.start()
-        Thread.sleep(5000)
+        Thread.sleep(10000)
         alg.stop()
         alg.mostLikelyValue(num4) should equal(max)
         alg.kill()
@@ -239,7 +239,7 @@ class ProbEvidenceMarginalMAPTest extends WordSpec with Matchers {
         val meanEstimate = (parameterMean / parameterVariance + observations.sum / variance) /
           (1.0 / parameterVariance + observations.length / variance)
 
-        val alg = ProbEvidenceMarginalMAP(1000, 2, 0.05, 1, ProposalScheme(parameter), linearSchedule, parameter)
+        val alg = ProbEvidenceMarginalMAP(1000, 0.05, 2, 1, ProposalScheme(parameter), linearSchedule, parameter)
         alg.start()
         alg.mostLikelyValue(parameter) should equal(meanEstimate +- 0.05)
         alg.kill()

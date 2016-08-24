@@ -29,11 +29,11 @@ import scala.collection.mutable
  * state is better than another state, or it has reached the maximum number of allowed runs. The maximization is done by
  * simulated annealing.
  * @param universe Universe on which to run the algorithm.
- * @param samplesPerIteration Number of probability of evidence samples to take per run. Must be strictly greater than 1.
- * A reasonable starting point is 100.
  * @param tolerance Confidence level used deciding to accept or reject under uncertainty. This corresponds to a maximum
  * allowed p-value. Thus, setting this to 0.05 means we only accept or reject if we are at least 95% confident that
- * we're making the right decision. Must be less than 0.5.
+ * we're making the right decision. Must between 0 and 0.5.
+ * @param samplesPerIteration Number of probability of evidence samples to take per run. Must be strictly greater than 1.
+ * A reasonable starting point is 100.
  * @param maxRuns Maximum number of runs of probability of evidence sampling allowed before giving up and returning the
  * proposal with higher estimated probability of evidence. Thus, at each iteration of simulated annealing, this
  * algorithm can take as many as `samplesPerIteration * maxRuns` probability of evidence samples. Setting to 1
@@ -49,8 +49,8 @@ import scala.collection.mutable
  * algorithm will still run if this condition is not satisfied, but it will not converge.
  */
 abstract class ProbEvidenceMarginalMAP(universe: Universe,
-                                       samplesPerIteration: Int,
                                        tolerance: Double,
+                                       samplesPerIteration: Int,
                                        maxRuns: Int,
                                        proposalScheme: ProposalScheme,
                                        schedule: Schedule,
@@ -58,6 +58,10 @@ abstract class ProbEvidenceMarginalMAP(universe: Universe,
   // Burn-in and interval aren't needed in this context, so they are set to 0 and 1, respectively
   extends MetropolisHastings(universe, proposalScheme, 0, 1, mapElements:_*) with MarginalMAPAlgorithm {
   import MetropolisHastings._
+
+  require(samplesPerIteration >= 2, "samples per iteration must be at least 2")
+  require(0 < tolerance && tolerance < 0.5, "tolerance must be between 0 and 0.5")
+  require(maxRuns >= 1, "maximum allowed runs must be at least 1")
 
   // The probability of evidence sampler associated with the current state of the MAP variables. Initialized when this
   // (i.e. the ProbEvidenceMarginalMAP) is started. In general, while this is active, probEvidenceSampler refers to
@@ -93,12 +97,9 @@ abstract class ProbEvidenceMarginalMAP(universe: Universe,
     scores.sum
   }
 
-  /*
-   * Proposes a new state, computes acceptance probability, and decides whether or not to accept.
-   * Updates temperature and logProbEvidence accordingly.
-   */
   override protected def mhStep(): State = {
-    // This state is not constrained
+    // This state is not constrained. Constraints are handled in decideToAccept because we incorporate them in the
+    // probability of evidence computation.
     val newState = proposeAndUpdate()
     // We don't care about dissatisfied elements that aren't MAP elements; remove them
     newState.dissatisfied.retain(fastTargets.contains)
@@ -113,6 +114,11 @@ abstract class ProbEvidenceMarginalMAP(universe: Universe,
     newState
   }
 
+  /**
+  Decide whether or not to accept the new (unconstrained) state, first taking into account conditions on the MAP
+   * elements. Does not change the state of the universe. Updates the temperature, preserved elements, and probability
+   * of evidence sampler accordingly. Incorporates constraints on the MAP elements.
+   */
   override protected def decideToAccept(newState: State): Boolean = {
     // Use the same satisfied / dissatisfied rule as MH
     val nothingNewDissatisfied = newState.dissatisfied subsetOf dissatisfied
@@ -125,16 +131,15 @@ abstract class ProbEvidenceMarginalMAP(universe: Universe,
   }
 
   /**
-   * Decide whether or not to accept, assuming all conditions on MAP elements are satisfied. Does not change the state
-   * of the universe. Updates the temperature, preserved elements, and probability of evidence sampler accordingly.
-   * Incorporates constraints on the MAP elements.
+   * Like decideToAccept, but assume all conditions on the MAP elements are satisfied.
    */
   protected def decideToAcceptSatisfied(): Boolean = {
     // Update the temperature
     temperature = schedule.temperature(temperature, sampleCount)
 
     // Always accept if none of the MAP values changed. This isn't necessarily meaningless; the values of other elements
-    // may have changed, which could result in new proposals later.
+    // may have changed, which could result in new proposals later. These are "observations" because they are the values
+    // we observe in the probability of evidence sampler.
     val observations = currentMAPValues
     if(observations == probEvidenceSampler.observations) return true
 
@@ -145,11 +150,11 @@ abstract class ProbEvidenceMarginalMAP(universe: Universe,
 
     // Create and start a probability of evidence sampler over the current values of the MAP elements
     val newProbEvidenceSampler = new MMAPProbEvidenceSampler(observations)
-    // This runs the sampler for samplesPerIteration samples
+    // This initially runs the sampler for samplesPerIteration samples
     newProbEvidenceSampler.start()
 
     // Normally, we test if log(U[0,1]) < log(newProbEvidence - oldProbEvidence + computeScores) * temperature.
-    // We want to reformat this as a hypothesis test involving the log of two normally distributed random variables.
+    // We want to reformat this as a hypothesis test involving the log of the mean of two sampled random variables.
     // This yields log(oldProbEvidence) + (log(U[0,1]) / temp - computeScores) < newProbEvidence.
     // Thus, logConstant is the multiplicative constant applied to the old probability of evidence.
     // TODO should we incorporate proposal probability?
@@ -187,9 +192,9 @@ abstract class ProbEvidenceMarginalMAP(universe: Universe,
   /**
    * Decides whether or not the mean of the old sampler, multiplied by the constant given, is likely to be less than the
    * mean of the new sampler. Computes in log space to avoid underflow. This may mutate the state of the universe.
-   * @param oldSampler The probability of evidence sampler for the previous state of the MAP variables.
-   * @param newSampler The probability of evidence sampler for the next state of the MAP variables.
-   * @param logConstant The log of a multiplicative constant
+   * @param oldSampler Probability of evidence sampler for the previous state of the MAP variables.
+   * @param newSampler Probability of evidence sampler for the next state of the MAP variables.
+   * @param logConstant Log of a multiplicative constant, by which we multiply the mean of the old sampler.
    * @param runs Maximum allowed additional runs of probability of evidence sampling before this method should return a
    * best guess. This is a kill switch to avoid taking an absurd number of samples when the difference between the means
    * is negligible. Must be >= 0. Setting this to 0 is equivalent to performing no hypothesis test at all and just
@@ -203,8 +208,8 @@ abstract class ProbEvidenceMarginalMAP(universe: Universe,
     val newLogStats = newSampler.totalLogStatistics
 
     // If we aren't allowed to take more samples, our best guess is to return the comparison of the sample means.
-    // Otherwise, perform the t-test to see if we're confident that the means differ. We can be confident that both
-    // counts are greater than 1 because both counts must be at least samplesPerIteration.
+    // Otherwise, perform the t-test to see if we're confident that the means differ. We are sure that both counts are
+    // greater than 1 because both counts must be at least samplesPerIteration.
     if(runs == 0 || LogStatistics.oneSidedTTest(oldLogStats, newLogStats) < tolerance) {
       oldLogStats.logMean < newLogStats.logMean
     }
@@ -248,7 +253,7 @@ abstract class ProbEvidenceMarginalMAP(universe: Universe,
     val universeState = new UniverseState(universe)
     preserve = universeState.myActiveElements
 
-    // Run the probability of evidence sampler samplesPerIteration
+    // Run the probability of evidence sampler for samplesPerIteration
     probEvidenceSampler = new MMAPProbEvidenceSampler(currentMAPValues)
     probEvidenceSampler.start()
     universeState.restore()
@@ -289,10 +294,10 @@ abstract class ProbEvidenceMarginalMAP(universe: Universe,
     override val numSamples = samplesPerIteration
 
     /**
-     * Run the algorithm after observing the necessary values of MAP elements.
+     * Observe the necessary values of MAP elements, then run the algorithm. After this is initialized, calling this
+     * method again is allowed. The additional samples are accounted for when returning the total log statistics.
      */
     override def run(): Unit = {
-      // We override this me
       for(ElemVal(elem, value) <- observations) elem.observe(value)
       super.run()
     }
@@ -323,13 +328,13 @@ abstract class ProbEvidenceMarginalMAP(universe: Universe,
 }
 
 class AnytimeProbEvidenceMarginalMAP(universe: Universe,
-                                     samplesPerIteration: Int,
                                      tolerance: Double,
+                                     samplesPerIteration: Int,
                                      maxRuns: Int,
                                      proposalScheme: ProposalScheme,
                                      schedule: Schedule,
                                      mapElements: List[Element[_]])
-  extends ProbEvidenceMarginalMAP(universe, samplesPerIteration, tolerance, maxRuns, proposalScheme, schedule, mapElements)
+  extends ProbEvidenceMarginalMAP(universe, tolerance, samplesPerIteration, maxRuns, proposalScheme, schedule, mapElements)
     with AnytimeSampler with AnytimeMarginalMAP {
   /**
    * Initialize the algorithm.
@@ -342,13 +347,13 @@ class AnytimeProbEvidenceMarginalMAP(universe: Universe,
 
 class OneTimeProbEvidenceMarginalMAP(val numSamples: Int,
                                      universe: Universe,
-                                     samplesPerIteration: Int,
                                      tolerance: Double,
+                                     samplesPerIteration: Int,
                                      maxRuns: Int,
                                      proposalScheme: ProposalScheme,
                                      schedule: Schedule,
                                      mapElements: List[Element[_]])
-  extends ProbEvidenceMarginalMAP(universe, samplesPerIteration, tolerance, maxRuns, proposalScheme, schedule, mapElements)
+  extends ProbEvidenceMarginalMAP(universe, tolerance, samplesPerIteration, maxRuns, proposalScheme, schedule, mapElements)
     with OneTimeSampler with OneTimeMarginalMAP {
 
   /**
@@ -362,42 +367,38 @@ class OneTimeProbEvidenceMarginalMAP(val numSamples: Int,
 
 object ProbEvidenceMarginalMAP {
   /**
-   * Creates a one time marginal MAP algorithm using probability of evidence.
+   * Creates a one time marginal MAP algorithm that uses probability of evidence.
    * @see [[com.cra.figaro.experimental.marginalmap.ProbEvidenceMarginalMAP]] abstract class for a complete description
    * of the parameters.
    */
-  def apply(iterations: Int, samplesPerIteration: Int, tolerance: Double, maxRuns: Int, proposalScheme: ProposalScheme,
+  def apply(iterations: Int, tolerance: Double, samplesPerIteration: Int, maxRuns: Int, proposalScheme: ProposalScheme,
             schedule: Schedule, mapElements: Element[_]*)(implicit universe: Universe) =
-    new OneTimeProbEvidenceMarginalMAP(iterations, universe, samplesPerIteration, tolerance, maxRuns, proposalScheme,
-      schedule, mapElements.toList)
+    new OneTimeProbEvidenceMarginalMAP(iterations, universe, tolerance, samplesPerIteration, maxRuns, proposalScheme, schedule, mapElements.toList)
 
   /**
-   * Creates an anytime marginal MAP algorithm using probability of evidence.
+   * Creates an anytime marginal MAP algorithm that uses probability of evidence.
    * @see [[com.cra.figaro.experimental.marginalmap.ProbEvidenceMarginalMAP]] abstract class for a complete description
    * of the parameters.
    */
-  def apply(samplesPerIteration: Int, tolerance: Double, maxRuns: Int, proposalScheme: ProposalScheme,
+  def apply(tolerance: Double, samplesPerIteration: Int, maxRuns: Int, proposalScheme: ProposalScheme,
             schedule: Schedule, mapElements: Element[_]*)(implicit universe: Universe) =
-  new AnytimeProbEvidenceMarginalMAP(universe, samplesPerIteration, tolerance, maxRuns, proposalScheme,
-    schedule, mapElements.toList)
+  new AnytimeProbEvidenceMarginalMAP(universe, tolerance, samplesPerIteration, maxRuns, proposalScheme, schedule, mapElements.toList)
 
   /**
-   * Creates a one time marginal MAP algorithm using probability of evidence. Takes 100 samples per iteration at a
+   * Creates a one time marginal MAP algorithm that uses probability of evidence. Takes 100 samples per iteration at a
    * tolerance of 0.05, up to a maximum of 100 runs. Uses the default proposal scheme and schedule.
    * @see [[com.cra.figaro.experimental.marginalmap.ProbEvidenceMarginalMAP]] abstract class for a complete description
    * of the parameters.
    */
   def apply(iterations: Int, mapElements: Element[_]*)(implicit universe: Universe) =
-  new OneTimeProbEvidenceMarginalMAP(iterations, universe, 100, 0.05, 100, ProposalScheme.default(universe),
-    Schedule.default(), mapElements.toList)
+  new OneTimeProbEvidenceMarginalMAP(iterations, universe, 0.05, 100, 100, ProposalScheme.default(universe), Schedule.default(), mapElements.toList)
 
   /**
-   * Creates an anytime marginal MAP algorithm using probability of evidence. Takes 100 samples per iteration at a
+   * Creates an anytime marginal MAP algorithm that uses probability of evidence. Takes 100 samples per iteration at a
    * tolerance of 0.05, up to a maximum of 100 runs. Uses the default proposal scheme and schedule.
    * @see [[com.cra.figaro.experimental.marginalmap.ProbEvidenceMarginalMAP]] abstract class for a complete description
    * of the parameters.
    */
   def apply(mapElements: Element[_]*)(implicit universe: Universe) =
-    new AnytimeProbEvidenceMarginalMAP(universe, 100, 0.05, 100, ProposalScheme.default(universe),
-      Schedule.default(), mapElements.toList)
+    new AnytimeProbEvidenceMarginalMAP(universe, 0.05, 100, 100, ProposalScheme.default(universe), Schedule.default(), mapElements.toList)
 }
