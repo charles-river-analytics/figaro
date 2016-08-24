@@ -104,7 +104,7 @@ trait NormalProposer extends Atomic[Double] {
     // The probability density of proposing the new value given the old value is the density of the new value from the
     // normal distribution, divided by the normalizing constant of the cumulative probability between the upper and
     // lower bounds. This ensures that the PDF of the truncated distribution integrates to 1.
-    val uncorrected = dist.probability(newRandomness) / dist.probability(lower, upper)
+    val uncorrected = dist.density(newRandomness) / dist.probability(lower, upper)
     // Correct for the scaling factor associated with newRandomness.
     uncorrected / generateValueDerivative(newRandomness)
   }
