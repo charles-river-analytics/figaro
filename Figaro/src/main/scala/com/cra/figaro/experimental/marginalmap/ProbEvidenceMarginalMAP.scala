@@ -312,9 +312,9 @@ abstract class ProbEvidenceMarginalMAP(universe: Universe,
         val weight = lw.computeWeight(universe.activeElements)
         successWeight = logSum(successWeight, weight)
         // Record the weight for the variance computation
-        observe(weight)
+        record(weight)
       } catch {
-        case Importance.Reject => observe(Double.NegativeInfinity)
+        case Importance.Reject => record(Double.NegativeInfinity)
       }
 
       // Deactivate only the temporary elements created during probability of evidence sampling

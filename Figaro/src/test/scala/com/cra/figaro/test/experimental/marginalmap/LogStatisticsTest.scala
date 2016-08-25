@@ -125,7 +125,7 @@ class LogStatisticsTest extends WordSpec with Matchers {
       "all of the observations are 0" in {
         val ols = new OnlineLogStatistics {}
         val numObservations = 100
-        for(_ <- 1 to numObservations) ols.observe(Double.NegativeInfinity)
+        for(_ <- 1 to numObservations) ols.record(Double.NegativeInfinity)
 
         val logStats = ols.totalLogStatistics
         logStats.logMean should be (Double.NegativeInfinity)
@@ -136,7 +136,7 @@ class LogStatisticsTest extends WordSpec with Matchers {
       "some of the observations are 0" in {
         val ols = new OnlineLogStatistics {}
         val observations = List(Double.NegativeInfinity, 0.0, -0.5, Double.NegativeInfinity, -2.2, 0.1)
-        observations.foreach(ols.observe)
+        observations.foreach(ols.record)
 
         val logStats = ols.totalLogStatistics
         logStats.logMean should be (-0.75413 +- 1E-5)
@@ -156,7 +156,7 @@ class LogStatisticsTest extends WordSpec with Matchers {
 
       "given one observation" in {
         val ols = new OnlineLogStatistics {}
-        ols.observe(1.5)
+        ols.record(1.5)
 
         val logStats = ols.totalLogStatistics
         logStats.logMean should be (1.5 +- 1E-4)
@@ -167,7 +167,7 @@ class LogStatisticsTest extends WordSpec with Matchers {
       "given several observations" in {
         val ols = new OnlineLogStatistics {}
         val observations = List(-3.7, 2.1, 0.8, 1.2, 0.8, -0.5)
-        observations.foreach(ols.observe)
+        observations.foreach(ols.record)
 
         val logStats = ols.totalLogStatistics
         logStats.logMean should be (1.0158 +- 1E-4)
@@ -180,7 +180,7 @@ class LogStatisticsTest extends WordSpec with Matchers {
       "exponentiation could underflow" in {
         val ols = new OnlineLogStatistics {}
         val observations = List(-3.7, 2.1, 0.8, 1.2, 0.8, -0.5).map(_ - logOffset)
-        observations.foreach(ols.observe)
+        observations.foreach(ols.record)
 
         val logStats = ols.totalLogStatistics.multiplyByConstant(logOffset)
         logStats.logMean should be (1.0158 +- 1E-4)
@@ -191,7 +191,7 @@ class LogStatisticsTest extends WordSpec with Matchers {
       "exponentiation could overflow" in {
         val ols = new OnlineLogStatistics {}
         val observations = List(-3.7, 2.1, 0.8, 1.2, 0.8, -0.5).map(_ + logOffset)
-        observations.foreach(ols.observe)
+        observations.foreach(ols.record)
 
         val logStats = ols.totalLogStatistics.multiplyByConstant(-logOffset)
         logStats.logMean should be (1.0158 +- 1E-4)

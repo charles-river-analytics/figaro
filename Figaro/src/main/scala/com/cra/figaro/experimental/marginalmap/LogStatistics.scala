@@ -91,7 +91,7 @@ trait OnlineLogStatistics {
    * Record the weight in the rolling mean and variance computation.
    * @param logWeight Log of the weight to record.
    */
-  def observe(logWeight: Double) = {
+  def record(logWeight: Double) = {
     // Online variance algorithm from Wikipedia
     count += 1
     if(logWeight >= logMean) {
