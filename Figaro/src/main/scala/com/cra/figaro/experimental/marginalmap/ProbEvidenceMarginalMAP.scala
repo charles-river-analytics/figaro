@@ -153,10 +153,11 @@ abstract class ProbEvidenceMarginalMAP(universe: Universe,
     // This initially runs the sampler for samplesPerIteration samples
     newProbEvidenceSampler.start()
 
-    // Normally, we test if log(U[0,1]) < log(newProbEvidence - oldProbEvidence + computeScores) * temperature.
+    // Normally, we test if log(U[0,1]) < (log(newProbEvidence) - log(oldProbEvidence) + computeScores) * temperature.
     // We want to reformat this as a hypothesis test involving the log of the mean of two sampled random variables.
-    // This yields log(oldProbEvidence) + (log(U[0,1]) / temp - computeScores) < newProbEvidence.
+    // This yields log(oldProbEvidence) + (log(U[0,1]) / temperature - computeScores) < log(newProbEvidence).
     // Thus, logConstant is the multiplicative constant applied to the old probability of evidence.
+
     // Note that in this implementation, we choose to ignore the proposal probability. In theory, this should not make a
     // difference in the limiting case, but in practice choosing to incorporate or not incorporate this probability
     // could affect the rate of convergence. Here, we choose to ignore it because the proposal probability may not
@@ -196,9 +197,11 @@ abstract class ProbEvidenceMarginalMAP(universe: Universe,
 
   /**
    * Decides whether or not the mean of the old sampler, multiplied by the constant given, is likely to be less than the
-   * mean of the new sampler. Computes in log space to avoid underflow. This may mutate the state of the universe.
-   * @param oldSampler Probability of evidence sampler for the previous state of the MAP variables.
-   * @param newSampler Probability of evidence sampler for the next state of the MAP variables.
+   * mean of the new sampler. Computes in log space to avoid underflow. This may mutate the state of the universe. This
+   * does not take into account conditions and constraints on the MAP elements directly; these should be incorporated in
+   * the log constant provided.
+   * @param oldSampler Probability of evidence sampler for the previous state of the MAP elements.
+   * @param newSampler Probability of evidence sampler for the next state of the MAP elements.
    * @param logConstant Log of a multiplicative constant, by which we multiply the mean of the old sampler.
    * @param runs Maximum allowed additional runs of probability of evidence sampling before this method should return a
    * best guess. This is a kill switch to avoid taking an absurd number of samples when the difference between the means
