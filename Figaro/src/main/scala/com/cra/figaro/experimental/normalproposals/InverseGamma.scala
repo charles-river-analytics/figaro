@@ -24,7 +24,7 @@ import scala.math._
  * Theta defaults to 1.
  */
 class AtomicInverseGamma(name: Name[Double], shape: Double, scale: Double = 1.0, collection: ElementCollection)
-  extends Element[Double](name, collection) with NormalProposer {
+  extends Element[Double](name, collection) with HasDensity[Double] with NormalProposer {
   // Lower bound for normal proposals
   override def lower = 0.0
   // Proposal scale is 20% of the standard deviation of the underlying Gamma randomness
@@ -35,6 +35,14 @@ class AtomicInverseGamma(name: Name[Double], shape: Double, scale: Double = 1.0,
   override def generateValue(rand: Randomness) = 1.0 / (rand * scale) // due to scaling property of Gamma
 
   override def generateValueDerivative(rand: Randomness) = 1.0 / (rand * rand * scale)
+
+  override def nextRandomness(oldRandomness: Randomness): (Randomness, Double, Double) = {
+    // If k is large, then the density is spread out enough for normal proposals to work reasonably well.
+    if(shape >= 1) super[NormalProposer].nextRandomness(oldRandomness)
+    // If k is small, too much density is concentrated extremely close to 0 for normal proposals to be effective.
+    // For example, if k=0.1, the median is ~0.00059.
+    else super[HasDensity].nextRandomness(oldRandomness)
+  }
 
   /**
    * The normalizing factor.

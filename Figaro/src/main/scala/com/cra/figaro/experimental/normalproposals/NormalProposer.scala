@@ -21,7 +21,8 @@ import scala.annotation.tailrec
 
 /**
  * Normally distributed proposals for univariate continuous elements. This works by proposing from a truncated normal
- * distribution over the randomness of this element.
+ * distribution over the randomness of this element. This implementation assumes that the probability density of values
+ * associated with randomnesses in the range (`lower`, `upper`) are finite.
  */
 trait NormalProposer extends Atomic[Double] {
   type Randomness = Double
