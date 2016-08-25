@@ -11,9 +11,8 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
-package com.cra.figaro.experimental.marginalmap
+package com.cra.figaro.util
 
-import com.cra.figaro.util._
 import org.apache.commons.math3.distribution.TDistribution
 
 import scala.math._

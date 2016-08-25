@@ -11,10 +11,10 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
-package com.cra.figaro.test.experimental.marginalmap
+package com.cra.figaro.test.util
 
-import com.cra.figaro.experimental.marginalmap.{LogStatistics, OnlineLogStatistics}
-import com.cra.figaro.experimental.marginalmap.LogStatistics.oneSidedTTest
+import com.cra.figaro.util._
+import com.cra.figaro.util.LogStatistics.oneSidedTTest
 import org.scalatest.{Matchers, WordSpec}
 
 class LogStatisticsTest extends WordSpec with Matchers {
