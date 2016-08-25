@@ -157,7 +157,12 @@ abstract class ProbEvidenceMarginalMAP(universe: Universe,
     // We want to reformat this as a hypothesis test involving the log of the mean of two sampled random variables.
     // This yields log(oldProbEvidence) + (log(U[0,1]) / temp - computeScores) < newProbEvidence.
     // Thus, logConstant is the multiplicative constant applied to the old probability of evidence.
-    // TODO should we incorporate proposal probability?
+    // Note that in this implementation, we choose to ignore the proposal probability. In theory, this should not make a
+    // difference in the limiting case, but in practice choosing to incorporate or not incorporate this probability
+    // could affect the rate of convergence. Here, we choose to ignore it because the proposal probability may not
+    // correspond to a meaningful change over the MAP elements. In particular, if new values are proposed for non-MAP
+    // elements but none of the values of MAP elements change, it would not be sensible to weight one state as being
+    // more or less favorable than the other.
     val logConstant =  math.log(random.nextDouble) / temperature - computeScores()
     // We've already run newProbEvidence sampler once by calling start(), so use maxRuns - 1
     val accepted = compareMeans(probEvidenceSampler, newProbEvidenceSampler, logConstant, maxRuns - 1)
