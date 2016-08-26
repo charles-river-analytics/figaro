@@ -44,6 +44,10 @@ trait HasDensity[T] extends Element[T] {
     val newRandomness = generateRandomness()
     val pOld = density(generateValue(oldRandomness))
     val pNew = density(generateValue(newRandomness))
+    // Note that these density ratios could overflow/underflow, particularly if there is nonzero probability of
+    // generating a value that has infinite density. For example, this may occur when generating from a Gamma
+    // distribution with sufficiently small shape parameter such that the value 0 may be produced, which has infinite
+    // density. We don't account for this explicitly because MH is unlikely to work well for these models to begin with.
     (newRandomness, pOld / pNew, pNew / pOld)
   }
 }
