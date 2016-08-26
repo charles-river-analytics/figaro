@@ -23,8 +23,9 @@ import JSci.maths.statistics._
 import com.cra.figaro.test.tags.NonDeterministic
 import com.cra.figaro.ndtest._
 
-// Copied from ContinuousTest, but applied only to NormalProposer elements using MH. The idea is that if we integrate
-// the NormalProposer elements into the main library, then we can reuse the previous tests.
+// Largely copied from ContinuousTest, but applied only to NormalProposer elements using MH. The idea is that if we
+// integrate the NormalProposer elements into the main library, then we can reuse the previous tests. Some additional
+// tests were added for multiple Beta parameters, since Beta only conditionally uses Normal proposals.
 class NormalProposerTest extends WordSpec with Matchers {
 
   val alpha: Double = 0.05
@@ -194,26 +195,97 @@ class NormalProposerTest extends WordSpec with Matchers {
     }
   }
 
-  "An AtomicBeta" should {
-    "compute the correct probability under Metropolis-Hastings" taggedAs NonDeterministic in {
-      val ndtest = new NDTest {
-        override def oneTest = {
-          Universe.createNew()
-          val a = 1.2
-          val b = 0.5
-          val elem = Beta(a, b)
-          val alg = MetropolisHastings(20000, ProposalScheme.default, elem)
-          alg.start()
-          val dist = new BetaDistribution(a, b)
-          val targetProb = dist.cumulative(0.3) - dist.cumulative(0.2)
-          val result = alg.probability(elem)(d => 0.2 <= d && d < 0.3)
-          alg.stop()
-          alg.kill()
-          update(result, NDTest.TTEST, "AtomicBetaTestResults", targetProb, alpha)
+  "An AtomicBeta" when {
+    "a >= 1.0 and b >= 1.0" should {
+      "compute the correct probability under Metropolis-Hastings" taggedAs NonDeterministic in {
+        val ndtest = new NDTest {
+          override def oneTest = {
+            Universe.createNew()
+            val a = 1.3
+            val b = 2.7
+            val elem = Beta(a, b)
+            val alg = MetropolisHastings(20000, ProposalScheme.default, elem)
+            alg.start()
+            val dist = new BetaDistribution(a, b)
+            val targetProb = dist.cumulative(0.3) - dist.cumulative(0.2)
+            val result = alg.probability(elem)(d => 0.2 <= d && d < 0.3)
+            alg.stop()
+            alg.kill()
+            update(result, NDTest.TTEST, "AtomicBetaTestResults", targetProb, alpha)
+          }
         }
-      }
 
-      ndtest.run(10)
+        ndtest.run(10)
+      }
+    }
+
+    "a >= 1.0 and b < 1.0" should {
+      "compute the correct probability under Metropolis-Hastings" taggedAs NonDeterministic in {
+        val ndtest = new NDTest {
+          override def oneTest = {
+            Universe.createNew()
+            val a = 1.2
+            val b = 0.5
+            val elem = Beta(a, b)
+            val alg = MetropolisHastings(20000, ProposalScheme.default, elem)
+            alg.start()
+            val dist = new BetaDistribution(a, b)
+            val targetProb = dist.cumulative(0.3) - dist.cumulative(0.2)
+            val result = alg.probability(elem)(d => 0.2 <= d && d < 0.3)
+            alg.stop()
+            alg.kill()
+            update(result, NDTest.TTEST, "AtomicBetaTestResults", targetProb, alpha)
+          }
+        }
+
+        ndtest.run(10)
+      }
+    }
+
+    "a < 1.0 and b >= 1.0" should {
+      "compute the correct probability under Metropolis-Hastings" taggedAs NonDeterministic in {
+        val ndtest = new NDTest {
+          override def oneTest = {
+            Universe.createNew()
+            val a = 0.3
+            val b = 1.0
+            val elem = Beta(a, b)
+            val alg = MetropolisHastings(20000, ProposalScheme.default, elem)
+            alg.start()
+            val dist = new BetaDistribution(a, b)
+            val targetProb = dist.cumulative(0.3) - dist.cumulative(0.2)
+            val result = alg.probability(elem)(d => 0.2 <= d && d < 0.3)
+            alg.stop()
+            alg.kill()
+            update(result, NDTest.TTEST, "AtomicBetaTestResults", targetProb, alpha)
+          }
+        }
+
+        ndtest.run(10)
+      }
+    }
+
+    "a < 1.0 and b < 1.0" should {
+      "compute the correct probability under Metropolis-Hastings" taggedAs NonDeterministic in {
+        val ndtest = new NDTest {
+          override def oneTest = {
+            Universe.createNew()
+            val a = 0.3
+            val b = 0.6
+            val elem = Beta(a, b)
+            val alg = MetropolisHastings(20000, ProposalScheme.default, elem)
+            alg.start()
+            val dist = new BetaDistribution(a, b)
+            val targetProb = dist.cumulative(0.3) - dist.cumulative(0.2)
+            val result = alg.probability(elem)(d => 0.2 <= d && d < 0.3)
+            alg.stop()
+            alg.kill()
+            update(result, NDTest.TTEST, "AtomicBetaTestResults", targetProb, alpha)
+          }
+        }
+
+        ndtest.run(10)
+      }
     }
   }
 }

@@ -13,8 +13,9 @@
 
 package com.cra.figaro.experimental.normalproposals
 
+import JSci.maths.SpecialMath.error
 import com.cra.figaro.language._
-import com.cra.figaro.util.{bound, random}
+import com.cra.figaro.util.random
 
 import scala.math._
 
@@ -54,6 +55,19 @@ class AtomicNormal(name: Name[Double], val mean: Double, val variance: Double, c
 }
 
 object Normal {
+
+  def probability(mean: Double, stDev: Double)(lower: Double, upper: Double) = {
+    val denominator = stDev * sqrt(2.0)
+    val erfLower = (lower - mean) / denominator
+    val erfUpper = (upper - mean) / denominator
+    0.5 * (error(erfUpper) - error(erfLower))
+  }
+
+  def density(mean: Double, stDev: Double)(d: Double) = {
+    val diff = d - mean
+    val exponent = -(diff * diff) / (2.0 * stDev * stDev)
+    exp(exponent) / (sqrt(2.0 * Pi) * stDev)
+  }
 
   def density(mean: Double, variance: Double, normalizer: Double)(d: Double) = {
     val diff = d - mean

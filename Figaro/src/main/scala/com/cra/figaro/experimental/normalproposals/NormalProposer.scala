@@ -112,14 +112,15 @@ trait NormalProposer extends Atomic[Double] {
    * `generateValue(newRandomness)`. This is a density over the corresponding values (as opposed to randomnesses).
    */
   protected def proposalProb(oldRandomness: Double, newRandomness: Double): Double = {
-    val dist = new NormalDistribution(oldRandomness, proposalScale)
+    val stDev = proposalScale
 
     // The probability density of proposing the new randomness given the old randomness is the density of the new
     // randomness from the normal distribution, divided by the normalizing constant of the cumulative probability
     // between the upper and lower bounds. This cumulative probability corresponds to the probability of not rejecting
     // when we sample from the regular normal proposal. This ensures that the PDF of the truncated distribution
     // integrates to 1.
-    val uncorrected = dist.density(newRandomness) / dist.probability(lower, upper)
+    val uncorrected =
+      Normal.density(oldRandomness, stDev)(newRandomness) / Normal.probability(oldRandomness, stDev)(lower, upper)
 
     // Correct for the scaling factor associated with newRandomness. This is needed because even though the proposal
     // distribution over the randomness of this element is a truncated normal distribution, the resulting proposal
