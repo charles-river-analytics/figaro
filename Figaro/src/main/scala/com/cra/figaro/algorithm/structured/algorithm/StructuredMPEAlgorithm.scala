@@ -34,10 +34,10 @@ abstract class StructuredMPEAlgorithm(val universe: Universe) extends Algorithm 
 
   val problem = new Problem(cc, List())
   // We have to add all active elements to the problem since these elements, if they are every used, need to have components created at the top level problem
+  // By assumption, all evidence elements are also permanent elements.
   universe.permanentElements.foreach(problem.add(_))
-  val evidenceElems = universe.conditionedElements ::: universe.constrainedElements
 
-  def initialComponents() = (universe.permanentElements ++ evidenceElems).distinct.map(cc(_))
+  def initialComponents() = universe.permanentElements.distinct.map(cc(_))
 
   /**
    * Returns the most likely value for the target element.
