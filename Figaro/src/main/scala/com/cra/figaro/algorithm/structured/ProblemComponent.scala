@@ -38,6 +38,16 @@ class ProblemComponent[Value](val problem: Problem, val element: Element[Value])
   def variable = _variable
 
   /**
+   * A problem component is fully expanded if any additional refinement cannot change its range or factors. This
+   * includes subproblems, so a problem component with subproblems can only be fully expanded if all of its subproblems
+   * are fully expanded.
+   *
+   * TODO: choose better wording than "expanded", since this field is applicable to components other than
+   * ExpandableComponent.
+   */
+  var fullyExpanded = false
+
+  /**
    *  Set the variable associated with this component to the given variable.
    */
   def setVariable(v: Variable[Value]) {
