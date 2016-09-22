@@ -249,7 +249,17 @@ package object util {
     if (seq.isEmpty) throw new IllegalArgumentException("Empty list")
     else helper(seq.tail.toList, 1, 0, seq.head)
   }
-  
+
+  /**
+   * Computes the difference of two probabilities in log space.
+   * Returns NaN if p2>p1, -Infinity if p2=p1
+   */
+  def logDiff(p1: Double, p2: Double): Double = {
+    // Also covers the case where p1 = p2 = -Infinity
+    if(p2 == Double.NegativeInfinity) p1
+    // log(exp(p1) - exp(p2)) = log(exp(p1) * (1 - exp(p2) / exp(p1))) = p1 + log(1 - exp(p2 - p1))
+    else p1 + Math.log1p(-Math.exp(p2 - p1))
+  }
   
   /**
    * Sums two probabilities in log space.

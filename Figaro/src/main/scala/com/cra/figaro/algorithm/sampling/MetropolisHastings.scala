@@ -46,7 +46,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
   protected var accepts = 0
   protected var rejects = 0
 
-  private val currentConstraintValues: Map[Element[_], Double] = Map()
+  protected val currentConstraintValues: Map[Element[_], Double] = Map()
   universe.register(currentConstraintValues)
 
   /**
@@ -61,7 +61,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
 
   private def newState: State = State(Map(), Map(), 0.0, 0.0, scala.collection.mutable.Set(), List())
 
-  private val fastTargets = targets.toSet
+  protected val fastTargets = targets.toSet
 
   protected var chainCache: Cache = new MHCache(universe)
 
@@ -406,6 +406,15 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
     proposalCounts = savedProposalCounts
     (acceptanceRatio, successResults, proposalResults)
   }
+
+  /**
+   * Clean up the sampler, freeing memory.
+   */
+  override def cleanUp(): Unit = {
+    super.cleanUp()
+    universe.clearTemporaries()
+    chainCache.clear()
+  }
 }
 
 /**
@@ -425,14 +434,6 @@ class AnytimeMetropolisHastings(universe: Universe,
   override def initialize(): Unit = {
     super.initialize()
     doInitialize()
-  }
-
-  /**
-   * Clean up the sampler, freeing memory.
-   */
-  override def cleanUp(): Unit = {
-    universe.clearTemporaries()
-    super.cleanUp()
   }
 }
 
