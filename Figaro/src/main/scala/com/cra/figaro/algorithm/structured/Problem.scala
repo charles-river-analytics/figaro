@@ -52,7 +52,8 @@ class Problem(val collection: ComponentCollection, val targets: List[Element[_]]
    * A flag indicating whether the problem has been solved.
    */
   var solved: Boolean = false
-  
+
+  // TODO remove
   val componentsToVisit: scala.collection.mutable.Set[ProblemComponent[_]] = scala.collection.mutable.Set()
 
   /**
@@ -124,4 +125,12 @@ class Problem(val collection: ComponentCollection, val targets: List[Element[_]]
   targets.foreach(target => if (!collection.contains(target)) add(target))
 }
 
-class NestedProblem[T](collection: ComponentCollection, val target: Element[T]) extends Problem(collection, List(target))
+class NestedProblem[T](collection: ComponentCollection, val target: Element[T]) extends Problem(collection, List(target)) {
+  /**
+   * Returns whether or not this nested problem is fully expanded. A nested problem is fully expanded when its target is
+   * fully expanded.
+   */
+  def fullyExpanded: Boolean = {
+    collection(target).fullyExpanded
+  }
+}

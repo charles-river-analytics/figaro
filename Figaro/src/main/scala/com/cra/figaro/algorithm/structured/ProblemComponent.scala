@@ -39,8 +39,8 @@ class ProblemComponent[Value](val problem: Problem, val element: Element[Value])
 
   /**
    * A problem component is fully expanded if any additional refinement cannot change its range or factors. This
-   * includes subproblems, so a problem component with subproblems can only be fully expanded if all of its subproblems
-   * are fully expanded.
+   * includes subproblems, so a problem component with subproblems can only be fully expanded if all components
+   * associated with its subproblems are fully expanded.
    *
    * TODO: choose better wording than "expanded", since this field is applicable to components other than
    * ExpandableComponent.
@@ -208,23 +208,11 @@ class ChainComponent[ParentValue, Value](problem: Problem, val chain: Chain[Pare
     subproblems += parentValue -> subproblem
   }
 
-  /**
-   * Make the non-constraint factors for this component by using the solutions to the subproblems.
-   */
-  override def makeNonConstraintFactors(parameterized: Boolean = false) {
-    super.makeNonConstraintFactors(parameterized)
-    for {
-      (parentValue, subproblem) <- subproblems
-    } {
-      raiseSubproblemSolution(parentValue, subproblem)
-    }
-  }
-
   def raiseSubproblemSolution(parentValue: ParentValue, subproblem: NestedProblem[Value]): Unit = {
     val factors = for {
       factor <- subproblem.solution
     } yield Factory.replaceVariable(factor, problem.collection(subproblem.target).variable, actualSubproblemVariables(parentValue))
-    nonConstraintFactors = factors.toList ::: nonConstraintFactors
+    nonConstraintFactors = factors ::: nonConstraintFactors
   }
 
   // Raise the given subproblem into this problem. Note that factors for the chain must have been created already
