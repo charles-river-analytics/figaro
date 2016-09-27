@@ -12,18 +12,14 @@
  */
 package com.cra.figaro.algorithm.structured.strategy.solve
 
-import com.cra.figaro.algorithm.structured.Problem
-import com.cra.figaro.algorithm.structured.solver
-import com.cra.figaro.algorithm.factored.factors.Factor
-import com.cra.figaro.algorithm.factored.factors.Variable
+import com.cra.figaro.algorithm.structured.{Problem, solver}
+import com.cra.figaro.algorithm.factored.factors.{Factor, Variable}
 
 /**
  * A solving strategy that applies the same solver to every problem
  */
-class ConstantStrategy(solverToUse: solver.Solver) extends SolvingStrategy {
+abstract class ConstantStrategy(solverToUse: solver.Solver) extends SolvingStrategy {
 
-  def solve(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): (List[Factor[Double]], Map[Variable[_], Factor[_]]) = {
-    solverToUse(problem, toEliminate, toPreserve, factors)
-  }
-  
+  override def eliminate(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]):
+    (List[Factor[Double]], Map[Variable[_], Factor[_]]) = solverToUse(problem, toEliminate, toPreserve, factors)
 }

@@ -14,15 +14,15 @@ package com.cra.figaro.experimental.marginalmap
 
 import com.cra.figaro.algorithm.factored.factors.{Factor, Variable}
 import com.cra.figaro.algorithm.structured.{NestedProblem, Problem, solver}
-import com.cra.figaro.algorithm.structured.strategy.solve.SolvingStrategy
+import com.cra.figaro.algorithm.structured.strategy.solve.RecursiveStructuredStrategy
 
 /**
  * A solving strategy that uses MPE VE to solve non-nested problems, and performs the MAP step at the top level.
  * It is assumed that at the top level, "toPreserve" elements are the MAP elements.
  */
-class MarginalMAPVEStrategy extends SolvingStrategy {
+class MarginalMAPVEStrategy extends RecursiveStructuredStrategy {
 
-  def solve(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]):
+  def eliminate(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]):
     (List[Factor[Double]], Map[Variable[_], Factor[_]]) = {
     problem match {
       case _: NestedProblem[_] => {

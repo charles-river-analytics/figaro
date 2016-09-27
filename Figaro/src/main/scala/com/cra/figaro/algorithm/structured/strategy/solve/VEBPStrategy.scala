@@ -21,9 +21,9 @@ import com.cra.figaro.algorithm.structured.solver
 /**
  * A solving strategy that chooses between VE and BP based on a score of the elminiation order
  */
-class VEBPStrategy(val scoreThreshold: Double, val iterations: Int) extends SolvingStrategy {
+class VEBPStrategy(val scoreThreshold: Double, val iterations: Int) extends RecursiveStructuredStrategy {
 
-  def solve(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): (List[Factor[Double]], Map[Variable[_], Factor[_]]) = {
+  def eliminate(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): (List[Factor[Double]], Map[Variable[_], Factor[_]]) = {
     val (score, order) = VariableElimination.eliminationOrder(factors, toPreserve)
     if (score > scoreThreshold) {
       solver.marginalBeliefPropagation(iterations)(problem, toEliminate, toPreserve, factors)
