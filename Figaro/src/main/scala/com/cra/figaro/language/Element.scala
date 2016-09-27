@@ -222,7 +222,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
     universe.registerUses(this, elem)
   }
 
-  private var myConditions: List[(Condition, Contingency)] = List()
+  private[language] var myConditions: List[(Condition, Contingency)] = List()
 
   /** All the conditions defined on this element.*/
   def allConditions = myConditions
@@ -237,7 +237,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    * If an element has any other condition besides this observation, we cannot use the
    * observation. However, it can have a constraint.
    */
-  private[figaro] var observation: Option[T] = None
+  private[figaro] var observation: Option[Value] = None
 
   /*
    * Testing whether a condition is satisfied can use any type of value. The condition can only be satisfied if the value has the right type and the condition returns true.
@@ -291,7 +291,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
     addCondition(newCondition, contingency)
   }
 
-  private var myConstraints: List[(Constraint, Contingency)] = List()
+  private[language] var myConstraints: List[(Constraint, Contingency)] = List()
 
   /**
    * The current soft constraints on the element.
@@ -412,7 +412,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
     removeConditions()
   }
 
-  private var setFlag: Boolean = false
+  private[language] var setFlag: Boolean = false
 
   /**
    * Allows different values of the element to be generated.
@@ -448,7 +448,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
     set(generateValue(randomness))
   }
 
-  private var myPragmas: List[Pragma[Value]] = List()
+  private[language] var myPragmas: List[Pragma[Value]] = List()
 
   /**
    * The pragmas attached to the element.

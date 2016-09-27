@@ -87,10 +87,10 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
 
   private def saveState: Map[Element[_], Any] = {
     bestEnergy = currentEnergy
-    Map(universe.activeElements.map(e => (e -> e.value)): _*)
+    Map(universe.permanentElements.map(e => (e -> e.value)): _*)
   }
 
-  override protected def initUpdates() = allLastUpdates = Map(universe.activeElements.map(e => (e -> (e.value, 0))): _*)
+  override protected def initUpdates() = allLastUpdates = Map(universe.permanentElements.map(e => (e -> (e.value, 0))): _*)
 
   override protected def updateTimesSeenForTarget[T](elem: Element[T], newValue: T): Unit = {
     allLastUpdates += (elem -> (newValue, sampleCount))
@@ -122,7 +122,7 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
       val nextState = mhStep()
       currentEnergy += nextState.modelProb
     }
-    initUpdates()    
+    initUpdates()
     if (dissatisfied.nonEmpty) bestEnergy = Double.MinValue else bestEnergy = currentEnergy 
   }
 
