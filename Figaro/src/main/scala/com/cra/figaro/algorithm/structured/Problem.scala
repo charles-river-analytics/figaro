@@ -15,7 +15,6 @@ package com.cra.figaro.algorithm.structured
 
 import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.language._
-import com.cra.figaro.algorithm.structured.strategy.solve.SolvingStrategy
 
 /**
  * A Problem defines an inference problem to be solved.
@@ -92,27 +91,6 @@ class Problem(val collection: ComponentCollection, val targets: List[Element[_]]
       }
     }
     otherProblem == this || components.exists(componentContains(_))
-  }
-
-
-  /**
-   * Solve the problem defined by all the components' current factors.
-   * This will also set the globals accordingly.
-   * All components in this problem and contained subproblems should be eliminated in the solution.
-   */
-  def solve( strategy: SolvingStrategy, bounds: Bounds = Lower) {
-    val targetComponents = targets.map(collection(_))    
-    val allFactors = components.flatMap(c => c.nonConstraintFactors ::: c.constraintFactors(bounds))
-    val allVariables = (Set[Variable[_]]() /: allFactors)(_ ++ _.variables)
-    val (toEliminate, toPreserve) = allVariables.partition(internal(_))
-    globals = toPreserve.map(collection.variableToComponent(_))
-    val (solution, recordingFactors) = strategy.solve(this, toEliminate, toPreserve, allFactors)
-    this.solution = solution
-    this.recordingFactors = recordingFactors
-    solved = true
-    toEliminate.foreach((v: Variable[_]) => {
-      if (collection.intermediates.contains(v)) collection.intermediates -= v
-    })
   }
 
   /**
