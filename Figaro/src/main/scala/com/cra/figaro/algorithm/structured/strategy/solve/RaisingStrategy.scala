@@ -14,26 +14,20 @@ package com.cra.figaro.algorithm.structured.strategy.solve
 
 import com.cra.figaro.algorithm.factored.factors.Factor
 import com.cra.figaro.algorithm.structured._
+import com.cra.figaro.algorithm.structured.strategy.RecursiveStrategy
 
 /**
  * A solving strategy that raises subproblems, or solves them and raises their solutions. Classes that implement this
  * trait must specify when to raise subproblems, and how to solve subproblems.
  */
-trait RaisingStrategy extends SolvingStrategy {
+trait RaisingStrategy extends SolvingStrategy with RecursiveStrategy {
 
   /**
-   * Decide whether to raise the given subproblem.
-   * @param subproblem A nested problem to consider raising.
-   * @return True if the subproblem should be raised, false if it should be solved and have its solution raised.
+   * Returns a strategy to solve the nested problem, or None to indicate that the nested problem should be raised.
+   * @param subproblem Nested problem to consider recursing on.
+   * @return A strategy to recurse on the nested problem, or None if it should not recurse further.
    */
-  def raisingCriteria(subproblem: NestedProblem[_]): Boolean
-
-  /**
-   * Solve the nested subproblem. This can be done recursively by calling `solve`, or a new strategy can be created.
-   * @param subproblem Subproblem to solve.
-   * @param bounds Bounds for constraint factors.
-   */
-  def solveNested(subproblem: NestedProblem[_], bounds: Bounds): Unit
+  override def recurse(subproblem: NestedProblem[_]): Option[RaisingStrategy]
 
   /**
    * Process the subproblems for the given component by either choosing to raise them without solving, or choosing to
@@ -43,13 +37,13 @@ trait RaisingStrategy extends SolvingStrategy {
    */
   def raiseSubproblems[ParentValue, Value](chainComp: ChainComponent[ParentValue, Value], bounds: Bounds): Unit = {
     for((parentValue, subproblem) <- chainComp.subproblems) {
-      if(raisingCriteria(subproblem)){
-        // Raise the subproblem without solving it
-        chainComp.raise(parentValue, bounds)
-      }
-      else {
-        solveNested(subproblem, bounds)
-        chainComp.raiseSubproblemSolution(parentValue, subproblem)
+      val recursingStrategy = recurse(subproblem)
+      recursingStrategy match {
+        case Some(strategy) =>
+          strategy.execute(bounds)
+          chainComp.raiseSubproblemSolution(parentValue, subproblem)
+        case None =>
+          chainComp.raise(parentValue, bounds)
       }
     }
   }

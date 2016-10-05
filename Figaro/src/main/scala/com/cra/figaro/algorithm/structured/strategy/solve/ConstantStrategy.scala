@@ -1,6 +1,6 @@
 /*
  * ConstantStrategy.scala
- * An abstract class that defines how to solve a problem
+ * Solving strategies that use a single solver.
  *
  * Created By:      Brian Ruttenberg (bruttenberg@cra.com)
  * Creation Date:   July 1, 2015
@@ -12,14 +12,54 @@
  */
 package com.cra.figaro.algorithm.structured.strategy.solve
 
-import com.cra.figaro.algorithm.structured.{Problem, solver}
 import com.cra.figaro.algorithm.factored.factors.{Factor, Variable}
+import com.cra.figaro.algorithm.structured.{NestedProblem, Problem, solver}
+
 
 /**
- * A solving strategy that applies the same solver to every problem
+ * A solving strategy that applies the same solver to every problem, including nested problems.
+ * @param problem Problem to solve.
+ * @param solverToUse Solver to use for elimination.
+ * @param raisingCriteria Function used to decide whether to raise a problem or solve it first and raise its solution.
+ * Defaults to a structured raising criteria, which never raises a subproblem without solving it first.
  */
-abstract class ConstantStrategy(solverToUse: solver.Solver) extends SolvingStrategy {
+class ConstantStrategy(problem: Problem, solverToUse: solver.Solver,
+                       raisingCriteria: (Problem, NestedProblem[_]) => Boolean = ConstantStrategy.structured)
+  extends SolvingStrategy(problem)
+  with RaisingStrategy {
 
-  override def eliminate(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]):
-    (List[Factor[Double]], Map[Variable[_], Factor[_]]) = solverToUse(problem, toEliminate, toPreserve, factors)
+  override def eliminate(toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]):
+    (List[Factor[Double]], Map[Variable[_], Factor[_]]) = {
+    solverToUse(problem, toEliminate, toPreserve, factors)
+  }
+
+  override def recurse(subproblem: NestedProblem[_]) = {
+    if(raisingCriteria(problem, subproblem)) None
+    else Some(new ConstantStrategy(problem, solverToUse))
+  }
+}
+
+object ConstantStrategy {
+
+  /**
+   * Decision function for constant raising strategies that raises a subproblem if any of its components are global.
+   */
+  def raiseIfGlobal(parent: Problem, subproblem: NestedProblem[_]): Boolean = {
+    subproblem.components.exists(pc => {
+      val a = subproblem.internal(pc.variable)
+      val b = subproblem.targets.contains(pc.element)
+      !a && !b
+    })
+  }
+
+  /**
+   * Decision function for constant raising strategies that always raises a subproblem.
+   */
+  def flatten(parent: Problem, subproblem: NestedProblem[_]): Boolean = true
+
+  /**
+   * Decision function for constant raising strategies that never raises a subproblem without solving it.
+   */
+  def structured(parent: Problem, subproblem: NestedProblem[_]): Boolean = false
+
 }
