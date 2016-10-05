@@ -12,17 +12,15 @@
  */
 package com.cra.figaro.test.algorithm.structured.strategy
 
-import org.scalatest.{WordSpec, Matchers}
+import org.scalatest.{Matchers, WordSpec}
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound.If
-import com.cra.figaro.algorithm.lazyfactored.ValueSet._
 import com.cra.figaro.library.atomic.discrete.Uniform
 import com.cra.figaro.algorithm.structured._
-import com.cra.figaro.algorithm.structured.strategy.decompose._
 import com.cra.figaro.algorithm.structured.algorithm.flat.FlatVE
 import com.cra.figaro.algorithm.structured.strategy.solve.ConstantStrategy
-import com.cra.figaro.algorithm.structured.strategy.decompose.DecompositionStrategy
 import com.cra.figaro.algorithm.structured.solver._
+import com.cra.figaro.algorithm.structured.strategy.refine._
 import com.cra.figaro.language.Element.toBooleanElement
 
 
@@ -39,9 +37,11 @@ class FlatTest extends WordSpec with Matchers {
         })        
         val cc = new ComponentCollection
         val problem = new Problem(cc, List(r1))
-        val fs = DecompositionStrategy.recursiveFlattenStrategy(problem, new ConstantStrategy(marginalVariableElimination), defaultRangeSizer, Lower, false)
-        fs.backwardChain(problem.components , Set())
-        val factors =problem.components.flatMap(_.nonConstraintFactors) 
+        val decompose = new FullDecompositionStrategy(problem, defaultRangeSizer, Lower, false)
+        decompose.execute(problem.components)
+        val solve = new ConstantStrategy(problem, marginalVariableElimination, ConstantStrategy.flatten)
+        solve.execute()
+        val factors = problem.components.flatMap(_.nonConstraintFactors)
         factors.foreach(f => println(f.toReadableString))
         factors.size should be(16)
         FlatVE.probability(r1, 1) should equal (0.5*0.2*.4 +- 0.000001)
