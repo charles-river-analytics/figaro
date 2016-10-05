@@ -12,26 +12,30 @@
  */
 package com.cra.figaro.algorithm.structured.strategy.solve
 
-import com.cra.figaro.algorithm.structured.Problem
+import com.cra.figaro.algorithm.structured.{NestedProblem, Problem, solver}
 import com.cra.figaro.algorithm.factored.factors.Factor
 import com.cra.figaro.algorithm.factored.factors.Variable
 import com.cra.figaro.algorithm.factored.VariableElimination
 import com.cra.figaro.algorithm.factored.gibbs.Gibbs
-import com.cra.figaro.algorithm.structured.solver
 
 /**
  * A solving strategy that chooses between VE and Gibbs based on a score of the elminiation order
  */
-class VEGibbsStrategy(val scoreThreshold: Double, val numSamples: Int, val burnIn: Int, val interval: Int,
-                      val blockToSampler: Gibbs.BlockSamplerCreator) extends RecursiveStructuredStrategy {
+class VEGibbsStrategy(problem: Problem, val scoreThreshold: Double, val numSamples: Int, val burnIn: Int,
+                      val interval: Int,  val blockToSampler: Gibbs.BlockSamplerCreator)
+  extends SolvingStrategy(problem) with RaisingStrategy {
 
-  def eliminate(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): (List[Factor[Double]], Map[Variable[_], Factor[_]]) = {
+  override def eliminate(toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): (List[Factor[Double]], Map[Variable[_], Factor[_]]) = {
     val (score, order) = VariableElimination.eliminationOrder(factors, toPreserve)
     if (score > scoreThreshold) {
       solver.marginalGibbs(numSamples, burnIn, interval, blockToSampler)(problem, toEliminate, toPreserve, factors)
     } else {
       solver.marginalVariableElimination(problem, toEliminate, toPreserve, factors)
     }
+  }
+
+  override def recurse(subproblem: NestedProblem[_]) = {
+    Some(new VEGibbsStrategy(subproblem, scoreThreshold, numSamples, burnIn, interval, blockToSampler))
   }
 
 }
