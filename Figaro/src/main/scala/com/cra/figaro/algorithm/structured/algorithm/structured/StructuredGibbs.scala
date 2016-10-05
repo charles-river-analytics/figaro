@@ -12,8 +12,6 @@
  */
 package com.cra.figaro.algorithm.structured.algorithm.structured
 
-
-import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.factored.factors.factory._
 import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.structured._
@@ -21,17 +19,19 @@ import com.cra.figaro.algorithm.structured.solver._
 import com.cra.figaro.algorithm.structured.strategy.solve.ConstantStrategy
 import com.cra.figaro.language._
 import com.cra.figaro.algorithm.structured.algorithm.StructuredProbQueryAlgorithm
-import com.cra.figaro.algorithm.structured.strategy.decompose._
 import com.cra.figaro.algorithm.factored.gibbs.Gibbs
 import com.cra.figaro.algorithm.factored.gibbs.BlockSampler
+import com.cra.figaro.algorithm.structured.strategy.refine._
 
 class StructuredGibbs(universe: Universe, numSamples: Int, burnIn: Int, interval: Int, blockToSampler: Gibbs.BlockSamplerCreator, targets: Element[_]*)
   extends StructuredProbQueryAlgorithm(universe, targets: _*) {
     val semiring = SumProductSemiring()
 
   def run() {
-    val strategy = DecompositionStrategy.recursiveStructuredStrategy(problem, new ConstantStrategy(marginalGibbs(numSamples, burnIn, interval, blockToSampler)), defaultRangeSizer, Lower, false)
-    strategy.execute(initialComponents)
+    val decompose = new FullDecompositionStrategy(problem, defaultRangeSizer, Lower, false)
+    decompose.execute(initialComponents())
+    val solve = new ConstantStrategy(problem, marginalGibbs(numSamples, burnIn, interval, blockToSampler))
+    solve.execute(Lower)
     val joint = problem.solution.foldLeft(Factory.unit(semiring))(_.product(_))
     targets.foreach(t => marginalizeToTarget(t, joint))
   }

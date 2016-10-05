@@ -14,7 +14,7 @@
 package com.cra.figaro.experimental.marginalmap
 
 import com.cra.figaro.algorithm.structured._
-import com.cra.figaro.algorithm.structured.strategy.decompose._
+import com.cra.figaro.algorithm.structured.strategy.refine._
 import com.cra.figaro.language._
 
 /**
@@ -25,9 +25,11 @@ import com.cra.figaro.language._
 class StructuredMarginalMAPVE(universe: Universe, mapElements: List[Element[_]])
   extends StructuredMarginalMAPAlgorithm(universe, mapElements) {
 
-  def run() {    
-    val strategy = DecompositionStrategy.recursiveStructuredStrategy(problem, new MarginalMAPVEStrategy, defaultRangeSizer, Lower, false)
-    strategy.execute(initialComponents)    
+  def run() {
+    val decompose = new FullDecompositionStrategy(problem, defaultRangeSizer, Lower, false)
+    decompose.execute(initialComponents())
+    val solve = new MarginalMAPVEStrategy(problem)
+    solve.execute(Lower)
   }
 }
 
