@@ -52,9 +52,6 @@ class Problem(val collection: ComponentCollection, val targets: List[Element[_]]
    */
   var solved: Boolean = false
 
-  // TODO remove
-  val componentsToVisit: scala.collection.mutable.Set[ProblemComponent[_]] = scala.collection.mutable.Set()
-
   /**
    * Add a component for the given element to this problem.
    */
