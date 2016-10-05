@@ -14,13 +14,13 @@ package com.cra.figaro.algorithm.structured.strategy.solve
 
 import com.cra.figaro.algorithm.structured._
 import com.cra.figaro.algorithm.factored.factors.{Factor, Variable}
+import com.cra.figaro.algorithm.structured.strategy.ProblemStrategy
 
 /**
  * A solving strategy solves an inference problem after a series of refinements have been made. This involves solving or
  * raising subproblems first, then eliminating variables that do not belong in the solution.
  */
-abstract class SolvingStrategy {
-
+private[figaro] abstract class SolvingStrategy(problem: Problem) extends ProblemStrategy(problem) {
   /**
    * Get the constraint and non-constraint factors associated with a component. If the component has subproblems, this
    * includes solving the subproblems and raising their solutions, or raising the subproblem factors.
@@ -32,37 +32,39 @@ abstract class SolvingStrategy {
 
   /**
    * Solve the problem by eliminating variables, leaving only the ones that belong in the solution.
-   * @param problem Problem to solve.
    * @param toEliminate Variables to eliminate.
-   * @param toPreserve Variables to preserve
+   * @param toPreserve Variables to preserve.
    * @param factors Factors over which to perform elimination.
    * @return A list of factors over the variables to preserve representing their joint distribution, and a map of
    * recording factors for MPE.
    */
-  def eliminate(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]):
+  def eliminate(toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]):
     (List[Factor[Double]], Map[Variable[_], Factor[_]])
 
   /**
    * Solve the problem defined by all the components' current factors. This involves solving and incorporating
    * subproblems as well. This will set the globals accordingly. All components in this problem and contained
    * subproblems should be eliminated in the solution. This does nothing if the problem is already solved.
-   * @param problem Problem to solve.
    * @param bounds Bounds for constraint factors.
    */
-  def solve(problem: Problem, bounds: Bounds = Lower) {
+  def execute(bounds: Bounds): Unit = {
+    // TODO should this be a final def?
     if(!problem.solved) {
       val collection = problem.collection
       val allFactors = problem.components.flatMap(getFactors(_, bounds))
       val allVariables = (Set[Variable[_]]() /: allFactors)(_ ++ _.variables)
       val (toEliminate, toPreserve) = allVariables.partition(problem.internal)
       problem.globals = toPreserve.map(collection.variableToComponent(_))
-      val (solution, recordingFactors) = eliminate(problem, toEliminate, toPreserve, allFactors)
+      val (solution, recordingFactors) = eliminate(toEliminate, toPreserve, allFactors)
       problem.solution = solution
       problem.recordingFactors = recordingFactors
       problem.solved = true
       toEliminate.foreach((v: Variable[_]) => {
+        // TODO might this cause bugs?
         if (collection.intermediates.contains(v)) collection.intermediates -= v
       })
     }
   }
+
+  override def execute(): Unit = execute(Lower)
 }

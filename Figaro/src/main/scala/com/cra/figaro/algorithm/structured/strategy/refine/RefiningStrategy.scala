@@ -13,6 +13,7 @@
 package com.cra.figaro.algorithm.structured.strategy.refine
 
 import com.cra.figaro.algorithm.structured.Problem
+import com.cra.figaro.algorithm.structured.strategy.ProblemStrategy
 
 /**
  * A refining strategy takes an inference problem over a set of factors and improves it to better reflect the underlying
@@ -22,7 +23,7 @@ import com.cra.figaro.algorithm.structured.Problem
  * Refining is separate from solving, but can be thought of as the process of deciding how much of a problem we want to
  * solve.
  */
-private[figaro] abstract class RefiningStrategy(val problem: Problem) {
+private[figaro] abstract class RefiningStrategy(problem: Problem) extends ProblemStrategy(problem) {
   /**
    * Refine the problem in place using this strategy. This will mark the problem as unsolved if any changes are made to
    * the problem or nested subproblems, since any previous solution may no longer be applicable. This also marks

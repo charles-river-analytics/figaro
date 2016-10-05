@@ -13,7 +13,7 @@
 package com.cra.figaro.algorithm.structured.strategy.refine
 
 import com.cra.figaro.algorithm.structured._
-import com.cra.figaro.algorithm.structured.strategy.decompose.RangeSizer
+import com.cra.figaro.algorithm.structured.strategy.RecursiveStrategy
 import com.cra.figaro.language.Element
 
 import scala.collection.mutable
@@ -32,7 +32,14 @@ import scala.collection.mutable
  */
 private[figaro] abstract class DecompositionStrategy(problem: Problem, val rangeSizer: RangeSizer, val bounds: Bounds,
   val parameterized: Boolean, done: scala.collection.mutable.Set[ProblemComponent[_]] = mutable.Set())
-  extends RefiningStrategy(problem) {
+  extends RefiningStrategy(problem) with RecursiveStrategy {
+
+  /**
+   * Optionally decompose a nested problem.
+   * @param nestedProblem Nested problem to decompose.
+   * @return A decomposition strategy for the nested problem, or None if it should not be decomposed further.
+   */
+  override def recurse(nestedProblem: NestedProblem[_]): Option[DecompositionStrategy]
 
   override def execute(): Unit = execute(problem.targets.map(problem.collection(_)))
 
@@ -47,13 +54,6 @@ private[figaro] abstract class DecompositionStrategy(problem: Problem, val range
       backwardChain(components)
     }
   }
-
-  /**
-   * Optionally decompose a nested problem.
-   * @param nestedProblem Nested problem to decompose.
-   * @return A decomposition strategy for the nested problem, or None if it should not be decomposed further.
-   */
-  def decompose(nestedProblem: NestedProblem[_]): Option[DecompositionStrategy]
 
   /**
    * Get the problem component associated with an element, generating it first if it hasn't been created.
@@ -111,7 +111,7 @@ private[figaro] abstract class DecompositionStrategy(problem: Problem, val range
   // TODO comment these
   def processChain(chainComp: ChainComponent[_, _], argsFullyExpanded: Boolean) = {
     chainComp.expand()
-    val subStrategies = chainComp.subproblems.values.flatMap(decompose)
+    val subStrategies = chainComp.subproblems.values.flatMap(recurse)
     subStrategies.foreach(_.execute())
     makeRangeAndFactors(chainComp)
     if(argsFullyExpanded && chainComp.subproblems.forall(_._2.fullyExpanded)) chainComp.fullyExpanded = true
