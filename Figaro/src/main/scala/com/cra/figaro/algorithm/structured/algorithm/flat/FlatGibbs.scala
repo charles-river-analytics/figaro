@@ -32,7 +32,7 @@ class FlatGibbs(universe: Universe, numSamples: Int, burnIn: Int, interval: Int,
   def run() {
     val decompose = new FullDecompositionStrategy(problem, defaultRangeSizer, Lower, false)
     decompose.execute(initialComponents())
-    val solve = new ConstantStrategy(problem, marginalGibbs(numSamples, burnIn, interval, blockToSampler), ConstantStrategy.flatten)
+    val solve = new ConstantStrategy(problem, flatten(problem), marginalGibbs(numSamples, burnIn, interval, blockToSampler))
     solve.execute(Lower)
     val joint = problem.solution.foldLeft(Factory.unit(semiring))(_.product(_))
     targets.foreach(t => marginalizeToTarget(t, joint))

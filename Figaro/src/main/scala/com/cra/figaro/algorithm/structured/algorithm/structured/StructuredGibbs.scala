@@ -16,7 +16,7 @@ import com.cra.figaro.algorithm.factored.factors.factory._
 import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.structured._
 import com.cra.figaro.algorithm.structured.solver._
-import com.cra.figaro.algorithm.structured.strategy.solve.ConstantStrategy
+import com.cra.figaro.algorithm.structured.strategy.solve._
 import com.cra.figaro.language._
 import com.cra.figaro.algorithm.structured.algorithm.StructuredProbQueryAlgorithm
 import com.cra.figaro.algorithm.factored.gibbs.Gibbs
@@ -30,7 +30,7 @@ class StructuredGibbs(universe: Universe, numSamples: Int, burnIn: Int, interval
   def run() {
     val decompose = new FullDecompositionStrategy(problem, defaultRangeSizer, Lower, false)
     decompose.execute(initialComponents())
-    val solve = new ConstantStrategy(problem, marginalGibbs(numSamples, burnIn, interval, blockToSampler))
+    val solve = new ConstantStrategy(problem, structured, marginalGibbs(numSamples, burnIn, interval, blockToSampler))
     solve.execute(Lower)
     val joint = problem.solution.foldLeft(Factory.unit(semiring))(_.product(_))
     targets.foreach(t => marginalizeToTarget(t, joint))

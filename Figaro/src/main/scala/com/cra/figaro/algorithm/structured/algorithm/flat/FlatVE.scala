@@ -29,7 +29,7 @@ class FlatVE(universe: Universe, targets: Element[_]*) extends StructuredProbQue
   def run() {
     val decompose = new FullDecompositionStrategy(problem, defaultRangeSizer, Lower, false)
     decompose.execute(initialComponents())
-    val solve = new ConstantStrategy(problem, marginalVariableElimination, ConstantStrategy.flatten)
+    val solve = new ConstantStrategy(problem, flatten(problem), marginalVariableElimination)
     solve.execute(Lower)
     val joint = problem.solution.foldLeft(Factory.unit(semiring))(_.product(_))  
     targets.foreach(t => marginalizeToTarget(t, joint))

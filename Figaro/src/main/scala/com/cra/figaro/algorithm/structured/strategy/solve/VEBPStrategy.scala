@@ -20,8 +20,8 @@ import com.cra.figaro.algorithm.factored.VariableElimination
 /**
  * A solving strategy that chooses between VE and BP based on a score of the elminiation order
  */
-class VEBPStrategy(problem: Problem, val scoreThreshold: Double, val iterations: Int) extends SolvingStrategy(problem)
-  with RaisingStrategy {
+class VEBPStrategy(problem: Problem, raisingCriteria: RaisingCriteria, val scoreThreshold: Double, val iterations: Int)
+  extends RaisingStrategy(problem, raisingCriteria) {
 
   override def eliminate(toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): (List[Factor[Double]], Map[Variable[_], Factor[_]]) = {
     val (score, order) = VariableElimination.eliminationOrder(factors, toPreserve)
@@ -33,7 +33,8 @@ class VEBPStrategy(problem: Problem, val scoreThreshold: Double, val iterations:
   }
 
   override def recurse(subproblem: NestedProblem[_]) = {
-    Some(new VEBPStrategy(subproblem, scoreThreshold, iterations))
+    if(subproblem.solved) None
+    else Some(new VEBPStrategy(subproblem, raisingCriteria, scoreThreshold, iterations))
   }
   
 }

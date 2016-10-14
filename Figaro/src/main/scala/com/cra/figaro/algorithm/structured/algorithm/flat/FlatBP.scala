@@ -28,7 +28,7 @@ class FlatBP(universe: Universe, iterations: Int, targets: Element[_]*) extends 
   def run() {
     val decompose = new FullDecompositionStrategy(problem, defaultRangeSizer, Lower, false)
     decompose.execute(initialComponents())
-    val solve = new ConstantStrategy(problem, marginalBeliefPropagation(iterations), ConstantStrategy.flatten)
+    val solve = new ConstantStrategy(problem, flatten(problem), marginalBeliefPropagation(iterations))
     solve.execute(Lower)
     val joint = problem.solution.foldLeft(Factory.unit(semiring))(_.product(_))  
     targets.foreach(t => marginalizeToTarget(t, joint))

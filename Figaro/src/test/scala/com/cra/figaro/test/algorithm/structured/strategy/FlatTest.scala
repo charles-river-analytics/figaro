@@ -18,11 +18,10 @@ import com.cra.figaro.library.compound.If
 import com.cra.figaro.library.atomic.discrete.Uniform
 import com.cra.figaro.algorithm.structured._
 import com.cra.figaro.algorithm.structured.algorithm.flat.FlatVE
-import com.cra.figaro.algorithm.structured.strategy.solve.ConstantStrategy
+import com.cra.figaro.algorithm.structured.strategy.solve._
 import com.cra.figaro.algorithm.structured.solver._
 import com.cra.figaro.algorithm.structured.strategy.refine._
 import com.cra.figaro.language.Element.toBooleanElement
-
 
 class FlatTest extends WordSpec with Matchers {
   "Executing a flat strategy" when {
@@ -39,7 +38,7 @@ class FlatTest extends WordSpec with Matchers {
         val problem = new Problem(cc, List(r1))
         val decompose = new FullDecompositionStrategy(problem, defaultRangeSizer, Lower, false)
         decompose.execute(problem.components)
-        val solve = new ConstantStrategy(problem, marginalVariableElimination, ConstantStrategy.flatten)
+        val solve = new ConstantStrategy(problem, flatten(problem), marginalVariableElimination)
         solve.execute()
         val factors = problem.components.flatMap(_.nonConstraintFactors)
         factors.foreach(f => println(f.toReadableString))

@@ -16,11 +16,10 @@ package com.cra.figaro.algorithm.structured.algorithm.structured
 import com.cra.figaro.language._
 import com.cra.figaro.algorithm.structured._
 import com.cra.figaro.algorithm.structured.solver._
-import com.cra.figaro.algorithm.structured.strategy.solve.ConstantStrategy
-import com.cra.figaro.algorithm.structured.algorithm._
+import com.cra.figaro.algorithm.structured.strategy.solve._
+import com.cra.figaro.algorithm.structured.algorithm.StructuredMPEAlgorithm
 import com.cra.figaro.algorithm.factored.factors.MaxProductSemiring
 import com.cra.figaro.algorithm.structured.strategy.refine._
-
 
 class StructuredMPEBP(universe: Universe, iterations: Int) extends StructuredMPEAlgorithm(universe) {
 
@@ -29,7 +28,7 @@ class StructuredMPEBP(universe: Universe, iterations: Int) extends StructuredMPE
   def run() {
     val decompose = new FullDecompositionStrategy(problem, defaultRangeSizer, Lower, false)
     decompose.execute(initialComponents())
-    val solve = new ConstantStrategy(problem, mpeBeliefPropagation(iterations))
+    val solve = new ConstantStrategy(problem, structured, mpeBeliefPropagation(iterations))
     solve.execute(Lower)
   }
 }

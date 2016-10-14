@@ -21,9 +21,9 @@ import com.cra.figaro.algorithm.factored.gibbs.Gibbs
 /**
  * A solving strategy that chooses between VE and Gibbs based on a score of the elminiation order
  */
-class VEGibbsStrategy(problem: Problem, val scoreThreshold: Double, val numSamples: Int, val burnIn: Int,
-                      val interval: Int,  val blockToSampler: Gibbs.BlockSamplerCreator)
-  extends SolvingStrategy(problem) with RaisingStrategy {
+class VEGibbsStrategy(problem: Problem, raisingCriteria: RaisingCriteria, val scoreThreshold: Double,
+                      val numSamples: Int, val burnIn: Int, val interval: Int,  val blockToSampler: Gibbs.BlockSamplerCreator)
+  extends RaisingStrategy(problem, raisingCriteria) {
 
   override def eliminate(toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): (List[Factor[Double]], Map[Variable[_], Factor[_]]) = {
     val (score, order) = VariableElimination.eliminationOrder(factors, toPreserve)
@@ -35,7 +35,8 @@ class VEGibbsStrategy(problem: Problem, val scoreThreshold: Double, val numSampl
   }
 
   override def recurse(subproblem: NestedProblem[_]) = {
-    Some(new VEGibbsStrategy(subproblem, scoreThreshold, numSamples, burnIn, interval, blockToSampler))
+    if(subproblem.solved) None
+    else Some(new VEGibbsStrategy(subproblem, raisingCriteria, scoreThreshold, numSamples, burnIn, interval, blockToSampler))
   }
 
 }

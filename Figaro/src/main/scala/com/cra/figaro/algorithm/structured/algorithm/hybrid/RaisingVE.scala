@@ -17,7 +17,7 @@ import com.cra.figaro.language._
 import com.cra.figaro.algorithm.factored.factors.SumProductSemiring
 import com.cra.figaro.algorithm.structured._
 import com.cra.figaro.algorithm.structured.solver._
-import com.cra.figaro.algorithm.structured.strategy.solve.ConstantStrategy
+import com.cra.figaro.algorithm.structured.strategy.solve._
 import com.cra.figaro.algorithm.structured.algorithm._
 import com.cra.figaro.algorithm.factored.factors.factory._
 import com.cra.figaro.algorithm.structured.strategy.refine._
@@ -29,7 +29,7 @@ class RaisingVE(universe: Universe, targets: Element[_]*) extends StructuredProb
   def run() {
     val decompose = new FullDecompositionStrategy(problem, defaultRangeSizer, Lower, false)
     decompose.execute(initialComponents())
-    val solve = new ConstantStrategy(problem, marginalVariableElimination, ConstantStrategy.raiseIfGlobal)
+    val solve = new ConstantStrategy(problem, raiseIfGlobal, marginalVariableElimination)
     solve.execute(Lower)
     val joint = problem.solution.foldLeft(Factory.unit(semiring))(_.product(_))  
     targets.foreach(t => marginalizeToTarget(t, joint))

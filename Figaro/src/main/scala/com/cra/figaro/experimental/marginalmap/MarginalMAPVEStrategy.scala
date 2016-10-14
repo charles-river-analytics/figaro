@@ -20,7 +20,8 @@ import com.cra.figaro.algorithm.structured.{NestedProblem, Problem, solver}
  * A solving strategy that uses MPE VE to solve non-nested problems, and performs the MAP step at the top level.
  * It is assumed that at the top level, "toPreserve" variables are the MAP variables.
  */
-class MarginalMAPVEStrategy(problem: Problem) extends SolvingStrategy(problem) with RaisingStrategy {
+class MarginalMAPVEStrategy(problem: Problem, raisingCriteria: RaisingCriteria)
+  extends RaisingStrategy(problem, raisingCriteria) {
 
   def eliminate(toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]):
     (List[Factor[Double]], Map[Variable[_], Factor[_]]) = {
@@ -34,7 +35,8 @@ class MarginalMAPVEStrategy(problem: Problem) extends SolvingStrategy(problem) w
 
   override def recurse(subproblem: NestedProblem[_]) = {
     // A problem needed for the initial step of summing out the non-MAP variables; use marginal VE for this
-    Some(new ConstantStrategy(subproblem, solver.marginalVariableElimination))
+    if(subproblem.solved) None
+    else Some(new ConstantStrategy(subproblem, raisingCriteria, solver.marginalVariableElimination))
   }
   
 }

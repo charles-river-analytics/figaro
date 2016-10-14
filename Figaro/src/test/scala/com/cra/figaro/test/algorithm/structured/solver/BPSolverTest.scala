@@ -183,7 +183,7 @@ class BPSolverTest extends WordSpec with Matchers {
         c1.makeConstraintFactors()
         c2.makeConstraintFactors()
         c3.makeConstraintFactors()
-        new ConstantStrategy(pr, marginalBeliefPropagation()).execute()
+        new ConstantStrategy(pr, structured, marginalBeliefPropagation()).execute()
 
         pr.globals should equal(Set(c2))
         pr.solved should equal(true)
@@ -216,7 +216,7 @@ class BPSolverTest extends WordSpec with Matchers {
         c1.makeConstraintFactors()
         c2.makeConstraintFactors()
         c3.makeConstraintFactors()
-        new ConstantStrategy(pr, marginalBeliefPropagation()).execute()
+        new ConstantStrategy(pr, structured, marginalBeliefPropagation()).execute()
 
         pr.globals should equal(Set(c2, c3))
         val result = multiplyAll(pr.solution)
@@ -272,7 +272,7 @@ class BPSolverTest extends WordSpec with Matchers {
         c1.makeConstraintFactors()
         c2.makeConstraintFactors()
         c3.makeConstraintFactors()
-        new ConstantStrategy(pr, marginalBeliefPropagation()).execute()
+        new ConstantStrategy(pr, structured, marginalBeliefPropagation()).execute()
 
         pr.globals should equal(Set(c1))
         val result = multiplyAll(pr.solution)
@@ -316,7 +316,7 @@ class BPSolverTest extends WordSpec with Matchers {
         c1.makeConstraintFactors()
         c2.makeConstraintFactors()
         c3.makeConstraintFactors()
-        new ConstantStrategy(pr, marginalBeliefPropagation()).execute()
+        new ConstantStrategy(pr, structured, marginalBeliefPropagation()).execute()
 
         pr.globals should equal(Set(c1))
         val result = multiplyAll(pr.solution)
@@ -361,7 +361,7 @@ class BPSolverTest extends WordSpec with Matchers {
         c1.makeConstraintFactors()
         c2.makeConstraintFactors()
         c3.makeConstraintFactors()
-        new ConstantStrategy(pr, marginalBeliefPropagation()).execute()
+        new ConstantStrategy(pr, structured, marginalBeliefPropagation()).execute()
 
         pr.globals should equal(Set(c1))
         val result = multiplyAll(pr.solution)
@@ -406,7 +406,7 @@ class BPSolverTest extends WordSpec with Matchers {
         c1.makeConstraintFactors()
         c2.makeConstraintFactors()
         c3.makeConstraintFactors()
-        new ConstantStrategy(pr, marginalBeliefPropagation()).execute()
+        new ConstantStrategy(pr, structured, marginalBeliefPropagation()).execute()
 
         pr.globals should equal(Set(c1))
         val result = multiplyAll(pr.solution)
@@ -452,7 +452,7 @@ class BPSolverTest extends WordSpec with Matchers {
         c11.makeConstraintFactors()
         c12.makeConstraintFactors()
         c2.makeConstraintFactors()
-        new ConstantStrategy(pr, marginalBeliefPropagation()).execute()
+        new ConstantStrategy(pr, structured, marginalBeliefPropagation()).execute()
 
         pr.globals should equal(Set(c2))
         val result = multiplyAll(pr.solution)
@@ -483,8 +483,8 @@ class BPSolverTest extends WordSpec with Matchers {
         c2.makeNonConstraintFactors()
         c1.makeConstraintFactors()
         c2.makeConstraintFactors()
-        new ConstantStrategy(pr, marginalBeliefPropagation()).execute()
-        val result = multiplyAll(pr.solution)
+      new ConstantStrategy(pr, structured, marginalBeliefPropagation()).execute()
+      val result = multiplyAll(pr.solution)
         val c2IndexT = c2.variable.range.indexOf(Regular(true))
         val c2IndexF = c2.variable.range.indexOf(Regular(false))
         result.get(List(c2IndexT)) should be(1.0 +- 0.000000001)
@@ -526,7 +526,7 @@ class BPSolverTest extends WordSpec with Matchers {
       ce1.makeConstraintFactors()
       ce2.makeConstraintFactors()
       cd.makeConstraintFactors()
-      new ConstantStrategy(pr, marginalBeliefPropagation()).execute()
+      new ConstantStrategy(pr, structured, marginalBeliefPropagation()).execute()
 
       // Probability that f1 is true = 0.6
       // Probability that e1 is true = 1.0
@@ -562,7 +562,7 @@ class BPSolverTest extends WordSpec with Matchers {
       cu.makeConstraintFactors()
       cf.makeConstraintFactors()
       ca.makeConstraintFactors()
-      new ConstantStrategy(pr, marginalBeliefPropagation()).execute()
+      new ConstantStrategy(pr, structured, marginalBeliefPropagation()).execute()
       val result = multiplyAll(pr.solution)
       val fIndexT = cf.variable.range.indexOf(Regular(true))
       val fIndexF = cf.variable.range.indexOf(Regular(false))
@@ -599,7 +599,7 @@ class BPSolverTest extends WordSpec with Matchers {
       c2.makeConstraintFactors()
       c3.makeConstraintFactors()
       c4.makeConstraintFactors()
-      new ConstantStrategy(pr, marginalBeliefPropagation()).execute()
+      new ConstantStrategy(pr, structured, marginalBeliefPropagation()).execute()
       val result = multiplyAll(pr.solution)
       val c4Index1 = c4.variable.range.indexOf(Regular(1))
       result.get(List(c4Index1)) should be((0.3 * 0.1 + 0.7 * 0.7) +- 0.000000001)
@@ -632,7 +632,7 @@ class BPSolverTest extends WordSpec with Matchers {
       c3.makeNonConstraintFactors()
       //c4.subproblems.values.foreach(new ConstantStrategy(_, marginalBeliefPropagation()).execute())
       c4.makeNonConstraintFactors()
-      new ConstantStrategy(pr, marginalBeliefPropagation()).execute()
+      new ConstantStrategy(pr, structured, marginalBeliefPropagation()).execute()
       val result = multiplyAll(pr.solution)
       val c4Index1 = c4.variable.range.indexOf(Regular(1))
       result.get(List(c4Index1)) should be((0.3 * 0.1 + 0.7 * 0.7) +- 0.000000001)
@@ -668,7 +668,7 @@ class BPSolverTest extends WordSpec with Matchers {
       c2.makeNonConstraintFactors()
       c3.makeNonConstraintFactors()
       c4.makeNonConstraintFactors()
-      new ConstantStrategy(pr, marginalBeliefPropagation()).execute()
+      new ConstantStrategy(pr, structured, marginalBeliefPropagation()).execute()
 
       val result = multiplyAll(pr.solution)
       val c1IndexT = c1.variable.range.indexOf(Regular(true))
@@ -707,7 +707,7 @@ class BPSolverTest extends WordSpec with Matchers {
       c3.makeNonConstraintFactors()
       //c4.subproblems.values.foreach(new ConstantStrategy(_, marginalBeliefPropagation()).execute())
       c4.makeNonConstraintFactors()
-      new ConstantStrategy(pr, marginalBeliefPropagation()).execute()
+      new ConstantStrategy(pr, structured, marginalBeliefPropagation()).execute()
 
       val result = multiplyAll(pr.solution)
       val c1IndexT = c1.variable.range.indexOf(Regular(true))
@@ -746,7 +746,7 @@ class BPSolverTest extends WordSpec with Matchers {
       c2.makeNonConstraintFactors()
       c3.makeNonConstraintFactors()
       c4.makeNonConstraintFactors()
-      new ConstantStrategy(pr, marginalBeliefPropagation()).execute()
+      new ConstantStrategy(pr, structured, marginalBeliefPropagation()).execute()
 
       val result = multiplyAll(pr.solution)
       val c4Index1 = c4.variable.range.indexOf(Regular(1))
@@ -788,9 +788,9 @@ class BPSolverTest extends WordSpec with Matchers {
         c2.makeNonConstraintFactors()
         c3.makeNonConstraintFactors()
         c4.makeNonConstraintFactors()
-        new ConstantStrategy(pr, marginalBeliefPropagation()).execute()
+      new ConstantStrategy(pr, structured, marginalBeliefPropagation()).execute()
 
-        val result = multiplyAll(pr.solution)
+      val result = multiplyAll(pr.solution)
         val c1IndexT = c1.variable.range.indexOf(Regular(true))
         val c1IndexF = c1.variable.range.indexOf(Regular(false))
         val pT = result.get(List(c1IndexT))
@@ -827,7 +827,7 @@ class BPSolverTest extends WordSpec with Matchers {
       c3.makeNonConstraintFactors()
       //c4.subproblems.values.foreach(new ConstantStrategy(_, marginalBeliefPropagation()).execute())
       c4.makeNonConstraintFactors()
-      new ConstantStrategy(pr, marginalBeliefPropagation()).execute()
+      new ConstantStrategy(pr, structured, marginalBeliefPropagation()).execute()
 
       val result = multiplyAll(pr.solution)
       val c4Index1 = c4.variable.range.indexOf(Regular(1))
@@ -869,9 +869,9 @@ class BPSolverTest extends WordSpec with Matchers {
         c3.makeNonConstraintFactors()
         //c4.subproblems.values.foreach(new ConstantStrategy(_, marginalBeliefPropagation()).execute())
         c4.makeNonConstraintFactors()
-        new ConstantStrategy(pr, marginalBeliefPropagation()).execute()
+      new ConstantStrategy(pr, structured, marginalBeliefPropagation()).execute()
 
-        val result = multiplyAll(pr.solution)
+      val result = multiplyAll(pr.solution)
         val c1IndexT = c1.variable.range.indexOf(Regular(true))
         val c1IndexF = c1.variable.range.indexOf(Regular(false))
         val pT = result.get(List(c1IndexT))
@@ -918,7 +918,7 @@ class BPSolverTest extends WordSpec with Matchers {
         // MPE: e1=.2,e2=F,e3=F,e4=T
         // If we leave e1 un-eliminated, we should end up with a factor that has e1=.2 at .48 and e1=.3 at .1225
         // However, since BP normalizes according to a MaxProduct semiring, the values are not normalized, so we look at the ratio
-        new ConstantStrategy(pr, mpeBeliefPropagation(20)).execute()
+        new ConstantStrategy(pr, structured, mpeBeliefPropagation(20)).execute()
         val f = pr.solution reduceLeft (_.product(_))
         f.numVars should equal(1)
         if (f.get(List(0)) > f.get(List(1))) {
@@ -963,7 +963,7 @@ class BPSolverTest extends WordSpec with Matchers {
         // p(e1=.3,e2=T,e3=F,e4=F) = 0.25 * 0.3 * 0.7 = .0525
         // p(e1=.3,e2=F,e3=T,e4=F) = 0.25 * 0.7 * 0.3 = .0525
         // MPE: e1=.2,e2=F,e3=F,e4=T
-        new ConstantStrategy(pr, mpeBeliefPropagation(20)).execute()
+        new ConstantStrategy(pr, structured, mpeBeliefPropagation(20)).execute()
         pr.recordingFactors(c1.variable).get(List()).asInstanceOf[Double] should be(0.2 +- .0000001)
         pr.recordingFactors(c2.variable).get(List()).asInstanceOf[Boolean] should be(false)
         pr.recordingFactors(c3.variable).get(List()).asInstanceOf[Boolean] should be(false)
@@ -1005,7 +1005,7 @@ class BPSolverTest extends WordSpec with Matchers {
         // p(e1=.3,e2=T,e3=T,e4=T) = 0.25 * 0.3 * 0.3 = .0225
         // p(e1=.3,e2=F,e3=F,e4=T) = 0.25 * 0.7 * 0.7 = .1225     
         // MPE: e1=.2,e2=F,e3=F,e4=T
-        new ConstantStrategy(pr, mpeBeliefPropagation(20)).execute()
+        new ConstantStrategy(pr, structured, mpeBeliefPropagation(20)).execute()
         pr.recordingFactors(c1.variable).get(List()).asInstanceOf[Double] should be(0.2 +- .0000001)
         pr.recordingFactors(c2.variable).get(List()).asInstanceOf[Boolean] should be(false)
         pr.recordingFactors(c3.variable).get(List()).asInstanceOf[Boolean] should be(false)

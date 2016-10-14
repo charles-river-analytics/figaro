@@ -21,9 +21,10 @@ import com.cra.figaro.algorithm.factored.gibbs.Gibbs
 /**
  * A solving strategy that chooses between VE, BP,  and Gibbs based on a score of the elminiation order and determinism
  */
-class VEBPGibbsStrategy(problem: Problem, val scoreThreshold: Double, val determThreshold: Double, val bpIters: Int,
-                        val numSamples: Int, val burnIn: Int, val interval: Int, val blockToSampler: Gibbs.BlockSamplerCreator)
-  extends SolvingStrategy(problem) with RaisingStrategy {
+class VEBPGibbsStrategy(problem: Problem, raisingCriteria: RaisingCriteria, val scoreThreshold: Double,
+                        val determThreshold: Double, val bpIters: Int, val numSamples: Int, val burnIn: Int,
+                        val interval: Int, val blockToSampler: Gibbs.BlockSamplerCreator)
+  extends RaisingStrategy(problem, raisingCriteria) {
 
   override def eliminate(toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): (List[Factor[Double]], Map[Variable[_], Factor[_]]) = {
     val (score, order) = VariableElimination.eliminationOrder(factors, toPreserve)
@@ -52,7 +53,8 @@ class VEBPGibbsStrategy(problem: Problem, val scoreThreshold: Double, val determ
   def hasDeterminism(problem: Problem, v: Variable[_]): Boolean = problem.collection.variableParents(v).nonEmpty
 
   override def recurse(subproblem: NestedProblem[_]) = {
-    Some(new VEBPGibbsStrategy(subproblem, scoreThreshold, determThreshold, bpIters, numSamples, burnIn, interval, blockToSampler))
+    if(subproblem.solved) None
+    else Some(new VEBPGibbsStrategy(subproblem, raisingCriteria, scoreThreshold, determThreshold, bpIters, numSamples, burnIn, interval, blockToSampler))
   }
   
 }
