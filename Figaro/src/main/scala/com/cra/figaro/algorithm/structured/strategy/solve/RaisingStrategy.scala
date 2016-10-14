@@ -12,18 +12,19 @@
  */
 package com.cra.figaro.algorithm.structured.strategy.solve
 
-import com.cra.figaro.algorithm.factored.factors.Factor
 import com.cra.figaro.algorithm.structured._
 import com.cra.figaro.algorithm.structured.strategy.RecursiveStrategy
 
 /**
- * A solving strategy that raises subproblems, or solves them and raises their solutions. Classes that implement this
- * trait must specify when to raise subproblems, and how to solve subproblems.
+ * A solving strategy that recursively raises subproblems, or solves them and raises their solutions.
  */
-trait RaisingStrategy extends SolvingStrategy with RecursiveStrategy {
+abstract class RaisingStrategy(problem: Problem, raisingCriteria: RaisingCriteria) extends SolvingStrategy(problem)
+  with RecursiveStrategy {
+
+  override def decideToRaise(): Boolean = raisingCriteria(problem)
 
   /**
-   * Returns a strategy to solve the nested problem, or None to indicate that the nested problem should be raised.
+   * Returns a strategy to solve the nested problem, or None if e.g. the subproblem is already solved.
    * @param subproblem Nested problem to consider recursing on.
    * @return A strategy to recurse on the nested problem, or None if it should not recurse further.
    */
@@ -38,22 +39,10 @@ trait RaisingStrategy extends SolvingStrategy with RecursiveStrategy {
   def raiseSubproblems[ParentValue, Value](chainComp: ChainComponent[ParentValue, Value], bounds: Bounds): Unit = {
     for((parentValue, subproblem) <- chainComp.subproblems) {
       val recursingStrategy = recurse(subproblem)
-      recursingStrategy match {
-        case Some(strategy) =>
-          strategy.execute(bounds)
-          chainComp.raiseSubproblemSolution(parentValue, subproblem)
-        case None =>
-          chainComp.raise(parentValue, bounds)
-      }
-    }
-  }
+      if(recursingStrategy.nonEmpty) recursingStrategy.get.execute(bounds)
 
-  override def getFactors(component: ProblemComponent[_], bounds: Bounds): List[Factor[Double]] = {
-    component match {
-      case chainComp: ChainComponent[_, _] =>
-        raiseSubproblems(chainComp, bounds)
-      case _ =>
+      if(subproblem.solved) chainComp.raiseSubproblemSolution(parentValue, subproblem)
+      else chainComp.raise(parentValue, bounds)
     }
-    component.nonConstraintFactors ::: component.constraintFactors(bounds)
   }
 }

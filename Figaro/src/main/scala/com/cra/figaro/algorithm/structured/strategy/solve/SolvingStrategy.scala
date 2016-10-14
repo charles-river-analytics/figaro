@@ -17,18 +17,25 @@ import com.cra.figaro.algorithm.factored.factors.{Factor, Variable}
 import com.cra.figaro.algorithm.structured.strategy.ProblemStrategy
 
 /**
- * A solving strategy solves an inference problem after a series of refinements have been made. This involves solving or
- * raising subproblems first, then eliminating variables that do not belong in the solution.
+ * A solving strategy solves an inference problem after a series of refinements have been made. This involves solving
+ * subproblems and collecting their factors. The solving strategy may then choose to eliminate variables that do not
+ * belong in the solution, or defer elimination to a higher-level problem.
  */
 private[figaro] abstract class SolvingStrategy(problem: Problem) extends ProblemStrategy(problem) {
+
   /**
-   * Get the constraint and non-constraint factors associated with a component. If the component has subproblems, this
-   * includes solving the subproblems and raising their solutions, or raising the subproblem factors.
-   * @param component Component for which to get factors.
+   * Process all subproblems for the given component by raising their factors.
+   * @param chainComp Component to process.
    * @param bounds Bounds for constraint factors.
-   * @return All factors needed for this component to solve the problem that contains it.
    */
-  def getFactors(component: ProblemComponent[_], bounds: Bounds): List[Factor[Double]]
+  def raiseSubproblems[ParentValue, Value](chainComp: ChainComponent[ParentValue, Value], bounds: Bounds): Unit
+
+  /**
+   * Decide whether to raise factors, or perform elimination on factors at this level.
+   * @return False if variables should be eliminated, true if factors should be raised up a level without elimination.
+   * In general, this should return false for a top-level problem, since otherwise no elimination will be applied.
+   */
+  def decideToRaise(): Boolean
 
   /**
    * Solve the problem by eliminating variables, leaving only the ones that belong in the solution.
@@ -44,16 +51,21 @@ private[figaro] abstract class SolvingStrategy(problem: Problem) extends Problem
   /**
    * Solve the problem defined by all the components' current factors. This involves solving and incorporating
    * subproblems as well. This will set the globals accordingly. All components in this problem and contained
-   * subproblems should be eliminated in the solution. This does nothing if the problem is already solved.
+   * subproblems should be eliminated in the solution.
    * @param bounds Bounds for constraint factors.
    */
   def execute(bounds: Bounds): Unit = {
-    // TODO should this be a final def?
-    if(!problem.solved) {
-      val collection = problem.collection
-      val allFactors = problem.components.flatMap(getFactors(_, bounds))
+    // Raise factors from all subproblems before deciding to eliminate and collecting factors.
+    problem.components.foreach {
+      case chainComp: ChainComponent[_, _] => raiseSubproblems(chainComp, bounds)
+      case _ =>
+    }
+
+    if(!decideToRaise()) {
+      val allFactors = problem.components.flatMap(c => c.constraintFactors(bounds) ::: c.nonConstraintFactors)
       val allVariables = (Set[Variable[_]]() /: allFactors)(_ ++ _.variables)
       val (toEliminate, toPreserve) = allVariables.partition(problem.internal)
+      val collection = problem.collection
       problem.globals = toPreserve.map(collection.variableToComponent(_))
       val (solution, recordingFactors) = eliminate(toEliminate, toPreserve, allFactors)
       problem.solution = solution
