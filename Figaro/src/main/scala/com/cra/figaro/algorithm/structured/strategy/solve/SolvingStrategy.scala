@@ -24,7 +24,7 @@ import com.cra.figaro.algorithm.structured.strategy.ProblemStrategy
 private[figaro] abstract class SolvingStrategy(problem: Problem) extends ProblemStrategy(problem) {
 
   /**
-   * Process all subproblems for the given component by raising their factors.
+   * Process all subproblems for the given component by raising their factors or solutions.
    * @param chainComp Component to process.
    * @param bounds Bounds for constraint factors.
    */

@@ -30,13 +30,7 @@ abstract class RaisingStrategy(problem: Problem, raisingCriteria: RaisingCriteri
    */
   override def recurse(subproblem: NestedProblem[_]): Option[RaisingStrategy]
 
-  /**
-   * Process the subproblems for the given component by either choosing to raise them without solving, or choosing to
-   * solve them and raise their solutions.
-   * @param chainComp Component to process.
-   * @param bounds Bounds for constraint factors.
-   */
-  def raiseSubproblems[ParentValue, Value](chainComp: ChainComponent[ParentValue, Value], bounds: Bounds): Unit = {
+  override def raiseSubproblems[ParentValue, Value](chainComp: ChainComponent[ParentValue, Value], bounds: Bounds): Unit = {
     for((parentValue, subproblem) <- chainComp.subproblems) {
       val recursingStrategy = recurse(subproblem)
       if(recursingStrategy.nonEmpty) recursingStrategy.get.execute(bounds)
