@@ -27,7 +27,7 @@ class StructuredMarginalMAPVE(universe: Universe, mapElements: List[Element[_]])
   extends StructuredMarginalMAPAlgorithm(universe, mapElements) {
 
   def run() {
-    val decompose = new FullDecompositionStrategy(problem, defaultRangeSizer, Lower, false)
+    val decompose = new FullDecompositionStrategy(problem, defaultRangeSizer, false)
     decompose.execute(initialComponents())
     val solve = new MarginalMAPVEStrategy(problem, structured)
     solve.execute(Lower)

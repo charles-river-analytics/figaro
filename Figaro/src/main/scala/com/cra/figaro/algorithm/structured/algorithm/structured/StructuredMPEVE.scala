@@ -26,7 +26,7 @@ class StructuredMPEVE(universe: Universe) extends StructuredMPEAlgorithm(univers
   val semiring = MaxProductSemiring()
 
   def run() {
-    val decompose = new FullDecompositionStrategy(problem, defaultRangeSizer, Lower, false)
+    val decompose = new FullDecompositionStrategy(problem, defaultRangeSizer, false)
     decompose.execute(initialComponents())
     val solve = new ConstantStrategy(problem, structured, mpeVariableElimination)
     solve.execute(Lower)

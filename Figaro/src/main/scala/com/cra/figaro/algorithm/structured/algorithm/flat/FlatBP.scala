@@ -26,7 +26,7 @@ class FlatBP(universe: Universe, iterations: Int, targets: Element[_]*) extends 
   val semiring = SumProductSemiring()
   
   def run() {
-    val decompose = new FullDecompositionStrategy(problem, defaultRangeSizer, Lower, false)
+    val decompose = new FullDecompositionStrategy(problem, defaultRangeSizer, false)
     decompose.execute(initialComponents())
     val solve = new ConstantStrategy(problem, flatten(problem), marginalBeliefPropagation(iterations))
     solve.execute(Lower)

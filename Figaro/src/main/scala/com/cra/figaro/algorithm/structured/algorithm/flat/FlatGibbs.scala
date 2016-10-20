@@ -30,7 +30,7 @@ class FlatGibbs(universe: Universe, numSamples: Int, burnIn: Int, interval: Int,
   val semiring = SumProductSemiring()
 
   def run() {
-    val decompose = new FullDecompositionStrategy(problem, defaultRangeSizer, Lower, false)
+    val decompose = new FullDecompositionStrategy(problem, defaultRangeSizer, false)
     decompose.execute(initialComponents())
     val solve = new ConstantStrategy(problem, flatten(problem), marginalGibbs(numSamples, burnIn, interval, blockToSampler))
     solve.execute(Lower)

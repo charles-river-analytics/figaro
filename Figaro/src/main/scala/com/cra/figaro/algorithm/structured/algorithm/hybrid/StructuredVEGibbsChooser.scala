@@ -29,7 +29,7 @@ class StructuredVEGibbsChooser(universe: Universe, scoreThreshold: Double, numSa
   val semiring = SumProductSemiring()
 
   def run() {
-    val decompose = new FullDecompositionStrategy(problem, defaultRangeSizer, Lower, false)
+    val decompose = new FullDecompositionStrategy(problem, defaultRangeSizer, false)
     decompose.execute(initialComponents())
     val solve = new VEGibbsStrategy(problem, structured, scoreThreshold, numSamples, burnIn, interval, blockToSampler)
     solve.execute(Lower)
