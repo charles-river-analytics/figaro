@@ -10,18 +10,18 @@
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
-package com.cra.figaro.test.algorithm.structured.strategy
+package com.cra.figaro.test.algorithm.structured.strategy.solve
 
-import org.scalatest.{Matchers, WordSpec}
-import com.cra.figaro.language._
-import com.cra.figaro.library.compound.If
-import com.cra.figaro.library.atomic.discrete.Uniform
 import com.cra.figaro.algorithm.structured._
 import com.cra.figaro.algorithm.structured.algorithm.flat.FlatVE
-import com.cra.figaro.algorithm.structured.strategy.solve._
 import com.cra.figaro.algorithm.structured.solver._
 import com.cra.figaro.algorithm.structured.strategy.refine._
+import com.cra.figaro.algorithm.structured.strategy.solve._
 import com.cra.figaro.language.Element.toBooleanElement
+import com.cra.figaro.language._
+import com.cra.figaro.library.atomic.discrete.Uniform
+import com.cra.figaro.library.compound.If
+import org.scalatest.{Matchers, WordSpec}
 
 class FlatTest extends WordSpec with Matchers {
   "Executing a flat strategy" when {
@@ -36,7 +36,7 @@ class FlatTest extends WordSpec with Matchers {
         })        
         val cc = new ComponentCollection
         val problem = new Problem(cc, List(r1))
-        val decompose = new FullDecompositionStrategy(problem, defaultRangeSizer, Lower, false)
+        val decompose = new FullDecompositionStrategy(problem, defaultRangeSizer, false)
         decompose.execute(problem.components)
         val solve = new ConstantStrategy(problem, flatten(problem), marginalVariableElimination)
         solve.execute()
