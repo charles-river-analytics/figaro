@@ -38,14 +38,18 @@ class ProblemComponent[Value](val problem: Problem, val element: Element[Value])
   def variable = _variable
 
   /**
-   * A problem component is fully expanded if any additional refinement cannot change its range or factors. This
-   * includes subproblems, so a problem component with subproblems can only be fully expanded if all components
-   * associated with its subproblems are fully expanded.
-   *
-   * TODO: choose better wording than "expanded", since this field is applicable to components other than
-   * ExpandableComponent.
+   * A problem is fully enumerated if its range is complete. This also means that its range cannot contain star. This is
+   * always false for components associated with elements that have infinite support.
    */
-  var fullyExpanded = false
+  var fullyEnumerated = false
+
+  /**
+   * A problem component is fully refined if any additional refinement cannot change its range or factors. One necessary
+   * condition is to be fully enumerated. Additionally, expandable components must be fully expanded (i.e. have created
+   * a subproblem for each parent value), and each subproblem must be fully refined. These conditions are necessary but
+   * not always sufficient to be fully refined.
+   */
+  var fullyRefined = false
 
   /**
    *  Set the variable associated with this component to the given variable.
@@ -159,11 +163,13 @@ class ApplyComponent[Value](problem: Problem, element: Element[Value]) extends P
 abstract class ExpandableComponent[ParentValue, Value](problem: Problem, parent: Element[ParentValue], element: Element[Value])
   extends ProblemComponent(problem, element) {
   /**
-   * Expand for all values of the parent, based on the current range of the parent.
+   * Expand for all values of the parent that were not previously expanded, based on the current range of the parent.
    */
   def expand() {
     if (problem.collection.contains(parent)) {
-      for { parentValue <- problem.collection(parent).range.regularValues } { expand(parentValue) }
+      val parentValues = problem.collection(parent).range.regularValues
+      val unexpanded = parentValues -- subproblems.keySet
+      for (parentValue <- unexpanded) expand(parentValue)
     }
   }
 

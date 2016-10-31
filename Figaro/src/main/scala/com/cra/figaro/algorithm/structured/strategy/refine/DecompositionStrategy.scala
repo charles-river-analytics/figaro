@@ -21,7 +21,7 @@ import scala.collection.mutable
 /**
  * Refining strategies that operate by decomposing subproblems. This does not solve the problem or any nested
  * subproblems, but involves processing problem components by generating ranges for variables, expanding relevant
- * subproblems, and creating factors. The strategy visits each needed component exactly once. Needed components are
+ * subproblems, and creating factors. The strategy visits each needed component at most once. Needed components are
  * discovered lazily by working backwards from the target components. As a result, the strategy makes no guarantees
  * about visiting components that are not needed.
  * @param problem The problem to decompose
@@ -36,7 +36,8 @@ private[figaro] abstract class DecompositionStrategy(problem: Problem, val range
   extends RefiningStrategy(problem) with RecursiveStrategy {
 
   /**
-   * Optionally decompose a nested problem.
+   * Optionally decompose a nested problem. The recusing strategy may not refine any components in the set `done`, but
+   * can add to this set. This generally means passing `done` directly into the constructor of the recursing strategy.
    * @param nestedProblem Nested problem to decompose.
    * @return A decomposition strategy for the nested problem, or None if it should not be decomposed further.
    */
@@ -50,14 +51,15 @@ private[figaro] abstract class DecompositionStrategy(problem: Problem, val range
    * components that are neither in this list nor needed to process components in this list may not be processed.
    */
   def execute(components: List[ProblemComponent[_]]) = {
-    // Only proceed if there is something to refine, i.e. a component not fully expanded.
-    if(components.exists(!_.fullyExpanded)) {
+    val refinable = components.filterNot(_.fullyRefined)
+    // Only proceed if there is something to refine
+    if(refinable.nonEmpty) {
       // TODO take a closer look at criteria for removing problem solutions
       // In particular, there could be problems with failing to propagate that the solution changed to superproblems.
       // What happens if one of the problems along the way used a raising strategy which didn't solve it?
       problem.solved = false
       problem.solution = List()
-      backwardChain(components)
+      refinable.foreach(decompose)
     }
   }
 
@@ -70,9 +72,10 @@ private[figaro] abstract class DecompositionStrategy(problem: Problem, val range
   }
 
   /**
-   * Process a component by generating its range and factors.
+   * Process a component by generating its range and factors. This includes non-constraint factors, as well as both
+   * lower and upper bound constraint factors.
    * @param comp Component to process. This should not be called on a component we previously processed, including fully
-   * expanded components.
+   * refined components.
    */
   protected def makeRangeAndFactors(comp: ProblemComponent[_]) {
     comp.generateRange(rangeSizer(comp))
@@ -81,77 +84,110 @@ private[figaro] abstract class DecompositionStrategy(problem: Problem, val range
     comp.makeConstraintFactors(Upper)
   }
 
-  /*
-   * backwardChain takes a list of items to process.
-   * When the first item is taken off the list, it checks whether it has already been done.
-   * When an item is taken off the list, if it has not been done, all the items it depends on
-   * are added to the list to do. This guarantees that when an item is finally processed,
-   * all the items it depends on have already been processed. Also, we do not process
-   * any items more than once.
+  /**
+   * Decompose a single problem component by recursively decomposing components on which it depends, then generating the
+   * range and factors. This guarantees that when range and factors are created, all components on which a component
+   * depends will have been processed.
+   *
+   * As a rule, this method never works in the other direction. If component B depends (directly or indirectly) on
+   * component A, then calling decompose on A will never recursively call decompose on component B. This is to avoid
+   * infinite loops, and to guarantee that the range and factors of A do not unpredictably change in the middle of a
+   * call to decompose A.
+   *
+   * Once range and factors have been created, the component will be added to the set done, and (if applicable) the
+   * component is marked as fully enumerated or expanded.
+   * @param comp Component to decompose. This strategy never decomposes a component more than once, so if the component
+   * is fully refined or in the set done, this method does nothing.
    */
-  protected[figaro] def backwardChain(toDo: List[ProblemComponent[_]]): Unit = {
-    toDo match {
-      case first :: rest =>
-        // Don't process any components that we previously visited, or that are known to need no further expansion.
-        if (done.contains(first) || first.fullyExpanded) backwardChain(rest)
-        else {
-          val argComponents = first.element.args.map(checkArg(_))
-          if (argComponents.nonEmpty) backwardChain(argComponents)
-          val argsFullyExpanded = argComponents.forall(_.fullyExpanded)
-          first match {
-            case chainComp: ChainComponent[_, _] =>
-              processChain(chainComp, argsFullyExpanded)
-            case maComp: MakeArrayComponent[_] =>
-              processMakeArray(maComp, argsFullyExpanded)
-            case _ =>
-              process(first, argsFullyExpanded)
-          }
-          done += first
-          backwardChain(rest)
-        }
-      case _ =>
+  def decompose(comp: ProblemComponent[_]): Unit = {
+    // Only process if the component is neither fully refined nor already visited
+    if(!(comp.fullyRefined || done.contains(comp))) {
+      comp match {
+        case chainComp: ChainComponent[_, _] =>
+          processChain(chainComp)
+        case maComp: MakeArrayComponent[_] =>
+          processMakeArray(maComp)
+        case _ =>
+          process(comp)
+      }
+      done += comp
     }
   }
 
   /**
-   * Generate the range and factors for the given Chain component. Mark it as fully expanded if applicable.
+   * Generate the range and factors for the given Chain component. Mark it as fully refined or enumerated if applicable.
    * @param chainComp Chain component to process. This should not be called on a component we previously processed,
-   * including fully expanded components.
-   * @param argsFullyExpanded True if and only if all parents of the Chain are fully expanded.
+   * including fully refined components.
    */
-  def processChain(chainComp: ChainComponent[_, _], argsFullyExpanded: Boolean) = {
+  def processChain(chainComp: ChainComponent[_, _]) = {
+    // Decompose the parent to get values for expansion
+    val parentComp = checkArg(chainComp.chain.parent)
+    decompose(parentComp)
+    // Ensure expansions exist for each parent value
     chainComp.expand()
-    val subStrategies = chainComp.subproblems.values.flatMap(recurse)
-    subStrategies.foreach(_.execute())
+    // Optionally recurse on subproblems. The recursive strategies do not change the range of the parent because
+    // parentComp is in the set done. This preserves the current state where we have expanded subproblems for each
+    // parent value.
+    val subproblems = chainComp.subproblems.values
+    subproblems.flatMap(recurse).foreach(_.execute())
+    // Make range and factors based on the refinement of the subproblems
     makeRangeAndFactors(chainComp)
-    if(argsFullyExpanded && chainComp.subproblems.forall(_._2.fullyExpanded)) chainComp.fullyExpanded = true
+    // The range for this component is complete if the range of the parent is complete (and therefore no further
+    // subproblems can be created), and the target for each subproblem has a complete range
+    if(parentComp.fullyEnumerated && subproblems.forall { sp => sp.collection(sp.target).fullyEnumerated }) {
+      chainComp.fullyEnumerated = true
+      // If all components in the subproblems are fully refined, then the chain component is also fully refined.
+      if(subproblems.forall(_.fullyRefined)) {
+        chainComp.fullyRefined = true
+      }
+
+    }
   }
 
   /**
-   * Generate the range and factors for the given MakeArray component. Mark it as fully expanded if applicable.
+   * Generate the range and factors for the given MakeArray component. Mark it as fully refined or enumerated if
+   * applicable.
    * @param maComp MakeArray component to process. This should not be called on a component we previously processed,
-   * including fully expanded components.
-   * @param argsFullyExpanded True if and only if all parents of the MakeArray are fully expanded.
+   * including fully refined components.
    */
-  def processMakeArray(maComp: MakeArrayComponent[_], argsFullyExpanded: Boolean) = {
+  def processMakeArray(maComp: MakeArrayComponent[_]) = {
+    // Decompose the number of items component to get the maximum number of expansions
+    val numItemsComp = checkArg(maComp.makeArray.numItems)
+    decompose(numItemsComp)
+    // Ensure expansions exist up to the maximum number of items
     maComp.expand()
+    // Decompose each of the items
     val items = maComp.makeArray.items.take(maComp.maxExpanded).toList
     val itemComponents = items.map(checkArg(_))
-    backwardChain(itemComponents)
+    itemComponents.foreach(decompose)
+    // Make range and factors based on the ranges of the items
     makeRangeAndFactors(maComp)
-    if(argsFullyExpanded && itemComponents.forall(_.fullyExpanded)) maComp.fullyExpanded = true
+    // The range for this component is complete if the number of items and each item have complete ranges. This also
+    // implies that the component is fully refined because there are no subproblems.
+    if(numItemsComp.fullyEnumerated && itemComponents.forall(_.fullyEnumerated)) {
+      maComp.fullyEnumerated = true
+      maComp.fullyRefined = true
+    }
   }
 
   /**
    * Generate the range and factors for the given component. Mark it as fully expanded if applicable.
    * @param comp Component to process. This should not be called on a component we previously processed, including fully
-   * expanded components.
-   * @param argsFullyExpanded True if and only if all parents of the component are fully expanded.
+   * refined components.
    */
-  def process(comp: ProblemComponent[_], argsFullyExpanded: Boolean) = {
+  def process(comp: ProblemComponent[_]) = {
+    // Decompose the args of this component
+    val argComponents = comp.element.args.map(checkArg(_))
+    argComponents.foreach(decompose)
+    // Make range and factors based on the ranges of the args
     makeRangeAndFactors(comp)
-    // TODO this should also check if the range is completely enumerated
-    if(argsFullyExpanded) comp.fullyExpanded = true
+    // The range and factors for this component are complete when the args all have complete ranges, since this is the
+    // only information used in producing the factors for this component.
+    if(argComponents.forall(_.fullyEnumerated)) {
+      // TODO a check for elements with infinite support
+      comp.fullyEnumerated = true
+      comp.fullyRefined = true
+    }
   }
 }
 

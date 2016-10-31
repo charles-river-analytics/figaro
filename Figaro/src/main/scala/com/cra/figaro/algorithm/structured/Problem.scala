@@ -103,16 +103,14 @@ class Problem(val collection: ComponentCollection, val targets: List[Element[_]]
     (Map(), 1.0)
   }
 
+  /**
+   * Determines if this problem is fully refined. A problem is fully refined when all components within are fully
+   * refined, in which case none of their ranges or factors will change with further refinement.
+   */
+  def fullyRefined: Boolean = components.forall(_.fullyRefined)
+
   targets.foreach(target => if (!collection.contains(target)) add(target))
 }
 
 class NestedProblem[T](collection: ComponentCollection, val target: Element[T], override val depth: Int)
-  extends Problem(collection, List(target)) {
-  /**
-   * Returns whether or not this nested problem is fully expanded. A nested problem is fully expanded when its target is
-   * fully expanded.
-   */
-  def fullyExpanded: Boolean = {
-    collection(target).fullyExpanded
-  }
-}
+  extends Problem(collection, List(target))
