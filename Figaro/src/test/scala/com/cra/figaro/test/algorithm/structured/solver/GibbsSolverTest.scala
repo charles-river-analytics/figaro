@@ -505,20 +505,6 @@ class GibbsSolverTest extends WordSpec with Matchers {
       cu.makeConstraintFactors()
       cf.makeConstraintFactors()
       ca.makeConstraintFactors()
-      /*
-       * TODO
-       * This test and the corresponding test for BP fail for a few reasons: 1) It tries to solve subproblems of ca,
-       * even though they have no factors. 2) The solution returned consists of a single (empty, unit) factor. Compare
-       * to VE, which returns no factors. 3) Raising the "solution" calls Factory.replaceVariable. This fails because
-       * the range of a is {*}, so when we call makeNonConstraintFactors, we don't actually make any factors for a. As a
-       * result, the actualSubproblemVariables map never gets populated. Will this be a problem once we introduce
-       * laziness?
-       *
-       * It seems the issue here is the possibility of not having created subproblems despite having generated the range
-       * of the parent of the chain. This should never happen; this is inconsistent with the specification. Part of
-       * "refine" is to ensure consistent ranges for variables. The real problem here might just be that this test is no
-       * longer correct.
-       */
       new ConstantStrategy(pr, structured, marginalGibbs(10000, 0, 1, BlockSampler.default)).execute()
       val result = multiplyAll(pr.solution)
       val fIndexT = cf.variable.range.indexOf(Regular(true))

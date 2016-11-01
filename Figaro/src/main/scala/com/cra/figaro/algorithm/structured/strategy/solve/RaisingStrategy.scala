@@ -31,12 +31,15 @@ abstract class RaisingStrategy(problem: Problem, raisingCriteria: RaisingCriteri
   override def recurse(subproblem: NestedProblem[_]): Option[RaisingStrategy]
 
   override def raiseSubproblems[ParentValue, Value](chainComp: ChainComponent[ParentValue, Value], bounds: Bounds): Unit = {
-    for((parentValue, subproblem) <- chainComp.subproblems) {
-      val recursingStrategy = recurse(subproblem)
-      if(recursingStrategy.nonEmpty) recursingStrategy.get.execute(bounds)
+    // If the chain's range is just {*}, then no factors were created and none of the subproblems are relevant
+    if(!chainComp.range.hasStar || chainComp.range.regularValues.nonEmpty) {
+      for((parentValue, subproblem) <- chainComp.subproblems) {
+        val recursingStrategy = recurse(subproblem)
+        if(recursingStrategy.nonEmpty) recursingStrategy.get.execute(bounds)
 
-      if(subproblem.solved) chainComp.raiseSubproblemSolution(parentValue, subproblem)
-      else chainComp.raise(parentValue, bounds)
+        if(subproblem.solved) chainComp.raiseSubproblemSolution(parentValue, subproblem)
+        else chainComp.raise(parentValue, bounds)
+      }
     }
   }
 }
