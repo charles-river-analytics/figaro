@@ -14,7 +14,7 @@ package com.cra.figaro.algorithm.structured.strategy.refine
 
 import com.cra.figaro.algorithm.structured._
 import com.cra.figaro.algorithm.structured.strategy.RecursiveStrategy
-import com.cra.figaro.language.Element
+import com.cra.figaro.language._
 
 import scala.collection.mutable
 
@@ -46,9 +46,11 @@ private[figaro] abstract class DecompositionStrategy(problem: Problem, val range
   override def execute(): Unit = execute(problem.targets.map(problem.collection(_)))
 
   /**
-   * Refine the problem by processing the given components.
-   * @param components Initial components to decompose. Decomposition proceeds lazily from these components, so any
-   * components that are neither in this list nor needed to process components in this list may not be processed.
+   * Refine the problem by processing the given components. This will mark the problem as unsolved if there are any
+   * components to refine, and will otherwise do nothing if all components in the list are fully refined.
+   * @param components Initial components to decompose. Decomposition proceeds lazily from the components in this list
+   * that are not fully refined. As a result, this may not process a component that is not in this list and is not
+   * needed to process a component in this list.
    */
   def execute(components: List[ProblemComponent[_]]) = {
     val refinable = components.filterNot(_.fullyRefined)
@@ -73,7 +75,8 @@ private[figaro] abstract class DecompositionStrategy(problem: Problem, val range
 
   /**
    * Process a component by generating its range and factors. This includes non-constraint factors, as well as both
-   * lower and upper bound constraint factors.
+   * lower and upper bound constraint factors. After calling this method, it may be necessary to check if the component
+   * is fully enumerated or refined.
    * @param comp Component to process. This should not be called on a component we previously processed, including fully
    * refined components.
    */
@@ -158,13 +161,13 @@ private[figaro] abstract class DecompositionStrategy(problem: Problem, val range
     maComp.expand()
     // Decompose each of the items
     val items = maComp.makeArray.items.take(maComp.maxExpanded).toList
-    val itemComponents = items.map(checkArg(_))
-    itemComponents.foreach(decompose)
+    val itemsComps = items.map(checkArg(_))
+    itemsComps.foreach(decompose)
     // Make range and factors based on the ranges of the items
     makeRangeAndFactors(maComp)
     // The range for this component is complete if the number of items and each item have complete ranges. This also
     // implies that the component is fully refined because there are no subproblems.
-    if(numItemsComp.fullyEnumerated && itemComponents.forall(_.fullyEnumerated)) {
+    if(numItemsComp.fullyEnumerated && itemsComps.forall(_.fullyEnumerated)) {
       maComp.fullyEnumerated = true
       maComp.fullyRefined = true
     }
@@ -177,14 +180,13 @@ private[figaro] abstract class DecompositionStrategy(problem: Problem, val range
    */
   def process(comp: ProblemComponent[_]) = {
     // Decompose the args of this component
-    val argComponents = comp.element.args.map(checkArg(_))
-    argComponents.foreach(decompose)
+    val argComps = comp.element.args.map(checkArg(_))
+    argComps.foreach(decompose)
     // Make range and factors based on the ranges of the args
     makeRangeAndFactors(comp)
-    // The range and factors for this component are complete when the args all have complete ranges, since this is the
-    // only information used in producing the factors for this component.
-    if(argComponents.forall(_.fullyEnumerated)) {
-      // TODO a check for elements with infinite support
+    // The range and factors for this component are complete when 1) the args all have complete ranges, since this is
+    // the only information used in producing the factors for this component, and 2) the range does not have *.
+    if(argComps.forall(_.fullyEnumerated) && !comp.range.hasStar) {
       comp.fullyEnumerated = true
       comp.fullyRefined = true
     }
