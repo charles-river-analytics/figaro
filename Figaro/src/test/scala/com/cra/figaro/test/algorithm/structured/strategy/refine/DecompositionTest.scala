@@ -282,7 +282,7 @@ class DecompositionTest extends WordSpec with Matchers {
     }
   }
 
-  "A lazy decomposition strategy" when {
+  /*"A lazy decomposition strategy" when {
     // An simple recursive element; useful for testing lazy partial expansion
     def geometric(): Element[Int] = If(Flip(0.5), Constant(1), geometric().map(_ + 1))
 
@@ -371,5 +371,5 @@ class DecompositionTest extends WordSpec with Matchers {
         c1.subproblems(false).solved should be(false)
       }
     }
-  }
+  }*/
 }

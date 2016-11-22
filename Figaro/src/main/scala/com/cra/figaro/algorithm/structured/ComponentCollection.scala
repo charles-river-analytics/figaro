@@ -70,7 +70,7 @@ class ComponentCollection {
       case Some(p) =>
         p.asInstanceOf[NestedProblem[V]]
       case None =>
-        val result = new NestedProblem(this, component.expandFunction(parentValue), component.problem.depth + 1)
+        val result = new NestedProblem(this, component.expandFunction(parentValue))
         expansions += (function, parentValue) -> result
         result
     }

@@ -53,12 +53,6 @@ class Problem(val collection: ComponentCollection, val targets: List[Element[_]]
   var solved: Boolean = false
 
   /**
-   * The depth of a problem relative to a top-level problem.
-   * Defaults to 0 for a top-level problem. Nested problems may override this.
-   */
-  val depth = 0
-
-  /**
    * Add a component for the given element to this problem.
    */
   def add[T](element: Element[T]): ProblemComponent[T] = collection.add(element, this)
@@ -112,5 +106,4 @@ class Problem(val collection: ComponentCollection, val targets: List[Element[_]]
   targets.foreach(target => if (!collection.contains(target)) add(target))
 }
 
-class NestedProblem[T](collection: ComponentCollection, val target: Element[T], override val depth: Int)
-  extends Problem(collection, List(target))
+class NestedProblem[T](collection: ComponentCollection, val target: Element[T]) extends Problem(collection, List(target))

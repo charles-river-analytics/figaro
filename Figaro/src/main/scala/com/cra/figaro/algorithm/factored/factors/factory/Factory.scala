@@ -323,7 +323,7 @@ object Factory {
       case c: Chain[_, _] => {
         val chainMap = LazyValues(elem.universe).getMap(c)
         chainMap.foreach(f => {
-          val subproblem = new NestedProblem(Variable.cc, f._2, comp.problem.depth + 1)
+          val subproblem = new NestedProblem(Variable.cc, f._2)
           Variable.cc.expansions += (c.chainFunction, f._1) -> subproblem
         })
       }

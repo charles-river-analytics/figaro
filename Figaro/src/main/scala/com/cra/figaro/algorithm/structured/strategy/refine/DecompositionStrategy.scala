@@ -210,29 +210,3 @@ class FullDecompositionStrategy(problem: Problem, rangeSizer: RangeSizer, parame
     Some(new FullDecompositionStrategy(nestedProblem, rangeSizer, parameterized, done))
   }
 }
-
-/**
- * A lazy decomposition strategy decomposes to a finite depth, starting from the current problem.
- * @param maxDepth Absolute maximum depth to which subproblems may be expanded. This must be greater than or equal to the
- * depth of the given problem. So, if `maxDepth = problem.depth`, this corresponds to not recursing on any subproblems
- * of the given problem. Note that the existence of global components may allow expansion of subproblems that are at a
- * lower depth than the current problem.
- * @param problem The problem to decompose
- * @param rangeSizer The method to determine the range of components
- * @param parameterized Indicates if this problem parameterized
- * @param done Problem components that were already processed, which should not be visited again. This is explicitly a
- * mutable set so that nested decomposition strategies can update any enclosing decomposition strategy with the
- * components that were processed. Defaults to the empty set.
- */
-class LazyDecompositionStrategy(maxDepth: Int, problem: Problem, rangeSizer: RangeSizer, parameterized: Boolean,
-                                done: mutable.Set[ProblemComponent[_]] = mutable.Set())
-  extends DecompositionStrategy(problem, rangeSizer, parameterized, done) {
-
-  override def recurse(nestedProblem: NestedProblem[_]): Option[DecompositionStrategy] = {
-    if(nestedProblem.depth <= maxDepth) {
-      Some(new LazyDecompositionStrategy(maxDepth, nestedProblem, rangeSizer, parameterized, done))
-    }
-    else None
-  }
-}
-
