@@ -12,24 +12,27 @@
  */
 package com.cra.figaro.test.experimental.structured
 
-import org.scalatest.{WordSpec, Matchers}
+import org.scalatest.{Matchers, WordSpec}
 import com.cra.figaro.language._
 import com.cra.figaro.experimental.structured._
-import com.cra.figaro.algorithm.lazyfactored.{Star, Regular, ValueSet}
-import ValueSet.{withoutStar, withStar}
+import com.cra.figaro.algorithm.lazyfactored.{Regular, Star, ValueSet}
+import ValueSet.{withStar, withoutStar}
 import com.cra.figaro.library.atomic.continuous.Beta
 import com.cra.figaro.library.atomic.continuous.Dirichlet
 import com.cra.figaro.algorithm.factored.ParticleGenerator
 import com.cra.figaro.library.atomic.discrete.{Binomial, Util}
 import com.cra.figaro.library.atomic.continuous.Normal
 import com.cra.figaro.algorithm.factored.factors.Factor
+import com.cra.figaro.experimental.structured.algorithm.StructuredVE
 import com.cra.figaro.library.atomic.discrete.Uniform
 import com.cra.figaro.util.MultiSet
 import com.cra.figaro.util.HashMultiSet
 import com.cra.figaro.library.atomic.discrete.FromRange
 import com.cra.figaro.library.collection.MakeArray
 import com.cra.figaro.library.compound.FoldLeft
-import com.cra.figaro.experimental.structured.factory.Factory.{makeTupleVarAndFactor, makeConditionalSelector}
+import com.cra.figaro.experimental.structured.factory.Factory.{makeConditionalSelector, makeTupleVarAndFactor}
+import com.cra.figaro.experimental.structured.solver.VESolver
+import com.cra.figaro.experimental.structured.solver.variableElimination
 
 class FactorMakerTest extends WordSpec with Matchers {
   "Making a tuple variable and factor for a set of variables" should {
@@ -785,10 +788,11 @@ class FactorMakerTest extends WordSpec with Matchers {
       }
     }
 
-    "given a parameterized binomial with a fixed number of trials with an added success probability, when the parameterized flag = true" should {
+    "given a parameterized binomial with a fixed number of trials with an added success probability, when the parameterized flag = true and old chain method is used" should {
       "produce a factor where the probability of every outcome is the correct probability given the MAP success probability" in {
           Universe.createNew()
           val cc = new ComponentCollection
+          cc.useOldChainMethod = true
           val pr = new Problem(cc)
           val v1 = Beta(2, 3)
           val v2 = Binomial(3, v1)
@@ -811,10 +815,11 @@ class FactorMakerTest extends WordSpec with Matchers {
       }
     }
 
-    "given a parameterized binomial with a fixed number of trials with an unadded success probability, when the parameterized flag = true" should {
+    "given a parameterized binomial with a fixed number of trials with an unadded success probability, when the parameterized flag = true using the old chain method" should {
       "produce a factor that assigns probability 1 to * and 0 to every outcome" in {
           Universe.createNew()
           val cc = new ComponentCollection
+          cc.useOldChainMethod = true
           val pr = new Problem(cc)
           val v1 = Beta(2, 3)
           val v2 = Binomial(3, v1)
@@ -835,10 +840,11 @@ class FactorMakerTest extends WordSpec with Matchers {
       }
     }
 
-    "given a parameterized binomial with a fixed number of trials with an added success probability, when the parameterized flag = false" should {
+    "given a parameterized binomial with a fixed number of trials with an added success probability, when the parameterized flag = false using the old chain method" should {
       "use the chain decomposition, conditioning on the values of the parameter" in {
           Universe.createNew()
           val cc = new ComponentCollection
+          cc.useOldChainMethod = true
           val pr = new Problem(cc)
           val v1 = Beta(2, 3)
           val v2 = Binomial(3, v1)
@@ -862,10 +868,11 @@ class FactorMakerTest extends WordSpec with Matchers {
       }
     }
 
-    "given a parameterized binomial with a fixed number of trials with an unadded success probability, when the parameterized flag = false" should {
+    "given a parameterized binomial with a fixed number of trials with an unadded success probability, when the parameterized flag = false using the old chain method" should {
       "create a simple factor with probability 1 for * and probability 0 for the outcomes" in {
           Universe.createNew()
           val cc = new ComponentCollection
+          cc.useOldChainMethod = true
           val pr = new Problem(cc)
           val v1 = Beta(2, 3)
           val v2 = Binomial(3, v1)
@@ -1036,10 +1043,11 @@ class FactorMakerTest extends WordSpec with Matchers {
         }
     }
 
-    "given a chain with parent without *" should {
+    "given a chain with parent without * using the old chain method" should {
       "produce a conditional selector for each parent value" in {
         Universe.createNew()
         val cc = new ComponentCollection
+        cc.useOldChainMethod = true
         val pr = new Problem(cc)
         val v1 = Flip(0.2)
         val v2 = Select(0.1 -> 1, 0.9 -> 2)
@@ -1124,6 +1132,7 @@ class FactorMakerTest extends WordSpec with Matchers {
       "produce a conditional selector for each non-temporary parent value" in {
         Universe.createNew()
         val cc = new ComponentCollection
+        cc.useOldChainMethod = true
         val pr = new Problem(cc)
         val v1 = Flip(0.2)
         val v4 = Chain(v1, (b: Boolean) => if (b) Select(0.1 -> 1, 0.9 -> 2); else Constant(3))
@@ -1208,10 +1217,11 @@ class FactorMakerTest extends WordSpec with Matchers {
       }
     }
 
-    "given a chain with parent with *" should {
+    "given a chain with parent with * using the old chain method" should {
       "produce an appropriate conditional selector for the * parent value" in {
         Universe.createNew()
         val cc = new ComponentCollection
+        cc.useOldChainMethod = true
         val pr = new Problem(cc)
         val v1 = Constant(true)
         val v2 = Constant(false)
@@ -1241,6 +1251,270 @@ class FactorMakerTest extends WordSpec with Matchers {
         starSelector.variables(0) should equal (tupleVar)
         starSelector.variables(1).range.size should equal (1)
         starSelector.variables(1).range(0).isRegular should equal (false)
+      }
+    }
+
+    "given a chain with no globals, no *, and the same values for each parent value, using the new chain method" should {
+      "produce a single factor connecting parent and child" in {
+        Universe.createNew()
+        val cc = new ComponentCollection
+        val pr = new Problem(cc)
+        val v1 = Select(0.3 -> 1, 0.2 -> 2, 0.5 -> 3)
+        val v2 = Chain(v1, (i: Int) => Flip(i / 10.0))
+        pr.add(v1)
+        pr.add(v2)
+        val c1 = cc(v1)
+        val c2 = cc(v2)
+        c1.generateRange()
+        c2.expand()
+
+        val pr1 = cc.expansions(v2.chainFunction, 1)
+        val subV1 = pr1.target
+        val subC1 = cc(subV1)
+        subC1.generateRange()
+        subC1.makeNonConstraintFactors()
+        pr1.solve(variableElimination)
+        val pr2 = cc.expansions(v2.chainFunction, 2)
+        val subV2 = pr2.target
+        val subC2 = cc(subV2)
+        subC2.generateRange()
+        subC2.makeNonConstraintFactors()
+        pr2.solve(variableElimination)
+        val pr3 = cc.expansions(v2.chainFunction, 3)
+        val subV3 = pr3.target
+        val subC3 = cc(subV3)
+        subC3.generateRange()
+        subC3.makeNonConstraintFactors()
+        pr3.solve(variableElimination)
+
+        c2.generateRange()
+        c2.makeNonConstraintFactors()
+
+        val List(factor) = c2.nonConstraintFactors
+        factor.variables should equal (List(c1.variable, c2.variable))
+        val v1Vals = c1.variable.range
+        val v2Vals = c2.variable.range
+        val v11 = v1Vals indexOf Regular(1)
+        val v12 = v1Vals indexOf Regular(2)
+        val v13 = v1Vals indexOf Regular(3)
+        val v2f = v2Vals indexOf Regular(false)
+        val v2t = v2Vals indexOf Regular(true)
+        factor.size should equal (6)
+        factor.get(List(v11,v2f)) should be (0.9 +- 0.0001)
+        factor.get(List(v11,v2t)) should be (0.1 +- 0.0001)
+        factor.get(List(v12,v2f)) should be (0.8 +- 0.0001)
+        factor.get(List(v12,v2t)) should be (0.2 +- 0.0001)
+        factor.get(List(v13,v2f)) should be (0.7 +- 0.0001)
+        factor.get(List(v13,v2t)) should be (0.3 +- 0.0001)
+      }
+    }
+
+    "given a chain with no globals, no *, different values for each parent value, using new chain method" should {
+      "produce a factor mapping the parent to the child with the union of the values" in {
+        Universe.createNew()
+        val cc = new ComponentCollection
+        val pr = new Problem(cc)
+        val v1 = Flip(0.5)
+        val v2 = Chain(v1, (b: Boolean) => if (b) Select(0.1 -> 1, 0.9 -> 2) else Select(0.2 -> 2, 0.8 -> 3))
+        pr.add(v1)
+        pr.add(v2)
+        val c1 = cc(v1)
+        val c2 = cc(v2)
+        c1.generateRange()
+        c2.expand()
+
+        val prf = cc.expansions(v2.chainFunction, false)
+        val subVf = prf.target
+        val subCf = cc(subVf)
+        subCf.generateRange()
+        subCf.makeNonConstraintFactors()
+        prf.solve(variableElimination)
+        val prt = cc.expansions(v2.chainFunction, true)
+        val subVt = prt.target
+        val subCt = cc(subVt)
+        subCt.generateRange()
+        subCt.makeNonConstraintFactors()
+        prt.solve(variableElimination)
+
+        c2.generateRange()
+        c2.makeNonConstraintFactors()
+
+        val List(factor) = c2.nonConstraintFactors
+        factor.variables should equal (List(c1.variable, c2.variable))
+        val v1Vals = c1.variable.range
+        val v2Vals = c2.variable.range
+        val v1f = v1Vals indexOf Regular(false)
+        val v1t = v1Vals indexOf Regular(true)
+        val v21 = v2Vals indexOf Regular(1)
+        val v22 = v2Vals indexOf Regular(2)
+        val v23 = v2Vals indexOf Regular(3)
+        factor.size should equal (6)
+        factor.get(List(v1f,v21)) should be (0.0 +- 0.0001)
+        factor.get(List(v1f,v22)) should be (0.2 +- 0.0001)
+        factor.get(List(v1f,v23)) should be (0.8 +- 0.0001)
+        factor.get(List(v1t,v21)) should be (0.1 +- 0.0001)
+        factor.get(List(v1t,v22)) should be (0.9 +- 0.0001)
+        factor.get(List(v1t,v23)) should be (0.0 +- 0.0001)
+
+      }
+    }
+
+    "given a chain with no globals, * in subproblem, using new chain method" should {
+      "produce a factor mapping parent to child including *" in {
+        Universe.createNew()
+        val cc = new ComponentCollection
+        val pr = new Problem(cc)
+        val v1 = Select(0.3 -> 1, 0.2 -> 2, 0.5 -> 3)
+        val v2 = Chain(v1, (i: Int) => Flip(i / 10.0))
+        pr.add(v1)
+        pr.add(v2)
+        val c1 = cc(v1)
+        val c2 = cc(v2)
+        c1.generateRange()
+        c2.expand()
+
+        val pr1 = cc.expansions(v2.chainFunction, 1)
+        val subV1 = pr1.target
+        val subC1 = cc(subV1)
+        subC1.generateRange()
+        subC1.makeNonConstraintFactors()
+        pr1.solve(variableElimination)
+        val pr2 = cc.expansions(v2.chainFunction, 2)
+        val subV2 = pr2.target
+        val subC2 = cc(subV2)
+        subC2.generateRange()
+        subC2.makeNonConstraintFactors()
+        pr2.solve(variableElimination)
+        val pr3 = cc.expansions(v2.chainFunction, 3)
+        // no range generation or factor creation
+        pr3.solve(variableElimination)
+
+        c2.generateRange()
+        c2.makeNonConstraintFactors()
+
+        val List(factor) = c2.nonConstraintFactors
+        factor.variables should equal (List(c1.variable, c2.variable))
+        val v1Vals = c1.variable.range
+        val v2Vals = c2.variable.range
+        val v11 = v1Vals indexOf Regular(1)
+        val v12 = v1Vals indexOf Regular(2)
+        val v13 = v1Vals indexOf Regular(3)
+        val v2f = v2Vals indexOf Regular(false)
+        val v2t = v2Vals indexOf Regular(true)
+        val v2Star = v2Vals indexWhere (!_.isRegular)
+        factor.size should equal (9)
+        factor.get(List(v11,v2f)) should be (0.9 +- 0.0001)
+        factor.get(List(v11,v2t)) should be (0.1 +- 0.0001)
+        factor.get(List(v11,v2Star)) should be (0.0 +- 0.0001)
+        factor.get(List(v12,v2f)) should be (0.8 +- 0.0001)
+        factor.get(List(v12,v2t)) should be (0.2 +- 0.0001)
+        factor.get(List(v12,v2Star)) should be (0.0 +- 0.0001)
+        factor.get(List(v13,v2f)) should be (0.0 +- 0.0001)
+        factor.get(List(v13,v2t)) should be (0.0 +- 0.0001)
+        factor.get(List(v13,v2Star)) should be (1.0 +- 0.0001)
+
+      }
+    }
+
+    "given a chain with no globals, * in parent values, using new chain method" should {
+      "produce a factor mapping parent to child including *" in {
+        Universe.createNew()
+        val cc = new ComponentCollection
+        val pr = new Problem(cc)
+        val vt = Constant(true)
+        val vf = Constant(false)
+        val v1 = Uniform(vt, vf)
+        val v2 = Chain(v1, (b: Boolean) => if (b) Select(0.1 -> 1, 0.9 -> 2) else Select(0.2 -> 1, 0.8 -> 2))
+        pr.add(vt)
+        pr.add(vf)
+        pr.add(v1)
+        pr.add(v2)
+        val ct = cc(vt)
+        val cf = cc(vf)
+        val c1 = cc(v1)
+        val c2 = cc(v2)
+        ct.generateRange()
+        ct.makeNonConstraintFactors()
+        // do not generate range for cf
+        c1.generateRange() // will include true and *
+        c1.makeNonConstraintFactors()
+        c2.expand()
+
+        val prt = cc.expansions(v2.chainFunction, true)
+        val subVt = prt.target
+        val subCt = cc(subVt)
+        subCt.generateRange()
+        subCt.makeNonConstraintFactors()
+        prt.solve(variableElimination)
+
+        c2.generateRange()
+        c2.makeNonConstraintFactors()
+
+        val List(factor) = c2.nonConstraintFactors
+        factor.variables should equal (List(c1.variable, c2.variable))
+        val v1Vals = c1.variable.range
+        val v2Vals = c2.variable.range
+        val v1Star = v1Vals.indexWhere(!_.isRegular)
+        val v1t = v1Vals indexOf Regular(true)
+        val v21 = v2Vals indexOf Regular(1)
+        val v22 = v2Vals indexOf Regular(2)
+        val v2Star = v2Vals.indexWhere(!_.isRegular)
+        factor.size should equal (6)
+        factor.get(List(v1Star,v21)) should be (0.0 +- 0.0001)
+        factor.get(List(v1Star,v22)) should be (0.0 +- 0.0001)
+        factor.get(List(v1Star,v2Star)) should be (1.0 +- 0.0001)
+        factor.get(List(v1t,v21)) should be (0.1 +- 0.0001)
+        factor.get(List(v1t,v22)) should be (0.9 +- 0.0001)
+        factor.get(List(v1t,v2Star)) should be (0.0 +- 0.0001)
+      }
+    }
+
+    "given a chain with globals" should {
+      "not use the new method" in {
+        Universe.createNew()
+        val cc = new ComponentCollection
+        val pr = new Problem(cc)
+        val v1 = Constant(1)
+        val v2 = Flip(0.5)
+        val v3 = Chain(v2, (b: Boolean) => if (b) Apply(v1, (i: Int) => i) else Constant(2))
+        pr.add(v1)
+        pr.add(v2)
+        pr.add(v3)
+        val c1 = cc(v1)
+        val c2 = cc(v2)
+        val c3 = cc(v3)
+        c1.generateRange()
+        c2.generateRange()
+        c3.expand()
+        val subPf = cc.expansions(v3.chainFunction, false)
+        val vPf = subPf.target
+        val cPf = cc(vPf)
+        cPf.generateRange()
+        cPf.makeNonConstraintFactors()
+        subPf.solve(variableElimination)
+        val subPt = cc.expansions(v3.chainFunction, true)
+        val vPt = subPt.target
+        val cPt = cc(vPt)
+        cPt.generateRange()
+        cPt.makeNonConstraintFactors()
+        subPt.solve(variableElimination)
+        c3.generateRange()
+        c3.makeNonConstraintFactors()
+
+        c3.nonConstraintFactors.length should be > (1)
+      }
+    }
+
+    "given a chain in which the outcome is a global, using the new method" should {
+      "produce the right result" in {
+        Universe.createNew()
+        val cc = new ComponentCollection
+        cc.useOldChainMethod = false
+        val pr = new Problem(cc)
+        val v1 = Constant(1)
+        val v2 = Flip(0.5)
+        val v3 = Chain(v2, (b: Boolean) => if (b) v1 else Constant(2))
+        StructuredVE.probability(v3, 1) should equal (0.5)
       }
     }
 

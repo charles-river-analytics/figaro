@@ -13,14 +13,13 @@
 
 package com.cra.figaro.experimental.structured
 
-import com.cra.figaro.language.{Element, Chain}
+import com.cra.figaro.language.{Chain, Element}
 import com.cra.figaro.algorithm.lazyfactored.ValueSet
-import com.cra.figaro.algorithm.factored.factors.Factor
-import com.cra.figaro.algorithm.factored.factors.Variable
+import com.cra.figaro.algorithm.factored.factors.{BasicFactor, Factor, Variable}
 import com.cra.figaro.library.collection.MakeArray
 import com.cra.figaro.library.collection.FixedSizeArray
 import com.cra.figaro.algorithm.factored.ParticleGenerator
-import com.cra.figaro.experimental.structured.factory.{Factory, ConstraintFactory}
+import com.cra.figaro.experimental.structured.factory.{ConstraintFactory, Factory}
 
 /*
 /** A component of a problem, created for a specific element. */
@@ -179,17 +178,79 @@ extends ExpandableComponent[ParentValue, Value](problem, chain.parent, chain) {
     subproblems += parentValue -> subproblem
   }
 
+  /*
+   * If all the subproblems have been eliminated completely, i.e., the factors returned for each
+   * subproblem mention only the chain outcome, we can use the compact chain factor construction.
+   * This is the case if none of these factors contains variables whose component is not one of the subproblem's
+   * components.
+   */
+  private def allSubproblemsEliminatedCompletely: Boolean = {
+for { (parentValue, subproblem) <- subproblems } {
+  println("parentValue = " + parentValue)
+  println("subproblem = " + subproblem)
+  println("factors = \n" + subproblem.solution.map(_.toReadableString).mkString("\n"))
+}
+    for {
+      (parentValue, subproblem) <- subproblems
+      factor <- subproblem.solution
+      variable <- factor.variables
+    } {
+
+      if (!subproblem.components.contains(problem.collection.variableToComponent(variable))) return false
+    }
+    return true
+  }
+
+  def compactChainFactor: Factor[Double] = {
+    val parentVar = Factory.getVariable(problem.collection, chain.parent)
+    val childVar = Factory.getVariable(problem.collection, chain)
+    val factor = new BasicFactor[Double](List(parentVar), List(childVar))
+    for { parentIndex <- 0 until parentVar.range.length } {
+      val parentXV = parentVar.range(parentIndex)
+      if (parentXV.isRegular) {
+        val subproblem = subproblems(parentXV.value)
+        val subVars = subproblem.solution.flatMap(_.variables)
+        if (subVars.length == 1) {
+          val subVar = subVars(0)
+          for { subVal <- subVar.range } {
+            val childIndex = childVar.range.indexOf(subVal)
+            val subIndex = subVar.range.indexOf(subVal)
+            val subEntries = subproblem.solution.map(_.get(List(subIndex)))
+            val entry = subEntries.reduce(factor.semiring.product)
+            factor.set(List(parentIndex, childIndex), entry)
+          }
+        } else { // This should be a case where the subproblem is empty and the value is *
+          val starIndex = childVar.range.indexWhere(!_.isRegular)
+          factor.set(List(parentIndex, starIndex), 1.0)
+        }
+
+      } else {
+        for { childIndex <- 0 until childVar.range.length } {
+          val entry = if (childVar.range(childIndex).isRegular) factor.semiring.zero else factor.semiring.one
+          factor.set(List(parentIndex, childIndex), entry)
+        }
+        val childIndex = childVar.range.indexWhere(!_.isRegular)
+        factor.set(List(parentIndex, childIndex), factor.semiring.one)
+      }
+    }
+    factor
+  }
+
   /**
    * Make the non-constraint factors for this component by using the solutions to the subproblems.
    */
   override def makeNonConstraintFactors(parameterized: Boolean = false) {
-    super.makeNonConstraintFactors(parameterized)
-    val subproblemFactors =
-      for {
-        (parentValue, subproblem) <- subproblems
-        factor <- subproblem.solution
-      } yield Factory.replaceVariable(factor, problem.collection(subproblem.target).variable, actualSubproblemVariables(parentValue))
-    nonConstraintFactors = subproblems.values.toList.flatMap(_.solution) ::: nonConstraintFactors
+    if (!problem.collection.useOldChainMethod && allSubproblemsEliminatedCompletely) {
+      nonConstraintFactors = List(compactChainFactor)
+    } else {
+      super.makeNonConstraintFactors(parameterized)
+      val subproblemFactors =
+        for {
+          (parentValue, subproblem) <- subproblems
+          factor <- subproblem.solution
+        } yield Factory.replaceVariable(factor, problem.collection(subproblem.target).variable, actualSubproblemVariables(parentValue))
+      nonConstraintFactors = subproblems.values.toList.flatMap(_.solution) ::: nonConstraintFactors
+    }
   }
 
   /*

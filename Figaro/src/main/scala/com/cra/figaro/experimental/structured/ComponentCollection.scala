@@ -30,6 +30,12 @@ import com.cra.figaro.algorithm.factored.factors.Variable
  * To create a new component for an element, you need to say what problem it belongs to.
  */
 class ComponentCollection {
+  /** Indicates whether the old method of creating chain factors should be used.
+    * This defaults to false since the new method is generally better, but it's
+    * useful to have it available for comparison.
+    */
+  var useOldChainMethod = false
+
   /** All the components in the collection, each associated with an element. */
   val components: Map[Element[_], ProblemComponent[_]] = Map()
 
