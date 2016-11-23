@@ -21,7 +21,7 @@ import com.cra.figaro.language._
  * @param bandwidth Parameter of the Gaussian kernel  
  */
 class KernelDensity(name: Name[Double], val samples: Seq[Double], val bandwidth: Double, collection: ElementCollection) 
-  extends Element[Double](name, collection) with Atomic[Double] {
+  extends Element[Double](name, collection) with Atomic[Double] with Continuous[Double] {
   
   // this represents the Gaussian kernel centered at one of the input points 
   val normalElt = Normal(0, bandwidth)
@@ -50,6 +50,9 @@ class KernelDensity(name: Name[Double], val samples: Seq[Double], val bandwidth:
     
     densities.sum / densities.length 
   }
+  
+  // TODO implement appropriate log transform
+  def logp(value: Double) = Double.NegativeInfinity
   
   override def toString = "KernelDensity(bandwidth=" + this.bandwidth + ")"
 }
