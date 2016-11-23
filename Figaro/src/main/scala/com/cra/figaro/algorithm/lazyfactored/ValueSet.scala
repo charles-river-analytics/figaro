@@ -45,6 +45,11 @@ class ValueSet[T](val xvalues: Set[Extended[T]]) {
    */
   val regularValues = xvalues.filter(_.isRegular).map(_.value)
 
+  /**
+    * Indicates whether there are no values, regular or star, in the value set
+    */
+  val isEmpty = !hasStar && regularValues.isEmpty
+
   /*
   /**
    * Returns the particular Star value in this value set. Throws an exception if there is no Star.

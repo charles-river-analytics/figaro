@@ -22,7 +22,7 @@ extends com.cra.figaro.algorithm.factored.VariableElimination[Double] {
     result
   }
 
-  debug = true
+  debug = false
 
   val semiring: Semiring[Double] = SumProductSemiring()
 

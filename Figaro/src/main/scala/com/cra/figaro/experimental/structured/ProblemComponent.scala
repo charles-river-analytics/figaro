@@ -179,24 +179,17 @@ extends ExpandableComponent[ParentValue, Value](problem, chain.parent, chain) {
   }
 
   /*
-   * If all the subproblems have been eliminated completely, i.e., the factors returned for each
-   * subproblem mention only the chain outcome, we can use the compact chain factor construction.
-   * This is the case if none of these factors contains variables whose component is not one of the subproblem's
-   * components.
+   * If all the subproblems have been eliminated completely and use no globals, we can use the new chain method.
    */
   private def allSubproblemsEliminatedCompletely: Boolean = {
-for { (parentValue, subproblem) <- subproblems } {
-  println("parentValue = " + parentValue)
-  println("subproblem = " + subproblem)
-  println("factors = \n" + subproblem.solution.map(_.toReadableString).mkString("\n"))
-}
     for {
       (parentValue, subproblem) <- subproblems
-      factor <- subproblem.solution
-      variable <- factor.variables
     } {
-
-      if (!subproblem.components.contains(problem.collection.variableToComponent(variable))) return false
+      val factors = subproblem.solution
+      val vars = factors.flatMap(_.variables)
+      val comps = vars.map(problem.collection.variableToComponent(_))
+      if (comps.exists(!subproblem.components.contains(_))) return false // the factors contain a global variable
+      if (problem.collection(subproblem.target).problem != subproblem) return false // the target is global
     }
     return true
   }
@@ -207,16 +200,18 @@ for { (parentValue, subproblem) <- subproblems } {
     val factor = new BasicFactor[Double](List(parentVar), List(childVar))
     for { parentIndex <- 0 until parentVar.range.length } {
       val parentXV = parentVar.range(parentIndex)
-      if (parentXV.isRegular) {
+      if (parentXV.isRegular && subproblems.contains(parentXV.value) && !subproblems(parentXV.value).solution.isEmpty ) {
         val subproblem = subproblems(parentXV.value)
-        val subVars = subproblem.solution.flatMap(_.variables)
+        // Need to normalize subsolution in case there's any nested evidence
+        val subsolution = subproblem.solution.reduce(_.product(_))
+        val sum = subsolution.foldLeft(subsolution.semiring.zero, subsolution.semiring.sum(_,_))
+        val subVars = subsolution.variables
         if (subVars.length == 1) {
           val subVar = subVars(0)
           for { subVal <- subVar.range } {
             val childIndex = childVar.range.indexOf(subVal)
             val subIndex = subVar.range.indexOf(subVal)
-            val subEntries = subproblem.solution.map(_.get(List(subIndex)))
-            val entry = subEntries.reduce(factor.semiring.product)
+            val entry = subsolution.semiring.product(subsolution.get(List(subIndex)), 1.0 / sum)
             factor.set(List(parentIndex, childIndex), entry)
           }
         } else { // This should be a case where the subproblem is empty and the value is *
