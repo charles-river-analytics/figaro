@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="SBT: net.sf.jsci:lpsolve:2003-11-03:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/net.sf.jsci/lpsolve/jars/lpsolve-2003-11-03.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/net.sf.jsci/lpsolve/srcs/lpsolve-2003-11-03-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

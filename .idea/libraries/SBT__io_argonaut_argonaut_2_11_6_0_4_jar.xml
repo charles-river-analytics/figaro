@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="SBT: io.argonaut:argonaut_2.11:6.0.4:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/io.argonaut/argonaut_2.11/jars/argonaut_2.11-6.0.4.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/io.argonaut/argonaut_2.11/srcs/argonaut_2.11-6.0.4-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

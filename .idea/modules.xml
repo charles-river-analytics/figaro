@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Figaro.iml" filepath="$PROJECT_DIR$/.idea/modules/Figaro.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Figaro-build.iml" filepath="$PROJECT_DIR$/.idea/modules/Figaro-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/FigaroExamples.iml" filepath="$PROJECT_DIR$/.idea/modules/FigaroExamples.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/FigaroExamples-build.iml" filepath="$PROJECT_DIR$/.idea/modules/FigaroExamples-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/root.iml" filepath="$PROJECT_DIR$/.idea/modules/root.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/root-build.iml" filepath="$PROJECT_DIR$/.idea/modules/root-build.iml" />
+    </modules>
+  </component>
+</project>

@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="SBT: net.sf.jsci:jsci:1.2:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/net.sf.jsci/jsci/jars/jsci-1.2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/net.sf.jsci/jsci/srcs/jsci-1.2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

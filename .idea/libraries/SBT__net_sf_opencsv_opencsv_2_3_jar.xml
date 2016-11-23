@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="SBT: net.sf.opencsv:opencsv:2.3:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/net.sf.opencsv/opencsv/jars/opencsv-2.3.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/net.sf.opencsv/opencsv/srcs/opencsv-2.3-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

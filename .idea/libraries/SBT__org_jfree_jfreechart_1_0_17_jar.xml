@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="SBT: org.jfree:jfreechart:1.0.17:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.jfree/jfreechart/jars/jfreechart-1.0.17.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.jfree/jfreechart/srcs/jfreechart-1.0.17-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

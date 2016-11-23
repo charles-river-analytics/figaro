@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="SBT: net.sourceforge.f2j:arpack_combined_all:0.1:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/net.sourceforge.f2j/arpack_combined_all/jars/arpack_combined_all-0.1-javadoc.jar!/" />
+      <root url="jar://$USER_HOME$/.ivy2/cache/net.sourceforge.f2j/arpack_combined_all/jars/arpack_combined_all-0.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

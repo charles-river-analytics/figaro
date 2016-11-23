@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="SBT: org.jfree:jcommon:1.0.21:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.jfree/jcommon/jars/jcommon-1.0.21.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.jfree/jcommon/srcs/jcommon-1.0.21-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
