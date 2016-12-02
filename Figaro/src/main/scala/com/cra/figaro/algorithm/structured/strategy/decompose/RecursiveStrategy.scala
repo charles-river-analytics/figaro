@@ -22,6 +22,7 @@ private[figaro] class RecursiveStructuredStrategy(problem: Problem, solvingStrat
   rangeSizer: RangeSizer, bounds: Bounds, parameterized: Boolean)
   extends StructuredStrategy(problem, solvingStrategy, 
       (p: Problem) => new RecursiveStructuredStrategy(p, solvingStrategy, rangeSizer, bounds, parameterized), rangeSizer, bounds, parameterized) { 
+  problem.collection.useNewChainMethod = true
 }
 
 /**

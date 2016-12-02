@@ -649,6 +649,8 @@ class VEBPChooserTest extends WordSpec with Matchers {
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e4))
       pr.add(e1)
+      pr.add(e2)
+      pr.add(e3)
       val c1 = cc(e1)
       val c4 = cc(e4)
       c1.generateRange()
@@ -690,6 +692,8 @@ class VEBPChooserTest extends WordSpec with Matchers {
       e2.observe(1)
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e1))
+      pr.add(e2)
+      pr.add(e3)
       pr.add(e4)
       val c1 = cc(e1)
       val c4 = cc(e4)

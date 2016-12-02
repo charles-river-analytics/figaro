@@ -39,6 +39,11 @@ object ComponentHash {
  * To create a new component for an element, you need to say what problem it belongs to.
  */
 class ComponentCollection {
+ /** Indicates whether the new method of creating chain factors should be used.
+  * This defaults to false since all the existing code uses the old method.
+  */
+  var useNewChainMethod = false
+
   /**
    * Maps a variable to the parents needed for creating blocks using Gibbs sampling.
    * TODO: test if this variable causes memory leaks.

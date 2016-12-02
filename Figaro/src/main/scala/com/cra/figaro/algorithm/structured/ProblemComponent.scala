@@ -198,15 +198,72 @@ class ChainComponent[ParentValue, Value](problem: Problem, val chain: Chain[Pare
     subproblems += parentValue -> subproblem
   }
 
+  /*
+   * If all the subproblems have been eliminated completely and use no globals, we can use the new chain method.
+   */
+  private def allSubproblemsEliminatedCompletely: Boolean = {
+    for {
+      (parentValue, subproblem) <- subproblems
+    } {
+      val factors = subproblem.solution
+      val vars = factors.flatMap(_.variables)
+      val comps = vars.map(problem.collection.variableToComponent(_))
+      if (comps.exists(!subproblem.components.contains(_))) return false // the factors contain a global variable
+      if (problem.collection(subproblem.target).problem != subproblem) return false // the target is global
+    }
+    return true
+  }
+
+  def compactChainFactor: Factor[Double] = {
+    val parentVar = Factory.getVariable(problem.collection, chain.parent)
+    val childVar = Factory.getVariable(problem.collection, chain)
+    val factor = new BasicFactor[Double](List(parentVar), List(childVar))
+    for { parentIndex <- 0 until parentVar.range.length } {
+      val parentXV = parentVar.range(parentIndex)
+      if (parentXV.isRegular && subproblems.contains(parentXV.value) && !subproblems(parentXV.value).solution.isEmpty ) {
+      val subproblem = subproblems(parentXV.value)
+      // Need to normalize subsolution in case there's any nested evidence
+      val subsolution = subproblem.solution.reduce(_.product(_))
+      val sum = subsolution.foldLeft(subsolution.semiring.zero, subsolution.semiring.sum(_,_))
+      val subVars = subsolution.variables
+      if (subVars.length == 1) {
+        val subVar = subVars(0)
+        for { subVal <- subVar.range } {
+          val childIndex = childVar.range.indexOf(subVal)
+          val subIndex = subVar.range.indexOf(subVal)
+          val entry = subsolution.semiring.product(subsolution.get(List(subIndex)), 1.0 / sum)
+          factor.set(List(parentIndex, childIndex), entry)
+        }
+      } else { // This should be a case where the subproblem is empty and the value is *
+          val starIndex = childVar.range.indexWhere(!_.isRegular)
+          factor.set(List(parentIndex, starIndex), 1.0)
+      }
+
+    } else {
+      for { childIndex <- 0 until childVar.range.length } {
+        val entry = if (childVar.range(childIndex).isRegular) factor.semiring.zero else factor.semiring.one
+        factor.set(List(parentIndex, childIndex), entry)
+      }
+      val childIndex = childVar.range.indexWhere(!_.isRegular)
+      factor.set(List(parentIndex, childIndex), factor.semiring.one)
+    }
+  }
+  factor
+}
+
   /**
    * Make the non-constraint factors for this component by using the solutions to the subproblems.
    */
   override def makeNonConstraintFactors(parameterized: Boolean = false) {
-    super.makeNonConstraintFactors(parameterized)
-    for {
-      (parentValue, subproblem) <- subproblems
-    } {
-      raiseSubproblemSolution(parentValue, subproblem)
+    if (problem.collection.useNewChainMethod && allSubproblemsEliminatedCompletely) {
+      nonConstraintFactors = List(compactChainFactor)
+    } else {
+      super.makeNonConstraintFactors(parameterized)
+      for {
+        (parentValue, subproblem) <- subproblems
+      } {
+        raiseSubproblemSolution(parentValue, subproblem)
+      }
     }
   }
 
