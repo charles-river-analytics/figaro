@@ -28,7 +28,7 @@ class StructuredGibbs(universe: Universe, numSamples: Int, burnIn: Int, interval
     val semiring = SumProductSemiring()
 
   def run() {
-    val decompose = new FullDecompositionStrategy(problem, defaultRangeSizer, false)
+    val decompose = new BottomUpStrategy(problem, defaultRangeSizer, false)
     decompose.execute(initialComponents())
     val solve = new ConstantStrategy(problem, structured, marginalGibbs(numSamples, burnIn, interval, blockToSampler))
     solve.execute(Lower)

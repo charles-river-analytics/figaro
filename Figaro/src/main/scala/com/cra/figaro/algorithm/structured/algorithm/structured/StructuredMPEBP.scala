@@ -26,7 +26,7 @@ class StructuredMPEBP(universe: Universe, iterations: Int) extends StructuredMPE
   val semiring = MaxProductSemiring()
 
   def run() {
-    val decompose = new FullDecompositionStrategy(problem, defaultRangeSizer, false)
+    val decompose = new BottomUpStrategy(problem, defaultRangeSizer, false)
     decompose.execute(initialComponents())
     val solve = new ConstantStrategy(problem, structured, mpeBeliefPropagation(iterations))
     solve.execute(Lower)

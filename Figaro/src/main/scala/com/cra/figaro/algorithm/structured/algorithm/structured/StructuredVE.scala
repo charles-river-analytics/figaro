@@ -27,7 +27,7 @@ class StructuredVE(universe: Universe, targets: Element[_]*) extends StructuredP
   val semiring = SumProductSemiring()
 
   def run() {
-    val decompose = new FullDecompositionStrategy(problem, defaultRangeSizer, false)
+    val decompose = new BottomUpStrategy(problem, defaultRangeSizer, false)
     decompose.execute(initialComponents())
     val solve = new ConstantStrategy(problem, structured, marginalVariableElimination)
     solve.execute(Lower)

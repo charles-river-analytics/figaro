@@ -27,7 +27,7 @@ class StructuredVEBPChooser(universe: Universe, scoreThreshold: Double, BPIterat
   val semiring = SumProductSemiring()
 
   def run() {
-    val decompose = new FullDecompositionStrategy(problem, defaultRangeSizer, false)
+    val decompose = new BottomUpStrategy(problem, defaultRangeSizer, false)
     decompose.execute(initialComponents())
     val solve = new VEBPStrategy(problem, structured, scoreThreshold, BPIterations)
     solve.execute(Lower)

@@ -20,13 +20,13 @@ import com.cra.figaro.algorithm.structured.strategy.solve._
 import com.cra.figaro.language._
 import com.cra.figaro.algorithm.structured.algorithm.StructuredProbQueryAlgorithm
 import com.cra.figaro.algorithm.structured.strategy.refine._
-import com.cra.figaro.algorithm.structured.strategy.refine.FullDecompositionStrategy
+import com.cra.figaro.algorithm.structured.strategy.refine.BottomUpStrategy
 
 class StructuredBP(universe: Universe, iterations: Int, targets: Element[_]*) extends StructuredProbQueryAlgorithm(universe, targets:_*)  {
    val semiring = SumProductSemiring()
   
   def run() {
-    val decompose = new FullDecompositionStrategy(problem, defaultRangeSizer, false)
+    val decompose = new BottomUpStrategy(problem, defaultRangeSizer, false)
     decompose.execute(initialComponents())
     val solve = new ConstantStrategy(problem, structured, marginalBeliefPropagation(iterations))
     solve.execute(Lower)
