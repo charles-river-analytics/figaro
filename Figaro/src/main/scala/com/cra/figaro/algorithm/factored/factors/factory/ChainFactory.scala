@@ -34,7 +34,7 @@ object ChainFactory {
     val chainVar = Factory.getVariable(cc, chain)
     val (pairVar, pairFactor) = Factory.makeTupleVarAndFactor(cc, Some(chain), parentVar, chainVar)
     cc.variableParents(pairVar) = Set(parentVar, chainVar)
-    var tempFactors = parentVar.range.zipWithIndex flatMap (pair => {
+    val tempFactors = parentVar.range.zipWithIndex flatMap (pair => {
       val (parentVal, parentIndex) = pair
       if (parentVal.isRegular) {
         // We need to create an actual variable to represent the outcome of the chain.
