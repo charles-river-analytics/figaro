@@ -1,6 +1,6 @@
 /*
- * DecompositionTest.scala
- * Tests for decomposition strategies.
+ * BottomUpTest.scala
+ * Tests for bottom-up strategies.
  *
  * Created By:      William Kretschmer (kretsch@mit.edu)
  * Creation Date:   Oct 18, 2016
@@ -18,22 +18,24 @@ import com.cra.figaro.algorithm.structured.strategy.solve._
 import com.cra.figaro.algorithm.structured._
 import com.cra.figaro.algorithm.structured.solver._
 import com.cra.figaro.language._
+import com.cra.figaro.library.atomic.continuous
 import com.cra.figaro.library.atomic.continuous.{Beta, Normal}
+import com.cra.figaro.library.atomic.discrete
 import com.cra.figaro.library.atomic.discrete._
 import com.cra.figaro.library.compound.If
 import org.scalatest.{Matchers, WordSpec}
 
 import scala.collection.mutable
 
-class DecompositionTest extends WordSpec with Matchers {
-  "A complete decomposition strategy" should {
+class BottomUpTest extends WordSpec with Matchers {
+  "A complete bottom-up strategy" should {
     "create ranges for all components" in {
       Universe.createNew()
       val e1 = Flip(0.3)
-      val e2 = If(e1, Constant(0), Uniform(2, 3, 4))
+      val e2 = If(e1, Constant(0), discrete.Uniform(2, 3, 4))
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e2))
-      new FullDecompositionStrategy(pr, defaultRangeSizer, false).execute()
+      new BottomUpStrategy(pr, defaultRangeSizer, false).execute()
 
       val c1 = cc(e1)
       val c2 = cc(e2)
@@ -55,7 +57,7 @@ class DecompositionTest extends WordSpec with Matchers {
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e1))
       val rangeSizer = (pc: ProblemComponent[_]) => 30
-      new FullDecompositionStrategy(pr, rangeSizer, false).execute()
+      new BottomUpStrategy(pr, rangeSizer, false).execute()
 
       cc(e1).variable.size should be(30)
     }
@@ -63,10 +65,10 @@ class DecompositionTest extends WordSpec with Matchers {
     "create non-constraint factors for all components" in {
       Universe.createNew()
       val e1 = Flip(0.3)
-      val e2 = If(e1, Constant(0), Uniform(2, 3, 4))
+      val e2 = If(e1, Constant(0), discrete.Uniform(2, 3, 4))
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e2))
-      new FullDecompositionStrategy(pr, defaultRangeSizer, false).execute()
+      new BottomUpStrategy(pr, defaultRangeSizer, false).execute()
 
       val c1 = cc(e1)
       val c2 = cc(e2)
@@ -83,11 +85,11 @@ class DecompositionTest extends WordSpec with Matchers {
 
     "create upper and lower bound constraint factors for top-level components" in {
       Universe.createNew()
-      val e1 = Uniform(1, 2, 3)
+      val e1 = discrete.Uniform(1, 2, 3)
       e1.addConstraint((i: Int) => 1.0 / i)
       val cc = new ComponentCollection
        val pr = new Problem(cc, List(e1))
-      new FullDecompositionStrategy(pr, defaultRangeSizer, false).execute()
+      new BottomUpStrategy(pr, defaultRangeSizer, false).execute()
 
       val c1 = cc(e1)
       c1.constraintFactors(Lower) should have size 1
@@ -102,7 +104,7 @@ class DecompositionTest extends WordSpec with Matchers {
         val e2 = Flip(e1)
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1, e2))
-        new FullDecompositionStrategy(pr, defaultRangeSizer, false).execute()
+        new BottomUpStrategy(pr, defaultRangeSizer, false).execute()
       }
 
       "parameterized is set to false" in {
@@ -111,14 +113,14 @@ class DecompositionTest extends WordSpec with Matchers {
         val e2 = Flip(e1)
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1, e2))
-        new FullDecompositionStrategy(pr, defaultRangeSizer, true).execute()
+        new BottomUpStrategy(pr, defaultRangeSizer, true).execute()
       }
     }*/
 
     "preserve solutions to solved subproblems" in {
       Universe.createNew()
       val e1 = Flip(0.3)
-      val e2 = If(e1, Select(0.1 -> 1, 0.9 -> 2), Uniform(3, 4))
+      val e2 = If(e1, Select(0.1 -> 1, 0.9 -> 2), discrete.Uniform(3, 4))
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e1, e2))
       val c1 = cc(e1)
@@ -127,10 +129,10 @@ class DecompositionTest extends WordSpec with Matchers {
       c2.expand()
       // Decompose and solve the subproblem corresponding to true
       val spr = c2.subproblems(true)
-      new FullDecompositionStrategy(spr, defaultRangeSizer, false).execute()
+      new BottomUpStrategy(spr, defaultRangeSizer, false).execute()
       new ConstantStrategy(spr, structured, marginalVariableElimination).execute()
       // This should not get rid of the solution
-      new FullDecompositionStrategy(pr, defaultRangeSizer, false).execute()
+      new BottomUpStrategy(pr, defaultRangeSizer, false).execute()
 
       spr.solved should be(true)
       val solution = spr.solution.head
@@ -142,22 +144,22 @@ class DecompositionTest extends WordSpec with Matchers {
     "mark visited components as done" in {
       Universe.createNew()
       val e1 = Flip(0.3)
-      val e2 = If(e1, Select(0.1 -> 1, 0.9 -> 2), Uniform(3, 4))
+      val e2 = If(e1, Select(0.1 -> 1, 0.9 -> 2), discrete.Uniform(3, 4))
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e1, e2))
       val done = mutable.Set[ProblemComponent[_]]()
-      new FullDecompositionStrategy(pr, defaultRangeSizer, false, done).execute()
+      new BottomUpStrategy(pr, defaultRangeSizer, false, done).execute()
       done.size should be(4)
     }
 
     "not decompose components in the done set" in {
       Universe.createNew()
-      val e1 = Uniform(1, 2, 3)
+      val e1 = discrete.Uniform(1, 2, 3)
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e1))
       val c1 = cc(e1)
       val done = mutable.Set[ProblemComponent[_]](c1)
-      new FullDecompositionStrategy(pr, defaultRangeSizer, false, done).execute()
+      new BottomUpStrategy(pr, defaultRangeSizer, false, done).execute()
 
       c1.variable.valueSet.regularValues should be(empty)
       c1.nonConstraintFactors should be(empty)
@@ -170,19 +172,29 @@ class DecompositionTest extends WordSpec with Matchers {
         val e1 = Select(0.1 -> 1, 0.2 -> 3, 0.3 -> 5, 0.5 -> 7)
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
-        new FullDecompositionStrategy(pr, defaultRangeSizer, false).execute()
+        new BottomUpStrategy(pr, defaultRangeSizer, false).execute()
 
         cc(e1).fullyEnumerated should be(true)
         cc(e1).fullyRefined should be(true)
       }
 
-      // TODO ranges for elements with infinite support currently do not work
-      /*"a top-level component is continuous" in {
+      "a top-level component is atomic with finite support" in {
+        Universe.createNew()
+        val e1 = Binomial(10, 0.3)
+        val cc = new ComponentCollection
+        val pr = new Problem(cc, List(e1))
+        new BottomUpStrategy(pr, defaultRangeSizer, false).execute()
+
+        cc(e1).fullyEnumerated should be(true)
+        cc(e1).fullyRefined should be(true)
+      }
+
+      "a top-level component is continuous" in {
         Universe.createNew()
         val e1 = Normal(0, 1)
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
-        new FullDecompositionStrategy(pr, defaultRangeSizer, false).execute()
+        new BottomUpStrategy(pr, defaultRangeSizer, false).execute()
 
         cc(e1).fullyEnumerated should be(false)
         cc(e1).fullyRefined should be(false)
@@ -193,11 +205,11 @@ class DecompositionTest extends WordSpec with Matchers {
         val e1 = Poisson(3)
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
-        new FullDecompositionStrategy(pr, defaultRangeSizer, false).execute()
+        new BottomUpStrategy(pr, defaultRangeSizer, false).execute()
 
         cc(e1).fullyEnumerated should be(false)
         cc(e1).fullyRefined should be(false)
-      }*/
+      }
 
       "the parents of a top-level component have finite support" in {
         Universe.createNew()
@@ -206,13 +218,12 @@ class DecompositionTest extends WordSpec with Matchers {
         val e3 = e1 ++ e2
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e3))
-        new FullDecompositionStrategy(pr, defaultRangeSizer, false).execute()
+        new BottomUpStrategy(pr, defaultRangeSizer, false).execute()
 
         cc(e3).fullyEnumerated should be(true)
         cc(e3).fullyRefined should be(true)
       }
 
-      /*
       "the parent of a top-level component has infinite support" in {
         Universe.createNew()
         val e1 = Poisson(3)
@@ -220,7 +231,7 @@ class DecompositionTest extends WordSpec with Matchers {
         val e3 = e1 ++ e2
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e3))
-        new FullDecompositionStrategy(pr, defaultRangeSizer, false).execute()
+        new BottomUpStrategy(pr, defaultRangeSizer, false).execute()
 
         cc(e3).fullyEnumerated should be(false)
         cc(e3).fullyRefined should be(false)
@@ -232,7 +243,7 @@ class DecompositionTest extends WordSpec with Matchers {
         val e2 = Chain(e1, (d: Double) => if(d < 0) Flip(0.2) else Flip(0.7))
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e2))
-        new FullDecompositionStrategy(pr, defaultRangeSizer, false).execute()
+        new BottomUpStrategy(pr, defaultRangeSizer, false).execute()
 
         val c2 = cc(e2)
         c2.fullyEnumerated should be(false)
@@ -249,7 +260,7 @@ class DecompositionTest extends WordSpec with Matchers {
         val e2 = If(e1, Constant(0.0), Normal(0, 1))
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e2))
-        new FullDecompositionStrategy(pr, defaultRangeSizer, false).execute()
+        new BottomUpStrategy(pr, defaultRangeSizer, false).execute()
 
         val c2 = cc(e2)
         c2.fullyEnumerated should be(false)
@@ -261,7 +272,7 @@ class DecompositionTest extends WordSpec with Matchers {
         val prf = c2.subproblems(false)
         cc(prf.target).fullyEnumerated should be(false)
         prf.fullyRefined should be(false)
-      }*/
+      }
 
       "a Chain whose parent has finite support has fully expanded all of its subproblems" in {
         Universe.createNew()
@@ -269,7 +280,7 @@ class DecompositionTest extends WordSpec with Matchers {
         val e2 = Chain(e1, (i: Int) => FromRange(0, i))
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e2))
-        new FullDecompositionStrategy(pr, defaultRangeSizer, false).execute()
+        new BottomUpStrategy(pr, defaultRangeSizer, false).execute()
 
         val c2 = cc(e2)
         c2.fullyEnumerated should be(true)
@@ -279,11 +290,88 @@ class DecompositionTest extends WordSpec with Matchers {
           subproblem.fullyRefined should be(true)
         }
       }
+
+      "a CompoundFlip has an infinite parent" in {
+        Universe.createNew()
+        val e1 = continuous.Uniform(0.0, 1.0)
+        val e2 = Flip(e1)
+
+        val cc = new ComponentCollection
+        val pr = new Problem(cc, List(e2))
+        new BottomUpStrategy(pr, defaultRangeSizer, false).execute()
+
+        cc(e2).fullyEnumerated should be(true)
+        cc(e2).fullyRefined should be(false)
+      }
+
+      "a CompoundSelect has an infinite parent" in {
+        Universe.createNew()
+        val e1 = continuous.Uniform(0.1, 0.7)
+        val e2 = continuous.Uniform(0.2, 0.3)
+        val e3 = Select((e1, "a"), (e2, "b"))
+
+        val cc = new ComponentCollection
+        val pr = new Problem(cc, List(e3))
+        new BottomUpStrategy(pr, defaultRangeSizer, false).execute()
+
+        cc(e3).fullyEnumerated should be(true)
+        cc(e3).fullyRefined should be(false)
+      }
+
+      "a CompoundDist has an infinite parent but is fully enumerable" in {
+        val e1 = continuous.Uniform(0.1, 0.7)
+        val e2 = continuous.Uniform(0.2, 0.3)
+        val e3 = Dist((e1, Flip(0.3)), (e2, Flip(0.5)))
+
+        val cc = new ComponentCollection
+        val pr = new Problem(cc, List(e3))
+        new BottomUpStrategy(pr, defaultRangeSizer, false).execute()
+
+        cc(e3).fullyEnumerated should be(true)
+        cc(e3).fullyRefined should be(false)
+      }
+    }
+
+    "memoize subproblems" in {
+      Universe.createNew()
+      val e1 = Flip(0.4)
+      val chainFunc = (b: Boolean) => if(b) Select(0.1 -> 1, 0.9 -> 2) else Select(0.7 -> 3, 0.3 -> 4)
+      val e2 = Chain(e1, chainFunc)
+      val e3 = Chain(!e1, chainFunc)
+
+      val cc = new ComponentCollection
+      val pr = new Problem(cc, List(e2, e3))
+      new BottomUpStrategy(pr, defaultRangeSizer, false).execute()
+
+      cc(e2).subproblems should equal(cc(e3).subproblems)
+    }
+
+    "add globals in Chains to the correct problem" in {
+      Universe.createNew()
+      val e1 = Chain(Flip(0.3), (b1: Boolean) => {
+        val e2 = Constant(0)
+        if(b1) Constant(1)
+        else Chain(Flip(0.4), (b2: Boolean) => {
+          if(b2) e2
+          else e2.map(_ + 1)
+        })
+      })
+
+      val cc = new ComponentCollection
+      val pr = new Problem(cc, List(e1))
+      new BottomUpStrategy(pr, defaultRangeSizer, false).execute()
+
+      val c1 = cc(e1)
+      // Should contain Constant(0) and Constant(1)
+      c1.subproblems(true).components should have size 2
+      // Should contain Constant(0), Flip(0.4), and Chain(Flip(0.4), ...)
+      c1.subproblems(false).components should have size 3
     }
   }
 
-  /*"A lazy decomposition strategy" when {
-    // An simple recursive element; useful for testing lazy partial expansion
+  "A partial bottom-up strategy" when {
+    // A simple recursive element; useful for testing lazy partial expansion
+    // This explicitly does not use Chain function memoization
     def geometric(): Element[Int] = If(Flip(0.5), Constant(1), geometric().map(_ + 1))
 
     "called once" should {
@@ -292,7 +380,7 @@ class DecompositionTest extends WordSpec with Matchers {
         val e1 = geometric()
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
-        new LazyDecompositionStrategy(3, pr, defaultRangeSizer, false).execute()
+        new PartialBottomUpStrategy(3, pr, defaultRangeSizer, false).execute()
 
         val c1 = cc(e1)
         c1.range.regularValues should equal(Set(1, 2, 3))
@@ -304,7 +392,7 @@ class DecompositionTest extends WordSpec with Matchers {
         val e1 = geometric()
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
-        new LazyDecompositionStrategy(3, pr, defaultRangeSizer, false).execute()
+        new PartialBottomUpStrategy(3, pr, defaultRangeSizer, false).execute()
 
         val c1 = cc(e1).asInstanceOf[ChainComponent[Boolean, Int]]
         c1.fullyEnumerated should be(false)
@@ -323,14 +411,14 @@ class DecompositionTest extends WordSpec with Matchers {
         val e2 = If(Flip(0.5), Constant(0), e1)
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e2))
-        // TODO this test fails without the statement below, because then e1 gets added to the wrong problem.
-        // Should we consider this a bug?
+        // Ensure that the global is added to the correct problem, even though this won't change the outcome of this test
         pr.add(e1)
-        new LazyDecompositionStrategy(3, pr, defaultRangeSizer, false).execute()
+        new PartialBottomUpStrategy(3, pr, defaultRangeSizer, false).execute()
 
-        // Even though e1 is called from the result of a Chain, it should be treated as a top-level component at depth 0
-        cc(e1).range.regularValues should equal(Set(1, 2, 3))
-        cc(e2).range.regularValues should equal(Set(0, 1, 2, 3))
+        // Because e1 is only used as the result of a Chain, decomposing e2 should count as incrementing the depth
+        // Therefore, we should only recurse on subproblems of e1 twice
+        cc(e1).range.regularValues should equal(Set(1, 2))
+        cc(e2).range.regularValues should equal(Set(0, 1, 2))
       }
     }
 
@@ -343,7 +431,7 @@ class DecompositionTest extends WordSpec with Matchers {
         val c1 = cc(e1)
 
         for(depth <- 0 to 10) {
-          new LazyDecompositionStrategy(depth, pr, defaultRangeSizer, false).execute()
+          new PartialBottomUpStrategy(depth, pr, defaultRangeSizer, false).execute()
           c1.range.hasStar should be(true)
           c1.range.regularValues should equal((1 to depth).toSet)
         }
@@ -354,7 +442,7 @@ class DecompositionTest extends WordSpec with Matchers {
         val e1 = geometric()
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
-        new LazyDecompositionStrategy(1, pr, defaultRangeSizer, false).execute()
+        new PartialBottomUpStrategy(1, pr, defaultRangeSizer, false).execute()
         new ConstantStrategy(pr, structured, marginalVariableElimination).execute()
 
         val c1 = cc(e1).asInstanceOf[ChainComponent[Boolean, Int]]
@@ -362,7 +450,7 @@ class DecompositionTest extends WordSpec with Matchers {
         c1.subproblems(true).solved should be(true)
         c1.subproblems(false).solved should be(true)
 
-        new LazyDecompositionStrategy(3, pr, defaultRangeSizer, false).execute()
+        new PartialBottomUpStrategy(3, pr, defaultRangeSizer, false).execute()
 
         pr.solved should be(false)
         // The first subproblem was fully refined so its solution should remain; the second subproblem was expanded
@@ -371,5 +459,5 @@ class DecompositionTest extends WordSpec with Matchers {
         c1.subproblems(false).solved should be(false)
       }
     }
-  }*/
+  }
 }
