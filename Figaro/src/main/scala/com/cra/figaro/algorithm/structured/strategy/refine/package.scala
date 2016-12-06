@@ -23,5 +23,20 @@ package object refine {
    */
   type RangeSizer = ProblemComponent[_] => Int
 
+  /**
+   * The default range sizer uses a fixed number of samples for each component. It takes
+   * `ParticleGenerator.defaultTotalSamples` samples for any component given.
+   */
   def defaultRangeSizer(pc: ProblemComponent[_]) = ParticleGenerator.defaultTotalSamples
+
+  /**
+   * A range sizer that takes an additional `ParticleGenerator.defaultTotalSamples` samples each time it is called.
+   */
+  def increasingRangeSizer(pc: ProblemComponent[_]) = {
+    val universe = pc.element.universe
+    if(ParticleGenerator.exists(universe)) {
+      ParticleGenerator(universe).samplesTaken(pc.element) + ParticleGenerator.defaultTotalSamples
+    }
+    else ParticleGenerator.defaultTotalSamples
+  }
 }
