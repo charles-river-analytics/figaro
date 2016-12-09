@@ -103,7 +103,7 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
    * by calling reachable on this graph.
    */
   private[figaro] def contextContents(element: Element[_]): List[Element[_]] =
-    reachable(element, (e: Element[_]) => e.directContextContents).toList
+    reachable((e: Element[_]) => e.directContextContents, false, element).toList
 
   private[figaro] def pushContext(element: Element[_]): Unit = {
     myContextStack ::= element
