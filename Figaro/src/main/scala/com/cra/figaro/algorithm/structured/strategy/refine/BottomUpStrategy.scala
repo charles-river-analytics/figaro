@@ -44,7 +44,10 @@ class BottomUpStrategy(problem: Problem, rangeSizer: RangeSizer, parameterized: 
    * that are not fully refined. As a result, this may not process a component that is not in this list and is not
    * needed to process a component in this list.
    */
-  def execute(components: List[ProblemComponent[_]]) = components.foreach(decompose)
+  def execute(components: List[ProblemComponent[_]]) = {
+    components.foreach(decompose)
+    markProblemsUnsolved()
+  }
 
   // Always recurse normally; this could overflow on infinite models
   override def recurse(nestedProblem: NestedProblem[_]): Option[DecompositionStrategy] = {

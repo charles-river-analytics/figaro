@@ -30,9 +30,9 @@ import com.cra.figaro.algorithm.structured.strategy.ProblemStrategy
 private[figaro] abstract class RefiningStrategy(problem: Problem, rangeSizer: RangeSizer, parameterized: Boolean)
   extends ProblemStrategy(problem) {
   /**
-   * Refine the problem in place using this strategy. This will mark the problem as unsolved if any changes are made to
-   * the problem or nested subproblems, since any previous solution may no longer be applicable. This also marks
-   * problem components as fully enumerated or refined where applicable.
+   * Refine the problem in place using this strategy. This will recursively mark as unsolved any problems whose
+   * solutions are no longer applicable as a result of refinement. This also marks problem components as fully
+   * enumerated or refined where applicable.
    */
   def execute(): Unit
 

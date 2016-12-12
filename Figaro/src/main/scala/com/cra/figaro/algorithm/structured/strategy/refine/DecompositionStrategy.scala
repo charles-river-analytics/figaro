@@ -16,6 +16,7 @@ import com.cra.figaro.algorithm.structured._
 import com.cra.figaro.algorithm.structured.strategy.RecursiveStrategy
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.discrete.AtomicBinomial
+import com.cra.figaro.util
 
 import scala.collection.mutable
 
@@ -36,7 +37,7 @@ import scala.collection.mutable
  * components that were processed. Defaults to the empty set.
  */
 private[figaro] abstract class DecompositionStrategy(problem: Problem, rangeSizer: RangeSizer, parameterized: Boolean,
-  done: scala.collection.mutable.Set[ProblemComponent[_]] = mutable.Set())
+  done: mutable.Set[ProblemComponent[_]] = mutable.Set())
   extends RefiningStrategy(problem, rangeSizer, parameterized) with RecursiveStrategy {
 
   /**
@@ -64,15 +65,23 @@ private[figaro] abstract class DecompositionStrategy(problem: Problem, rangeSize
   protected def shouldRefine(comp: ProblemComponent[_]): Boolean
 
   /**
-   * Mark a problem as unsolved. This is to be used when a change in refinement status makes a solution inapplicable.
-   * @param problem Problem to mark as unsolved.
+   * Recursively marks as unsolved any problem whose solution could have changed as a result of refinement by this
+   * strategy or any of its recursively generated strategyes.
    */
-  protected def markAsUnsolved(problem: Problem): Unit = {
-    // TODO need to recurse on problems that contain this
-    // What happens if a problem is unsolved only because it was ignored by a raising strategy?
-    if(problem.solved) {
-      problem.solved = false
-      problem.solution = Nil
+  protected def markProblemsUnsolved(): Unit = {
+    // Start with the problems associated with each visited component
+    val initialProblems = done.map(_.problem).toSeq
+    // From a subproblem, we must include the problems that use it
+    val problemGraph = (p: Problem) => p match {
+      case np: NestedProblem[_] => np.collection.expandableComponents(np).map(_.problem)
+      case _ => Set()
+    }
+    // We have to work our way up the whole problem graph marking problems as unsolved; reachable does this efficiently
+    val allUnsolvedProblems = util.reachable(problemGraph, true, initialProblems:_*)
+    // Mark each reachable problem as unsolved
+    for(p <- allUnsolvedProblems) {
+      p.solved = false
+      p.solution = Nil
     }
   }
 
@@ -85,7 +94,19 @@ private[figaro] abstract class DecompositionStrategy(problem: Problem, rangeSize
   /**
    * Execute this decomposition strategy, starting with the initial components.
    */
-  override def execute(): Unit = initialComponents.foreach(decompose)
+  override def execute(): Unit = {
+    initialComponents.foreach(decompose)
+    markProblemsUnsolved()
+  }
+
+  /**
+   * Like `execute`, but doesn't mark problems as unsolved. This is intended as an optimization for recursive
+   * strategies. Instead of working our way up the problem graph to mark problems as unsolved each time we finish
+   * executing a recursive decomposition, this allows performing this in a single top-level step. This should be only be
+   * used in strategies where the set `done` is passed to the recursively constructed strategy at each iteration. As
+   * such, this method cannot be public.
+   */
+  protected def recursiveExecute(): Unit = initialComponents.foreach(decompose)
 
   /**
    * Decompose a single problem component by recursively decomposing components on which it depends, then generating the
@@ -114,7 +135,6 @@ private[figaro] abstract class DecompositionStrategy(problem: Problem, rangeSize
           process(comp)
       }
       done += comp
-      markAsUnsolved(comp.problem)
     }
   }
 
@@ -133,7 +153,8 @@ private[figaro] abstract class DecompositionStrategy(problem: Problem, rangeSize
     // parentComp is in the set done. This preserves the current state where we have expanded subproblems for each
     // parent value.
     val subproblems = chainComp.subproblems.values
-    subproblems.flatMap(recurse).foreach(_.execute())
+    // Use the recursive execute method so we only mark problems as unsolved once
+    subproblems.flatMap(recurse).foreach(_.recursiveExecute())
     // Make range and factors based on the refinement of the subproblems
     makeRangeAndFactors(chainComp)
     // The range for this component is complete if the range of the parent is complete (and therefore no further
