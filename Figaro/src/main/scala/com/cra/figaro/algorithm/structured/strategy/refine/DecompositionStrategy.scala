@@ -72,7 +72,7 @@ private[figaro] abstract class DecompositionStrategy(problem: Problem, rangeSize
     // Start with the problems associated with each visited component
     val initialProblems = done.map(_.problem).toSeq
     // From a subproblem, we must include the problems that use it
-    val problemGraph = (p: Problem) => p match {
+    def problemGraph(p: Problem): Traversable[Problem] = p match {
       case np: NestedProblem[_] => np.collection.expandableComponents(np).map(_.problem)
       case _ => Set()
     }

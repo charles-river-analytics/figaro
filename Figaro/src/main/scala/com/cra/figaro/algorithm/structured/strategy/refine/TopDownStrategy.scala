@@ -50,8 +50,9 @@ class TopDownStrategy(topLevel: List[ProblemComponent[_]], problem: Problem, ran
   // Used in computing the set of components that need updates after refining the top-level components.
   protected def children(comp: ProblemComponent[_]): Traversable[ProblemComponent[_]] = {
     val elem = comp.element
-    elem.universe.directlyUsedBy(elem).flatMap{child =>
-      // Only returns the child if it is in the collection and not fully refined
+    // Returns the component associated with the element if it is in the collection and not fully refined
+    // This isn't an anonymous function only because the Scala compiler can't figure out the types
+    def componentOption(child: Element[_]): Option[ProblemComponent[_]] = {
       if(problem.collection.contains(child)) {
         val childComp = problem.collection(child)
         if(childComp.fullyRefined) None
@@ -59,6 +60,7 @@ class TopDownStrategy(topLevel: List[ProblemComponent[_]], problem: Problem, ran
       }
       else None
     }
+    elem.universe.directlyUsedBy(elem).flatMap(componentOption)
   }
 
   // The set of components reachable from topLevel through components not fully refined (includes top-level)
