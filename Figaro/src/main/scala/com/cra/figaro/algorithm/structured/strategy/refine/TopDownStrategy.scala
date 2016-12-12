@@ -14,6 +14,7 @@ package com.cra.figaro.algorithm.structured.strategy.refine
 
 import com.cra.figaro.algorithm.structured._
 import com.cra.figaro.language._
+import com.cra.figaro.util
 
 import scala.collection.mutable
 
@@ -45,30 +46,23 @@ class TopDownStrategy(topLevel: List[ProblemComponent[_]], problem: Problem, ran
   // Top-down strategies assume the collection contains args of any element we refine, hence this is unchecked
   override protected def checkArg[T](element: Element[T]): ProblemComponent[T] = problem.collection(element)
 
-  // The set of components reachable from topLevel through components not fully refined
-  protected val reachable = {
-    // TODO: consider adding this to util
-    var visited = Set[ProblemComponent[_]]()
-
-    // Recursively visit all indirect children of a single component
-    def helper(comp: ProblemComponent[_]): Unit = {
-      if(!visited.contains(comp)) {
-        visited += comp
-        val elem = comp.element
-        // The direct children are the elements that directly use elem that are also in the collection
-        for(childElem <- elem.universe.directlyUsedBy(elem)) {
-          if(problem.collection.contains(childElem)) {
-            val childComp = problem.collection(childElem)
-            // Add the child and recurse if the child is not fully refined
-            if(!childComp.fullyRefined) helper(childComp)
-          }
-        }
+  // Finds the direct children of the given component that are both in the component collection and not fully refined.
+  // Used in computing the set of components that need updates after refining the top-level components.
+  protected def children(comp: ProblemComponent[_]): Traversable[ProblemComponent[_]] = {
+    val elem = comp.element
+    elem.universe.directlyUsedBy(elem).flatMap{child =>
+      // Only returns the child if it is in the collection and not fully refined
+      if(problem.collection.contains(child)) {
+        val childComp = problem.collection(child)
+        if(childComp.fullyRefined) None
+        else Some(childComp)
       }
+      else None
     }
-
-    for(comp <- topLevel) if(!comp.fullyRefined) helper(comp)
-    visited
   }
+
+  // The set of components reachable from topLevel through components not fully refined (includes top-level)
+  protected val reachable = util.reachable(children, true, topLevel:_*)
 
   // Refine a component if it is not fully refined and it is reachable from one of the top-level components
   override protected def shouldRefine(comp: ProblemComponent[_]): Boolean = reachable.contains(comp)
