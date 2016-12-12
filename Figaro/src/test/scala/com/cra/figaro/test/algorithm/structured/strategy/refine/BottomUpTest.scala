@@ -12,6 +12,7 @@
  */
 package com.cra.figaro.test.algorithm.structured.strategy.refine
 
+import com.cra.figaro.algorithm.factored.factors.BasicFactor
 import com.cra.figaro.algorithm.lazyfactored.Regular
 import com.cra.figaro.algorithm.structured.strategy.refine._
 import com.cra.figaro.algorithm.structured.strategy.solve._
@@ -139,6 +140,68 @@ class BottomUpTest extends WordSpec with Matchers {
       val range = cc(spr.target).variable.range
       solution.get(List(range.indexOf(Regular(1)))) should be(0.1 +- 0.000000001)
       solution.get(List(range.indexOf(Regular(2)))) should be(0.9 +- 0.000000001)
+    }
+
+    "recursively mark problems as unsolved" when {
+      // A "solution" which we will artificially place in problems to make sure it gets removed
+      val dummySolution = List(new BasicFactor[Double](List(), List()))
+
+      "executed on a top-level problem with no subproblems" in {
+        Universe.createNew()
+        val e1 = Flip(0.3)
+        val cc = new ComponentCollection
+        val pr = new Problem(cc, List(e1))
+        pr.solved = true
+        pr.solution = dummySolution
+        new BottomUpStrategy(pr, defaultRangeSizer, false).execute()
+
+        pr.solved should be(false)
+        pr.solution should be(empty)
+      }
+
+      "executed recursively on a nested problem" in {
+        Universe.createNew()
+        val e1 = Flip(0.3)
+        val e2 = If(e1, Select(0.1 -> 1, 0.9 -> 2), discrete.Uniform(3, 4))
+        val cc = new ComponentCollection
+        val pr = new Problem(cc, List(e1, e2))
+        // Create subproblems without refining them
+        new PartialBottomUpStrategy(0, pr, defaultRangeSizer, false).execute()
+
+        pr.solved = true
+        pr.solution = dummySolution
+        for((_, subproblem) <- cc(e2).subproblems) {
+          subproblem.solved = true
+          subproblem.solution = dummySolution
+        }
+        new BottomUpStrategy(pr, defaultRangeSizer, false).execute()
+
+        pr.solved should be(false)
+        pr.solution should be(empty)
+        for((_, subproblem) <- cc(e2).subproblems) {
+          subproblem.solved should be(false)
+          subproblem.solution should be(empty)
+        }
+      }
+
+      "executed directly on a nested problem already marked as unsolved" in {
+        Universe.createNew()
+        val e1 = Flip(0.3)
+        val e2 = If(e1, Select(0.1 -> 1, 0.9 -> 2), discrete.Uniform(3, 4))
+        val cc = new ComponentCollection
+        val pr = new Problem(cc, List(e1, e2))
+        // Create subproblems without refining them
+        new PartialBottomUpStrategy(0, pr, defaultRangeSizer, false).execute()
+
+        // We don't mark the nested problems as solved because this test is to ensure that we recursively go up the
+        // problem tree without stopping at unsolved components
+        pr.solved = true
+        pr.solution = dummySolution
+        new BottomUpStrategy(cc(e2).subproblems(true), defaultRangeSizer, false).execute()
+
+        pr.solved should be(false)
+        pr.solution should be(empty)
+      }
     }
 
     "mark visited components as done" in {
