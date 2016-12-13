@@ -22,6 +22,49 @@ import com.cra.figaro.language.Name.stringToName
 
 class ExpandTest extends WordSpec with Matchers {
   "Expanding a chain" should {
+    "add the expanded subproblem to the collection" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Flip(0.2)
+      val e2 = Constant(1)
+      val e3 = Uniform(2, 3)
+      val f = (b: Boolean) => if (b) e2 else e3
+      val e4 = Chain(e1, f)
+      pr.add(e4)
+      val c4 = cc(e4)
+      c4.expand(false)
+
+      val spr = c4.subproblems(false)
+      cc.expansions((f, false)) should be theSameInstanceAs spr
+      cc.expandableComponents(spr) should equal(Set(c4))
+    }
+
+    "reuse the expansion for the same function and parent value" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Flip(0.2)
+      val e2 = Flip(0.3)
+      val e3 = Constant(1)
+      val e4 = Uniform(2, 3)
+      val f = (b: Boolean) => if (b) e3 else e4
+      val e5 = Chain(e1, f)
+      val e6 = Chain(e2, f)
+      pr.add(e5)
+      pr.add(e6)
+      val c5 = cc(e5)
+      val c6 = cc(e6)
+      c5.expand(false)
+      c6.expand(false)
+
+      val spr5 = c5.subproblems(false)
+      val spr6 = c6.subproblems(false)
+      spr5 should be theSameInstanceAs spr6
+      cc.expansions((f, false)) should be theSameInstanceAs spr5
+      cc.expandableComponents(spr5) should equal(Set(c5, c6))
+    }
+
     "at one parent value, create the subproblem whose target is the result element" in {
       Universe.createNew()
       val cc = new ComponentCollection
