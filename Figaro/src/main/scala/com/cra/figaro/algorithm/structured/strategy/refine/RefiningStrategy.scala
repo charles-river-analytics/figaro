@@ -25,7 +25,7 @@ import com.cra.figaro.algorithm.structured.strategy.ProblemStrategy
  * solve.
  * @param problem Problem to refine.
  * @param rangeSizer Method to determine the size of the range of components.
- * @param parameterized Indicates if whether or not to make parameterized factors.
+ * @param parameterized Indicates whether or not to make parameterized factors.
  */
 private[figaro] abstract class RefiningStrategy(problem: Problem, rangeSizer: RangeSizer, parameterized: Boolean)
   extends ProblemStrategy(problem) {

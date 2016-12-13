@@ -31,7 +31,7 @@ import scala.collection.mutable
  * first refining their args.
  * @param problem Problem to refine.
  * @param rangeSizer Method to determine the size of the range of components.
- * @param parameterized Indicates if whether or not to make parameterized factors.
+ * @param parameterized Indicates whether or not to make parameterized factors.
  * @param done Problem components that were already processed, which should not be visited again. This is explicitly a
  * mutable set so that nested decomposition strategies can update any enclosing decomposition strategy with the
  * components that were processed. Defaults to the empty set.
