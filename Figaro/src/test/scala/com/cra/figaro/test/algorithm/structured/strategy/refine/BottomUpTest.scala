@@ -89,7 +89,7 @@ class BottomUpTest extends WordSpec with Matchers {
       val e1 = discrete.Uniform(1, 2, 3)
       e1.addConstraint((i: Int) => 1.0 / i)
       val cc = new ComponentCollection
-       val pr = new Problem(cc, List(e1))
+      val pr = new Problem(cc, List(e1))
       new BottomUpStrategy(pr, defaultRangeSizer, false).execute()
 
       val c1 = cc(e1)
