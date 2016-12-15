@@ -55,7 +55,7 @@ class ValueSet[T](val xvalues: Set[Extended[T]]) {
    */
   def starValue: Star[T] = {
     try {
-      regularValues.find(_.isInstanceOf[Star[T]]).get.asInstanceOf[Star[T]]
+      xvalues.find(_.isInstanceOf[Star[T]]).get.asInstanceOf[Star[T]]
     } catch {
       case _: NoSuchElementException => throw new RuntimeException("Attempt to get the Star value of a value set without a Star")
     }
