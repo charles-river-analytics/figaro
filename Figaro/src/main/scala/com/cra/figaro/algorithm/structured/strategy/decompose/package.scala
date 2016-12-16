@@ -30,5 +30,5 @@ package object decompose {
    */
   type RangeSizer = ProblemComponent[_] => Int
 
-  def defaultRangeSizer(pc: ProblemComponent[_]) = ParticleGenerator.defaultTotalSamples
+  def defaultRangeSizer(pc: ProblemComponent[_]) = ParticleGenerator.defaultMaxNumSamplesAtChain
 }

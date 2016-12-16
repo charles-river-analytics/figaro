@@ -324,10 +324,7 @@ object Range {
         val resultValues = homogeneousCartesianProduct(elementValues: _*).toSet.asInstanceOf[Set[i.Value]]
         if (incomplete) withStar(resultValues); else withoutStar(resultValues)
 
-      case a: Atomic[_] => {
-        if (!ParticleGenerator.exists(a.universe)) {
-          println("Warning: Sampling element " + a + " even though no sampler defined for this universe")
-        }
+      case a: Atomic[_] => {       
         val thisSampler = ParticleGenerator(a.universe)
         val samples = thisSampler(a, numValues)
         withoutStar(samples.unzip._2.toSet)

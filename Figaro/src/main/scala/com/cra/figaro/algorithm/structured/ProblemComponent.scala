@@ -93,7 +93,7 @@ class ProblemComponent[Value](val problem: Problem, val element: Element[Value])
    * The range will include * based on argument ranges including * or any subproblem not being expanded.\
    *
    */
-  def generateRange(numValues: Int = ParticleGenerator.defaultTotalSamples) {
+  def generateRange(numValues: Int = ParticleGenerator.defaultMaxNumSamplesAtChain) {
     val newRange = Range(this, numValues)
     if ((newRange.hasStar ^ range.hasStar) || (newRange.regularValues != range.regularValues)) {
       range = newRange

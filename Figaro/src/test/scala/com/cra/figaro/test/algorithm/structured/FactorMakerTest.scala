@@ -469,7 +469,7 @@ class FactorMakerTest extends WordSpec with Matchers {
 
         val List(factor) = c2.nonConstraintFactors
         factor.variables should equal (List(c1.variable, c2.variable))
-        factor.size should equal (ParticleGenerator.defaultTotalSamples * 2)
+        factor.size should equal (ParticleGenerator.defaultMaxNumSamplesAtChain * 2)
         for { (p, index) <- c1.variable.range.zipWithIndex } {
           factor.get(List(index, 0)) should equal (p.value)
           factor.get(List(index, 1)) should equal (1 - p.value)
@@ -732,7 +732,7 @@ class FactorMakerTest extends WordSpec with Matchers {
 
         val List(factor) = c2.nonConstraintFactors
         factor.variables should equal (List(c1.variable, c2.variable))
-        factor.size should equal (ParticleGenerator.defaultTotalSamples * 2)
+        factor.size should equal (ParticleGenerator.defaultMaxNumSamplesAtChain * 2)
         for {
           (xprobs, i) <- c1.variable.range.zipWithIndex
           j <- 0 until c2.variable.range.size
@@ -859,7 +859,7 @@ class FactorMakerTest extends WordSpec with Matchers {
           val List(var1, var2, tupleVar) = tupleFactor.variables
           var1 should equal (c1.variable)
           var2 should equal (c2.variable)
-          factors.size should equal (ParticleGenerator.defaultTotalSamples)
+          factors.size should equal (ParticleGenerator.defaultMaxNumSamplesAtChain)
           val vars = factors(0).variables
           vars.size should equal (2)
           vars(0) should equal (tupleVar)
@@ -904,7 +904,7 @@ class FactorMakerTest extends WordSpec with Matchers {
 
         val List(factor) = c1.nonConstraintFactors
         factor.variables should equal (List(c1.variable))
-        factor.size should equal (ParticleGenerator.defaultTotalSamples)
+        factor.size should equal (ParticleGenerator.defaultMaxNumSamplesAtChain)
       }
     }
 

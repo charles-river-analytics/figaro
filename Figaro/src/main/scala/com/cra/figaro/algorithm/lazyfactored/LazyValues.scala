@@ -184,10 +184,7 @@ class LazyValues(universe: Universe) {
       case v: ValuesMaker[_] => {
         v.makeValues(depth)
       }
-      case a: Atomic[_] => {
-        if (!ParticleGenerator.exists(universe)) {
-          println("Warning: Sampling element " + a + " even though no sampler defined for this universe")
-        }
+      case a: Atomic[_] => {       
         val thisSampler = ParticleGenerator(universe)
     	  val samples = thisSampler(a, numArgSamples)
         withoutStar(samples.unzip._2.toSet)
@@ -241,9 +238,9 @@ class LazyValues(universe: Universe) {
   def apply[T](element: Element[T], depth: Int): ValueSet[T] = {
     val (numArgSamples, numTotalSamples) = if (ParticleGenerator.exists(universe)) {
       val pg = ParticleGenerator(universe)
-      (pg.numArgSamples, pg.numTotalSamples )
+      (pg.numSamplesFromAtomics, pg.maxNumSamplesAtChain )
     } else {
-      (ParticleGenerator.defaultArgSamples, ParticleGenerator.defaultTotalSamples)
+      (ParticleGenerator.defaultNumSamplesFromAtomics, ParticleGenerator.defaultMaxNumSamplesAtChain)
     }
     apply(element, depth, numArgSamples, numTotalSamples)
   }
