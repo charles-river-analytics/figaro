@@ -24,6 +24,7 @@ import com.cra.figaro.library.collection.FixedSizeArray
 import com.cra.figaro.library.atomic.discrete.{ AtomicBinomial, ParameterizedBinomialFixedNumTrials }
 import com.cra.figaro.library.compound.FoldLeft
 import com.cra.figaro.library.compound.IntSelector
+import com.cra.figaro.algorithm.ValuesMaker
 
 object Range {
   private def getRange[U](collection: ComponentCollection, otherElement: Element[U]): ValueSet[U] = {
@@ -154,10 +155,10 @@ object Range {
 
   def apply[V](component: ProblemComponent[V], numValues: Int): ValueSet[V] = {
     component match {
-      case cc: ChainComponent[_, V] => chainRange(cc)
+      case cc: ChainComponent[_, V]  => chainRange(cc)
       case mc: MakeArrayComponent[V] => makeArrayRange(mc)
-      case ac: ApplyComponent[V] => applyRange(ac)
-      case _ => otherRange(component, numValues)
+      case ac: ApplyComponent[V]     => applyRange(ac)
+      case _                         => otherRange(component, numValues)
     }
   }
 
@@ -281,7 +282,7 @@ object Range {
     component.element match {
       case c: Constant[_] => withoutStar(Set(c.constant))
 
-      case f: AtomicFlip => withoutStar(Set(true, false))
+      case f: AtomicFlip  => withoutStar(Set(true, false))
 
       case f: ParameterizedFlip =>
         if (getRange(collection, f.parameter).hasStar) withStar(Set(true, false)) else withoutStar(Set(true, false))
@@ -324,15 +325,9 @@ object Range {
         val resultValues = homogeneousCartesianProduct(elementValues: _*).toSet.asInstanceOf[Set[i.Value]]
         if (incomplete) withStar(resultValues); else withoutStar(resultValues)
 
-      case a: Atomic[_] => {       
-        val thisSampler = ParticleGenerator(a.universe)
-        val samples = thisSampler(a, numValues)
-        withoutStar(samples.unzip._2.toSet)
-      }
-
       case r: SingleValuedReferenceElement[_] => getRangeOfSingleValuedReference(collection, r.collection, r.reference)
 
-      case r: MultiValuedReferenceElement[_] => getRangeOfMultiValuedReference(collection, r.collection, r.reference)
+      case r: MultiValuedReferenceElement[_]  => getRangeOfMultiValuedReference(collection, r.collection, r.reference)
 
       case a: Aggregate[_, _] =>
         val inputs = getRange(collection, a.mvre)
@@ -349,6 +344,17 @@ object Range {
           val all = Set((0 until maxCounter): _*)
           if (counterValues.hasStar) ValueSet.withStar(all); else ValueSet.withoutStar(all)
         } else { ValueSet.withStar(Set()) }
+
+      // Make values is hardcoded with depth. SFI should control iterative deepening, so call make values with infinite depth
+      case v: ValuesMaker[_] => {
+        v.makeValues(Int.MaxValue)
+      }
+
+      case a: Atomic[_] => {
+        val thisSampler = ParticleGenerator(a.universe)
+        val samples = thisSampler(a, numValues)
+        withoutStar(samples.unzip._2.toSet)
+      }
 
       case _ =>
         /* A new improvement - if we can't compute the values, we just make them *, so the rest of the computation can proceed */

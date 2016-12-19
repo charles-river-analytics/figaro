@@ -29,7 +29,7 @@ import argonaut._, Argonaut._
  * @param b The prior beta parameter
  */
 class AtomicBeta(name: Name[Double], a: Double, b: Double, collection: ElementCollection)
-  extends Element[Double](name, collection) with Atomic[Double] with DoubleParameter with ValuesMaker[Double] with Beta{
+  extends Element[Double](name, collection) with Atomic[Double] with DoubleParameter  with Beta{
   type Randomness = Double
 
   /**
@@ -97,6 +97,8 @@ class AtomicBeta(name: Name[Double], a: Double, b: Double, collection: ElementCo
     else (learnedAlpha - 1) / (learnedAlpha + learnedBeta - 2)
   }
 
+  // Values for Beta parameters now handled directly in the algorithms
+  @deprecated("Values for Beta parameters are now handled directly in the algorithms", "4.1.0")
   def makeValues(depth: Int) = ValueSet.withoutStar(Set(MAPValue))
 
   def maximize(sufficientStatistics: Seq[Double]) {
