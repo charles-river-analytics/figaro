@@ -14,7 +14,9 @@ package com.cra.figaro.experimental.marginalmap
 
 import com.cra.figaro.algorithm.{Algorithm, AlgorithmException}
 import com.cra.figaro.algorithm.factored.factors.Factor
-import com.cra.figaro.algorithm.structured.{ComponentCollection, Problem}
+import com.cra.figaro.algorithm.structured.strategy.refine._
+import com.cra.figaro.algorithm.structured.strategy.solve._
+import com.cra.figaro.algorithm.structured.{ComponentCollection, Lower, Problem}
 import com.cra.figaro.language._
 
 /**
@@ -25,7 +27,14 @@ import com.cra.figaro.language._
 abstract class StructuredMarginalMAPAlgorithm(val universe: Universe, val mapElements: List[Element[_]])
   extends Algorithm with OneTimeMarginalMAP {
 
-  def run(): Unit
+  def solvingStrategy(): SolvingStrategy
+
+  def run(): Unit = {
+    val decompose = new BottomUpStrategy(problem, defaultRangeSizer, false, initialComponents())
+    decompose.execute()
+    val solve = solvingStrategy()
+    solve.execute(Lower)
+  }
 
   val cc: ComponentCollection = new ComponentCollection
 

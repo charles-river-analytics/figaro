@@ -14,17 +14,24 @@ package com.cra.figaro.algorithm.structured.algorithm
 
 import com.cra.figaro.algorithm.Algorithm
 import com.cra.figaro.language._
-import scala.collection.mutable.Map
 import com.cra.figaro.algorithm.factored.factors.Factor
 import com.cra.figaro.algorithm.factored.factors.Semiring
-import com.cra.figaro.algorithm.structured.Problem
-import com.cra.figaro.algorithm.structured.ComponentCollection
+import com.cra.figaro.algorithm.structured.{ComponentCollection, Lower, Problem}
 import com.cra.figaro.algorithm.OneTimeMPE
 import com.cra.figaro.algorithm.AlgorithmException
+import com.cra.figaro.algorithm.structured.strategy.refine._
+import com.cra.figaro.algorithm.structured.strategy.solve._
 
 abstract class StructuredMPEAlgorithm(val universe: Universe) extends Algorithm with OneTimeMPE {
 
-  def run(): Unit
+  def solvingStrategy(): SolvingStrategy
+
+  def run(): Unit = {
+    val decompose = new BottomUpStrategy(problem, defaultRangeSizer, false, initialComponents())
+    decompose.execute()
+    val solve = solvingStrategy()
+    solve.execute(Lower)
+  }
 
   val semiring: Semiring[Double]
 

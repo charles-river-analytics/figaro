@@ -15,28 +15,17 @@ package com.cra.figaro.algorithm.structured.algorithm.hybrid
 
 import com.cra.figaro.language._
 import com.cra.figaro.algorithm.factored.factors.SumProductSemiring
-import com.cra.figaro.algorithm.structured._
 import com.cra.figaro.algorithm.structured.strategy.solve._
 import com.cra.figaro.algorithm.structured.algorithm.StructuredProbQueryAlgorithm
-import com.cra.figaro.algorithm.factored.factors.factory._
 import com.cra.figaro.algorithm.factored.gibbs.Gibbs
 import com.cra.figaro.algorithm.factored.gibbs.BlockSampler
-import com.cra.figaro.algorithm.structured.strategy.refine._
 
 class StructuredVEGibbsChooser(universe: Universe, scoreThreshold: Double, numSamples: Int, burnIn: Int, interval: Int, blockToSampler: Gibbs.BlockSamplerCreator, targets: Element[_]*)
   extends StructuredProbQueryAlgorithm(universe, targets: _*) {
 
   val semiring = SumProductSemiring()
 
-  def run() {
-    val decompose = new BottomUpStrategy(problem, defaultRangeSizer, false)
-    decompose.execute(initialComponents())
-    val solve = new VEGibbsStrategy(problem, structured, scoreThreshold, numSamples, burnIn, interval, blockToSampler)
-    solve.execute(Lower)
-    val joint = problem.solution.foldLeft(Factory.unit(semiring))(_.product(_))
-    targets.foreach(t => marginalizeToTarget(t, joint))
-  }
-
+  def solvingStrategy() = new VEGibbsStrategy(problem, structured, scoreThreshold, numSamples, burnIn, interval, blockToSampler)
 }
 
 object StructuredVEGibbsChooser {

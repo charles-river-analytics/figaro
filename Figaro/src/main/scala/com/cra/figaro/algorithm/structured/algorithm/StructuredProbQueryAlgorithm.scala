@@ -15,15 +15,27 @@ package com.cra.figaro.algorithm.structured.algorithm
 import com.cra.figaro.algorithm.OneTimeProbQuery
 import com.cra.figaro.algorithm.Algorithm
 import com.cra.figaro.language._
+
 import scala.collection.mutable.Map
 import com.cra.figaro.algorithm.factored.factors.Factor
 import com.cra.figaro.algorithm.factored.factors.Semiring
-import com.cra.figaro.algorithm.structured.Problem
-import com.cra.figaro.algorithm.structured.ComponentCollection
+import com.cra.figaro.algorithm.factored.factors.factory.Factory
+import com.cra.figaro.algorithm.structured.{ComponentCollection, Lower, Problem}
+import com.cra.figaro.algorithm.structured.strategy.refine._
+import com.cra.figaro.algorithm.structured.strategy.solve._
 
 abstract class StructuredProbQueryAlgorithm(val universe: Universe, val queryTargets: Element[_]*) extends Algorithm with OneTimeProbQuery {
 
-  def run(): Unit
+  def solvingStrategy(): SolvingStrategy
+
+  def run(): Unit = {
+    val decompose = new BottomUpStrategy(problem, defaultRangeSizer, false, initialComponents())
+    decompose.execute()
+    val solve = solvingStrategy()
+    solve.execute(Lower)
+    val joint = problem.solution.foldLeft(Factory.unit(semiring))(_.product(_))
+    queryTargets.foreach(t => marginalizeToTarget(t, joint))
+  }
 
   val semiring: Semiring[Double]
 
