@@ -17,7 +17,12 @@ import com.cra.figaro.algorithm.structured.NestedProblem
 /**
  * A strategy that may choose to recursively operate on subproblems.
  */
-trait RecursiveStrategy extends ProblemStrategy {
+trait RecursiveStrategy {
+  /**
+   * Execute the strategy.
+   */
+  def execute(): Unit
+
   /**
    * Optionally recurse on a subproblem.
    * @param subproblem Nested problem to consider recursing on.

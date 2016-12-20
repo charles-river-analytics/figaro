@@ -42,4 +42,6 @@ abstract class RaisingStrategy(problem: Problem, raisingCriteria: RaisingCriteri
       }
     }
   }
+
+  override def execute(): Unit = execute(Lower)
 }

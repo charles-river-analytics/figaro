@@ -103,6 +103,11 @@ class Problem(val collection: ComponentCollection, val targets: List[Element[_]]
    */
   def fullyRefined: Boolean = components.forall(_.fullyRefined)
 
+  /**
+   * Targets of this problem as a list of components in the collection.
+   */
+  def targetComponents: List[ProblemComponent[_]] = targets.map(collection(_))
+
   targets.foreach(target => if (!collection.contains(target)) add(target))
 }
 

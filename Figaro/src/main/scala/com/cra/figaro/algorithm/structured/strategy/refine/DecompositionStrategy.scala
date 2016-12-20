@@ -21,24 +21,22 @@ import com.cra.figaro.util
 import scala.collection.mutable
 
 /**
- * Refining strategies that operate by decomposing components. This does not solve the problem or any nested
- * subproblems, but involves processing problem components by generating ranges for variables, expanding relevant
- * subproblems, and creating factors.
- *
- * This strategy visits component at most once, so generally it is of no use to call `execute` multiple times.
+ * Refining strategies that operate by decomposing components. This involves processing problem components by generating
+ * ranges for variables, expanding relevant subproblems, and creating factors. This strategy visits components at most
+ * once, so generally it is of no use to call `execute` multiple times.
  *
  * Needed components are discovered lazily by working backwards from the initial components. As a result, the strategy
  * makes no guarantees about visiting components that are not needed.
- * @param problem Problem to refine.
+ * @param collection Collection of components to refine.
  * @param rangeSizer Method to determine the size of the range of components.
  * @param parameterized Indicates whether or not to make parameterized factors.
  * @param done Problem components that were already processed, which should not be visited again. This is explicitly a
  * mutable set so that nested decomposition strategies can update any enclosing decomposition strategy with the
- * components that were processed. Defaults to the empty set.
+ * components that were processed.
  */
-private[figaro] abstract class DecompositionStrategy(problem: Problem, rangeSizer: RangeSizer, parameterized: Boolean,
-  done: mutable.Set[ProblemComponent[_]] = mutable.Set())
-  extends RefiningStrategy(problem, rangeSizer, parameterized) with RecursiveStrategy {
+private[figaro] abstract class DecompositionStrategy(collection: ComponentCollection, rangeSizer: RangeSizer,
+                                                     parameterized: Boolean, done: mutable.Set[ProblemComponent[_]])
+  extends RefiningStrategy(collection, rangeSizer, parameterized) with RecursiveStrategy {
 
   /**
    * Optionally decompose a nested problem. The recusing strategy may not refine any components in the set `done`, but
@@ -73,7 +71,7 @@ private[figaro] abstract class DecompositionStrategy(problem: Problem, rangeSize
     val initialProblems = done.map(_.problem).toSeq
     // From a subproblem, we must include the problems that use it
     def problemGraph(p: Problem): Traversable[Problem] = p match {
-      case np: NestedProblem[_] => np.collection.expandableComponents(np).map(_.problem)
+      case np: NestedProblem[_] => collection.expandableComponents(np).map(_.problem)
       case _ => Set()
     }
     // We have to work our way up the whole problem graph marking problems as unsolved; reachable does this efficiently
@@ -160,7 +158,7 @@ private[figaro] abstract class DecompositionStrategy(problem: Problem, rangeSize
     // The range for this component is complete if the range of the parent is complete (and therefore no further
     // subproblems can be created), and the target for each subproblem has a complete range
     chainComp.fullyEnumerated =
-      parentComp.fullyEnumerated && subproblems.forall { sp => sp.collection(sp.target).fullyEnumerated }
+      parentComp.fullyEnumerated && subproblems.forall { sp => collection(sp.target).fullyEnumerated }
     // If all components in the subproblems are fully refined, then the chain component is also fully refined
     chainComp.fullyRefined = chainComp.fullyEnumerated && subproblems.forall(_.fullyRefined)
   }

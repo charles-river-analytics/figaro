@@ -14,14 +14,13 @@ package com.cra.figaro.algorithm.structured.strategy.solve
 
 import com.cra.figaro.algorithm.structured._
 import com.cra.figaro.algorithm.factored.factors.{Factor, Variable}
-import com.cra.figaro.algorithm.structured.strategy.ProblemStrategy
 
 /**
  * A solving strategy solves an inference problem after a series of refinements have been made. This involves solving
  * subproblems and collecting their factors. The solving strategy may then choose to eliminate variables that do not
  * belong in the solution, or defer elimination to a higher-level problem.
  */
-private[figaro] abstract class SolvingStrategy(problem: Problem) extends ProblemStrategy(problem) {
+private[figaro] abstract class SolvingStrategy(problem: Problem) {
 
   /**
    * Process all subproblems for the given component by raising their factors or solutions.
@@ -77,6 +76,4 @@ private[figaro] abstract class SolvingStrategy(problem: Problem) extends Problem
       })
     }
   }
-
-  override def execute(): Unit = execute(Lower)
 }
