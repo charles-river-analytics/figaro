@@ -11,23 +11,18 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
-package com.cra.figaro.test.algorithm.factored.experimental.collapsedgibbs
+package com.cra.figaro.test.experimental
 
 import com.cra.figaro.algorithm.factored.factors._
-import com.cra.figaro.algorithm.lazyfactored.{ LazyValues, ValueSet }
+import com.cra.figaro.algorithm.lazyfactored.LazyValues
 import com.cra.figaro.language._
-import com.cra.figaro.library.atomic.discrete.Uniform
 import com.cra.figaro.library.compound.If
+import com.cra.figaro.library.compound.^^
 import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import com.cra.figaro.algorithm.factored.factors.factory.Factory
 import com.cra.figaro.algorithm.factored.gibbs.Gibbs
-import com.cra.figaro.algorithm.factored.gibbs.WalkSAT
-import com.cra.figaro.algorithm.factored.gibbs.StateNotFoundException
-import com.cra.figaro.algorithm.factored.gibbs.BlockSampler
-import com.cra.figaro.language.Element.toBooleanElement
 import com.cra.figaro.experimental.collapsedgibbs._
-import com.cra.figaro.library.compound.^^
 
 class CollapsedGibbsTest extends WordSpec with Matchers {
   "A Collapsed Gibbs sampler" should {

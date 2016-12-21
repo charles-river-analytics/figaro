@@ -1252,7 +1252,7 @@ class FactorMakerTest extends WordSpec with Matchers {
     "produce a single factor connecting parent and child" in {
       Universe.createNew()
       val cc = new ComponentCollection
-      cc.useNewChainMethod = true
+      cc.useSingleChainFactor = true
       val pr = new Problem(cc)
       val v1 = Select(0.3 -> 1, 0.2 -> 2, 0.5 -> 3)
       val v2 = Chain(v1, (i: Int) => Flip(i / 10.0))
@@ -1309,7 +1309,7 @@ class FactorMakerTest extends WordSpec with Matchers {
     "produce a factor mapping the parent to the child with the union of the values" in {
       Universe.createNew()
       val cc = new ComponentCollection
-      cc.useNewChainMethod = true
+      cc.useSingleChainFactor = true
       val pr = new Problem(cc)
       val v1 = Flip(0.5)
       val v2 = Chain(v1, (b: Boolean) => if (b) Select(0.1 -> 1, 0.9 -> 2) else Select(0.2 -> 2, 0.8 -> 3))
@@ -1360,7 +1360,7 @@ class FactorMakerTest extends WordSpec with Matchers {
     "produce a factor mapping parent to child including *" in {
       Universe.createNew()
       val cc = new ComponentCollection
-      cc.useNewChainMethod = true
+      cc.useSingleChainFactor = true
       val pr = new Problem(cc)
       val v1 = Select(0.3 -> 1, 0.2 -> 2, 0.5 -> 3)
       val v2 = Chain(v1, (i: Int) => Flip(i / 10.0))
@@ -1418,7 +1418,7 @@ class FactorMakerTest extends WordSpec with Matchers {
     "produce a factor mapping parent to child including *" in {
       Universe.createNew()
       val cc = new ComponentCollection
-      cc.useNewChainMethod = true
+      cc.useSingleChainFactor = true
       val pr = new Problem(cc)
       val vt = Constant(true)
       val vf = Constant(false)
@@ -1472,7 +1472,7 @@ class FactorMakerTest extends WordSpec with Matchers {
     "not use the new method even when the new method is being used" in {
       Universe.createNew()
       val cc = new ComponentCollection
-      cc.useNewChainMethod = true
+      cc.useSingleChainFactor = true
       val pr = new Problem(cc)
       val v1 = Constant(1)
       val v2 = Flip(0.5)
@@ -1509,7 +1509,7 @@ class FactorMakerTest extends WordSpec with Matchers {
     "produce the right result" in {
       Universe.createNew()
       val cc = new ComponentCollection
-      cc.useNewChainMethod = true
+      cc.useSingleChainFactor = true
       val pr = new Problem(cc)
       val v1 = Constant(1)
       val v2 = Flip(0.5)

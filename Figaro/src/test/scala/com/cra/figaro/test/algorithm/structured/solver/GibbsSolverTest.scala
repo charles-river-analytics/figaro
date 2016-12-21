@@ -99,7 +99,7 @@ class GibbsSolverTest extends WordSpec with Matchers {
       "given a Chain with compact factors" in {
         Universe.createNew()
         val cc = new ComponentCollection
-        cc.useNewChainMethod = true
+        cc.useSingleChainFactor = true
         val e1 = Flip(0.4)
         val e2 = Chain(e1, (b: Boolean) => if(b) Uniform(1, 2, 3, 4) else Uniform(3, 4, 5))
         val e3 = Apply(e2, (i: Int) => i * 2)
@@ -141,7 +141,7 @@ class GibbsSolverTest extends WordSpec with Matchers {
       "produce the correct result with a compact Chain factor" in {
         Universe.createNew()
         val cc = new ComponentCollection
-        cc.useNewChainMethod = true
+        cc.useSingleChainFactor = true
         val e1 = Flip(0.4)
         val e2 = Chain(e1, (b: Boolean) => if(b) Uniform(1, 2) else Uniform(2, 3))
         val e3 = Apply(e2, (i: Int) => i * 2)

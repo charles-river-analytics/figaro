@@ -84,7 +84,7 @@ collection) \{
 }
 \end{flushleft}
 
-First, note that it inherits from \texttt{CachingChain}. When you inherit from \texttt{Chain}, you have two options. You can specify either a caching or non-caching version of the chain (which has preset cache capacities), or you can directly instantiate \texttt{Chain} with a specified cache capacity. Note that chains themselves do not extend the \texttt{Cacheable} trait, since the support of a can be infinite. Also, when you inherit from a class, you have to explicitly pass along the name and collection arguments.
+First, note that it inherits from \texttt{CachingChain}. When you inherit from \texttt{Chain}, you have two options. You can specify either a caching or non-caching version of the chain. Chains themselves perform no caching, but the cacheable or non--cacheable status of a chain tells an algorithm whether it is allowed to cache chain results. Note that chains themselves do not extend the \texttt{Cacheable} trait, since the support of a can be infinite. Also, when you inherit from a class, you have to explicitly pass along the name and collection arguments.
 
 The operation of the chain can be thought of as follows: first, produce specific values for each of the options. Then, given such a specific set of values, create an atomic uniform element over those values. Finally, generate a specific value from the atomic uniform element, i.e., a uniformly chosen value from
 those values.
@@ -180,13 +180,12 @@ Certain algorithms rely on element classes being able to support specific functi
 Figaro provides a different solution. There is a trait called \texttt{ValuesMa\-ker} that characterizes element classes for which values can be enumerated. If you want your element class to support range computation, make it extend \texttt{ValuesMaker} and have it implement the \texttt{makeValues} method, which produces an enumeration of the possible values of the element. For example, we might want to enumerate the possible values of an atomic binomial element. If n is the number of trials of the binomial, we can define the function:
 
 \begin{flushleft}
-\texttt{def makeValues: Set[Int] = (for \{ i <- 0 to n \} yield i).toSet}
+\texttt{def makeValues(depth: Int): ValueSet[Int] = ValueSet.withoutStar((for \{ i <- 0 to n \} yield i).toSet})
 \end{flushleft}
 
-The \texttt{makeValues} method returns a set of values. For a binomial, this is simply all the integers from
-0 to the number of trials. This set is computed through a for comprehension whose result is turned into a set. We also make \texttt{AtomicBinomial} extend \texttt{ValuesMaker}.
+The \texttt{makeValues} method returns a set of values in a set called a ValueSet. A ValueSet is a set of over a type but also includes a special value call * (star) that is used for lazy inference. In addition, makeValues function requires a depth value that is also needed for lazy inference. For a binomial, the makeValues function is simply all the integers from 0 to the number of trials. This set is computed through a for comprehension whose result is turned into a set. We also make \texttt{AtomicBinomial} extend \texttt{ValuesMaker}.
 
-Similarly, factored algorithms like variable elimination requires both that it be possible to enumerate the values of an element and that it be possible to turn into a set of factors. To specify that it has the latter capability, you make it
+Generally, factored algorithms like variable elimination requires both that it be possible to enumerate the values of an element and that it be possible to turn into a set of factors. However, factored algorithms will operate on any Figaro model by sampling values from an element if no ValuesMaker is defined. It is still better though to explicitly specify how to make factors for a new element. To do this, you make it
 extend \texttt{FactorMaker} and implement the \texttt{makeFactors} method. Factors are parameterized by the type of values they contain; in this case, since we are creating a factor representing probabilities, we make a \texttt{Factor[Double]}.
 
 For example, the one could extend the \texttt{AtomicBinomial} class to extend \texttt{FactorMaker} and include the following code to generate factors:

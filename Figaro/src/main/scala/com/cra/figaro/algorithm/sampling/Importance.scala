@@ -21,7 +21,6 @@ import scala.collection.mutable.{ Set, Map }
 import com.cra.figaro.experimental.particlebp.AutomaticDensityEstimator
 import com.cra.figaro.algorithm.factored.ParticleGenerator
 import com.cra.figaro.algorithm.sampling.parallel.ParImportance
-import com.cra.figaro.algorithm.sampling.LikelihoodWeighter
 import com.cra.figaro.library.cache.PermanentCache
 import com.cra.figaro.library.collection.Container
 
