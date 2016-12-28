@@ -26,9 +26,19 @@ object ChainFactory {
   /**
    * Make the factors associated with a chain element.
    */
-  
- import com.cra.figaro.algorithm.factored.factors.factory.Factory
- def makeFactors[T, U](cc: ComponentCollection, chain: Chain[T, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {
+
+  import com.cra.figaro.algorithm.factored.factors.factory.Factory
+
+  def makeFactors[T, U](cc: ComponentCollection, chain: Chain[T, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {
+    val chainComp = cc(chain)
+    if (chainComp.allSubproblemsEliminatedCompletely && cc.useSingleChainFactor) {
+      makeSingleFactor[T, U](cc, chain)(mapper)
+    } else {
+      makeMultipleFactors[T, U](cc, chain)(mapper)
+    }
+  }
+
+  def makeMultipleFactors[T, U](cc: ComponentCollection, chain: Chain[T, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {
     val chainComp = cc(chain)
     val parentVar = Factory.getVariable(cc, chain.parent)
     val chainVar = Factory.getVariable(cc, chain)
@@ -51,8 +61,7 @@ object ChainFactory {
         cc.variableParents(chainVar) += actualVar
         chainComp.actualSubproblemVariables += parentVal.value -> actualVar
         List(Factory.makeConditionalSelector(pairVar, parentVal, actualVar, chainComp.range.regularValues)(mapper))
-      }
-      else {
+      } else {
         // We create a dummy variable for the outcome variable whose value is always star.
         // We create a dummy factor for that variable.
         // Then we use makeConditionalSelector with the dummy variable
@@ -62,5 +71,44 @@ object ChainFactory {
     })
     pairFactor :: tempFactors
   }
-  
+
+  def makeSingleFactor[T, U](cc: ComponentCollection, chain: Chain[T, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {
+    val chainComp = cc(chain)
+    val parentVar = Factory.getVariable(cc, chain.parent)
+    val childVar = Factory.getVariable(cc, chain)
+    val factor = new BasicFactor[Double](List(parentVar), List(childVar))
+    for { parentIndex <- 0 until parentVar.range.length } {
+      val parentXV = parentVar.range(parentIndex)
+      if (parentXV.isRegular && chainComp.subproblems.contains(parentXV.value) && !chainComp.subproblems(parentXV.value).solution.isEmpty) {
+        val subproblem = chainComp.subproblems(parentXV.value)
+        // Need to normalize subsolution in case there's any nested evidence
+        val subsolution = subproblem.solution.reduce(_.product(_))
+        val sum = subsolution.foldLeft(subsolution.semiring.zero, subsolution.semiring.sum(_, _))
+        val subVars = subsolution.variables
+        if (subVars.length == 1) {
+          val subVar = subVars(0)
+          for { subVal <- subVar.range } {
+            val childIndex = childVar.range.indexOf(subVal)
+            val subIndex = subVar.range.indexOf(subVal)
+            val entry = subsolution.semiring.product(subsolution.get(List(subIndex)), 1.0 / sum)
+            factor.set(List(parentIndex, childIndex), entry)
+          }
+        } else { // This should be a case where the subproblem is empty and the value is *
+          val starIndex = childVar.range.indexWhere(!_.isRegular)
+          factor.set(List(parentIndex, starIndex), factor.semiring.one)
+        }
+
+      } else {
+        for { childIndex <- 0 until childVar.range.length } {
+          val entry = if (childVar.range(childIndex).isRegular) factor.semiring.zero else factor.semiring.one
+          factor.set(List(parentIndex, childIndex), entry)
+        }
+        val childIndex = childVar.range.indexWhere(!_.isRegular)
+        factor.set(List(parentIndex, childIndex), factor.semiring.one)
+      }
+    }
+    List(factor)
+
+  }
+
 }

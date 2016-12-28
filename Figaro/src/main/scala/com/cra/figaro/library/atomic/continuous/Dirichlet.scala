@@ -32,7 +32,7 @@ import argonaut.Argonaut._
  * @param alphas the prior concentration parameters
  */
 class AtomicDirichlet(name: Name[Array[Double]], val alphas: Array[Double], collection: ElementCollection)
-  extends Element[Array[Double]](name, collection) with Atomic[Array[Double]] with ArrayParameter with ValuesMaker[Array[Double]] with Dirichlet{
+    extends Element[Array[Double]](name, collection) with Atomic[Array[Double]] with ArrayParameter with Dirichlet {
 
   /**
    * The number of concentration parameters in the Dirichlet distribution.
@@ -134,6 +134,8 @@ class AtomicDirichlet(name: Name[Array[Double]], val alphas: Array[Double], coll
     result
   }
 
+  // Values for Beta parameters now handled directly in the algorithms
+  @deprecated("Values for Beta parameters are now handled directly in the algorithms", "4.1.0")
   def makeValues(depth: Int) = ValueSet.withoutStar(Set(MAPValue))
 
   override def toString = "Dirichlet(" + alphas.mkString(", ") + ")"
@@ -143,12 +145,12 @@ class AtomicDirichlet(name: Name[Array[Double]], val alphas: Array[Double], coll
  * Dirichlet distributions in which the parameters are elements.
  */
 class CompoundDirichlet(name: Name[Array[Double]], alphas: Array[Element[Double]], collection: ElementCollection)
-  extends NonCachingChain[List[Double], Array[Double]](
-    name,
-    new Inject("", alphas, collection),
-    (aa: Seq[Double]) => new AtomicDirichlet("", aa.toArray, collection),
-    collection)
-  with Dirichlet {
+    extends NonCachingChain[List[Double], Array[Double]](
+      name,
+      new Inject("", alphas, collection),
+      (aa: Seq[Double]) => new AtomicDirichlet("", aa.toArray, collection),
+      collection)
+    with Dirichlet {
 
   def alphaValues = alphas.map(_.value)
 
@@ -184,7 +186,7 @@ object Dirichlet extends Creatable {
 
   //Needs to be a nested field or a jEmptyArray
   implicit def DirichletEncodeJson: EncodeJson[Dirichlet] = EncodeJson((d: Dirichlet) =>
-  ("name" := d.name.string) ->: ("alphaValues" := jArray((for (a <- d.alphaValues) yield { jNumber(a) }).toList)) ->: jEmptyObject)
+    ("name" := d.name.string) ->: ("alphaValues" := jArray((for (a <- d.alphaValues) yield { jNumber(a) }).toList)) ->: jEmptyObject)
 
   implicit def DirichletDecodeJson(implicit collection: ElementCollection): DecodeJson[AtomicDirichlet] =
     DecodeJson(c => for {
@@ -197,17 +199,15 @@ object Dirichlet extends Creatable {
    */
   def apply(alphas: Double*)(implicit name: Name[Array[Double]], collection: ElementCollection) =
     new AtomicDirichlet(name, alphas.toArray, collection)
-  
+
   def apply(alphas: Array[Double])(implicit name: Name[Array[Double]], collection: ElementCollection) =
     new AtomicDirichlet(name, alphas, collection)
-  
+
   /**
    * Create a Dirichlet distribution in which the parameters are elements.
    */
   def apply(alphas: Element[Double]*)(implicit name: Name[Array[Double]], collection: ElementCollection) =
     new CompoundDirichlet(name, alphas.toArray, collection)
-  
-
 
   type ResultType = Array[Double]
 

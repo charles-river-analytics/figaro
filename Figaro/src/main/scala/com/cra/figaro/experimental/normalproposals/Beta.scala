@@ -19,7 +19,7 @@ import math.{ pow, sqrt }
 import JSci.maths.SpecialMath.beta
 import com.cra.figaro.algorithm.ValuesMaker
 import com.cra.figaro.algorithm.lazyfactored.ValueSet
-import com.cra.figaro.library.atomic.continuous.{Beta, Util}
+import com.cra.figaro.library.atomic.continuous.Util
 
 /**
  * A Beta distribution in which the alpha and beta parameters are provided.
@@ -29,7 +29,7 @@ import com.cra.figaro.library.atomic.continuous.{Beta, Util}
  * @param b The prior beta parameter
  */
 class AtomicBeta(name: Name[Double], a: Double, b: Double, collection: ElementCollection)
-  extends Element[Double](name, collection) with HasDensity[Double] with NormalProposer with DoubleParameter with ValuesMaker[Double] with Beta {
+  extends Element[Double](name, collection) with HasDensity[Double] with NormalProposer with DoubleParameter with com.cra.figaro.library.atomic.continuous.Beta {
   // Bounds for normal proposals
   override def lower = 0.0
   override def upper = 1.0

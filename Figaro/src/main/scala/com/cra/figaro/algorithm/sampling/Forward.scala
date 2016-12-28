@@ -16,8 +16,6 @@ package com.cra.figaro.algorithm.sampling
 import com.cra.figaro.language._
 import com.cra.figaro.library.cache.Cache
 import com.cra.figaro.library.cache.NoCache
-import com.cra.figaro.algorithm.sampling.LikelihoodWeighter
-
 
 class ForwardWeighter(universe: Universe, cache: Cache) extends LikelihoodWeighter(universe, cache) {
   override def rejectionAction() = ()

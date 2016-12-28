@@ -689,8 +689,8 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val v1 = Normal(0.0, 1.0)
         Values()(v1)
         val factor = Factory.makeFactorsForElement(v1)
-        factor(0).size should equal(ParticleGenerator.defaultArgSamples)
-        factor(0).get(List(0)) should equal(1.0 / ParticleGenerator.defaultArgSamples)
+        factor(0).size should equal(ParticleGenerator.defaultNumSamplesFromAtomics)
+        factor(0).get(List(0)) should equal(1.0 / ParticleGenerator.defaultNumSamplesFromAtomics)
       }
 
       "correctly create factors for continuous elements through chains" in {

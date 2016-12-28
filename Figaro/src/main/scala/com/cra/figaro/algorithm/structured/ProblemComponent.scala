@@ -93,7 +93,7 @@ class ProblemComponent[Value](val problem: Problem, val element: Element[Value])
    * The range will include * based on argument ranges including * or any subproblem not being expanded.\
    *
    */
-  def generateRange(numValues: Int = ParticleGenerator.defaultTotalSamples) {
+  def generateRange(numValues: Int = ParticleGenerator.defaultMaxNumSamplesAtChain) {
     val newRange = Range(this, numValues)
     if ((newRange.hasStar ^ range.hasStar) || (newRange.regularValues != range.regularValues)) {
       range = newRange
@@ -147,7 +147,7 @@ class ApplyComponent[Value](problem: Problem, element: Element[Value]) extends P
  * @param element the element to which this component corresponds
  */
 abstract class ExpandableComponent[ParentValue, Value](problem: Problem, parent: Element[ParentValue], element: Element[Value])
-  extends ProblemComponent(problem, element) {
+    extends ProblemComponent(problem, element) {
   /**
    * Expand for all values of the parent, based on the current range of the parent.
    */
@@ -159,11 +159,11 @@ abstract class ExpandableComponent[ParentValue, Value](problem: Problem, parent:
 
   /** Expand for a particular parent value. */
   def expand(parentValue: ParentValue): Unit
-  
-  val expandFunction: (ParentValue) => Element[Value] 
-  
+
+  val expandFunction: (ParentValue) => Element[Value]
+
   /**
-   *  The subproblems nested inside this expandable component. 
+   *  The subproblems nested inside this expandable component.
    *  They are created for particular parent values.
    */
   var subproblems: Map[ParentValue, NestedProblem[Value]] = Map()
@@ -173,12 +173,12 @@ abstract class ExpandableComponent[ParentValue, Value](problem: Problem, parent:
  * A problem component created for a chain element.
  */
 class ChainComponent[ParentValue, Value](problem: Problem, val chain: Chain[ParentValue, Value])
-  extends ExpandableComponent[ParentValue, Value](problem, chain.parent, chain) {
+    extends ExpandableComponent[ParentValue, Value](problem, chain.parent, chain) {
 
   val elementsCreated: scala.collection.mutable.Set[Element[_]] = scala.collection.mutable.Set() ++ chain.universe.contextContents(chain)
 
   val expandFunction = chain.get _
-  
+
   /**
    *  The subproblems are defined in terms of formal variables.
    *  We need to create actual variables for each of the subproblems to replace the formal variables with in their solutions.
@@ -201,7 +201,7 @@ class ChainComponent[ParentValue, Value](problem: Problem, val chain: Chain[Pare
   /*
    * If all the subproblems have been eliminated completely and use no globals, we can use the new chain method.
    */
-  private def allSubproblemsEliminatedCompletely: Boolean = {
+  private[figaro] def allSubproblemsEliminatedCompletely: Boolean = {
     for {
       (parentValue, subproblem) <- subproblems
     } {
@@ -214,51 +214,12 @@ class ChainComponent[ParentValue, Value](problem: Problem, val chain: Chain[Pare
     return true
   }
 
-  def compactChainFactor: Factor[Double] = {
-    val parentVar = Factory.getVariable(problem.collection, chain.parent)
-    val childVar = Factory.getVariable(problem.collection, chain)
-    val factor = new BasicFactor[Double](List(parentVar), List(childVar))
-    for { parentIndex <- 0 until parentVar.range.length } {
-      val parentXV = parentVar.range(parentIndex)
-      if (parentXV.isRegular && subproblems.contains(parentXV.value) && !subproblems(parentXV.value).solution.isEmpty ) {
-      val subproblem = subproblems(parentXV.value)
-      // Need to normalize subsolution in case there's any nested evidence
-      val subsolution = subproblem.solution.reduce(_.product(_))
-      val sum = subsolution.foldLeft(subsolution.semiring.zero, subsolution.semiring.sum(_,_))
-      val subVars = subsolution.variables
-      if (subVars.length == 1) {
-        val subVar = subVars(0)
-        for { subVal <- subVar.range } {
-          val childIndex = childVar.range.indexOf(subVal)
-          val subIndex = subVar.range.indexOf(subVal)
-          val entry = subsolution.semiring.product(subsolution.get(List(subIndex)), 1.0 / sum)
-          factor.set(List(parentIndex, childIndex), entry)
-        }
-      } else { // This should be a case where the subproblem is empty and the value is *
-          val starIndex = childVar.range.indexWhere(!_.isRegular)
-          factor.set(List(parentIndex, starIndex), 1.0)
-      }
-
-    } else {
-      for { childIndex <- 0 until childVar.range.length } {
-        val entry = if (childVar.range(childIndex).isRegular) factor.semiring.zero else factor.semiring.one
-        factor.set(List(parentIndex, childIndex), entry)
-      }
-      val childIndex = childVar.range.indexWhere(!_.isRegular)
-      factor.set(List(parentIndex, childIndex), factor.semiring.one)
-    }
-  }
-  factor
-}
-
   /**
    * Make the non-constraint factors for this component by using the solutions to the subproblems.
    */
   override def makeNonConstraintFactors(parameterized: Boolean = false) {
-    if (problem.collection.useNewChainMethod && allSubproblemsEliminatedCompletely) {
-      nonConstraintFactors = List(compactChainFactor)
-    } else {
-      super.makeNonConstraintFactors(parameterized)
+    super.makeNonConstraintFactors(parameterized)
+    if (!problem.collection.useSingleChainFactor || !allSubproblemsEliminatedCompletely) {
       for {
         (parentValue, subproblem) <- subproblems
       } {
@@ -300,13 +261,13 @@ class ChainComponent[ParentValue, Value](problem: Problem, val chain: Chain[Pare
  * A problem component for a MakeArray element.
  */
 class MakeArrayComponent[Value](problem: Problem, val makeArray: MakeArray[Value])
-  extends ExpandableComponent[Int, FixedSizeArray[Value]](problem, makeArray.numItems, makeArray) {
+    extends ExpandableComponent[Int, FixedSizeArray[Value]](problem, makeArray.numItems, makeArray) {
   /** The maximum number of items expanded so far. */
   var maxExpanded = 0
 
   // This isn't really needed in MakeArray since the main expand function won't call this.
   val expandFunction = (i: Int) => Constant(makeArray.makeValues(i).regularValues.head)
-  
+
   /**
    * Ensure that the given number of items is expanded.
    */
