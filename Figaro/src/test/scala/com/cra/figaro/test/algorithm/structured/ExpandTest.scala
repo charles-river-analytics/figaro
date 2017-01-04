@@ -199,7 +199,7 @@ class ExpandTest extends WordSpec with Matchers {
       c4.expand()
       c4.subproblems.foreach(f => process(cc(f._2.target)))
       process(c4)
-      c4.raise(Lower)
+      c4.raise()
       c4.nonConstraintFactors.size should be (5)
       val tf = cc(c4.subproblems(true).target).nonConstraintFactors(0)
       val ff = cc(c4.subproblems(false).target).nonConstraintFactors(0)
@@ -226,7 +226,7 @@ class ExpandTest extends WordSpec with Matchers {
       c4.expand()
       c4.subproblems.foreach(f => process(cc(f._2.target)))
       process(c4)
-      c4.raise(Lower)
+      c4.raise()
       c4.constraintFactors(Lower).size should be (1)      
     }
 

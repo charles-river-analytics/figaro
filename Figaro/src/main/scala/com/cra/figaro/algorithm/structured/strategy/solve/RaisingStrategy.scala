@@ -30,18 +30,22 @@ abstract class RaisingStrategy(problem: Problem, raisingCriteria: RaisingCriteri
    */
   override def recurse(subproblem: NestedProblem[_]): Option[RaisingStrategy]
 
-  override def raiseSubproblems[ParentValue, Value](chainComp: ChainComponent[ParentValue, Value], bounds: Bounds): Unit = {
+  override def raiseSubproblems[ParentValue, Value](chainComp: ChainComponent[ParentValue, Value]): Unit = {
     // If the chain's range is just {*}, then no factors were created and none of the subproblems are relevant
     if(!chainComp.range.hasStar || chainComp.range.regularValues.nonEmpty) {
       for((parentValue, subproblem) <- chainComp.subproblems) {
         val recursingStrategy = recurse(subproblem)
-        if(recursingStrategy.nonEmpty) recursingStrategy.get.execute(bounds)
+        if(recursingStrategy.nonEmpty) recursingStrategy.get.execute()
 
         if(subproblem.solved) chainComp.raiseSubproblemSolution(parentValue, subproblem)
-        else chainComp.raise(parentValue, bounds)
+        else chainComp.raise(parentValue)
       }
     }
   }
 
+  /**
+   * Execute on a nested problem. Because nested problems never have evidence variables, it doesn't matter which bounds
+   * we use.
+   */
   override def execute(): Unit = execute(Lower)
 }

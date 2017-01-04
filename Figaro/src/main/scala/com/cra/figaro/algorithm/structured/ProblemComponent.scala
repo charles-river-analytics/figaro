@@ -194,7 +194,7 @@ class ChainComponent[ParentValue, Value](problem: Problem, val chain: Chain[Pare
   val elementsCreated: scala.collection.mutable.Set[Element[_]] = scala.collection.mutable.Set() ++ chain.universe.contextContents(chain)
 
   val expandFunction = chain.get _
-  
+
   /**
    *  The subproblems are defined in terms of formal variables.
    *  We need to create actual variables for each of the subproblems to replace the formal variables with in their solutions.
@@ -223,23 +223,22 @@ class ChainComponent[ParentValue, Value](problem: Problem, val chain: Chain[Pare
 
   // Raise the given subproblem into this problem. Note that factors for the chain must have been created already
   // This probably needs some more thought!
-  def raise(parentValue: ParentValue, bounds: Bounds = Lower): Unit = {
+  // This assumes that components in nested problems do not have evidence on them, and therefore we don't need to raise
+  // the constraint factors.
+  def raise(parentValue: ParentValue): Unit = {
 
     if (subproblems.contains(parentValue) && !subproblems(parentValue).solved) {
 
       val subproblem = subproblems(parentValue)
       val comp = subproblem.collection(subproblem.target)
-      val CF = subproblem.components.flatMap(c => c.constraintFactors(bounds).map(Factory.replaceVariable(_, comp.variable, actualSubproblemVariables(parentValue))))
       val NCF = subproblem.components.flatMap(c => c.nonConstraintFactors.map(Factory.replaceVariable(_, comp.variable, actualSubproblemVariables(parentValue))))
 
-      if (bounds == Lower) constraintLower = constraintLower ::: CF
-      else constraintUpper = constraintUpper ::: CF
       nonConstraintFactors = nonConstraintFactors ::: NCF
     }
   }
 
   // Raise all subproblems into this problem
-  def raise(bounds: Bounds) { subproblems.foreach(sp => raise(sp._1, bounds)) }
+  def raise() { subproblems.foreach(sp => raise(sp._1)) }
 
 }
 

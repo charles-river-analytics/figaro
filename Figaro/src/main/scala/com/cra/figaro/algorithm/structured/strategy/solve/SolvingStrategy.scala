@@ -23,11 +23,11 @@ import com.cra.figaro.algorithm.factored.factors.{Factor, Variable}
 private[figaro] abstract class SolvingStrategy(problem: Problem) {
 
   /**
-   * Process all subproblems for the given component by raising their factors or solutions.
+   * Process all subproblems for the given component by raising their factors or solutions. This doesn't use bounds
+   * because components in nested problems, which correspond to temporary elements, cannot have evidence.
    * @param chainComp Component to process.
-   * @param bounds Bounds for constraint factors.
    */
-  def raiseSubproblems[ParentValue, Value](chainComp: ChainComponent[ParentValue, Value], bounds: Bounds): Unit
+  def raiseSubproblems[ParentValue, Value](chainComp: ChainComponent[ParentValue, Value]): Unit
 
   /**
    * Decide whether to raise factors, or perform elimination on factors at this level.
@@ -56,7 +56,7 @@ private[figaro] abstract class SolvingStrategy(problem: Problem) {
   def execute(bounds: Bounds): Unit = {
     // Raise factors from all subproblems before deciding to eliminate and collecting factors.
     problem.components.foreach {
-      case chainComp: ChainComponent[_, _] => raiseSubproblems(chainComp, bounds)
+      case chainComp: ChainComponent[_, _] => raiseSubproblems(chainComp)
       case _ =>
     }
 
