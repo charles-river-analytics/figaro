@@ -19,9 +19,8 @@ import com.cra.figaro.algorithm.structured.solver._
 import com.cra.figaro.algorithm.structured.strategy.solve._
 import com.cra.figaro.algorithm.structured.algorithm._
 
-class RaisingVE(universe: Universe, targets: Element[_]*) extends StructuredProbQueryAlgorithm(universe, targets:_*) {
- 
-  val semiring = SumProductSemiring()
+class RaisingVE(universe: Universe, targets: Element[_]*) extends StructuredProbQueryAlgorithm(universe, targets:_*)
+  with DecompositionProbQuery {
   
   def solvingStrategy() = new ConstantStrategy(problem, raiseIfGlobal, marginalVariableElimination)
 }

@@ -21,8 +21,8 @@ import com.cra.figaro.language._
  * @param universe Universe on which to perform inference.
  * @param mapElements Elements for which to compute MAP queries. Elements not in this list are summed over.
  */
-class StructuredMarginalMAPVE(universe: Universe, mapElements: List[Element[_]])
-  extends StructuredMarginalMAPAlgorithm(universe, mapElements) {
+class StructuredMarginalMAPVE(universe: Universe, mapElements: Element[_]*)
+  extends StructuredMarginalMAPAlgorithm(universe, mapElements:_*) with DecompositionMarginalMAP {
 
   def solvingStrategy() = new MarginalMAPVEStrategy(problem, structuredRaising)
 }
@@ -34,7 +34,7 @@ object StructuredMarginalMAPVE {
    * and cannot be queried.
    */
   def apply(mapElements: Element[_]*)(implicit universe: Universe) = {        
-    new StructuredMarginalMAPVE(universe, mapElements.toList)
+    new StructuredMarginalMAPVE(universe, mapElements:_*)
   }
 
   /**

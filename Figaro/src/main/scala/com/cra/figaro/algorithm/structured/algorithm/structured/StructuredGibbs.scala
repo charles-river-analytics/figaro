@@ -12,18 +12,15 @@
  */
 package com.cra.figaro.algorithm.structured.algorithm.structured
 
-import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.structured.solver._
 import com.cra.figaro.algorithm.structured.strategy.solve._
 import com.cra.figaro.language._
-import com.cra.figaro.algorithm.structured.algorithm.StructuredProbQueryAlgorithm
+import com.cra.figaro.algorithm.structured.algorithm._
 import com.cra.figaro.algorithm.factored.gibbs.Gibbs
 import com.cra.figaro.algorithm.factored.gibbs.BlockSampler
 
 class StructuredGibbs(universe: Universe, numSamples: Int, burnIn: Int, interval: Int, blockToSampler: Gibbs.BlockSamplerCreator, targets: Element[_]*)
-  extends StructuredProbQueryAlgorithm(universe, targets: _*) {
-
-  val semiring = SumProductSemiring()
+  extends StructuredProbQueryAlgorithm(universe, targets: _*) with DecompositionProbQuery {
 
   def solvingStrategy() = new ConstantStrategy(problem, structuredRaising, marginalGibbs(numSamples, burnIn, interval, blockToSampler))
 }

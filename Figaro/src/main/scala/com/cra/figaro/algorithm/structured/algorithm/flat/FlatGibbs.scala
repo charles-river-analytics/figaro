@@ -14,7 +14,6 @@
 package com.cra.figaro.algorithm.structured.algorithm.flat
 
 import com.cra.figaro.language._
-import com.cra.figaro.algorithm.factored.factors.SumProductSemiring
 import com.cra.figaro.algorithm.structured.solver._
 import com.cra.figaro.algorithm.structured.strategy.solve._
 import com.cra.figaro.algorithm.structured.algorithm._
@@ -22,9 +21,7 @@ import com.cra.figaro.algorithm.factored.gibbs._
 import com.cra.figaro.algorithm.factored.gibbs.BlockSampler
 
 class FlatGibbs(universe: Universe, numSamples: Int, burnIn: Int, interval: Int, blockToSampler: Gibbs.BlockSamplerCreator, targets: Element[_]*)
-  extends StructuredProbQueryAlgorithm(universe, targets: _*) {
-
-  val semiring = SumProductSemiring()
+  extends StructuredProbQueryAlgorithm(universe, targets: _*) with DecompositionProbQuery {
 
   def solvingStrategy() = new ConstantStrategy(problem, flatRaising(problem), marginalGibbs(numSamples, burnIn, interval, blockToSampler))
 }

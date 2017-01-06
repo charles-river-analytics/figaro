@@ -12,14 +12,13 @@
  */
 package com.cra.figaro.algorithm.structured.algorithm.structured
 
-import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.structured.solver._
 import com.cra.figaro.algorithm.structured.strategy.solve._
 import com.cra.figaro.language._
-import com.cra.figaro.algorithm.structured.algorithm.StructuredProbQueryAlgorithm
+import com.cra.figaro.algorithm.structured.algorithm._
 
-class StructuredBP(universe: Universe, iterations: Int, targets: Element[_]*) extends StructuredProbQueryAlgorithm(universe, targets:_*)  {
-  val semiring = SumProductSemiring()
+class StructuredBP(universe: Universe, iterations: Int, targets: Element[_]*) extends StructuredProbQueryAlgorithm(universe, targets:_*)
+  with DecompositionProbQuery {
 
   def solvingStrategy() = new ConstantStrategy(problem, structuredRaising, marginalBeliefPropagation(iterations))
 }

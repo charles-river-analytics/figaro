@@ -16,12 +16,10 @@ package com.cra.figaro.algorithm.structured.algorithm.structured
 import com.cra.figaro.language._
 import com.cra.figaro.algorithm.structured.solver._
 import com.cra.figaro.algorithm.structured.strategy.solve._
-import com.cra.figaro.algorithm.structured.algorithm.StructuredMPEAlgorithm
-import com.cra.figaro.algorithm.factored.factors.MaxProductSemiring
+import com.cra.figaro.algorithm.structured.algorithm._
 
-class StructuredMPEBP(universe: Universe, iterations: Int) extends StructuredMPEAlgorithm(universe) {
-
-  val semiring = MaxProductSemiring()
+class StructuredMPEBP(universe: Universe, iterations: Int) extends StructuredMPEAlgorithm(universe)
+  with DecompositionMPE {
 
   def solvingStrategy() = new ConstantStrategy(problem, structuredRaising, mpeBeliefPropagation(iterations))
 }

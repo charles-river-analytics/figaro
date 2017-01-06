@@ -14,16 +14,13 @@
 package com.cra.figaro.algorithm.structured.algorithm.hybrid
 
 import com.cra.figaro.language._
-import com.cra.figaro.algorithm.factored.factors.SumProductSemiring
 import com.cra.figaro.algorithm.structured.strategy.solve._
-import com.cra.figaro.algorithm.structured.algorithm.StructuredProbQueryAlgorithm
+import com.cra.figaro.algorithm.structured.algorithm._
 import com.cra.figaro.algorithm.factored.gibbs.Gibbs
 import com.cra.figaro.algorithm.factored.gibbs.BlockSampler
 
 class StructuredVEBPGibbsChooser(universe: Universe, scoreThreshold: Double, determThreshold: Double, bpIters: Int, numSamples: Int, burnIn: Int, interval: Int, blockToSampler: Gibbs.BlockSamplerCreator, targets: Element[_]*)
-  extends StructuredProbQueryAlgorithm(universe, targets: _*) {
-
-  val semiring = SumProductSemiring()
+  extends StructuredProbQueryAlgorithm(universe, targets: _*) with DecompositionProbQuery {
 
   def solvingStrategy() = new VEBPGibbsStrategy(problem, structuredRaising, scoreThreshold, determThreshold, bpIters, numSamples, burnIn, interval, blockToSampler)
 }
