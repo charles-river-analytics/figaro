@@ -58,3 +58,4 @@ trait OneTimeStructuredMarginalMAP extends StructuredMarginalMAPAlgorithm with O
 
 trait AnytimeStructuredMarginalMAP extends StructuredMarginalMAPAlgorithm with AnytimeStructured with AnytimeMarginalMAP
 
+trait DecompositionMarginalMAP extends OneTimeStructuredMarginalMAP with DecompositionStructuredAlgorithm
