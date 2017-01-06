@@ -23,7 +23,7 @@ class StructuredMPEBP(universe: Universe, iterations: Int) extends StructuredMPE
 
   val semiring = MaxProductSemiring()
 
-  def solvingStrategy() = new ConstantStrategy(problem, structured, mpeBeliefPropagation(iterations))
+  def solvingStrategy() = new ConstantStrategy(problem, structuredRaising, mpeBeliefPropagation(iterations))
 }
 
 object StructuredMPEBP {

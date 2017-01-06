@@ -26,7 +26,7 @@ class FlatGibbs(universe: Universe, numSamples: Int, burnIn: Int, interval: Int,
 
   val semiring = SumProductSemiring()
 
-  def solvingStrategy() = new ConstantStrategy(problem, flatten(problem), marginalGibbs(numSamples, burnIn, interval, blockToSampler))
+  def solvingStrategy() = new ConstantStrategy(problem, flatRaising(problem), marginalGibbs(numSamples, burnIn, interval, blockToSampler))
 }
 
 object FlatGibbs {

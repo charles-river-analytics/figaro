@@ -23,7 +23,7 @@ class StructuredMPEVE(universe: Universe) extends StructuredMPEAlgorithm(univers
 
   val semiring = MaxProductSemiring()
 
-  def solvingStrategy() = new ConstantStrategy(problem, structured, mpeVariableElimination)
+  def solvingStrategy() = new ConstantStrategy(problem, structuredRaising, mpeVariableElimination)
 }
 
 object StructuredMPEVE {

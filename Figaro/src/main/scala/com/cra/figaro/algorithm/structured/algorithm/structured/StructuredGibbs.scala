@@ -25,7 +25,7 @@ class StructuredGibbs(universe: Universe, numSamples: Int, burnIn: Int, interval
 
   val semiring = SumProductSemiring()
 
-  def solvingStrategy() = new ConstantStrategy(problem, structured, marginalGibbs(numSamples, burnIn, interval, blockToSampler))
+  def solvingStrategy() = new ConstantStrategy(problem, structuredRaising, marginalGibbs(numSamples, burnIn, interval, blockToSampler))
 }
 
 object StructuredGibbs {

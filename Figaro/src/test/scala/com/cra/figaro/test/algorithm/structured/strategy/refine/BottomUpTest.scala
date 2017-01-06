@@ -131,7 +131,7 @@ class BottomUpTest extends WordSpec with Matchers {
       // Decompose and solve the subproblem corresponding to true
       val spr = c2.subproblems(true)
       new BottomUpStrategy(spr, defaultRangeSizer, false, spr.targetComponents).execute()
-      new ConstantStrategy(spr, structured, marginalVariableElimination).execute()
+      new ConstantStrategy(spr, structuredRaising, marginalVariableElimination).execute()
       // This should not get rid of the solution
       new BottomUpStrategy(pr, defaultRangeSizer, false, pr.targetComponents).execute()
 
@@ -506,7 +506,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
         new PartialBottomUpStrategy(1, pr, defaultRangeSizer, false, pr.targetComponents).execute()
-        new ConstantStrategy(pr, structured, marginalVariableElimination).execute()
+        new ConstantStrategy(pr, structuredRaising, marginalVariableElimination).execute()
 
         val c1 = cc(e1).asInstanceOf[ChainComponent[Boolean, Int]]
         pr.solved should be(true)

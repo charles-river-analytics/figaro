@@ -23,7 +23,7 @@ class StructuredVEBPChooser(universe: Universe, scoreThreshold: Double, BPIterat
 
   val semiring = SumProductSemiring()
 
-  def solvingStrategy() = new VEBPStrategy(problem, structured, scoreThreshold, BPIterations)
+  def solvingStrategy() = new VEBPStrategy(problem, structuredRaising, scoreThreshold, BPIterations)
 }
 
 object StructuredVEBPChooser {

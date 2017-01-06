@@ -24,7 +24,7 @@ import com.cra.figaro.language._
 class StructuredMarginalMAPVE(universe: Universe, mapElements: List[Element[_]])
   extends StructuredMarginalMAPAlgorithm(universe, mapElements) {
 
-  def solvingStrategy() = new MarginalMAPVEStrategy(problem, structured)
+  def solvingStrategy() = new MarginalMAPVEStrategy(problem, structuredRaising)
 }
 
 object StructuredMarginalMAPVE {

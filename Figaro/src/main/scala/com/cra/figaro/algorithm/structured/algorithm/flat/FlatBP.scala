@@ -22,7 +22,7 @@ class FlatBP(universe: Universe, iterations: Int, targets: Element[_]*) extends 
 
   val semiring = SumProductSemiring()
   
-  def solvingStrategy() = new ConstantStrategy(problem, flatten(problem), marginalBeliefPropagation(iterations))
+  def solvingStrategy() = new ConstantStrategy(problem, flatRaising(problem), marginalBeliefPropagation(iterations))
 }
 
 object FlatBP {

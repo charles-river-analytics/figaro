@@ -23,7 +23,7 @@ class StructuredVE(universe: Universe, targets: Element[_]*) extends StructuredP
 
   val semiring = SumProductSemiring()
 
-  def solvingStrategy() = new ConstantStrategy(problem, structured, marginalVariableElimination)
+  def solvingStrategy() = new ConstantStrategy(problem, structuredRaising, marginalVariableElimination)
 }
 
 object StructuredVE {

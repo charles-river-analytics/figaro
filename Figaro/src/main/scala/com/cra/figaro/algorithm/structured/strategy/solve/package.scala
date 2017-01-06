@@ -39,12 +39,12 @@ package object solve {
    * all factors of problems strictly contained in the top-level problem are raised.
    * @param topLevel The problem that should not be raised. This function raises all other problems.
    */
-  def flatten(topLevel: Problem)(problem: Problem): Boolean = {
+  def flatRaising(topLevel: Problem)(problem: Problem): Boolean = {
     problem != topLevel
   }
 
   /**
    * Never raises a problem without solving it.
    */
-  def structured(problem: Problem): Boolean = false
+  def structuredRaising(problem: Problem): Boolean = false
 }

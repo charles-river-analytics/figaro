@@ -25,7 +25,7 @@ class StructuredVEBPGibbsChooser(universe: Universe, scoreThreshold: Double, det
 
   val semiring = SumProductSemiring()
 
-  def solvingStrategy() = new VEBPGibbsStrategy(problem, structured, scoreThreshold, determThreshold, bpIters, numSamples, burnIn, interval, blockToSampler)
+  def solvingStrategy() = new VEBPGibbsStrategy(problem, structuredRaising, scoreThreshold, determThreshold, bpIters, numSamples, burnIn, interval, blockToSampler)
 }
 
 object StructuredVEBPGibbsChooser {

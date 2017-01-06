@@ -25,7 +25,7 @@ class StructuredVEGibbsChooser(universe: Universe, scoreThreshold: Double, numSa
 
   val semiring = SumProductSemiring()
 
-  def solvingStrategy() = new VEGibbsStrategy(problem, structured, scoreThreshold, numSamples, burnIn, interval, blockToSampler)
+  def solvingStrategy() = new VEGibbsStrategy(problem, structuredRaising, scoreThreshold, numSamples, burnIn, interval, blockToSampler)
 }
 
 object StructuredVEGibbsChooser {

@@ -23,7 +23,7 @@ class FlatVE(universe: Universe, targets: Element[_]*) extends StructuredProbQue
  
   val semiring = SumProductSemiring()
   
-  def solvingStrategy() = new ConstantStrategy(problem, flatten(problem), marginalVariableElimination)
+  def solvingStrategy() = new ConstantStrategy(problem, flatRaising(problem), marginalVariableElimination)
 }
 
 object FlatVE {

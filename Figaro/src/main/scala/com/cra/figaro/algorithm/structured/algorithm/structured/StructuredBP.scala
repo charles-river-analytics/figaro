@@ -21,7 +21,7 @@ import com.cra.figaro.algorithm.structured.algorithm.StructuredProbQueryAlgorith
 class StructuredBP(universe: Universe, iterations: Int, targets: Element[_]*) extends StructuredProbQueryAlgorithm(universe, targets:_*)  {
   val semiring = SumProductSemiring()
 
-  def solvingStrategy() = new ConstantStrategy(problem, structured, marginalBeliefPropagation(iterations))
+  def solvingStrategy() = new ConstantStrategy(problem, structuredRaising, marginalBeliefPropagation(iterations))
 }
 
 /*
