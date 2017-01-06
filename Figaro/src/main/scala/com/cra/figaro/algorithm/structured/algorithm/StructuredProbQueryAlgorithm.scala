@@ -39,6 +39,9 @@ abstract class StructuredProbQueryAlgorithm(val universe: Universe, val queryTar
     }
   }
 
+  /**
+   * Compute the (normalized) marginalization of the joint factor to the given target element.
+   */
   protected def marginalizedTargetFactor[T](target: Element[T], jointFactor: Factor[Double]): Factor[Double] = {
     val targetVar = collection(target).variable
     val unnormalizedTargetFactor = jointFactor.marginalizeTo(targetVar)

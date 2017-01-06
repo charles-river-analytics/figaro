@@ -15,7 +15,15 @@ package com.cra.figaro.algorithm.structured.algorithm
 import com.cra.figaro.algorithm.structured.strategy.refine._
 import com.cra.figaro.language._
 
+/**
+ * One time structured algorithms that use a single bottom-up refining strategy to decompose the entire model. This uses
+ * the default range sizer, and does not create parameterized factors.
+ */
 trait DecompositionStructuredAlgorithm extends OneTimeStructured {
+  /**
+   * Initial elements to pass to the bottom-up strategy for decomposition. Defaults to a list containing all problem
+   * targets and all evidence elements in the universe.
+   */
   def initialElements: List[Element[_]] = {
     (problemTargets ::: universe.conditionedElements ::: universe.constrainedElements).distinct
   }
@@ -28,5 +36,6 @@ trait DecompositionStructuredAlgorithm extends OneTimeStructured {
 trait DecompositionProbQuery extends OneTimeStructuredProbQuery with DecompositionStructuredAlgorithm
 
 trait DecompositionMPE extends OneTimeStructuredMPE with DecompositionStructuredAlgorithm {
+  // For MPE, any permanent element can be queried, so they must all passed as initial elements for decomposition.
   override def initialElements = universe.permanentElements
 }
