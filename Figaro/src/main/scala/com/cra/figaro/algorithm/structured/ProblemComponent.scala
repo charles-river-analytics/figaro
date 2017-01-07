@@ -119,7 +119,7 @@ class ProblemComponent[Value](val problem: Problem, val element: Element[Value])
    *  Generate the constraint factors based on the current range.
    *  Bounds specifies whether these should be created for computing lower or upper bounds.
    *  Throws an IllegalArgumentException if the component is not fully enumerated and any constraint value is not in the
-   *  closed interval [0.0, 1.0]
+   *  closed interval [0.0, 1.0], since this assumption is needed for lower and upper bounds to be correct.
    */
   def makeConstraintFactors(bounds: Bounds = Lower) {
     val upper = bounds == Upper
