@@ -13,7 +13,7 @@
 package com.cra.figaro.algorithm.structured.algorithm
 
 import com.cra.figaro.language._
-import com.cra.figaro.algorithm.{AnytimeProbQuery, OneTimeProbQuery, ProbQueryAlgorithm}
+import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.factored.factors.{Factor, SumProductSemiring}
 import com.cra.figaro.algorithm.factored.factors.factory.Factory
 import com.cra.figaro.algorithm.structured._
@@ -23,20 +23,12 @@ abstract class StructuredProbQueryAlgorithm(val universe: Universe, val queryTar
 
   override def problemTargets = queryTargets.toList
 
-  // Solutions marginalized to individual targets for lower and upper bounds, respectively.
-  private var lowerTargetFactors: Map[Element[_], Factor[Double]] = Map()
-  private var upperTargetFactors: Map[Element[_], Factor[Double]] = Map()
+  // Solutions are factors marginalized to individual targets.
+  type ProcessedSolution = Map[Element[_], Factor[Double]]
 
-  override def recordSolution(bounds: Bounds): Unit = {
+  override def extractSolution(): ProcessedSolution = {
     val joint = problem.solution.foldLeft(Factory.unit(SumProductSemiring()))(_.product(_))
-    val marginalized = queryTargets.map(target => (target, marginalizedTargetFactor(target, joint)))
-                                   .toMap[Element[_], Factor[Double]]
-    if(bounds == Lower) {
-      lowerTargetFactors = marginalized
-    }
-    else {
-      upperTargetFactors = marginalized
-    }
+    queryTargets.map(target => (target, marginalizedTargetFactor(target, joint))).toMap
   }
 
   /**
@@ -54,9 +46,10 @@ abstract class StructuredProbQueryAlgorithm(val universe: Universe, val queryTar
    * Throws an IllegalArgumentException if the range of the target contains star.
    */
   def computeDistribution[T](target: Element[T]): Stream[(Double, T)] = {
+    // TODO is this really correct even if the target range doesn't contain star?
     val targetVar = collection(target).variable
     if(targetVar.valueSet.hasStar) throw new IllegalArgumentException("target range contains *")
-    val factor = lowerTargetFactors(target)
+    val factor = processedSolutions(Lower)(target)
     val dist = factor.getIndices.map(indices => (factor.get(indices), targetVar.range(indices.head).value))
     // normalization is unnecessary here because it is done in marginalizeTo
     dist.toStream

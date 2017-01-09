@@ -47,18 +47,37 @@ abstract class StructuredAlgorithm extends Algorithm {
   def solvingStrategy(): SolvingStrategy
 
   /**
-   * The list of bounds for which this algorithm should compute solutions. This defaults to just lower bounds, because
-   * standard implementations don't have laziness (or disallow star values). Lazy algorithms will generally override
-   * this to compute both lower and upper bounds.
+   * All bounds for which this algorithm needs to compute solutions. This is determined by looking for components that
+   * have * in their range, and have constraint factors associated with them. If such a component exists, we need both
+   * lower and upper bounds. Otherwise, just one of the bounds suffices because they are equivalent; it defaults to
+   * lower in this case.
    * @return All bounds for which this algorithm should compute solutions.
    */
-  def allBounds(): List[Bounds] = List(Lower)
+  def neededBounds(): Set[Bounds] = {
+    if(problem.components.exists(comp => comp.range.hasStar && comp.constraintFactors().nonEmpty)) Set(Lower, Upper)
+    else Set(Lower)
+  }
+
+  /**
+   * Subclasses must define the type of solutions to be stored for querying. In general, this should allow fast queries,
+   * but in general the representation depends on the particular class of algorithm.
+   */
+  type ProcessedSolution
+
+  /**
+   * The processed solutions associated with the most recent solving run. After solving, this map contains a key for
+   * each of the bounds that were determined necessary by `neededBounds()`, and a value corresponding to the solution
+   * produced thereafter by `extractSolution()`. For thread safety purposes, this is explicitly an immutable map, as it
+   * allows us to guarantee that all entries in the map correspond to solutions from a single iteration of `runStep()`.
+   */
+  protected var processedSolutions: Map[Bounds, ProcessedSolution] = Map()
 
   /**
    * Extract the solution in a way that allows fast queries to the algorithm.
-   * @param bounds Bounds for which to record the solution.
+   * @return A processed solution that can be stored in `processedSolutions`, computed based on the current solution to
+   * the problem.
    */
-  def recordSolution(bounds: Bounds): Unit
+  def extractSolution(): ProcessedSolution
 
   /**
    * Collection containing all components that the problem or its subproblems use.
@@ -84,10 +103,10 @@ abstract class StructuredAlgorithm extends Algorithm {
    */
   def runStep(): Unit = {
     refiningStrategy().execute()
-    for(bounds <- allBounds()) {
+    processedSolutions = neededBounds().map(bounds => {
       solvingStrategy().execute(bounds)
-      recordSolution(bounds)
-    }
+      bounds -> extractSolution()
+    }).toMap
   }
 }
 
