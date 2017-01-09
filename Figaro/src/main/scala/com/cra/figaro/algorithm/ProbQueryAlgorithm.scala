@@ -96,7 +96,7 @@ trait BaseProbQueryAlgorithm[U[_]]
     projectDistribution(doDistribution(target))
   }
 
-  private def check[T](target: U[T]): Unit = {
+  protected def check[T](target: U[T]): Unit = {
     if (!active) throw new AlgorithmInactiveException
     if (!(queryTargets contains target)) throw new NotATargetException(target)
   }
