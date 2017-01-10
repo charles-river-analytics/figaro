@@ -83,15 +83,15 @@ object ChainFactory {
         val subproblem = chainComp.subproblems(parentXV.value)
         // Need to normalize subsolution in case there's any nested evidence
         val subsolution = subproblem.solution.reduce(_.product(_))
-        val sum = subsolution.foldLeft(subsolution.semiring.zero, subsolution.semiring.sum(_, _))
+        //val sum = subsolution.foldLeft(subsolution.semiring.zero, subsolution.semiring.sum(_, _))
         val subVars = subsolution.variables
         if (subVars.length == 1) {
           val subVar = subVars(0)
           for { subVal <- subVar.range } {
             val childIndex = childVar.range.indexOf(subVal)
             val subIndex = subVar.range.indexOf(subVal)
-            val entry = subsolution.semiring.product(subsolution.get(List(subIndex)), 1.0 / sum)
-            factor.set(List(parentIndex, childIndex), entry)
+            //val entry = subsolution.semiring.product(subsolution.get(List(subIndex)), 1.0 / sum)
+            factor.set(List(parentIndex, childIndex), subsolution.get(List(subIndex)))
           }
         } else { // This should be a case where the subproblem is empty and the value is *
           val starIndex = childVar.range.indexWhere(!_.isRegular)

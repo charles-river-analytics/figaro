@@ -58,7 +58,7 @@ class EMWithMHTest extends WordSpec with PrivateMethodTester with Matchers {
               f.observe(false)
             }
 
-            val algorithm = EMWithBP(terminationCriteria, 10, b)(universe)
+            val algorithm = EMWithMH(terminationCriteria, 10000, b)(universe)
             algorithm.start
 
             val result = b.MAPValue

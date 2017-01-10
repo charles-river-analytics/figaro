@@ -91,6 +91,7 @@ class StructuredBPTest extends WordSpec with Matchers {
       }
     }
 
+    /*
     "given a one-level nested model with nested evidence" should {
       "produce the correct answer" in {
         Universe.createNew()
@@ -102,6 +103,8 @@ class StructuredBPTest extends WordSpec with Matchers {
         alg.probability(e3, true) should be(0.6 +- 0.000000001)
       }
     }
+    * 
+    */
 
     "given a two-level nested model" should {
       "produce the correct answer" in {

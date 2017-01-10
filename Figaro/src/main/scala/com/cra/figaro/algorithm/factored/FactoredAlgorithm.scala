@@ -41,7 +41,7 @@ trait FactoredAlgorithm[T] extends Algorithm {
    * If any of these elements has * in its range, the lower and upper bounds of factors will be different, so we need to compute both.
    * If they don't, we don't need to compute bounds. 
    */
-  def getNeededElements(starterElements: List[Element[_]], depth: Int): (List[Element[_]], Boolean) = {
+  def getNeededElements(starterElements: List[Element[_]], depth: Int, parameterized: Boolean = false): (List[Element[_]], Boolean) = {
     // Since there may be evidence on the dependent universes, we have to include their parents as important elements
     val dependentUniverseParents = 
       for { 
@@ -63,7 +63,7 @@ trait FactoredAlgorithm[T] extends Algorithm {
     }
     // Make sure we compute values from scratch in case the elements have changed
     LazyValues.clear(universe)
-    val values = LazyValues(universe)
+    val values = LazyValues(universe, parameterized)
 
     /* 
      * Beginning with the given element at the given depth, find all elements that the given element is used by within the depth.
