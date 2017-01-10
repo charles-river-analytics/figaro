@@ -212,7 +212,11 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
    * for all elements in the universe.
    */
   def getFactors(neededElements: List[Element[_]], targetElements: List[Element[_]], upperBounds: Boolean = false): List[Factor[Double]] = {
-    val thisUniverseFactors = (neededElements flatMap (Factory.makeFactorsForElement(_, upperBounds, true))).filterNot(_.isEmpty)
+    val parameterized = this match {
+      case p: ParameterLearner => true
+      case _ => false
+    }
+    val thisUniverseFactors = (neededElements flatMap (Factory.makeFactorsForElement(_, upperBounds, parameterized))).filterNot(_.isEmpty)
     val dependentUniverseFactors =
       for { (dependentUniverse, evidence) <- dependentUniverses } yield Factory.makeDependentFactor(Variable.cc, universe, dependentUniverse, dependentAlgorithm(dependentUniverse, evidence))
     val factors = dependentUniverseFactors ::: thisUniverseFactors
@@ -372,7 +376,11 @@ abstract class ProbQueryBeliefPropagation(override val universe: Universe, targe
   var needsBounds: Boolean = _
 
   def generateGraph() = {
-    val needs = getNeededElements(starterElements, depth)
+    val parameterized = this match {
+      case p: ParameterLearner => true
+      case _ => false
+    }    
+    val needs = getNeededElements(starterElements, depth, parameterized)
     neededElements = needs._1
     needsBounds = needs._2
 

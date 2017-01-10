@@ -17,6 +17,8 @@ import com.cra.figaro.library.compound._
 import scala.collection.mutable.Set
 import scala.language.implicitConversions
 
+class EvidenceNotAllowedException(element: Element[_]) extends RuntimeException("Evidence not allowed on " + element.toString + " because it is a temporary element")
+
 /**
  * An Element is the core component of a probabilistic model. Elements can be understood as
  * defining a probabilistic process. Elements are parameterized by the type of Value the process
@@ -222,6 +224,8 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
     universe.registerUses(this, elem)
   }
 
+  private def checkIfEvidenceAllowed = if (isTemporary) throw new EvidenceNotAllowedException(this)
+  
   private[language] var myConditions: List[(Condition, Contingency)] = List()
 
   /** All the conditions defined on this element.*/
@@ -268,6 +272,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
 
   /** Add the given condition to the existing conditions of the element. By default, the contingency is empty. */
   def addCondition(condition: Condition, contingency: Contingency = List()): Unit = {
+    checkIfEvidenceAllowed
     universe.makeConditioned(this)
     contingency.foreach(ev => ensureContingency(ev.elem))
     observation = None
@@ -287,6 +292,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    * Set the condition associated with the contingency. Removes previous conditions associated with the contingency.  By default, the contingency is empty.
    */
   def setCondition(newCondition: Condition, contingency: Contingency = List()): Unit = {
+    checkIfEvidenceAllowed
     removeConditions(contingency)
     addCondition(newCondition, contingency)
   }
@@ -349,6 +355,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    * Add a contingent constraint to the element. By default, the contingency is empty.
    */
   def addConstraint(constraint: Constraint, contingency: Contingency = List()): Unit = {
+    checkIfEvidenceAllowed
     universe.makeConstrained(this)
     contingency.foreach(ev => ensureContingency(ev.elem))
     myConstraints ::= (ProbConstraintType(constraint), contingency)
@@ -358,6 +365,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    * Add a log contingent constraint to the element. By default, the contingency is empty.
    */
   def addLogConstraint(constraint: Constraint, contingency: Contingency = List()): Unit = {
+    checkIfEvidenceAllowed
     universe.makeConstrained(this)
     contingency.foreach(ev => ensureContingency(ev.elem))
     myConstraints ::= (LogConstraintType(constraint), contingency)
@@ -381,6 +389,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    * Set the constraint associated with the contingency. Removes previous constraints associated with the contingency.  By default, the contingency is empty.
    */
   def setConstraint(newConstraint: Constraint, contingency: Contingency = List()): Unit = {
+    checkIfEvidenceAllowed
     removeConstraints(contingency)
     addConstraint(newConstraint, contingency)
   }
@@ -389,6 +398,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    * Set the log constraint associated with the contingency. Removes previous constraints associated with the contingency.  By default, the contingency is empty.
    */
   def setLogConstraint(newConstraint: Constraint, contingency: Contingency = List()): Unit = {
+    checkIfEvidenceAllowed
     removeConstraints(contingency)
     addLogConstraint(newConstraint, contingency)
   }
@@ -397,6 +407,7 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    * Condition the element by observing a particular value. Propagates the effect to dependent elements and ensures that no other value for the element can be generated.
    */
   def observe(observation: Value): Unit = {
+    checkIfEvidenceAllowed
     removeConditions()
     set(observation)
     universe.makeConditioned(this)

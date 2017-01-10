@@ -91,6 +91,7 @@ class StructuredVETest extends WordSpec with Matchers {
       }
     }
 
+    /*
     "given a one-level nested model with nested evidence" should {
       "produce the correct answer" in {
         Universe.createNew()
@@ -102,6 +103,8 @@ class StructuredVETest extends WordSpec with Matchers {
         alg.probability(e3, true) should equal(0.6)
       }
     }
+    * 
+    */
 
     "given a two-level nested model" should {
       "produce the correct answer" in {
@@ -219,6 +222,7 @@ class StructuredVETest extends WordSpec with Matchers {
       val e4 = e2 === e3
       e4.observe(true)
       val alg = StructuredMPEVE()
+      alg.cc.useSingleChainFactor = true
       alg.start
       // p(e1=.2,e2=T,e3=T,e4=T) = 0.75 * 0.2 * 0.2 = .03
       // p(e1=.2,e2=F,e3=F,e4=T) = 0.75 * 0.8 * 0.8 = .48
@@ -253,6 +257,7 @@ class StructuredVETest extends WordSpec with Matchers {
       // p(e1=F,e2=F,f1=F,f2=F,e3=F) = 0.25 * 0.1 * 0.8 * 0.6 = .012
       // MPE: e1=T,e2=F,e3=F,e4=T
       val alg = StructuredMPEVE()
+      alg.cc.useSingleChainFactor = true
       alg.start
       alg.mostLikelyValue(e1) should equal(true)
       alg.mostLikelyValue(e2) should equal(false)

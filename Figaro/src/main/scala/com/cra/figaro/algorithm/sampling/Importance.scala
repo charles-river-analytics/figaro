@@ -49,6 +49,7 @@ abstract class Importance(universe: Universe, targets: Element[_]*)
     super.kill()
     lw.clearCache()
     lw.deregisterDependencies()
+    universe.deregisterAlgorithm(this)
   }
 
   /*
