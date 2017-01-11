@@ -14,7 +14,7 @@ package com.cra.figaro.algorithm.structured.algorithm
 
 import com.cra.figaro.language._
 import com.cra.figaro.algorithm._
-import com.cra.figaro.algorithm.factored.factors.{BoundsSumProductSemiring, Factor, SumProductSemiring}
+import com.cra.figaro.algorithm.factored.factors.{Factor, SumProductSemiring}
 import com.cra.figaro.algorithm.factored.factors.factory.Factory
 import com.cra.figaro.algorithm.structured._
 
@@ -23,48 +23,12 @@ abstract class StructuredProbQueryAlgorithm(val universe: Universe, val queryTar
 
   override def problemTargets = queryTargets.toList
 
-  // Extracted solutions are joint factors over targets.
-  override type ExtractedSolution = Factor[Double]
+  // Solutions are factors marginalized to individual targets.
+  type ProcessedSolution = Map[Element[_], Factor[Double]]
 
-  override def extractSolution(): ExtractedSolution = {
-    problem.solution.foldLeft(Factory.unit(SumProductSemiring()))(_.product(_))
-  }
-
-  override def processSolutions(extractedSolutions: Map[Bounds, Factor[Double]]): Unit = {
-    // TODO what happens if these are sparse?
-    val jointLower = if(extractedSolutions.size == 1) extractedSolutions.head._2 else extractedSolutions(Lower)
-    val jointUpper = if(extractedSolutions.size == 1) extractedSolutions.head._2 else extractedSolutions(Upper)
-
-    assert(jointLower.variables == jointUpper.variables)
-    val allIndicesIndexed = jointLower.getIndices.zipWithIndex.toIndexedSeq
-
-    // TODO can these be anything other than 1.0? Not if we don't do normalization!
-    val lowerTotal = jointLower.foldLeft(0.0, _ + _)
-    val upperTotal = jointUpper.foldLeft(0.0, _ + _)
-
-    val lowerBounds = for((indices, _) <- allIndicesIndexed) yield jointLower.get(indices) / upperTotal
-
-    val ranges = jointLower.variables.map(_.range.toIndexedSeq)
-
-    val upperBounds = for((indices, i) <- allIndicesIndexed) yield {
-      val (consistentIndexed, inconsistentIndexed) = allIndicesIndexed.partition { case (otherIndices, _) =>
-        indices.zip(otherIndices).zip(ranges).forall{ case ((index, otherIndex), range) =>
-          // Because the range is a set, two extended values are equal if and only if their indices are equal
-          index == otherIndex || !range(otherIndex).isRegular
-        }
-      }
-
-      val consistentUpper = consistentIndexed.map { case (_, j) => lowerBounds(j) }
-      val inconsistentLower = inconsistentIndexed.map { case (otherIndices, _) => jointUpper.get(otherIndices) }
-
-      (consistentUpper.sum / lowerTotal) min (1.0 - inconsistentLower.sum)
-    }
-
-    val result = jointLower.createFactor(jointLower.parents, jointLower.output, BoundsSumProductSemiring())
-    for((indices, i) <- allIndicesIndexed) {
-      result.set(indices, (lowerBounds(i), upperBounds(i)))
-    }
-    // TODO marginalize result
+  override def extractSolution(): ProcessedSolution = {
+    val joint = problem.solution.foldLeft(Factory.unit(SumProductSemiring()))(_.product(_))
+    queryTargets.map(target => (target, marginalizedTargetFactor(target, joint))).toMap
   }
 
   /**
