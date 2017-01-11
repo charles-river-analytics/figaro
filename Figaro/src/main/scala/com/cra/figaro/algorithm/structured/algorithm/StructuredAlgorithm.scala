@@ -59,25 +59,23 @@ abstract class StructuredAlgorithm extends Algorithm {
   }
 
   /**
-   * Subclasses must define the type of solutions to be stored for querying. In general, this should allow fast queries,
-   * but in general the representation depends on the particular class of algorithm.
+   * Subclasses must define the type of solutions to be extracted from a problem after solving for particular bounds.
    */
-  type ProcessedSolution
+  type ExtractedSolution
 
   /**
-   * The processed solutions associated with the most recent solving run. After solving, this map contains a key for
-   * each of the bounds that were determined necessary by `neededBounds()`, and a value corresponding to the solution
-   * produced thereafter by `extractSolution()`. For thread safety purposes, this is explicitly an immutable map, as it
-   * allows us to guarantee that all entries in the map correspond to solutions from a single iteration of `runStep()`.
+   * Extract the solution from the problem in a way that allows fast queries to the algorithm.
+   * @return An extracted solution computed based on the current solution to the problem.
    */
-  protected var processedSolutions: Map[Bounds, ProcessedSolution] = Map()
+  def extractSolution(): ExtractedSolution
 
   /**
-   * Extract the solution in a way that allows fast queries to the algorithm.
-   * @return A processed solution that can be stored in `processedSolutions`, computed based on the current solution to
-   * the problem.
+   * Process solutions for each of the different bounds computed on the last solving run. This should record the
+   * solutions in a manner that is threadsafe for querying, and that allows fast queries to the algorithm.
+   * @param extractedSolutions Solutions extracted for particular bounds. This contains a key for each bounds that were
+   * determined necessary on the last solving run by a call to `neededBounds()`.
    */
-  def extractSolution(): ProcessedSolution
+  def processSolutions(extractedSolutions: Map[Bounds, ExtractedSolution]): Unit
 
   /**
    * Collection containing all components that the problem or its subproblems use.
@@ -103,10 +101,11 @@ abstract class StructuredAlgorithm extends Algorithm {
    */
   def runStep(): Unit = {
     refiningStrategy().execute()
-    processedSolutions = neededBounds().map(bounds => {
+    val extractedSolutions = neededBounds().map(bounds => {
       solvingStrategy().execute(bounds)
       bounds -> extractSolution()
     }).toMap
+    processSolutions(extractedSolutions)
   }
 }
 
