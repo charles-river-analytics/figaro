@@ -195,7 +195,7 @@ package object util {
    * even if `includeStart` is set to false.
    */
   def reachable[T](graph: T => Traversable[T], includeStart: Boolean, start: T*): Set[T] = {
-    var marked: Set[T] = Set()
+    var marked: Set[T] = if(includeStart) start.toSet else Set()
 
     def helper(t: T): Unit =
       if (!marked.contains(t)) {
@@ -203,12 +203,8 @@ package object util {
         for (child <- graph(t)) helper(child)
       }
 
-    if(includeStart) {
-      for(t <- start) helper(t)
-    }
-    else {
-      for(t <- start ; child <- graph(t)) helper(child)
-    }
+    for(t <- start ; child <- graph(t)) helper(child)
+
     marked
   }
 
