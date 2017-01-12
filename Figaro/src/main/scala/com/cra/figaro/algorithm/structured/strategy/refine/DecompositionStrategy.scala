@@ -27,6 +27,13 @@ import scala.collection.mutable
  *
  * Needed components are discovered lazily by working backwards from the initial components. As a result, the strategy
  * makes no guarantees about visiting components that are not needed.
+ *
+ * Expanding subproblems proceeds in a depth-first manner. To avoid infinite recursions, the strategy sets a subproblem
+ * as open before executing recursively on the subproblem. When refining of the subproblem is complete, the subproblem
+ * is once again set as closed. For this to work correctly, this usually means that if a recursive
+ * `DecompositionStrategy` is called from anything but the top-level, any subproblems that contain `initialComponents`
+ * directly or indirectly must also be marked as open. Thus, it is usually safest to call `DecompositionStrategy` from a
+ * set of top-level components.
  * @param collection Collection of components to refine.
  * @param rangeSizer Method to determine the size of the range of components.
  * @param parameterized Indicates whether or not to make parameterized factors.
@@ -39,7 +46,7 @@ private[figaro] abstract class DecompositionStrategy(collection: ComponentCollec
   extends RefiningStrategy(collection, rangeSizer, parameterized) with RecursiveStrategy {
 
   /**
-   * Optionally decompose a nested problem. The recusing strategy may not refine any components in the set `done`, but
+   * Optionally decompose a nested problem. The recursing strategy may not refine any components in the set `done`, but
    * can add to this set. This generally means passing `done` directly into the constructor of the recursing strategy.
    * @param nestedProblem Nested problem to decompose.
    * @return A decomposition strategy for the nested problem, or None if it should not be decomposed further.
@@ -70,16 +77,16 @@ private[figaro] abstract class DecompositionStrategy(collection: ComponentCollec
     // Start with the problems associated with each visited component
     val initialProblems = done.map(_.problem).toSeq
     // From a subproblem, we must include the problems that use it
-    def problemGraph(p: Problem): Traversable[Problem] = p match {
-      case np: NestedProblem[_] => collection.expandableComponents(np).map(_.problem)
+    def problemGraph(pr: Problem): Traversable[Problem] = pr match {
+      case npr: NestedProblem[_] => collection.expandableComponents(npr).map(_.problem)
       case _ => Set()
     }
     // We have to work our way up the whole problem graph marking problems as unsolved; reachable does this efficiently
     val allUnsolvedProblems = util.reachable(problemGraph, true, initialProblems:_*)
     // Mark each reachable problem as unsolved
-    for(p <- allUnsolvedProblems) {
-      p.solved = false
-      p.solution = Nil
+    for(pr <- allUnsolvedProblems) {
+      pr.solved = false
+      pr.solution = Nil
     }
   }
 
@@ -151,8 +158,13 @@ private[figaro] abstract class DecompositionStrategy(collection: ComponentCollec
     // parentComp is in the set done. This preserves the current state where we have expanded subproblems for each
     // parent value.
     val subproblems = chainComp.subproblems.values
-    // Use the recursive execute method so we only mark problems as unsolved once
-    subproblems.flatMap(recurse).foreach(_.recursiveExecute())
+    for(subproblem <- subproblems ; strategy <- recurse(subproblem)) {
+      // Mark subproblem as open to avoid infinite recursion
+      subproblem.open = true
+      // Use the recursive execute method so we only mark problems as unsolved once
+      strategy.recursiveExecute()
+      subproblem.open = false
+    }
     // Make range and factors based on the refinement of the subproblems
     makeRangeAndFactors(chainComp)
     // The range for this component is complete if the range of the parent is complete (and therefore no further

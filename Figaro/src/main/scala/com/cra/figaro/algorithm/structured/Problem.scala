@@ -111,4 +111,14 @@ class Problem(val collection: ComponentCollection, val targets: List[Element[_]]
   targets.foreach(target => if (!collection.contains(target)) add(target))
 }
 
-class NestedProblem[T](collection: ComponentCollection, val target: Element[T]) extends Problem(collection, List(target))
+class NestedProblem[T](collection: ComponentCollection, val target: Element[T]) extends Problem(collection, List(target)) {
+  /**
+   * A flag indicating whether this nested problem can be memoized for its chain function. If set to true, this
+   * nested problem will not be returned by `collection.expansion`. Instead, a new nested problem will be created and
+   * returned without being memoized.
+   *
+   * This defaults to false, but can be set by algorithms expanding recursive problems, or by a user who wants to
+   * disable memoization for parts of the model.
+   */
+  var open: Boolean = false
+}
