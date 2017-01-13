@@ -393,6 +393,36 @@ class BottomUpTest extends WordSpec with Matchers {
         cc(e3).fullyEnumerated should be(true)
         cc(e3).fullyRefined should be(false)
       }
+
+      "mark nested problems as open, then closed" in {
+        Universe.createNew()
+        val e1 = Flip(0.3)
+        val e2 = If(e1, Constant(0), discrete.Uniform(1, 2))
+        val cc = new ComponentCollection
+        val pr = new Problem(cc, List(e2))
+        // We test that the strategy marks the problem as open by putting a test inside the recursiveExecute method in
+        // the recursing strategy. To ensure that the test is executed exactly twice, we have this counter.
+        var counter = 0
+        val strategy = new BottomUpStrategy(pr, defaultRangeSizer, false, pr.targetComponents) {
+          override def recurse(nestedProblem: NestedProblem[_]): Option[DecompositionStrategy] = {
+            val recursiveStrategy =
+              new BottomUpStrategy(nestedProblem, defaultRangeSizer, false, nestedProblem.targetComponents) {
+                override def recursiveExecute(): Unit = {
+                  super.recursiveExecute()
+                  counter += 1
+                  nestedProblem.open should be(true)
+                }
+              }
+            Some(recursiveStrategy)
+          }
+        }
+        strategy.execute()
+
+        counter should equal(2)
+        for(subproblem <- cc(e2).subproblems.values) {
+          subproblem.open should be(false)
+        }
+      }
     }
 
     "memoize subproblems" in {
@@ -432,11 +462,18 @@ class BottomUpTest extends WordSpec with Matchers {
     }
   }
 
-  "A partial bottom-up strategy" when {
-    // A simple recursive element; useful for testing lazy partial expansion
-    // This explicitly does not use Chain function memoization
-    def geometric(): Element[Int] = If(Flip(0.5), Constant(1), geometric().map(_ + 1))
+  // A simple recursive element; useful for testing lazy partial expansion
+  // This explicitly does not use Chain function memoization
+  def geometric(): Element[Int] = If(Flip(0.5), Constant(1), geometric().map(_ + 1))
+  // This explicitly uses Chain function memoization
+  def memoGeometric(): Element[Int] = Chain(Flip(0.5), memoGeometricFunc)
+  // Memoization only works when we use the same function instance at each recursion (i.e. we need reference equality)
+  val memoGeometricFunc = (b: Boolean) => {
+    if(b) Constant(1)
+    else memoGeometric().map(_ + 1)
+  }
 
+  "A partial bottom-up strategy" when {
     "called once" should {
       "produce the correct range" in {
         Universe.createNew()
@@ -520,6 +557,27 @@ class BottomUpTest extends WordSpec with Matchers {
         // further so its solution should be removed
         c1.subproblems(true).solved should be(true)
         c1.subproblems(false).solved should be(false)
+      }
+    }
+
+    "given a recursive model that uses the same function at each recursion" should {
+      "reuse the non-recursive part of the model, but produce a different subproblem for the recursive part" in {
+        Universe.createNew()
+        val e1 = memoGeometric()
+        val cc = new ComponentCollection
+        val pr = new Problem(cc, List(e1))
+        new PartialBottomUpStrategy(2, pr, defaultRangeSizer, false, pr.targetComponents).execute()
+
+        val c1 = cc(e1).asInstanceOf[ChainComponent[Boolean, Int]]
+        val nestedc1 = c1.subproblems(false).components.collectFirst{
+          case chainComp: ChainComponent[_, _] => chainComp
+        }.get.asInstanceOf[ChainComponent[Boolean, Int]]
+
+        // Sanity check; verify that the chain functions are the same (which normally induces memoization)
+        c1.chain.chainFunction should equal(nestedc1.chain.chainFunction)
+        // The subproblem corresponding to parent value true is non-recursive, but corresponding to false is recursive
+        nestedc1.subproblems(true) should equal(c1.subproblems(true))
+        nestedc1.subproblems(false) should not equal c1.subproblems(false)
       }
     }
   }
