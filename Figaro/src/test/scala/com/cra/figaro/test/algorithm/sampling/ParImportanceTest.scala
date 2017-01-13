@@ -110,10 +110,10 @@ class ParImportanceTest extends WordSpec with Matchers with PrivateMethodTester 
     "with an observation on a compound flip, terminate quickly and produce the correct result" taggedAs (NonDeterministic) in {
       // Tests the likelihood weighting implementation for compound flip
       val gen = () => {
-        val universe = Universe.createNew()
+        val universe = new Universe
         val b = Uniform(0.0, 1.0)("b", universe)
-        for (_ <- 1 to 16) { Flip(b).observe(true) }
-        for (_ <- 1 to 4) { Flip(b).observe(false) }
+        for (_ <- 1 to 16) { Flip(b)("", universe).observe(true) }
+        for (_ <- 1 to 4) { Flip(b)("", universe).observe(false) }
         universe
       }
       val alg = Importance.par(gen, numThreads, "b")
@@ -136,10 +136,10 @@ class ParImportanceTest extends WordSpec with Matchers with PrivateMethodTester 
     "with an observation on a parameterized flip, terminate quickly and produce the correct result" taggedAs (NonDeterministic) in {
       // Tests the likelihood weighting implementation for compound flip
       val gen = () => {
-        val universe = Universe.createNew()
+        val universe = new Universe
         val b = Beta(2.0, 5.0)("b", universe)
-        for (_ <- 1 to 16) { Flip(b).observe(true) }
-        for (_ <- 1 to 4) { Flip(b).observe(false) }
+        for (_ <- 1 to 16) { Flip(b)("", universe).observe(true) }
+        for (_ <- 1 to 4) { Flip(b)("", universe).observe(false) }
         universe
       }
       val alg = Importance.par(gen, numThreads, "b")
@@ -149,7 +149,7 @@ class ParImportanceTest extends WordSpec with Matchers with PrivateMethodTester 
       alg.stop()
       // Result is beta(2 + 16,5 + 4)
       // Expectation is (alpha) / (alpha + beta) = 18/27
-      val exp = alg.expectation("b", (d: Double) => d)
+      val exp = alg.expectation("b")((d: Double) => d)
       val time1 = System.currentTimeMillis()
       // If likelihood weighting is working, stopping and querying the algorithm should be almost instantaneous
       // If likelihood weighting is not working, stopping and querying the algorithm requires waiting for a non-rejected sample
@@ -161,9 +161,9 @@ class ParImportanceTest extends WordSpec with Matchers with PrivateMethodTester 
     "with an observation on a parameterized binomial, terminate quickly and produce the correct result" in {
       // Tests the likelihood weighting implementation for chain
       val gen = () => {
-        val universe = Universe.createNew()
+        val universe = new Universe
         val beta = Beta(2.0, 5.0)("beta", universe)
-        val bin = Binomial(2000, beta)
+        val bin = Binomial(2000, beta)("", universe)
         bin.observe(1600)
         universe
       }
@@ -174,7 +174,7 @@ class ParImportanceTest extends WordSpec with Matchers with PrivateMethodTester 
       alg.stop()
       // Result is beta(2 + 1600,5 + 400)
       // Expectation is (alpha) / (alpha + beta) = 1602/2007
-      val exp = alg.expectation("beta", (d: Double) => d)
+      val exp = alg.expectation("beta")((d: Double) => d)
       val time1 = System.currentTimeMillis()
       // If likelihood weighting is working, stopping and querying the algorithm should be almost instantaneous
       // If likelihood weighting is not working, stopping and querying the algorithm requires waiting for a non-rejected sample
@@ -186,9 +186,9 @@ class ParImportanceTest extends WordSpec with Matchers with PrivateMethodTester 
     "with an observation on a chain, terminate quickly and produce the correct result" in {
       // Tests the likelihood weighting implementation for chain
       val gen = () => {
-        val universe = Universe.createNew()
+        val universe = new Universe
         val beta = Uniform(0.0, 1.0)("beta", universe)
-        val bin = Binomial(2000, beta)
+        val bin = Binomial(2000, beta)("", universe)
         bin.observe(1600)
         universe
       }
@@ -200,7 +200,7 @@ class ParImportanceTest extends WordSpec with Matchers with PrivateMethodTester 
       // uniform(0,1) is beta(1,1)
       // Result is beta(1 + 1600,1 + 400)
       // Expectation is (alpha) / (alpha + beta) = 1601/2003
-      val exp = alg.expectation("beta", (d: Double) => d)
+      val exp = alg.expectation("beta")((d: Double) => d)
       val time1 = System.currentTimeMillis()
       // If likelihood weighting is working, stopping and querying the algorithm should be almost instantaneous
       // If likelihood weighting is not working, stopping and querying the algorithm requires waiting for a non-rejected sample
@@ -212,9 +212,9 @@ class ParImportanceTest extends WordSpec with Matchers with PrivateMethodTester 
     "with an observation on a dist, terminate quickly and produce the correct result" in {
       // Tests the likelihood weighting implementation for dist
       val gen = () => {
-        val universe = Universe.createNew()
+        val universe = new Universe
         val beta = Beta(2.0, 5.0)("beta", universe)
-        val dist = Dist(0.5 -> Constant(1000)(Name.default, universe), 0.5 -> Binomial(2000, beta)(Name.default, universe))
+        val dist = Dist(0.5 -> Constant(1000)(Name.default, universe), 0.5 -> Binomial(2000, beta)(Name.default, universe))("", universe)
         dist.observe(1600) // forces it to choose bin, and observation should propagate to it
         universe
       }
@@ -225,7 +225,7 @@ class ParImportanceTest extends WordSpec with Matchers with PrivateMethodTester 
       alg.stop()
       // Result is beta(2 + 1600,5 + 400)
       // Expectation is (alpha) / (alpha + beta) = 1602/2007
-      val exp = alg.expectation("beta", (d: Double) => d)
+      val exp = alg.expectation("beta")((d: Double) => d)
       val time1 = System.currentTimeMillis()
       // If likelihood weighting is working, stopping and querying the algorithm should be almost instantaneous
       // If likelihood weighting is not working, stopping and querying the algorithm requires waiting for a non-rejected sample

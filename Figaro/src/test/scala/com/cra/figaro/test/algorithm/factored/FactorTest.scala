@@ -374,7 +374,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         f.set(List(0, 0, 1), 0.3)
         f.set(List(1, 0, 1), 0.4)
         f.set(List(2, 0, 1), 0.5)
-        val g = f.marginalizeTo(SumProductSemiring().asInstanceOf[Semiring[Double]], v3)
+        val g = f.marginalizeTo(v3)
         g.variables should equal(List(v3))
         val p1 = 0.0 + 0.1 + 0.2
         val p2 = 0.3 + 0.4 + 0.5
@@ -409,7 +409,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
       f.set(List(0, 1, 1), 0.15)
       f.set(List(1, 1, 1), 0.2)
       f.set(List(2, 1, 1), 0.25)
-      val g = f.marginalizeTo(SumProductSemiring().asInstanceOf[Semiring[Double]], v1, v3)
+      val g = f.marginalizeTo(v1, v3)
       g.variables should equal(List(v1, v3))
       g.get(List(0, 0)) should be(0.0 +- 0.000001)
       g.get(List(1, 0)) should be(0.1 +- 0.000001)
@@ -689,8 +689,8 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         val v1 = Normal(0.0, 1.0)
         Values()(v1)
         val factor = Factory.makeFactorsForElement(v1)
-        factor(0).size should equal(ParticleGenerator.defaultArgSamples)
-        factor(0).get(List(0)) should equal(1.0 / ParticleGenerator.defaultArgSamples)
+        factor(0).size should equal(ParticleGenerator.defaultNumSamplesFromAtomics)
+        factor(0).get(List(0)) should equal(1.0 / ParticleGenerator.defaultNumSamplesFromAtomics)
       }
 
       "correctly create factors for continuous elements through chains" in {

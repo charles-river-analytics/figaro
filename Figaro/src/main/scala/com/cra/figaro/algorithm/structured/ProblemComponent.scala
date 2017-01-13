@@ -93,7 +93,7 @@ class ProblemComponent[Value](val problem: Problem, val element: Element[Value])
    * The range will include * based on argument ranges including * or any subproblem not being expanded.\
    *
    */
-  def generateRange(numValues: Int = ParticleGenerator.defaultTotalSamples) {
+  def generateRange(numValues: Int = ParticleGenerator.defaultMaxNumSamplesAtChain) {
     val newRange = Range(this, numValues)
     if ((newRange.hasStar ^ range.hasStar) || (newRange.regularValues != range.regularValues)) {
       range = newRange
@@ -147,7 +147,7 @@ class ApplyComponent[Value](problem: Problem, element: Element[Value]) extends P
  * @param element the element to which this component corresponds
  */
 abstract class ExpandableComponent[ParentValue, Value](problem: Problem, parent: Element[ParentValue], element: Element[Value])
-  extends ProblemComponent(problem, element) {
+    extends ProblemComponent(problem, element) {
   /**
    * Expand for all values of the parent, based on the current range of the parent.
    */
@@ -159,25 +159,25 @@ abstract class ExpandableComponent[ParentValue, Value](problem: Problem, parent:
 
   /** Expand for a particular parent value. */
   def expand(parentValue: ParentValue): Unit
-  
-  val expandFunction: (ParentValue) => Element[Value] 
+
+  val expandFunction: (ParentValue) => Element[Value]
+
+  /**
+   *  The subproblems nested inside this expandable component.
+   *  They are created for particular parent values.
+   */
+  var subproblems: Map[ParentValue, NestedProblem[Value]] = Map()
 }
 
 /**
  * A problem component created for a chain element.
  */
 class ChainComponent[ParentValue, Value](problem: Problem, val chain: Chain[ParentValue, Value])
-  extends ExpandableComponent[ParentValue, Value](problem, chain.parent, chain) {
+    extends ExpandableComponent[ParentValue, Value](problem, chain.parent, chain) {
 
   val elementsCreated: scala.collection.mutable.Set[Element[_]] = scala.collection.mutable.Set() ++ chain.universe.contextContents(chain)
 
   val expandFunction = chain.get _
-  
-  /**
-   *  The subproblems represent nested problems from chains.
-   *  They are created for particular parent values.
-   */
-  var subproblems: Map[ParentValue, NestedProblem[Value]] = Map()
 
   /**
    *  The subproblems are defined in terms of formal variables.
@@ -198,15 +198,33 @@ class ChainComponent[ParentValue, Value](problem: Problem, val chain: Chain[Pare
     subproblems += parentValue -> subproblem
   }
 
+  /*
+   * If all the subproblems have been eliminated completely and use no globals, we can use the new chain method.
+   */
+  private[figaro] def allSubproblemsEliminatedCompletely: Boolean = {
+    for {
+      (parentValue, subproblem) <- subproblems
+    } {
+      val factors = subproblem.solution
+      val vars = factors.flatMap(_.variables)
+      val comps = vars.map(problem.collection.variableToComponent(_))
+      if (comps.exists(!subproblem.components.contains(_))) return false // the factors contain a global variable
+      if (problem.collection(subproblem.target).problem != subproblem) return false // the target is global
+    }
+    return true
+  }
+
   /**
    * Make the non-constraint factors for this component by using the solutions to the subproblems.
    */
   override def makeNonConstraintFactors(parameterized: Boolean = false) {
     super.makeNonConstraintFactors(parameterized)
-    for {
-      (parentValue, subproblem) <- subproblems
-    } {
-      raiseSubproblemSolution(parentValue, subproblem)
+    if (!problem.collection.useSingleChainFactor || !allSubproblemsEliminatedCompletely) {
+      for {
+        (parentValue, subproblem) <- subproblems
+      } {
+        raiseSubproblemSolution(parentValue, subproblem)
+      }
     }
   }
 
@@ -243,13 +261,13 @@ class ChainComponent[ParentValue, Value](problem: Problem, val chain: Chain[Pare
  * A problem component for a MakeArray element.
  */
 class MakeArrayComponent[Value](problem: Problem, val makeArray: MakeArray[Value])
-  extends ExpandableComponent[Int, FixedSizeArray[Value]](problem, makeArray.numItems, makeArray) {
+    extends ExpandableComponent[Int, FixedSizeArray[Value]](problem, makeArray.numItems, makeArray) {
   /** The maximum number of items expanded so far. */
   var maxExpanded = 0
 
   // This isn't really needed in MakeArray since the main expand function won't call this.
   val expandFunction = (i: Int) => Constant(makeArray.makeValues(i).regularValues.head)
-  
+
   /**
    * Ensure that the given number of items is expanded.
    */

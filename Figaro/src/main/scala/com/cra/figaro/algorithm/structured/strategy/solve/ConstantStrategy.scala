@@ -22,7 +22,7 @@ import com.cra.figaro.algorithm.factored.factors.Variable
  */
 class ConstantStrategy(solverToUse: solver.Solver) extends SolvingStrategy {
 
-  def solve(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): List[Factor[Double]] = {
+  def solve(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): (List[Factor[Double]], Map[Variable[_], Factor[_]]) = {
     solverToUse(problem, toEliminate, toPreserve, factors)
   }
   

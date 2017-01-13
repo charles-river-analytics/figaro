@@ -145,6 +145,7 @@ class ExpandTest extends WordSpec with Matchers {
     "add non-constraint factors to the chain" in {
       Universe.createNew()
       val cc = new ComponentCollection
+      // raising should use the old chain method
       val pr = new Problem(cc)
       val e1 = Flip(0.2)
       def f(b: Boolean) = if (b) Uniform(1,2) else Uniform(3,4)
@@ -169,6 +170,7 @@ class ExpandTest extends WordSpec with Matchers {
     "add constraint factors to the chain" in {
       Universe.createNew()
       val cc = new ComponentCollection
+      // raising should use the old chain method
       val pr = new Problem(cc)
       val u1 = Uniform(1,2)
       val u2 = Uniform(3,4)

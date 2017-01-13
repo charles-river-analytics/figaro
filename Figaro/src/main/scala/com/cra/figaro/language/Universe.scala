@@ -36,7 +36,7 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
    */
   override val universe = this
 
-  private val myActiveElements: Set[Element[_]] = Set()
+  private[language] val myActiveElements: Set[Element[_]] = Set()
 
   /**
    * The active elements in the universe.
@@ -46,7 +46,7 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
   /** Elements in the universe that are not defined in the context of another element. */
   def permanentElements: List[Element[_]] = myActiveElements.toList filterNot (_.isTemporary)
 
-  private val myConditionedElements: Set[Element[_]] = Set()
+  private[language] val myConditionedElements: Set[Element[_]] = Set()
 
   /** Elements in the universe that have had a condition applied to them. */
   def conditionedElements: List[Element[_]] = myConditionedElements.toList
@@ -55,7 +55,7 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
 
   private[language] def makeUnconditioned(elem: Element[_]) { myConditionedElements -= elem }
 
-  private val myConstrainedElements: Set[Element[_]] = Set()
+  private[language] val myConstrainedElements: Set[Element[_]] = Set()
 
   /** Elements in the universe that have had a constraint applied to them. */
   def constrainedElements: List[Element[_]] = myConstrainedElements.toList
@@ -64,7 +64,7 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
 
   private[language] def makeUnconstrained(elem: Element[_]) { myConstrainedElements -= elem }
 
-  private val myStochasticElements = new HashSelectableSet[Element[_]]
+  private[language] val myStochasticElements = new HashSelectableSet[Element[_]]
 
   /**
    * The active non-deterministic elements in the universe.
@@ -89,7 +89,7 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
    * any Chain. Conversely, if it is not empty, it must have been created within a chain, so it is temporary. It is
    * possible to remove all temporary Elements from a Map.
    */
-  private var myContextStack: List[Element[_]] = List()
+  private[language] var myContextStack: List[Element[_]] = List()
 
   private[figaro] def contextStack = myContextStack
 
@@ -118,12 +118,12 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
       myContextStack = myContextStack dropWhile (_ != element) drop 1
   }
 
-  private val myUses: Map[Element[_], Set[Element[_]]] = Map()
+  private[language] val myUses: Map[Element[_], Set[Element[_]]] = Map()
 
-  private val myUsedBy: Map[Element[_], Set[Element[_]]] = Map()
+  private[language] val myUsedBy: Map[Element[_], Set[Element[_]]] = Map()
 
-  private val myRecursiveUsedBy: Map[Element[_], Set[Element[_]]] = Map()
-  private val myRecursiveUses: Map[Element[_], Set[Element[_]]] = Map()
+  private[language] val myRecursiveUsedBy: Map[Element[_], Set[Element[_]]] = Map()
+  private[language] val myRecursiveUses: Map[Element[_], Set[Element[_]]] = Map()
 
   /**
    * Returns the set of elements that the given element uses in its generation, either directly or recursively.
@@ -143,7 +143,7 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
   }
 
   /**
-   * Returns the set of elements that are directly used by the given element, without recursing.
+   * Returns the set of elements that use the given element in their generation, without recursing.
    */
   def directlyUsedBy(elem: Element[_]): Set[Element[_]] = myUsedBy.getOrElse(elem, Set())
 

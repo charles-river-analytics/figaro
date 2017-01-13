@@ -135,8 +135,12 @@ trait Factor[T] {
    * The result is associated with all the variables in the
    * input except for the summed over variable and the value for a set of assignments is the
    * sum of the values of the corresponding assignments in the input.
+   *
+   * If no funciton is provided, this defaults to the sum function in this factor's semiring.
    */
-  def sumOver(variable: Variable[_]): Factor[T]
+  def sumOver(
+    variable: Variable[_],
+    sum: (T, T) => T = semiring.sum): Factor[T]
 
   /**
    * Returns a factor that maps values of the other variables to the value of the given variable that
@@ -150,22 +154,28 @@ trait Factor[T] {
   def recordArgMax[U](variable: Variable[U], comparator: (T, T) => Boolean, _semiring: Semiring[U] = semiring.asInstanceOf[Semiring[U]]): Factor[U]
 
   /**
-   * Returns the marginalization of the factor to a variable according to the given addition function.
-   * This involves summing out all other variables.
+   * Returns the marginalization of the factor to a variable according to the addition
+   * function in this factor's semiring. This involves summing out all other variables.
    */
-  def marginalizeTo(
-    semiring: Semiring[T],
+  def marginalizeTo(targets: Variable[_]*): Factor[T] = marginalizeToWithSum(semiring.sum, targets:_*)
+
+  /**
+    * Returns the marginalization of the factor to a variable according to the given
+    * addition function. Unlike marginalizeTo, this uses the provided sum function.
+    * This is useful e.g. to easily switch between max-product and sum-product operations
+    * when the data within are unchanged and the product operation is the same.
+    *
+    * The returned factor uses the semiring associated with this factor; it does not
+    * override the sum function of the semiring with the function given here.
+    */
+  def marginalizeToWithSum(
+    sum: (T, T) => T,
     targets: Variable[_]*): Factor[T]
 
   /**
    * Returns a new Factor with duplicate variable(s) removed
    */
   def deDuplicate(): Factor[T]
-
-  /**
-   * Creates a new Factor of the same class with a different type and semiring
-   */
-  def convert[U](semiring: Semiring[U]): Factor[U]
 
   /**
    * Produce a readable string representation of the factor

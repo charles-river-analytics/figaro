@@ -48,7 +48,7 @@ class VEGraph private (val info: Map[Variable[_], VariableInfo]) {
    * variables appearing in a factor with the eliminated variable, and excludes all factors in which the
    * eliminated variable appears.
    */
-  def eliminate(variable: Variable[_]): VEGraph = {
+  def eliminate(variable: Variable[_]): (VEGraph, Double) = {
     val VariableInfo(oldFactors, allVars) = info(variable)
     val newFactor = AbstractFactor((allVars - variable).toList)
     var newInfo = VEGraph.makeInfo(info, List(newFactor), oldFactors)
@@ -57,7 +57,7 @@ class VEGraph private (val info: Map[Variable[_], VariableInfo]) {
       newInfo += neighbor -> VariableInfo(oldNeighborFactors, oldNeighborNeighbors - variable)
     }
     newInfo(variable).neighbors foreach (removeNeighbor(_))
-    (new VEGraph(newInfo))
+    (new VEGraph(newInfo), VEGraph.cost(newFactor))
   }
 
   /**

@@ -24,14 +24,14 @@ import com.cra.figaro.algorithm.structured.strategy.decompose._
 import com.cra.figaro.algorithm.factored.factors.factory._
 
 class StructuredVEBPChooser(universe: Universe, scoreThreshold: Double, BPIterations: Int, targets: Element[_]*)
-  extends StructuredAlgorithm(universe, targets: _*) {
+  extends StructuredProbQueryAlgorithm(universe, targets: _*) {
 
   val semiring = SumProductSemiring()
 
   def run() {
     val strategy = DecompositionStrategy.recursiveStructuredStrategy(problem, new VEBPStrategy(scoreThreshold, BPIterations), defaultRangeSizer, Lower, false)
     strategy.execute(initialComponents)
-    val joint = problem.solution.foldLeft(Factory.unit(SumProductSemiring()))(_.product(_))
+    val joint = problem.solution.foldLeft(Factory.unit(semiring))(_.product(_))
     targets.foreach(t => marginalizeToTarget(t, joint))
   }
 

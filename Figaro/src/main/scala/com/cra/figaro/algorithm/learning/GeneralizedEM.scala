@@ -24,6 +24,10 @@ import com.cra.figaro.algorithm.online.Online
 import com.cra.figaro.algorithm.factored.VariableElimination
 import com.cra.figaro.algorithm.factored.factors.Variable
 import com.cra.figaro.algorithm.sampling.Forward
+import com.cra.figaro.algorithm.OneTimeProbQuery
+import com.cra.figaro.algorithm.factored.beliefpropagation.OneTimeProbabilisticBeliefPropagation
+import com.cra.figaro.algorithm.factored.beliefpropagation.ProbQueryBeliefPropagation
+import com.cra.figaro.algorithm.sampling.ProbEvidenceSampler
 
 /**
  * Expectation maximization iteratively produces an estimate of sufficient statistics for learnable parameters,
@@ -235,7 +239,10 @@ object EMWithBP {
 
   private def makeBP(numIterations: Int, targets: Seq[Element[_]])(universe: Universe) = {
     Variable.clearCache
-    BeliefPropagation(numIterations, targets: _*)(universe)
+    new ProbQueryBeliefPropagation(universe, targets: _*)(
+      List(),
+      (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u)) 
+      with OneTimeProbabilisticBeliefPropagation with OneTimeProbQuery with ParameterLearner { val iterations = numIterations }
   }
   /**
    * An expectation maximization algorithm using Belief Propagation sampling for inference.

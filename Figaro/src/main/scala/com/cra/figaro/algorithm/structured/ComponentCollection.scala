@@ -17,7 +17,17 @@ import com.cra.figaro.language._
 import com.cra.figaro.library.collection.MakeArray
 import scala.collection.mutable.Map
 import com.cra.figaro.algorithm.factored.factors._
-
+import scala.collection.mutable.HashMap
+/**
+* To speed up factor creation time, it's necessary to override the hashcode of component collections.
+*/
+object ComponentHash {
+  var hashCodeState = 10
+  def nextCode: Int = {
+    hashCodeState += 1
+    hashCodeState
+  }
+}
 
 /**
  * A collection of problem components. This data structure manages all the components being used in the solution of a top-level
@@ -29,6 +39,11 @@ import com.cra.figaro.algorithm.factored.factors._
  * To create a new component for an element, you need to say what problem it belongs to.
  */
 class ComponentCollection {
+ /** Indicates whether to create chain factors by decomposing the chain into several factors or a single factor
+  * This defaults to false since all the existing code a decomposition
+  */
+  var useSingleChainFactor = false
+
   /**
    * Maps a variable to the parents needed for creating blocks using Gibbs sampling.
    * TODO: test if this variable causes memory leaks.
@@ -36,7 +51,9 @@ class ComponentCollection {
   val variableParents: Map[Variable[_], Set[Variable[_]]] = Map().withDefaultValue(Set())
 
   /** All the components in the collection, each associated with an element. */
-  val components: Map[Element[_], ProblemComponent[_]] = Map()
+  val components: Map[Element[_], ProblemComponent[_]] = new HashMap[Element[_], ProblemComponent[_]]() {
+    override val hashCode = ComponentHash.nextCode
+  }
 
   /**
    *  Intermediate variables defined during the construction of factors.

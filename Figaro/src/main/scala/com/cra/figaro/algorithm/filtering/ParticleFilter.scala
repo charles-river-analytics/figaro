@@ -197,6 +197,7 @@ class OneTimeParticleFilter(static: Universe = new Universe(), initial: Universe
   def run(): Unit = {
     val lw = new LikelihoodWeighter(currentUniverse, new PermanentCache(currentUniverse))
     doTimeStep((i: Int) => initialWeightedParticle(static, currentUniverse, lw))
+    lw.deregisterDependencies()
   }
 
   /**
@@ -210,6 +211,7 @@ class OneTimeParticleFilter(static: Universe = new Universe(), initial: Universe
     doTimeStep((i: Int) => addWeightedParticle(evidence, i, newWindow, lw))
     previousUniverse = newWindow.previous
     currentUniverse = newWindow.current
+    lw.deregisterDependencies()
   }
 }
 

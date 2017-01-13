@@ -90,6 +90,7 @@ class StructuredVEBPChooserTest extends WordSpec with Matchers {
       }
     }
 
+    /*
     "given a one-level nested model with nested evidence" should {
       "produce the correct answer" in {
         Universe.createNew()
@@ -101,6 +102,8 @@ class StructuredVEBPChooserTest extends WordSpec with Matchers {
         alg.probability(e3, true) should equal (0.6)
       }
     }
+    * 
+    */
 
     "given a two-level nested model" should {
       "produce the correct answer" in {

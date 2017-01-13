@@ -58,12 +58,12 @@ trait Gibbs[T] extends BaseUnweightedSampler with FactoredAlgorithm[T] {
   /**
    * Number of samples to throw away initially.
    */
-  val burnIn: Int
+  def burnIn(): Int
 
   /**
    * Iterations thrown away between samples.
    */
-  val interval: Int
+  def interval(): Int
 
   /**
    * Method to create a blocking scheme given information about the model and factors.

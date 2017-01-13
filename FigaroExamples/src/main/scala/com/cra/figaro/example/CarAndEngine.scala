@@ -55,7 +55,7 @@ object CarAndEngine {
     val alg = VariableElimination(car.speed)
     alg.start()
     alg.stop()
-    println(alg.expectation(car.speed, (d: Double) => d))
+    println(alg.expectation(car.speed)(d => d))
     alg.kill()
   }
 }
