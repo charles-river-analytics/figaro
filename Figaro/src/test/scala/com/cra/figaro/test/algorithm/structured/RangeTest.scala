@@ -1669,6 +1669,33 @@ class RangeTest extends WordSpec with Matchers {
       c1.range.hasStar should equal (false)
       c1.range.regularValues.size should equal (5)
     }
+
+    "for an atomic element, expand the range when additional samples are taken" in {
+      val universe = Universe.createNew()
+      val pg = ParticleGenerator(universe)
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Normal(0, 1)
+      pr.add(e1)
+      val c1 = cc(e1)
+      c1.generateRange(5)
+      val range1 = c1.range
+      // Should compute additional samples
+      c1.generateRange(15)
+      val range2 = c1.range
+      // Should return the same result as range2
+      c1.generateRange(10)
+      val range3 = c1.range
+
+      range1.hasStar should equal (false)
+      range2.hasStar should equal (false)
+      range3.hasStar should equal (false)
+      range1.regularValues.size should equal (5)
+      range2.regularValues.size should equal (15)
+      range3.regularValues.size should equal (15)
+      range1.regularValues.subsetOf(range2.regularValues) should equal (true)
+      range3.regularValues should equal(range2.regularValues)
+    }
   }
 
   class EC1(universe: Universe) extends ElementCollection

@@ -238,22 +238,21 @@ class UtilTest extends WordSpec with Matchers {
   }
 
   "Util.reachable" when {
-    "given a graph that maps items to traversables of items, and an element" should {
-      "return a traversable containing the elements reachable from the given element and no others" in {
+    "given a graph and no start elements" should {
+      "return an empty set" in {
         val graph = Map(1 -> List(2, 3), 2 -> List(3, 4), 3 -> List(5), 4 -> List(), 5 -> List(), 6 -> List(1))
-        val r = reachable(1, graph).toList
-        r should contain(2)
-        r should contain(3)
-        r should contain(4)
-        r should contain(5)
-        r should not contain (1)
-        r should not contain (6)
+        reachable(graph, false) should be(empty)
+        reachable(graph, true) should be(empty)
       }
+    }
 
-      "return a traversable that does not contain duplicates" in {
+    "given a graph that maps items to traversables of items, and an element" should {
+      "return a set containing the elements reachable from the given element and no others" in {
         val graph = Map(1 -> List(2, 3), 2 -> List(3, 4), 3 -> List(5), 4 -> List(), 5 -> List(), 6 -> List(1))
-        val r = reachable(1, graph).toList
-        r should equal(r.distinct)
+        // Should not include the start element
+        reachable(graph, false, 1) should equal(Set(2, 3, 4, 5))
+        // Should include the start element
+        reachable(graph, true, 1) should equal(Set(1, 2, 3, 4, 5))
       }
 
       "take time roughly linear in the number of edges of the graph" taggedAs (Performance) in {
@@ -278,26 +277,40 @@ class UtilTest extends WordSpec with Matchers {
         val numEdges2 = 28
 
         def reach(graph: Map[Int, List[Int]])() =
-          reachable(1, graph)
+          reachable(graph, false, 1)
 
         val time1 = measureTime(reach(graph1), 20, 100)
         val time2 = measureTime(reach(graph2), 20, 100)
         val slack = 1.2
         time2 / time1 should be < (numEdges2.toDouble / numEdges1 * slack)
       }
+    }
 
-      "produce a result of the same type as its input" in {
-        val graph1 = Map(1 -> List(1))
-        reachable(1, graph1).isInstanceOf[List[_]] should be(true)
-        val graph2 = Map(1 -> Set(1))
-        reachable(1, graph2).isInstanceOf[Set[_]] should be(true)
+    "given a graph and multiple start elements" should {
+      "return a set containing start elements reachable from other start elements" in {
+        val graph = Map(1 -> List(2), 2 -> List(3, 4), 3 -> List(5), 4 -> List(), 5 -> List())
+        reachable(graph, false, 1, 3) should equal(Set(2, 3, 4, 5))
+        reachable(graph, true, 1, 3) should equal(Set(1, 2, 3, 4, 5))
+      }
+
+      "return the correct set on a connected graph" in {
+        val graph = Map(1 -> List(3), 2 -> List(3), 3 -> List())
+        reachable(graph, false, 1, 2) should equal(Set(3))
+        reachable(graph, true, 1, 2) should equal(Set(1, 2, 3))
+      }
+
+      "return the correct set on a disconnected graph" in {
+        val graph = Map(1 -> List(3), 2 -> List(4), 3 -> List(), 4 -> List())
+        reachable(graph, false, 1, 2) should equal(Set(3, 4))
+        reachable(graph, true, 1, 2) should equal(Set(1, 2, 3, 4))
       }
     }
 
     "given a cyclic graph and an element involved in a cycle" should {
       "terminate and return a traversable includeing the element" in {
-        val graph = Map(1 -> List(1))
-        reachable(1, graph).toList should contain(1)
+        val graph = Map(1 -> List(2), 2 -> List(1, 3), 3 -> List())
+        reachable(graph, false, 1) should equal(Set(1, 2, 3))
+        reachable(graph, true, 1) should equal(Set(1, 2, 3))
       }
     }
   }

@@ -904,7 +904,41 @@ class FactorMakerTest extends WordSpec with Matchers {
 
         val List(factor) = c1.nonConstraintFactors
         factor.variables should equal (List(c1.variable))
-        factor.size should equal (ParticleGenerator.defaultMaxNumSamplesAtChain)
+        val samples = ParticleGenerator.defaultNumSamplesFromAtomics 
+        factor.size should equal (samples)
+        for {index <- 0 until samples} {
+          factor.get(List(index)) should equal(1.0 / samples +- 0.0001)
+        }
+      }
+
+      "compute the correct weights when the range changes" in {
+        val universe = Universe.createNew()
+        val pg = ParticleGenerator(universe)
+        val cc = new ComponentCollection
+        val pr = new Problem(cc)
+        val v1 = Normal(0.0, 1.0)
+        pr.add(v1)
+        val c1 = cc(v1)
+
+        c1.generateRange(5)
+        c1.makeNonConstraintFactors()
+        val List(factor1) = c1.nonConstraintFactors
+
+        c1.generateRange(15)
+        c1.makeNonConstraintFactors()
+        val List(factor2) = c1.nonConstraintFactors
+
+        c1.generateRange(10)
+        c1.makeNonConstraintFactors()
+        val List(factor3) = c1.nonConstraintFactors
+
+        for {index <- 0 until 5} {
+          factor1.get(List(index)) should equal(1.0 / 5 +- 0.0001)
+        }
+        for {index <- 0 until 15} {
+          factor2.get(List(index)) should equal(1.0 / 15 +- 0.0001)
+          factor3.get(List(index)) should equal(1.0 / 15 +- 0.0001)
+        }
       }
     }
 

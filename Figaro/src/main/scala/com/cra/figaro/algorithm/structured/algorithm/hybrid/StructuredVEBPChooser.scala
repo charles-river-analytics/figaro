@@ -14,27 +14,13 @@
 package com.cra.figaro.algorithm.structured.algorithm.hybrid
 
 import com.cra.figaro.language._
-import com.cra.figaro.algorithm.factored.factors.SumProductSemiring
-import com.cra.figaro.algorithm.structured._
-import com.cra.figaro.algorithm.structured.strategy._
-import com.cra.figaro.algorithm.structured.solver._
 import com.cra.figaro.algorithm.structured.strategy.solve._
 import com.cra.figaro.algorithm.structured.algorithm._
-import com.cra.figaro.algorithm.structured.strategy.decompose._
-import com.cra.figaro.algorithm.factored.factors.factory._
 
 class StructuredVEBPChooser(universe: Universe, scoreThreshold: Double, BPIterations: Int, targets: Element[_]*)
-  extends StructuredProbQueryAlgorithm(universe, targets: _*) {
+  extends StructuredProbQueryAlgorithm(universe, targets: _*) with DecompositionProbQuery {
 
-  val semiring = SumProductSemiring()
-
-  def run() {
-    val strategy = DecompositionStrategy.recursiveStructuredStrategy(problem, new VEBPStrategy(scoreThreshold, BPIterations), defaultRangeSizer, Lower, false)
-    strategy.execute(initialComponents)
-    val joint = problem.solution.foldLeft(Factory.unit(semiring))(_.product(_))
-    targets.foreach(t => marginalizeToTarget(t, joint))
-  }
-
+  def solvingStrategy() = new VEBPStrategy(problem, structuredRaising, scoreThreshold, BPIterations)
 }
 
 object StructuredVEBPChooser {

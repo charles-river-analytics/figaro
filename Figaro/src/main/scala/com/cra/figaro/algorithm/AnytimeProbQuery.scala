@@ -67,6 +67,8 @@ trait AnytimeProbQuery extends ProbQueryAlgorithm with Anytime {
         Expectation(computeExpectation(target, function))
       case ComputeProbability(target, predicate) =>
         Probability(computeProbability(target, predicate))
+      case ComputeProjection(target) =>
+        Projection(computeProjection(target))
     }
   
   protected def doDistribution[T](target: Element[T]): Stream[(Double, T)] = {

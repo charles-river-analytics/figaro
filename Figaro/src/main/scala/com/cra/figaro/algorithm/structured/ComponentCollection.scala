@@ -67,16 +67,35 @@ class ComponentCollection {
   val expansions: Map[(Function1[_, Element[_]], _), NestedProblem[_]] = Map()
 
   /**
-   *  Get the nested subproblem associated with a particular function and parent value.
-   *  Checks in the cache if an expansion exists and creates one if necessary.
+   * A map from a subproblem to the set of expandable components that use it.
+   */
+  val expandableComponents: Map[NestedProblem[_], Set[ExpandableComponent[_, _]]] = Map()
+
+  /**
+   *  Get the nested subproblem associated with a particular function and parent value. Checks in the cache if an
+   *  expansion exists and creates one if necessary. If the expansion in the cache is marked as open, this always
+   *  creates a new subproblem, but does not add it to the cache. This also adds the component to the set of expandable
+   *  components that use the returned subproblem.
    */
   private[structured] def expansion[P, V](component: ExpandableComponent[P, V], function: Function1[P, Element[V]], parentValue: P): NestedProblem[V] = {
     expansions.get((function, parentValue)) match {
       case Some(p) =>
-        p.asInstanceOf[NestedProblem[V]]
+        if(p.open) {
+          // Make a new nested problem, but don't add it to expansions
+          val result = new NestedProblem(this, component.expandFunction(parentValue))
+          expandableComponents += result -> Set(component)
+          result
+        }
+        else {
+          // Return the cached problem
+          expandableComponents(p) += component
+          p.asInstanceOf[NestedProblem[V]]
+        }
       case None =>
+        // Make a new nested problem and add it to expansions
         val result = new NestedProblem(this, component.expandFunction(parentValue))
         expansions += (function, parentValue) -> result
+        expandableComponents += result -> Set(component)
         result
     }
   }

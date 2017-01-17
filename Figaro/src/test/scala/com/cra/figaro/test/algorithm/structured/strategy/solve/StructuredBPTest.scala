@@ -10,15 +10,13 @@
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
-package com.cra.figaro.test.algorithm.structured.strategy
+package com.cra.figaro.test.algorithm.structured.strategy.solve
 
-import org.scalatest.{ WordSpec, Matchers }
+import com.cra.figaro.algorithm.structured.algorithm.structured.{StructuredBP, StructuredMPEBP}
+import com.cra.figaro.language.Element.toBooleanElement
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound.If
-import com.cra.figaro.algorithm.structured.algorithm.structured.StructuredBP
-import com.cra.figaro.algorithm.lazyfactored.ValueSet._
-import com.cra.figaro.language.Element.toBooleanElement
-import com.cra.figaro.algorithm.structured.algorithm.structured.StructuredMPEBP
+import org.scalatest.{Matchers, WordSpec}
 
 class StructuredBPTest extends WordSpec with Matchers {
   "Executing a recursive structured BP solver strategy" when {

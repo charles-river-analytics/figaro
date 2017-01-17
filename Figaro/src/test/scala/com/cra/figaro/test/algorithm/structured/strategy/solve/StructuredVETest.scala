@@ -10,15 +10,13 @@
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
-package com.cra.figaro.test.algorithm.structured.strategy
+package com.cra.figaro.test.algorithm.structured.strategy.solve
 
-import org.scalatest.{Matchers, WordSpec}
+import com.cra.figaro.algorithm.structured.algorithm.structured.{StructuredMPEVE, StructuredVE}
+import com.cra.figaro.language.Element.toBooleanElement
 import com.cra.figaro.language._
 import com.cra.figaro.library.compound.If
-import com.cra.figaro.algorithm.structured.algorithm.structured.StructuredVE
-import com.cra.figaro.algorithm.lazyfactored.ValueSet._
-import com.cra.figaro.language.Element.toBooleanElement
-import com.cra.figaro.algorithm.structured.algorithm.structured.StructuredMPEVE
+import org.scalatest.{Matchers, WordSpec}
 
 class StructuredVETest extends WordSpec with Matchers {
   "Executing a recursive structured VE solver strategy" when {

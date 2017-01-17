@@ -203,6 +203,8 @@ object Range {
     component.element match {
 
       case i: FastIf[_] =>
+        applyMap.put(true, i.thn.asInstanceOf[V])
+        applyMap.put(false, i.thn.asInstanceOf[V])
         if (getRange(collection, i.test).hasStar) withStar(Set(i.thn, i.els)) else withoutStar(Set(i.thn, i.els))
 
       case a: Apply1[_, V] =>

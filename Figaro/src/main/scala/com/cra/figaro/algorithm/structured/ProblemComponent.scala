@@ -38,6 +38,20 @@ class ProblemComponent[Value](val problem: Problem, val element: Element[Value])
   def variable = _variable
 
   /**
+   * A problem is fully enumerated if its range is complete. This also means that its range cannot contain star. This is
+   * always false for components associated with elements that have infinite support.
+   */
+  var fullyEnumerated = false
+
+  /**
+   * A problem component is fully refined if any additional refinement cannot change its range or factors. One necessary
+   * condition is to be fully enumerated. Additionally, expandable components must be fully expanded (i.e. have created
+   * a subproblem for each parent value), and each subproblem must be fully refined. These conditions are necessary but
+   * not always sufficient to be fully refined.
+   */
+  var fullyRefined = false
+
+  /**
    *  Set the variable associated with this component to the given variable.
    */
   def setVariable(v: Variable[Value]) {
@@ -104,10 +118,20 @@ class ProblemComponent[Value](val problem: Problem, val element: Element[Value])
   /**
    *  Generate the constraint factors based on the current range.
    *  Bounds specifies whether these should be created for computing lower or upper bounds.
+   *  Throws an IllegalArgumentException if the component is not fully enumerated and any constraint value is not in the
+   *  closed interval [0.0, 1.0], since this assumption is needed for lower and upper bounds to be correct.
    */
   def makeConstraintFactors(bounds: Bounds = Lower) {
-    if (bounds == Upper) constraintUpper = ConstraintFactory.makeFactors(problem.collection, element, true)
-    else constraintLower = ConstraintFactory.makeFactors(problem.collection, element, false)
+    val upper = bounds == Upper
+    val constraintFactors = ConstraintFactory.makeFactors(problem.collection, element, upper)
+    if(!fullyEnumerated) {
+      for(factor <- constraintFactors ; indices <- factor.getIndices) {
+        val entry = factor.get(indices)
+        require(0.0 <= entry && entry <= 1.0, s"constraint for element $element out of bounds: $entry")
+      }
+    }
+    if(upper) constraintUpper = constraintFactors
+    else constraintLower = constraintFactors
   }
 
   /**
@@ -149,11 +173,13 @@ class ApplyComponent[Value](problem: Problem, element: Element[Value]) extends P
 abstract class ExpandableComponent[ParentValue, Value](problem: Problem, parent: Element[ParentValue], element: Element[Value])
     extends ProblemComponent(problem, element) {
   /**
-   * Expand for all values of the parent, based on the current range of the parent.
+   * Expand for all values of the parent that were not previously expanded, based on the current range of the parent.
    */
   def expand() {
     if (problem.collection.contains(parent)) {
-      for { parentValue <- problem.collection(parent).range.regularValues } { expand(parentValue) }
+      val parentValues = problem.collection(parent).range.regularValues
+      val unexpanded = parentValues -- subproblems.keySet
+      for (parentValue <- unexpanded) expand(parentValue)
     }
   }
 
@@ -214,46 +240,31 @@ class ChainComponent[ParentValue, Value](problem: Problem, val chain: Chain[Pare
     return true
   }
 
-  /**
-   * Make the non-constraint factors for this component by using the solutions to the subproblems.
-   */
-  override def makeNonConstraintFactors(parameterized: Boolean = false) {
-    super.makeNonConstraintFactors(parameterized)
-    if (!problem.collection.useSingleChainFactor || !allSubproblemsEliminatedCompletely) {
-      for {
-        (parentValue, subproblem) <- subproblems
-      } {
-        raiseSubproblemSolution(parentValue, subproblem)
-      }
-    }
-  }
-
   def raiseSubproblemSolution(parentValue: ParentValue, subproblem: NestedProblem[Value]): Unit = {
     val factors = for {
       factor <- subproblem.solution
     } yield Factory.replaceVariable(factor, problem.collection(subproblem.target).variable, actualSubproblemVariables(parentValue))
-    nonConstraintFactors = factors.toList ::: nonConstraintFactors
+    nonConstraintFactors = factors ::: nonConstraintFactors
   }
 
   // Raise the given subproblem into this problem. Note that factors for the chain must have been created already
   // This probably needs some more thought!
-  def raise(parentValue: ParentValue, bounds: Bounds = Lower): Unit = {
+  // This assumes that components in nested problems do not have evidence on them, and therefore we don't need to raise
+  // the constraint factors.
+  def raise(parentValue: ParentValue): Unit = {
 
     if (subproblems.contains(parentValue) && !subproblems(parentValue).solved) {
 
       val subproblem = subproblems(parentValue)
       val comp = subproblem.collection(subproblem.target)
-      val CF = subproblem.components.flatMap(c => c.constraintFactors(bounds).map(Factory.replaceVariable(_, comp.variable, actualSubproblemVariables(parentValue))))
       val NCF = subproblem.components.flatMap(c => c.nonConstraintFactors.map(Factory.replaceVariable(_, comp.variable, actualSubproblemVariables(parentValue))))
 
-      if (bounds == Lower) constraintLower = constraintLower ::: CF
-      else constraintUpper = constraintUpper ::: CF
       nonConstraintFactors = nonConstraintFactors ::: NCF
     }
   }
 
   // Raise all subproblems into this problem
-  def raise(bounds: Bounds) { subproblems.foreach(sp => raise(sp._1, bounds)) }
+  def raise() { subproblems.foreach(sp => raise(sp._1)) }
 
 }
 

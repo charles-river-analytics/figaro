@@ -15,7 +15,6 @@ package com.cra.figaro.algorithm.structured
 
 import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.language._
-import com.cra.figaro.algorithm.structured.strategy.solve.SolvingStrategy
 
 /**
  * A Problem defines an inference problem to be solved.
@@ -52,8 +51,6 @@ class Problem(val collection: ComponentCollection, val targets: List[Element[_]]
    * A flag indicating whether the problem has been solved.
    */
   var solved: Boolean = false
-  
-  val componentsToVisit: scala.collection.mutable.Set[ProblemComponent[_]] = scala.collection.mutable.Set()
 
   /**
    * Add a component for the given element to this problem.
@@ -93,27 +90,6 @@ class Problem(val collection: ComponentCollection, val targets: List[Element[_]]
     otherProblem == this || components.exists(componentContains(_))
   }
 
-
-  /**
-   * Solve the problem defined by all the components' current factors.
-   * This will also set the globals accordingly.
-   * All components in this problem and contained subproblems should be eliminated in the solution.
-   */
-  def solve( strategy: SolvingStrategy, bounds: Bounds = Lower) {
-    val targetComponents = targets.map(collection(_))    
-    val allFactors = components.flatMap(c => c.nonConstraintFactors ::: c.constraintFactors(bounds))
-    val allVariables = (Set[Variable[_]]() /: allFactors)(_ ++ _.variables)
-    val (toEliminate, toPreserve) = allVariables.partition(internal(_))
-    globals = toPreserve.map(collection.variableToComponent(_))
-    val (solution, recordingFactors) = strategy.solve(this, toEliminate, toPreserve, allFactors)
-    this.solution = solution
-    this.recordingFactors = recordingFactors
-    solved = true
-    toEliminate.foreach((v: Variable[_]) => {
-      if (collection.intermediates.contains(v)) collection.intermediates -= v
-    })
-  }
-
   /**
    * Produce a single weighted sample of all the elements in this problem.
    */
@@ -121,7 +97,28 @@ class Problem(val collection: ComponentCollection, val targets: List[Element[_]]
     (Map(), 1.0)
   }
 
+  /**
+   * Determines if this problem is fully refined. A problem is fully refined when all components within are fully
+   * refined, in which case none of their ranges or factors will change with further refinement.
+   */
+  def fullyRefined: Boolean = components.forall(_.fullyRefined)
+
+  /**
+   * Targets of this problem as a list of components in the collection.
+   */
+  def targetComponents: List[ProblemComponent[_]] = targets.map(collection(_))
+
   targets.foreach(target => if (!collection.contains(target)) add(target))
 }
 
-class NestedProblem[T](collection: ComponentCollection, val target: Element[T]) extends Problem(collection, List(target))
+class NestedProblem[T](collection: ComponentCollection, val target: Element[T]) extends Problem(collection, List(target)) {
+  /**
+   * A flag indicating whether this nested problem can be memoized for its chain function. If set to true, this
+   * nested problem will not be returned by `collection.expansion`. Instead, a new nested problem will be created and
+   * returned without being memoized.
+   *
+   * This defaults to false, but can be set by algorithms expanding recursive problems, or by a user who wants to
+   * disable memoization for parts of the model.
+   */
+  var open: Boolean = false
+}
