@@ -24,9 +24,12 @@ import JSci.maths.SpecialMath.{ gamma, logGamma }
  * Theta defaults to 1.
  */
 class AtomicGamma(name: Name[Double], k: Double, theta: Double = 1.0, collection: ElementCollection)
-  extends Element[Double](name, collection) with Atomic[Double] {
+  extends Element[Double](name, collection) with Atomic[Double] with Gamma {
   type Randomness = Double
 
+  def kValue = k
+  def thetaValue = theta
+  
   def generateRandomness() = Util.generateGamma(k)
 
   def generateValue(rand: Randomness) =

@@ -21,9 +21,13 @@ import scala.math.log
  * A continuous uniform distribution in which the parameters are constants.
  */
 class AtomicUniform(name: Name[Double], val lower: Double, val upper: Double, collection: ElementCollection)
-  extends Element[Double](name, collection) with Atomic[Double] {
+  extends Element[Double](name, collection) with Atomic[Double] with Uniform {
   type Randomness = Double
-
+  
+  def lowerValue: Double = lower
+  
+  def upperValue: Double = upper
+  
   private lazy val diff = upper - lower
 
   def generateRandomness() = random.nextDouble() * diff + lower
