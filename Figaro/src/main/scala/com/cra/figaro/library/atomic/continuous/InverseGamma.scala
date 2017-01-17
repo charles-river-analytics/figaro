@@ -28,11 +28,8 @@ import JSci.maths.SpecialMath.{ gamma, logGamma }
  * Theta defaults to 1.
  */
 class AtomicInverseGamma(name: Name[Double], shape: Double, scale: Double = 1.0, collection: ElementCollection)
-  extends Element[Double](name, collection) with Atomic[Double] {
+  extends Element[Double](name, collection) with Atomic[Double] with InverseGamma {
 
-
-  
-  
   type Randomness = Double
 
   def generateRandomness() = Util.generateGamma(shape)
@@ -58,6 +55,11 @@ class AtomicInverseGamma(name: Name[Double], shape: Double, scale: Double = 1.0,
   override def toString =
     if (scale == 1.0) "InverseGamma(" + shape + ")"
     else "InverseGamma(" + shape + ", " + scale + ")"
+}
+
+trait InverseGamma extends Continuous[Double] {
+  // TODO implement appropriate log transform
+  def logp(value: Double) = Double.NegativeInfinity
 }
 
 object InverseGamma {
