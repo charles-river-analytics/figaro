@@ -116,7 +116,7 @@ class GibbsSolverTest extends WordSpec with Matchers {
           val target = cc(spr.target)
           target.generateRange()
           target.makeNonConstraintFactors()
-          spr.solve(new ConstantStrategy(marginalVariableElimination))
+          new ConstantStrategy(spr, structuredRaising, marginalVariableElimination).execute()
         }
         c2.generateRange()
         c2.makeNonConstraintFactors()
@@ -158,13 +158,13 @@ class GibbsSolverTest extends WordSpec with Matchers {
           val target = cc(spr.target)
           target.generateRange()
           target.makeNonConstraintFactors()
-          spr.solve(new ConstantStrategy(marginalVariableElimination))
+          new ConstantStrategy(spr, structuredRaising, marginalVariableElimination).execute()
         }
         c2.generateRange()
         c2.makeNonConstraintFactors()
         c3.generateRange()
         c3.makeNonConstraintFactors()
-        pr.solve(new ConstantStrategy(marginalGibbs(10000, 0, 1, BlockSampler.default)))
+        new ConstantStrategy(pr, structuredRaising, marginalGibbs(10000, 0, 1, BlockSampler.default)).execute()
 
         val result = multiplyAll(pr.solution)
         result.variables should equal (List(c3.variable))

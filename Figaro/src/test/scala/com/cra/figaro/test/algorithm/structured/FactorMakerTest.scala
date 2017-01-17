@@ -15,7 +15,7 @@ package com.cra.figaro.test.algorithm.structured
 import org.scalatest.{Matchers, WordSpec}
 import com.cra.figaro.language._
 import com.cra.figaro.algorithm.structured._
-import com.cra.figaro.algorithm.structured.strategy.solve.ConstantStrategy
+import com.cra.figaro.algorithm.structured.strategy.solve._
 import com.cra.figaro.algorithm.structured.solver._
 import com.cra.figaro.algorithm.lazyfactored.{Regular, Star, ValueSet}
 import ValueSet.{withStar, withoutStar}
@@ -1302,20 +1302,21 @@ class FactorMakerTest extends WordSpec with Matchers {
       val subC1 = cc(subV1)
       subC1.generateRange()
       subC1.makeNonConstraintFactors()
-      pr1.solve(new ConstantStrategy(marginalVariableElimination))
+      new ConstantStrategy(pr1, structuredRaising, marginalVariableElimination).execute()
 
       val pr2 = cc.expansions(v2.chainFunction, 2)
       val subV2 = pr2.target
       val subC2 = cc(subV2)
       subC2.generateRange()
       subC2.makeNonConstraintFactors()
-      pr2.solve(new ConstantStrategy(marginalVariableElimination))
+      new ConstantStrategy(pr2, structuredRaising, marginalVariableElimination).execute()
+
       val pr3 = cc.expansions(v2.chainFunction, 3)
       val subV3 = pr3.target
       val subC3 = cc(subV3)
       subC3.generateRange()
       subC3.makeNonConstraintFactors()
-      pr3.solve(new ConstantStrategy(marginalVariableElimination))
+      new ConstantStrategy(pr3, structuredRaising, marginalVariableElimination).execute()
 
       c2.generateRange()
       c2.makeNonConstraintFactors()
@@ -1359,13 +1360,13 @@ class FactorMakerTest extends WordSpec with Matchers {
       val subCf = cc(subVf)
       subCf.generateRange()
       subCf.makeNonConstraintFactors()
-      prf.solve(new ConstantStrategy(marginalVariableElimination))
+      new ConstantStrategy(prf, structuredRaising, marginalVariableElimination).execute()
       val prt = cc.expansions(v2.chainFunction, true)
       val subVt = prt.target
       val subCt = cc(subVt)
       subCt.generateRange()
       subCt.makeNonConstraintFactors()
-      prt.solve(new ConstantStrategy(marginalVariableElimination))
+      new ConstantStrategy(prt, structuredRaising, marginalVariableElimination).execute()
 
       c2.generateRange()
       c2.makeNonConstraintFactors()
@@ -1410,16 +1411,16 @@ class FactorMakerTest extends WordSpec with Matchers {
       val subC1 = cc(subV1)
       subC1.generateRange()
       subC1.makeNonConstraintFactors()
-      pr1.solve(new ConstantStrategy(marginalVariableElimination))
+      new ConstantStrategy(pr1, structuredRaising, marginalVariableElimination).execute()
       val pr2 = cc.expansions(v2.chainFunction, 2)
       val subV2 = pr2.target
       val subC2 = cc(subV2)
       subC2.generateRange()
       subC2.makeNonConstraintFactors()
-      pr2.solve(new ConstantStrategy(marginalVariableElimination))
+      new ConstantStrategy(pr2, structuredRaising, marginalVariableElimination).execute()
       val pr3 = cc.expansions(v2.chainFunction, 3)
       // no range generation or factor creation
-      pr3.solve(new ConstantStrategy(marginalVariableElimination))
+      new ConstantStrategy(pr3, structuredRaising, marginalVariableElimination).execute()
 
       c2.generateRange()
       c2.makeNonConstraintFactors()
@@ -1478,7 +1479,7 @@ class FactorMakerTest extends WordSpec with Matchers {
       val subCt = cc(subVt)
       subCt.generateRange()
       subCt.makeNonConstraintFactors()
-      prt.solve(new ConstantStrategy(marginalVariableElimination))
+      new ConstantStrategy(prt, structuredRaising, marginalVariableElimination).execute()
 
       c2.generateRange()
       c2.makeNonConstraintFactors()
@@ -1525,13 +1526,13 @@ class FactorMakerTest extends WordSpec with Matchers {
       val cPf = cc(vPf)
       cPf.generateRange()
       cPf.makeNonConstraintFactors()
-      subPf.solve(new ConstantStrategy(marginalVariableElimination))
+      new ConstantStrategy(subPf, structuredRaising, marginalVariableElimination).execute()
       val subPt = cc.expansions(v3.chainFunction, true)
       val vPt = subPt.target
       val cPt = cc(vPt)
       cPt.generateRange()
       cPt.makeNonConstraintFactors()
-      subPt.solve(new ConstantStrategy(marginalVariableElimination))
+      new ConstantStrategy(subPt, structuredRaising, marginalVariableElimination).execute()
       c3.generateRange()
       c3.makeNonConstraintFactors()
 
