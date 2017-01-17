@@ -24,7 +24,7 @@ import org.apache.commons.math3.random.RandomGenerator
  * A multivariate normal distribution in which the means and variance-covariances are constants.
  */
 class AtomicMultivariateNormal(name: Name[List[Double]], val means: List[Double], val covariances: List[List[Double]], collection: ElementCollection)
-  extends Element[List[Double]](name, collection) with Atomic[List[Double]] {
+  extends Element[List[Double]](name, collection) with Atomic[List[Double]] with MultivariateNormal {
 
   /*
    * Class to wrap the Figaro RNG around the apache math RNG so we can use the apache math multivariate normal 
@@ -78,7 +78,7 @@ class MultivariateNormalCompoundMean(name: Name[List[Double]], val means: Elemen
     name,
     means,
     (m: List[Double]) => new AtomicMultivariateNormal("", m, covariances, collection),
-    collection) {
+    collection) with MultivariateNormal {
   override def toString = "Normal(" + means + ",\n " + covariances + ")"
 }
 
@@ -94,8 +94,12 @@ class MultivariateCompoundNormal(name: Name[List[Double]], val mean: Element[Lis
       variance,
       (v: List[List[Double]]) => new AtomicMultivariateNormal("", m, v, collection),
       collection),
-    collection) {
+    collection) with MultivariateNormal {
   override def toString = "Normal(" + mean + ", " + variance + ")"
+}
+
+trait MultivariateNormal extends Continuous[List[Double]] {
+  def logp(value: List[Double]) = Double.NegativeInfinity
 }
 
 object MultivariateNormal extends Creatable {

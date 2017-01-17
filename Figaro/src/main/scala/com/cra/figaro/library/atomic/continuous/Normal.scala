@@ -21,11 +21,15 @@ import scala.math._
  * A normal distribution in which the mean and variance are constants.
  */
 class AtomicNormal(name: Name[Double], val mean: Double, val variance: Double, collection: ElementCollection)
-  extends Element[Double](name, collection) with Atomic[Double] {
+  extends Element[Double](name, collection) with Atomic[Double] with Normal {
   lazy val standardDeviation = sqrt(variance)
 
   type Randomness = Double
+  
+  def meanValue: Double = mean
 
+  def varianceValue: Double = variance
+  
   def generateRandomness() = {
     val u1 = random.nextDouble()
     val u2 = random.nextDouble()
