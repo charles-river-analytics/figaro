@@ -238,8 +238,9 @@ class ExpandTest extends WordSpec with Matchers {
       tfVar should be (false)
       ffVar should be (false)
     }
-    
-    "add constraint factors to the chain" in {
+
+    // Raising no longer includes constraint factors because nested evidence is disallowed
+    /*"add constraint factors to the chain" in {
       Universe.createNew()
       val cc = new ComponentCollection
       // raising should use the old chain method
@@ -259,7 +260,7 @@ class ExpandTest extends WordSpec with Matchers {
       process(c4)
       c4.raise()
       c4.constraintFactors(Lower).size should be (1)      
-    }
+    }*/
 
   }
 
