@@ -97,26 +97,36 @@ class BottomUpTest extends WordSpec with Matchers {
       c1.constraintFactors(Upper) should have size 1
     }
 
-    // TODO parameters seemingly don't work in SFI
-    /*"conditionally make parameterized factors" when {
-      "parameterized is set to true" in {
-        Universe.createNew()
-        val e1 = Beta(1, 2)
-        val e2 = Flip(e1)
-        val cc = new ComponentCollection
-        val pr = new Problem(cc, List(e1, e2))
-        new BottomUpStrategy(pr, defaultRangeSizer, false, pr.targetComponents).execute()
-      }
-
+    "conditionally make parameterized factors" when {
       "parameterized is set to false" in {
         Universe.createNew()
         val e1 = Beta(1, 2)
         val e2 = Flip(e1)
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1, e2))
-        new BottomUpStrategy(pr, defaultRangeSizer, true, pr.targetComponents).execute()
+        val rangeSizer = (pc: ProblemComponent[_]) => 25
+        new BottomUpStrategy(pr, rangeSizer, false, pr.targetComponents).execute()
+
+        // Factor for e1 should contain sampled values
+        // Its size should be the size of the range of the component
+        val List(f1) = cc(e1).nonConstraintFactors
+        f1 should have size 25
+        // Factor for e2 should encode the conditional probability distribution
+        // Its size should be the product of the sizes of the ranges of the components
+        val List(f2) = cc(e2).nonConstraintFactors
+        f2 should have size 50
       }
-    }*/
+
+      // Ranging in SFI doesn't currently support parameterized = true
+      /*"parameterized is set to true" in {
+        Universe.createNew()
+        val e1 = Beta(1, 2)
+        val e2 = Flip(e1)
+        val cc = new ComponentCollection
+        val pr = new Problem(cc, List(e1, e2))
+        new BottomUpStrategy(pr, defaultRangeSizer, true, pr.targetComponents).execute()
+      }*/
+    }
 
     "preserve solutions to solved subproblems" in {
       Universe.createNew()
