@@ -17,7 +17,7 @@ import com.cra.figaro.language._
 
 import akka.pattern.ask
 
-trait LazyStructuredProbQuery extends StructuredProbQueryAlgorithm {
+trait LazyStructuredProbQuery extends StructuredProbQueryAlgorithm with LazyStructured {
   /**
    * Return an estimate from the marginal probability distribution over the target of the lower and upper bounds,
    * respectively, of the particular value given.

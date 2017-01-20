@@ -16,8 +16,9 @@ import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.lazyfactored.{Extended, Star}
 import com.cra.figaro.language._
 import akka.pattern.ask
+import com.cra.figaro.algorithm.structured.algorithm.LazyStructured
 
-trait LazyStructuredMarginalMAP extends StructuredMarginalMAPAlgorithm {
+trait LazyStructuredMarginalMAP extends StructuredMarginalMAPAlgorithm with LazyStructured {
   /**
    * Return an estimate of the most likely extended value of the given element. Returns a regular value if the bounds
    * are strong enough to prove the existence of a MAP, and * otherwise.

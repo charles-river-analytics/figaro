@@ -17,7 +17,7 @@ import com.cra.figaro.algorithm.lazyfactored.{Extended, Star}
 import com.cra.figaro.language._
 import akka.pattern.ask
 
-trait LazyStructuredMPE extends StructuredMPEAlgorithm {
+trait LazyStructuredMPE extends StructuredMPEAlgorithm with LazyStructured {
   /**
    * Return an estimate of the most likely extended value of the given element. Returns a regular value if the bounds
    * are strong enough to prove the existence of an MPE, and * otherwise.

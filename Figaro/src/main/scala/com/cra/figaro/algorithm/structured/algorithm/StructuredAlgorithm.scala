@@ -47,6 +47,13 @@ abstract class StructuredAlgorithm extends Algorithm {
   def solvingStrategy(): SolvingStrategy
 
   /**
+   * Verify that all constraint factors satisfy the bounds needed for the correctness of this algorithm. This gets
+   * executed before solving. By default, this method does nothing; subclasses can override this to throw an exception
+   * if the bounds requirements are not met.
+   */
+  def checkConstraintBounds(): Unit = {}
+
+  /**
    * All bounds for which this algorithm needs to compute solutions. This is determined by looking for components that
    * have * in their range, and have constraint factors associated with them. If such a component exists, we need both
    * lower and upper bounds. Otherwise, just one of the bounds suffices because they are equivalent; it defaults to
@@ -54,7 +61,8 @@ abstract class StructuredAlgorithm extends Algorithm {
    * @return All bounds for which this algorithm should compute solutions.
    */
   def neededBounds(): Set[Bounds] = {
-    if(problem.components.exists(comp => comp.range.hasStar && comp.constraintFactors().nonEmpty)) Set(Lower, Upper)
+    val hasStarConstraint = problem.components.exists(comp => comp.range.hasStar && comp.constraintFactors().nonEmpty)
+    if(hasStarConstraint) Set(Lower, Upper)
     else Set(Lower)
   }
 
@@ -103,6 +111,7 @@ abstract class StructuredAlgorithm extends Algorithm {
    */
   def runStep(): Unit = {
     refiningStrategy().execute()
+    checkConstraintBounds()
     processedSolutions = neededBounds().map(bounds => {
       solvingStrategy().execute(bounds)
       bounds -> extractSolution()
@@ -115,4 +124,21 @@ trait AnytimeStructured extends StructuredAlgorithm with Anytime
 trait OneTimeStructured extends StructuredAlgorithm with OneTime {
   // One time structured algorithms run refinement and solving just once each.
   override def run(): Unit = runStep()
+}
+
+/**
+ * Structured algorithms that are lazy. The only method this changes is the `checkConstraintBounds` method, where it
+ * requires all constraints to be in the range [0.0, 1.0].
+ */
+trait LazyStructured extends StructuredAlgorithm {
+  override def checkConstraintBounds(): Unit = {
+    // Look at the non constraint factors of the components not fully refined
+    for(comp <- problem.components if !comp.fullyRefined) {
+      // Verify that all entries in the factors are in the range [0.0, 1.0].
+      for(factor <- comp.constraintFactors() ; indices <- factor.getIndices) {
+        val entry = factor.get(indices)
+        require(0.0 <= entry && entry <= 1.0, s"constraint for element ${comp.element} out of bounds: $entry")
+      }
+    }
+  }
 }
