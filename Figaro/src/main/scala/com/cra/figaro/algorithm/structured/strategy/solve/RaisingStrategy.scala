@@ -54,10 +54,14 @@ abstract class RaisingStrategy(problem: Problem, raisingCriteria: RaisingCriteri
       // Variable associated with the target in the subproblem and chain factors, respectively
       val compVar = subproblem.collection(subproblem.target).variable
       val actualVar = chainComp.actualSubproblemVariables(parentValue)
+      // Helper method to replace the variable in raised factors with the actual variable in the chain factors
+      def replaceVariable(factors: List[Factor[Double]]): List[Factor[Double]] = {
+        factors.map(Factory.replaceVariable(_, compVar, actualVar))
+      }
 
       if(subproblem.solved) {
         // If the subproblem has a solution, return it; replace formal variable with actual variable
-        subproblem.solution.map(Factory.replaceVariable(_, compVar, actualVar))
+        replaceVariable(subproblem.solution)
       }
       else {
         // Otherwise, recurse on the subproblem
@@ -66,14 +70,14 @@ abstract class RaisingStrategy(problem: Problem, raisingCriteria: RaisingCriteri
         if(raisingCriteria(subproblem)) {
           // If we decide to raise without solving, copy the factors from the recursing strategy
           // Replace formal variable with actual variable
-          recursingStrategy.nonConstraintFactors.map(Factory.replaceVariable(_, compVar, actualVar))
+          replaceVariable(recursingStrategy.nonConstraintFactors)
         }
         else {
           // Otherwise, compute the solution
           // Because this is a nested problem, it doesn't matter which bounds we use
           recursingStrategy.execute()
           // Replace formal variable with actual variable
-          subproblem.solution.map(Factory.replaceVariable(_, compVar, actualVar))
+          replaceVariable(subproblem.solution)
         }
       }
     }

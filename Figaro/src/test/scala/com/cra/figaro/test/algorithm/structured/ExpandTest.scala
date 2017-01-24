@@ -214,7 +214,7 @@ class ExpandTest extends WordSpec with Matchers {
   }
 
   "Raising a subproblem" should {
-    "add non-constraint factors to the chain" in {
+    /*"add non-constraint factors to the chain" in {
       Universe.createNew()
       val cc = new ComponentCollection
       // raising should use the old chain method
@@ -237,7 +237,7 @@ class ExpandTest extends WordSpec with Matchers {
       val ffVar = c4.nonConstraintFactors.exists(p => p.output.exists(_ == ff.variables.head) || p.parents.exists(_ == ff.variables.head))
       tfVar should be (false)
       ffVar should be (false)
-    }
+    }*/
 
     // Raising no longer includes constraint factors because nested evidence is disallowed
     /*"add constraint factors to the chain" in {

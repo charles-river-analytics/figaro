@@ -232,6 +232,7 @@ class ChainComponent[ParentValue, Value](problem: Problem, val chain: Chain[Pare
     return true
   }
 
+  /*
   def raiseSubproblemSolution(parentValue: ParentValue, subproblem: NestedProblem[Value]): Unit = {
     val factors = for {
       factor <- subproblem.solution
@@ -257,6 +258,7 @@ class ChainComponent[ParentValue, Value](problem: Problem, val chain: Chain[Pare
 
   // Raise all subproblems into this problem
   def raise() { subproblems.foreach(sp => raise(sp._1)) }
+  */
 
 }
 
