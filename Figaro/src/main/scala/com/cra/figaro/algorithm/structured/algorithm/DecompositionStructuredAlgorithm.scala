@@ -28,6 +28,11 @@ trait DecompositionStructuredAlgorithm extends OneTimeStructured {
     (problemTargets ::: universe.conditionedElements ::: universe.constrainedElements).distinct
   }
 
+  override def initialize(): Unit = {
+    super.initialize()
+    collection.useSingleChainFactor = true
+  }
+
   override def refiningStrategy(): RefiningStrategy = {
     new BottomUpStrategy(problem, defaultRangeSizer, false, initialElements.map(collection(_)))
   }

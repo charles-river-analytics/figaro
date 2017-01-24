@@ -81,7 +81,7 @@ abstract class RaisingStrategy(problem: Problem, raisingCriteria: RaisingCriteri
         }
       }
     }
-    if(chainComp.allSubproblemsEliminatedCompletely) {
+    if(problem.collection.useSingleChainFactor && chainComp.allSubproblemsEliminatedCompletely) {
       // Use a single condensed factor
       ChainFactory.makeSingleFactor(problem.collection, chainComp.chain)
     }
