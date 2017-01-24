@@ -23,7 +23,7 @@ import com.cra.figaro.algorithm.factored.gibbs.BlockSampler
 class FlatGibbs(universe: Universe, numSamples: Int, burnIn: Int, interval: Int, blockToSampler: Gibbs.BlockSamplerCreator, targets: Element[_]*)
   extends StructuredProbQueryAlgorithm(universe, targets: _*) with DecompositionProbQuery {
 
-  def solvingStrategy() = new ConstantStrategy(problem, flatRaising(problem), marginalGibbs(numSamples, burnIn, interval, blockToSampler))
+  def solvingStrategy() = new ConstantStrategy(problem, flatRaising, marginalGibbs(numSamples, burnIn, interval, blockToSampler))
 }
 
 object FlatGibbs {

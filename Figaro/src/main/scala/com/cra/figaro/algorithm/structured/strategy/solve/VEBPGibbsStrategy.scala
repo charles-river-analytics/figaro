@@ -53,8 +53,7 @@ class VEBPGibbsStrategy(problem: Problem, raisingCriteria: RaisingCriteria, val 
   def hasDeterminism(problem: Problem, v: Variable[_]): Boolean = problem.collection.variableParents(v).nonEmpty
 
   override def recurse(subproblem: NestedProblem[_]) = {
-    if(subproblem.solved) None
-    else Some(new VEBPGibbsStrategy(subproblem, raisingCriteria, scoreThreshold, determThreshold, bpIters, numSamples, burnIn, interval, blockToSampler))
+    new VEBPGibbsStrategy(subproblem, raisingCriteria, scoreThreshold, determThreshold, bpIters, numSamples, burnIn, interval, blockToSampler)
   }
   
 }

@@ -35,8 +35,7 @@ class VEGibbsStrategy(problem: Problem, raisingCriteria: RaisingCriteria, val sc
   }
 
   override def recurse(subproblem: NestedProblem[_]) = {
-    if(subproblem.solved) None
-    else Some(new VEGibbsStrategy(subproblem, raisingCriteria, scoreThreshold, numSamples, burnIn, interval, blockToSampler))
+    new VEGibbsStrategy(subproblem, raisingCriteria, scoreThreshold, numSamples, burnIn, interval, blockToSampler)
   }
 
 }

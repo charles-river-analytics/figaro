@@ -35,8 +35,7 @@ class MarginalMAPVEStrategy(problem: Problem, raisingCriteria: RaisingCriteria)
 
   override def recurse(subproblem: NestedProblem[_]) = {
     // A problem needed for the initial step of summing out the non-MAP variables; use marginal VE for this
-    if(subproblem.solved) None
-    else Some(new ConstantStrategy(subproblem, raisingCriteria, solver.marginalVariableElimination))
+    new ConstantStrategy(subproblem, raisingCriteria, solver.marginalVariableElimination)
   }
   
 }

@@ -13,7 +13,6 @@
 package com.cra.figaro.algorithm.structured.strategy.refine
 
 import com.cra.figaro.algorithm.structured._
-import com.cra.figaro.algorithm.structured.strategy.RecursiveStrategy
 
 /**
  * A refining strategy takes an inference problem over a set of factors and improves it to better reflect the underlying
@@ -27,14 +26,13 @@ import com.cra.figaro.algorithm.structured.strategy.RecursiveStrategy
  * @param rangeSizer Method to determine the size of the range of components.
  * @param parameterized Indicates whether or not to make parameterized factors.
  */
-private[figaro] abstract class RefiningStrategy(collection: ComponentCollection, rangeSizer: RangeSizer,
-  parameterized: Boolean) extends RecursiveStrategy {
+private[figaro] abstract class RefiningStrategy(collection: ComponentCollection, rangeSizer: RangeSizer, parameterized: Boolean) {
   /**
-   * Refine in place using this strategy. This will recursively mark as unsolved any problems whose
-   * solutions are no longer applicable as a result of refinement. This also marks problem components as fully
-   * enumerated or refined where applicable.
+   * Refine in place using this strategy. This will recursively mark as unsolved any problems whose solutions are no
+   * longer applicable as a result of refinement. This also marks problem components as fully enumerated or refined
+   * where applicable.
    */
-  override def execute(): Unit
+  def execute(): Unit
 
   /**
    * Process a component by generating its range and factors. This includes non-constraint factors, as well as both

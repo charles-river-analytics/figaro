@@ -16,25 +16,35 @@ import com.cra.figaro.algorithm.structured._
 import com.cra.figaro.algorithm.factored.factors.{Factor, Variable}
 
 /**
- * A solving strategy solves an inference problem after a series of refinements have been made. This involves solving
- * subproblems and collecting their factors. The solving strategy may then choose to eliminate variables that do not
- * belong in the solution, or defer elimination to a higher-level problem.
+ * A solving strategy solves an inference problem after a series of refinements have been made. This can involve solving
+ * subproblems and collecting their factors, but this class does not account for subproblems by default. Executing the
+ * strategy then eliminates variables that do not belong in the solution.
+ * @param problem Problem to solve.
  */
 private[figaro] abstract class SolvingStrategy(problem: Problem) {
 
   /**
-   * Process all subproblems for the given component by raising their factors or solutions. This doesn't use bounds
-   * because components in nested problems, which correspond to temporary elements, cannot have evidence.
-   * @param chainComp Component to process.
+   * Get all of the non-constraint factors needed for solving.
+   * @return Non-constraint factors for solving.
    */
-  def raiseSubproblems[ParentValue, Value](chainComp: ChainComponent[ParentValue, Value]): Unit
+  def nonConstraintFactors: List[Factor[Double]] = {
+    problem.components.flatMap(_.nonConstraintFactors)
+  }
 
   /**
-   * Decide whether to raise factors, or perform elimination on factors at this level.
-   * @return False if variables should be eliminated, true if factors should be raised up a level without elimination.
-   * In general, this should return false for a top-level problem, since otherwise no elimination will be applied.
+   * Get all of the constraint factors needed for solving.
+   * @param bounds Bounds for the returned constraint factors.
+   * @return Constraint factors for solving.
    */
-  def decideToRaise(): Boolean
+  def constraintFactors(bounds: Bounds): List[Factor[Double]] = {
+    problem match {
+      // Nested problems can't have evidence
+      case np: NestedProblem[_] =>
+        List()
+      case _ =>
+        problem.components.flatMap(_.constraintFactors(bounds))
+    }
+  }
 
   /**
    * Solve the problem by eliminating variables, leaving only the ones that belong in the solution.
@@ -51,29 +61,22 @@ private[figaro] abstract class SolvingStrategy(problem: Problem) {
    * Solve the problem defined by all the components' current factors. This involves solving and incorporating
    * subproblems as well. This will set the globals accordingly. All components in this problem and contained
    * subproblems should be eliminated in the solution.
-   * @param bounds Bounds for constraint factors.
+   * @param bounds Bounds for constraint factors. Defaults to `Lower`. This default is intended for the cases where it
+   * does not matter which bounds should be used because both upper and lower bounds would be the same.
    */
-  def execute(bounds: Bounds): Unit = {
-    // Raise factors from all subproblems before deciding to eliminate and collecting factors.
-    problem.components.foreach {
-      case chainComp: ChainComponent[_, _] => raiseSubproblems(chainComp)
-      case _ =>
-    }
-
-    if(!decideToRaise()) {
-      val allFactors = problem.components.flatMap(c => c.constraintFactors(bounds) ::: c.nonConstraintFactors)
-      val allVariables = (Set[Variable[_]]() /: allFactors)(_ ++ _.variables)
-      val (toEliminate, toPreserve) = allVariables.partition(problem.internal)
-      val collection = problem.collection
-      problem.globals = toPreserve.map(collection.variableToComponent(_))
-      val (solution, recordingFactors) = eliminate(toEliminate, toPreserve, allFactors)
-      problem.solution = solution
-      problem.recordingFactors = recordingFactors
-      problem.solved = true
-      toEliminate.foreach((v: Variable[_]) => {
-        // TODO might this cause bugs?
-        if (collection.intermediates.contains(v)) collection.intermediates -= v
-      })
-    }
+  def execute(bounds: Bounds = Lower): Unit = {
+    val allFactors = constraintFactors(bounds) ::: nonConstraintFactors
+    val allVariables = (Set[Variable[_]]() /: allFactors)(_ ++ _.variables)
+    val (toEliminate, toPreserve) = allVariables.partition(problem.internal)
+    val collection = problem.collection
+    problem.globals = toPreserve.map(collection.variableToComponent(_))
+    val (solution, recordingFactors) = eliminate(toEliminate, toPreserve, allFactors)
+    problem.solution = solution
+    problem.recordingFactors = recordingFactors
+    problem.solved = true
+    toEliminate.foreach((v: Variable[_]) => {
+      // TODO might this cause bugs?
+      if (collection.intermediates.contains(v)) collection.intermediates -= v
+    })
   }
 }

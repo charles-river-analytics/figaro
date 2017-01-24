@@ -20,7 +20,7 @@ import com.cra.figaro.algorithm.structured.algorithm._
 class FlatBP(universe: Universe, iterations: Int, targets: Element[_]*) extends StructuredProbQueryAlgorithm(universe, targets:_*)
   with DecompositionProbQuery {
   
-  def solvingStrategy() = new ConstantStrategy(problem, flatRaising(problem), marginalBeliefPropagation(iterations))
+  def solvingStrategy() = new ConstantStrategy(problem, flatRaising, marginalBeliefPropagation(iterations))
 }
 
 object FlatBP {

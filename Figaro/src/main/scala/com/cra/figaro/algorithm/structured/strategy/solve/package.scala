@@ -12,20 +12,20 @@
  */
 package com.cra.figaro.algorithm.structured.strategy
 
-import com.cra.figaro.algorithm.structured.Problem
+import com.cra.figaro.algorithm.structured.NestedProblem
 
 package object solve {
   /**
    * A raising criteria is a decision function that chooses whether or not to eliminate variables at the level of this
-   * problem, or to raise factors to the next higher problem. Returns true if the factors should be raised, or false if
-   * a solver should perform elimination.
+   * nested problem, or to raise factors to the next higher problem. Returns true if the factors should be raised, or
+   * false if a solver should perform elimination.
    */
-  type RaisingCriteria = Problem => Boolean
+  type RaisingCriteria = NestedProblem[_] => Boolean
 
   /**
-   * Raises a problem if any of its components are global.
+   * Raises a nested problem if any of its components are global.
    */
-  def raiseIfGlobal(problem: Problem): Boolean = {
+  def raiseIfGlobal(problem: NestedProblem[_]): Boolean = {
     // Raise if there exists a component that is neither internal nor a target
     problem.components.exists(pc => {
       val a = problem.internal(pc.variable)
@@ -35,16 +35,13 @@ package object solve {
   }
 
   /**
-   * Always raises a problem, unless it is the specified top-level problem. This has the effect of "flattening" because
-   * all factors of problems strictly contained in the top-level problem are raised.
-   * @param topLevel The problem that should not be raised. This function raises all other problems.
+   * Always raises a nested problem. This has the effect of "flattening" because all factors of problems strictly
+   * contained in the top-level problem are raised.
    */
-  def flatRaising(topLevel: Problem)(problem: Problem): Boolean = {
-    problem != topLevel
-  }
+  def flatRaising(problem: NestedProblem[_]): Boolean = true
 
   /**
-   * Never raises a problem without solving it.
+   * Never raises a nested problem without solving it.
    */
-  def structuredRaising(problem: Problem): Boolean = false
+  def structuredRaising(problem: NestedProblem[_]): Boolean = false
 }

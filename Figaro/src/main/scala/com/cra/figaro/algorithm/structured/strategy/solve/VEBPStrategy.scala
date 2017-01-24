@@ -33,8 +33,7 @@ class VEBPStrategy(problem: Problem, raisingCriteria: RaisingCriteria, val score
   }
 
   override def recurse(subproblem: NestedProblem[_]) = {
-    if(subproblem.solved) None
-    else Some(new VEBPStrategy(subproblem, raisingCriteria, scoreThreshold, iterations))
+    new VEBPStrategy(subproblem, raisingCriteria, scoreThreshold, iterations)
   }
   
 }

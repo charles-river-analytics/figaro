@@ -13,7 +13,6 @@
 package com.cra.figaro.algorithm.structured.strategy.refine
 
 import com.cra.figaro.algorithm.structured._
-import com.cra.figaro.algorithm.structured.strategy.RecursiveStrategy
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.discrete.AtomicBinomial
 import com.cra.figaro.util
@@ -43,7 +42,7 @@ import scala.collection.mutable
  */
 private[figaro] abstract class DecompositionStrategy(collection: ComponentCollection, rangeSizer: RangeSizer,
                                                      parameterized: Boolean, done: mutable.Set[ProblemComponent[_]])
-  extends RefiningStrategy(collection, rangeSizer, parameterized) with RecursiveStrategy {
+  extends RefiningStrategy(collection, rangeSizer, parameterized) {
 
   /**
    * Optionally decompose a nested problem. The recursing strategy may not refine any components in the set `done`, but
@@ -51,7 +50,7 @@ private[figaro] abstract class DecompositionStrategy(collection: ComponentCollec
    * @param nestedProblem Nested problem to decompose.
    * @return A decomposition strategy for the nested problem, or None if it should not be decomposed further.
    */
-  override def recurse(nestedProblem: NestedProblem[_]): Option[DecompositionStrategy]
+  def recurse(nestedProblem: NestedProblem[_]): Option[DecompositionStrategy]
 
   /**
    * Get the problem component associated with an element. This may involve adding the element to the collection if a

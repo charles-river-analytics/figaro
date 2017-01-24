@@ -21,7 +21,7 @@ import com.cra.figaro.algorithm.structured.algorithm._
 class FlatVE(universe: Universe, targets: Element[_]*) extends StructuredProbQueryAlgorithm(universe, targets:_*)
   with DecompositionProbQuery {
   
-  def solvingStrategy() = new ConstantStrategy(problem, flatRaising(problem), marginalVariableElimination)
+  def solvingStrategy() = new ConstantStrategy(problem, flatRaising, marginalVariableElimination)
 }
 
 object FlatVE {

@@ -12,40 +12,78 @@
  */
 package com.cra.figaro.algorithm.structured.strategy.solve
 
+import com.cra.figaro.algorithm.factored.factors.Factor
+import com.cra.figaro.algorithm.factored.factors.factory.{ChainFactory, Factory}
 import com.cra.figaro.algorithm.structured._
-import com.cra.figaro.algorithm.structured.strategy.RecursiveStrategy
 
 /**
- * A solving strategy that recursively raises subproblems, or solves them and raises their solutions.
+ * A solving strategy that handles subproblems. It either recursively raises subproblems, or solves them and raises
+ * their solutions.
+ * @param problem Problem to solve.
+ * @param raisingCriteria Decision function to decide whether to solve a subproblem or raise without elimination.
  */
-abstract class RaisingStrategy(problem: Problem, raisingCriteria: RaisingCriteria) extends SolvingStrategy(problem)
-  with RecursiveStrategy {
-
-  override def decideToRaise(): Boolean = raisingCriteria(problem)
+abstract class RaisingStrategy(problem: Problem, raisingCriteria: RaisingCriteria) extends SolvingStrategy(problem) {
 
   /**
-   * Returns a strategy to solve the nested problem, or None if e.g. the subproblem is already solved.
-   * @param subproblem Nested problem to consider recursing on.
-   * @return A strategy to recurse on the nested problem, or None if it should not recurse further.
+   * Returns a strategy that could be used to solve the nested problem.
+   * @param subproblem Unsolved nested problem to recurse on.
+   * @return A strategy to solve the nested problem.
    */
-  override def recurse(subproblem: NestedProblem[_]): Option[RaisingStrategy]
+  def recurse(subproblem: NestedProblem[_]): RaisingStrategy
 
-  override def raiseSubproblems[ParentValue, Value](chainComp: ChainComponent[ParentValue, Value]): Unit = {
-    // If the chain's range is just {*}, then no factors were created and none of the subproblems are relevant
-    if(!chainComp.range.hasStar || chainComp.range.regularValues.nonEmpty) {
-      for((parentValue, subproblem) <- chainComp.subproblems) {
-        val recursingStrategy = recurse(subproblem)
-        if(recursingStrategy.nonEmpty) recursingStrategy.get.execute()
-
-        if(subproblem.solved) chainComp.raiseSubproblemSolution(parentValue, subproblem)
-        else chainComp.raise(parentValue)
-      }
-    }
+  /**
+   * Get all of the non-constraint factors needed for solving. This includes subproblem factors.
+   * @return Non-constraint factors for solving.
+   */
+  override def nonConstraintFactors: List[Factor[Double]] = problem.components.flatMap {
+    case chainComp: ChainComponent[_, _] =>
+      chainNonConstraintFactors(chainComp)
+    case comp =>
+      comp.nonConstraintFactors
   }
 
   /**
-   * Execute on a nested problem. Because nested problems never have evidence variables, it doesn't matter which bounds
-   * we use.
+   * Get non-constraint factors associated with a single chain component.
+   * @param chainComp Chain component to process.
+   * @return All factors associated with the chain component that are needed for solving. This includes (possibly
+   * eliminated) subproblem factors.
    */
-  override def execute(): Unit = execute(Lower)
+  protected def chainNonConstraintFactors[ParentValue, Value](chainComp: ChainComponent[ParentValue, Value]): List[Factor[Double]] = {
+    // Process each subproblem and collect the corresponding factors
+    val collectedSubproblemFactors = for((parentValue, subproblem) <- chainComp.subproblems) yield {
+      // Variable associated with the target in the subproblem and chain factors, respectively
+      val compVar = subproblem.collection(subproblem.target).variable
+      val actualVar = chainComp.actualSubproblemVariables(parentValue)
+
+      if(subproblem.solved) {
+        // If the subproblem has a solution, return it; replace formal variable with actual variable
+        subproblem.solution.map(Factory.replaceVariable(_, compVar, actualVar))
+      }
+      else {
+        // Otherwise, recurse on the subproblem
+        val recursingStrategy = recurse(subproblem)
+
+        if(raisingCriteria(subproblem)) {
+          // If we decide to raise without solving, copy the factors from the recursing strategy
+          // Replace formal variable with actual variable
+          recursingStrategy.nonConstraintFactors.map(Factory.replaceVariable(_, compVar, actualVar))
+        }
+        else {
+          // Otherwise, compute the solution
+          // Because this is a nested problem, it doesn't matter which bounds we use
+          recursingStrategy.execute()
+          // Replace formal variable with actual variable
+          subproblem.solution.map(Factory.replaceVariable(_, compVar, actualVar))
+        }
+      }
+    }
+    if(chainComp.allSubproblemsEliminatedCompletely) {
+      // Use a single condensed factor
+      ChainFactory.makeSingleFactor(problem.collection, chainComp.chain)
+    }
+    else {
+      // Return the collected subproblem factors, and the chain factors that connect them
+      chainComp.nonConstraintFactors ::: collectedSubproblemFactors.toList.flatten
+    }
+  }
 }
