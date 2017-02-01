@@ -280,9 +280,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         pr.add(v1)
         val c1 = cc(v1)
         c1.generateRange()
-        c1.makeNonConstraintFactors()
 
-        val List(factor) = c1.nonConstraintFactors
+        val List(factor) = c1.nonConstraintFactors()
         factor.variables should equal (List(c1.variable))
         factor.size should equal (1)
         factor.get(List(0)) should equal(1.0)
@@ -299,9 +298,8 @@ class FactorMakerTest extends WordSpec with Matchers {
           pr.add(v1)
           val c1 = cc(v1)
           c1.generateRange()
-          c1.makeNonConstraintFactors()
 
-          val List(factor) = c1.nonConstraintFactors
+          val List(factor) = c1.nonConstraintFactors()
           factor.variables should equal (List(c1.variable))
           factor.size should equal (2)
           factor.get(List(0)) should equal(0.3)
@@ -323,9 +321,8 @@ class FactorMakerTest extends WordSpec with Matchers {
           val c2 = cc(v2)
           c1.generateRange()
           c2.generateRange()
-          c2.makeNonConstraintFactors()
 
-          val List(factor) = c2.nonConstraintFactors
+          val List(factor) = c2.nonConstraintFactors()
           factor.variables should equal (List(c1.variable, c2.variable))
           factor.size should equal (4)
           val vals = c1.variable.range
@@ -356,9 +353,8 @@ class FactorMakerTest extends WordSpec with Matchers {
           c2.generateRange()
           c3.generateRange()
           c4.generateRange()
-          c4.makeNonConstraintFactors()
 
-          val List(factor) = c4.nonConstraintFactors
+          val List(factor) = c4.nonConstraintFactors()
           factor.variables should equal (List(c3.variable, c4.variable))
           factor.size should equal (6) // the parent has two values: * and e3; the flip has three values: true, false, and *
           val parentStarIndex = c3.variable.range.indexWhere(!_.isRegular)
@@ -385,9 +381,8 @@ class FactorMakerTest extends WordSpec with Matchers {
           pr.add(v2)
           val c2 = cc(v2)
           c2.generateRange()
-          c2.makeNonConstraintFactors()
 
-          val List(factor) = c2.nonConstraintFactors
+          val List(factor) = c2.nonConstraintFactors()
           factor.variables.size should equal (2)
           factor.variables(1) should equal (c2.variable)
           factor.size should equal (3)
@@ -415,9 +410,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         val c2 = cc(v2)
         c1.generateRange()
         c2.generateRange()
-        c2.makeNonConstraintFactors(true)
 
-        val List(factor) = c2.nonConstraintFactors
+        val List(factor) = c2.nonConstraintFactors(true)
         factor.variables should equal (List(c2.variable))
         factor.size should equal (2)
         val trueIndex = c2.variable.range.indexOf(Regular(true))
@@ -437,9 +431,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         pr.add(v2)
         val c2 = cc(v2)
         c2.generateRange()
-        c2.makeNonConstraintFactors(true)
 
-        val List(factor) = c2.nonConstraintFactors
+        val List(factor) = c2.nonConstraintFactors(true)
         factor.variables should equal (List(c2.variable))
         factor.size should equal (3)
         val trueIndex = c2.variable.range.indexOf(Regular(true))
@@ -465,9 +458,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         val c2 = cc(v2)
         c1.generateRange()
         c2.generateRange()
-        c2.makeNonConstraintFactors(false)
 
-        val List(factor) = c2.nonConstraintFactors
+        val List(factor) = c2.nonConstraintFactors(false)
         factor.variables should equal (List(c1.variable, c2.variable))
         factor.size should equal (ParticleGenerator.defaultMaxNumSamplesAtChain * 2)
         for { (p, index) <- c1.variable.range.zipWithIndex } {
@@ -488,9 +480,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         pr.add(v2)
         val c2 = cc(v2)
         c2.generateRange()
-        c2.makeNonConstraintFactors(false)
 
-        val List(factor) = c2.nonConstraintFactors
+        val List(factor) = c2.nonConstraintFactors(false)
         factor.variables.size should equal (2)
         factor.variables(1) should equal (c2.variable)
         factor.size should equal (3)
@@ -513,9 +504,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         pr.add(v1)
         val c1 = cc(v1)
         c1.generateRange()
-        c1.makeNonConstraintFactors()
 
-        val List(factor) = c1.nonConstraintFactors
+        val List(factor) = c1.nonConstraintFactors()
         val vals = c1.variable.range
         val i1 = vals.indexOf(Regular(1))
         val i0 = vals.indexOf(Regular(0))
@@ -551,9 +541,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         c2.generateRange()
         c3.generateRange()
         c4.generateRange()
-        c4.makeNonConstraintFactors()
 
-        val List(factor) = c4.nonConstraintFactors
+        val List(factor) = c4.nonConstraintFactors()
         factor.variables should equal (List(c1.variable, c2.variable, c3.variable, c4.variable))
         factor.size should equal (6)
         val norm1 = 0.1 + 0.8 + 0.9
@@ -594,9 +583,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         c4.generateRange()
         c5.generateRange()
         c6.generateRange()
-        c6.makeNonConstraintFactors()
 
-        val List(factor) = c6.nonConstraintFactors
+        val List(factor) = c6.nonConstraintFactors()
         factor.variables should equal (List(c3.variable, c4.variable, c5.variable, c6.variable))
         factor.size should equal (12)
         val c3StarIndex = c3.variable.range.indexWhere(!_.isRegular)
@@ -637,8 +625,7 @@ class FactorMakerTest extends WordSpec with Matchers {
           val c3 = cc(v3)
           c2.generateRange()
           c3.generateRange()
-          c3.makeNonConstraintFactors()
-          val List(factor) = c3.nonConstraintFactors
+          val List(factor) = c3.nonConstraintFactors()
 
           factor.variables.size should equal (3)
           factor.variables(1) should equal (c2.variable)
@@ -673,9 +660,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         val c2 = cc(v2)
         c1.generateRange()
         c2.generateRange()
-        c2.makeNonConstraintFactors(true)
 
-        val List(factor) = c2.nonConstraintFactors
+        val List(factor) = c2.nonConstraintFactors(true)
         factor.variables should equal (List(c2.variable))
         factor.size should equal (2)
         val pFalse = v1.MAPValue(0)
@@ -697,9 +683,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         pr.add(v2)
         val c2 = cc(v2)
         c2.generateRange()
-        c2.makeNonConstraintFactors(true)
 
-        val List(factor) = c2.nonConstraintFactors
+        val List(factor) = c2.nonConstraintFactors(true)
         factor.variables should equal (List(c2.variable))
         factor.size should equal (3)
         val pFalse = v1.MAPValue(0)
@@ -728,9 +713,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         val c2 = cc(v2)
         c1.generateRange()
         c2.generateRange()
-        c2.makeNonConstraintFactors(false)
 
-        val List(factor) = c2.nonConstraintFactors
+        val List(factor) = c2.nonConstraintFactors(false)
         factor.variables should equal (List(c1.variable, c2.variable))
         factor.size should equal (ParticleGenerator.defaultMaxNumSamplesAtChain * 2)
         for {
@@ -753,9 +737,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         pr.add(v2)
         val c2 = cc(v2)
         c2.generateRange()
-        c2.makeNonConstraintFactors(false)
 
-        val List(factor) = c2.nonConstraintFactors
+        val List(factor) = c2.nonConstraintFactors(false)
         factor.variables should equal (List(c2.variable))
         factor.size should equal (3)
         val trueIndex = c2.variable.range.indexOf(Regular(true))
@@ -776,9 +759,8 @@ class FactorMakerTest extends WordSpec with Matchers {
           pr.add(v1)
           val c1 = cc(v1)
           c1.generateRange()
-          c1.makeNonConstraintFactors()
 
-          val List(factor) = c1.nonConstraintFactors
+          val List(factor) = c1.nonConstraintFactors()
           factor.variables should equal (List(c1.variable))
           factor.size should equal (4)
           factor.get(List(0)) should equal (Util.binomialDensity(3, 0.6, 0))
@@ -801,9 +783,8 @@ class FactorMakerTest extends WordSpec with Matchers {
           val c2 = cc(v2)
           c1.generateRange()
           c2.generateRange()
-          c2.makeNonConstraintFactors(true)
 
-          val List(factor) = c2.nonConstraintFactors
+          val List(factor) = c2.nonConstraintFactors(true)
           factor.variables should equal (List(c2.variable))
           factor.size should equal (4)
           val probSuccess = v1.MAPValue
@@ -824,9 +805,8 @@ class FactorMakerTest extends WordSpec with Matchers {
           pr.add(v2)
           val c2 = cc(v2)
           c2.generateRange()
-          c2.makeNonConstraintFactors(true)
 
-          val List(factor) = c2.nonConstraintFactors
+          val List(factor) = c2.nonConstraintFactors(true)
           factor.variables should equal (List(c2.variable))
           factor.size should equal (5)
           val probSuccess = v1.MAPValue
@@ -853,9 +833,8 @@ class FactorMakerTest extends WordSpec with Matchers {
           c1.generateRange()
           c2.expand() // need to do this so the atomic binomials for each of the beta values is added to the problem
           c2.generateRange()
-          c2.makeNonConstraintFactors(false)
 
-          val tupleFactor :: factors = c2.nonConstraintFactors
+          val tupleFactor :: factors = c2.nonConstraintFactors(false)
           val List(var1, var2, tupleVar) = tupleFactor.variables
           var1 should equal (c1.variable)
           var2 should equal (c2.variable)
@@ -876,9 +855,8 @@ class FactorMakerTest extends WordSpec with Matchers {
           pr.add(v2)
           val c2 = cc(v2)
           c2.generateRange()
-          c2.makeNonConstraintFactors(false)
 
-          val List(factor) = c2.nonConstraintFactors
+          val List(factor) = c2.nonConstraintFactors(false)
           factor.variables should equal (List(c2.variable))
           factor.size should equal (5)
           val probSuccess = v1.MAPValue
@@ -900,9 +878,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         pr.add(v1)
         val c1 = cc(v1)
         c1.generateRange()
-        c1.makeNonConstraintFactors()
 
-        val List(factor) = c1.nonConstraintFactors
+        val List(factor) = c1.nonConstraintFactors()
         factor.variables should equal (List(c1.variable))
         val samples = ParticleGenerator.defaultNumSamplesFromAtomics 
         factor.size should equal (samples)
@@ -921,16 +898,13 @@ class FactorMakerTest extends WordSpec with Matchers {
         val c1 = cc(v1)
 
         c1.generateRange(5)
-        c1.makeNonConstraintFactors()
-        val List(factor1) = c1.nonConstraintFactors
+        val List(factor1) = c1.nonConstraintFactors()
 
         c1.generateRange(15)
-        c1.makeNonConstraintFactors()
-        val List(factor2) = c1.nonConstraintFactors
+        val List(factor2) = c1.nonConstraintFactors()
 
         c1.generateRange(10)
-        c1.makeNonConstraintFactors()
-        val List(factor3) = c1.nonConstraintFactors
+        val List(factor3) = c1.nonConstraintFactors()
 
         for {index <- 0 until 5} {
           factor1.get(List(index)) should equal(1.0 / 5 +- 0.0001)
@@ -959,7 +933,6 @@ class FactorMakerTest extends WordSpec with Matchers {
           c1.generateRange()
           c2.generateRange()
           c3.generateRange()
-          c3.makeNonConstraintFactors()
 
           val v1Vals = c1.variable.range
           val v3Vals = c3.variable.range
@@ -969,7 +942,7 @@ class FactorMakerTest extends WordSpec with Matchers {
           val v3IndexF = v3Vals.indexOf(Regular(false))
           val v1Index = v3.outcomes.indexOf(v1)
           val v2Index = v3.outcomes.indexOf(v2)
-          val selectFactor :: tupleFactor :: outcomeFactors = c3.nonConstraintFactors
+          val selectFactor :: tupleFactor :: outcomeFactors = c3.nonConstraintFactors()
           tupleFactor.variables.size should equal (3)
           val selectVar = tupleFactor.variables(0)
           tupleFactor.variables(1) should equal (c3.variable)
@@ -1021,7 +994,6 @@ class FactorMakerTest extends WordSpec with Matchers {
           c3.generateRange()
           c4.generateRange()
           c5.generateRange()
-          c5.makeNonConstraintFactors()
 
           val v1Vals = c1.variable.range
           val v2Vals = c2.variable.range
@@ -1038,7 +1010,7 @@ class FactorMakerTest extends WordSpec with Matchers {
           val v3t = v3Vals.indexOf(Regular(true))
           val v5f = v5Vals.indexOf(Regular(false))
           val v5t = v5Vals.indexOf(Regular(true))
-          val selectFactor :: tupleFactor :: outcomeFactors = c5.nonConstraintFactors
+          val selectFactor :: tupleFactor :: outcomeFactors = c5.nonConstraintFactors()
           tupleFactor.variables.size should equal (3)
           val selectVar = tupleFactor.variables(0)
           tupleFactor.variables(1) should equal (c5.variable)
@@ -1094,7 +1066,6 @@ class FactorMakerTest extends WordSpec with Matchers {
         c2.generateRange()
         c3.generateRange()
         c4.generateRange()
-        c4.makeNonConstraintFactors()
 
         val v1Vals = c1.variable.range
         val v2Vals = c2.variable.range
@@ -1106,7 +1077,7 @@ class FactorMakerTest extends WordSpec with Matchers {
         val v41 = v4Vals indexOf Regular(1)
         val v42 = v4Vals indexOf Regular(2)
         val v43 = v4Vals indexOf Regular(3)
-        val tupleFactor :: selectors = c4.nonConstraintFactors
+        val tupleFactor :: selectors = c4.nonConstraintFactors()
         selectors.size should equal (2)
         val (trueSelector, falseSelector) =
           if (v1t == 0) {
@@ -1178,7 +1149,6 @@ class FactorMakerTest extends WordSpec with Matchers {
         c2.generateRange()
         c3.generateRange()
         c4.generateRange()
-        c4.makeNonConstraintFactors()
 
         val v1Vals = c1.variable.range
         val v2Vals = c2.variable.range
@@ -1190,7 +1160,7 @@ class FactorMakerTest extends WordSpec with Matchers {
         val v41 = v4Vals indexOf Regular(1)
         val v42 = v4Vals indexOf Regular(2)
         val v43 = v4Vals indexOf Regular(3)
-        val tupleFactor :: selectors = c4.nonConstraintFactors
+        val tupleFactor :: selectors = c4.nonConstraintFactors()
         selectors.size should equal (2)
         val (trueSelector, falseSelector) =
           if (v1t == 0) {
@@ -1269,10 +1239,9 @@ class FactorMakerTest extends WordSpec with Matchers {
         val c5 = cc(v5)
         c5.generateRange()
         c6.generateRange()
-        c6.makeNonConstraintFactors()
 
         val v3Star = c3.variable.range.indexWhere(!_.isRegular)
-        val tupleFactor :: selectors = c6.nonConstraintFactors
+        val tupleFactor :: selectors = c6.nonConstraintFactors()
         val tupleVar = tupleFactor.variables(2)
         val starSelector = selectors(v3Star)
         starSelector.variables.size should equal (2)
@@ -1301,27 +1270,23 @@ class FactorMakerTest extends WordSpec with Matchers {
       val subV1 = pr1.target
       val subC1 = cc(subV1)
       subC1.generateRange()
-      subC1.makeNonConstraintFactors()
       new ConstantStrategy(pr1, structuredRaising, marginalVariableElimination).execute()
 
       val pr2 = cc.expansions(v2.chainFunction, 2)
       val subV2 = pr2.target
       val subC2 = cc(subV2)
       subC2.generateRange()
-      subC2.makeNonConstraintFactors()
       new ConstantStrategy(pr2, structuredRaising, marginalVariableElimination).execute()
 
       val pr3 = cc.expansions(v2.chainFunction, 3)
       val subV3 = pr3.target
       val subC3 = cc(subV3)
       subC3.generateRange()
-      subC3.makeNonConstraintFactors()
       new ConstantStrategy(pr3, structuredRaising, marginalVariableElimination).execute()
 
       c2.generateRange()
-      c2.makeNonConstraintFactors()
 
-      val List(factor) = c2.nonConstraintFactors
+      val List(factor) = c2.nonConstraintFactors()
       factor.variables should equal (List(c1.variable, c2.variable))
       val v1Vals = c1.variable.range
       val v2Vals = c2.variable.range
@@ -1359,19 +1324,16 @@ class FactorMakerTest extends WordSpec with Matchers {
       val subVf = prf.target
       val subCf = cc(subVf)
       subCf.generateRange()
-      subCf.makeNonConstraintFactors()
       new ConstantStrategy(prf, structuredRaising, marginalVariableElimination).execute()
       val prt = cc.expansions(v2.chainFunction, true)
       val subVt = prt.target
       val subCt = cc(subVt)
       subCt.generateRange()
-      subCt.makeNonConstraintFactors()
       new ConstantStrategy(prt, structuredRaising, marginalVariableElimination).execute()
 
       c2.generateRange()
-      c2.makeNonConstraintFactors()
 
-      val List(factor) = c2.nonConstraintFactors
+      val List(factor) = c2.nonConstraintFactors()
       factor.variables should equal (List(c1.variable, c2.variable))
       val v1Vals = c1.variable.range
       val v2Vals = c2.variable.range
@@ -1410,22 +1372,19 @@ class FactorMakerTest extends WordSpec with Matchers {
       val subV1 = pr1.target
       val subC1 = cc(subV1)
       subC1.generateRange()
-      subC1.makeNonConstraintFactors()
       new ConstantStrategy(pr1, structuredRaising, marginalVariableElimination).execute()
       val pr2 = cc.expansions(v2.chainFunction, 2)
       val subV2 = pr2.target
       val subC2 = cc(subV2)
       subC2.generateRange()
-      subC2.makeNonConstraintFactors()
       new ConstantStrategy(pr2, structuredRaising, marginalVariableElimination).execute()
       val pr3 = cc.expansions(v2.chainFunction, 3)
       // no range generation or factor creation
       new ConstantStrategy(pr3, structuredRaising, marginalVariableElimination).execute()
 
       c2.generateRange()
-      c2.makeNonConstraintFactors()
 
-      val List(factor) = c2.nonConstraintFactors
+      val List(factor) = c2.nonConstraintFactors()
       factor.variables should equal (List(c1.variable, c2.variable))
       val v1Vals = c1.variable.range
       val v2Vals = c2.variable.range
@@ -1468,23 +1427,19 @@ class FactorMakerTest extends WordSpec with Matchers {
       val c1 = cc(v1)
       val c2 = cc(v2)
       ct.generateRange()
-      ct.makeNonConstraintFactors()
       // do not generate range for cf
       c1.generateRange() // will include true and *
-      c1.makeNonConstraintFactors()
       c2.expand()
 
       val prt = cc.expansions(v2.chainFunction, true)
       val subVt = prt.target
       val subCt = cc(subVt)
       subCt.generateRange()
-      subCt.makeNonConstraintFactors()
       new ConstantStrategy(prt, structuredRaising, marginalVariableElimination).execute()
 
       c2.generateRange()
-      c2.makeNonConstraintFactors()
 
-      val List(factor) = c2.nonConstraintFactors
+      val List(factor) = c2.nonConstraintFactors()
       factor.variables should equal (List(c1.variable, c2.variable))
       val v1Vals = c1.variable.range
       val v2Vals = c2.variable.range
@@ -1525,18 +1480,15 @@ class FactorMakerTest extends WordSpec with Matchers {
       val vPf = subPf.target
       val cPf = cc(vPf)
       cPf.generateRange()
-      cPf.makeNonConstraintFactors()
       new ConstantStrategy(subPf, structuredRaising, marginalVariableElimination).execute()
       val subPt = cc.expansions(v3.chainFunction, true)
       val vPt = subPt.target
       val cPt = cc(vPt)
       cPt.generateRange()
-      cPt.makeNonConstraintFactors()
       new ConstantStrategy(subPt, structuredRaising, marginalVariableElimination).execute()
       c3.generateRange()
-      c3.makeNonConstraintFactors()
 
-      c3.nonConstraintFactors.length should be > (1)
+      c3.nonConstraintFactors().length should be > (1)
     }
   }
 
@@ -1566,9 +1518,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         val c2 = cc(v2)
         c1.generateRange()
         c2.generateRange()
-        c2.makeNonConstraintFactors()
 
-        val List(factor) = c2.nonConstraintFactors
+        val List(factor) = c2.nonConstraintFactors()
         val v1Vals = c1.variable.range
         val v2Vals = c2.variable.range
         val v11 = v1Vals indexOf Regular(1)
@@ -1609,9 +1560,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         c3.generateRange()
         c4.generateRange()
         c5.generateRange()
-        c5.makeNonConstraintFactors()
 
-        val List(factor) = c5.nonConstraintFactors
+        val List(factor) = c5.nonConstraintFactors()
         val v4Vals = c4.variable.range
         val v5Vals = c5.variable.range
         val v4Star = v4Vals indexWhere(!_.isRegular)
@@ -1650,9 +1600,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         c1.generateRange()
         c2.generateRange()
         c3.generateRange()
-        c3.makeNonConstraintFactors()
 
-        val List(factor) = c3.nonConstraintFactors
+        val List(factor) = c3.nonConstraintFactors()
         val v1Vals = c1.variable.range
         val v2Vals = c2.variable.range
         val v3Vals = c3.variable.range
@@ -1699,9 +1648,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         val c2 = cc(e2)
         c1.generateRange()
         c2.generateRange()
-        c2.makeNonConstraintFactors()
 
-        val List(factor) = c2.nonConstraintFactors
+        val List(factor) = c2.nonConstraintFactors()
         factor.variables should equal (List(c1.variable, c2.variable))
         val c1IndexT = c1.variable.range.indexOf(Regular(true))
         val c1IndexF = c1.variable.range.indexOf(Regular(false))
@@ -1740,9 +1688,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         c4.generateRange()
         c5.generateRange()
         c6.generateRange()
-        c6.makeNonConstraintFactors()
 
-        val List(factor) = c6.nonConstraintFactors
+        val List(factor) = c6.nonConstraintFactors()
         val v4Vals = c4.variable.range
         val v5Vals = c5.variable.range
         val v6Vals = c6.variable.range
@@ -1804,9 +1751,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         c2.generateRange()
         c3.generateRange()
         c4.generateRange()
-        c4.makeNonConstraintFactors()
 
-        val List(factor) = c4.nonConstraintFactors
+        val List(factor) = c4.nonConstraintFactors()
         val v1Vals = c1.variable.range
         val v2Vals = c2.variable.range
         val v3Vals = c3.variable.range
@@ -1872,9 +1818,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         c5.generateRange()
         c6.generateRange()
         c7.generateRange()
-        c7.makeNonConstraintFactors()
 
-        val List(factor) = c7.nonConstraintFactors
+        val List(factor) = c7.nonConstraintFactors()
         val v4Vals = c4.variable.range
         val v5Vals = c5.variable.range
         val v6Vals = c6.variable.range
@@ -1943,9 +1888,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         c3.generateRange()
         c4.generateRange()
         c5.generateRange()
-        c5.makeNonConstraintFactors()
 
-        val List(factor) = c5.nonConstraintFactors
+        val List(factor) = c5.nonConstraintFactors()
         val v1Vals = c1.variable.range
         val v2Vals = c2.variable.range
         val v3Vals = c3.variable.range
@@ -2038,9 +1982,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         c6.generateRange()
         c7.generateRange()
         c8.generateRange()
-        c8.makeNonConstraintFactors()
 
-        val List(factor) = c8.nonConstraintFactors
+        val List(factor) = c8.nonConstraintFactors()
         val v4Vals = c4.variable.range
         val v5Vals = c5.variable.range
         val v6Vals = c6.variable.range
@@ -2142,9 +2085,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         c4.generateRange()
         c5.generateRange()
         c6.generateRange()
-        c6.makeNonConstraintFactors()
 
-        val List(factor) = c6.nonConstraintFactors
+        val List(factor) = c6.nonConstraintFactors()
         val v1Vals = c1.variable.range
         val v2Vals = c2.variable.range
         val v3Vals = c3.variable.range
@@ -2245,9 +2187,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         c7.generateRange()
         c8.generateRange()
         c9.generateRange()
-        c9.makeNonConstraintFactors()
 
-        val List(factor) = c9.nonConstraintFactors
+        val List(factor) = c9.nonConstraintFactors()
         val v4Vals = c4.variable.range
         val v5Vals = c5.variable.range
         val v6Vals = c6.variable.range
@@ -2338,8 +2279,7 @@ class FactorMakerTest extends WordSpec with Matchers {
         c1.generateRange()
         c2.generateRange()
         c3.generateRange()
-        c3.makeNonConstraintFactors()
-        val List(factor) = c3.nonConstraintFactors
+        val List(factor) = c3.nonConstraintFactors()
 
         val v1Vals = c1.variable.range
         val v2Vals = c2.variable.range
@@ -2426,8 +2366,7 @@ class FactorMakerTest extends WordSpec with Matchers {
         c4.generateRange()
         c5.generateRange()
         c6.generateRange()
-        c6.makeNonConstraintFactors()
-        val List(factor) = c6.nonConstraintFactors
+        val List(factor) = c6.nonConstraintFactors()
 
         val v4Vals = c4.variable.range
         val v5Vals = c5.variable.range
@@ -2481,9 +2420,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         val c2 = cc(e2)
         c1.generateRange()
         c2.generateRange()
-        c2.makeNonConstraintFactors()
 
-        val List(factor) = c2.nonConstraintFactors
+        val List(factor) = c2.nonConstraintFactors()
         factor.variables should equal (List(c1.variable, c2.variable))
         factor.contents.size should equal (2)
         val v1True = c1.variable.range.indexOf(Regular(true))
@@ -2513,9 +2451,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         c2.generateRange()
         c3.generateRange()
         c4.generateRange()
-        c4.makeNonConstraintFactors()
 
-        val List(factor) = c4.nonConstraintFactors
+        val List(factor) = c4.nonConstraintFactors()
         factor.variables should equal (List(c3.variable, c4.variable))
         factor.contents.size should equal (2)
         val v3False = c3.variable.range.indexOf(Regular(false))
@@ -2550,11 +2487,10 @@ class FactorMakerTest extends WordSpec with Matchers {
         c12.generateRange()
         c2.generateRange()
         c3.generateRange()
-        c3.makeNonConstraintFactors()
 
         // Four factors should be produced: two conditional selectors, and one for each of the possibilities
         // The conditional selector and result factors for each parent value are produced in turn
-        val tupleFactor :: factors = c3.nonConstraintFactors
+        val tupleFactor :: factors = c3.nonConstraintFactors()
         val tupleVar = tupleFactor.variables(2)
         tupleFactor.variables(1) should equal (c3.variable)
         val startVar = tupleFactor.variables(0)
@@ -2624,13 +2560,12 @@ class FactorMakerTest extends WordSpec with Matchers {
         c24.generateRange()
         c3.generateRange()
         c4.generateRange()
-        c4.makeNonConstraintFactors()
 
         // Eight factors should be produced:
         // Two conditional selectors at the top level,
         // Three conditional selectors at the second level
         // Three result factors at the third level
-        val topTupleFactor :: factors = c4.nonConstraintFactors
+        val topTupleFactor :: factors = c4.nonConstraintFactors()
         val topTupleVar = topTupleFactor.variables(2)
         val topIndex3T = topTupleVar.range.indexOf(Regular(List(Regular(ec3), Regular(true))))
         val topIndex3F = topTupleVar.range.indexOf(Regular(List(Regular(ec3), Regular(false))))
@@ -2717,7 +2652,6 @@ class FactorMakerTest extends WordSpec with Matchers {
         c22.generateRange()
         c3.generateRange()
         c4.generateRange()
-        c4.makeNonConstraintFactors()
 
         // Three factors should be produced: one regular conditional selector with its possibility, and one * conditional selector
         // The conditional selector and result factors for each parent value are produced in turn
@@ -2727,7 +2661,7 @@ class FactorMakerTest extends WordSpec with Matchers {
         val e4FalseIndex = c4.variable.range.indexOf(Regular(false))
         val e4StarIndex = c4.variable.range.indexWhere(!_.isRegular)
         val e4Star = c4.variable.range(e4StarIndex)
-        val tupleFactor :: factors = c4.nonConstraintFactors
+        val tupleFactor :: factors = c4.nonConstraintFactors()
         val tupleVar = tupleFactor.variables(2)
         val vtIndexStarStar = tupleVar.range.indexOf(Regular(List(e3Star, e4Star)))
         val vtIndexStarF = tupleVar.range.indexOf(Regular(List(e3Star, Regular(false))))
@@ -2780,9 +2714,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         val c3 = cc(e3)
         c1.generateRange()
         c3.generateRange()
-        c3.makeNonConstraintFactors()
 
-        val List(factor) = c3.nonConstraintFactors
+        val List(factor) = c3.nonConstraintFactors()
         factor.variables should equal (List(c1.variable, c3.variable))
         factor.contents.size should equal (2)
         val c1TrueIndex = c1.variable.range.indexOf(Regular(true))
@@ -2812,9 +2745,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         c2.generateRange()
         c3.generateRange()
         c5.generateRange()
-        c5.makeNonConstraintFactors()
 
-        val List(factor) = c5.nonConstraintFactors
+        val List(factor) = c5.nonConstraintFactors()
         factor.variables should equal (List(c3.variable, c5.variable))
         factor.contents.size should equal (2)
         val c3FalseIndex = c3.variable.range.indexOf(Regular(false))
@@ -2851,7 +2783,6 @@ class FactorMakerTest extends WordSpec with Matchers {
         c12.generateRange()
         c2.generateRange()
         c4.generateRange()
-        c4.makeNonConstraintFactors()
 
         val c11Index1 = c11.variable.range.indexOf(Regular(1))
         val c11Index2 = c11.variable.range.indexOf(Regular(2))
@@ -2867,7 +2798,7 @@ class FactorMakerTest extends WordSpec with Matchers {
         val c4Index23 = c4.variable.range.indexOf(Regular(HashMultiSet(2, 3)))
 
         // 10 factors should be produced: one tuple factor, two conditional selectors, 2 applys, 2 injects, and three for the simple references
-        val tupleFactor :: factors = c4.nonConstraintFactors
+        val tupleFactor :: factors = c4.nonConstraintFactors()
         factors.size should equal (9)
         tupleFactor.variables(0) should equal (c2.variable)
         tupleFactor.variables(1) should equal (c4.variable)
@@ -3021,13 +2952,12 @@ class FactorMakerTest extends WordSpec with Matchers {
         c24.generateRange()
         c3.generateRange()
         c5.generateRange()
-        c5.makeNonConstraintFactors()
 
         // 18 factors are produced
         // 1 top level tuple factor, 2 top level selectors
         // - for option ec3: 1 tuple factor, 2 selectors, 2 applys, 2 injects, 3 results
         // - for option ec4: 1 tuple factor, 1 selector, 1 apply, 1 inject, 1 result
-        val topTupleFactor :: factors = c5.nonConstraintFactors
+        val topTupleFactor :: factors = c5.nonConstraintFactors()
         factors.size should equal (17)
         val c11Index1 = c11.variable.range.indexOf(Regular(1))
         val c11Index2 = c11.variable.range.indexOf(Regular(2))
@@ -3215,7 +3145,6 @@ class FactorMakerTest extends WordSpec with Matchers {
         cl12.generateRange()
         c2.generateRange()
         c4.generateRange()
-        c4.makeNonConstraintFactors()
 
         val c11Index1 = c11.variable.range.indexOf(Regular(1))
         val c11Index2 = c11.variable.range.indexOf(Regular(2))
@@ -3236,7 +3165,7 @@ class FactorMakerTest extends WordSpec with Matchers {
 
         // 1 factors should be produced:
         // one tuple factor, two conditional selectors, one star selector, 2 applys, 2 injects, and three for the simple references
-        val tupleFactor :: factors = c4.nonConstraintFactors
+        val tupleFactor :: factors = c4.nonConstraintFactors()
         factors.size should equal (10)
         val tupleVar = tupleFactor.variables(2)
         tupleFactor.variables(0) should equal (c2.variable)
@@ -3406,9 +3335,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         c2.generateRange()
         c4.generateRange()
         c3.generateRange()
-        c3.makeNonConstraintFactors()
 
-        val List(factor) = c3.nonConstraintFactors
+        val List(factor) = c3.nonConstraintFactors()
         factor.variables should equal (List(c4.variable, c3.variable))
         factor.contents.size should equal (6)
         factor.get(List(c4.variable.range.indexOf(Regular(HashMultiSet(1))), c3.variable.range.indexOf(Regular(0)))) should equal (1.0)
@@ -3453,9 +3381,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         c2.generateRange()
         c4.generateRange()
         c3.generateRange()
-        c3.makeNonConstraintFactors()
 
-        val List(factor) = c3.nonConstraintFactors
+        val List(factor) = c3.nonConstraintFactors()
         factor.variables should equal (List(c4.variable, c3.variable))
         factor.contents.size should equal (4)
         factor.get(List(c4.variable.range.indexWhere(!_.isRegular), c3.variable.range.indexWhere(!_.isRegular))) should equal (1.0)
@@ -3479,9 +3406,8 @@ class FactorMakerTest extends WordSpec with Matchers {
           c1.generateRange()
           c2.expand()
           c2.generateRange()
-          c2.makeNonConstraintFactors()
 
-          val List(factor) = c2.nonConstraintFactors
+          val List(factor) = c2.nonConstraintFactors()
           factor.variables should equal (List(c1.variable, c2.variable))
           factor.contents.size should equal (3)
           val c1Index0 = c1.variable.range.indexOf(Regular(0))
@@ -3519,9 +3445,8 @@ class FactorMakerTest extends WordSpec with Matchers {
           c1.generateRange()
           c2.expand()
           c2.generateRange()
-          c2.makeNonConstraintFactors()
 
-          val List(factor) = c2.nonConstraintFactors
+          val List(factor) = c2.nonConstraintFactors()
           factor.variables should equal (List(c1.variable, c2.variable))
           factor.contents.size should equal (3)
           val c1Index0 = c1.variable.range.indexOf(Regular(0))
@@ -3550,9 +3475,8 @@ class FactorMakerTest extends WordSpec with Matchers {
           c1.generateRange()
           c2.expand(1)
           c2.generateRange()
-          c2.makeNonConstraintFactors()
 
-          val List(factor) = c2.nonConstraintFactors
+          val List(factor) = c2.nonConstraintFactors()
           factor.variables should equal (List(c1.variable, c2.variable))
           factor.contents.size should equal (3)
           val c1Index0 = c1.variable.range.indexOf(Regular(0))
@@ -3588,9 +3512,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         c2.generateRange()
         c3.generateRange()
         c4.generateRange()
-        c4.makeNonConstraintFactors()
 
-        val List(factor1, factor2, factor3) = c4.nonConstraintFactors
+        val List(factor1, factor2, factor3) = c4.nonConstraintFactors()
         factor1.variables.size should equal (3)
         val startVar = factor1.variables(0)
         factor1.variables(1) should equal (c1.variable)
@@ -3665,9 +3588,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         c2.generateRange()
         c3.generateRange()
         c4.generateRange()
-        c4.makeNonConstraintFactors()
 
-        val List(factor1, factor2, factor3) = c4.nonConstraintFactors
+        val List(factor1, factor2, factor3) = c4.nonConstraintFactors()
         factor1.variables.size should equal (3)
         val startVar = factor1.variables(0)
         factor1.variables(1) should equal (c1.variable)
@@ -3730,8 +3652,7 @@ class FactorMakerTest extends WordSpec with Matchers {
         val f = Flip(0.5)
         pr.add(f)
         val c1 = cc(f)
-        c1.makeNonConstraintFactors()
-        c1.nonConstraintFactors should be(empty)
+        c1.nonConstraintFactors() should be(empty)
       }
     }
 
@@ -3752,8 +3673,7 @@ class FactorMakerTest extends WordSpec with Matchers {
         val v12 = v1Vals indexOf Regular(2)
         val v13 = v1Vals indexOf Regular(3)
 
-        c1.makeConstraintFactors(Lower)
-        val List(condFactorL, constrFactorL) = c1.constraintLower
+        val List(condFactorL, constrFactorL) = c1.constraintFactors(Lower)
         condFactorL.get(List(v11)) should be(1.0 +- 0.000000001)
         condFactorL.get(List(v12)) should be(0.0 +- 0.000000001)
         condFactorL.get(List(v13)) should be(1.0 +- 0.000000001)
@@ -3761,8 +3681,7 @@ class FactorMakerTest extends WordSpec with Matchers {
         constrFactorL.get(List(v12)) should be(2.0 +- 0.000000001)
         constrFactorL.get(List(v13)) should be(3.0 +- 0.000000001)
 
-        c1.makeConstraintFactors(Upper)
-        val List(condFactorU, constrFactorU) = c1.constraintUpper
+        val List(condFactorU, constrFactorU) = c1.constraintFactors(Upper)
         condFactorU.get(List(v11)) should be(1.0 +- 0.000000001)
         condFactorU.get(List(v12)) should be(0.0 +- 0.000000001)
         condFactorU.get(List(v13)) should be(1.0 +- 0.000000001)
@@ -3798,8 +3717,7 @@ class FactorMakerTest extends WordSpec with Matchers {
         val v12 = v1Vals indexOf Regular(2)
         val v13 = v1Vals indexOf Regular(3)
 
-        c1.makeConstraintFactors(Lower)
-        val List(condFactorL, constrFactorL) = c1.constraintLower
+        val List(condFactorL, constrFactorL) = c1.constraintFactors(Lower)
         condFactorL.get(List(v1Star)) should be(0.0 +- 0.000000001)
         condFactorL.get(List(v12)) should be(0.0 +- 0.000000001)
         condFactorL.get(List(v13)) should be(1.0 +- 0.000000001)
@@ -3807,8 +3725,7 @@ class FactorMakerTest extends WordSpec with Matchers {
         constrFactorL.get(List(v12)) should be(2.0 +- 0.000000001)
         constrFactorL.get(List(v13)) should be(3.0 +- 0.000000001)
 
-        c1.makeConstraintFactors(Upper)
-        val List(condFactorU, constrFactorU) = c1.constraintUpper
+        val List(condFactorU, constrFactorU) = c1.constraintFactors(Upper)
         condFactorU.get(List(v1Star)) should be(1.0 +- 0.000000001)
         condFactorU.get(List(v12)) should be(0.0 +- 0.000000001)
         condFactorU.get(List(v13)) should be(1.0 +- 0.000000001)
@@ -3838,13 +3755,11 @@ class FactorMakerTest extends WordSpec with Matchers {
         c11.generateRange()
         c12.generateRange()
         c2.generateRange()
-        c11.makeConstraintFactors()
-        c12.makeConstraintFactors()
 
         val e2Index1 = c2.variable.range.indexOf(Regular(ec1))
         val e2Index2 = c2.variable.range.indexOf(Regular(ec2))
-        val List(factor1) = c11.constraintLower
-        val List(factor2) = c12.constraintLower
+        val List(factor1) = c11.constraintFactors()
+        val List(factor2) = c12.constraintFactors()
         factor1.variables should equal (List(c2.variable, c11.variable))
         factor2.variables should equal (List(c2.variable, c12.variable))
         factor1.size should equal (2)
@@ -3881,15 +3796,11 @@ class FactorMakerTest extends WordSpec with Matchers {
         c11.generateRange()
         c12.generateRange()
         c2.generateRange()
-        c11.makeConstraintFactors(Lower)
-        c12.makeConstraintFactors(Lower)
-        c11.makeConstraintFactors(Upper)
-        c12.makeConstraintFactors(Upper)
 
         val e2IndexStar = c2.variable.range.indexWhere(!_.isRegular)
         val e2Index2 = c2.variable.range.indexOf(Regular(ec2))
-        val List(factor1L) = c11.constraintLower
-        val List(factor2L) = c12.constraintLower
+        val List(factor1L) = c11.constraintFactors(Lower)
+        val List(factor2L) = c12.constraintFactors(Lower)
         factor1L.variables should equal (List(c2.variable, c11.variable))
         factor2L.variables should equal (List(c2.variable, c12.variable))
         factor1L.size should equal (2)
@@ -3898,8 +3809,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         factor2L.size should equal (2)
         factor2L.get(List(e2IndexStar, 0)) should equal (0.3 +- .0001)
         factor2L.get(List(e2Index2, 0)) should equal (0.3 +- .0001)
-        val List(factor1U) = c11.constraintUpper
-        val List(factor2U) = c12.constraintUpper
+        val List(factor1U) = c11.constraintFactors(Upper)
+        val List(factor2U) = c12.constraintFactors(Upper)
         factor1U.variables should equal (List(c2.variable, c11.variable))
         factor2U.variables should equal (List(c2.variable, c12.variable))
         factor1U.size should equal (2)

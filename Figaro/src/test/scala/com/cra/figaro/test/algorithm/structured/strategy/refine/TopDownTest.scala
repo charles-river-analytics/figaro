@@ -31,9 +31,9 @@ class TopDownTest extends WordSpec with Matchers {
       val e1 = Normal(0.0, 1.0)
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e1))
-      new BottomUpStrategy(pr, range(20), false, pr.targetComponents).execute()
+      new BottomUpStrategy(pr, range(20), pr.targetComponents).execute()
       val c1 = cc(e1)
-      new TopDownStrategy(cc, range(30), false, List(c1)).execute()
+      new TopDownStrategy(cc, range(30), List(c1)).execute()
 
       c1.range.regularValues should have size 30
     }
@@ -44,10 +44,10 @@ class TopDownTest extends WordSpec with Matchers {
       val e2 = e1.map(_ + 1)
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e2))
-      new BottomUpStrategy(pr, range(20), false, pr.targetComponents).execute()
+      new BottomUpStrategy(pr, range(20), pr.targetComponents).execute()
       val c1 = cc(e1)
       val c2 = cc(e2)
-      new TopDownStrategy(cc, range(30), false, List(c1)).execute()
+      new TopDownStrategy(cc, range(30), List(c1)).execute()
 
       val c2ExpectedValues = c1.range.regularValues.map(_ + 1)
       println(c2ExpectedValues.toList.sorted)
@@ -62,20 +62,20 @@ class TopDownTest extends WordSpec with Matchers {
       e2.addConstraint((d: Double) => d * d)
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e2))
-      new BottomUpStrategy(pr, range(20), false, pr.targetComponents).execute()
+      new BottomUpStrategy(pr, range(20), pr.targetComponents).execute()
       val c1 = cc(e1)
       val c2 = cc(e2)
-      new TopDownStrategy(cc, range(30), false, List(c1)).execute()
+      new TopDownStrategy(cc, range(30), List(c1)).execute()
 
       // Factor lists each over one variable; each factor should have size equal to the range of the variable
-      val singleVarFactors = List(c1.nonConstraintFactors, c2.constraintFactors(Lower), c2.constraintFactors(Upper))
+      val singleVarFactors = List(c1.nonConstraintFactors(), c2.constraintFactors(Lower), c2.constraintFactors(Upper))
       for(list <- singleVarFactors) {
         list should have size 1
         list.head should have size 30
       }
       // The non-constraint factor for c2 is over two variables, each with range 30
-      c2.nonConstraintFactors should have size 1
-      c2.nonConstraintFactors.head should have size 900
+      c2.nonConstraintFactors() should have size 1
+      c2.nonConstraintFactors().head should have size 900
     }
 
     "expand, but not recurse on, Chain subproblems" in {
@@ -84,18 +84,19 @@ class TopDownTest extends WordSpec with Matchers {
       val e2 = Normal(e1, 1.0)
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e2))
-      new BottomUpStrategy(pr, range(5), false, pr.targetComponents).execute()
+      new BottomUpStrategy(pr, range(5), pr.targetComponents).execute()
       val c1 = cc(e1)
       val c2 = cc(e2)
       val initialSubproblems = c2.subproblems
-      new TopDownStrategy(cc, range(10), false, List(c1)).execute()
+      new TopDownStrategy(cc, range(10), List(c1)).execute()
 
       val newSubproblems = c2.subproblems -- initialSubproblems.keySet
       // Make sure it creates the correct number of new subproblems
       newSubproblems should have size 5
       // No components in the new subproblems should be refined yet
       for((_, subproblem) <- newSubproblems ; comp <- subproblem.components) {
-        comp.nonConstraintFactors should be(empty)
+        // TODO check if this still holds
+        comp.nonConstraintFactors() should be(empty)
         comp.range.regularValues should be(empty)
         comp.range.hasStar should equal(true)
       }
@@ -110,12 +111,12 @@ class TopDownTest extends WordSpec with Matchers {
 
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e4))
-      new BottomUpStrategy(pr, range(20), false, pr.targetComponents).execute()
+      new BottomUpStrategy(pr, range(20), pr.targetComponents).execute()
       val c1 = cc(e1)
       val c2 = cc(e2)
       val c4 = cc(e4)
       val done = mutable.Set[ProblemComponent[_]]()
-      new TopDownStrategy(cc, range(30), false, List(c1), done).execute()
+      new TopDownStrategy(cc, range(30), List(c1), done).execute()
 
       // e2 should be fully enumerated, which makes e3 fully refined
       // This should not stop e4 from getting refined, since it also uses e1 directly
@@ -129,9 +130,9 @@ class TopDownTest extends WordSpec with Matchers {
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e1))
       // Because we start at e1, e2 should not get added to the collection here
-      new BottomUpStrategy(pr, range(20), false, pr.targetComponents).execute()
+      new BottomUpStrategy(pr, range(20), pr.targetComponents).execute()
       val c1 = cc(e1)
-      new TopDownStrategy(cc, range(30), false, List(c1)).execute()
+      new TopDownStrategy(cc, range(30), List(c1)).execute()
       cc.contains(e2) should equal(false)
     }
   }

@@ -36,7 +36,7 @@ class BottomUpTest extends WordSpec with Matchers {
       val e2 = If(e1, Constant(0), discrete.Uniform(2, 3, 4))
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e2))
-      new BottomUpStrategy(pr, defaultRangeSizer, false, pr.targetComponents).execute()
+      new BottomUpStrategy(pr, defaultRangeSizer, pr.targetComponents).execute()
 
       val c1 = cc(e1)
       val c2 = cc(e2)
@@ -58,7 +58,7 @@ class BottomUpTest extends WordSpec with Matchers {
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e1))
       val rangeSizer = (pc: ProblemComponent[_]) => 30
-      new BottomUpStrategy(pr, rangeSizer, false, pr.targetComponents).execute()
+      new BottomUpStrategy(pr, rangeSizer, pr.targetComponents).execute()
 
       cc(e1).variable.size should be(30)
     }
@@ -69,19 +69,19 @@ class BottomUpTest extends WordSpec with Matchers {
       val e2 = If(e1, Constant(0), discrete.Uniform(2, 3, 4))
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e2))
-      new BottomUpStrategy(pr, defaultRangeSizer, false, pr.targetComponents).execute()
+      new BottomUpStrategy(pr, defaultRangeSizer, pr.targetComponents).execute()
 
       val c1 = cc(e1)
       val c2 = cc(e2)
       // Each component has 1 factor
       // Chain components additionally have 1 factor per subproblem
-      c1.nonConstraintFactors should have size 1
-      c2.nonConstraintFactors should have size 3
+      c1.nonConstraintFactors() should have size 1
+      c2.nonConstraintFactors() should have size 3
 
       val c1t = cc(c2.subproblems(true).target)
       val c1f = cc(c2.subproblems(false).target)
-      c1t.nonConstraintFactors should have size 1
-      c1f.nonConstraintFactors should have size 1
+      c1t.nonConstraintFactors() should have size 1
+      c1f.nonConstraintFactors() should have size 1
     }
 
     "create upper and lower bound constraint factors for top-level components" in {
@@ -90,7 +90,7 @@ class BottomUpTest extends WordSpec with Matchers {
       e1.addConstraint((i: Int) => 1.0 / i)
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e1))
-      new BottomUpStrategy(pr, defaultRangeSizer, false, pr.targetComponents).execute()
+      new BottomUpStrategy(pr, defaultRangeSizer, pr.targetComponents).execute()
 
       val c1 = cc(e1)
       c1.constraintFactors(Lower) should have size 1
@@ -105,15 +105,15 @@ class BottomUpTest extends WordSpec with Matchers {
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1, e2))
         val rangeSizer = (pc: ProblemComponent[_]) => 25
-        new BottomUpStrategy(pr, rangeSizer, false, pr.targetComponents).execute()
+        new BottomUpStrategy(pr, rangeSizer, pr.targetComponents).execute()
 
         // Factor for e1 should contain sampled values
         // Its size should be the size of the range of the component
-        val List(f1) = cc(e1).nonConstraintFactors
+        val List(f1) = cc(e1).nonConstraintFactors()
         f1 should have size 25
         // Factor for e2 should encode the conditional probability distribution
         // Its size should be the product of the sizes of the ranges of the components
-        val List(f2) = cc(e2).nonConstraintFactors
+        val List(f2) = cc(e2).nonConstraintFactors()
         f2 should have size 50
       }
 
@@ -140,10 +140,10 @@ class BottomUpTest extends WordSpec with Matchers {
       c2.expand()
       // Decompose and solve the subproblem corresponding to true
       val spr = c2.subproblems(true)
-      new BottomUpStrategy(spr, defaultRangeSizer, false, spr.targetComponents).execute()
+      new BottomUpStrategy(spr, defaultRangeSizer, spr.targetComponents).execute()
       new ConstantStrategy(spr, structuredRaising, marginalVariableElimination).execute()
       // This should not get rid of the solution
-      new BottomUpStrategy(pr, defaultRangeSizer, false, pr.targetComponents).execute()
+      new BottomUpStrategy(pr, defaultRangeSizer, pr.targetComponents).execute()
 
       spr.solved should be(true)
       val solution = spr.solution.head
@@ -163,7 +163,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val pr = new Problem(cc, List(e1))
         pr.solved = true
         pr.solution = dummySolution
-        new BottomUpStrategy(pr, defaultRangeSizer, false, pr.targetComponents).execute()
+        new BottomUpStrategy(pr, defaultRangeSizer, pr.targetComponents).execute()
 
         pr.solved should be(false)
         pr.solution should be(empty)
@@ -176,7 +176,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1, e2))
         // Create subproblems without refining them
-        new PartialBottomUpStrategy(0, pr, defaultRangeSizer, false, pr.targetComponents).execute()
+        new PartialBottomUpStrategy(0, pr, defaultRangeSizer, pr.targetComponents).execute()
 
         pr.solved = true
         pr.solution = dummySolution
@@ -184,7 +184,7 @@ class BottomUpTest extends WordSpec with Matchers {
           subproblem.solved = true
           subproblem.solution = dummySolution
         }
-        new BottomUpStrategy(pr, defaultRangeSizer, false, pr.targetComponents).execute()
+        new BottomUpStrategy(pr, defaultRangeSizer, pr.targetComponents).execute()
 
         pr.solved should be(false)
         pr.solution should be(empty)
@@ -201,13 +201,13 @@ class BottomUpTest extends WordSpec with Matchers {
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1, e2))
         // Create subproblems without refining them
-        new PartialBottomUpStrategy(0, pr, defaultRangeSizer, false, pr.targetComponents).execute()
+        new PartialBottomUpStrategy(0, pr, defaultRangeSizer, pr.targetComponents).execute()
 
         // We don't mark the nested problems as solved because this test is to ensure that we recursively go up the
         // problem tree without stopping at unsolved components
         pr.solved = true
         pr.solution = dummySolution
-        new BottomUpStrategy(cc(e2).subproblems(true), defaultRangeSizer, false, pr.targetComponents).execute()
+        new BottomUpStrategy(cc(e2).subproblems(true), defaultRangeSizer, pr.targetComponents).execute()
 
         pr.solved should be(false)
         pr.solution should be(empty)
@@ -221,7 +221,7 @@ class BottomUpTest extends WordSpec with Matchers {
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e1, e2))
       val done = mutable.Set[ProblemComponent[_]]()
-      new BottomUpStrategy(pr, defaultRangeSizer, false, pr.targetComponents, done).execute()
+      new BottomUpStrategy(pr, defaultRangeSizer, pr.targetComponents, done).execute()
       done.size should be(4)
     }
 
@@ -232,10 +232,11 @@ class BottomUpTest extends WordSpec with Matchers {
       val pr = new Problem(cc, List(e1))
       val c1 = cc(e1)
       val done = mutable.Set[ProblemComponent[_]](c1)
-      new BottomUpStrategy(pr, defaultRangeSizer, false, pr.targetComponents, done).execute()
+      new BottomUpStrategy(pr, defaultRangeSizer, pr.targetComponents, done).execute()
 
       c1.variable.valueSet.regularValues should be(empty)
-      c1.nonConstraintFactors should be(empty)
+      // TODO check if this still holds
+      c1.nonConstraintFactors() should be(empty)
       c1.constraintFactors(Lower) should be(empty)
     }
 
@@ -245,7 +246,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val e1 = Select(0.1 -> 1, 0.2 -> 3, 0.3 -> 5, 0.5 -> 7)
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
-        new BottomUpStrategy(pr, defaultRangeSizer, false, pr.targetComponents).execute()
+        new BottomUpStrategy(pr, defaultRangeSizer, pr.targetComponents).execute()
 
         cc(e1).fullyEnumerated should be(true)
         cc(e1).fullyRefined should be(true)
@@ -256,7 +257,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val e1 = Binomial(10, 0.3)
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
-        new BottomUpStrategy(pr, defaultRangeSizer, false, pr.targetComponents).execute()
+        new BottomUpStrategy(pr, defaultRangeSizer, pr.targetComponents).execute()
 
         cc(e1).fullyEnumerated should be(true)
         cc(e1).fullyRefined should be(true)
@@ -267,7 +268,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val e1 = Normal(0, 1)
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
-        new BottomUpStrategy(pr, defaultRangeSizer, false, pr.targetComponents).execute()
+        new BottomUpStrategy(pr, defaultRangeSizer, pr.targetComponents).execute()
 
         cc(e1).fullyEnumerated should be(false)
         cc(e1).fullyRefined should be(false)
@@ -278,7 +279,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val e1 = Poisson(3)
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
-        new BottomUpStrategy(pr, defaultRangeSizer, false, pr.targetComponents).execute()
+        new BottomUpStrategy(pr, defaultRangeSizer, pr.targetComponents).execute()
 
         cc(e1).fullyEnumerated should be(false)
         cc(e1).fullyRefined should be(false)
@@ -291,7 +292,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val e3 = e1 ++ e2
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e3))
-        new BottomUpStrategy(pr, defaultRangeSizer, false, pr.targetComponents).execute()
+        new BottomUpStrategy(pr, defaultRangeSizer, pr.targetComponents).execute()
 
         cc(e3).fullyEnumerated should be(true)
         cc(e3).fullyRefined should be(true)
@@ -304,7 +305,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val e3 = e1 ++ e2
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e3))
-        new BottomUpStrategy(pr, defaultRangeSizer, false, pr.targetComponents).execute()
+        new BottomUpStrategy(pr, defaultRangeSizer, pr.targetComponents).execute()
 
         cc(e3).fullyEnumerated should be(false)
         cc(e3).fullyRefined should be(false)
@@ -316,7 +317,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val e2 = Chain(e1, (d: Double) => if(d < 0) Flip(0.2) else Flip(0.7))
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e2))
-        new BottomUpStrategy(pr, defaultRangeSizer, false, pr.targetComponents).execute()
+        new BottomUpStrategy(pr, defaultRangeSizer, pr.targetComponents).execute()
 
         val c2 = cc(e2)
         c2.fullyEnumerated should be(false)
@@ -333,7 +334,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val e2 = If(e1, Constant(0.0), Normal(0, 1))
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e2))
-        new BottomUpStrategy(pr, defaultRangeSizer, false, pr.targetComponents).execute()
+        new BottomUpStrategy(pr, defaultRangeSizer, pr.targetComponents).execute()
 
         val c2 = cc(e2)
         c2.fullyEnumerated should be(false)
@@ -353,7 +354,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val e2 = Chain(e1, (i: Int) => FromRange(0, i))
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e2))
-        new BottomUpStrategy(pr, defaultRangeSizer, false, pr.targetComponents).execute()
+        new BottomUpStrategy(pr, defaultRangeSizer, pr.targetComponents).execute()
 
         val c2 = cc(e2)
         c2.fullyEnumerated should be(true)
@@ -371,7 +372,7 @@ class BottomUpTest extends WordSpec with Matchers {
 
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e2))
-        new BottomUpStrategy(pr, defaultRangeSizer, false, pr.targetComponents).execute()
+        new BottomUpStrategy(pr, defaultRangeSizer, pr.targetComponents).execute()
 
         cc(e2).fullyEnumerated should be(true)
         cc(e2).fullyRefined should be(false)
@@ -385,7 +386,7 @@ class BottomUpTest extends WordSpec with Matchers {
 
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e3))
-        new BottomUpStrategy(pr, defaultRangeSizer, false, pr.targetComponents).execute()
+        new BottomUpStrategy(pr, defaultRangeSizer, pr.targetComponents).execute()
 
         cc(e3).fullyEnumerated should be(true)
         cc(e3).fullyRefined should be(false)
@@ -398,7 +399,7 @@ class BottomUpTest extends WordSpec with Matchers {
 
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e3))
-        new BottomUpStrategy(pr, defaultRangeSizer, false, pr.targetComponents).execute()
+        new BottomUpStrategy(pr, defaultRangeSizer, pr.targetComponents).execute()
 
         cc(e3).fullyEnumerated should be(true)
         cc(e3).fullyRefined should be(false)
@@ -413,10 +414,10 @@ class BottomUpTest extends WordSpec with Matchers {
         // We test that the strategy marks the problem as open by putting a test inside the recursiveExecute method in
         // the recursing strategy. To ensure that the test is executed exactly twice, we have this counter.
         var counter = 0
-        val strategy = new BottomUpStrategy(pr, defaultRangeSizer, false, pr.targetComponents) {
+        val strategy = new BottomUpStrategy(pr, defaultRangeSizer, pr.targetComponents) {
           override def recurse(nestedProblem: NestedProblem[_]): Option[DecompositionStrategy] = {
             val recursiveStrategy =
-              new BottomUpStrategy(nestedProblem, defaultRangeSizer, false, nestedProblem.targetComponents) {
+              new BottomUpStrategy(nestedProblem, defaultRangeSizer, nestedProblem.targetComponents) {
                 override def recursiveExecute(): Unit = {
                   super.recursiveExecute()
                   counter += 1
@@ -444,7 +445,7 @@ class BottomUpTest extends WordSpec with Matchers {
 
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e2, e3))
-      new BottomUpStrategy(pr, defaultRangeSizer, false, pr.targetComponents).execute()
+      new BottomUpStrategy(pr, defaultRangeSizer, pr.targetComponents).execute()
 
       cc(e2).subproblems should equal(cc(e3).subproblems)
     }
@@ -462,7 +463,7 @@ class BottomUpTest extends WordSpec with Matchers {
 
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e1))
-      new BottomUpStrategy(pr, defaultRangeSizer, false, pr.targetComponents).execute()
+      new BottomUpStrategy(pr, defaultRangeSizer, pr.targetComponents).execute()
 
       val c1 = cc(e1)
       // Should contain Constant(0) and Constant(1)
@@ -490,7 +491,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val e1 = geometric()
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
-        new PartialBottomUpStrategy(3, pr, defaultRangeSizer, false, pr.targetComponents).execute()
+        new PartialBottomUpStrategy(3, pr, defaultRangeSizer, pr.targetComponents).execute()
 
         val c1 = cc(e1)
         c1.range.regularValues should equal(Set(1, 2, 3))
@@ -502,7 +503,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val e1 = geometric()
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
-        new PartialBottomUpStrategy(3, pr, defaultRangeSizer, false, pr.targetComponents).execute()
+        new PartialBottomUpStrategy(3, pr, defaultRangeSizer, pr.targetComponents).execute()
 
         val c1 = cc(e1).asInstanceOf[ChainComponent[Boolean, Int]]
         c1.fullyEnumerated should be(false)
@@ -523,7 +524,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val pr = new Problem(cc, List(e2))
         // Ensure that the global is added to the correct problem, even though this won't change the outcome of this test
         pr.add(e1)
-        new PartialBottomUpStrategy(3, pr, defaultRangeSizer, false, pr.targetComponents).execute()
+        new PartialBottomUpStrategy(3, pr, defaultRangeSizer, pr.targetComponents).execute()
 
         // Because e1 is only used as the result of a Chain, decomposing e2 should count as incrementing the depth
         // Therefore, we should only recurse on subproblems of e1 twice
@@ -541,7 +542,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val c1 = cc(e1)
 
         for(depth <- 0 to 10) {
-          new PartialBottomUpStrategy(depth, pr, defaultRangeSizer, false, pr.targetComponents).execute()
+          new PartialBottomUpStrategy(depth, pr, defaultRangeSizer, pr.targetComponents).execute()
           c1.range.hasStar should be(true)
           c1.range.regularValues should equal((1 to depth).toSet)
         }
@@ -552,7 +553,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val e1 = geometric()
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
-        new PartialBottomUpStrategy(1, pr, defaultRangeSizer, false, pr.targetComponents).execute()
+        new PartialBottomUpStrategy(1, pr, defaultRangeSizer, pr.targetComponents).execute()
         new ConstantStrategy(pr, structuredRaising, marginalVariableElimination).execute()
 
         val c1 = cc(e1).asInstanceOf[ChainComponent[Boolean, Int]]
@@ -560,7 +561,7 @@ class BottomUpTest extends WordSpec with Matchers {
         c1.subproblems(true).solved should be(true)
         c1.subproblems(false).solved should be(true)
 
-        new PartialBottomUpStrategy(3, pr, defaultRangeSizer, false, pr.targetComponents).execute()
+        new PartialBottomUpStrategy(3, pr, defaultRangeSizer, pr.targetComponents).execute()
 
         pr.solved should be(false)
         // The first subproblem was fully refined so its solution should remain; the second subproblem was expanded
@@ -576,7 +577,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val e1 = memoGeometric()
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
-        new PartialBottomUpStrategy(2, pr, defaultRangeSizer, false, pr.targetComponents).execute()
+        new PartialBottomUpStrategy(2, pr, defaultRangeSizer, pr.targetComponents).execute()
 
         val c1 = cc(e1).asInstanceOf[ChainComponent[Boolean, Int]]
         val nestedc1 = c1.subproblems(false).components.collectFirst{

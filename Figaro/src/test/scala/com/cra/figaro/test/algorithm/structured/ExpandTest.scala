@@ -207,14 +207,15 @@ class ExpandTest extends WordSpec with Matchers {
     }
   }
 
-  def process(comp: ProblemComponent[_]) = {
+  /*def process(comp: ProblemComponent[_]) = {
     comp.generateRange(Int.MaxValue )
     comp.makeNonConstraintFactors(false)
     comp.makeConstraintFactors(Lower)
-  }
+  }*/
 
-  "Raising a subproblem" should {
-    /*"add non-constraint factors to the chain" in {
+  // Raising is now handled by solving strategies
+  /*"Raising a subproblem" should {
+    "add non-constraint factors to the chain" in {
       Universe.createNew()
       val cc = new ComponentCollection
       // raising should use the old chain method
@@ -237,10 +238,9 @@ class ExpandTest extends WordSpec with Matchers {
       val ffVar = c4.nonConstraintFactors.exists(p => p.output.exists(_ == ff.variables.head) || p.parents.exists(_ == ff.variables.head))
       tfVar should be (false)
       ffVar should be (false)
-    }*/
+    }
 
-    // Raising no longer includes constraint factors because nested evidence is disallowed
-    /*"add constraint factors to the chain" in {
+    "add constraint factors to the chain" in {
       Universe.createNew()
       val cc = new ComponentCollection
       // raising should use the old chain method
@@ -260,9 +260,9 @@ class ExpandTest extends WordSpec with Matchers {
       process(c4)
       c4.raise()
       c4.constraintFactors(Lower).size should be (1)      
-    }*/
+    }
 
-  }
+  }*/
 
   "Expanding a MakeArray" should {
     "at one count, add all the previously unadded items to the problem" in {

@@ -36,11 +36,11 @@ class FlatTest extends WordSpec with Matchers {
         })        
         val cc = new ComponentCollection
         val problem = new Problem(cc, List(r1))
-        val decompose = new BottomUpStrategy(problem, defaultRangeSizer, false, problem.components)
+        val decompose = new BottomUpStrategy(problem, defaultRangeSizer, problem.components)
         decompose.execute()
         val solve = new ConstantStrategy(problem, flatRaising, marginalVariableElimination)
         solve.execute()
-        val factors = problem.components.flatMap(_.nonConstraintFactors)
+        val factors = problem.components.flatMap(_.nonConstraintFactors())
         factors.foreach(f => println(f.toReadableString))
         factors.size should be(16)
         FlatVE.probability(r1, 1) should equal (0.5*0.2*.4 +- 0.000001)
@@ -190,7 +190,8 @@ class FlatTest extends WordSpec with Matchers {
         val alg = FlatVE(e2)
         alg.start
         alg.probability(e2, true) should equal (0.5)
-        alg.problem.collection(e1).nonConstraintFactors.isEmpty should be (true)
+        // TODO see if this is still true
+        alg.problem.collection(e1).nonConstraintFactors().isEmpty should be (true)
         //count should equal (0)
       }
     }
