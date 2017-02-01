@@ -38,8 +38,8 @@ class ProblemComponent[Value](val problem: Problem, val element: Element[Value])
   def variable = _variable
 
   /**
-   * A problem is fully enumerated if its range is complete. This also means that its range cannot contain star. This is
-   * always false for components associated with elements that have infinite support.
+   * A problem component is fully enumerated if its range is complete. This also means that its range cannot contain
+   * star. This is always false for components associated with elements that have infinite support.
    */
   var fullyEnumerated = false
 
@@ -62,27 +62,22 @@ class ProblemComponent[Value](val problem: Problem, val element: Element[Value])
   setVariable(new Variable(range))
 
   /**
-   *  Lower bound factors resulting from conditions and constraints on this element.
-   *  These should be updated when the range changes but otherwise should be left alone.
-   */
-  var constraintLower: List[Factor[Double]] = List()
-  /**
-   *  Upper bound factors resulting from conditions and constraints on this element.
-   *  These should be updated when the range changes but otherwise should be left alone.
-   */
-  var constraintUpper: List[Factor[Double]] = List()
-
-  /**
    * Gets the constraint factors for this component. Returns the lower bound factors unless an Upper argument is provided.
    */
-  def constraintFactors(bounds: Bounds = Lower) = if (bounds == Upper) constraintUpper else constraintLower
+  def constraintFactors(bounds: Bounds = Lower): List[Factor[Double]] = {
+    val upper = bounds == Upper
+    ConstraintFactory.makeFactors(problem.collection, element, upper)
+  }
 
   /**
-   *  All non-constraint factors resulting from the definition of this element. For many element classes,
-   *  these factors will be generated directly in the usual way.
-   *  For chains, they will include the solutions of subproblems.
+   *  Generate the non-constraint factors based on the current range. For most elements, this just generates the factors
+   *  in the usual way. For a chain, this does not include subproblem factors. The parameterized flag indicates whether
+   *  parameterized elements should have special factors created that use the MAP values of their arguments. This
+   *  defaults to false.
    */
-  var nonConstraintFactors: List[Factor[Double]] = List()
+  def nonConstraintFactors(parameterized: Boolean = false): List[Factor[Double]] = {
+    Factory.makeFactors(problem.collection, element, parameterized).map(_.deDuplicate)
+  }
 
   /*
   // The current belief about this component, used for belief propagation.
@@ -113,27 +108,6 @@ class ProblemComponent[Value](val problem: Problem, val element: Element[Value])
       range = newRange
       setVariable(new Variable(range))
     }
-  }
-
-  /**
-   *  Generate the constraint factors based on the current range.
-   *  Bounds specifies whether these should be created for computing lower or upper bounds.
-   */
-  def makeConstraintFactors(bounds: Bounds = Lower) {
-    val upper = bounds == Upper
-    val constraintFactors = ConstraintFactory.makeFactors(problem.collection, element, upper)
-    if(upper) constraintUpper = constraintFactors
-    else constraintLower = constraintFactors
-  }
-
-  /**
-   *  Generate the non-constraint factors based on the current range.
-   *  For most elements, this just generates the factors in the usual way.
-   *  For a chain, this takes the current solution to the subproblems, which are lists of factors over this and other components.
-   *  The parameterized flag indicates whether parameterized elements should have special factors created that use the MAP values of their arguments.
-   */
-  def makeNonConstraintFactors(parameterized: Boolean = false) {
-    nonConstraintFactors = factory.Factory.makeFactors(problem.collection, element, parameterized).map(_.deDuplicate)
   }
 
   /*
@@ -217,19 +191,22 @@ class ChainComponent[ParentValue, Value](problem: Problem, val chain: Chain[Pare
   }
 
   /*
-   * If all the subproblems have been eliminated completely and use no globals, we can use the new chain method.
+   * Tests if we can use the optimized Chain factor. If all the subproblems have been eliminated completely and use no
+   * globals, we can use the new chain method.
    */
   private[figaro] def allSubproblemsEliminatedCompletely: Boolean = {
-    for {
-      (parentValue, subproblem) <- subproblems
-    } {
-      val factors = subproblem.solution
-      val vars = factors.flatMap(_.variables)
-      val comps = vars.map(problem.collection.variableToComponent(_))
-      if (comps.exists(!subproblem.components.contains(_))) return false // the factors contain a global variable
-      if (problem.collection(subproblem.target).problem != subproblem) return false // the target is global
+    // Every subproblem must be completely eliminated
+    subproblems.values.forall { subproblem =>
+      // The subproblem must be solved and have no globals in its solution
+      subproblem.solved && {
+        val factors = subproblem.solution
+        val vars = factors.flatMap(_.variables)
+        val comps = vars.map(problem.collection.variableToComponent(_))
+        // The first part checks that the subproblem target is not global
+        // The second part checks that the factors contain no additional global variables
+        problem.collection(subproblem.target).problem == subproblem && comps.forall(subproblem.components.contains)
+      }
     }
-    return true
   }
 
   /*

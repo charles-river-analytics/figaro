@@ -20,15 +20,14 @@ import scala.collection.mutable
 
 /**
  * Strategies that refine a set of "top-level" components, then update all indirect children of those components to have
- * consistent ranges and factors. The primary purpose of this strategy is as a ranging tool.
+ * consistent ranges. The primary purpose of this strategy is as a ranging tool.
  *
- * This only updates children that are already in collection. New elements will not be added to the collection, unless
+ * This only updates children are already in the collection. New elements will not be added to the collection, unless
  * they belong to newly expanded subproblems, in which case they will be added without being refined. Another way of
  * saying this is that this strategy will not recursively refine subproblems. This strategy makes the assumption that
  * the collection contains all args of any component that the strategy refines.
  * @param collection Collection of components to refine.
  * @param rangeSizer Method to determine the size of the range of components.
- * @param parameterized Indicates whether or not to make parameterized factors.
  * @param topLevel Top-level components to refine and work down from. Strictly speaking, it is not essential that these
  * components be top-level (i.e. have no args), but most components that are not top-level cannot be refined without
  * first refining their args.
@@ -36,9 +35,9 @@ import scala.collection.mutable
  * mutable set so that nested decomposition strategies can update any enclosing decomposition strategy with the
  * components that were processed. Defaults to the empty set.
  */
-class TopDownStrategy(collection: ComponentCollection, rangeSizer: RangeSizer, parameterized: Boolean,
-                      topLevel: List[ProblemComponent[_]], done: mutable.Set[ProblemComponent[_]] = mutable.Set())
-  extends DecompositionStrategy(collection, rangeSizer, parameterized, done) {
+class TopDownStrategy(collection: ComponentCollection, rangeSizer: RangeSizer, topLevel: List[ProblemComponent[_]],
+                      done: mutable.Set[ProblemComponent[_]] = mutable.Set())
+  extends DecompositionStrategy(collection, rangeSizer, done) {
 
   // Never recurse on subproblems because we don't want to modify the factor graph structure
   override def recurse(nestedProblem: NestedProblem[_]): Option[DecompositionStrategy] = None

@@ -21,8 +21,8 @@ import scala.collection.mutable
 
 /**
  * Refining strategies that operate by decomposing components. This involves processing problem components by generating
- * ranges for variables, expanding relevant subproblems, and creating factors. This strategy visits components at most
- * once, so generally it is of no use to call `execute` multiple times.
+ * ranges for variables and expanding relevant subproblems. This strategy visits components at most once, so generally
+ * it is of no use to call `execute` multiple times.
  *
  * Needed components are discovered lazily by working backwards from the initial components. As a result, the strategy
  * makes no guarantees about visiting components that are not needed.
@@ -35,14 +35,13 @@ import scala.collection.mutable
  * set of top-level components.
  * @param collection Collection of components to refine.
  * @param rangeSizer Method to determine the size of the range of components.
- * @param parameterized Indicates whether or not to make parameterized factors.
  * @param done Problem components that were already processed, which should not be visited again. This is explicitly a
  * mutable set so that nested decomposition strategies can update any enclosing decomposition strategy with the
  * components that were processed.
  */
 private[figaro] abstract class DecompositionStrategy(collection: ComponentCollection, rangeSizer: RangeSizer,
-                                                     parameterized: Boolean, done: mutable.Set[ProblemComponent[_]])
-  extends RefiningStrategy(collection, rangeSizer, parameterized) {
+                                                     done: mutable.Set[ProblemComponent[_]])
+  extends RefiningStrategy(collection, rangeSizer) {
 
   /**
    * Optionally decompose a nested problem. The recursing strategy may not refine any components in the set `done`, but
@@ -76,7 +75,7 @@ private[figaro] abstract class DecompositionStrategy(collection: ComponentCollec
     // Start with the problems associated with each visited component
     val initialProblems = done.map(_.problem).toSeq
     // From a subproblem, we must include the problems that use it
-    def problemGraph(pr: Problem): Traversable[Problem] = pr match {
+    def problemGraph(pr: Problem): Set[Problem] = pr match {
       case npr: NestedProblem[_] => collection.expandableComponents(npr).map(_.problem)
       case _ => Set()
     }
@@ -114,16 +113,16 @@ private[figaro] abstract class DecompositionStrategy(collection: ComponentCollec
 
   /**
    * Decompose a single problem component by recursively decomposing components on which it depends, then generating the
-   * range and factors. This guarantees that when range and factors are created, all components on which a component
-   * depends will have been processed.
+   * range for each component. This guarantees that when ranges are created, all components on which a component depends
+   * will have been processed.
    *
    * As a rule, this method never works in the other direction. If component B depends (directly or indirectly) on
    * component A, then calling decompose on A will never recursively call decompose on component B. This is to avoid
-   * infinite loops, and to guarantee that the range and factors of A do not unpredictably change in the middle of a
-   * call to decompose A.
+   * infinite loops, and to guarantee that the range of A does not unpredictably change in the middle of a call to
+   * decompose A.
    *
-   * Once range and factors have been created, the component will be added to the set done, and (if applicable) the
-   * component is marked as fully enumerated or expanded.
+   * Once the range has been created, the component will be added to the set done, and (if applicable) the component is
+   * marked as fully enumerated or refined.
    * @param comp Component to decompose. This strategy never decomposes a component more than once, so if the component
    * is fully refined or in the set done, this method does nothing.
    */
@@ -143,7 +142,7 @@ private[figaro] abstract class DecompositionStrategy(collection: ComponentCollec
   }
 
   /**
-   * Generate the range and factors for the given Chain component. Mark it as fully refined or enumerated if applicable.
+   * Generate the range for the given Chain component. Mark it as fully refined or enumerated if applicable.
    * @param chainComp Chain component to process. This should not be called on a component we previously processed,
    * including fully refined components.
    */
@@ -164,8 +163,8 @@ private[figaro] abstract class DecompositionStrategy(collection: ComponentCollec
       strategy.recursiveExecute()
       subproblem.open = false
     }
-    // Make range and factors based on the refinement of the subproblems
-    makeRangeAndFactors(chainComp)
+    // Make range based on the refinement of the subproblems
+    generateRange(chainComp)
     // The range for this component is complete if the range of the parent is complete (and therefore no further
     // subproblems can be created), and the target for each subproblem has a complete range
     chainComp.fullyEnumerated =
@@ -175,8 +174,7 @@ private[figaro] abstract class DecompositionStrategy(collection: ComponentCollec
   }
 
   /**
-   * Generate the range and factors for the given MakeArray component. Mark it as fully refined or enumerated if
-   * applicable.
+   * Generate the range for the given MakeArray component. Mark it as fully refined or enumerated if applicable.
    * @param maComp MakeArray component to process. This should not be called on a component we previously processed,
    * including fully refined components.
    */
@@ -190,8 +188,8 @@ private[figaro] abstract class DecompositionStrategy(collection: ComponentCollec
     val items = maComp.makeArray.items.take(maComp.maxExpanded).toList
     val itemsComps = items.map(checkArg(_))
     itemsComps.foreach(decompose)
-    // Make range and factors based on the ranges of the items
-    makeRangeAndFactors(maComp)
+    // Make range based on the ranges of the items
+    generateRange(maComp)
     // The range for this component is complete if the number of items and each item have complete ranges
     // This also implies that the component is fully refined because there are no subproblems
     maComp.fullyEnumerated = numItemsComp.fullyEnumerated && itemsComps.forall(_.fullyEnumerated)
@@ -199,7 +197,7 @@ private[figaro] abstract class DecompositionStrategy(collection: ComponentCollec
   }
 
   /**
-   * Generate the range and factors for the given component. Mark it as fully refined or enumerated if applicable.
+   * Generate the range afor the given component. Mark it as fully refined or enumerated if applicable.
    * @param comp Component to process. This should not be called on a component we previously processed, including fully
    * refined components.
    */
@@ -207,8 +205,8 @@ private[figaro] abstract class DecompositionStrategy(collection: ComponentCollec
     // Decompose the args of this component
     val argComps = comp.element.args.map(checkArg(_))
     argComps.foreach(decompose)
-    // Make range and factors based on the ranges of the args
-    makeRangeAndFactors(comp)
+    // Make range based on the ranges of the args
+    generateRange(comp)
     // We need to know if all args are fully enumerated to determine the enumeration and refinement status
     val argsFullyEnumerated = argComps.forall(_.fullyEnumerated)
     // If the range doesn't have *, the enumeration status breaks into several cases
@@ -227,6 +225,8 @@ private[figaro] abstract class DecompositionStrategy(collection: ComponentCollec
         case _ => argsFullyEnumerated
       }
     }
+    // We assume the factors depend only on the ranges of this component and its arguments. When all of these components
+    // are fully enumerated, the factors of this component can't change any further, and therefore it is fully refined.
     comp.fullyRefined = comp.fullyEnumerated && argsFullyEnumerated
   }
 }
