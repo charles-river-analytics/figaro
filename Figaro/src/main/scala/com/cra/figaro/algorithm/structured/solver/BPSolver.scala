@@ -70,9 +70,10 @@ class BPSolver(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[
   }
 
   def makeRecordingFactor[U](v: Variable[U]): Factor[U] = {
-    val bf = new BasicFactor[U](List(), List())
-    val maxInd = beliefMap(VariableNode(v)).contents.maxBy(_._2)._1
-    val maxValue = v.range(maxInd(0))
+    val bf = new DenseFactor[U](List(), List())
+    val factor = beliefMap(VariableNode(v))
+    val maxInd = factor.getIndices.foldLeft((List[Int](), Double.NegativeInfinity))( (c: (List[Int], Double), l: List[Int]) => if (factor.get(l) > c._2) (l, factor.get(l)) else c)    
+    val maxValue = v.range(maxInd._1.head)
     bf.set(List(), maxValue.value.asInstanceOf[v.Value])
     bf
   }

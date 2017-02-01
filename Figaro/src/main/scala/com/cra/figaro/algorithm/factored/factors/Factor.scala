@@ -18,14 +18,15 @@ import scala.collection.mutable.ListBuffer
 import com.cra.figaro.language.Element
 import com.cra.figaro.algorithm.lazyfactored.Extended
 import scala.reflect.runtime.universe._
+
 /**
  * Definition of Factor <p>
  *
  * A factor is associated with a set of variables and specifies a value for every
- * combination of assignments to those variables. 
- * 
+ * combination of assignments to those variables.
+ *
  * Factors are parameterized by the type of the Variables they contain and contain a semiring
- * that defines the mathematical operation to be performed on the values 
+ * that defines the mathematical operation to be performed on the values
  * Parent variables are distinguished from the output variable.
  *
  * Refactored by
@@ -35,14 +36,12 @@ import scala.reflect.runtime.universe._
  */
 trait Factor[T] {
   def semiring: Semiring[T]
-  
+
   def parents: List[Variable[_]]
   def output: List[Variable[_]]
   def variables = parents ::: output
 
   lazy val numVars = variables.size
-
-  protected[figaro] var contents: Map[List[Int], T] = Map()
 
   val size = (1 /: variables)(_ * _.size)
 
@@ -54,7 +53,8 @@ trait Factor[T] {
   /**
    * Description that includes the variable list and conditional probabilities
    */
-  override def toString = "Factor(" + variables.map(_.id).mkString(",") + " " + contents.mkString(",") + ")"
+  //override def toString = "Factor(" + variables.map(_.id).mkString(",") + " " + contents.mkString(",") + ")"
+  override def toString = "Factor(" + variables.map(_.id).mkString(",") + " " + stringContents + ")"
 
   /**
    * Indicates if any of this Factor's variables has Star
@@ -71,32 +71,44 @@ trait Factor[T] {
    */
   val isConstraint: Boolean = false
 
-  def contains(index: List[Int]) = contents.contains(index)
+  def contains(index: List[Int]) = contentsContains(index)
 
   /**
    * Fold the given function through the contents of the factor, beginning with the given initial values
    */
   def foldLeft(initial: T, fn: (T, T) => T): T = {
-    (initial /: contents.values)(fn(_, _))
+    (initial /: getContents())(fn(_, _))
   }
 
   def getIndices: Indices = generateIndices
 
   def generateIndices: Indices = new Indices(variables)
-  
+
   def convertIndicesToValues(indices: List[Int]): List[Extended[_]] = {
     val values = for { i <- 0 until indices.size } yield variables(i).range(indices(i))
     values.toList
   }
 
   /**
+   * Get the contents of a factor as a traversable (note: no indicies provided)
+   */
+  def getContents(): Traversable[T]
+
+  /**
+   * Return the contents of a factor as a string
+   */
+  def stringContents(): String
+
+  /**
+   * Test whether a factor contains a value for a specific index
+   */
+  def contentsContains(index: List[Int]): Boolean
+
+  /**
    * Set the value associated with a row. The row is identified by an list of indices
    * into the ranges of the variables over which the factor is defined.
    */
-  def set(indices: List[Int], value: T): Factor[T] = {
-    contents += indices -> value
-    this
-  }
+  def set(indices: List[Int], value: T): Factor[T]
 
   /**
    * Get the value associated with a row. The row is identified by an list of indices
@@ -157,17 +169,17 @@ trait Factor[T] {
    * Returns the marginalization of the factor to a variable according to the addition
    * function in this factor's semiring. This involves summing out all other variables.
    */
-  def marginalizeTo(targets: Variable[_]*): Factor[T] = marginalizeToWithSum(semiring.sum, targets:_*)
+  def marginalizeTo(targets: Variable[_]*): Factor[T] = marginalizeToWithSum(semiring.sum, targets: _*)
 
   /**
-    * Returns the marginalization of the factor to a variable according to the given
-    * addition function. Unlike marginalizeTo, this uses the provided sum function.
-    * This is useful e.g. to easily switch between max-product and sum-product operations
-    * when the data within are unchanged and the product operation is the same.
-    *
-    * The returned factor uses the semiring associated with this factor; it does not
-    * override the sum function of the semiring with the function given here.
-    */
+   * Returns the marginalization of the factor to a variable according to the given
+   * addition function. Unlike marginalizeTo, this uses the provided sum function.
+   * This is useful e.g. to easily switch between max-product and sum-product operations
+   * when the data within are unchanged and the product operation is the same.
+   *
+   * The returned factor uses the semiring associated with this factor; it does not
+   * override the sum function of the semiring with the function given here.
+   */
   def marginalizeToWithSum(
     sum: (T, T) => T,
     targets: Variable[_]*): Factor[T]
@@ -188,8 +200,7 @@ class Indices(variables: List[Variable[_]]) extends Iterable[List[Int]] {
   val limits = variables.map(_.size.asInstanceOf[Int] - 1)
   val numVars = limits.length
   val factorSize = (1 /: variables)(_ * _.size)
-  
-  
+
   def iterator = new Iterator[List[Int]] {
     var current: List[Int] = List(-1)
     def hasNext = {
@@ -210,12 +221,12 @@ class Indices(variables: List[Variable[_]]) extends Iterable[List[Int]] {
 
     def next: List[Int] = current
   }
-  
+
   def allIndices: List[List[Int]] = {
     @tailrec def helper(current: List[Int], accum: List[List[Int]]): List[List[Int]] =
       nextIndices(current) match {
         case Some(next) => helper(next, current :: accum)
-        case None => (current :: accum).reverse
+        case None       => (current :: accum).reverse
       }
     if (factorSize == 0) List()
     else helper(List.fill(numVars)(0), List())
@@ -225,16 +236,16 @@ class Indices(variables: List[Variable[_]]) extends Iterable[List[Int]] {
    * Given a list of indices corresponding to a row in the factor, returns the list of indices
    * corresponding to the next row.
    * Returns None if the last index list has been reached.
-   */  
+   */
   def nextIndices(indices: List[Int]): Option[List[Int]] = {
     var temp = indices.reverse
     var newIndices = List[Int]()
     var success = true
     var carry = true
-    
+
     var position = numVars - 1
-    
-    while(carry) {
+
+    while (carry) {
       temp match {
         case head :: tail => {
           //  current position can be incremented
@@ -243,8 +254,7 @@ class Indices(variables: List[Variable[_]]) extends Iterable[List[Int]] {
             newIndices ::= head + 1
             newIndices :::= tail.reverse
             carry = false
-          }
-          // limit reached so zero current position and 
+          } // limit reached so zero current position and 
           // carry to next
           else if (head == limits(position)) {
             newIndices ::= 0
@@ -259,40 +269,39 @@ class Indices(variables: List[Variable[_]]) extends Iterable[List[Int]] {
         }
       }
     }
-    
+
     if (success) {
       Some(newIndices)
-    }
-    else {
+    } else {
       None
     }
   }
 }
 
 object Factor {
-//  def combineIndices(thisIndices: List[Int], thisIndexMap: List[Int], thatIndices: List[Int], thatIndexMap: List[Int], numVars: Int): Option[List[Int]] = {
-//    var newIndices = new ListBuffer[Int]()
-//    var good = true;
-//
-//    for (i <- 0 until numVars) {
-//      val inThis = thisIndexMap.indexOf(i)
-//      val inThat = thatIndexMap.indexOf(i)
-//
-//      (inThis >= 0, inThat >= 0) match {
-//        case (true, false) => newIndices.append(thisIndices(inThis))
-//        case (false, true) => newIndices.append(thatIndices(inThat))
-//        case (true, true) =>
-//          if (thisIndices(inThis) == thatIndices(inThat))
-//            newIndices.append(thisIndices(inThis))
-//          else
-//            good = false
-//        case _ => good = false
-//      }
-//    }
-//
-//    if (good)
-//      Some(newIndices.toList)
-//    else
-//      None
-//  }
+  //  def combineIndices(thisIndices: List[Int], thisIndexMap: List[Int], thatIndices: List[Int], thatIndexMap: List[Int], numVars: Int): Option[List[Int]] = {
+  //    var newIndices = new ListBuffer[Int]()
+  //    var good = true;
+  //
+  //    for (i <- 0 until numVars) {
+  //      val inThis = thisIndexMap.indexOf(i)
+  //      val inThat = thatIndexMap.indexOf(i)
+  //
+  //      (inThis >= 0, inThat >= 0) match {
+  //        case (true, false) => newIndices.append(thisIndices(inThis))
+  //        case (false, true) => newIndices.append(thatIndices(inThat))
+  //        case (true, true) =>
+  //          if (thisIndices(inThis) == thatIndices(inThat))
+  //            newIndices.append(thisIndices(inThis))
+  //          else
+  //            good = false
+  //        case _ => good = false
+  //      }
+  //    }
+  //
+  //    if (good)
+  //      Some(newIndices.toList)
+  //    else
+  //      None
+  //  }
 }

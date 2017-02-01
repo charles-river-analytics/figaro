@@ -71,7 +71,7 @@ class VESolver(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[
 
   private def backtrackOne[T](factor: Factor[_], variable: Variable[T]): Unit = {
     val indices =
-      for { variable <- factor.variables } yield util.indices(variable.range, Regular(getRecordingFactor(variable).contents.head._2)).head
+      for { variable <- factor.variables } yield util.indices(variable.range, Regular(getRecordingFactor(variable).getContents().head)).head
     recordingFactorsMap += variable -> {
       val bf = factor.asInstanceOf[Factor[variable.Value]].createFactor(List(), List())
       bf.set(List(), factor.asInstanceOf[Factor[variable.Value]].get(indices))
