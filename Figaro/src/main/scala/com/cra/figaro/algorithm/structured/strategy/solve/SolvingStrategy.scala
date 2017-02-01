@@ -19,6 +19,8 @@ import com.cra.figaro.algorithm.factored.factors.{Factor, Variable}
  * A solving strategy solves an inference problem after a series of refinements have been made. This can involve solving
  * subproblems and collecting their factors, but this class does not account for subproblems by default. Executing the
  * strategy then eliminates variables that do not belong in the solution.
+ *
+ * By default, solving strategies do not use parameterized factors, but subclasses can override this.
  * @param problem Problem to solve.
  */
 private[figaro] abstract class SolvingStrategy(problem: Problem) {
@@ -28,7 +30,7 @@ private[figaro] abstract class SolvingStrategy(problem: Problem) {
    * @return Non-constraint factors for solving.
    */
   def nonConstraintFactors: List[Factor[Double]] = {
-    problem.components.flatMap(_.nonConstraintFactors)
+    problem.components.flatMap(_.nonConstraintFactors())
   }
 
   /**

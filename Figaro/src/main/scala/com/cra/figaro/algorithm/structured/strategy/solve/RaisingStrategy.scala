@@ -39,7 +39,7 @@ abstract class RaisingStrategy(problem: Problem, raisingCriteria: RaisingCriteri
     case chainComp: ChainComponent[_, _] =>
       chainNonConstraintFactors(chainComp)
     case comp =>
-      comp.nonConstraintFactors
+      comp.nonConstraintFactors()
   }
 
   /**
@@ -48,7 +48,9 @@ abstract class RaisingStrategy(problem: Problem, raisingCriteria: RaisingCriteri
    * @return All factors associated with the chain component that are needed for solving. This includes (possibly
    * eliminated) subproblem factors.
    */
-  protected def chainNonConstraintFactors[ParentValue, Value](chainComp: ChainComponent[ParentValue, Value]): List[Factor[Double]] = {
+  def chainNonConstraintFactors[ParentValue, Value](chainComp: ChainComponent[ParentValue, Value]): List[Factor[Double]] = {
+    // If the range is {*}, there is no need to raise subproblems because they will all be uniquely *
+    if(chainComp.range.regularValues.isEmpty) return chainComp.nonConstraintFactors()
     // Process each subproblem and collect the corresponding factors
     val collectedSubproblemFactors = for((parentValue, subproblem) <- chainComp.subproblems) yield {
       // Variable associated with the target in the subproblem and chain factors, respectively
@@ -87,7 +89,7 @@ abstract class RaisingStrategy(problem: Problem, raisingCriteria: RaisingCriteri
     }
     else {
       // Return the collected subproblem factors, and the chain factors that connect them
-      chainComp.nonConstraintFactors ::: collectedSubproblemFactors.toList.flatten
+      chainComp.nonConstraintFactors() ::: collectedSubproblemFactors.toList.flatten
     }
   }
 }

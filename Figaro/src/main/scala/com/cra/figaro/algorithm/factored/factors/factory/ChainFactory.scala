@@ -30,12 +30,7 @@ object ChainFactory {
   import com.cra.figaro.algorithm.factored.factors.factory.Factory
 
   def makeFactors[T, U](cc: ComponentCollection, chain: Chain[T, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {
-    val chainComp = cc(chain)
-    if (chainComp.allSubproblemsEliminatedCompletely && cc.useSingleChainFactor) {
-      makeSingleFactor[T, U](cc, chain)(mapper)
-    } else {
-      makeMultipleFactors[T, U](cc, chain)(mapper)
-    }
+    makeMultipleFactors(cc, chain)(mapper)
   }
 
   def makeMultipleFactors[T, U](cc: ComponentCollection, chain: Chain[T, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {

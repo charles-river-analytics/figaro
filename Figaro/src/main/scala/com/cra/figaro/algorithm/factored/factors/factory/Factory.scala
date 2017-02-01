@@ -352,13 +352,10 @@ object Factory {
     // Make the constraint and non-constraint factors for the element by calling the
     // component factor makers    
     val constraint = if (upper) {
-      comp.makeConstraintFactors(Upper)
       comp.constraintFactors(Upper)
     } else {
-      comp.makeConstraintFactors(Lower)
       comp.constraintFactors(Lower)
     }
-    comp.makeNonConstraintFactors(parameterized)
-    constraint ::: comp.nonConstraintFactors
+    constraint ::: comp.nonConstraintFactors(parameterized)
   }
 }
