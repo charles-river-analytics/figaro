@@ -97,7 +97,7 @@ object ComplexFactory {
       val injectRange = if (incomplete) withStar(resultValues); else withoutStar(resultValues)
 
       val resultVariable = Factory.makeVariable(cc, injectRange)
-      val factor = new BasicFactor[Double](inputVariables, List(resultVariable))
+      val factor = new DenseFactor[Double](inputVariables, List(resultVariable))
       factor.fillByRule(rule _)
       (resultVariable, factor)
     }

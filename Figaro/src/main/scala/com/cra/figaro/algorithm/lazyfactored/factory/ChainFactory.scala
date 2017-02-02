@@ -53,7 +53,7 @@ object ChainFactory {
         // We create a dummy factor for that variable.
         // Then we use makeSelection with the dummy variable
         val dummy = new Variable(ValueSet.withStar[U](Set()))
-        val dummyFactor = new BasicFactor[Double](List(), List(dummy))
+        val dummyFactor = new DenseFactor[Double](List(), List(dummy))
         dummyFactor.set(List(0), 1.0)
         tempFactors.append(makeSelection(chain, selectorVar, parentSize, parentIndex, dummy, selector), dummyFactor)
       }

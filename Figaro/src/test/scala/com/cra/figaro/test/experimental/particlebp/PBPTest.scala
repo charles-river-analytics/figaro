@@ -134,7 +134,7 @@ class PBPTest extends WordSpec with Matchers {
       val msgs = bpb.getLastMessagesToNode(n)
       msgs.size should be > 1
       msgs(1).numVars should be(1)
-      msgs(1).contents.map(_._2).sum should be(0.0 +- .01)
+      msgs(1).getContents().sum should be(0.0 +- .01)
     }
 
     "with no conditions or constraints produce the correct result for a one time algorithm" in {

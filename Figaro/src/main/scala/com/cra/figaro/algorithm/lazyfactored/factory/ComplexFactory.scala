@@ -34,7 +34,7 @@ object ComplexFactory {
       case None =>
         val elementVar = Variable(element)
         val firstVar = Variable(first)
-        val factor = new BasicFactor[Double](List(firstVar), List(elementVar))
+        val factor = new DenseFactor[Double](List(firstVar), List(elementVar))
         for {
           i <- 0 until firstVar.range.size
           j <- 0 until elementVar.range.size
@@ -66,7 +66,7 @@ object ComplexFactory {
         case None =>
           val elementVar = Variable(element)
           val firstVar = Variable(first)
-          val factor = new BasicFactor[Double](List(firstVar), List(elementVar))
+          val factor = new DenseFactor[Double](List(firstVar), List(elementVar))
           for {
             i <- 0 until firstVar.range.size
             j <- 0 until elementVar.range.size
@@ -115,7 +115,7 @@ object ComplexFactory {
   def makeFactors[T, U](element: Aggregate[T, U]): List[Factor[Double]] = {
     val elementVar = Variable(element)
     val mvreVar = Variable(element.mvre)
-    val factor = new BasicFactor[Double](List(mvreVar), List(elementVar))
+    val factor = new DenseFactor[Double](List(mvreVar), List(elementVar))
     for {
       (mvreXvalue, mvreIndex) <- mvreVar.range.zipWithIndex
       (elementXvalue, elementIndex) <- elementVar.range.zipWithIndex
@@ -134,7 +134,7 @@ object ComplexFactory {
   def makeFactors[T](element: com.cra.figaro.library.collection.MakeArray[T]): List[Factor[Double]] = {
     val arg1Var = Variable(element.numItems)
     val resultVar = Variable(element)
-    val factor = new BasicFactor[Double](List(arg1Var), List(resultVar))
+    val factor = new DenseFactor[Double](List(arg1Var), List(resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
     val resultIndices = resultVar.range.zipWithIndex
     for {
@@ -158,7 +158,7 @@ object ComplexFactory {
    */
   def makeFactors[T,U](fold: FoldLeft[T,U]): List[Factor[Double]] = {
     def makeOneFactor(currentAccumVar: Variable[U], elemVar: Variable[T], nextAccumVar: Variable[U]): Factor[Double] = {
-      val result = new BasicFactor[Double](List(currentAccumVar, elemVar), List(nextAccumVar))
+      val result = new DenseFactor[Double](List(currentAccumVar, elemVar), List(nextAccumVar))
       val currentAccumIndices = currentAccumVar.range.zipWithIndex
       val elemIndices = elemVar.range.zipWithIndex
       val nextAccumIndices = nextAccumVar.range.zipWithIndex

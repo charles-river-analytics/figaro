@@ -76,7 +76,7 @@ object ChainFactory {
     val chainComp = cc(chain)
     val parentVar = Factory.getVariable(cc, chain.parent)
     val childVar = Factory.getVariable(cc, chain)
-    val factor = new BasicFactor[Double](List(parentVar), List(childVar))
+    val factor = new DenseFactor[Double](List(parentVar), List(childVar))
     for { parentIndex <- 0 until parentVar.range.length } {
       val parentXV = parentVar.range(parentIndex)
       if (parentXV.isRegular && chainComp.subproblems.contains(parentXV.value) && !chainComp.subproblems(parentXV.value).solution.isEmpty) {
