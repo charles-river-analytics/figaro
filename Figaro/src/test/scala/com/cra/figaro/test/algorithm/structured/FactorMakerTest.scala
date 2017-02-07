@@ -25,6 +25,7 @@ import com.cra.figaro.algorithm.factored.ParticleGenerator
 import com.cra.figaro.library.atomic.discrete.{Binomial, Util}
 import com.cra.figaro.library.atomic.continuous.Normal
 import com.cra.figaro.algorithm.factored.factors.Factor
+import com.cra.figaro.algorithm.factored.factors.factory.ChainFactory
 import com.cra.figaro.library.atomic.discrete.Uniform
 import com.cra.figaro.util.MultiSet
 import com.cra.figaro.util.HashMultiSet
@@ -1286,7 +1287,7 @@ class FactorMakerTest extends WordSpec with Matchers {
 
       c2.generateRange()
 
-      val List(factor) = c2.nonConstraintFactors()
+      val List(factor) = ChainFactory.makeSingleFactor(cc, v2)
       factor.variables should equal (List(c1.variable, c2.variable))
       val v1Vals = c1.variable.range
       val v2Vals = c2.variable.range
@@ -1333,7 +1334,7 @@ class FactorMakerTest extends WordSpec with Matchers {
 
       c2.generateRange()
 
-      val List(factor) = c2.nonConstraintFactors()
+      val List(factor) = ChainFactory.makeSingleFactor(cc, v2)
       factor.variables should equal (List(c1.variable, c2.variable))
       val v1Vals = c1.variable.range
       val v2Vals = c2.variable.range
@@ -1384,7 +1385,7 @@ class FactorMakerTest extends WordSpec with Matchers {
 
       c2.generateRange()
 
-      val List(factor) = c2.nonConstraintFactors()
+      val List(factor) = ChainFactory.makeSingleFactor(cc, v2)
       factor.variables should equal (List(c1.variable, c2.variable))
       val v1Vals = c1.variable.range
       val v2Vals = c2.variable.range
@@ -1439,7 +1440,7 @@ class FactorMakerTest extends WordSpec with Matchers {
 
       c2.generateRange()
 
-      val List(factor) = c2.nonConstraintFactors()
+      val List(factor) = ChainFactory.makeSingleFactor(cc, v2)
       factor.variables should equal (List(c1.variable, c2.variable))
       val v1Vals = c1.variable.range
       val v2Vals = c2.variable.range
