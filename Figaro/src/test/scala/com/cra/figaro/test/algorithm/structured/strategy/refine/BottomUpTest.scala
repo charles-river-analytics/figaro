@@ -12,7 +12,7 @@
  */
 package com.cra.figaro.test.algorithm.structured.strategy.refine
 
-import com.cra.figaro.algorithm.factored.factors.BasicFactor
+import com.cra.figaro.algorithm.factored.factors.DenseFactor
 import com.cra.figaro.algorithm.lazyfactored.Regular
 import com.cra.figaro.algorithm.structured.strategy.refine._
 import com.cra.figaro.algorithm.structured.strategy.solve._
@@ -154,7 +154,7 @@ class BottomUpTest extends WordSpec with Matchers {
 
     "recursively mark problems as unsolved" when {
       // A "solution" which we will artificially place in problems to make sure it gets removed
-      val dummySolution = List(new BasicFactor[Double](List(), List()))
+      val dummySolution = List(new DenseFactor[Double](List(), List()))
 
       "executed on a top-level problem with no subproblems" in {
         Universe.createNew()
