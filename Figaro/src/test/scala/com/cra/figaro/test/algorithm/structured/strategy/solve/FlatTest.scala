@@ -28,6 +28,7 @@ class FlatTest extends WordSpec with Matchers {
     
     "expanding the model" should {
       "produce the correct factors" in {
+        // TODO these tests should really go in a separate test suite for raising strategies
         Universe.createNew()
         val e1 = Flip(0.4)        
         val r1 = Chain(e1, (b: Boolean) => {
@@ -39,8 +40,7 @@ class FlatTest extends WordSpec with Matchers {
         val decompose = new BottomUpStrategy(problem, defaultRangeSizer, problem.components)
         decompose.execute()
         val solve = new ConstantStrategy(problem, flatRaising, marginalVariableElimination)
-        solve.execute()
-        val factors = problem.components.flatMap(_.nonConstraintFactors())
+        val factors = solve.nonConstraintFactors()
         factors.foreach(f => println(f.toReadableString))
         factors.size should be(16)
         FlatVE.probability(r1, 1) should equal (0.5*0.2*.4 +- 0.000001)
