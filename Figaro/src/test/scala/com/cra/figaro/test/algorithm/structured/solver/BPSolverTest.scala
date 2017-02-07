@@ -688,7 +688,8 @@ class BPSolverTest extends WordSpec with Matchers {
         (pT / (pT + pF)) should be(0.3 +- 0.01)
       }
 
-    "with a model using chain and a condition on one of the outcome elements, when the outcomes are nested, correctly condition the result" in {
+    // These tests are invalid because nested evidence is disallowed
+    /*"with a model using chain and a condition on one of the outcome elements, when the outcomes are nested, correctly condition the result" in {
       Universe.createNew()
       val e1 = Flip(0.3)
       val e2 = Select(0.1 -> 1, 0.9 -> 2)
@@ -752,7 +753,7 @@ class BPSolverTest extends WordSpec with Matchers {
         val pF = result.get(List(c1IndexF))
         (pT / (pT + pF)) should be(0.3 +- 0.01)
       }
-
+    */
   }
 
   "Running MPE VariableElimination" when {
