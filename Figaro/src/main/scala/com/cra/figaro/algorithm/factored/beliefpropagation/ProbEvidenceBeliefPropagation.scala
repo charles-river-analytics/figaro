@@ -64,7 +64,7 @@ trait ProbEvidenceBeliefPropagation extends ProbabilisticBeliefPropagation with 
     val factorNodes = factorGraph.getNodes.filter(_.isInstanceOf[FactorNode]).toList
     val varNodes = factorGraph.getNodes.filter(_.isInstanceOf[VariableNode]).toList
 
-    val nonZeroEvidence = factorNodes.exists(p => beliefMap(p).contents.exists(_._2 != Double.NegativeInfinity))
+    val nonZeroEvidence = factorNodes.exists(p => beliefMap(p).getContents().exists(_ != Double.NegativeInfinity))
 
     if (nonZeroEvidence) {
       val betheEnergy = -1 * factorNodes.map(f => {

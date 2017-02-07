@@ -209,7 +209,7 @@ class SparseFactorTest extends WordSpec with Matchers with PrivateMethodTester {
         f1.set(List(0), 0.5)
         f1.set(List(1), 0.5)
 
-        val f2 = new BasicFactor[Double](List(f, f), List(e))
+        val f2 = new DenseFactor[Double](List(f, f), List(e))
         f2.set(List(0, 0, 0), 1.0)
         f2.set(List(0, 0, 1), 0.0)
         f2.set(List(0, 1, 0), 0.0)

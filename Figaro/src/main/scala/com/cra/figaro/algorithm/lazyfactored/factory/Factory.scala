@@ -38,19 +38,19 @@ object Factory {
    * The mutliplicative identity factor.
    */
   def unit[T: TypeTag](semiring: Semiring[T]): Factor[T] = {
-    val result = new BasicFactor[T](List(), List(), semiring)
+    val result = new DenseFactor[T](List(), List(), semiring)
     result.set(List(), semiring.one)
     result
   }
 
   /**
-   * Create a BasicFactor from the supplied parent and children variables
+   * Create a DenseFactor from the supplied parent and children variables
    */
   def defaultFactor[T: TypeTag](parents: List[Variable[_]], children: List[Variable[_]], _semiring: Semiring[T] = SumProductSemiring().asInstanceOf[Semiring[T]]) = 
-      new BasicFactor[T](parents, children, _semiring)
+      new DenseFactor[T](parents, children, _semiring)
 
   private def makeFactors[T](const: Constant[T]): List[Factor[Double]] = {
-    val factor = new BasicFactor[Double](List(), List(Variable(const)))
+    val factor = new DenseFactor[Double](List(), List(Variable(const)))
     factor.set(List(0), 1.0)
     List(factor)
   }
@@ -130,7 +130,7 @@ object Factory {
 //        // We create a dummy factor for that variable.
 //        // Then we use makeConditionalSelector with the dummy variable
 //        val dummy = new Variable(ValueSet.withStar[U](Set()))
-//        val dummyFactor = new BasicFactor[Double](List(), List(dummy))
+//        val dummyFactor = new DenseFactor[Double](List(), List(dummy))
 //        dummyFactor.set(List(0), 1.0)
 //        List(makeConditionalSelector(chain, parentVar, pair._2, dummy), dummyFactor)
 //      }
@@ -262,7 +262,7 @@ object Factory {
     val inputVariables = inject.args map (Variable(_))
     val resultVariable = Variable(inject)
     //    val variables = resultVariable :: inputVariables
-    val factor = new BasicFactor[Double](inputVariables, List(resultVariable))
+    val factor = new DenseFactor[Double](inputVariables, List(resultVariable))
     factor.fillByRule(rule _)
     List(factor)
   }
@@ -271,7 +271,7 @@ object Factory {
   private def makeParameterFactors(param: Parameter[_]): List[Factor[Double]] = {
     // The parameter should have one possible value, which is its expected value
     assert(Variable(param).range.size == 1)
-    val factor = new BasicFactor[Double](List(), List(Variable(param)))
+    val factor = new DenseFactor[Double](List(), List(Variable(param)))
     factor.set(List(0), 1.0)
     List(factor)
   }
@@ -337,7 +337,7 @@ object Factory {
       val currentDensity = densityMap.getOrElse(v, 0.0)
       densityMap.update(v, currentDensity + atomic.density(v))
     }
-    val factor = new BasicFactor[Double](List(), List(variable))
+    val factor = new DenseFactor[Double](List(), List(variable))
     for { (v, i) <- values.zipWithIndex } {
       factor.set(List(i), densityMap(v))
     }
@@ -454,10 +454,10 @@ object Factory {
   }
 
   /**
-   * Creates a BasicFactor from the supplied variables
+   * Creates a DenseFactor from the supplied variables
    */
   def simpleMake[T: TypeTag](variables: List[Variable[_]]) =
-    new BasicFactor[T](variables, List())
+    new DenseFactor[T](variables, List())
 
   /**
    * Remove an element from the factor cache, ensuring that factors for the element
@@ -492,7 +492,7 @@ object Factory {
       result
     }
     val variables = uses map (Variable(_))
-    val factor = new BasicFactor[Double](variables, List())
+    val factor = new DenseFactor[Double](variables, List())
     factor.fillByRule(rule _)
     factor
   }

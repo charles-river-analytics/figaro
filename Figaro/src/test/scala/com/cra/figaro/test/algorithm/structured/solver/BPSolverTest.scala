@@ -131,7 +131,7 @@ class BPSolverTest extends WordSpec with Matchers {
 
       val factor = bp.tupleFactor
       val vt = bp.tupleVar
-      factor.contents.size should equal(4)
+      factor.getContents().size should equal(4)
       val v1IndexT = v1.range.indexOf(Regular(true))
       val v1IndexF = v1.range.indexOf(Regular(false))
       val v3Index1 = v3.range.indexOf(Regular(1))

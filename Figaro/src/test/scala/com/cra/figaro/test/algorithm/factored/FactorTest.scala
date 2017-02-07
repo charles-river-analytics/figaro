@@ -613,11 +613,11 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
           }
           val v2index1 = pairRange.indexWhere(p => p(0).asInstanceOf[Regular[Int]].value == v2Index && p(1).asInstanceOf[Regular[Boolean]].value == true)
           val v2index2 = pairRange.indexWhere(p => p(0).asInstanceOf[Regular[Int]].value == v2Index && p(1).asInstanceOf[Regular[Boolean]].value == false)
-          v2Factor.get(List(v2index1, v3FalseIndex)) should equal(1.0)
-          v2Factor.get(List(v2index1, v3TrueIndex)) should equal(0.0)
+          v2Factor.get(List(v2index1, 0)) should equal(0.0)
+          v2Factor.get(List(v2index2, 0)) should equal(1.0)
           for { i <- 0 to 1 } {
             val ind = pairRange.indexWhere(p => p(0).asInstanceOf[Regular[Int]].value == v1Index && p(1).asInstanceOf[Regular[Boolean]].value == v3Vals(i).value)
-            v2Factor.get(List(ind, i)) should equal(1.0)
+            v2Factor.get(List(ind, 0)) should equal(1.0)
           }
         }
     }
@@ -829,7 +829,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         factor.contains(List(v12, v21)) should equal(false)
         factor.contains(List(v13, v20)) should equal(false)
         factor.get(List(v13, v21)) should equal(1.0)
-        factor.contents.size should equal(3)
+        factor.getContents().size should equal(3)
       }
     }
 
@@ -870,7 +870,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         factor.get(List(v13, v23, v30)) should equal(1.0)
         factor.contains(List(v13, v23, v31)) should equal(false)
         factor.contains(List(v13, v23, v32)) should equal(false)
-        factor.contents.size should equal(6)
+        factor.getContents().size should equal(6)
       }
     }
 
@@ -914,7 +914,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         factor.get(List(v13, v22, v31, v40)) should equal(1.0)
         factor.contains(List(v13, v22, v31, v41)) should equal(false)
         factor.contains(List(v13, v22, v31, v42)) should equal(false)
-        factor.contents.size should equal(6)
+        factor.getContents().size should equal(6)
       }
     }
 
@@ -982,7 +982,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         factor.get(List(v13, v22, v31, v4true, v50)) should equal(1.0)
         factor.contains(List(v13, v22, v31, v4true, v51)) should equal(false)
         factor.contains(List(v13, v22, v31, v4true, v52)) should equal(false)
-        factor.contents.size should equal(12)
+        factor.getContents().size should equal(12)
       }
     }
 
@@ -1055,7 +1055,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         factor.get(List(v13, v22, v31, v4true, v5false, v60)) should equal(1.0)
         factor.contains(List(v13, v22, v31, v4true, v5false, v61)) should equal(false)
         factor.contains(List(v13, v22, v31, v4true, v5false, v62)) should equal(false)
-        factor.contents.size should equal(12)
+        factor.getContents().size should equal(12)
       }
     }
 
@@ -1290,7 +1290,7 @@ class FactorTest extends WordSpec with Matchers with PrivateMethodTester {
         factor.get(List(v12, v21)) should equal(1.0)
         factor.contains(List(v13, v20)) should equal(false)
         factor.get(List(v13, v21)) should equal(1.0)
-        factor.contents.size should equal(4)
+        factor.getContents().size should equal(4)
       }
 
       "given a multi-universe model with Chains" in {

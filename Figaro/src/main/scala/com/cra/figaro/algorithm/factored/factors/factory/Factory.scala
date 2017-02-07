@@ -70,7 +70,7 @@ object Factory {
       val newFactor =
         factor match {
           case s: SparseFactor[Double] => new SparseFactor[Double](newVariables, List())
-          case b: BasicFactor[Double] => new BasicFactor[Double](newVariables, List())
+          case b: DenseFactor[Double] => new DenseFactor[Double](newVariables, List())
         }
       for { indices <- factor.getIndices } { newFactor.set(indices, factor.get(indices)) }
       newFactor
@@ -81,7 +81,7 @@ object Factory {
    * The mutliplicative identity factor.
    */
   def unit[T: TypeTag](semiring: Semiring[T]): Factor[T] = {
-    val result = new BasicFactor[T](List(), List(), semiring)
+    val result = new DenseFactor[T](List(), List(), semiring)
     result.set(List(), semiring.one)
     result
   }
@@ -110,13 +110,13 @@ object Factory {
   }
 
   /**
-   * Create a BasicFactor from the supplied parent and children variables
+   * Create a DenseFactor from the supplied parent and children variables
    */
   def defaultFactor[T: TypeTag](parents: List[Variable[_]], children: List[Variable[_]], _semiring: Semiring[T] = SumProductSemiring().asInstanceOf[Semiring[T]]) =
-    new BasicFactor[T](parents, children, _semiring)
+    new DenseFactor[T](parents, children, _semiring)
 
   private def makeFactors[T](cc: ComponentCollection, const: Constant[T]): List[Factor[Double]] = {
-    val factor = new BasicFactor[Double](List(), List(getVariable(cc, const)))
+    val factor = new DenseFactor[Double](List(), List(getVariable(cc, const)))
     factor.set(List(0), 1.0)
     List(factor)
   }
@@ -177,7 +177,7 @@ object Factory {
     val inputVariables = inject.args map (getVariable(cc, _))
     val resultVariable = getVariable(cc, inject)
     //    val variables = resultVariable :: inputVariables
-    val factor = new BasicFactor[Double](inputVariables, List(resultVariable))
+    val factor = new DenseFactor[Double](inputVariables, List(resultVariable))
     factor.fillByRule(rule _)
     List(factor)
   }
@@ -187,7 +187,7 @@ object Factory {
     // The parameter should have one possible value, which is its expected value
     val paramVar = getVariable(cc, param)
     assert(paramVar.range.size == 1)
-    val factor = new BasicFactor[Double](List(), List(paramVar))
+    val factor = new DenseFactor[Double](List(), List(paramVar))
     factor.set(List(0), 1.0)
     List(factor)
   }
@@ -263,7 +263,7 @@ object Factory {
       val currentDensity = densityMap.getOrElse(v, 0.0)
       densityMap.update(v, currentDensity + atomic.density(v))
     }
-    val factor = new BasicFactor[Double](List(), List(variable))
+    val factor = new DenseFactor[Double](List(), List(variable))
     for { (v, i) <- values.zipWithIndex } {
       factor.set(List(i), densityMap(v))
     }
@@ -314,7 +314,7 @@ object Factory {
       result
     }
     val variables = uses map (cc(_).variable)
-    val factor = new BasicFactor[Double](variables, List())
+    val factor = new DenseFactor[Double](variables, List())
     factor.fillByRule(rule _)
     factor
   }

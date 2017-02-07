@@ -194,7 +194,7 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
    *  Normalize a factor.
    */
   def normalize(factor: Factor[Double]): Factor[Double] = {
-    val z = logSpaceSemiring().sumMany(factor.contents.values)
+    val z = logSpaceSemiring().sumMany(factor.getContents())
     // Since we're in log space, d - z = log(exp(d)/exp(z))
     factor.mapTo((d: Double) => if (z != logSpaceSemiring().zero) d - z else logSpaceSemiring().zero)
   }
