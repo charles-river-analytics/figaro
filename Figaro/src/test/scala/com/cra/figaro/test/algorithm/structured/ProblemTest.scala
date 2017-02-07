@@ -33,7 +33,6 @@ class ProblemTest extends WordSpec with Matchers {
       c1.element should equal (e1)
       c1.range.hasStar should equal (true)
       c1.range.regularValues should be (empty)
-      // TODO these might need to be uncommented
       c1.constraintFactors(Lower) should be (empty)
       c1.constraintFactors(Upper) should be (empty)
       c1.nonConstraintFactors() should be (empty)

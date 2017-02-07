@@ -190,7 +190,6 @@ class FlatTest extends WordSpec with Matchers {
         val alg = FlatVE(e2)
         alg.start
         alg.probability(e2, true) should equal (0.5)
-        // TODO see if this is still true
         alg.problem.collection(e1).nonConstraintFactors().isEmpty should be (true)
         //count should equal (0)
       }

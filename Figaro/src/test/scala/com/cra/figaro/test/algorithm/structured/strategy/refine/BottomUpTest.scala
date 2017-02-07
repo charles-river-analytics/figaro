@@ -235,7 +235,6 @@ class BottomUpTest extends WordSpec with Matchers {
       new BottomUpStrategy(pr, defaultRangeSizer, pr.targetComponents, done).execute()
 
       c1.variable.valueSet.regularValues should be(empty)
-      // TODO check if this still holds
       c1.nonConstraintFactors() should be(empty)
       c1.constraintFactors(Lower) should be(empty)
     }

@@ -95,7 +95,6 @@ class TopDownTest extends WordSpec with Matchers {
       newSubproblems should have size 5
       // No components in the new subproblems should be refined yet
       for((_, subproblem) <- newSubproblems ; comp <- subproblem.components) {
-        // TODO check if this still holds
         comp.nonConstraintFactors() should be(empty)
         comp.range.regularValues should be(empty)
         comp.range.hasStar should equal(true)
