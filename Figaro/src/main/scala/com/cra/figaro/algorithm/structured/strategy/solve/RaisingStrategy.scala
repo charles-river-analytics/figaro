@@ -35,7 +35,7 @@ abstract class RaisingStrategy(problem: Problem, raisingCriteria: RaisingCriteri
    * Get all of the non-constraint factors needed for solving. This includes subproblem factors.
    * @return Non-constraint factors for solving.
    */
-  override def nonConstraintFactors: List[Factor[Double]] = problem.components.flatMap {
+  override def nonConstraintFactors(): List[Factor[Double]] = problem.components.flatMap {
     case chainComp: ChainComponent[_, _] =>
       chainNonConstraintFactors(chainComp)
     case comp =>
@@ -72,7 +72,7 @@ abstract class RaisingStrategy(problem: Problem, raisingCriteria: RaisingCriteri
         if(raisingCriteria(subproblem)) {
           // If we decide to raise without solving, copy the factors from the recursing strategy
           // Replace formal variable with actual variable
-          replaceVariable(recursingStrategy.nonConstraintFactors)
+          replaceVariable(recursingStrategy.nonConstraintFactors())
         }
         else {
           // Otherwise, compute the solution

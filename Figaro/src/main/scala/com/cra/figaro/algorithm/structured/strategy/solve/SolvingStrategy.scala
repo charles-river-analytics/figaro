@@ -29,7 +29,7 @@ private[figaro] abstract class SolvingStrategy(problem: Problem) {
    * Get all of the non-constraint factors needed for solving.
    * @return Non-constraint factors for solving.
    */
-  def nonConstraintFactors: List[Factor[Double]] = {
+  def nonConstraintFactors(): List[Factor[Double]] = {
     problem.components.flatMap(_.nonConstraintFactors())
   }
 
@@ -67,7 +67,7 @@ private[figaro] abstract class SolvingStrategy(problem: Problem) {
    * does not matter which bounds should be used because both upper and lower bounds would be the same.
    */
   def execute(bounds: Bounds = Lower): Unit = {
-    val allFactors = constraintFactors(bounds) ::: nonConstraintFactors
+    val allFactors = constraintFactors(bounds) ::: nonConstraintFactors()
     val allVariables = (Set[Variable[_]]() /: allFactors)(_ ++ _.variables)
     val (toEliminate, toPreserve) = allVariables.partition(problem.internal)
     val collection = problem.collection
@@ -78,6 +78,7 @@ private[figaro] abstract class SolvingStrategy(problem: Problem) {
     problem.solved = true
     toEliminate.foreach((v: Variable[_]) => {
       // TODO might this cause bugs?
+      // It should be fine, as long as we repopulate intermediates every time we make factors
       if (collection.intermediates.contains(v)) collection.intermediates -= v
     })
   }
