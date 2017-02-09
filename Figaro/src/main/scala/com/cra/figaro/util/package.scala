@@ -184,26 +184,28 @@ package object util {
   }
 
   /**
-   * Find the elements that are reachable from a given element in a directed graph.
-   * The graph is represented as a
-   * function from T to List[T], where the list associated with an element is the list of nodes to which there is a
-   * directed edge from the element. The element on which reachable is called is not returned as one of the reachable
-   * elements.
-   *
-   * The implementation avoids following the exponential number of paths by marking which nodes have been checked. This
-   * technique also allows the algorithm to work on cyclic graphs.
+   * Find the elements that are reachable from given elements in a directed graph. The implementation avoids following
+   * the exponential number of paths by marking which nodes have been checked. This technique also allows the algorithm
+   * to work on cyclic graphs.
+   * @param graph A function that given an element returns a collection of nodes to which there is a directed edge.
+   * @param includeStart Flag to indicate whether to explicitly include the start elements in the returned set or not.
+   * @param start Graph elements from which to begin searching.
+   * @return A set containing all nodes reachable by directed edges from the start nodes. Note: if a start node is
+   * reachable by a path from another start node (or by a cycle containing itself), the node will be included the set
+   * even if `includeStart` is set to false.
    */
-  def reachable[T](t: T, graph: T => Traversable[T]): Traversable[T] = {
-    var marked: Set[T] = Set()
+  def reachable[T](graph: T => Traversable[T], includeStart: Boolean, start: T*): Set[T] = {
+    var marked: Set[T] = if(includeStart) start.toSet else Set()
 
-    def helper(t: T): Traversable[T] =
-      if (marked contains t) Traversable()
-      else {
+    def helper(t: T): Unit =
+      if (!marked.contains(t)) {
         marked += t
-        Traversable(t) ++ (graph(t) flatMap (helper(_)))
+        for (child <- graph(t)) helper(child)
       }
 
-    graph(t) flatMap (helper(_)) // written this way so that t is not returned
+    for(t <- start ; child <- graph(t)) helper(child)
+
+    marked
   }
 
   /**

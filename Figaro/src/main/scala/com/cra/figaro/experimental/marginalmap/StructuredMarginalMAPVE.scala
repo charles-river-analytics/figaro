@@ -13,8 +13,7 @@
 
 package com.cra.figaro.experimental.marginalmap
 
-import com.cra.figaro.algorithm.structured._
-import com.cra.figaro.algorithm.structured.strategy.decompose._
+import com.cra.figaro.algorithm.structured.strategy.solve._
 import com.cra.figaro.language._
 
 /**
@@ -22,13 +21,10 @@ import com.cra.figaro.language._
  * @param universe Universe on which to perform inference.
  * @param mapElements Elements for which to compute MAP queries. Elements not in this list are summed over.
  */
-class StructuredMarginalMAPVE(universe: Universe, mapElements: List[Element[_]])
-  extends StructuredMarginalMAPAlgorithm(universe, mapElements) {
+class StructuredMarginalMAPVE(universe: Universe, mapElements: Element[_]*)
+  extends StructuredMarginalMAPAlgorithm(universe, mapElements:_*) with DecompositionMarginalMAP {
 
-  def run() {    
-    val strategy = DecompositionStrategy.recursiveStructuredStrategy(problem, new MarginalMAPVEStrategy, defaultRangeSizer, Lower, false)
-    strategy.execute(initialComponents)    
-  }
+  def solvingStrategy() = new MarginalMAPVEStrategy(problem, structuredRaising)
 }
 
 object StructuredMarginalMAPVE {
@@ -38,7 +34,7 @@ object StructuredMarginalMAPVE {
    * and cannot be queried.
    */
   def apply(mapElements: Element[_]*)(implicit universe: Universe) = {        
-    new StructuredMarginalMAPVE(universe, mapElements.toList)
+    new StructuredMarginalMAPVE(universe, mapElements:_*)
   }
 
   /**

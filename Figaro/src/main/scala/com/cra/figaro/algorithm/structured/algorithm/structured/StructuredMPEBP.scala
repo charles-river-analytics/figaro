@@ -14,24 +14,14 @@
 package com.cra.figaro.algorithm.structured.algorithm.structured
 
 import com.cra.figaro.language._
-import com.cra.figaro.algorithm.structured._
-import com.cra.figaro.algorithm.structured.strategy._
 import com.cra.figaro.algorithm.structured.solver._
-import com.cra.figaro.algorithm.structured.strategy.solve.ConstantStrategy
+import com.cra.figaro.algorithm.structured.strategy.solve._
 import com.cra.figaro.algorithm.structured.algorithm._
-import com.cra.figaro.algorithm.structured.strategy.decompose._
-import com.cra.figaro.algorithm.factored.factors.factory._
-import com.cra.figaro.algorithm.factored.factors.MaxProductSemiring
 
+class StructuredMPEBP(universe: Universe, iterations: Int) extends StructuredMPEAlgorithm(universe)
+  with DecompositionMPE {
 
-class StructuredMPEBP(universe: Universe, iterations: Int) extends StructuredMPEAlgorithm(universe) {
-
-  val semiring = MaxProductSemiring()
-
-  def run() {    
-    val strategy = DecompositionStrategy.recursiveStructuredStrategy(problem, new ConstantStrategy(mpeBeliefPropagation(iterations)), defaultRangeSizer, Lower, false)
-    strategy.execute(initialComponents)    
-  }
+  def solvingStrategy() = new ConstantStrategy(problem, structuredRaising, mpeBeliefPropagation(iterations))
 }
 
 object StructuredMPEBP {

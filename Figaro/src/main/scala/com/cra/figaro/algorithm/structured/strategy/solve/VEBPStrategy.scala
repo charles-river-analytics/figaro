@@ -12,24 +12,28 @@
  */
 package com.cra.figaro.algorithm.structured.strategy.solve
 
-import com.cra.figaro.algorithm.structured.Problem
+import com.cra.figaro.algorithm.structured.{NestedProblem, Problem, solver}
 import com.cra.figaro.algorithm.factored.factors.Factor
 import com.cra.figaro.algorithm.factored.factors.Variable
 import com.cra.figaro.algorithm.factored.VariableElimination
-import com.cra.figaro.algorithm.structured.solver
 
 /**
  * A solving strategy that chooses between VE and BP based on a score of the elminiation order
  */
-class VEBPStrategy(val scoreThreshold: Double, val iterations: Int) extends SolvingStrategy {
+class VEBPStrategy(problem: Problem, raisingCriteria: RaisingCriteria, val scoreThreshold: Double, val iterations: Int)
+  extends RaisingStrategy(problem, raisingCriteria) {
 
-  def solve(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): (List[Factor[Double]], Map[Variable[_], Factor[_]]) = {
+  override def eliminate(toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): (List[Factor[Double]], Map[Variable[_], Factor[_]]) = {
     val (score, order) = VariableElimination.eliminationOrder(factors, toPreserve)
     if (score > scoreThreshold) {
       solver.marginalBeliefPropagation(iterations)(problem, toEliminate, toPreserve, factors)
     } else {
       solver.marginalVariableElimination(problem, toEliminate, toPreserve, factors)
     }
+  }
+
+  override def recurse(subproblem: NestedProblem[_]) = {
+    new VEBPStrategy(subproblem, raisingCriteria, scoreThreshold, iterations)
   }
   
 }
