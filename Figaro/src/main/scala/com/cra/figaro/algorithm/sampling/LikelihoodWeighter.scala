@@ -87,73 +87,79 @@ class LikelihoodWeighter(universe: Universe, cache: Cache) {
     else {
       val (currElem, currObs, currResult) = currentStack.head
 
-      currElem match {
-        case dist: Dist[_, _] =>
-          val parents = dist match {
-            case dc: CompoundDist[_] => dc.probs.filterNot(visited.contains(_)).map(e => (e, getObservation(e, None), None))
-            case _ => List()
-          }
-
-          if (parents.nonEmpty) {
-            traverse(parents ::: currentStack, elementsToVisit, currentWeight, visited)
-          } else {
-            val rand = dist.generateRandomness()
-            val index = dist.selectIndex(rand)
-            val resultElement = if (currResult.isEmpty) dist.outcomeArray(index) else currResult.get
-            val nextHead = List((resultElement, getObservation(resultElement, currObs), None), (currElem, None, Some(resultElement)))
-
-            if (visited.contains(resultElement) && currObs.nonEmpty) {
-              // we did this in the wrong order, and have to repropagate the result for likelihood weighting, and add it to the dependency map so we don't do this incorrectly next time              
-              val elementsToRedo = findDependentElements(dist, resultElement)
-              val newWeight = (currentWeight /: elementsToRedo)((c: Double, n: Element[_]) => undoWeight(c, n))
-              traverse(nextHead ::: currentStack.tail, elementsToRedo.toList ::: elementsToVisit, newWeight, visited --= elementsToRedo)
-            } else if (!visited.contains(resultElement)) {
-              traverse(nextHead ::: currentStack.tail, elementsToVisit, currentWeight, visited)
-            } else {
-              dist.value = resultElement.value.asInstanceOf[dist.Value]
-              dependencies.getOrElseUpdate(resultElement, Set()) += dist
-              val nextWeight = computeNextWeight(currentWeight, currElem, currObs)
-              traverse(currentStack.tail, elementsToVisit, nextWeight, visited += currElem)
+      if (currElem.intervention.isDefined) {
+        currElem.value = currElem.intervention.get
+        traverse(currentStack.tail, elementsToVisit, currentWeight, visited += currElem)
+      } else {
+        currElem match {
+          case dist: Dist[_, _] =>
+            val parents = dist match {
+              case dc: CompoundDist[_] => dc.probs.filterNot(visited.contains(_)).map(e => (e, getObservation(e, None), None))
+              case _ => List()
             }
-          }
 
-        case chain: Chain[_, _] =>
-          if (!visited.contains(chain.parent)) {
-            traverse((chain.parent, getObservation(chain.parent, None), None) :: currentStack, elementsToVisit, currentWeight, visited)
-          } else {
-            val next = if (currResult.isEmpty) cache(chain).get else currResult.get
-            val nextHead = List((next, getObservation(next, currObs), None), (currElem, None, Some(next)))
-            if (visited.contains(next) && currObs.nonEmpty) {
-              // we did this in the wrong order, and have to repropagate the result for likelihood weighting
-              val elementsToRedo = findDependentElements(chain, next)
-              val newWeight = (currentWeight /: elementsToRedo)((c: Double, n: Element[_]) => undoWeight(c, n))
-              traverse(nextHead ::: currentStack.tail, elementsToRedo.toList ::: elementsToVisit, newWeight, visited --= elementsToRedo)
-            } else if (!visited.contains(next)) {
-              traverse(nextHead ::: currentStack.tail, elementsToVisit, currentWeight, visited)
+            if (parents.nonEmpty) {
+              traverse(parents ::: currentStack, elementsToVisit, currentWeight, visited)
             } else {
-              chain match {
-                case cc: CachingChain[_, _] => if (!next.isTemporary) dependencies.getOrElseUpdate(next, Set()) += chain
-                case _ => ()
+              val rand = dist.generateRandomness()
+              val index = dist.selectIndex(rand)
+              val resultElement = if (currResult.isEmpty) dist.outcomeArray(index) else currResult.get
+              val nextHead = List((resultElement, getObservation(resultElement, currObs), None), (currElem, None, Some(resultElement)))
+
+              if (visited.contains(resultElement) && currObs.nonEmpty) {
+                // we did this in the wrong order, and have to repropagate the result for likelihood weighting, and add it to the dependency map so we don't do this incorrectly next time
+                val elementsToRedo = findDependentElements(dist, resultElement)
+                val newWeight = (currentWeight /: elementsToRedo) ((c: Double, n: Element[_]) => undoWeight(c, n))
+                traverse(nextHead ::: currentStack.tail, elementsToRedo.toList ::: elementsToVisit, newWeight, visited --= elementsToRedo)
+              } else if (!visited.contains(resultElement)) {
+                traverse(nextHead ::: currentStack.tail, elementsToVisit, currentWeight, visited)
+              } else {
+                dist.value = resultElement.value.asInstanceOf[dist.Value]
+                dependencies.getOrElseUpdate(resultElement, Set()) += dist
+                val nextWeight = computeNextWeight(currentWeight, currElem, currObs)
+                traverse(currentStack.tail, elementsToVisit, nextWeight, visited += currElem)
               }
-              chain.value = next.value.asInstanceOf[chain.Value]
+            }
+
+
+          case chain: Chain[_, _] =>
+            if (!visited.contains(chain.parent)) {
+              traverse((chain.parent, getObservation(chain.parent, None), None) :: currentStack, elementsToVisit, currentWeight, visited)
+            } else {
+              val next = if (currResult.isEmpty) cache(chain).get else currResult.get
+              val nextHead = List((next, getObservation(next, currObs), None), (currElem, None, Some(next)))
+              if (visited.contains(next) && currObs.nonEmpty) {
+                // we did this in the wrong order, and have to repropagate the result for likelihood weighting
+                val elementsToRedo = findDependentElements(chain, next)
+                val newWeight = (currentWeight /: elementsToRedo) ((c: Double, n: Element[_]) => undoWeight(c, n))
+                traverse(nextHead ::: currentStack.tail, elementsToRedo.toList ::: elementsToVisit, newWeight, visited --= elementsToRedo)
+              } else if (!visited.contains(next)) {
+                traverse(nextHead ::: currentStack.tail, elementsToVisit, currentWeight, visited)
+              } else {
+                chain match {
+                  case cc: CachingChain[_, _] => if (!next.isTemporary) dependencies.getOrElseUpdate(next, Set()) += chain
+                  case _ => ()
+                }
+                chain.value = next.value.asInstanceOf[chain.Value]
+                val nextWeight = computeNextWeight(currentWeight, currElem, currObs)
+                traverse(currentStack.tail, elementsToVisit, nextWeight, visited += currElem)
+              }
+            }
+          case _ =>
+            val args = (currElem.args ::: currElem.elementsIAmContingentOn.toList)
+            // Find all the arguments of the element that have not been visited
+            val remainingArgs = args.filterNot(visited.contains(_)).map(e => (e, getObservation(e, None), None))
+            // if there are args unvisited, push those args to the top of the stack
+            if (remainingArgs.nonEmpty) {
+              traverse(remainingArgs ::: currentStack, elementsToVisit, currentWeight, visited)
+            } else {
+              // else, we can now process this element and move on to the next item
+              currElem.randomness = currElem.generateRandomness()
+              currElem.value = currElem.generateValue(currElem.randomness)
               val nextWeight = computeNextWeight(currentWeight, currElem, currObs)
               traverse(currentStack.tail, elementsToVisit, nextWeight, visited += currElem)
             }
-          }
-        case _ =>
-          val args = (currElem.args ::: currElem.elementsIAmContingentOn.toList)
-          // Find all the arguments of the element that have not been visited
-          val remainingArgs = args.filterNot(visited.contains(_)).map(e => (e, getObservation(e, None), None))
-          // if there are args unvisited, push those args to the top of the stack            
-          if (remainingArgs.nonEmpty) {
-            traverse(remainingArgs ::: currentStack, elementsToVisit, currentWeight, visited)
-          } else {
-            // else, we can now process this element and move on to the next item
-            currElem.randomness = currElem.generateRandomness()
-            currElem.value = currElem.generateValue(currElem.randomness)
-            val nextWeight = computeNextWeight(currentWeight, currElem, currObs)
-            traverse(currentStack.tail, elementsToVisit, nextWeight, visited += currElem)
-          }
+        }
       }
     }
   }
