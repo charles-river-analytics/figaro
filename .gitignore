@@ -20,3 +20,6 @@ project/plugins/project/
 .classpath
 .project
 /bin/
+
+#IntelliJ
+.idea/

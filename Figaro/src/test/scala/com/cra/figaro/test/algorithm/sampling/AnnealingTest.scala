@@ -196,7 +196,7 @@ class AnnealingTest extends WordSpec with Matchers with PrivateMethodTester {
         annealer.kill
       } catch {
         case knf: Exception => fail("running algorithm should not produce exceptions.")
-        case _ =>
+        case _: Throwable => ()
       }
     }
   }

@@ -17,12 +17,12 @@ import com.cra.figaro.algorithm._
 import com.cra.figaro.language._
 import scala.collection.mutable.Map
 import scala.language.postfixOps
-import com.cra.figaro.util.logSum
+import com.cra.figaro.util._
 
 /**
  * Samplers that use weighted samples.
  */
-abstract class WeightedSampler(override val universe: Universe, targets: Element[_]*) extends ProbQuerySampler with Sampler {
+abstract class WeightedSampler(override val universe: Universe, targets: Element[_]*) extends ProbQuerySampler with Sampler with StreamableProbQueryAlgorithm {
   lazy val queryTargets = targets.toList
   /**
    * A sample consists of a weight and a map from elements to their values.
@@ -78,5 +78,23 @@ abstract class WeightedSampler(override val universe: Universe, targets: Element
   override protected[algorithm] def computeProjection[T](target: Element[T]): List[(T, Double)] = {
     val weightSeen = allWeightsSeen.find(_._1 == target).get._2.asInstanceOf[Map[T, Double]]
     weightSeen.mapValues(s => math.exp(s - getTotalWeight)).toList
+  }
+  
+  def sampleFromPosterior[T](element: Element[T]): Stream[T] = {
+    def nextSample(posterior: List[(Double, T)]): Stream[T] = sampleMultinomial(posterior) #:: nextSample(posterior)
+    
+    val elementIndex = allWeightsSeen.indexWhere(_._1 == element)
+    if (elementIndex < 0) {
+      throw new NotATargetException(element)
+    } else {
+      val (values, weights) = allWeightsSeen(elementIndex)._2.toList.unzip
+      if (values.isEmpty) throw new NotATargetException(element)
+      
+      val logSum = logSumMany(weights)
+      if (logSum == Double.NegativeInfinity) throw new ZeroTotalUnnormalizedProbabilityException
+      
+      val weightedValues = weights.map(w => math.exp(w - logSum)).zip(values.asInstanceOf[List[T]])
+      nextSample(weightedValues)     
+    }
   }
 }

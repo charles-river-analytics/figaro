@@ -23,12 +23,12 @@ import com.cra.figaro.algorithm.structured.solver
  */
 class VEBPStrategy(val scoreThreshold: Double, val iterations: Int) extends SolvingStrategy {
 
-  def solve(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): List[Factor[Double]] = {
+  def solve(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): (List[Factor[Double]], Map[Variable[_], Factor[_]]) = {
     val (score, order) = VariableElimination.eliminationOrder(factors, toPreserve)
     if (score > scoreThreshold) {
-      solver.beliefPropagation(iterations)(problem, toEliminate, toPreserve, factors)
+      solver.marginalBeliefPropagation(iterations)(problem, toEliminate, toPreserve, factors)
     } else {
-      solver.variableElimination(problem, toEliminate, toPreserve, factors)
+      solver.marginalVariableElimination(problem, toEliminate, toPreserve, factors)
     }
   }
   

@@ -24,13 +24,21 @@ import com.cra.figaro.util.MapResampler
 import com.cra.figaro.algorithm.factored.factors.Factor
 
 /**
- * Class to handle sampling from continuous elements in PBP
- * @param argSamples Maximum number of samples to take from atomic elements
- * @param totalSamples Maximum number of samples on the output of chains
+ * Class to handle sampling from continuous elements to make factors
+ * @param numSamplesFromAtomics Maximum number of samples to take from atomic elements
+ * @param maxNumSamplesAtChain Maximum number of samples on the output of chains
  * @param de An instance to compute the density estimate of point during resampling
  */
-class ParticleGenerator(de: DensityEstimator, val numArgSamples: Int, val numTotalSamples: Int) {
+class ParticleGenerator(de: DensityEstimator, val numSamplesFromAtomics: Int, val maxNumSamplesAtChain: Int) {
 
+  @deprecated("numArgSamples is deprecated. Please use numSamplesFromAtomics", "4.1")
+  val numArgSamples = numSamplesFromAtomics
+  
+  @deprecated("numTotalSamples is deprecated. Please use maxNumSamplesAtChain", "4.1")
+  val numTotalSamples =  maxNumSamplesAtChain
+  
+  var warningIssued = false
+  
   // Caches the samples for an element
   private val sampleMap = Map[Element[_], (List[(Double, _)], Int)]()
 
@@ -52,7 +60,7 @@ class ParticleGenerator(de: DensityEstimator, val numArgSamples: Int, val numTot
   /**
    * Retrieves the samples for an element using the default number of samples.
    */
-  def apply[T](elem: Element[T]): List[(Double, T)] = apply(elem, numArgSamples)
+  def apply[T](elem: Element[T]): List[(Double, T)] = apply(elem, numSamplesFromAtomics)
 
   /**
    * Retrieves the samples for an element using the indicated number of samples
@@ -63,6 +71,10 @@ class ParticleGenerator(de: DensityEstimator, val numArgSamples: Int, val numTot
         e.asInstanceOf[(List[(Double, T)], Int)]._1
       }
       case None => {
+        if (!warningIssued) {
+          println("Warning: you are using a factored algorithm with continuous or infinite elements. The element will be sampled " + numSamples + " times")
+          warningIssued = true
+        }
         val sampler = ElementSampler(elem, numSamples)
         sampler.start
         val result = sampler.computeDistribution(elem).toList
@@ -86,9 +98,9 @@ class ParticleGenerator(de: DensityEstimator, val numArgSamples: Int, val numTot
     def nextDouble(d: Double) = random.nextGaussian() * proposalVariance + d
 
     val numSamples = sampleMap(elem)._2
-    
+
     val sampleDensity: Double = 1.0 / numSamples
-       
+
     // Generate new samples given the old samples for an element 
     val newSamples = elem match {
       /* If the element is an instance of OneShifter (Geometric, poisson, etc),
@@ -97,7 +109,7 @@ class ParticleGenerator(de: DensityEstimator, val numArgSamples: Int, val numTot
       case o: OneShifter => {
         val toResample = if (beliefs.size < numSamples) {
           val resampler = new MapResampler(beliefs.map(s => (s._1, s._2)))
-          List.fill(numSamples)(1.0/numSamples, resampler.resample)
+          List.fill(numSamples)(1.0 / numSamples, resampler.resample)
         } else {
           beliefs
         }
@@ -118,7 +130,7 @@ class ParticleGenerator(de: DensityEstimator, val numArgSamples: Int, val numTot
         // return the new particles
         samples.groupBy(_._2).toList.map(s => (s._2.unzip._1.sum, s._2.head._2))
       }
-      
+
       /* For atomic doubles, we do the same thing as the OneShifters, but we assume
        * that we never need to resample since the number of particles equals numSamples.
        * We propose a new double and check its acceptance. Note the proposal is symmetric.
@@ -146,9 +158,9 @@ class ParticleGenerator(de: DensityEstimator, val numArgSamples: Int, val numTot
    *  we estimate the density using the density estimator, then multiple all of the estimates together. Finally, since
    *  we only sample atomic elements, we multiple each result but the density of the values in the original element 
    */
-  private def accept[T](elem: Atomic[_], oldValue: T, newValue: T, proposalProb: Double, beliefs: List[List[(Double, T)]]): T = {        
-    val oldDensity = beliefs.map(de.getDensity(oldValue, _)).product*elem.asInstanceOf[Atomic[T]].density(oldValue)
-    val newDensity = beliefs.map(de.getDensity(newValue, _)).product*elem.asInstanceOf[Atomic[T]].density(newValue)
+  private def accept[T](elem: Atomic[_], oldValue: T, newValue: T, proposalProb: Double, beliefs: List[List[(Double, T)]]): T = {
+    val oldDensity = beliefs.map(de.getDensity(oldValue, _)).product * elem.asInstanceOf[Atomic[T]].density(oldValue)
+    val newDensity = beliefs.map(de.getDensity(newValue, _)).product * elem.asInstanceOf[Atomic[T]].density(newValue)
     val ratio = (newDensity / oldDensity) * proposalProb
 
     val nextValue = if (ratio > 1) {
@@ -164,12 +176,18 @@ object ParticleGenerator {
   /**
    * Maximum number of particles to generate per atomic
    */
-  var defaultArgSamples = 15
+  var defaultNumSamplesFromAtomics = 15
   
+  @deprecated("defaultArgSamples is deprecated. Please use defaultNumSamplesFromAtomics", "4.1")
+  var defaultArgSamples = defaultNumSamplesFromAtomics
+
   /**
    * Maximum number of particles to generate through a chain.
    */
-  var defaultTotalSamples = 15
+  var defaultMaxNumSamplesAtChain = 15
+  
+  @deprecated("defaultTotalSamples is deprecated. Please use defaultMaxNumSamplesAtChain", "4.1")
+  var defaultTotalSamples = defaultMaxNumSamplesAtChain
 
   private val samplerMap: Map[Universe, ParticleGenerator] = Map()
 
@@ -186,11 +204,11 @@ object ParticleGenerator {
   /**
    * Create a new particle generator for the given universe, using the given density estimatore, number of argument samples and total number of samples
    */
-  def apply(univ: Universe, de: DensityEstimator, numArgSamples: Int, numTotalSamples: Int): ParticleGenerator =
+  def apply(univ: Universe, de: DensityEstimator, numSamplesFromAtomics: Int, maxNumSamplesAtChain: Int): ParticleGenerator =
     samplerMap.get(univ) match {
       case Some(e) => e
       case None => {
-        samplerMap += (univ -> new ParticleGenerator(de, numArgSamples, numTotalSamples))
+        samplerMap += (univ -> new ParticleGenerator(de, numSamplesFromAtomics, maxNumSamplesAtChain))
         univ.registerUniverse(samplerMap)
         samplerMap(univ)
       }
@@ -200,7 +218,13 @@ object ParticleGenerator {
    * Create a new particle generate for a universe using a constant density estimator and default samples
    */
   def apply(univ: Universe): ParticleGenerator = apply(univ, new ConstantDensityEstimator,
-      defaultArgSamples, defaultTotalSamples)
+    defaultNumSamplesFromAtomics, defaultMaxNumSamplesAtChain)
+
+  /**
+   * Create a new particle generator for a universe using a constant density estimator and the number of argument samples and total number of samples
+   */
+  def apply(univ: Universe, numSamplesFromAtomics: Int, maxNumSamplesAtChain: Int): ParticleGenerator = apply(univ, new ConstantDensityEstimator,
+    numSamplesFromAtomics, maxNumSamplesAtChain)
 
   /**
    * Check if a particle generate exists for this universe

@@ -261,7 +261,7 @@ object ParticleBeliefPropagation {
    * Creates a One Time belief propagation computer in the current default universe.
    */
   def apply(myOuterIterations: Int, myInnerIterations: Int, targets: Element[_]*)(implicit universe: Universe) =
-    new ProbQueryParticleBeliefPropagation(ParticleGenerator.defaultArgSamples, ParticleGenerator.defaultTotalSamples,
+    new ProbQueryParticleBeliefPropagation(ParticleGenerator.defaultNumSamplesFromAtomics, ParticleGenerator.defaultMaxNumSamplesAtChain,
       universe, targets: _*)(List(),
       (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u)) with OneTimeParticleBeliefPropagation with OneTimeProbQuery {
       val outerIterations = myOuterIterations
@@ -273,7 +273,7 @@ object ParticleBeliefPropagation {
    */
   def apply(dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
     dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double, myOuterIterations: Int, myInnerIterations: Int, targets: Element[_]*)(implicit universe: Universe) =
-    new ProbQueryParticleBeliefPropagation(ParticleGenerator.defaultArgSamples, ParticleGenerator.defaultTotalSamples,
+    new ProbQueryParticleBeliefPropagation(ParticleGenerator.defaultNumSamplesFromAtomics, ParticleGenerator.defaultMaxNumSamplesAtChain,
       universe, targets: _*)(dependentUniverses, dependentAlgorithm) with OneTimeParticleBeliefPropagation with OneTimeProbQuery {
       val outerIterations = myOuterIterations
       val innerIterations = myInnerIterations
@@ -306,7 +306,7 @@ object ParticleBeliefPropagation {
    * Creates a Anytime belief propagation computer in the current default universe.
    */
   def apply(stepTimeMillis: Long, targets: Element[_]*)(implicit universe: Universe) =
-    new ProbQueryParticleBeliefPropagation(ParticleGenerator.defaultArgSamples, ParticleGenerator.defaultTotalSamples,
+    new ProbQueryParticleBeliefPropagation(ParticleGenerator.defaultNumSamplesFromAtomics, ParticleGenerator.defaultMaxNumSamplesAtChain,
       universe, targets: _*)(List(),
       (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u)) with AnytimeParticleBeliefPropagation with AnytimeProbQuery {
       val myStepTimeMillis = stepTimeMillis
@@ -317,7 +317,7 @@ object ParticleBeliefPropagation {
    */
   def apply(dependentUniverses: List[(Universe, List[NamedEvidence[_]])],
     dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double, stepTimeMillis: Long, targets: Element[_]*)(implicit universe: Universe) =
-    new ProbQueryParticleBeliefPropagation(ParticleGenerator.defaultArgSamples, ParticleGenerator.defaultTotalSamples,
+    new ProbQueryParticleBeliefPropagation(ParticleGenerator.defaultNumSamplesFromAtomics, ParticleGenerator.defaultMaxNumSamplesAtChain,
       universe, targets: _*)(dependentUniverses, dependentAlgorithm) with AnytimeParticleBeliefPropagation with AnytimeProbQuery {
       val myStepTimeMillis = stepTimeMillis
     }

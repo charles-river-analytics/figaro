@@ -21,6 +21,7 @@ import scala.language.existentials
 import scala.math.log
 import scala.annotation.tailrec
 import com.cra.figaro.library.cache._
+import com.cra.figaro.library.collection.Container
 
 /**
  * Metropolis-Hastings samplers.
@@ -45,7 +46,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
   protected var accepts = 0
   protected var rejects = 0
 
-  private val currentConstraintValues: Map[Element[_], Double] = Map()
+  protected val currentConstraintValues: Map[Element[_], Double] = Map()
   universe.register(currentConstraintValues)
 
   /**
@@ -60,7 +61,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
 
   private def newState: State = State(Map(), Map(), 0.0, 0.0, scala.collection.mutable.Set(), List())
 
-  private val fastTargets = targets.toSet
+  protected val fastTargets = targets.toSet
 
   protected var chainCache: Cache = new MHCache(universe)
 
@@ -83,11 +84,11 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
           result.value
       }
     } else elem.observation.get
-    
+
     // if an old value is already stored, don't overwrite it
     val newOldValues = if (state.oldValues contains elem) state.oldValues; else state.oldValues + (elem -> elem.value)
     val newDissatisfied = if (elem.condition(newValue)) state.dissatisfied -= elem; else state.dissatisfied += elem
-    elem.value = newValue    
+    elem.value = newValue
     State(newOldValues, state.oldRandomness, state.proposalProb, state.modelProb, newDissatisfied, state.visitOrder :+ elem)
   }
 
@@ -178,10 +179,10 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
         val state1 = switch(state, proposeChainCheck(elem1), proposeChainCheck(elem2))
         continue(state1, rest)
     }
-  
+
   private def proposeChainCheck(elem: Element[_]): Element[_] = {
     val e = chainCache(elem)
-    if (e.isEmpty) elem else e.get.asInstanceOf[Element[_]] 
+    if (e.isEmpty) elem else e.get.asInstanceOf[Element[_]]
   }
 
   protected def runScheme(): State = runStep(newState, proposalScheme)
@@ -285,11 +286,11 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
 
     state.visitOrder.foreach { elem =>
       elem match {
-        case c: Chain[_, _] => {          
+        case c: Chain[_, _] => {
           chainCache(c) match {
-            case Some(result) => c.value = result.value.asInstanceOf[c.Value] 
+            case Some(result) => c.value = result.value.asInstanceOf[c.Value]
             case None => throw new AlgorithmException
-          }              
+          }
         }
         case _ => {
           if (state.oldRandomness.contains(elem)) elem.randomness = state.oldRandomness(elem).asInstanceOf[elem.Randomness]
@@ -405,6 +406,15 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
     proposalCounts = savedProposalCounts
     (acceptanceRatio, successResults, proposalResults)
   }
+
+  /**
+   * Clean up the sampler, freeing memory.
+   */
+  override def cleanUp(): Unit = {
+    super.cleanUp()
+    universe.clearTemporaries()
+    chainCache.clear()
+  }
 }
 
 /**
@@ -424,14 +434,6 @@ class AnytimeMetropolisHastings(universe: Universe,
   override def initialize(): Unit = {
     super.initialize()
     doInitialize()
-  }
-
-  /**
-   * Clean up the sampler, freeing memory.
-   */
-  override def cleanUp(): Unit = {
-    universe.clearTemporaries()
-    super.cleanUp()
   }
 }
 
@@ -520,6 +522,18 @@ object MetropolisHastings {
    */
   def probability[T](target: Element[T], value: T): Double =
     probability(target, (t: T) => t == value)
+
+  /**
+   * Use MH to sample the joint posterior distribution of several variables
+   */
+  def sampleJointPosterior(targets: Element[_]*)(implicit universe: Universe): Stream[List[Any]] = {
+    val jointElement = Container(targets: _*).foldLeft(List[Any]())((l: List[Any], i: Any) => l :+ i)
+    val alg = MetropolisHastings(1000000, ProposalScheme.default, jointElement)(universe)
+    alg.start()
+    val posterior = alg.sampleFromPosterior(jointElement)
+    alg.kill()
+    posterior
+  }
 
   private[figaro] case class State(oldValues: Map[Element[_], Any],
     oldRandomness: Map[Element[_], Any],

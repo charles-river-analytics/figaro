@@ -23,14 +23,14 @@ import com.cra.figaro.algorithm.structured.algorithm._
 import com.cra.figaro.algorithm.structured.strategy.decompose._
 import com.cra.figaro.algorithm.factored.factors.factory._
 
-class RaisingVE(universe: Universe, targets: Element[_]*) extends StructuredAlgorithm(universe, targets:_*) {
+class RaisingVE(universe: Universe, targets: Element[_]*) extends StructuredProbQueryAlgorithm(universe, targets:_*) {
  
   val semiring = SumProductSemiring()
   
   def run() {    
-    val strategy = DecompositionStrategy.recursiveRaisingStrategy(problem, new ConstantStrategy(variableElimination), RaisingStrategy.raiseIfGlobal, defaultRangeSizer, Lower, false)
+    val strategy = DecompositionStrategy.recursiveRaisingStrategy(problem, new ConstantStrategy(marginalVariableElimination), RaisingStrategy.raiseIfGlobal, defaultRangeSizer, Lower, false)
     strategy.execute(initialComponents)
-    val joint = problem.solution.foldLeft(Factory.unit(SumProductSemiring()))(_.product(_))  
+    val joint = problem.solution.foldLeft(Factory.unit(semiring))(_.product(_))  
     targets.foreach(t => marginalizeToTarget(t, joint))
   }
 

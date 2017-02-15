@@ -69,7 +69,7 @@ object WalkSAT {
           val adjacentFactors = nonConstraintFactors.filter(f => f.variables.contains(variableToSample))
           val varAndParents = variableParents.getOrElse(variableToSample, Set()) + variableToSample
           // Marginalize to the variable and its parents
-          val parentFactors = adjacentFactors.map(_.marginalizeTo(semiring, varAndParents.toList:_*))
+          val parentFactors = adjacentFactors.map(_.marginalizeTo(varAndParents.toList:_*))
           // Produce a sample
           val sampleOption = (0 until variableToSample.size).find(sample => parentFactors.forall(factor => {
             factor.get(factor.variables.map(currentSamples.getOrElse(_, sample))) != semiring.zero

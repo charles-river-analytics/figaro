@@ -33,7 +33,7 @@ class AlgorithmTest extends WordSpec with Matchers {
       val a = new SimpleAlgorithm(c)
       an[AlgorithmInactiveException] should be thrownBy { a.distribution(c) }
       an[AlgorithmInactiveException] should be thrownBy { a.expectation(c, (b: Boolean) => 1.0) }
-      an[AlgorithmInactiveException] should be thrownBy { a.probability(c, (b: Boolean) => true) }
+      an[AlgorithmInactiveException] should be thrownBy { a.probability(c)(b => true) }
       an[AlgorithmInactiveException] should be thrownBy { a.probability(c, true) }
     }
 
@@ -44,17 +44,17 @@ class AlgorithmTest extends WordSpec with Matchers {
       a.start()
       a.distribution(c)
       a.expectation(c, (b: Boolean) => 1.0)
-      a.probability(c, (b: Boolean) => true)
+      a.probability(c)(b => true)
       a.probability(c, true)
       a.stop()
       a.distribution(c)
-      a.expectation(c, (b: Boolean) => 1.0)
-      a.probability(c, (b: Boolean) => true)
+      a.expectation(c)(b => 1.0)
+      a.probability(c)(b => true)
       a.probability(c, true)
       a.resume()
       a.distribution(c)
-      a.expectation(c, (b: Boolean) => 1.0)
-      a.probability(c, (b: Boolean) => true)
+      a.expectation(c)(b => 1.0)
+      a.probability(c)(b => true)
       a.probability(c, true)
     }
 
@@ -66,7 +66,7 @@ class AlgorithmTest extends WordSpec with Matchers {
       a.kill()
       an[AlgorithmInactiveException] should be thrownBy { a.distribution(c) }
       an[AlgorithmInactiveException] should be thrownBy { a.expectation(c, (b: Boolean) => 1.0) }
-      an[AlgorithmInactiveException] should be thrownBy { a.probability(c, (b: Boolean) => true) }
+      an[AlgorithmInactiveException] should be thrownBy { a.probability(c)(b => true) }
       an[AlgorithmInactiveException] should be thrownBy { a.probability(c, true) }
     }
 
@@ -101,7 +101,7 @@ class AlgorithmTest extends WordSpec with Matchers {
       val f = Flip(0.3)
       val a = new SimpleAlgorithm(f)
       a.start()
-      a.probability(f, (b: Boolean) => b) should equal(0.3)
+      a.probability(f)(b => b) should equal(0.3)
     }
 
     "compute the probability of a value" in {
@@ -129,7 +129,7 @@ class AlgorithmTest extends WordSpec with Matchers {
       val a = new SimpleAnytime(c)
       a.start()
       a.stop()
-      val x = a.expectation(c, (b: Boolean) => -1.0)
+      val x = a.expectation(c)(b => -1.0)
       a.expectation(c, (b: Boolean) => -1.0) should equal(x)
       a.kill()
     }
@@ -142,7 +142,7 @@ class AlgorithmTest extends WordSpec with Matchers {
       a.stop()
       a.resume()
       val x = a.expectation(c, (b: Boolean) => -1.0)
-      a.expectation(c, (b: Boolean) => -1.0) should be > (x)
+      a.expectation(c)(b => -1.0) should be > (x)
       a.kill()
     }
 
@@ -199,7 +199,7 @@ class AlgorithmTest extends WordSpec with Matchers {
       val myFlip = Flip(0.8)
       val s = new SimpleWeighted(myFlip)
       s.start()
-      s.probability(myFlip, (b: Boolean) => b) should be(1.0 / 3 +- 0.001)
+      s.probability(myFlip)(b => b) should be(1.0 / 3 +- 0.001)
     }
   }
 

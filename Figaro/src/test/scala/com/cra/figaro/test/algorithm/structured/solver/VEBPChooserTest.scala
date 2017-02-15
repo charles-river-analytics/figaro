@@ -469,7 +469,7 @@ class VEBPChooserTest extends WordSpec with Matchers {
       c1.makeNonConstraintFactors()
       c2.makeNonConstraintFactors()
       c3.makeNonConstraintFactors()
-      c4.subproblems.values.foreach(_.solve(new ConstantStrategy(variableElimination)))
+      c4.subproblems.values.foreach(_.solve(new ConstantStrategy(marginalVariableElimination)))
       c4.makeNonConstraintFactors()
       pr.solve(new VEBPStrategy(Double.PositiveInfinity, 100))
 
@@ -545,7 +545,7 @@ class VEBPChooserTest extends WordSpec with Matchers {
       c1.makeNonConstraintFactors()
       c2.makeNonConstraintFactors()
       c3.makeNonConstraintFactors()
-      c4.subproblems.values.foreach(_.solve(new ConstantStrategy(variableElimination)))
+      c4.subproblems.values.foreach(_.solve(new ConstantStrategy(marginalVariableElimination)))
       c4.makeNonConstraintFactors()
       pr.solve(new VEBPStrategy(Double.PositiveInfinity, 100))
 
@@ -649,6 +649,8 @@ class VEBPChooserTest extends WordSpec with Matchers {
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e4))
       pr.add(e1)
+      pr.add(e2)
+      pr.add(e3)
       val c1 = cc(e1)
       val c4 = cc(e4)
       c1.generateRange()
@@ -665,7 +667,7 @@ class VEBPChooserTest extends WordSpec with Matchers {
       c1.makeNonConstraintFactors()
       c2.makeNonConstraintFactors()
       c3.makeNonConstraintFactors()
-      c4.subproblems.values.foreach(_.solve(new ConstantStrategy(variableElimination)))
+      c4.subproblems.values.foreach(_.solve(new ConstantStrategy(marginalVariableElimination)))
       c4.makeNonConstraintFactors()
       pr.solve(new VEBPStrategy(Double.PositiveInfinity, 100))
 
@@ -690,6 +692,8 @@ class VEBPChooserTest extends WordSpec with Matchers {
       e2.observe(1)
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e1))
+      pr.add(e2)
+      pr.add(e3)
       pr.add(e4)
       val c1 = cc(e1)
       val c4 = cc(e4)
@@ -707,7 +711,7 @@ class VEBPChooserTest extends WordSpec with Matchers {
       c1.makeNonConstraintFactors()
       c2.makeNonConstraintFactors()
       c3.makeNonConstraintFactors()
-      c4.subproblems.values.foreach(_.solve(new ConstantStrategy(variableElimination)))
+      c4.subproblems.values.foreach(_.solve(new ConstantStrategy(marginalVariableElimination)))
       c4.makeNonConstraintFactors()
       pr.solve(new VEBPStrategy(Double.PositiveInfinity, 100))
 
@@ -777,7 +781,7 @@ class VEBPChooserTest extends WordSpec with Matchers {
         c1.makeConstraintFactors()
         c2.makeConstraintFactors()
         c3.makeConstraintFactors()
-        pr.solve(new ConstantStrategy(variableElimination))
+        pr.solve(new ConstantStrategy(marginalVariableElimination))
 
         pr.globals should equal (Set(c2, c3))
         val result = multiplyAll(pr.solution)
@@ -1187,7 +1191,7 @@ class VEBPChooserTest extends WordSpec with Matchers {
       c1.makeNonConstraintFactors()
       c2.makeNonConstraintFactors()
       c3.makeNonConstraintFactors()
-      c4.subproblems.values.foreach(_.solve(new ConstantStrategy(beliefPropagation())))
+      c4.subproblems.values.foreach(_.solve(new ConstantStrategy(marginalBeliefPropagation())))
       c4.makeNonConstraintFactors()
       pr.solve(new VEBPStrategy(Double.NegativeInfinity, 100))
       val result = multiplyAll(pr.solution)
@@ -1262,7 +1266,7 @@ class VEBPChooserTest extends WordSpec with Matchers {
       c1.makeNonConstraintFactors()
       c2.makeNonConstraintFactors()
       c3.makeNonConstraintFactors()
-      c4.subproblems.values.foreach(_.solve(new ConstantStrategy(beliefPropagation())))
+      c4.subproblems.values.foreach(_.solve(new ConstantStrategy(marginalBeliefPropagation())))
       c4.makeNonConstraintFactors()
       pr.solve(new VEBPStrategy(Double.NegativeInfinity, 100))
 
@@ -1382,7 +1386,7 @@ class VEBPChooserTest extends WordSpec with Matchers {
       c1.makeNonConstraintFactors()
       c2.makeNonConstraintFactors()
       c3.makeNonConstraintFactors()
-      c4.subproblems.values.foreach(_.solve(new ConstantStrategy(beliefPropagation())))
+      c4.subproblems.values.foreach(_.solve(new ConstantStrategy(marginalBeliefPropagation())))
       c4.makeNonConstraintFactors()
       pr.solve(new VEBPStrategy(Double.NegativeInfinity, 100))
 
@@ -1424,7 +1428,7 @@ class VEBPChooserTest extends WordSpec with Matchers {
       c1.makeNonConstraintFactors()
       c2.makeNonConstraintFactors()
       c3.makeNonConstraintFactors()
-      c4.subproblems.values.foreach(_.solve(new ConstantStrategy(beliefPropagation())))
+      c4.subproblems.values.foreach(_.solve(new ConstantStrategy(marginalBeliefPropagation())))
       c4.makeNonConstraintFactors()
       pr.solve(new VEBPStrategy(Double.NegativeInfinity, 100))
 

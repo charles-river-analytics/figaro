@@ -257,7 +257,7 @@ class MHTest extends WordSpec with Matchers with PrivateMethodTester {
       try {
         mh.start()
         mh.stop()
-        mh.probability(f1, (b: Boolean) => b) should be(p1 / (p1 + p2) +- tolerance)
+        mh.probability(f1)(b => b) should be(p1 / (p1 + p2) +- tolerance)
       } finally {
         mh.kill()
       }
@@ -276,7 +276,7 @@ class MHTest extends WordSpec with Matchers with PrivateMethodTester {
         alg.stop()
         val p1 = 0.2 * 0.7
         val p2 = 0.8 * 0.4
-        alg.probability(elem1, (b: Boolean) => b) should be(p1 / (p1 + p2) +- tolerance)
+        alg.probability(elem1)(b => b) should be(p1 / (p1 + p2) +- tolerance)
       } finally {
         alg.kill()
       }
@@ -293,7 +293,7 @@ class MHTest extends WordSpec with Matchers with PrivateMethodTester {
       try {
         alg.start()
         alg.stop()
-        alg.probability(elem2, (d: Double) => 1.4 < d && d < 1.6) should be(1.0 +- tolerance)
+        alg.probability(elem2)(d => 1.4 < d && d < 1.6) should be(1.0 +- tolerance)
       } finally {
         alg.kill()
       }
@@ -361,7 +361,7 @@ class MHTest extends WordSpec with Matchers with PrivateMethodTester {
       try {
         mh.start()
         mh.stop()
-        mh.probability(f1, (b: Boolean) => b) should be(p1 / (p1 + p2) +- tolerance)
+        mh.probability(f1)(b => b) should be(p1 / (p1 + p2) +- tolerance)
       } finally {
         mh.kill()
       }
@@ -477,6 +477,44 @@ class MHTest extends WordSpec with Matchers with PrivateMethodTester {
     val method = cls.getDeclaredMethod("newState")
     method.setAccessible(true)
     method.invoke(mh).asInstanceOf[State]
+  }
+
+  "Sampling the posterior" should {
+    "produce the correct answer for marginals" in {
+      Universe.createNew()
+      val u = Uniform(0.2, 1.0)
+      val f = Flip(u)
+      val a = If(f, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
+      a.setConstraint((i: Int) => i.toDouble)
+      // U(true) = \int_{0.2}^{1.0} (0.3 + 2 * 0.7) p = 0.85 * 0.96
+      // U(false) = \int_{0.2}^(1.0) (2 * (1-p)) = 0.64
+      val u1 = 0.85 * 0.96
+      val u2 = 0.64
+      val pos = MetropolisHastings.sampleJointPosterior(f)
+      val probTrue = (pos.take(1000).toList.map(t => t(0).asInstanceOf[Boolean])).count(p => p)
+      probTrue.toDouble / 1000.0 should be(u1 / (u1 + u2) +- .01)
+    }
+
+    "produce the correct answer for joint" in {
+      Universe.createNew()
+      val u = Uniform(0.2, 1.0)
+      val f = Flip(u)
+      val a = If(f, Select(0.3 -> 1, 0.7 -> 2), Constant(2))
+      a.setConstraint((i: Int) => i.toDouble)
+      val pair = ^^(f, a)
+      val alg = Importance(20000, pair)
+      alg.start()
+
+      val pos = MetropolisHastings.sampleJointPosterior(f, a)
+      val samples = pos.take(5000).toList.map(t => (t(0).asInstanceOf[Boolean], t(1).asInstanceOf[Int]))
+
+      val probTrueTwo = samples.count(p => p._1 == true && p._2 == 2).toDouble / 5000.0 should be(alg.probability(pair, (true, 2)) +- .01)
+      val probTrueOne = samples.count(p => p._1 == true && p._2 == 1).toDouble / 5000.0 should be(alg.probability(pair, (true, 1)) +- .01)
+      val probFalseTwo = samples.count(p => p._1 == false && p._2 == 2).toDouble / 5000.0 should be(alg.probability(pair, (false, 2)) +- .01)
+      val probFalseOne = samples.count(p => p._1 == false && p._2 == 1).toDouble / 5000.0 should be(alg.probability(pair, (false, 1)) +- .01)
+      alg.kill()
+    }
+
   }
 
   def getDissatisfied(mh: MetropolisHastings): Set[Element[_]] = {

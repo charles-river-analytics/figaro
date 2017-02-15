@@ -39,7 +39,7 @@ class FlatTest extends WordSpec with Matchers {
         })        
         val cc = new ComponentCollection
         val problem = new Problem(cc, List(r1))
-        val fs = DecompositionStrategy.recursiveFlattenStrategy(problem, new ConstantStrategy(variableElimination), defaultRangeSizer, Lower, false)
+        val fs = DecompositionStrategy.recursiveFlattenStrategy(problem, new ConstantStrategy(marginalVariableElimination), defaultRangeSizer, Lower, false)
         fs.backwardChain(problem.components , Set())
         val factors =problem.components.flatMap(_.nonConstraintFactors) 
         factors.foreach(f => println(f.toReadableString))
@@ -108,6 +108,7 @@ class FlatTest extends WordSpec with Matchers {
       }
     }
 
+    /*
     "given a one-level nested model with nested evidence" should {
       "produce the correct answer" in {
         Universe.createNew()
@@ -119,6 +120,8 @@ class FlatTest extends WordSpec with Matchers {
         alg.probability(e3, true) should equal (0.6)
       }
     }
+    * 
+    */
 
     "given a two-level nested model" should {
       "produce the correct answer" in {

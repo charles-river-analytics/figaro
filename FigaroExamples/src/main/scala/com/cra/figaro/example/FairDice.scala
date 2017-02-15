@@ -95,11 +95,11 @@ object FairDice {
     ve.stop()
     
     println("\nThe probabilities of seeing each side of d_1 are: ")
-    outcomes.foreach { o => println("\t" + ve.probability(d1, (i: Int) => i == o) + " -> " + o) }
+    outcomes.foreach { o => println("\t" + ve.probability(d1)(_ == o) + " -> " + o) }
     println("\nThe probabilities of seeing each side of d_2 are: ")
-    outcomes.foreach { o => println("\t" + ve.probability(d2, (i: Int) => i == o) + " -> " + o) }
+    outcomes.foreach { o => println("\t" + ve.probability(d2)( _ == o) + " -> " + o) }
     println("\nThe probabilities of seeing each side of d_3 are: ")
-    outcomes.foreach { o => println("\t" + ve.probability(d3, (i: Int) => i == o) + " -> " + o) }
+    outcomes.foreach { o => println("\t" + ve.probability(d3)( _ == o) + " -> " + o) }
 
 
     ve.kill()

@@ -375,7 +375,7 @@ class AbstractionTest extends WordSpec with Matchers {
        * Uniform2 will result in (2,3) with expected weight 2.5.
        * Therefore flip should be around 0.4 for true.
        */
-      ve.probability(flip, (b: Boolean) => b) should be(0.4 +- 0.02)
+      ve.probability(flip)(b => b) should be(0.4 +- 0.02)
       ve.kill
     }
   }

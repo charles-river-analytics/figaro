@@ -30,7 +30,7 @@ class DiscreteTest extends WordSpec with Matchers {
       val elem = Uniform(1, 2, 3, 4)
       val alg = Importance(20000, elem)
       alg.start()
-      alg.probability(elem, (i: Int) => 1 <= i && i < 3) should be(0.5 +- 0.01)
+      alg.probability(elem)(i => 1 <= i && i < 3) should be(0.5 +- 0.01)
     }
 
     "for an input within the options have density equal to 1 divided by the number of options" in {
@@ -76,7 +76,7 @@ class DiscreteTest extends WordSpec with Matchers {
         val alg = Importance(20000, elem)
         alg.start()
         val targetProb = 0.5 * 0.5 + 0.5 * 0.3
-        alg.probability(elem, (i: Int) => i == 3) should be(targetProb +- 0.01)
+        alg.probability(elem)(_ == 3) should be(targetProb +- 0.01)
       }
 
     "convert to the correct string" in {
@@ -95,7 +95,7 @@ class DiscreteTest extends WordSpec with Matchers {
         val alg = Importance(20000, elem)
         alg.start()
         val targetProb = 0.9 * 0.9 * 0.1
-        alg.probability(elem, (i: Int) => i == 3) should be(targetProb +- 0.01)
+        alg.probability(elem)(_ == 3) should be(targetProb +- 0.01)
       }
 
     "produce the correct result under Metropolis-Hastings" in {
@@ -104,7 +104,7 @@ class DiscreteTest extends WordSpec with Matchers {
       val alg = MetropolisHastings(50000, ProposalScheme.default, elem)
       alg.start()
       val targetProb = 0.9 * 0.9 * 0.1
-      alg.probability(elem, (i: Int) => i == 3) should be(targetProb +- 0.01)
+      alg.probability(elem)(_ == 3) should be(targetProb +- 0.01)
     }
 
     "have the correct density" in {
@@ -127,7 +127,7 @@ class DiscreteTest extends WordSpec with Matchers {
       val alg = Importance(20000, elem)
       alg.start()
       val targetProb = 0.5 * 0.9 * 0.9 * 0.1 + 0.5 * 0.7 * 0.7 * 0.3
-      alg.probability(elem, (i: Int) => i == 3) should be(targetProb +- 0.01)
+      alg.probability(elem)(_ == 3) should be(targetProb +- 0.01)
     }
 
     "convert to the correct string" in {
@@ -145,7 +145,7 @@ class DiscreteTest extends WordSpec with Matchers {
       alg.start()
       val dist = new PoissonDistribution(0.9)
       val targetProb = dist.probability(3)
-      alg.probability(elem, (i: Int) => i == 3) should be(targetProb +- 0.01)
+      alg.probability(elem)(_ == 3) should be(targetProb +- 0.01)
     }
 
     "produce the correct result under Metropolis-Hastings" in {
@@ -155,7 +155,7 @@ class DiscreteTest extends WordSpec with Matchers {
       alg.start()
       val dist = new PoissonDistribution(0.9)
       val targetProb = dist.probability(3)
-      alg.probability(elem, (i: Int) => i == 3) should be(targetProb +- 0.01)
+      alg.probability(elem)(_ == 3) should be(targetProb +- 0.01)
     }
 
     "have the correct density" in {
@@ -191,7 +191,7 @@ class DiscreteTest extends WordSpec with Matchers {
       val dist1 = new PoissonDistribution(0.7)
       val dist2 = new PoissonDistribution(0.9)
       val targetProb = 0.5 * dist1.probability(3) + 0.5 * dist2.probability(3)
-      alg.probability(elem, (i: Int) => i == 3) should be(targetProb +- 0.01)
+      alg.probability(elem)(_ == 3) should be(targetProb +- 0.01)
     }
 
     "convert to the correct string" in {
@@ -209,7 +209,7 @@ class DiscreteTest extends WordSpec with Matchers {
       alg.start()
       val dist = new BinomialDistribution(5, 0.9)
       val targetProb = dist.probability(3)
-      alg.probability(elem, (i: Int) => i == 3) should be(targetProb +- 0.01)
+      alg.probability(elem)(_ == 3) should be(targetProb +- 0.01)
     }
 
     "produce the correct result under Metropolis-Hastings" in {
@@ -219,7 +219,7 @@ class DiscreteTest extends WordSpec with Matchers {
       alg.start()
       val dist = new BinomialDistribution(5, 0.9)
       val targetProb = dist.probability(3)
-      alg.probability(elem, (i: Int) => i == 3) should be(targetProb +- 0.01)
+      alg.probability(elem)(_ == 3) should be(targetProb +- 0.01)
     }
 
     "have the correct density" in {
@@ -283,7 +283,7 @@ class DiscreteTest extends WordSpec with Matchers {
       val dist1 = new BinomialDistribution(5, 0.7)
       val dist2 = new BinomialDistribution(5, 0.9)
       val targetProb = 0.5 * dist1.probability(3) + 0.5 * dist2.probability(3)
-      alg.probability(elem, (i: Int) => i == 3) should be(targetProb +- 0.01)
+      alg.probability(elem)(_ == 3) should be(targetProb +- 0.01)
     }
 
     "convert to the correct string" in {
@@ -300,7 +300,7 @@ class DiscreteTest extends WordSpec with Matchers {
       val elem = SwitchingFlip(0.8)
       val alg = Importance(40000, elem)
       alg.start()
-      alg.probability(elem, (b: Boolean) => b) should be(0.8 +- 0.01)
+      alg.probability(elem)(b => b) should be(0.8 +- 0.01)
     }
 
     "always produce the opposite value for the next randomness" in {
@@ -324,7 +324,7 @@ class DiscreteTest extends WordSpec with Matchers {
       val elem = SwitchingFlip(0.7)
       val alg = MetropolisHastings(20000, ProposalScheme.default, elem)
       alg.start()
-      alg.probability(elem, (b: Boolean) => b) should be(0.7 +- 0.01)
+      alg.probability(elem)(b => b) should be(0.7 +- 0.01)
     }
 
     "produce the right probability when conditioned under Metropolis-Hastings" in {
@@ -336,7 +336,7 @@ class DiscreteTest extends WordSpec with Matchers {
       alg.start()
       val p1 = 0.2 * 0.7
       val p2 = 0.8 * 0.4
-      alg.probability(elem1, (b: Boolean) => b) should be(p1 / (p1 + p2) +- 0.01)
+      alg.probability(elem1)(b => b) should be(p1 / (p1 + p2) +- 0.01)
     }
   }
 }
