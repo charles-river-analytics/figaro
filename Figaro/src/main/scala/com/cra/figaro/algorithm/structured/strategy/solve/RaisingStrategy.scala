@@ -43,27 +43,16 @@ abstract class RaisingStrategy(problem: Problem, raisingCriteria: RaisingCriteri
   }
 
   /**
-   * Get non-constraint factors associated with a single chain component.
-   * @param chainComp Chain component to process.
-   * @return All factors associated with the chain component that are needed for solving. This includes (possibly
-   * eliminated) subproblem factors.
+   * Get the non-constraint factors associated with all subproblems of a Chain component. This returns the existing
+   * solution if there is one. Otherwise, it chooses to solve or raise the subproblem based on the raising criteria.
+   * @param chainComp Chain component whose subproblems are to be processed.
+   * @return All factors associated with subproblems that are needed for solving, grouped by parent value.
    */
-  def chainNonConstraintFactors[ParentValue, Value](chainComp: ChainComponent[ParentValue, Value]): List[Factor[Double]] = {
-    // If the range is {*}, there is no need to raise subproblems because they will all be uniquely *
-    if(chainComp.range.regularValues.isEmpty) return chainComp.nonConstraintFactors()
-    // Process each subproblem and collect the corresponding factors
-    val collectedSubproblemFactors = for((parentValue, subproblem) <- chainComp.subproblems) yield {
-      // Variable associated with the target in the subproblem and chain factors, respectively
-      val compVar = subproblem.collection(subproblem.target).variable
-      val actualVar = chainComp.actualSubproblemVariables(parentValue)
-      // Helper method to replace the variable in raised factors with the actual variable in the chain factors
-      def replaceVariable(factors: List[Factor[Double]]): List[Factor[Double]] = {
-        factors.map(Factory.replaceVariable(_, compVar, actualVar))
-      }
-
-      if(subproblem.solved) {
-        // If the subproblem has a solution, return it; replace formal variable with actual variable
-        replaceVariable(subproblem.solution)
+  def subproblemNonConstraintFactors[ParentValue, Value](chainComp: ChainComponent[ParentValue, Value]): Map[ParentValue, List[Factor[Double]]] = {
+    for((parentValue, subproblem) <- chainComp.subproblems) yield {
+      val subproblemFactors = if(subproblem.solved) {
+        // If the subproblem has a solution, return it
+        subproblem.solution
       }
       else {
         // Otherwise, recurse on the subproblem
@@ -71,25 +60,50 @@ abstract class RaisingStrategy(problem: Problem, raisingCriteria: RaisingCriteri
 
         if(raisingCriteria(subproblem)) {
           // If we decide to raise without solving, copy the factors from the recursing strategy
-          // Replace formal variable with actual variable
-          replaceVariable(recursingStrategy.nonConstraintFactors())
+          recursingStrategy.nonConstraintFactors()
         }
         else {
           // Otherwise, compute the solution
           // Because this is a nested problem, it doesn't matter which bounds we use
           recursingStrategy.execute()
-          // Replace formal variable with actual variable
-          replaceVariable(subproblem.solution)
+          subproblem.solution
         }
       }
+      parentValue -> subproblemFactors
     }
+  }
+
+  /**
+   * Get non-constraint factors associated with a single Chain component.
+   * @param chainComp Chain component to process.
+   * @return All factors associated with the chain component that are needed for solving. This includes (possibly
+   * eliminated) subproblem factors.
+   */
+  def chainNonConstraintFactors[ParentValue, Value](chainComp: ChainComponent[ParentValue, Value]): List[Factor[Double]] = {
+    // If the range is {*}, there is no need to raise subproblems because they will all be uniquely *
+    if(chainComp.range.regularValues.isEmpty) return chainComp.nonConstraintFactors()
+    // Process each subproblem and collect the corresponding factors by parent value
+    val collectedSubproblemFactors = subproblemNonConstraintFactors(chainComp)
+
     if(problem.collection.useSingleChainFactor && chainComp.allSubproblemsEliminatedCompletely) {
       // Use a single condensed factor
       ChainFactory.makeSingleFactor(problem.collection, chainComp.chain)
     }
     else {
-      // Return the collected subproblem factors, and the chain factors that connect them
-      chainComp.nonConstraintFactors() ::: collectedSubproblemFactors.toList.flatten
+      // Before returning the subproblem factors, we need to replace the variable in the raised factors with the actual
+      // variable used in the Chain. This requires first calling nonConstraintFactors() to get actualSubproblemVariables
+      // for each subproblem.
+      val chainFactors = chainComp.nonConstraintFactors()
+      val allSubproblemFactors = chainComp.subproblems.flatMap { case (parentValue, subproblem) =>
+        // Replace the variable in the factors for a particular subproblem
+        val subproblemFactors = collectedSubproblemFactors(parentValue)
+        // Variable associated with the target in the subproblem and chain factors, respectively
+        val compVar = subproblem.collection(subproblem.target).variable
+        val actualVar = chainComp.actualSubproblemVariables(parentValue)
+        subproblemFactors.map(Factory.replaceVariable(_, compVar, actualVar))
+      }
+      // Return all subproblem factors, and the chain factors that connect them
+      chainFactors ++ allSubproblemFactors
     }
   }
 }

@@ -172,8 +172,9 @@ class ChainComponent[ParentValue, Value](problem: Problem, val chain: Chain[Pare
   val expandFunction = chain.get _
 
   /**
-   *  The subproblems are defined in terms of formal variables.
-   *  We need to create actual variables for each of the subproblems to replace the formal variables with in their solutions.
+   *  The subproblems are defined in terms of formal variables. We need to create actual variables for each of the
+   *  subproblems to replace the formal variables with in their solutions. This stores the variables used the last time
+   *  factors were created for this component.
    */
   var actualSubproblemVariables: Map[ParentValue, Variable[Value]] = Map()
 
