@@ -44,7 +44,6 @@ object ChainFactory {
       if (parentVal.isRegular) {
         // Use the actual variable, which should have been computed when we generated the range of the component
         val actualVar = chainComp.actualSubproblemVariables(parentVal.value)
-        cc.variableParents(chainVar) += actualVar
         List(Factory.makeConditionalSelector(pairVar, parentVal, actualVar, chainComp.range.regularValues)(mapper))
       } else {
         // We create a dummy variable for the outcome variable whose value is always star.
