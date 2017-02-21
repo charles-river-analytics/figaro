@@ -172,31 +172,11 @@ class ChainComponent[ParentValue, Value](problem: Problem, val chain: Chain[Pare
   val expandFunction = chain.get _
 
   /**
-   *  The subproblems are defined in terms of formal variables.
-   *  We need to create actual variables for each of the subproblems to replace the formal variables with in their solutions.
+   *  The subproblems are defined in terms of formal variables. We need to create actual variables for each of the
+   *  subproblems to replace the formal variables with in their solutions. This stores the variables used the last time
+   *  factors were created for this component.
    */
   var actualSubproblemVariables: Map[ParentValue, Variable[Value]] = Map()
-
-  /**
-   * For a Chain, generate the range as usual, then create the actual subproblem variables for use in factor creation.
-   */
-  override def generateRange(numValues: Int): Unit = {
-    super.generateRange(numValues)
-    actualSubproblemVariables = for((parentValue, subproblem) <- subproblems) yield {
-      // We need to create an actual variable to represent the outcome of the chain.
-      // This will have the same range as the formal variable associated with the expansion.
-      // The formal variable will be replaced with the actual variable in the solution.
-      // There are two possibilities.
-      // If the outcome element is defined inside the chain, it will actually be different in every expansion,
-      // even though the formal variable is the same. But if the outcome element is defined outside the chain,
-      // it is a global that will be the same every time, so the actual variable is the variable of this global.
-      val formalVar = Factory.getVariable(problem.collection, subproblem.target)
-      val actualVar =
-        if(subproblem.global(formalVar)) formalVar
-        else Factory.makeVariable(problem.collection, formalVar.valueSet)
-      parentValue -> actualVar
-    }
-  }
 
   /**
    *  Create a subproblem for a particular parent value.
