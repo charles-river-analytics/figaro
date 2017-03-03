@@ -20,6 +20,7 @@ import com.cra.figaro.algorithm.factored.factors.Factor
 import com.cra.figaro.algorithm.factored.factors.Semiring
 import com.cra.figaro.algorithm.structured.Problem
 import com.cra.figaro.algorithm.structured.ComponentCollection
+import com.cra.figaro.algorithm.lazyfactored.Extended
 
 abstract class StructuredProbQueryAlgorithm(val universe: Universe, val queryTargets: Element[_]*) extends Algorithm with OneTimeProbQuery {
 
@@ -36,8 +37,11 @@ abstract class StructuredProbQueryAlgorithm(val universe: Universe, val queryTar
   universe.permanentElements.foreach(problem.add(_))
   val evidenceElems = universe.conditionedElements ::: universe.constrainedElements
   
+  
   def initialComponents() = (problem.targets ++ evidenceElems).distinct.map(cc(_))
 
+  var jointFactor: Factor[Double] = null
+    
   protected def marginalizeToTarget(target: Element[_], jointFactor: Factor[Double]): Unit = {
     val targetVar = cc(target).variable
     val unnormalizedTargetFactor = jointFactor.marginalizeTo(targetVar)
@@ -46,6 +50,16 @@ abstract class StructuredProbQueryAlgorithm(val universe: Universe, val queryTar
     targetFactors += target -> targetFactor
   }
 
+  def distribution(target: Element[_]*): List[(Double, List[Extended[_]])] = {
+    val targetVars = target.map(cc(_).variable)
+    val unnormalizedTargetFactor = jointFactor.marginalizeTo(targetVars:_*)
+    val z = unnormalizedTargetFactor.foldLeft(0.0, _ + _)
+    val targetFactor = unnormalizedTargetFactor.mapTo((d: Double) => d / z)
+//    val filteredIndices: List[List[Int]] = targetFactor.getIndices.filter(f => f.foldLeft(true)((b, i) => b & targetVars(i).range(i).isRegular)).toList
+    val dist = targetFactor.getIndices.map(f => (targetFactor.get(f), targetFactor.convertIndicesToValues(f))).toList
+    dist
+  }
+  
   /**
    * Computes the normalized distribution over a single target element.
    */

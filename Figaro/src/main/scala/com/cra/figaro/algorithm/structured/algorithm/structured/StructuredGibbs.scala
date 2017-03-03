@@ -32,8 +32,8 @@ class StructuredGibbs(universe: Universe, numSamples: Int, burnIn: Int, interval
   def run() {
     val strategy = DecompositionStrategy.recursiveStructuredStrategy(problem, new ConstantStrategy(marginalGibbs(numSamples, burnIn, interval, blockToSampler)), defaultRangeSizer, Lower, false)
     strategy.execute(initialComponents)
-    val joint = problem.solution.foldLeft(Factory.unit(semiring))(_.product(_))
-    targets.foreach(t => marginalizeToTarget(t, joint))
+    jointFactor = problem.solution.foldLeft(Factory.unit(semiring))(_.product(_))
+    targets.foreach(t => marginalizeToTarget(t, jointFactor))
   }
 }
 

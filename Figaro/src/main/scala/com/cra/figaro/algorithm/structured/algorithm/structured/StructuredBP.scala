@@ -28,8 +28,8 @@ class StructuredBP(universe: Universe, iterations: Int, targets: Element[_]*) ex
   def run() {    
     val strategy = DecompositionStrategy.recursiveStructuredStrategy(problem, new ConstantStrategy(marginalBeliefPropagation(iterations)), defaultRangeSizer, Lower, false)
     strategy.execute(initialComponents)
-    val joint = problem.solution.foldLeft(Factory.unit(semiring))(_.product(_))  
-    targets.foreach(t => marginalizeToTarget(t, joint))
+    val jointFactor = problem.solution.foldLeft(Factory.unit(semiring))(_.product(_))  
+    targets.foreach(t => marginalizeToTarget(t, jointFactor))
   }
 }
 
