@@ -14,12 +14,13 @@ package com.cra.figaro.algorithm.structured.algorithm
 
 import com.cra.figaro.language._
 import com.cra.figaro.algorithm._
-import com.cra.figaro.algorithm.factored.factors.{Factor, SumProductSemiring}
+import com.cra.figaro.algorithm.factored.factors.{ Factor, SumProductSemiring }
 import com.cra.figaro.algorithm.factored.factors.factory.Factory
 import com.cra.figaro.algorithm.structured._
+import com.cra.figaro.algorithm.lazyfactored.Extended
 
 abstract class StructuredProbQueryAlgorithm(val universe: Universe, val queryTargets: Element[_]*)
-  extends StructuredAlgorithm with ProbQueryAlgorithm {
+    extends StructuredAlgorithm with ProbQueryAlgorithm {
 
   override def problemTargets = queryTargets.toList
 
@@ -48,7 +49,7 @@ abstract class StructuredProbQueryAlgorithm(val universe: Universe, val queryTar
   def computeDistribution[T](target: Element[T]): Stream[(Double, T)] = {
     // TODO is this really correct even if the target range doesn't contain star?
     val targetVar = collection(target).variable
-    if(targetVar.valueSet.hasStar) throw new IllegalArgumentException("target range contains *")
+    if (targetVar.valueSet.hasStar) throw new IllegalArgumentException("target range contains *")
     val factor = processedSolutions(Lower)(target)
     val dist = factor.getIndices.map(indices => (factor.get(indices), targetVar.range(indices.head).value))
     // normalization is unnecessary here because it is done in marginalizeTo
@@ -63,6 +64,17 @@ abstract class StructuredProbQueryAlgorithm(val universe: Universe, val queryTar
     def get(pair: (Double, T)) = pair._1 * function(pair._2)
     (0.0 /: computeDistribution(target))(_ + get(_))
   }
+
+  def distribution(target: Element[_]*): List[(Double, List[Extended[_]])] = {
+    val targetVars = target.map(collection(_).variable)
+    val jointFactor = problem.solution.foldLeft(Factory.unit(SumProductSemiring()))(_.product(_))
+    val unnormalizedTargetFactor = jointFactor.marginalizeTo(targetVars: _*)
+    val z = unnormalizedTargetFactor.foldLeft(0.0, _ + _)
+    val targetFactor = unnormalizedTargetFactor.mapTo((d: Double) => d / z)
+    val dist = targetFactor.getIndices.map(f => (targetFactor.get(f), targetFactor.convertIndicesToValues(f))).toList
+    dist
+  }
+
 }
 
 trait OneTimeStructuredProbQuery extends StructuredProbQueryAlgorithm with OneTimeStructured with OneTimeProbQuery
