@@ -50,9 +50,24 @@ class TopDownTest extends WordSpec with Matchers {
       new TopDownStrategy(cc, range(30), List(c1)).execute()
 
       val c2ExpectedValues = c1.range.regularValues.map(_ + 1)
-      println(c2ExpectedValues.toList.sorted)
-      println(c2.range.regularValues.toList.sorted)
       c2.range.regularValues should equal(c2ExpectedValues)
+    }
+
+    "update from globals through Chain outcomes" in {
+      Universe.createNew()
+      val e1 = Flip(0.5)
+      val e2 = Normal(0.0, 1.0)
+      val e3 = If(e1, e2.map(_ + 1), Select(0.2 -> -1.0, 0.8 -> 1.0))
+      val cc = new ComponentCollection
+      val pr = new Problem(cc, List(e3))
+      pr.add(e2)
+      new BottomUpStrategy(pr, range(20), pr.targetComponents).execute()
+      val c2 = cc(e2)
+      val c3 = cc(e3)
+      new TopDownStrategy(cc, range(30), List(c2)).execute()
+
+      val c3ExpectedValues = c2.range.regularValues.map(_ + 1) + (-1.0, 1.0)
+      c3.range.regularValues should equal(c3ExpectedValues)
     }
 
     "update the factors where ranges changed" in {

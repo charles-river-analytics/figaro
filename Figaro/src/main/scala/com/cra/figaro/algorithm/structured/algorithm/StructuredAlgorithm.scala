@@ -132,8 +132,9 @@ trait OneTimeStructured extends StructuredAlgorithm with OneTime {
  */
 trait LazyStructured extends StructuredAlgorithm {
   override def checkConstraintBounds(): Unit = {
-    // Look at the non constraint factors of the components not fully refined
-    for(comp <- problem.components if !comp.fullyRefined) {
+    // Look at the non constraint factors of the components not fully enumerated. This check is necessary because
+    // components not fully enumerated might later have constraints out of bounds when their ranges increase in size.
+    for(comp <- problem.components if !comp.fullyEnumerated) {
       // Verify that all entries in the factors are in the range [0.0, 1.0].
       for(factor <- comp.constraintFactors() ; indices <- factor.getIndices) {
         val entry = factor.get(indices)

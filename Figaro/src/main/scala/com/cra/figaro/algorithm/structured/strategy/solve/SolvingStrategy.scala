@@ -77,8 +77,6 @@ private[figaro] abstract class SolvingStrategy(problem: Problem) {
     problem.recordingFactors = recordingFactors
     problem.solved = true
     toEliminate.foreach((v: Variable[_]) => {
-      // TODO might this cause bugs?
-      // It should be fine, as long as we repopulate intermediates every time we make factors
       if (collection.intermediates.contains(v)) collection.intermediates -= v
     })
   }

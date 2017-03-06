@@ -12,14 +12,14 @@
  */
 package com.cra.figaro.test.algorithm.structured.solver
 
-import org.scalatest.{WordSpec, Matchers}
+import org.scalatest.{Matchers, WordSpec}
 import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.lazyfactored.Regular
 import com.cra.figaro.algorithm.factored.gibbs.BlockSampler
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.discrete.Uniform
 import com.cra.figaro.library.compound.If
-import com.cra.figaro.algorithm.factored.factors.factory.Factory
+import com.cra.figaro.algorithm.factored.factors.factory.{ChainFactory, Factory}
 import com.cra.figaro.algorithm.structured.strategy.solve._
 import com.cra.figaro.algorithm.structured._
 import com.cra.figaro.algorithm.structured.solver._
@@ -106,7 +106,11 @@ class GibbsSolverTest extends WordSpec with Matchers {
         val v2 = c2.variable
         val v3 = c3.variable
 
-        val solver = new GibbsSolver(pr, Set(), Set(v3), pr.components.flatMap(_.nonConstraintFactors()), 1, 0, 1, BlockSampler.default)
+        val factors = pr.components.flatMap {
+          case chainComp: ChainComponent[_, _] => ChainFactory.makeSingleFactor(cc, chainComp.chain)
+          case comp => comp.nonConstraintFactors()
+        }
+        val solver = new GibbsSolver(pr, Set(), Set(v3), factors, 1, 0, 1, BlockSampler.default)
         // Call initialize to set solver.variables so createBlocks may be called
         solver.initialize()
         // Chain should not be blocked with parent, but should still be blocked with its deterministic children

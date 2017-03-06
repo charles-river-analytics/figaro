@@ -28,7 +28,6 @@ class FlatTest extends WordSpec with Matchers {
     
     "expanding the model" should {
       "produce the correct factors" in {
-        // TODO these tests should really go in a separate test suite for raising strategies
         Universe.createNew()
         val e1 = Flip(0.4)        
         val r1 = Chain(e1, (b: Boolean) => {
