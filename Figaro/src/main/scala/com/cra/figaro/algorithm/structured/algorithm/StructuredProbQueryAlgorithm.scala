@@ -67,22 +67,22 @@ abstract class StructuredProbQueryAlgorithm(val universe: Universe, val queryTar
     (0.0 /: computeDistribution(target))(_ + get(_))
   }
 
-  def distribution(target: Element[_]*): (List[(String, Variable[_])], List[(Double, List[Extended[_]])]) = {
+  def distribution(target: Element[_]*): (List[(String, ProblemComponent[_])], List[(Double, List[Extended[_]])]) = {
     val targetVars = target.map(collection(_).variable)
     val jointFactor = problem.solution.foldLeft(Factory.unit(SumProductSemiring()))(_.product(_))
     val unnormalizedTargetFactor = jointFactor.marginalizeTo(targetVars: _*)
     val z = unnormalizedTargetFactor.foldLeft(0.0, _ + _)
     val targetFactor = unnormalizedTargetFactor.mapTo((d: Double) => d / z)
-    val variables = nameVariables(target, targetFactor)
+    val components = nameComponents(target, targetFactor)
     val dist = targetFactor.getIndices.map(f => (targetFactor.get(f), targetFactor.convertIndicesToValues(f))).toList
-    (variables, dist)
+    (components, dist)
   }
   
-  private def nameVariables(targets: Seq[Element[_]], factor: Factor[_]): List[(String, Variable[_])] = {
-    val targetVars = targets.map(t => (t.name.string, collection(t).variable))
+  private def nameComponents(targets: Seq[Element[_]], factor: Factor[_]): List[(String, ProblemComponent[_])] = {
+    val targetVars: Seq[(String, ProblemComponent[_])] = targets.map(t => (t.name.string, collection(t)))
     val variables = factor.variables
-    val mappedElementNames = targetVars.map(t => (t._1, t._2, variables.indexOf(t._2))).sortBy(_._3).toList
-    for ((name, variable, pos) <- mappedElementNames) yield (name, variable)
+    val mappedElementNames = targetVars.map(t => (t._1, t._2, variables.indexOf(t._2.variable))).sortBy(_._3).toList
+    for ((name, component, pos) <- mappedElementNames) yield (name, component)
   }
 
 }
