@@ -34,14 +34,12 @@ import scala.collection.mutable
  * directly or indirectly must also be marked as open. Thus, it is usually safest to call `DecompositionStrategy` from a
  * set of top-level components.
  * @param collection Collection of components to refine.
- * @param rangeSizer Method to determine the size of the range of components.
  * @param done Problem components that were already processed, which should not be visited again. This is explicitly a
  * mutable set so that nested decomposition strategies can update any enclosing decomposition strategy with the
  * components that were processed.
  */
-private[figaro] abstract class DecompositionStrategy(collection: ComponentCollection, rangeSizer: RangeSizer,
-                                                     done: mutable.Set[ProblemComponent[_]])
-  extends RefiningStrategy(collection, rangeSizer) {
+private[figaro] abstract class DecompositionStrategy(collection: ComponentCollection, done: mutable.Set[ProblemComponent[_]])
+  extends RefiningStrategy(collection) {
 
   /**
    * Optionally decompose a nested problem. The recursing strategy may not refine any components in the set `done`, but

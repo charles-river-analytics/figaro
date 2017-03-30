@@ -153,12 +153,12 @@ object Range {
     helper(ValueSet.withoutStar(Set(fold.start)), fold.elements)
   }
 
-  def apply[V](component: ProblemComponent[V], numValues: Int): ValueSet[V] = {
+  def apply[V](component: ProblemComponent[V]): ValueSet[V] = {
     component match {
       case cc: ChainComponent[_, V]  => chainRange(cc)
       case mc: MakeArrayComponent[V] => makeArrayRange(mc)
       case ac: ApplyComponent[V]     => applyRange(ac)
-      case _                         => otherRange(component, numValues)
+      case _                         => otherRange(component)
     }
   }
 
@@ -279,7 +279,7 @@ object Range {
     }
   }
 
-  private def otherRange[V](component: ProblemComponent[V], numValues: Int): ValueSet[V] = {
+  private def otherRange[V](component: ProblemComponent[V]): ValueSet[V] = {
     val collection = component.problem.collection
     component.element match {
       case c: Constant[_] => withoutStar(Set(c.constant))
@@ -352,11 +352,11 @@ object Range {
         v.makeValues(Int.MaxValue)
       }
 
-      case a: Atomic[_] => {
+      /*case a: Atomic[_] => {
         val thisSampler = ParticleGenerator(a.universe)
         val samples = thisSampler(a, numValues)
         withoutStar(samples.unzip._2.toSet)
-      }
+      }*/
 
       case _ =>
         /* A new improvement - if we can't compute the values, we just make them *, so the rest of the computation can proceed */

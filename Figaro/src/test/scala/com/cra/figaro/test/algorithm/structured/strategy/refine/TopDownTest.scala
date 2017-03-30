@@ -31,9 +31,9 @@ class TopDownTest extends WordSpec with Matchers {
       val e1 = Normal(0.0, 1.0)
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e1))
-      new BottomUpStrategy(pr, range(20), pr.targetComponents).execute()
+      new BottomUpStrategy(pr, pr.targetComponents).execute()
       val c1 = cc(e1)
-      new TopDownStrategy(cc, range(30), List(c1)).execute()
+      new TopDownStrategy(cc, List(c1)).execute()
 
       c1.range.regularValues should have size 30
     }
@@ -44,10 +44,10 @@ class TopDownTest extends WordSpec with Matchers {
       val e2 = e1.map(_ + 1)
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e2))
-      new BottomUpStrategy(pr, range(20), pr.targetComponents).execute()
+      new BottomUpStrategy(pr, pr.targetComponents).execute()
       val c1 = cc(e1)
       val c2 = cc(e2)
-      new TopDownStrategy(cc, range(30), List(c1)).execute()
+      new TopDownStrategy(cc, List(c1)).execute()
 
       val c2ExpectedValues = c1.range.regularValues.map(_ + 1)
       c2.range.regularValues should equal(c2ExpectedValues)
@@ -61,10 +61,10 @@ class TopDownTest extends WordSpec with Matchers {
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e3))
       pr.add(e2)
-      new BottomUpStrategy(pr, range(20), pr.targetComponents).execute()
+      new BottomUpStrategy(pr, pr.targetComponents).execute()
       val c2 = cc(e2)
       val c3 = cc(e3)
-      new TopDownStrategy(cc, range(30), List(c2)).execute()
+      new TopDownStrategy(cc, List(c2)).execute()
 
       val c3ExpectedValues = c2.range.regularValues.map(_ + 1) + (-1.0, 1.0)
       c3.range.regularValues should equal(c3ExpectedValues)
@@ -77,10 +77,10 @@ class TopDownTest extends WordSpec with Matchers {
       e2.addConstraint((d: Double) => d * d)
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e2))
-      new BottomUpStrategy(pr, range(20), pr.targetComponents).execute()
+      new BottomUpStrategy(pr, pr.targetComponents).execute()
       val c1 = cc(e1)
       val c2 = cc(e2)
-      new TopDownStrategy(cc, range(30), List(c1)).execute()
+      new TopDownStrategy(cc, List(c1)).execute()
 
       // Factor lists each over one variable; each factor should have size equal to the range of the variable
       val singleVarFactors = List(c1.nonConstraintFactors(), c2.constraintFactors(Lower), c2.constraintFactors(Upper))
@@ -99,11 +99,11 @@ class TopDownTest extends WordSpec with Matchers {
       val e2 = Normal(e1, 1.0)
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e2))
-      new BottomUpStrategy(pr, range(5), pr.targetComponents).execute()
+      new BottomUpStrategy(pr, pr.targetComponents).execute()
       val c1 = cc(e1)
       val c2 = cc(e2)
       val initialSubproblems = c2.subproblems
-      new TopDownStrategy(cc, range(10), List(c1)).execute()
+      new TopDownStrategy(cc, List(c1)).execute()
 
       val newSubproblems = c2.subproblems -- initialSubproblems.keySet
       // Make sure it creates the correct number of new subproblems
@@ -125,12 +125,12 @@ class TopDownTest extends WordSpec with Matchers {
 
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e4))
-      new BottomUpStrategy(pr, range(20), pr.targetComponents).execute()
+      new BottomUpStrategy(pr, pr.targetComponents).execute()
       val c1 = cc(e1)
       val c2 = cc(e2)
       val c4 = cc(e4)
       val done = mutable.Set[ProblemComponent[_]]()
-      new TopDownStrategy(cc, range(30), List(c1), done).execute()
+      new TopDownStrategy(cc, List(c1), done).execute()
 
       // e2 should be fully enumerated, which makes e3 fully refined
       // This should not stop e4 from getting refined, since it also uses e1 directly
@@ -144,9 +144,9 @@ class TopDownTest extends WordSpec with Matchers {
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e1))
       // Because we start at e1, e2 should not get added to the collection here
-      new BottomUpStrategy(pr, range(20), pr.targetComponents).execute()
+      new BottomUpStrategy(pr, pr.targetComponents).execute()
       val c1 = cc(e1)
-      new TopDownStrategy(cc, range(30), List(c1)).execute()
+      new TopDownStrategy(cc, List(c1)).execute()
       cc.contains(e2) should equal(false)
     }
   }

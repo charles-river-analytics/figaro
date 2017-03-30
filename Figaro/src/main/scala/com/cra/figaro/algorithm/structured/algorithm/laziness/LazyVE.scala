@@ -60,7 +60,7 @@ abstract class LazyVE(universe: Universe, targets: Element[_]*) extends Structur
   }
 
   def refiningStrategy(): RefiningStrategy = {
-    new PartialBottomUpStrategy(depth, problem, defaultRangeSizer, initialElements.map(collection(_)))
+    new PartialBottomUpStrategy(depth, problem, initialElements.map(collection(_)))
   }
 
 }

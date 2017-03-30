@@ -95,15 +95,13 @@ class ProblemComponent[Value](val problem: Problem, val element: Element[Value])
 
   /**
    *  Generate a range of values for this component. Also sets the variable for this component.
-   * The optional argument is the number of values to include in the range.
-   * This argument is only used for atomic elements.
    * If an argument is not in the component collection, we do not generate the argument, but instead assume its only value is *.
    * This doesn't change the range of any other element or expand any subproblems.
    * The range will include * based on argument ranges including * or any subproblem not being expanded.\
    *
    */
-  def generateRange(numValues: Int = ParticleGenerator.defaultMaxNumSamplesAtChain) {
-    val newRange = Range(this, numValues)
+  def generateRange() {
+    val newRange = Range(this)
     if ((newRange.hasStar ^ range.hasStar) || (newRange.regularValues != range.regularValues)) {
       range = newRange
       setVariable(new Variable(range))
