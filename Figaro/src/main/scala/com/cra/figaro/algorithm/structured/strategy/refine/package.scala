@@ -35,8 +35,8 @@ package object refine {
   def increasingRangeSizer(pc: ProblemComponent[_]) = {
     val universe = pc.element.universe
     if(ParticleGenerator.exists(universe)) {
-      ParticleGenerator(universe).samplesTaken(pc.element) + ParticleGenerator.defaultMaxNumSamplesAtChain
+      ParticleGenerator(universe).samplesTaken(pc.element) + 1
     }
-    else ParticleGenerator.defaultMaxNumSamplesAtChain
+    else 1
   }
 }
