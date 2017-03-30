@@ -99,6 +99,7 @@ object Variable {
     case chain: Chain[_, T] => new ChainComponent(problem, chain)
     case makeArray: MakeArray[_] => new MakeArrayComponent(problem, makeArray).asInstanceOf[ProblemComponent[T]]
     case apply: Apply[_] => new ApplyComponent(problem, apply)
+    case atomic: Atomic[T] => new AtomicComponent(problem, atomic)
     case _ => new ProblemComponent(problem, elem)
   }
 

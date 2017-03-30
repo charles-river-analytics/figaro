@@ -347,6 +347,7 @@ object Factory {
         val applyMap = LazyValues(elem.universe).getMap(a)
         applyComp.setMap(applyMap)
       }
+      // TODO put ParticleGenerator samples in AtomicComponent
       case _ => ()
     }
     // Make the constraint and non-constraint factors for the element by calling the

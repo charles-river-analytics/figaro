@@ -134,6 +134,12 @@ class ComponentCollection {
   def apply[T](makeArray: MakeArray[T]): MakeArrayComponent[T] = components(makeArray).asInstanceOf[MakeArrayComponent[T]]
 
   /**
+   *  Get the component associated with this element in this collection.
+   *  Throws an exception if the element is not associated with any component.
+   */
+  def apply[T](atomic: Atomic[T]): AtomicComponent[T] = components(atomic).asInstanceOf[AtomicComponent[T]]
+
+  /**
    * Add a component for the given element in the given problem to the component collection and return the component.
    */
   private[structured] def add[T](element: Element[T], problem: Problem): ProblemComponent[T] = {
@@ -148,6 +154,7 @@ class ComponentCollection {
           case chain: Chain[_, T] => new ChainComponent(problem, chain)
           case makeArray: MakeArray[_] => new MakeArrayComponent(problem, makeArray)
           case apply: Apply[_] => new ApplyComponent(problem, apply)
+          case atomic: Atomic[T] => new AtomicComponent(problem, atomic)
           case _ => new ProblemComponent(problem, element)
         }
       components += element -> component
