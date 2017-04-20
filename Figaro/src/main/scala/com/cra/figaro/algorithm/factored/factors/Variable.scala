@@ -98,8 +98,10 @@ object Variable {
   private def makeComponent[T](elem: Element[T]): ProblemComponent[T] = elem match {
     case chain: Chain[_, T] => new ChainComponent(problem, chain)
     case makeArray: MakeArray[_] => new MakeArrayComponent(problem, makeArray).asInstanceOf[ProblemComponent[T]]
-    case apply: Apply[_] => new ApplyComponent(problem, apply)
-    case atomic: Atomic[T] => new AtomicComponent(problem, atomic)
+    case apply: Apply[T] => new ApplyComponent(problem, apply)
+    // This is subtle: we must use the atomic component type that generates a distribution based on the range given,
+    // rather than one that generates its own range
+    case atomic: Atomic[T] => new ValuesAtomicComponent(problem, atomic)
     case _ => new ProblemComponent(problem, elem)
   }
 
