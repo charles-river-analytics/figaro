@@ -15,8 +15,11 @@ package com.cra.figaro.algorithm.structured
 
 import com.cra.figaro.language._
 import com.cra.figaro.library.collection.MakeArray
+
 import scala.collection.mutable.Map
 import com.cra.figaro.algorithm.factored.factors._
+import com.cra.figaro.library.atomic.discrete.AtomicBinomial
+
 import scala.collection.mutable.HashMap
 /**
 * To speed up factor creation time, it's necessary to override the hashcode of component collections.
@@ -153,8 +156,12 @@ class ComponentCollection {
         element match {
           case chain: Chain[_, T] => new ChainComponent(problem, chain)
           case makeArray: MakeArray[_] => new MakeArrayComponent(problem, makeArray)
-          case apply: Apply[_] => new ApplyComponent(problem, apply)
-          case atomic: Atomic[T] => new AtomicComponent(problem, atomic)
+          case apply: Apply[T] => new ApplyComponent(problem, apply)
+          // TODO make choice of ranging strategy configurable for atomics
+          case flip: AtomicFlip => new FiniteAtomicComponent(problem, flip)
+          case select: AtomicSelect[T] => new FiniteAtomicComponent(problem, select)
+          case binomial: AtomicBinomial => new FiniteAtomicComponent(problem, binomial)
+          case atomic: Atomic[T] => new SampledAtomicComponent(problem, atomic)
           case _ => new ProblemComponent(problem, element)
         }
       components += element -> component
