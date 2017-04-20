@@ -14,10 +14,9 @@
 package com.cra.figaro.algorithm.structured
 
 import com.cra.figaro.language._
-import com.cra.figaro.algorithm.lazyfactored.{Extended, ValueSet}
+import com.cra.figaro.algorithm.lazyfactored.ValueSet
 import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.factored.factors.factory._
-import com.cra.figaro.algorithm.structured.strategy.refine.Discretizer
 
 /*
 /** A component of a problem, created for a specific element. */
@@ -98,7 +97,6 @@ class ProblemComponent[Value](val problem: Problem, val element: Element[Value])
    *
    */
   def generateRange() {
-    // TODO elaborate on ranging method used here
     val newRange = Range(this)
     if ((newRange.hasStar ^ range.hasStar) || (newRange.regularValues != range.regularValues)) {
       range = newRange
@@ -121,37 +119,8 @@ class ProblemComponent[Value](val problem: Problem, val element: Element[Value])
   */
 }
 
-class ApplyComponent[Value](problem: Problem, element: Element[Value]) extends ProblemComponent(problem, element) {
+class ApplyComponent[Value](problem: Problem, val apply: Apply[Value]) extends ProblemComponent(problem, apply) {
   private var applyMap = scala.collection.mutable.Map[Any, Value]()
   def getMap() = applyMap
   def setMap(m: scala.collection.mutable.Map[Any, Value]) = applyMap = m
-}
-
-/**
- * Problem components for atomic elements.
- */
-class AtomicComponent[Value](problem: Problem, element: Atomic[Value]) extends ProblemComponent(problem, element) {
-  /**
-   * Probabilities associated with values in the range of this component. This is usually needed for factor creation,
-   * but there are some exceptions, such as when the element has a finite range (e.g. Flip or atomic Binomial), or when
-   * the range of the component is {*}. When the map is needed for factor creation, it is required that (1) the key set
-   * of this map equals the range of the component, and (2) the values in this map sum to 1.0.
-   */
-  var probs: Map[Extended[Value], Double] = Map()
-
-  /**
-   * Method to discretize the range of this component.
-   */
-  var discretizer: Discretizer[Value] = _ // TODO make and comment on default generator
-
-  override def generateRange(): Unit = {
-    // Generate extended values and probabilities with the discretizer
-    probs = discretizer.discretize()
-    // Assign the range in the normal way using the extended values
-    val newRange = new ValueSet(probs.keySet)
-    if ((newRange.hasStar ^ range.hasStar) || (newRange.regularValues != range.regularValues)) {
-      range = newRange
-      setVariable(new Variable(range))
-    }
-  }
 }
