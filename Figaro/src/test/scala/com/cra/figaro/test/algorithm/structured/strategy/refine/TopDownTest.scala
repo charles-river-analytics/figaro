@@ -22,35 +22,22 @@ import org.scalatest.{Matchers, WordSpec}
 import scala.collection.mutable
 
 class TopDownTest extends WordSpec with Matchers {
-  // Range sizer for the given number of samples
-  def range(samples: Int)(pc: ProblemComponent[_]) = samples
-
   "A top-down strategy" should {
-    "take additional samples for top-level components" in {
-      Universe.createNew()
-      val e1 = Normal(0.0, 1.0)
-      val cc = new ComponentCollection
-      val pr = new Problem(cc, List(e1))
-      new BottomUpStrategy(pr, pr.targetComponents).execute()
-      val c1 = cc(e1)
-      new TopDownStrategy(cc, List(c1)).execute()
-
-      c1.range.regularValues should have size 30
-    }
-
     "update ranges to be consistent" in {
       Universe.createNew()
       val e1 = Normal(0.0, 1.0)
       val e2 = e1.map(_ + 1)
       val cc = new ComponentCollection
-      val pr = new Problem(cc, List(e2))
-      new BottomUpStrategy(pr, pr.targetComponents).execute()
-      val c1 = cc(e1)
+      val pr = new Problem(cc, List(e1, e2))
+      val c1 = cc(e1).asInstanceOf[SampledAtomicComponent[Double]]
       val c2 = cc(e2)
+      c1.samplesPerIteration = 10
+      new BottomUpStrategy(pr, pr.targetComponents).execute()
       new TopDownStrategy(cc, List(c1)).execute()
 
       val c2ExpectedValues = c1.range.regularValues.map(_ + 1)
       c2.range.regularValues should equal(c2ExpectedValues)
+      c2ExpectedValues should have size 20
     }
 
     "update from globals through Chain outcomes" in {
@@ -61,13 +48,15 @@ class TopDownTest extends WordSpec with Matchers {
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e3))
       pr.add(e2)
-      new BottomUpStrategy(pr, pr.targetComponents).execute()
-      val c2 = cc(e2)
+      val c2 = cc(e2).asInstanceOf[SampledAtomicComponent[Double]]
       val c3 = cc(e3)
+      c2.samplesPerIteration = 10
+      new BottomUpStrategy(pr, pr.targetComponents).execute()
       new TopDownStrategy(cc, List(c2)).execute()
 
       val c3ExpectedValues = c2.range.regularValues.map(_ + 1) + (-1.0, 1.0)
       c3.range.regularValues should equal(c3ExpectedValues)
+      c3ExpectedValues should have size 22
     }
 
     "update the factors where ranges changed" in {
@@ -76,19 +65,21 @@ class TopDownTest extends WordSpec with Matchers {
       val e2 = e1.map(_ + 1)
       e2.addConstraint((d: Double) => d * d)
       val cc = new ComponentCollection
-      val pr = new Problem(cc, List(e2))
-      new BottomUpStrategy(pr, pr.targetComponents).execute()
-      val c1 = cc(e1)
+      val pr = new Problem(cc, List(e1, e2))
+      val c1 = cc(e1).asInstanceOf[SampledAtomicComponent[Double]]
       val c2 = cc(e2)
+      c1.samplesPerIteration = 15
+      new BottomUpStrategy(pr, pr.targetComponents).execute()
       new TopDownStrategy(cc, List(c1)).execute()
 
       // Factor lists each over one variable; each factor should have size equal to the range of the variable
+      // The range should have 30 values because we take 15 samples twice
       val singleVarFactors = List(c1.nonConstraintFactors(), c2.constraintFactors(Lower), c2.constraintFactors(Upper))
       for(list <- singleVarFactors) {
         list should have size 1
         list.head should have size 30
       }
-      // The non-constraint factor for c2 is over two variables, each with range 30
+      // The non-constraint factor for c2 is over two variables, each with range 30, giving size 30*30=900
       c2.nonConstraintFactors() should have size 1
       c2.nonConstraintFactors().head should have size 900
     }
@@ -98,16 +89,17 @@ class TopDownTest extends WordSpec with Matchers {
       val e1 = Normal(0.0, 1.0)
       val e2 = Normal(e1, 1.0)
       val cc = new ComponentCollection
-      val pr = new Problem(cc, List(e2))
-      new BottomUpStrategy(pr, pr.targetComponents).execute()
-      val c1 = cc(e1)
+      val pr = new Problem(cc, List(e1, e2))
+      val c1 = cc(e1).asInstanceOf[SampledAtomicComponent[Double]]
       val c2 = cc(e2)
+      c1.samplesPerIteration = 10
+      new BottomUpStrategy(pr, pr.targetComponents).execute()
       val initialSubproblems = c2.subproblems
       new TopDownStrategy(cc, List(c1)).execute()
 
       val newSubproblems = c2.subproblems -- initialSubproblems.keySet
       // Make sure it creates the correct number of new subproblems
-      newSubproblems should have size 5
+      newSubproblems should have size 10
       // No components in the new subproblems should be refined yet
       for((_, subproblem) <- newSubproblems ; comp <- subproblem.components) {
         comp.nonConstraintFactors() should be(empty)

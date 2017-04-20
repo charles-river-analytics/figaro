@@ -52,17 +52,6 @@ class BottomUpTest extends WordSpec with Matchers {
       c1f.range.hasStar should be(false)
     }
 
-    "sample continuous components with the rangeSizer" in {
-      Universe.createNew()
-      val e1 = Normal(0, 1)
-      val cc = new ComponentCollection
-      val pr = new Problem(cc, List(e1))
-      val rangeSizer = (pc: ProblemComponent[_]) => 30
-      new BottomUpStrategy(pr, pr.targetComponents).execute()
-
-      cc(e1).variable.size should be(30)
-    }
-
     "create non-constraint factors for all components" in {
       Universe.createNew()
       val e1 = Flip(0.3)
@@ -104,7 +93,8 @@ class BottomUpTest extends WordSpec with Matchers {
         val e2 = Flip(e1)
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1, e2))
-        val rangeSizer = (pc: ProblemComponent[_]) => 25
+        val c1 = cc(e1).asInstanceOf[SampledAtomicComponent[Double]]
+        c1.samplesPerIteration = 25
         new BottomUpStrategy(pr, pr.targetComponents).execute()
 
         // Factor for e1 should contain sampled values
@@ -124,7 +114,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val e2 = Flip(e1)
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1, e2))
-        new BottomUpStrategy(pr, defaultRangeSizer, true, pr.targetComponents).execute()
+        new BottomUpStrategy(pr, true, pr.targetComponents).execute()
       }*/
     }
 
