@@ -455,14 +455,15 @@ class FactorMakerTest extends WordSpec with Matchers {
         val v2 = Flip(v1)
         pr.add(v1)
         pr.add(v2)
-        val c1 = cc(v1)
+        val c1 = cc(v1).asInstanceOf[SampledAtomicComponent[Double]]
         val c2 = cc(v2)
+        c1.samplesPerIteration = 15
         c1.generateRange()
         c2.generateRange()
 
         val List(factor) = c2.nonConstraintFactors(false)
         factor.variables should equal (List(c1.variable, c2.variable))
-        factor.size should equal (ParticleGenerator.defaultMaxNumSamplesAtChain * 2)
+        factor.size should equal (c1.samplesPerIteration * 2)
         for { (p, index) <- c1.variable.range.zipWithIndex } {
           factor.get(List(index, 0)) should equal (p.value)
           factor.get(List(index, 1)) should equal (1 - p.value)
@@ -710,14 +711,15 @@ class FactorMakerTest extends WordSpec with Matchers {
         val v2 = Select(v1, false, true)
         pr.add(v1)
         pr.add(v2)
-        val c1 = cc(v1)
+        val c1 = cc(v1).asInstanceOf[SampledAtomicComponent[Array[Double]]]
         val c2 = cc(v2)
+        c1.samplesPerIteration = 15
         c1.generateRange()
         c2.generateRange()
 
         val List(factor) = c2.nonConstraintFactors(false)
         factor.variables should equal (List(c1.variable, c2.variable))
-        factor.size should equal (ParticleGenerator.defaultMaxNumSamplesAtChain * 2)
+        factor.size should equal (c1.samplesPerIteration * 2)
         for {
           (xprobs, i) <- c1.variable.range.zipWithIndex
           j <- 0 until c2.variable.range.size
@@ -829,8 +831,9 @@ class FactorMakerTest extends WordSpec with Matchers {
           val v2 = Binomial(3, v1)
           pr.add(v1)
           pr.add(v2)
-          val c1 = cc(v1)
+          val c1 = cc(v1).asInstanceOf[SampledAtomicComponent[Double]]
           val c2 = cc(v2)
+          c1.samplesPerIteration = 15
           c1.generateRange()
           c2.expand() // need to do this so the atomic binomials for each of the beta values is added to the problem
           c2.generateRange()
@@ -839,7 +842,7 @@ class FactorMakerTest extends WordSpec with Matchers {
           val List(var1, var2, tupleVar) = tupleFactor.variables
           var1 should equal (c1.variable)
           var2 should equal (c2.variable)
-          factors.size should equal (ParticleGenerator.defaultMaxNumSamplesAtChain)
+          factors.size should equal (c1.samplesPerIteration)
           val vars = factors(0).variables
           vars.size should equal (2)
           vars(0) should equal (tupleVar)
@@ -877,42 +880,43 @@ class FactorMakerTest extends WordSpec with Matchers {
         val pr = new Problem(cc)
         val v1 = Normal(0.0, 1.0)
         pr.add(v1)
-        val c1 = cc(v1)
+        val c1 = cc(v1).asInstanceOf[SampledAtomicComponent[Double]]
+        val numSamples = 15
+        c1.samplesPerIteration = numSamples
         c1.generateRange()
 
         val List(factor) = c1.nonConstraintFactors()
         factor.variables should equal (List(c1.variable))
-        val samples = ParticleGenerator.defaultNumSamplesFromAtomics 
-        factor.size should equal (samples)
-        for {index <- 0 until samples} {
-          factor.get(List(index)) should equal(1.0 / samples +- 0.0001)
+        factor.size should equal (numSamples)
+        for {index <- 0 until numSamples} {
+          factor.get(List(index)) should equal(1.0 / numSamples +- 0.0001)
         }
       }
 
       "compute the correct weights when the range changes" in {
+        // TODO this should go in a test for atomic components
         val universe = Universe.createNew()
         val pg = ParticleGenerator(universe)
         val cc = new ComponentCollection
         val pr = new Problem(cc)
         val v1 = Normal(0.0, 1.0)
         pr.add(v1)
-        val c1 = cc(v1)
+        val c1 = cc(v1).asInstanceOf[SampledAtomicComponent[Double]]
 
-        c1.generateRange(5)
+        c1.samplesPerIteration = 5
+        c1.generateRange()
+        c1.variable.size should equal(5)
         val List(factor1) = c1.nonConstraintFactors()
-
-        c1.generateRange(15)
-        val List(factor2) = c1.nonConstraintFactors()
-
-        c1.generateRange(10)
-        val List(factor3) = c1.nonConstraintFactors()
-
         for {index <- 0 until 5} {
           factor1.get(List(index)) should equal(1.0 / 5 +- 0.0001)
         }
-        for {index <- 0 until 15} {
+
+        c1.samplesPerIteration = 10
+        c1.generateRange()
+        c1.variable.size should equal(15)
+        val List(factor2) = c1.nonConstraintFactors()
+        for {index <- 0 until 1} {
           factor2.get(List(index)) should equal(1.0 / 15 +- 0.0001)
-          factor3.get(List(index)) should equal(1.0 / 15 +- 0.0001)
         }
       }
     }

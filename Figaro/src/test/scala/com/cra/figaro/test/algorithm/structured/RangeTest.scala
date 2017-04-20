@@ -1657,14 +1657,16 @@ class RangeTest extends WordSpec with Matchers {
     }
 
     "for an atomic element, set the range to contain the right number of particles" in {
+      // TODO more complete tests for atomic ranging
       val universe = Universe.createNew()
       val pg = ParticleGenerator(universe)
       val cc = new ComponentCollection
       val pr = new Problem(cc)
       val e1 = Normal(0, 1)
       pr.add(e1)
-      val c1 = cc(e1)
-      c1.generateRange(5)
+      val c1 = cc(e1).asInstanceOf[SampledAtomicComponent[Double]]
+      c1.samplesPerIteration = 5
+      c1.generateRange()
 
       c1.range.hasStar should equal (false)
       c1.range.regularValues.size should equal (5)
@@ -1677,24 +1679,21 @@ class RangeTest extends WordSpec with Matchers {
       val pr = new Problem(cc)
       val e1 = Normal(0, 1)
       pr.add(e1)
-      val c1 = cc(e1)
-      c1.generateRange(5)
+      val c1 = cc(e1).asInstanceOf[SampledAtomicComponent[Double]]
+
+      c1.samplesPerIteration = 5
+      c1.generateRange()
       val range1 = c1.range
-      // Should compute additional samples
-      c1.generateRange(15)
+
+      c1.samplesPerIteration = 10
+      c1.generateRange()
       val range2 = c1.range
-      // Should return the same result as range2
-      c1.generateRange(10)
-      val range3 = c1.range
 
       range1.hasStar should equal (false)
       range2.hasStar should equal (false)
-      range3.hasStar should equal (false)
       range1.regularValues.size should equal (5)
       range2.regularValues.size should equal (15)
-      range3.regularValues.size should equal (15)
       range1.regularValues.subsetOf(range2.regularValues) should equal (true)
-      range3.regularValues should equal(range2.regularValues)
     }
   }
 
