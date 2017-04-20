@@ -14,7 +14,6 @@ package com.cra.figaro.algorithm.structured.strategy.refine
 
 import com.cra.figaro.algorithm.structured._
 import com.cra.figaro.language._
-import com.cra.figaro.library.atomic.discrete.AtomicBinomial
 import com.cra.figaro.util
 
 import scala.collection.mutable
@@ -132,6 +131,8 @@ private[figaro] abstract class DecompositionStrategy(collection: ComponentCollec
           processChain(chainComp)
         case maComp: MakeArrayComponent[_] =>
           processMakeArray(maComp)
+        case atomicComp: AtomicComponent[_] =>
+          processAtomic(atomicComp)
         case _ =>
           process(comp)
       }
@@ -195,6 +196,19 @@ private[figaro] abstract class DecompositionStrategy(collection: ComponentCollec
   }
 
   /**
+   * Generate the range for the given atomic component. Mark it as fully refined or enumerated if applicable.
+   * @param atomicComp Atomic component to process. This should not be called on a component we previously processed,
+   * including fully refined components.
+   */
+  def processAtomic(atomicComp: AtomicComponent[_]): Unit = {
+    // An atomic element has no args; simply generate its range
+    generateRange(atomicComp)
+    // Decide if the component is fully enumerated/refined based on the ranging strategy used
+    atomicComp.fullyRefined = atomicComp.fullyRefinable()
+    atomicComp.fullyEnumerated = atomicComp.fullyRefined
+  }
+
+  /**
    * Generate the range afor the given component. Mark it as fully refined or enumerated if applicable.
    * @param comp Component to process. This should not be called on a component we previously processed, including fully
    * refined components.
@@ -210,14 +224,10 @@ private[figaro] abstract class DecompositionStrategy(collection: ComponentCollec
     // If the range doesn't have *, the enumeration status breaks into several cases
     comp.fullyEnumerated = !comp.range.hasStar && {
       comp.element match {
-        // Includes atomic, compound, and parameterized Flip or Select, all of which have fixed ranges
-        // This in turn includes AtomicUniform and FromRange, leaving AtomicBinomial as the only finite-ranged Atomic
-        case _: Flip | _: Select[_, _] | _: AtomicBinomial => true
+        // Ranges of compound/parameterized Flip and Select don't depend on parents
+        case _: Flip | _: Select[_, _] => true
         // CompoundDist range does not depend on the probabilities; only the outcomes need to be enumerated
         case d: CompoundDist[_] => d.outcomes.forall(o => checkArg(o).fullyEnumerated)
-        // Flip and Select are covered above, which also covers Uniform and FromRange
-        // If we didn't fall into one of the cases above, this is an Atomic with infinite range
-        case _: Atomic[_] => false
         // Otherwise, we assume the range is generated deterministically from the element's args, which means this is
         // enumerable if and only if all of the args are fully enumerated
         case _ => argsFullyEnumerated
