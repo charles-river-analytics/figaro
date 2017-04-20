@@ -19,7 +19,6 @@ import com.cra.figaro.language._
 import com.cra.figaro.library.compound.FastIf
 import com.cra.figaro.util.{ MultiSet, homogeneousCartesianProduct }
 import com.cra.figaro.util.HashMultiSet
-import com.cra.figaro.algorithm.factored.ParticleGenerator
 import com.cra.figaro.library.collection.FixedSizeArray
 import com.cra.figaro.library.atomic.discrete.{ AtomicBinomial, ParameterizedBinomialFixedNumTrials }
 import com.cra.figaro.library.compound.FoldLeft
