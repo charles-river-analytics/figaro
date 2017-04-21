@@ -49,7 +49,7 @@ object ChainFactory {
         // If the outcome element is defined inside the chain, it will actually be different in every expansion,
         // even though the formal variable is the same. But if the outcome element is defined outside the chain,
         // it is a global that will be the same every time, so the actual variable is the variable of this global.
-        val nestedProblem = cc.expansions((chain.chainFunction, parentVal.value))
+        val nestedProblem = chainComp.subproblems(parentVal.value)
         val outcomeElem = nestedProblem.target.asInstanceOf[Element[U]]
         val formalVar = Factory.getVariable(cc, outcomeElem)
         val actualVar = if (!nestedProblem.global(formalVar)) Factory.makeVariable(cc, formalVar.valueSet) else formalVar
