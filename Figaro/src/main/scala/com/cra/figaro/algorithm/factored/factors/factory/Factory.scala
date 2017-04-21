@@ -251,7 +251,7 @@ object Factory {
 
   private def makeAbstract[T](cc: ComponentCollection, atomic: Atomic[T], abstraction: Abstraction[T]): List[Factor[Double]] = {
     val variable = getVariable(cc, atomic)
-    // TODO this fails if range contains *
+    assert(!variable.valueSet.hasStar, "can't make abstract factors with *")
     val values = variable.range.map(_.value)
     val densityMap = scala.collection.mutable.Map[T, Double]()
     for { v <- values } {

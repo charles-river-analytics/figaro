@@ -209,7 +209,7 @@ private[figaro] abstract class DecompositionStrategy(collection: ComponentCollec
   }
 
   /**
-   * Generate the range afor the given component. Mark it as fully refined or enumerated if applicable.
+   * Generate the range for the given component. Mark it as fully refined or enumerated if applicable.
    * @param comp Component to process. This should not be called on a component we previously processed, including fully
    * refined components.
    */
