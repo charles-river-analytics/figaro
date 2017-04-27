@@ -15,8 +15,9 @@ package com.cra.figaro.algorithm.structured
 
 import com.cra.figaro.algorithm.factored.ParticleGenerator
 import com.cra.figaro.algorithm.factored.factors.Variable
-import com.cra.figaro.algorithm.lazyfactored.{Extended, Regular, ValueSet}
+import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.language._
+import com.cra.figaro.library.atomic.discrete.{AtomicGeometric, AtomicPoisson}
 
 import scala.collection.mutable
 
@@ -150,4 +151,53 @@ class ValuesAtomicComponent[Value](problem: Problem, atomic: Atomic[Value]) exte
   override def fullyRefinable(): Boolean = false
 }
 
-// TODO binning component for continuous elements, counting component for positive integer-valued components
+/**
+ * Components for atomics whose ranges consist of integers in the range [L,infinity) for some lower bound L. Ranging
+ * proceeds by taking all integers in the range [L,U] for an increasing upper bound U.
+ */
+class CountingAtomicComponent(problem: Problem, atomic: Atomic[Int]) extends AtomicComponent(problem, atomic) {
+  // TODO consider other ways to sample than just taking the first n values
+  // For example, when the mode is much greater than 0, the current method will initially put most of the mass on *
+  // If possible, a greedy approach might work better: select the remaining values with greatest density
+
+  /**
+   * Fixed inclusive lower bound for the range of this component.
+   */
+  protected val lower: Int = atomic match {
+    case g: AtomicGeometric => 1
+    case p: AtomicPoisson => 0
+    case _ => 0
+  }
+
+  /**
+   * Current number of regular values in the range of this component.
+   */
+  protected var numValues: Int = 0
+
+  /**
+   * Number of additional values to add per call to `discretize()`.
+   */
+  var valuesPerIteration: Int = 1
+
+  override def discretize(): Map[Extended[Int], Double] = {
+    // Take additional samples each iteration
+    numValues += valuesPerIteration
+    // Accumulate the total probability mass on regular values
+    var regularTotal = 0.0
+    // Compute probability masses on particular values in the range [lower, lower + numvalues)
+    val regularValues = for(value <- lower until (lower + numValues)) yield {
+      val prob = atomic.density(value)
+      regularTotal += prob
+      Regular(value) -> prob
+    }
+    // All remaining unaccounted probability mass goes to *
+    val starProb = 1.0 - regularTotal
+    assert(starProb >= 0)
+    regularValues.toMap[Extended[Int], Double].updated(Star(), starProb)
+  }
+
+  // A component with possibly infinite range is not fully refinable
+  override def fullyRefinable(): Boolean = false
+}
+
+// TODO binning component for continuous elements

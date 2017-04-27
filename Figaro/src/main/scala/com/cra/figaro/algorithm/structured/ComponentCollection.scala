@@ -18,7 +18,7 @@ import com.cra.figaro.library.collection.MakeArray
 
 import scala.collection.mutable.Map
 import com.cra.figaro.algorithm.factored.factors._
-import com.cra.figaro.library.atomic.discrete.AtomicBinomial
+import com.cra.figaro.library.atomic.discrete.{AtomicBinomial, AtomicGeometric, AtomicPoisson}
 
 import scala.collection.mutable.HashMap
 /**
@@ -161,6 +161,8 @@ class ComponentCollection {
           case flip: AtomicFlip => new FiniteAtomicComponent(problem, flip)
           case select: AtomicSelect[T] => new FiniteAtomicComponent(problem, select)
           case binomial: AtomicBinomial => new FiniteAtomicComponent(problem, binomial)
+          case geometric: AtomicGeometric => new CountingAtomicComponent(problem, geometric)
+          case poisson: AtomicPoisson => new CountingAtomicComponent(problem, poisson)
           case atomic: Atomic[T] => new SampledAtomicComponent(problem, atomic)
           case _ => new ProblemComponent(problem, element)
         }
