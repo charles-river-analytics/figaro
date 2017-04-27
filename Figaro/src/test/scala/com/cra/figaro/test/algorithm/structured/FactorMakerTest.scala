@@ -22,14 +22,12 @@ import ValueSet.{withStar, withoutStar}
 import com.cra.figaro.library.atomic.continuous.Beta
 import com.cra.figaro.library.atomic.continuous.Dirichlet
 import com.cra.figaro.algorithm.factored.ParticleGenerator
-import com.cra.figaro.library.atomic.discrete.{Binomial, Util}
+import com.cra.figaro.library.atomic.discrete._
 import com.cra.figaro.library.atomic.continuous.Normal
 import com.cra.figaro.algorithm.factored.factors.Factor
 import com.cra.figaro.algorithm.factored.factors.factory.ChainFactory
-import com.cra.figaro.library.atomic.discrete.Uniform
 import com.cra.figaro.util.MultiSet
 import com.cra.figaro.util.HashMultiSet
-import com.cra.figaro.library.atomic.discrete.FromRange
 import com.cra.figaro.library.collection.MakeArray
 import com.cra.figaro.library.compound.FoldLeft
 import com.cra.figaro.algorithm.factored.factors.factory.Factory.{makeConditionalSelector, makeTupleVarAndFactor}
@@ -872,51 +870,71 @@ class FactorMakerTest extends WordSpec with Matchers {
       }
     }
 
-    "given an atomic without an explicit factor maker" should {
-      "automatically sample the element" in {
-        val universe = Universe.createNew()
-        val pg = ParticleGenerator(universe)
+    "given an atomic Geometric" should {
+      "weight the first n values by their probability mass, and put the remaining mass on *" in {
+        Universe.createNew()
         val cc = new ComponentCollection
         val pr = new Problem(cc)
-        val v1 = Normal(0.0, 1.0)
+        val v1 = Geometric(0.7)
         pr.add(v1)
-        val c1 = cc(v1).asInstanceOf[SampledAtomicComponent[Double]]
-        val numSamples = 15
-        c1.samplesPerIteration = numSamples
+        val c1 = cc(v1).asInstanceOf[CountingAtomicComponent]
+        c1.valuesPerIteration = 5
         c1.generateRange()
 
         val List(factor) = c1.nonConstraintFactors()
         factor.variables should equal (List(c1.variable))
-        factor.size should equal (numSamples)
-        for {index <- 0 until numSamples} {
-          factor.get(List(index)) should equal(1.0 / numSamples +- 0.0001)
+        factor.size should equal(6)
+        factor.get(List(c1.variable.range.indexWhere(!_.isRegular))) should equal (math.pow(0.7, 5) +- 0.0001)
+        for(n <- 1 to 5) {
+          val index = c1.variable.range.indexOf(Regular(n))
+          val prob = math.pow(0.7, n - 1) * 0.3
+          factor.get(List(index)) should equal (prob +- 0.00001)
         }
       }
+    }
 
-      "compute the correct weights when the range changes" in {
-        // TODO this should go in a test for atomic components
-        val universe = Universe.createNew()
-        val pg = ParticleGenerator(universe)
+    "given an atomic Poisson" should {
+      "weight the first n values by their probability mass, and put the remaining mass on *" in {
+        Universe.createNew()
+        val cc = new ComponentCollection
+        val pr = new Problem(cc)
+        val v1 = Poisson(4.0)
+        pr.add(v1)
+        val c1 = cc(v1).asInstanceOf[CountingAtomicComponent]
+        c1.valuesPerIteration = 5
+        c1.generateRange()
+
+        val List(factor) = c1.nonConstraintFactors()
+        factor.variables should equal (List(c1.variable))
+        factor.size should equal(6)
+        var prob = math.pow(math.E, -4.0)
+        var starProb = 1.0
+        for(n <- 0 until 5) {
+          val index = c1.variable.range.indexOf(Regular(n))
+          factor.get(List(index)) should equal (prob +- 0.00001)
+          starProb -= prob
+          prob = prob * 4.0 / (n + 1)
+        }
+        factor.get(List(c1.variable.range.indexWhere(!_.isRegular))) should equal (starProb +- 0.0001)
+      }
+    }
+
+    "given a continuous atomic" should {
+      "weight sampled values" in {
+        Universe.createNew()
         val cc = new ComponentCollection
         val pr = new Problem(cc)
         val v1 = Normal(0.0, 1.0)
         pr.add(v1)
         val c1 = cc(v1).asInstanceOf[SampledAtomicComponent[Double]]
-
         c1.samplesPerIteration = 5
         c1.generateRange()
-        c1.variable.size should equal(5)
-        val List(factor1) = c1.nonConstraintFactors()
-        for {index <- 0 until 5} {
-          factor1.get(List(index)) should equal(1.0 / 5 +- 0.0001)
-        }
 
-        c1.samplesPerIteration = 10
-        c1.generateRange()
-        c1.variable.size should equal(15)
-        val List(factor2) = c1.nonConstraintFactors()
-        for {index <- 0 until 1} {
-          factor2.get(List(index)) should equal(1.0 / 15 +- 0.0001)
+        val List(factor) = c1.nonConstraintFactors()
+        factor.variables should equal (List(c1.variable))
+        factor.size should equal(5)
+        for(index <- 0 until 5) {
+          factor.get(List(index)) should equal(0.2 +- 0.00001)
         }
       }
     }
