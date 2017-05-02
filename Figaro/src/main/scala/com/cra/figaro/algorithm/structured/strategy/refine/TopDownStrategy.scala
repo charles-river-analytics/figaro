@@ -27,7 +27,6 @@ import scala.collection.mutable
  * saying this is that this strategy will not recursively refine subproblems. This strategy makes the assumption that
  * the collection contains all args of any component that the strategy refines.
  * @param collection Collection of components to refine.
- * @param rangeSizer Method to determine the size of the range of components.
  * @param topLevel Top-level components to refine and work down from. Strictly speaking, it is not essential that these
  * components be top-level (i.e. have no args), but most components that are not top-level cannot be refined without
  * first refining their args.
@@ -35,9 +34,8 @@ import scala.collection.mutable
  * mutable set so that nested decomposition strategies can update any enclosing decomposition strategy with the
  * components that were processed. Defaults to the empty set.
  */
-class TopDownStrategy(collection: ComponentCollection, rangeSizer: RangeSizer, topLevel: List[ProblemComponent[_]],
-                      done: mutable.Set[ProblemComponent[_]] = mutable.Set())
-  extends DecompositionStrategy(collection, rangeSizer, done) {
+class TopDownStrategy(collection: ComponentCollection, topLevel: List[ProblemComponent[_]], done: mutable.Set[ProblemComponent[_]] = mutable.Set())
+  extends DecompositionStrategy(collection, done) {
 
   // Never recurse on subproblems because we don't want to modify the factor graph structure
   override def recurse(nestedProblem: NestedProblem[_]): Option[DecompositionStrategy] = None

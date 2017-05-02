@@ -22,9 +22,8 @@ import com.cra.figaro.algorithm.structured._
  * Refining is separate from solving, but can be thought of as the process of deciding how much of a problem we want to
  * solve.
  * @param collection Collection of components to refine.
- * @param rangeSizer Method to determine the size of the range of components.
  */
-private[figaro] abstract class RefiningStrategy(collection: ComponentCollection, rangeSizer: RangeSizer) {
+private[figaro] abstract class RefiningStrategy(collection: ComponentCollection) {
   /**
    * Refine in place using this strategy. This will recursively mark as unsolved any problems whose solutions are no
    * longer applicable as a result of refinement. This also marks problem components as fully enumerated or refined
@@ -39,7 +38,7 @@ private[figaro] abstract class RefiningStrategy(collection: ComponentCollection,
    */
   def generateRange(comp: ProblemComponent[_]): Unit = {
     if(!comp.fullyEnumerated) {
-      comp.generateRange(rangeSizer(comp))
+      comp.generateRange()
     }
   }
 }

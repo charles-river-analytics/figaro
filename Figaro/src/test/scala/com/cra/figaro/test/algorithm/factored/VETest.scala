@@ -401,6 +401,41 @@ class VETest extends WordSpec with Matchers {
     }
   }
 
+  "Running VE with an intervention and evidence" should {
+    "not condition the intervention variable on the evidence" in {
+      Universe.createNew()
+      val a = Flip(0.1)
+      val b = If(a, Flip(0.2), Flip(0.3))
+      val c = If(b, Flip(0.4), Flip(0.5))
+      val d = If(c, Flip(0.6), Flip(0.7))
+      b.intervene(true)
+      d.observe(true)
+      VariableElimination.probability(b, true) should equal (1.0)
+    }
+
+    "produce the correct posterior on a variable that is neither intervention nor evidence" in {
+      Universe.createNew()
+      val a = Flip(0.1)
+      val b = If(a, Flip(0.2), Flip(0.3))
+      val c = If(b, Flip(0.4), Flip(0.5))
+      val d = If(c, Flip(0.6), Flip(0.7))
+      b.intervene(true)
+      d.observe(true)
+      val answer = 0.4 * 0.6 / (0.4 * 0.6 + 0.6 * 0.7)
+      VariableElimination.probability(c, true) should be (answer +- 0.00001)
+    }
+
+    "given a variable that has both evidence and an intervention created after the evidence, ignore the evidence" in {
+      Universe.createNew()
+      val a = Flip(0.1)
+      val b = If(a, Flip(0.2), Flip(0.3))
+      val c = If(b, Flip(0.4), Flip(0.5))
+      val d = If(c, Flip(0.6), Flip(0.7))
+      b.observe(false)
+      b.intervene(true)
+      VariableElimination.probability(c, true) should be (0.4 +- 0.00001)
+    }
+  }
   "MPEVariableElimination" should {
     "compute the most likely values of all the variables given the conditions and constraints" in {
       Universe.createNew()

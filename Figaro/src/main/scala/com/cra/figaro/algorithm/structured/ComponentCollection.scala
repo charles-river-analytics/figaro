@@ -15,8 +15,11 @@ package com.cra.figaro.algorithm.structured
 
 import com.cra.figaro.language._
 import com.cra.figaro.library.collection.MakeArray
+
 import scala.collection.mutable.Map
 import com.cra.figaro.algorithm.factored.factors._
+import com.cra.figaro.library.atomic.discrete.{AtomicBinomial, AtomicGeometric, AtomicPoisson}
+
 import scala.collection.mutable.HashMap
 /**
 * To speed up factor creation time, it's necessary to override the hashcode of component collections.
@@ -134,6 +137,12 @@ class ComponentCollection {
   def apply[T](makeArray: MakeArray[T]): MakeArrayComponent[T] = components(makeArray).asInstanceOf[MakeArrayComponent[T]]
 
   /**
+   *  Get the component associated with this element in this collection.
+   *  Throws an exception if the element is not associated with any component.
+   */
+  def apply[T](atomic: Atomic[T]): AtomicComponent[T] = components(atomic).asInstanceOf[AtomicComponent[T]]
+
+  /**
    * Add a component for the given element in the given problem to the component collection and return the component.
    */
   private[structured] def add[T](element: Element[T], problem: Problem): ProblemComponent[T] = {
@@ -147,7 +156,14 @@ class ComponentCollection {
         element match {
           case chain: Chain[_, T] => new ChainComponent(problem, chain)
           case makeArray: MakeArray[_] => new MakeArrayComponent(problem, makeArray)
-          case apply: Apply[_] => new ApplyComponent(problem, apply)
+          case apply: Apply[T] => new ApplyComponent(problem, apply)
+          // TODO make choice of ranging strategy configurable for atomics
+          case flip: AtomicFlip => new FiniteAtomicComponent(problem, flip)
+          case select: AtomicSelect[T] => new FiniteAtomicComponent(problem, select)
+          case binomial: AtomicBinomial => new FiniteAtomicComponent(problem, binomial)
+          case geometric: AtomicGeometric => new CountingAtomicComponent(problem, geometric)
+          case poisson: AtomicPoisson => new CountingAtomicComponent(problem, poisson)
+          case atomic: Atomic[T] => new SampledAtomicComponent(problem, atomic)
           case _ => new ProblemComponent(problem, element)
         }
       components += element -> component
