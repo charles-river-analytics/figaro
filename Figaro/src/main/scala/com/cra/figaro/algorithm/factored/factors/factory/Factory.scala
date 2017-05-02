@@ -335,6 +335,7 @@ object Factory {
           chainMap.foreach(f => {
             val subproblem = new NestedProblem(Variable.cc, f._2)
             Variable.cc.expansions += (chain.chainFunction, f._1) -> subproblem
+            chainComp.subproblems = chainComp.subproblems.updated(f._1, subproblem)
           })
         // If the element is a MakeArray, we need mark that it has been expanded. Note that
         // the normal Values call will expand the MakeArray, we are just setting the max expansion here
