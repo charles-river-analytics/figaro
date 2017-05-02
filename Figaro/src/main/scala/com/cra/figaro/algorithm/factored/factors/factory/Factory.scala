@@ -318,41 +318,48 @@ object Factory {
    * Make factors for a particular element. This function wraps the SFI method of creating factors using component collections
    */
   def makeFactorsForElement[Value](elem: Element[_], upper: Boolean = false, parameterized: Boolean = false) = {
-    Variable(elem)
+    val variable = Variable(elem)
     val comp = Variable.cc(elem)
-    comp match {
-      // If the element is a chain, we need to create subproblems for each value of the chain
-      // to create factors accordingly
-      case chainComp: ChainComponent[_, _] =>
-        val chain = chainComp.chain
-        val chainMap = LazyValues(elem.universe).getMap(chain)
-        chainMap.foreach(f => {
-          val subproblem = new NestedProblem(Variable.cc, f._2)
-          Variable.cc.expansions += (chain.chainFunction, f._1) -> subproblem
-        })
-      // If the element is a MakeArray, we need mark that it has been expanded. Note that
-      // the normal Values call will expand the MakeArray, we are just setting the max expansion here
-      case maComp: MakeArrayComponent[_] =>
-        val ma = maComp.makeArray
-        maComp.maxExpanded = Variable.cc(ma.numItems).range.regularValues.max
-      // If the element is an apply, we need to populate the Apply map used by the factor creation
-      case applyComp: ApplyComponent[Value] =>
-        val apply = applyComp.apply
-        val applyMap = LazyValues(elem.universe).getMap(apply)
-        applyComp.setMap(applyMap)
-      case atomicComp: ValuesAtomicComponent[Value] =>
-        // The range for this component was generated, but not its distribution
-        // This computes the probability mass for each value in the range
-        atomicComp.probs = atomicComp.discretize()
-      case _ => ()
+    if (elem.intervention.isDefined) {
+      val factor = new DenseFactor[Double](List(), List(variable))
+      factor.set(List(0), 1.0)
+      List(factor)
     }
-    // Make the constraint and non-constraint factors for the element by calling the
-    // component factor makers    
-    val constraint = if (upper) {
-      comp.constraintFactors(Upper)
-    } else {
-      comp.constraintFactors(Lower)
+    else {
+      comp match {
+        // If the element is a chain, we need to create subproblems for each value of the chain
+        // to create factors accordingly
+        case chainComp: ChainComponent[_, _] =>
+          val chain = chainComp.chain
+          val chainMap = LazyValues(elem.universe).getMap(chain)
+          chainMap.foreach(f => {
+            val subproblem = new NestedProblem(Variable.cc, f._2)
+            Variable.cc.expansions += (chain.chainFunction, f._1) -> subproblem
+          })
+        // If the element is a MakeArray, we need mark that it has been expanded. Note that
+        // the normal Values call will expand the MakeArray, we are just setting the max expansion here
+        case maComp: MakeArrayComponent[_] =>
+          val ma = maComp.makeArray
+          maComp.maxExpanded = Variable.cc(ma.numItems).range.regularValues.max
+        // If the element is an apply, we need to populate the Apply map used by the factor creation
+        case applyComp: ApplyComponent[Value] =>
+          val apply = applyComp.apply
+          val applyMap = LazyValues(elem.universe).getMap(apply)
+          applyComp.setMap(applyMap)
+        case atomicComp: ValuesAtomicComponent[Value] =>
+          // The range for this component was generated, but not its distribution
+          // This computes the probability mass for each value in the range
+          atomicComp.probs = atomicComp.discretize()
+        case _ => ()
+      }
+      // Make the constraint and non-constraint factors for the element by calling the
+      // component factor makers
+      val constraint = if (upper) {
+        comp.constraintFactors(Upper)
+      } else {
+        comp.constraintFactors(Lower)
+      }
+      constraint ::: comp.nonConstraintFactors(parameterized)
     }
-    constraint ::: comp.nonConstraintFactors(parameterized)
   }
 }

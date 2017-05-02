@@ -458,6 +458,42 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
     }
   }
 
+  "Sampling a model with an intervention and evidence" should {
+    "not condition the intervention variable on the evidence" in {
+      Universe.createNew()
+      val a = Flip(0.1)
+      val b = If(a, Flip(0.2), Flip(0.3))
+      val c = If(b, Flip(0.4), Flip(0.5))
+      val d = If(c, Flip(0.6), Flip(0.7))
+      b.intervene(true)
+      d.observe(true)
+      Importance.probability(b, true) should equal (1.0)
+    }
+
+    "produce the correct posterior on a variable that is neither intervention nor evidence" in {
+      Universe.createNew()
+      val a = Flip(0.1)
+      val b = If(a, Flip(0.2), Flip(0.3))
+      val c = If(b, Flip(0.4), Flip(0.5))
+      val d = If(c, Flip(0.6), Flip(0.7))
+      b.intervene(true)
+      d.observe(true)
+      val answer = 0.4 * 0.6 / (0.4 * 0.6 + 0.6 * 0.7)
+      Importance.probability(c, true) should be (answer +- 0.02)
+    }
+
+    "given a variable that has both evidence and an intervention created after the evidence, ignore the evidence" in {
+      Universe.createNew()
+      val a = Flip(0.1)
+      val b = If(a, Flip(0.2), Flip(0.3))
+      val c = If(b, Flip(0.4), Flip(0.5))
+      val d = If(c, Flip(0.6), Flip(0.7))
+      b.observe(false)
+      b.intervene(true)
+      Importance.probability(c, true) should be (0.4 +- 0.02)
+    }
+  }
+
   "Running importance sampling" should {
     "produce the correct answer each time when run twice with different conditions" in {
       Universe.createNew()
