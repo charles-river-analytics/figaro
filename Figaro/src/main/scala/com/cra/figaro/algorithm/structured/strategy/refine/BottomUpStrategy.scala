@@ -24,20 +24,18 @@ import scala.collection.mutable
  *
  * This will fail on infinitely recursive models.
  * @param problem Problem to refine.
- * @param rangeSizer Method to determine the size of the range of components.
  * @param initialComponents List of components belonging to the problem from which to begin bottom-up decomposition.
  * @param done Problem components that were already processed, which should not be visited again. This is explicitly a
  * mutable set so that nested decomposition strategies can update any enclosing decomposition strategy with the
  * components that were processed. Defaults to the empty set.
  */
-class BottomUpStrategy(problem: Problem, rangeSizer: RangeSizer,
-                       override val initialComponents: List[ProblemComponent[_]],
+class BottomUpStrategy(problem: Problem, override val initialComponents: List[ProblemComponent[_]],
                        done: mutable.Set[ProblemComponent[_]] = mutable.Set())
-  extends DecompositionStrategy(problem.collection, rangeSizer, done) {
+  extends DecompositionStrategy(problem.collection, done) {
 
   // Always recurse normally; this could overflow on infinite models
   override def recurse(nestedProblem: NestedProblem[_]): Option[DecompositionStrategy] = {
-    Some(new BottomUpStrategy(nestedProblem, rangeSizer, nestedProblem.targetComponents, done))
+    Some(new BottomUpStrategy(nestedProblem, nestedProblem.targetComponents, done))
   }
 
   // Get the component from the collection, or add it if it does not exist
@@ -55,21 +53,18 @@ class BottomUpStrategy(problem: Problem, rangeSizer: RangeSizer,
  * recurses to some given maximum depth. This makes the strategy applicable for infinitely recursive models.
  * @param depth Maximum recursion depth allowed; must be nonnegative.
  * @param problem Problem to refine.
- * @param rangeSizer Method to determine the size of the range of components.
  * @param initialComponents List of components belonging to the problem from which to begin bottom-up decomposition.
  * @param done Problem components that were already processed, which should not be visited again. This is explicitly a
  * mutable set so that nested decomposition strategies can update any enclosing decomposition strategy with the
  * components that were processed. Defaults to the empty set.
  */
-class PartialBottomUpStrategy(depth: Int, problem: Problem, rangeSizer: RangeSizer,
-                              initialComponents: List[ProblemComponent[_]],
-                              done: mutable.Set[ProblemComponent[_]] = mutable.Set())
-  extends BottomUpStrategy(problem, rangeSizer, initialComponents, done) {
+class PartialBottomUpStrategy(depth: Int, problem: Problem, initialComponents: List[ProblemComponent[_]], done: mutable.Set[ProblemComponent[_]] = mutable.Set())
+  extends BottomUpStrategy(problem, initialComponents, done) {
 
   // Only recurse if we haven't reached the maximum recursion depth yet
   override def recurse(nestedProblem: NestedProblem[_]): Option[DecompositionStrategy] = {
     if(depth > 0) {
-      Some(new PartialBottomUpStrategy(depth - 1, nestedProblem, rangeSizer, nestedProblem.targetComponents, done))
+      Some(new PartialBottomUpStrategy(depth - 1, nestedProblem, nestedProblem.targetComponents, done))
     }
     else None
   }

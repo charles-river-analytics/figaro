@@ -23,7 +23,9 @@ object ConstraintFactory {
    * @param upper If true, upper bound factors will be created, otherwise lower bound
    */
   def makeFactors[T](cc: ComponentCollection, elem: Element[T], upper: Boolean): List[Factor[Double]] =
-    elem.allConditions.map(makeConditionFactor(cc, elem, _, upper)) ::: elem.allConstraints.map(makeConstraintFactor(cc, elem, _, upper))
+    if (elem.intervention.isEmpty)
+      elem.allConditions.map(makeConditionFactor(cc, elem, _, upper)) ::: elem.allConstraints.map(makeConstraintFactor(cc, elem, _, upper))
+    else List()
 
   private def makeConditionFactor[T](cc: ComponentCollection, elem: Element[T], contingentCondition: (T => Boolean, Element.Contingency), upper: Boolean): Factor[Double] =
     makeConstraintFactor(cc, elem, (ProbConstraintType((t: T) => if (contingentCondition._1(t)) 1.0; else 0.0), contingentCondition._2), upper)

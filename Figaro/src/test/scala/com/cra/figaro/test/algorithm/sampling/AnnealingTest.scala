@@ -166,6 +166,50 @@ class AnnealingTest extends WordSpec with Matchers with PrivateMethodTester {
 
   }
 
+  "Annealing a model with an intervention and evidence" should {
+    "produce the intervention value for the intervention variable" in {
+      Universe.createNew()
+      val a = Flip(0.1)
+      val b = If(a, Flip(0.2), Flip(0.8))
+      val c = If(b, Flip(0.9), Flip(0.1))
+      val d = If(c, Flip(0.4), Flip(0.7))
+      d.observe(true)
+      val annealer0 = MetropolisHastingsAnnealer(ProposalScheme.default, Schedule.default(2.0), 100)
+      annealer0.start()
+      annealer0.mostLikelyValue(b) should equal(false)
+      b.intervene(true)
+      val annealer1 = MetropolisHastingsAnnealer(ProposalScheme.default, Schedule.default(2.0), 100)
+      annealer1.start()
+      annealer1.mostLikelyValue(b) should equal(true)
+    }
+
+    "produce the correct value for a variable that is neither intervention nor evidence" in {
+      Universe.createNew()
+      val a = Flip(0.1)
+      val b = If(a, Flip(0.2), Flip(0.8))
+      val c = If(b, Flip(0.9), Flip(0.1))
+      val d = If(c, Flip(0.4), Flip(0.7))
+      b.intervene(true)
+      d.observe(true)
+      val annealer1 = MetropolisHastingsAnnealer(ProposalScheme.default, Schedule.default(2.0), 100)
+      annealer1.start()
+      annealer1.mostLikelyValue(c) should equal(false)
+    }
+
+    "given a variable that has both evidence and an intervention created after the evidence, ignore the evidence" in {
+      Universe.createNew()
+      val a = Flip(0.1)
+      val b = If(a, Flip(0.2), Flip(0.8))
+      val c = If(b, Flip(0.9), Flip(0.1))
+      val d = If(c, Flip(0.4), Flip(0.7))
+      b.observe(false)
+      b.intervene(true)
+      val annealer1 = MetropolisHastingsAnnealer(ProposalScheme.default, Schedule.default(2.0), 100)
+      annealer1.start()
+      annealer1.mostLikelyValue(c) should equal(true)
+    }
+  }
+
   "Running anytime annealing" should {
 
     def buildComplicatedModel(): Universe = {

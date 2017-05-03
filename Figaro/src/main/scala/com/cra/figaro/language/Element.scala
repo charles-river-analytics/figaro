@@ -244,6 +244,16 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
   private[figaro] var observation: Option[Value] = None
 
   /*
+   * Interventions are used for causal reasoning. They cut off dependencies of this element on its arguments
+   * and set a specific value.
+   */
+  private[figaro] var intervention: Option[Value] = None
+
+  def intervene(v: Value) { intervention = Some(v); value = v }
+
+  def unintervene() { intervention = None }
+
+  /*
    * Testing whether a condition is satisfied can use any type of value. The condition can only be satisfied if the value has the right type and the condition returns true.
    */
   private def checkedCondition(condition: Condition, value: Any): Boolean =

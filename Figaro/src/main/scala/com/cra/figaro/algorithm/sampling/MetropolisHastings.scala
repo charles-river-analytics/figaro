@@ -93,28 +93,32 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
   }
 
   private def propose[T](state: State, elem: Element[T]): State = {
-    if (debug) println("Proposing " + elem.name.string)
-    if (elementsToTrack contains elem) proposalCounts += elem -> (proposalCounts(elem) + 1)
-    val oldValue = elem.value
-    val oldRandomness = elem.randomness
-    val (randomness, proposalProb, modelProb) = elem.nextRandomness(elem.randomness)
-    val state1 =
-      if (randomness == oldRandomness) {
-        state
-      } else {
-        val newOldRandomness = {
-          state.oldRandomness + (elem -> elem.randomness)
+    if (elem.intervention.isDefined) {
+      state
+    } else {
+      if (debug) println("Proposing " + elem.name.string)
+      if (elementsToTrack contains elem) proposalCounts += elem -> (proposalCounts(elem) + 1)
+      val oldValue = elem.value
+      val oldRandomness = elem.randomness
+      val (randomness, proposalProb, modelProb) = elem.nextRandomness(elem.randomness)
+      val state1 =
+        if (randomness == oldRandomness) {
+          state
+        } else {
+          val newOldRandomness = {
+            state.oldRandomness + (elem -> elem.randomness)
+          }
+          val newProb = state.proposalProb + log(proposalProb)
+          elem.randomness = randomness
+          State(state.oldValues, newOldRandomness, newProb, state.modelProb + log(modelProb), state.dissatisfied, state.visitOrder)
         }
-        val newProb = state.proposalProb + log(proposalProb)
-        elem.randomness = randomness
-        State(state.oldValues, newOldRandomness, newProb, state.modelProb + log(modelProb), state.dissatisfied, state.visitOrder)
-      }
-    val result = attemptChange(state1, elem)
-    if (debug) println("old randomness = " + oldRandomness +
-      ", old value = " + oldValue +
-      ", new randomness = " + elem.randomness +
-      ", new value = " + elem.value)
-    result
+      val result = attemptChange(state1, elem)
+      if (debug) println("old randomness = " + oldRandomness +
+        ", old value = " + oldValue +
+        ", new randomness = " + elem.randomness +
+        ", new value = " + elem.value)
+      result
+    }
   }
 
   /*
@@ -202,11 +206,14 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
    * expression changes, the value of the Flip might change if its current randomness probability is appropriate.
    */
   private def updateOne[T](state: State, elem: Element[T]): State = {
-    if (debug) println("Updating " + elem.name.string)
-    val oldValue = elem.value
-    val result = attemptChange(state, elem) // compare to propose
-    if (debug) println("randomness = " + elem.randomness + ", old value = " + oldValue + ", new value = " + elem.value)
-    result
+    if (elem.intervention.isDefined) state
+    else {
+      if (debug) println("Updating " + elem.name.string)
+      val oldValue = elem.value
+      val result = attemptChange(state, elem) // compare to propose
+      if (debug) println("randomness = " + elem.randomness + ", old value = " + oldValue + ", new value = " + elem.value)
+      result
+    }
   }
 
   /*
@@ -258,7 +265,8 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
    * is not found in the cache, then it's value is 1.0.
    */
   protected def computeScores(): Double = {
-    val constrainedElements = universe.constrainedElements
+    // A variable with an intervention shouldn't be scored
+    val constrainedElements = universe.constrainedElements.filter(_.intervention.isEmpty)
     val scores = constrainedElements.map { e =>
       e.constraintValue - currentConstraintValues.getOrElseUpdate(e, 0.0)
     }
@@ -268,7 +276,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
   protected def accept(state: State): Unit = {
     if (debug) println("Accepting!\n")
     currentConstraintValues.keys.foreach(e => currentConstraintValues += e -> e.constraintValue)
-    dissatisfied = (dissatisfied filter (!_.conditionSatisfied)) ++ state.dissatisfied
+    dissatisfied = (dissatisfied filter (e => !e.conditionSatisfied && e.intervention.isEmpty)) ++ state.dissatisfied
   }
 
   private def setValue(pair: (Element[_], Any)) = {

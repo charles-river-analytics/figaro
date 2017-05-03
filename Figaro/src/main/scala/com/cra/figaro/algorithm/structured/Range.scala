@@ -19,7 +19,6 @@ import com.cra.figaro.language._
 import com.cra.figaro.library.compound.FastIf
 import com.cra.figaro.util.{ MultiSet, homogeneousCartesianProduct }
 import com.cra.figaro.util.HashMultiSet
-import com.cra.figaro.algorithm.factored.ParticleGenerator
 import com.cra.figaro.library.collection.FixedSizeArray
 import com.cra.figaro.library.atomic.discrete.{ AtomicBinomial, ParameterizedBinomialFixedNumTrials }
 import com.cra.figaro.library.compound.FoldLeft
@@ -153,12 +152,12 @@ object Range {
     helper(ValueSet.withoutStar(Set(fold.start)), fold.elements)
   }
 
-  def apply[V](component: ProblemComponent[V], numValues: Int): ValueSet[V] = {
+  def apply[V](component: ProblemComponent[V]): ValueSet[V] = {
     component match {
       case cc: ChainComponent[_, V]  => chainRange(cc)
       case mc: MakeArrayComponent[V] => makeArrayRange(mc)
       case ac: ApplyComponent[V]     => applyRange(ac)
-      case _                         => otherRange(component, numValues)
+      case _                         => otherRange(component)
     }
   }
 
@@ -204,7 +203,7 @@ object Range {
 
       case i: FastIf[_] =>
         applyMap.put(true, i.thn.asInstanceOf[V])
-        applyMap.put(false, i.thn.asInstanceOf[V])
+        applyMap.put(false, i.els.asInstanceOf[V])
         if (getRange(collection, i.test).hasStar) withStar(Set(i.thn, i.els)) else withoutStar(Set(i.thn, i.els))
 
       case a: Apply1[_, V] =>
@@ -279,7 +278,7 @@ object Range {
     }
   }
 
-  private def otherRange[V](component: ProblemComponent[V], numValues: Int): ValueSet[V] = {
+  private def otherRange[V](component: ProblemComponent[V]): ValueSet[V] = {
     val collection = component.problem.collection
     component.element match {
       case c: Constant[_] => withoutStar(Set(c.constant))
@@ -352,11 +351,11 @@ object Range {
         v.makeValues(Int.MaxValue)
       }
 
-      case a: Atomic[_] => {
+      /*case a: Atomic[_] => {
         val thisSampler = ParticleGenerator(a.universe)
         val samples = thisSampler(a, numValues)
         withoutStar(samples.unzip._2.toSet)
-      }
+      }*/
 
       case _ =>
         /* A new improvement - if we can't compute the values, we just make them *, so the rest of the computation can proceed */

@@ -12,19 +12,19 @@
  */
 package com.cra.figaro.test.algorithm.structured
 
-import org.scalatest.{WordSpec, Matchers}
+import org.scalatest.{Matchers, WordSpec}
 import com.cra.figaro.language._
-import com.cra.figaro.library.atomic.discrete.Uniform
+import com.cra.figaro.library.atomic.discrete.{Binomial, Geometric, Poisson, Uniform}
 import com.cra.figaro.library.compound.If
 import com.cra.figaro.algorithm.lazyfactored.ValueSet._
 import com.cra.figaro.util.MultiSet
 import com.cra.figaro.algorithm.factored.ParticleGenerator
+import com.cra.figaro.algorithm.lazyfactored.{Regular, Star}
 import com.cra.figaro.library.atomic.continuous.Normal
 import com.cra.figaro.library.collection.MakeArray
 import com.cra.figaro.library.collection.FixedSizeArray
 import com.cra.figaro.library.atomic.continuous.Beta
 import com.cra.figaro.library.atomic.continuous.Dirichlet
-import com.cra.figaro.library.atomic.discrete.Binomial
 import com.cra.figaro.library.compound.FoldLeft
 import com.cra.figaro.library.compound.IntSelector
 import com.cra.figaro.algorithm.structured._
@@ -1656,45 +1656,74 @@ class RangeTest extends WordSpec with Matchers {
       cc.contains(e1) should equal (false)
     }
 
-    "for an atomic element, set the range to contain the right number of particles" in {
-      val universe = Universe.createNew()
-      val pg = ParticleGenerator(universe)
+    "for an atomic Geometric, take the first n values" in {
+      Universe.createNew()
       val cc = new ComponentCollection
       val pr = new Problem(cc)
-      val e1 = Normal(0, 1)
-      pr.add(e1)
-      val c1 = cc(e1)
-      c1.generateRange(5)
+      val v1 = Geometric(0.7)
+      pr.add(v1)
+      val c1 = cc(v1).asInstanceOf[CountingAtomicComponent]
+      // 8 total values taken
+      c1.valuesPerIteration = 3
+      c1.generateRange()
+      c1.valuesPerIteration = 5
+      c1.generateRange()
 
-      c1.range.hasStar should equal (false)
-      c1.range.regularValues.size should equal (5)
+      c1.probs should have size 9
+      for(n <- 1 to 8) {
+        val mass = math.pow(0.7, n - 1) * 0.3
+        c1.probs(Regular(n)) should equal (mass +- 0.00001)
+      }
+      c1.probs(Star()) should equal (math.pow(0.7, 8) +- 0.00001)
+      c1.range.hasStar should equal (true)
+      c1.range.regularValues should equal ((1 to 8).toSet)
     }
 
-    "for an atomic element, expand the range when additional samples are taken" in {
-      val universe = Universe.createNew()
-      val pg = ParticleGenerator(universe)
+    "for an atomic Poisson, take the first n values" in {
+      Universe.createNew()
       val cc = new ComponentCollection
       val pr = new Problem(cc)
-      val e1 = Normal(0, 1)
-      pr.add(e1)
-      val c1 = cc(e1)
-      c1.generateRange(5)
-      val range1 = c1.range
-      // Should compute additional samples
-      c1.generateRange(15)
-      val range2 = c1.range
-      // Should return the same result as range2
-      c1.generateRange(10)
-      val range3 = c1.range
+      val v1 = Poisson(4.0)
+      pr.add(v1)
+      val c1 = cc(v1).asInstanceOf[CountingAtomicComponent]
+      // 8 total values taken
+      c1.valuesPerIteration = 3
+      c1.generateRange()
+      c1.valuesPerIteration = 5
+      c1.generateRange()
 
-      range1.hasStar should equal (false)
-      range2.hasStar should equal (false)
-      range3.hasStar should equal (false)
-      range1.regularValues.size should equal (5)
-      range2.regularValues.size should equal (15)
-      range3.regularValues.size should equal (15)
-      range1.regularValues.subsetOf(range2.regularValues) should equal (true)
-      range3.regularValues should equal(range2.regularValues)
+      c1.probs should have size 9
+      var prob = math.pow(math.E, -4.0)
+      var starProb = 1.0
+      for(n <- 0 until 8) {
+        c1.probs(Regular(n)) should equal (prob +- 0.00001)
+        starProb -= prob
+        prob = prob * 4.0 / (n + 1)
+      }
+      c1.probs(Star()) should equal (starProb +- 0.00001)
+      c1.range.hasStar should equal (true)
+      c1.range.regularValues should equal ((0 until 8).toSet)
+    }
+
+    "for a continuous atomic, take samples" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val v1 = Normal(0.0, 1.0)
+      pr.add(v1)
+      val c1 = cc(v1).asInstanceOf[SampledAtomicComponent[Double]]
+      // 8 total samples taken
+      c1.samplesPerIteration = 3
+      c1.generateRange()
+      c1.samplesPerIteration = 5
+      c1.generateRange()
+
+      c1.probs should have size 8
+      for((xvalue, prob) <- c1.probs) {
+        xvalue.isRegular should equal (true)
+        prob should equal (0.125 +- 0.00001)
+      }
+      c1.range.xvalues should equal(c1.probs.keySet)
     }
   }
 
