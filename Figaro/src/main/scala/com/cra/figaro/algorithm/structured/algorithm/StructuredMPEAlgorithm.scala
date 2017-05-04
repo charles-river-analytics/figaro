@@ -14,6 +14,8 @@ package com.cra.figaro.algorithm.structured.algorithm
 
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.factored.factors.{Factor, Variable}
+import com.cra.figaro.algorithm.structured.Bounds
+import com.cra.figaro.algorithm.structured.solver._
 import com.cra.figaro.language._
 
 abstract class StructuredMPEAlgorithm(val universe: Universe) extends StructuredAlgorithm with MPEAlgorithm {
@@ -21,25 +23,28 @@ abstract class StructuredMPEAlgorithm(val universe: Universe) extends Structured
   override def problemTargets = List()
 
   // Solutions contain MPE values of individual variables, and are precisely the problem's recording factors.
-  type ProcessedSolution = Map[Variable[_], Factor[_]]
+  protected var targetFactors: Map[Variable[_], Factor[_]] = Map()
 
-  override def extractSolution(): ProcessedSolution = problem.recordingFactors
+  override def processSolutions(solutions: Map[Bounds, Solution]): Unit = {
+    if(solutions.size > 1) {
+      throw new IllegalArgumentException("this model requires lower and upper bounds; " +
+        "use a lazy algorithm instead, or a ranging strategy that avoids *")
+    }
+    val (_, recordingFactors) = solutions.head._2
+    targetFactors = recordingFactors
+  }
 
   /**
    * Returns the most likely value for the target element.
    * Throws an IllegalArgumentException if the range of the target contains star.
    */
   def mostLikelyValue[T](target: Element[T]): T = {
-    if(processedSolutions.size > 1) {
-      throw new IllegalArgumentException("this model requires lower and upper bounds; " +
-        "use a lazy algorithm instead, or a ranging strategy that avoids *")
-    }
     val targetVar = collection(target).variable
     if (targetVar.valueSet.hasStar) {
       throw new IllegalArgumentException("target range contains *; " +
         "use a lazy algorithm instead, or a ranging strategy that avoids *")
     }
-    val factor = processedSolutions.head._2(targetVar).asInstanceOf[Factor[T]]
+    val factor = targetFactors(targetVar).asInstanceOf[Factor[T]]
     if (factor.size != 1) throw new AlgorithmException//("Final factor for most likely value has more than one entry")
     factor.get(List())
   }

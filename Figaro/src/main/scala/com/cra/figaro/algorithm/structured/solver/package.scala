@@ -16,18 +16,20 @@ package com.cra.figaro.algorithm.structured
 import com.cra.figaro.algorithm.factored.factors.Factor
 import com.cra.figaro.algorithm.factored.factors.Variable
 import com.cra.figaro.algorithm.factored.gibbs.Gibbs
-import com.cra.figaro.algorithm.structured.solver.BPSolver
-import com.cra.figaro.algorithm.structured.solver.GibbsSolver
-import com.cra.figaro.algorithm.structured.solver.VESolver
 import com.cra.figaro.algorithm.factored.factors.SumProductSemiring
 import com.cra.figaro.algorithm.factored.factors.MaxProductSemiring
 
 package object solver {
   /**
+   * A solution consists of the eliminated factors over globals, and the map of recording factors.
+   */
+  type Solution = (List[Factor[Double]], Map[Variable[_], Factor[_]])
+
+  /**
    * A Solver takes a set of variables to eliminate, a set of variables to preserve, and a list of factors.
    * It returns a list of factors that mention only the preserved variables.
    */
-  type Solver = (Problem, Set[Variable[_]], Set[Variable[_]], List[Factor[Double]]) => (List[Factor[Double]], Map[Variable[_], Factor[_]])
+  type Solver = (Problem, Set[Variable[_]], Set[Variable[_]], List[Factor[Double]]) => Solution
 
   /**
    * Creates a Gibbs sampling solver.
@@ -40,7 +42,7 @@ package object solver {
    * @param toPreserve the variables to be preserved (not eliminated)
    * @param factors all the factors in the problem
    */
-  def marginalGibbs(numSamples: Int, burnIn: Int, interval: Int, blockToSampler: Gibbs.BlockSamplerCreator)(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): (List[Factor[Double]], Map[Variable[_], Factor[_]]) = {
+  def marginalGibbs(numSamples: Int, burnIn: Int, interval: Int, blockToSampler: Gibbs.BlockSamplerCreator)(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): Solution = {
     val gibbs = new GibbsSolver(problem, toEliminate, toPreserve, factors, numSamples, burnIn, interval, blockToSampler)
     (gibbs.go(), Map())
   }
@@ -52,7 +54,7 @@ package object solver {
    * @param toPreserve the variables to be preserved (not eliminated)
    * @param factors all the factors in the problem
    */
-  def marginalVariableElimination(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): (List[Factor[Double]], Map[Variable[_], Factor[_]]) = {
+  def marginalVariableElimination(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): Solution = {
     val ve = new VESolver(problem, toEliminate, toPreserve, factors, SumProductSemiring())
     ve.go()
   }
@@ -64,7 +66,7 @@ package object solver {
    * @param toPreserve the variables to be preserved (not eliminated)
    * @param factors all the factors in the problem
    */
-  def mpeVariableElimination(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): (List[Factor[Double]], Map[Variable[_], Factor[_]]) = {
+  def mpeVariableElimination(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): Solution = {
     val ve = new VESolver(problem, toEliminate, toPreserve, factors, MaxProductSemiring())
     ve.go()
   }
@@ -78,7 +80,7 @@ package object solver {
    * @param factors all the factors in the problem
    */
   def marginalBeliefPropagation(iterations: Int = 100)(problem: Problem, toEliminate: Set[Variable[_]],
-    toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): (List[Factor[Double]], Map[Variable[_], Factor[_]]) = {
+    toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): Solution = {
     val bp = new BPSolver(problem, toEliminate, toPreserve, factors, iterations, SumProductSemiring())
     bp.go()
   }
@@ -92,7 +94,7 @@ package object solver {
    * @param factors all the factors in the problem
    */
   def mpeBeliefPropagation(iterations: Int = 100)(problem: Problem, toEliminate: Set[Variable[_]],
-    toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): (List[Factor[Double]], Map[Variable[_], Factor[_]]) = {
+    toPreserve: Set[Variable[_]], factors: List[Factor[Double]]): Solution = {
     val bp = new BPSolver(problem, toEliminate, toPreserve, factors, iterations, MaxProductSemiring())
     bp.go()
   }

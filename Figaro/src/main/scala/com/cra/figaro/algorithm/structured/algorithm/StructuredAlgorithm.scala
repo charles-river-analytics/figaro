@@ -14,6 +14,7 @@ package com.cra.figaro.algorithm.structured.algorithm
 
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.structured._
+import com.cra.figaro.algorithm.structured.solver.Solution
 import com.cra.figaro.algorithm.structured.strategy.refine.RefiningStrategy
 import com.cra.figaro.algorithm.structured.strategy.solve.SolvingStrategy
 import com.cra.figaro.language._
@@ -67,25 +68,12 @@ abstract class StructuredAlgorithm extends Algorithm {
   }
 
   /**
-   * Subclasses must define the type of solutions to be stored for querying. In general, this should allow fast queries,
-   * but in general the representation depends on the particular class of algorithm.
+   * Extract the solution in a way that allows fast queries to the algorithm. This usually involves storing some form of
+   * the solution in a variable, but the exact implementation is up to the algorithm that overrides this.
+   * @param solutions A map from bounds to computed solutions for those bounds. Contains one key for each of the bounds
+   * needed, according to `neededBounds()`.
    */
-  type ProcessedSolution
-
-  /**
-   * The processed solutions associated with the most recent solving run. After solving, this map contains a key for
-   * each of the bounds that were determined necessary by `neededBounds()`, and a value corresponding to the solution
-   * produced thereafter by `extractSolution()`. For thread safety purposes, this is explicitly an immutable map, as it
-   * allows us to guarantee that all entries in the map correspond to solutions from a single iteration of `runStep()`.
-   */
-  protected var processedSolutions: Map[Bounds, ProcessedSolution] = Map()
-
-  /**
-   * Extract the solution in a way that allows fast queries to the algorithm.
-   * @return A processed solution that can be stored in `processedSolutions`, computed based on the current solution to
-   * the problem.
-   */
-  def extractSolution(): ProcessedSolution
+  def processSolutions(solutions: Map[Bounds, Solution]): Unit
 
   /**
    * Collection containing all components that the problem or its subproblems use.
@@ -112,10 +100,11 @@ abstract class StructuredAlgorithm extends Algorithm {
   def runStep(): Unit = {
     refiningStrategy().execute()
     checkConstraintBounds()
-    processedSolutions = neededBounds().map(bounds => {
+    val solutions = neededBounds().map(bounds => {
       solvingStrategy().execute(bounds)
-      bounds -> extractSolution()
+      bounds -> (problem.solution, problem.recordingFactors)
     }).toMap
+    processSolutions(solutions)
   }
 }
 
