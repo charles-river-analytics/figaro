@@ -14,7 +14,6 @@ package com.cra.figaro.algorithm.structured.algorithm
 
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.factored.factors.{Factor, Variable}
-import com.cra.figaro.algorithm.structured.Lower
 import com.cra.figaro.language._
 
 abstract class StructuredMPEAlgorithm(val universe: Universe) extends StructuredAlgorithm with MPEAlgorithm {
@@ -31,10 +30,16 @@ abstract class StructuredMPEAlgorithm(val universe: Universe) extends Structured
    * Throws an IllegalArgumentException if the range of the target contains star.
    */
   def mostLikelyValue[T](target: Element[T]): T = {
-    // TODO is this really correct even if the target range doesn't contain star?
+    if(processedSolutions.size > 1) {
+      throw new IllegalArgumentException("this model requires lower and upper bounds; " +
+        "use a lazy algorithm instead, or a ranging strategy that avoids *")
+    }
     val targetVar = collection(target).variable
-    if(targetVar.valueSet.hasStar) throw new IllegalArgumentException("target range contains *")
-    val factor = processedSolutions(Lower)(targetVar).asInstanceOf[Factor[T]]
+    if (targetVar.valueSet.hasStar) {
+      throw new IllegalArgumentException("target range contains *; " +
+        "use a lazy algorithm instead, or a ranging strategy that avoids *")
+    }
+    val factor = processedSolutions.head._2(targetVar).asInstanceOf[Factor[T]]
     if (factor.size != 1) throw new AlgorithmException//("Final factor for most likely value has more than one entry")
     factor.get(List())
   }

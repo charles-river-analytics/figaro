@@ -18,8 +18,6 @@ import com.cra.figaro.algorithm.factored.factors.{ Factor, SumProductSemiring }
 import com.cra.figaro.algorithm.factored.factors.factory.Factory
 import com.cra.figaro.algorithm.structured._
 import com.cra.figaro.algorithm.lazyfactored.Extended
-import com.cra.figaro.algorithm.factored.factors.Variable
-import com.cra.figaro.algorithm.factored.factors.ElementVariable
 
 abstract class StructuredProbQueryAlgorithm(val universe: Universe, val queryTargets: Element[_]*)
     extends StructuredAlgorithm with ProbQueryAlgorithm {
@@ -49,10 +47,16 @@ abstract class StructuredProbQueryAlgorithm(val universe: Universe, val queryTar
    * Throws an IllegalArgumentException if the range of the target contains star.
    */
   def computeDistribution[T](target: Element[T]): Stream[(Double, T)] = {
-    // TODO is this really correct even if the target range doesn't contain star?
+    if(processedSolutions.size > 1) {
+      throw new IllegalArgumentException("this model requires lower and upper bounds; " +
+        "use a lazy algorithm instead, or a ranging strategy that avoids *")
+    }
     val targetVar = collection(target).variable
-    if (targetVar.valueSet.hasStar) throw new IllegalArgumentException("target range contains *")
-    val factor = processedSolutions(Lower)(target)
+    if (targetVar.valueSet.hasStar) {
+      throw new IllegalArgumentException("target range contains *; " +
+        "use a lazy algorithm instead, or a ranging strategy that avoids *")
+    }
+    val factor = processedSolutions.head._2(target)
     val dist = factor.getIndices.map(indices => (factor.get(indices), targetVar.range(indices.head).value))
     // normalization is unnecessary here because it is done in marginalizeTo
     dist.toStream

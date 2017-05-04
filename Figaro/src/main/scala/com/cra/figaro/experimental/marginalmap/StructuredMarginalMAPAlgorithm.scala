@@ -38,9 +38,15 @@ abstract class StructuredMarginalMAPAlgorithm(val universe: Universe, val mapEle
    * Throws an IllegalArgumentException if the range of the target contains star.
    */
   def computeMostLikelyValue[T](target: Element[T]): T = {
-    // TODO is this really correct even if the target range doesn't contain star?
+    if(processedSolutions.size > 1) {
+      throw new IllegalArgumentException("this model requires lower and upper bounds; " +
+        "use a lazy algorithm instead, or a ranging strategy that avoids *")
+    }
     val targetVar = collection(target).variable
-    if(targetVar.valueSet.hasStar) throw new IllegalArgumentException("target range contains *")
+    if (targetVar.valueSet.hasStar) {
+      throw new IllegalArgumentException("target range contains *; " +
+        "use a lazy algorithm instead, or a ranging strategy that avoids *")
+    }
     val factor = processedSolutions(Lower)(targetVar).asInstanceOf[Factor[T]]
     if (factor.size != 1) throw new AlgorithmException//("Final factor for most likely value has more than one entry")
     factor.get(List())
