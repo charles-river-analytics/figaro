@@ -1,13 +1,13 @@
 /*
- * ResultsGUI.scala 
+ * ResultsGUI.scala
  * The main controller for visualizations. Coordinates data input and display as well as user interaction with displays.
- * 
+ *
  * Created By:      Glenn Takata (gtakata@cra.com)
  * Creation Date:   Mar 16, 2015
- * 
+ *
  * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 package com.cra.figaro.util.visualization
@@ -44,16 +44,16 @@ class EmptyTab extends BoxPanel(Orientation.Vertical) {
 object ResultsGUI extends SimpleSwingApplication {
   val TAB_WIDTH = 600
   val TAB_HEIGHT = 300
-  
+
   val TABLE_WIDTH = 600
   val TABLE_HEIGHT = 250
-  
+
   val results = new ResultHandler
 //  def addResult(result: ResultsData) {
   def addResult(name: String, dist: Any) {
     val result = dist match {
-      case l: List[(Double, Double)] => DiscreteData(name, DataReduction.binToDistribution(l)) 
-      case e: Element[_] => ContinuousData(name, e)
+      case l: List[(Double, Double) @unchecked] => DiscreteData(name, DataReduction.binToDistribution(l))
+      case e: Element[_]                        => ContinuousData(name, e)
     }
     results.newResult(result)
   }
@@ -70,13 +70,13 @@ object ResultsGUI extends SimpleSwingApplication {
       table.revalidate
     }
 
-    // table 
+    // table
     val table = new ResultsTable
 
     val graphs = new TabbedPane() {
       preferredSize = new Dimension(TAB_WIDTH, TAB_HEIGHT)
       resizable = true
-      
+
       pages += new TabbedPane.Page("", new EmptyTab)
     }
 
@@ -96,7 +96,7 @@ object ResultsGUI extends SimpleSwingApplication {
     }
 
     contents = mainPanel
-    
+
     listenTo(results, table.getSelection)
     reactions += {
       case NewResult(result) => {
@@ -117,14 +117,14 @@ object ResultsGUI extends SimpleSwingApplication {
 
     private def updateHistogram(result: ResultsData) {
       graphs.pages.clear()
-      
+
       result match {
         case DiscreteData(name, dist) => {
             val color = currentColor
             val histogramTab = new Histogram(new ResultsView(result), color)
             graphs.pages += new TabbedPane.Page(result.name + " Distribution", histogramTab)
         }
-        case ContinuousData(name, dist) => { 
+        case ContinuousData(name, dist) => {
           val color = ColorGradient.HEATMAP
           val distributionTab = new Distribution(new ResultsView(result), color)
           graphs.pages += new TabbedPane.Page(result.name + " Density", distributionTab)
@@ -132,7 +132,7 @@ object ResultsGUI extends SimpleSwingApplication {
         }
         case _ =>
       }
-      
+
       graphs.revalidate
       graphs.repaint
     }

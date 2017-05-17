@@ -1,13 +1,13 @@
 /*
  * SufficientStatisticsFactor.scala
  * Factors over variables and their sufficient statistics
- * 
+ *
  * Created By:      Michael Howard (mhoward@cra.com)
  * Creation Date:   Jun 1, 2013
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -181,7 +181,7 @@ class SufficientStatisticsFactor(parameterMap: Map[Parameter[_], Seq[Double]]) {
         ids :+ a._3
       }
       mapping(ids(0)) match {
-        case p: ParameterizedVariable[T] => {
+        case p: ParameterizedVariable[T @unchecked] => {
           factor.set(indices, parameterRule(values.asInstanceOf[List[Extended[T]]].map(_.value), p))
         }
         case v: Variable[_] => factor.set(indices, blankRule(values))
@@ -219,7 +219,7 @@ class SufficientStatisticsFactor(parameterMap: Map[Parameter[_], Seq[Double]]) {
     probEvidenceComputer: () => Double): Factor[(Double, Map[Parameter[_], Seq[Double]])] = {
     val factor = Factory.makeDependentFactor(cc, parentUniverse, dependentUniverse, probEvidenceComputer)
     convertFactor(factor)
-    
+
   }
 
 }

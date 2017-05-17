@@ -154,10 +154,10 @@ object Range {
 
   def apply[V](component: ProblemComponent[V]): ValueSet[V] = {
     component match {
-      case cc: ChainComponent[_, V]  => chainRange(cc)
-      case mc: MakeArrayComponent[V] => makeArrayRange(mc)
-      case ac: ApplyComponent[V]     => applyRange(ac)
-      case _                         => otherRange(component)
+      case cc: ChainComponent[_, V]             => chainRange(cc)
+      case mc: MakeArrayComponent[V @unchecked] => makeArrayRange(mc)
+      case ac: ApplyComponent[V]                => applyRange(ac)
+      case _                                    => otherRange(component)
     }
   }
 
