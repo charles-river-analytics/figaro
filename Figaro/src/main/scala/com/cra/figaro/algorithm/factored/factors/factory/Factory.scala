@@ -207,14 +207,14 @@ object Factory {
     }
   }
 
-  
+
   def parameterCheck(elem: Element[_], parameterized: Boolean): Boolean = {
     elem match {
       case parameter: DoubleParameter => parameterized
       case _ => false
     }
   }
-  
+
   /**
    * Invokes Factor constructors for a standard set of Elements. This method uses various
    * secondary factories.
@@ -342,7 +342,7 @@ object Factory {
         maC.maxExpanded = Variable.cc(ma.numItems).range.regularValues.max
       }
       // If the element is an apply, we need to populate the Apply map used by the factor creation
-      case a: Apply[Value] => {
+      case a: Apply[Value @unchecked] => {
         val applyComp = comp.asInstanceOf[ApplyComponent[Value]]
         val applyMap = LazyValues(elem.universe).getMap(a)
         applyComp.setMap(applyMap)
@@ -350,7 +350,7 @@ object Factory {
       case _ => ()
     }
     // Make the constraint and non-constraint factors for the element by calling the
-    // component factor makers    
+    // component factor makers
     val constraint = if (upper) {
       comp.makeConstraintFactors(Upper)
       comp.constraintFactors(Upper)

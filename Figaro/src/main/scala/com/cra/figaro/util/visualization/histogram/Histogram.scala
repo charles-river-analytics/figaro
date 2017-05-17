@@ -1,13 +1,13 @@
 /*
- * Histogram.scala 
+ * Histogram.scala
  * Setup and display histograms based on distribution (prob, value) data
- * 
+ *
  * Created By:      Glenn Takata (gtakata@cra.com)
  * Creation Date:   Apr 9, 2015
- * 
+ *
  * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 package com.cra.figaro.util.visualization.histogram
@@ -18,7 +18,7 @@ import java.awt.geom.Rectangle2D
 import java.text.NumberFormat
 import javax.swing.BorderFactory
 import javax.swing.Box
-import scala.collection.JavaConversions
+import scala.collection.JavaConverters._
 import scala.swing._
 import scala.swing.BorderPanel.Position._
 import prefuse.Constants
@@ -125,7 +125,7 @@ class Histogram(val dataview: DataView, var color: String) extends BorderPanel {
   };
 
   // add this update listener to the filter, so that when the filter changes (i.e.,
-  // the user adjusts the axis parameters, or enters a name for filtering), the 
+  // the user adjusts the axis parameters, or enters a name for filtering), the
   // visualization is updated
   filter.addExpressionListener(lstnr);
 
@@ -192,7 +192,7 @@ class Histogram(val dataview: DataView, var color: String) extends BorderPanel {
         val table = dataview.getTable
         val filter = ExpressionParser.predicate("Name = " + item.getSourceTuple.get("Name"))
         val rows = table.rows(filter)
-        for (item <- JavaConversions.asScalaIterator(table.tuples(rows))) {
+        for (item <- table.tuples(rows).asScala) {
           println(item)
         }
       }
@@ -219,9 +219,9 @@ class Histogram(val dataview: DataView, var color: String) extends BorderPanel {
     val xAxisHeight = 10;
     val displayHeight = height - xAxisHeight - insetHeight - 2 * viewYOffset
     val maxDisplayWidth = width - yAxisWidth - insetWidth - 2 * viewXOffset
-    
+
     val displayWidth = math.min(data.range.getExtent * 60, maxDisplayWidth)
-    
+
     val dataView: Rectangle2D = new Rectangle2D.Double(insets.left + yAxisWidth + viewXOffset, insets.top + viewYOffset, displayWidth, displayHeight)
     val xView: Rectangle2D = new Rectangle2D.Double(insets.left + yAxisWidth + viewXOffset, insets.top + displayHeight + viewYOffset , displayWidth, xAxisHeight)
     val yView: Rectangle2D = new Rectangle2D.Double(insets.left, insets.top + viewYOffset, yAxisWidth, displayHeight)
@@ -231,7 +231,7 @@ class Histogram(val dataview: DataView, var color: String) extends BorderPanel {
 
     xaxis.setLayoutBounds(dataView);
     xlabels.setLayoutBounds(xView)
-    
+
     yaxis.setLayoutBounds(dataView);
     ylabels.setLayoutBounds(yView)
 

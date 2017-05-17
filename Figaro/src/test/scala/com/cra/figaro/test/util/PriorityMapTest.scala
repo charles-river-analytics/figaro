@@ -1,13 +1,13 @@
 /*
- * PriorityMapTest.scala   
+ * PriorityMapTest.scala
  * Priority map tests.
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -82,7 +82,7 @@ class PriorityMapTest extends WordSpec with Matchers {
       hpm.extractMin() should equal(("bar", 1))
       hpm.extractMin() should equal(("foo", 2))
       hpm.extractMin() should equal(("baz", 3))
-      an [IllegalArgumentException] should be thrownBy { hpm.extractMin() } 
+      an [IllegalArgumentException] should be thrownBy { hpm.extractMin() }
     }
 
     "iterate over the elements from lowest to highest" in {
@@ -113,18 +113,18 @@ class PriorityMapTest extends WordSpec with Matchers {
       hpm2.extractMin() should equal(("bar", 1))
       hpm2.extractMin() should equal(("foo", 2))
       hpm2.extractMin() should equal(("baz", 3))
-      an [IllegalArgumentException] should be thrownBy { hpm2.extractMin() } 
+      an [IllegalArgumentException] should be thrownBy { hpm2.extractMin() }
     }
 
     "take roughly log n time for inserting" taggedAs (Performance) in {
       val small = 256
       val large = 512
-      def insert(n: Int)() = {
+      def insert(n: Int) = {
         val h = new HeapPriorityMap[Int, Double]
         for { j <- 1 to n } h += j -> random.nextDouble()
       }
-      val time1 = measureTime(insert(small), 20, 100)
-      val time2 = measureTime(insert(large), 20, 100)
+      val time1 = measureTime(() => insert(small), 20, 100)
+      val time2 = measureTime(() => insert(large), 20, 100)
       // allow slack; if timing is not roughly log n this mark will probably be exceeded
       val slack = 1.1
       time2 / time1 should be < (large.toDouble / small * log(large) / log(small) * slack)
@@ -133,7 +133,7 @@ class PriorityMapTest extends WordSpec with Matchers {
     "take roughly log n time for extracting the minimum element" taggedAs (Performance) in {
       val small = 256
       val large = 512
-      def extract(pm: HeapPriorityMap[Int, Double])() = {
+      def extract(pm: HeapPriorityMap[Int, Double]) = {
         val pm2 = pm.clone
         while (pm2.nonEmpty) pm2.extractMin()
       }
@@ -141,8 +141,8 @@ class PriorityMapTest extends WordSpec with Matchers {
       for { j <- 1 to small } { pm1 += j -> random.nextDouble() }
       val pm2 = new HeapPriorityMap[Int, Double]()
       for { j <- 1 to large } { pm2 += j -> random.nextDouble() }
-      val time1 = measureTime(extract(pm1), 20, 100)
-      val time2 = measureTime(extract(pm2), 20, 100)
+      val time1 = measureTime(() => extract(pm1), 20, 100)
+      val time2 = measureTime(() => extract(pm2), 20, 100)
       // allow slack; if timing is not roughly log n this mark will probably be exceeded
       val slack = 1.1
       time2 / time1 should be < (large.toDouble / small * log(large) / log(small) * slack)
