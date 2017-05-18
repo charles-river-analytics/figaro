@@ -13,8 +13,10 @@
 package com.cra.figaro.algorithm.structured.algorithm
 
 import com.cra.figaro.algorithm._
+import com.cra.figaro.algorithm.factored.ParticleGenerator
 import com.cra.figaro.algorithm.structured._
 import com.cra.figaro.algorithm.structured.solver.Solution
+import com.cra.figaro.algorithm.structured.strategy.range.RangingStrategy
 import com.cra.figaro.algorithm.structured.strategy.refine.RefiningStrategy
 import com.cra.figaro.algorithm.structured.strategy.solve.SolvingStrategy
 import com.cra.figaro.language._
@@ -34,6 +36,13 @@ abstract class StructuredAlgorithm extends Algorithm {
    * @return Targets for the problem.
    */
   def problemTargets: List[Element[_]]
+
+  /**
+   * Strategy to use for ranging atomic components. This is only called once. Uses the default ranging strategy unless
+   * overwritten.
+   * @return A ranging strategy to be used for ranging all atomic components.
+   */
+  def rangingStrategy: RangingStrategy = RangingStrategy.default(ParticleGenerator.defaultNumSamplesFromAtomics)
 
   /**
    * Strategy to use for refinement at a single iteration. This may return a new strategy for each iteration.
@@ -79,6 +88,7 @@ abstract class StructuredAlgorithm extends Algorithm {
    * Collection containing all components that the problem or its subproblems use.
    */
   val collection = new ComponentCollection()
+  collection.rangingStrategy = rangingStrategy
 
   /**
    * Inference problem to be solved.
