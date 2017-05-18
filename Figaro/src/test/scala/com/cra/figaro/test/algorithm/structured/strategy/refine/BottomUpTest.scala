@@ -18,6 +18,7 @@ import com.cra.figaro.algorithm.structured.strategy.refine._
 import com.cra.figaro.algorithm.structured.strategy.solve._
 import com.cra.figaro.algorithm.structured._
 import com.cra.figaro.algorithm.structured.solver._
+import com.cra.figaro.algorithm.structured.strategy.range.SamplingRanger
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous
 import com.cra.figaro.library.atomic.continuous.{Beta, Normal}
@@ -93,8 +94,8 @@ class BottomUpTest extends WordSpec with Matchers {
         val e2 = Flip(e1)
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1, e2))
-        val c1 = cc(e1).asInstanceOf[SampledAtomicComponent[Double]]
-        c1.samplesPerIteration = 25
+        val c1 = cc(e1)
+        c1.ranger.asInstanceOf[SamplingRanger[Double]].samplesPerIteration = 25
         new BottomUpStrategy(pr, pr.targetComponents).execute()
 
         // Factor for e1 should contain sampled values

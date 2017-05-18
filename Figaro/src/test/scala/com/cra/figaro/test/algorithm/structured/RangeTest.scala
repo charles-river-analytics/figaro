@@ -28,6 +28,7 @@ import com.cra.figaro.library.atomic.continuous.Dirichlet
 import com.cra.figaro.library.compound.FoldLeft
 import com.cra.figaro.library.compound.IntSelector
 import com.cra.figaro.algorithm.structured._
+import com.cra.figaro.algorithm.structured.strategy.range.{CountingRanger, SamplingRanger}
 
 
 class RangeTest extends WordSpec with Matchers {
@@ -1662,11 +1663,12 @@ class RangeTest extends WordSpec with Matchers {
       val pr = new Problem(cc)
       val v1 = Geometric(0.7)
       pr.add(v1)
-      val c1 = cc(v1).asInstanceOf[CountingAtomicComponent]
+      val c1 = cc(v1)
+      val ranger = c1.ranger.asInstanceOf[CountingRanger]
       // 8 total values taken
-      c1.valuesPerIteration = 3
+      ranger.valuesPerIteration = 3
       c1.generateRange()
-      c1.valuesPerIteration = 5
+      ranger.valuesPerIteration = 5
       c1.generateRange()
 
       c1.probs should have size 9
@@ -1685,11 +1687,12 @@ class RangeTest extends WordSpec with Matchers {
       val pr = new Problem(cc)
       val v1 = Poisson(4.0)
       pr.add(v1)
-      val c1 = cc(v1).asInstanceOf[CountingAtomicComponent]
+      val c1 = cc(v1)
+      val ranger = c1.ranger.asInstanceOf[CountingRanger]
       // 8 total values taken
-      c1.valuesPerIteration = 3
+      ranger.valuesPerIteration = 3
       c1.generateRange()
-      c1.valuesPerIteration = 5
+      ranger.valuesPerIteration = 5
       c1.generateRange()
 
       c1.probs should have size 9
@@ -1711,11 +1714,12 @@ class RangeTest extends WordSpec with Matchers {
       val pr = new Problem(cc)
       val v1 = Normal(0.0, 1.0)
       pr.add(v1)
-      val c1 = cc(v1).asInstanceOf[SampledAtomicComponent[Double]]
+      val c1 = cc(v1)
+      val ranger = c1.ranger.asInstanceOf[SamplingRanger[Double]]
       // 8 total samples taken
-      c1.samplesPerIteration = 3
+      ranger.samplesPerIteration = 3
       c1.generateRange()
-      c1.samplesPerIteration = 5
+      ranger.samplesPerIteration = 5
       c1.generateRange()
 
       c1.probs should have size 8
