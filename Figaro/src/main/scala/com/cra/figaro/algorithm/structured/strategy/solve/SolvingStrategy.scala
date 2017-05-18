@@ -23,7 +23,7 @@ import com.cra.figaro.algorithm.factored.factors.{Factor, Variable}
  * By default, solving strategies do not use parameterized factors, but subclasses can override this.
  * @param problem Problem to solve.
  */
-private[figaro] abstract class SolvingStrategy(problem: Problem) {
+abstract class SolvingStrategy(problem: Problem) {
 
   /**
    * Get all of the non-constraint factors needed for solving.

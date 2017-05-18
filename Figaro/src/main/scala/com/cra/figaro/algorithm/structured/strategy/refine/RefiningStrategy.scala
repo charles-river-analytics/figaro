@@ -23,7 +23,7 @@ import com.cra.figaro.algorithm.structured._
  * solve.
  * @param collection Collection of components to refine.
  */
-private[figaro] abstract class RefiningStrategy(collection: ComponentCollection) {
+abstract class RefiningStrategy(collection: ComponentCollection) {
   /**
    * Refine in place using this strategy. This will recursively mark as unsolved any problems whose solutions are no
    * longer applicable as a result of refinement. This also marks problem components as fully enumerated or refined

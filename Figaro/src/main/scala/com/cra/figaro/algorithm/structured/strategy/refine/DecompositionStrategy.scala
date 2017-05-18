@@ -37,7 +37,7 @@ import scala.collection.mutable
  * mutable set so that nested decomposition strategies can update any enclosing decomposition strategy with the
  * components that were processed.
  */
-private[figaro] abstract class DecompositionStrategy(collection: ComponentCollection, done: mutable.Set[ProblemComponent[_]])
+abstract class DecompositionStrategy(collection: ComponentCollection, done: mutable.Set[ProblemComponent[_]])
   extends RefiningStrategy(collection) {
 
   /**
