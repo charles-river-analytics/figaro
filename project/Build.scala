@@ -77,13 +77,10 @@ object FigaroBuild extends Build {
     ))
     .settings(packageOptions := Seq(Package.JarManifest(figaroManifest)))
     .settings(libraryDependencies ++= Seq(
-      "org.scala-lang"         %  "scala-reflect" % scalaVersion.value,
-      "org.ow2.asm"            %  "asm"           % "5.2",
       "org.apache.commons"     %  "commons-math3" % "3.6.1",
       "net.sf.jsci"            %  "jsci"          % "1.2",
       "org.prefuse"            %  "prefuse"       % "beta-20071021",
       "com.typesafe.akka"      %% "akka-actor"    % "2.4.18",
-      "org.scalanlp"           %% "breeze"        % "0.13.1",
       "io.argonaut"            %% "argonaut"      % "6.2",
       "org.scala-lang.modules" %% "scala-swing"   % "2.0.0",
       "com.storm-enroute"      %% "scalameter"    % "0.8.2"             % "provided",
