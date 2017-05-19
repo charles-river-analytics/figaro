@@ -33,7 +33,7 @@ class MultiValuedTest extends WordSpec with Matchers {
       def makeComponent() = Select(0.2 -> specialComponent1, 0.8 -> new Component)
 
       class Container extends ElementCollection {
-        val components = MakeList(Select(0.3 -> 1, 0.7 -> 2), makeComponent)("components", this)
+        val components = MakeList(Select(0.3 -> 1, 0.7 -> 2), makeComponent _)("components", this)
         val sum = getAggregate((xs: MultiSet[Int]) => (0 /: xs)(_ + _))("components.f")
       }
 
@@ -69,7 +69,7 @@ class MultiValuedTest extends WordSpec with Matchers {
       def makeComponent() = Select(0.2 -> specialComponent1, 0.8 -> new Component)
 
       class Container extends ElementCollection {
-        val components = MakeList(Select(0.3 -> 1, 0.7 -> 2), makeComponent)("components", this)
+        val components = MakeList(Select(0.3 -> 1, 0.7 -> 2), makeComponent _)("components", this)
         val sum = getAggregate((xs: MultiSet[Int]) => (0 /: xs)(_ + _))("components.f")
       }
 
@@ -105,7 +105,7 @@ class MultiValuedTest extends WordSpec with Matchers {
       def makeComponent() = Select(0.2 -> specialComponent1, 0.8 -> new Component)
 
       class Container extends ElementCollection {
-        val components = MakeList(Select(0.3 -> 1, 0.7 -> 2), makeComponent)("components", this)
+        val components = MakeList(Select(0.3 -> 1, 0.7 -> 2), makeComponent _)("components", this)
         val sum = getAggregate((xs: MultiSet[Int]) => (0 /: xs)(_ + _))("components.f")
       }
 

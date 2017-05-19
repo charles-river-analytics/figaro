@@ -1,13 +1,13 @@
 /*
- * Build.scala 
+ * Build.scala
  * The Figaro project SBT build program.
- * 
+ *
  * Created By:      Michael Reposa (mreposa@cra.com)
  * Creation Date:   Feb 17, 2014
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -25,7 +25,8 @@ object FigaroBuild extends Build {
     organization := "com.cra.figaro",
     description := "Figaro: a language for probablistic programming",
     version := "4.1.0.0",
-    scalaVersion := "2.11.7",
+    scalaVersion := "2.12.2",
+    crossScalaVersions := Seq(scalaVersion.value, "2.11.11"),
     crossPaths := true,
     publishMavenStyle := true,
     pomExtra :=
@@ -51,10 +52,8 @@ object FigaroBuild extends Build {
 	</scm>
   )
 
-  lazy val scalaMajorMinor = "2.11"
-
   // Read exisiting Figaro MANIFEST.MF from file
-  lazy val figaroManifest = Using.fileInputStream(file("Figaro/META-INF/MANIFEST.MF")) { 
+  lazy val figaroManifest = Using.fileInputStream(file("Figaro/META-INF/MANIFEST.MF")) {
     in => new java.util.jar.Manifest(in)
   }
 
@@ -78,17 +77,14 @@ object FigaroBuild extends Build {
     ))
     .settings(packageOptions := Seq(Package.JarManifest(figaroManifest)))
     .settings(libraryDependencies ++= Seq(
-      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "asm" % "asm" % "3.3.1",
-      "org.apache.commons" % "commons-math3" % "3.3",
-      "net.sf.jsci" % "jsci" % "1.2",
-      "com.typesafe.akka" %% "akka-actor" % "2.3.14",
-      "org.scalanlp" %% "breeze" % "0.10",
-      "io.argonaut" %% "argonaut" % "6.0.4",
-      "org.prefuse" % "prefuse" % "beta-20071021",
-      "org.scala-lang.modules" %% "scala-swing" % "1.0.1",
-      "com.storm-enroute" %% "scalameter" % "0.7" % "provided",
-      "org.scalatest" %% "scalatest" % "2.2.4" % "provided, test"
+      "org.apache.commons"     %  "commons-math3" % "3.6.1",
+      "net.sf.jsci"            %  "jsci"          % "1.2",
+      "org.prefuse"            %  "prefuse"       % "beta-20071021",
+      "com.typesafe.akka"      %% "akka-actor"    % "2.4.18",
+      "io.argonaut"            %% "argonaut"      % "6.2",
+      "org.scala-lang.modules" %% "scala-swing"   % "2.0.0",
+      "com.storm-enroute"      %% "scalameter"    % "0.8.2"             % "provided",
+      "org.scalatest"          %% "scalatest"     % "3.0.3"             % "provided,test"
     ))
     // Copy all managed dependencies to \lib_managed directory
     .settings(retrieveManaged := true)
@@ -108,7 +104,7 @@ object FigaroBuild extends Build {
     // sbt-assembly settings
     .settings(assemblySettings: _*)
     .settings(test in assembly := {})
-    .settings(jarName in assembly := "figaro_" + scalaMajorMinor + "-" + version.value + "-fat.jar")
+    .settings(jarName in assembly := "figaro_" + scalaBinaryVersion.value + "-" + version.value + "-fat.jar")
     .settings(assemblyOption in assembly ~= { _.copy(includeScala = false) })
     .settings(excludedJars in assembly := {
 	val cp = (fullClasspath in assembly).value
@@ -118,13 +114,13 @@ object FigaroBuild extends Build {
     .settings(testFrameworks += new TestFramework("org.scalameter.ScalaMeterFramework"))
     .settings(logBuffered := false)
     // SBTEclipse settings
-    .settings(EclipseKeys.eclipseOutput := Some("target/scala-2.11/classes"))
-      
+    .settings(EclipseKeys.eclipseOutput := Some(s"target/scala-$scalaBinaryVersion/classes"))
+
   lazy val examples = Project("FigaroExamples", file("FigaroExamples"))
     .dependsOn(figaro)
     .settings(packageOptions := Seq(Package.JarManifest(examplesManifest)))
     // SBTEclipse settings
-    .settings(EclipseKeys.eclipseOutput := Some("target/scala-2.11/classes"))
+    .settings(EclipseKeys.eclipseOutput := Some(s"target/scala-$scalaBinaryVersion/classes"))
     // Copy all managed dependencies to \lib_managed directory
     .settings(retrieveManaged := true)
 

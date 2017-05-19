@@ -234,10 +234,12 @@ class VETest extends WordSpec with Matchers {
       }
       val factors1 = make(small)
       val factors2 = make(large)
-      def order(factors: Traversable[Factor[Double]])() =
+
+      def order(factors: Traversable[Factor[Double]]) =
         VariableElimination.eliminationOrder(factors, List())._2
-      val time1 = measureTime(order(factors1), 20, 100)
-      val time2 = measureTime(order(factors2), 20, 100)
+
+      val time1 = measureTime(() => order(factors1), 20, 100)
+      val time2 = measureTime(() => order(factors2), 20, 100)
       val slack = 1.1
       time2 / time1 should be < (large / small * log(large) / log(small) * slack)
     }
@@ -415,7 +417,7 @@ class VETest extends WordSpec with Matchers {
       // p(e1=F,e2=T,e3=T) = 0.25 * 0.9 * 0.4 = .09
       // p(e1=F,e2=F,e3=F) = 0.25 * 0.1 * 0.6 = .015
       // MPE: e1=T,e2=F,e3=F,e4=T
-      val alg = MPEVariableElimination()      
+      val alg = MPEVariableElimination()
       alg.start
       alg.mostLikelyValue(e1) should equal(true)
       alg.mostLikelyValue(e2) should equal(false)

@@ -173,13 +173,13 @@ trait Anytime extends Algorithm {
    * Release all resources from this anytime algorithm.
    */
   def shutdown {
-    if (running) {      
-      awaitResponse(runner ? "kill", messageTimeout.duration)      
+    if (running) {
+      awaitResponse(runner ? "kill", messageTimeout.duration)
       system.stop(runner)
-      system.shutdown
+      system.terminate()
     }
   }
-  
+
   /*
    * A helper function to query the running thread and await a response.
    * In the case that it times out, it will print a message that it timed out and return an exception response.
@@ -187,7 +187,7 @@ trait Anytime extends Algorithm {
    */
   protected def awaitResponse(response: Future[Any], duration: Duration): Response = {
     try {
-      val result = Await.result(response, duration) 
+      val result = Await.result(response, duration)
       result match {
         case e: ExceptionResponse => {
           println(e.msg)
@@ -202,7 +202,7 @@ trait Anytime extends Algorithm {
         ExceptionResponse("Timeout")
       }
       case e: Exception => throw e
-    } 
+    }
   }
-  
+
 }
