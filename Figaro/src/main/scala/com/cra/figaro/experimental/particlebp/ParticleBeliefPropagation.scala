@@ -1,13 +1,13 @@
 /*
  * ParticleBeliefPropagation.scala
  * A particle belief propagation algorithm
- * 
+ *
  * Created By:      Brian Ruttenberg (bruttenberg@cra.com)
  * Creation Date:   Oct 20, 2014
- * 
+ *
  * Copyright 2014 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -21,7 +21,6 @@ import scala.collection.immutable.Set
 import scala.collection.mutable.Map
 import com.cra.figaro.algorithm.factored.beliefpropagation._
 import com.cra.figaro.algorithm.factored._
-import breeze.linalg.normalize
 import com.cra.figaro.algorithm.UnsupportedAlgorithmException
 import com.cra.figaro.algorithm.sampling.ProbEvidenceSampler
 import com.cra.figaro.algorithm.factored.factors.factory.Factory
@@ -68,29 +67,29 @@ trait ParticleBeliefPropagation extends FactoredAlgorithm[Double] with InnerBPHa
    * Elements towards which queries are directed. By default, these are the target elements.
    */
   def starterElements: List[Element[_]] = targetElements
-  
+
     /**
    * A list of universes that depend on this universe such that evidence on those universes should be taken into
    * account in this universe.
    */
   val dependentUniverses: List[(Universe, List[NamedEvidence[_]])]
-  
+
     /**
    * The algorithm to compute probability of specified evidence in a dependent universe.
-   * We use () => Double to represent this algorithm instead of an instance of ProbEvidenceAlgorithm. 
+   * We use () => Double to represent this algorithm instead of an instance of ProbEvidenceAlgorithm.
    * Typical usage is to return the result of ProbEvidenceAlgorithm.computeProbEvidence when invoked.
    */
   val dependentAlgorithm: (Universe, List[NamedEvidence[_]]) => () => Double
-  
+
   /*
-   * Runs the inner loop of PBP. 
-   * 
+   * Runs the inner loop of PBP.
+   *
    */
   private[figaro] def runInnerLoop(elemsWithPosteriors: Set[Element[_]], dependentElems: Set[Element[_]]) = {
     currentUniverse = universe
 
     // Remove factors on all elements that can possibly change during resampluing
-    //dependentElems.foreach(Factory.removeFactors(_))    
+    //dependentElems.foreach(Factory.removeFactors(_))
 
     // Clear the variable and values caches
     Variable.clearCache()
@@ -123,7 +122,7 @@ trait ParticleBeliefPropagation extends FactoredAlgorithm[Double] with InnerBPHa
       val factors = getLastMessagesToNode(elem)
       val factorBeliefs = factors.map(bp.factorToBeliefs(_))
 
-      // estimate the bandwidth of the proposal using the old belieds 
+      // estimate the bandwidth of the proposal using the old belieds
       val bw = proposalEstimator(oldBeliefs)
       // generate new samples
       val newSamples = pbpSampler.resample(elem, oldBeliefs, factorBeliefs, bw)
@@ -135,11 +134,11 @@ trait ParticleBeliefPropagation extends FactoredAlgorithm[Double] with InnerBPHa
 
   /* For purposes of resampling, we want to find the belief of the element WITHOUT
     * the original factor. That is, we will incorporate that information using the exact
-    * density of the element, we don't need to estimate it from a factor. 
-    * 
+    * density of the element, we don't need to estimate it from a factor.
+    *
     * So this function will return all of the last messages to the element node and divide out
-    * the original factor 
-    * 
+    * the original factor
+    *
     */
   private[figaro] def getLastMessagesToNode(elem: Element[_]): List[Factor[Double]] = {
 
@@ -163,7 +162,7 @@ trait ParticleBeliefPropagation extends FactoredAlgorithm[Double] with InnerBPHa
   }
 
   /*
-   * Runs the outer loop of PBP. 
+   * Runs the outer loop of PBP.
    */
   private[figaro] def runOuterLoop() = {
 
@@ -235,7 +234,7 @@ abstract class ProbQueryParticleBeliefPropagation(numArgSamples: Int, numTotalSa
   val queryTargets = targetElements
 
   val semiring = LogSumProductSemiring()
-  
+
   val densityEstimator = new AutomaticDensityEstimator
 
   val pbpSampler = ParticleGenerator(universe, densityEstimator, numArgSamples, numTotalSamples)
@@ -245,7 +244,7 @@ abstract class ProbQueryParticleBeliefPropagation(numArgSamples: Int, numTotalSa
    * the BP instances
    */
   def getFactors(neededElements: List[Element[_]],
-    targetElements: List[Element[_]], upperBounds: Boolean = false): List[Factor[Double]] = List()  
+    targetElements: List[Element[_]], upperBounds: Boolean = false): List[Factor[Double]] = List()
 
   def computeDistribution[T](target: Element[T]): Stream[(Double, T)] = bp.getBeliefsForElement(target).toStream
 
