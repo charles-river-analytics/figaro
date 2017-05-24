@@ -1,13 +1,13 @@
 /*
- * SerializationTest.scala 
+ * SerializationTest.scala
  * TBD needs description
- * 
+ *
  * Created By:      Michael Howard (mhoward@cra.com)
  * Creation Date:   Mar 5, 2015
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 package com.cra.figaro.test.learning
@@ -23,11 +23,11 @@ import com.cra.figaro.library.atomic.continuous.Dirichlet
 import com.cra.figaro.library.atomic.continuous.Beta
 import com.cra.figaro.patterns.learning._
 class SerializationTest extends WordSpec with Matchers {
-  
+
   "A Beta parameter" should {
     "serialize its name and alpha and beta values" in {
       val u = Universe.createNew()
-      val b = Beta(1,5)("b", u)
+      val b: Beta = Beta(1,5)("b", u)
       val jsonBeta = b.asJson
       println(jsonBeta.spaces2)
       val name = jsonBeta.field("name").get.as[String].value.get
@@ -52,8 +52,8 @@ class SerializationTest extends WordSpec with Matchers {
   "A Dirichlet parameter" should {
     "serialize its name and concentration parameters" in{
       val u = Universe.createNew()
-     
-      val d = Dirichlet(1,2,3,4,5)("d", u)
+
+      val d: Dirichlet = Dirichlet(1,2,3,4,5)("d", u)
       val jsonDirichlet = d.asJson
       println(jsonDirichlet.spaces2)
       val name = jsonDirichlet.field("name").get.as[String].value.get
@@ -88,10 +88,10 @@ class SerializationTest extends WordSpec with Matchers {
       val b2 = Beta(2,2)("b2",m)
       val d2 = Dirichlet(1,2,3,4,5,6)("d2",m)
       val jsonParameters = m.asJson
-      
+
       val u = Universe.createNew()
       val m2 = jsonParameters.as[ModelParameters].value.get
-      
+
       //Note: This was intended to conceal any matching/casting behind the scenes
       //But it really makes accessing the values directly kind of clunky.
       //A better method would be a 'toDouble' or 'toArray' method
@@ -114,7 +114,7 @@ class SerializationTest extends WordSpec with Matchers {
         case p: PrimitiveArray => p.a
         case default => throw new IllegalArgumentException("Cannot MAP value from parameter collection.")
       }
-      
+
       b1MAP should be(b1.MAPValue)
       d1MAP.length should be(d1.MAPValue.length)
       d1MAP(0) should be(d1.MAPValue(0))
@@ -131,7 +131,7 @@ class SerializationTest extends WordSpec with Matchers {
       d2MAP(5) should be(d2.MAPValue(5))
     }
 
-    
+
   }
 
 }

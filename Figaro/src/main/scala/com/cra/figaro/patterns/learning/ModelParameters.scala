@@ -1,13 +1,13 @@
 /*
  * ModelParameters.scala
  * Collections for defining prior and posterior parameters.
- * 
+ *
  * Created By:      Michael Howard (mhoward@cra.com)
  * Creation Date:   Oct 29, 2014
- * 
+ *
  * Copyright 2014 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -145,7 +145,7 @@ class ModelParameters extends ElementCollection {
     }
 
     /**
-     * @param The name of a parameter to retrieve from the set of model parameters 
+     * @param The name of a parameter to retrieve from the set of model parameters
      */
     def apply(s: String): ParameterType = {
       val p = getElementByReference(s)
@@ -187,9 +187,9 @@ object ModelParameters {
    */
   implicit val decodeJson: DecodeJson[Parameter[_]] = DecodeJson { c =>
     c.downField("Beta").as[AtomicBeta] |||
-    c.downField("Dirichlet").as[AtomicDirichlet]
+    c.downField("Dirichlet").as[Parameter[_]]
   }
-  
+
   /**
    * Encode a set of model parameters into JSON
    */

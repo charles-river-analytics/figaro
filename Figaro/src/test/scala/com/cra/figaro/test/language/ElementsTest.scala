@@ -1,13 +1,13 @@
 /*
- * ElementsTest.scala  
+ * ElementsTest.scala
  * Tests of basic functionality of Figaro elements.
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -105,7 +105,7 @@ class ElementsTest extends WordSpec with Matchers {
         c.get(true)
         sum should equal(2)
       }
-      * 
+      *
       */
 
       // No more caching, removed
@@ -128,7 +128,7 @@ class ElementsTest extends WordSpec with Matchers {
         // see implementation of NonCachingChain and use of oldParentValue
         sum should be > (3)
       }
-      * 
+      *
       */
       "call the CPD for each Chain access" in {
         Universe.createNew()
@@ -150,7 +150,7 @@ class ElementsTest extends WordSpec with Matchers {
 
     // No more local context of chains
     /*
-    "managing the context" should {      
+    "managing the context" should {
       "store new elements in the correct subContext" in {
         Universe.createNew()
         val c = Chain(Flip(0.5), (b: Boolean) => if (b) Constant(0) else Constant(1))
@@ -161,7 +161,7 @@ class ElementsTest extends WordSpec with Matchers {
         c.myMappedContextContents(false).size should equal(1)
         c.elemInContext(c.myMappedContextContents(false).head) should equal(false)
       }
-     
+
       "remove deactivated elements from context when resizing the cache" in {
         Universe.createNew()
         val c = NonCachingChain(Uniform(0, 1, 2), (b: Int) => Constant(b))
@@ -171,7 +171,7 @@ class ElementsTest extends WordSpec with Matchers {
         c.directContextContents.size should equal(2)
         c.elemInContext.size should equal(2)
       }
-    
+
       "remove deactivated elements from context when removing temporaries" in {
         Universe.createNew()
         val c = CachingChain(com.cra.figaro.library.atomic.discrete.Uniform(0, 10), (b: Int) => Constant(b))
@@ -182,7 +182,7 @@ class ElementsTest extends WordSpec with Matchers {
         c.directContextContents.size should equal(1)
         c.elemInContext.size should equal(1)
       }
-    
+
       "only remove elements defined in subContext" in {
         Universe.createNew()
         def fcn(b: Int) = {
@@ -202,7 +202,7 @@ class ElementsTest extends WordSpec with Matchers {
         Universe.universe.contextContents(c) forall (_.active) should equal(true)
       }
     }
-    * 
+    *
     */
   }
 
@@ -249,7 +249,7 @@ class ElementsTest extends WordSpec with Matchers {
         val f2 = Flip(0.5)
         f1.set(true)
         f2.set(false)
-        val c = Chain(f1, f2, fn)        
+        val c = Chain(f1, f2, fn)
         c.get(true, true)
         c.get(false, false)
         c.get(true, true)
@@ -725,21 +725,23 @@ class ElementsTest extends WordSpec with Matchers {
         z.constraint(false) should equal(math.log(3.0))
       }
     }
-    
+
     "correctly set the observation" should {
-      Universe.createNew()
-      val x = Flip(0.3)
-      x.observation should equal (None)
-      x.addConstraint((b: Boolean) => if (b) 1.0; else 2.0)
-      x.observation should equal (None)
-      x.addCondition((b: Boolean) => b)
-      x.observation should equal (None)
-      x.observe(true)
-      x.observation should equal (Some(true))
-      x.addConstraint((b: Boolean) => if (b) 1.0; else 2.0)
-      x.observation should equal (Some(true))
-      x.addCondition((b: Boolean) => b)
-      x.observation should equal (None)
+      "an example" in {
+        Universe.createNew()
+        val x = Flip(0.3)
+        x.observation should equal (None)
+        x.addConstraint((b: Boolean) => if (b) 1.0; else 2.0)
+        x.observation should equal (None)
+        x.addCondition((b: Boolean) => b)
+        x.observation should equal (None)
+        x.observe(true)
+        x.observation should equal (Some(true))
+        x.addConstraint((b: Boolean) => if (b) 1.0; else 2.0)
+        x.observation should equal (Some(true))
+        x.addCondition((b: Boolean) => b)
+        x.observation should equal (None)
+      }
     }
   }
 

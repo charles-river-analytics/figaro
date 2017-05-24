@@ -1,13 +1,13 @@
 /*
- * SelectableSetTest.scala   
+ * SelectableSetTest.scala
  * Selectable set tests.
- * 
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -21,7 +21,7 @@ import com.cra.figaro.test._
 import com.cra.figaro.test.tags.Performance
 
 class SelectableSetTest extends WordSpec with PrivateMethodTester with Matchers {
-  "A SelectableSet" should {   
+  "A SelectableSet" should {
     "contain an element after insertion" in {
       val s = new HashSelectableSet[Int]
       s.add(1)
@@ -68,12 +68,12 @@ class SelectableSetTest extends WordSpec with PrivateMethodTester with Matchers 
     "take roughly constant time for insertion" taggedAs (Performance) in {
       val small = 2000
       val large = 4000
-      def insert(n: Int)() = {
+      def insert(n: Int) = {
         val s = new HashSelectableSet[Int]
         for { j <- 1 to n } s.add(j)
       }
-      val time1 = measureTime(insert(small), 20, 100)
-      val time2 = measureTime(insert(large), 20, 100)
+      val time1 = measureTime(() => insert(small), 20, 100)
+      val time2 = measureTime(() => insert(large), 20, 100)
       // allow slack; if timing is not roughly constant this mark will probably be exceeded
       val slack = 1.2
       time2 / time1 should be < (large.toDouble / small * slack)
@@ -82,7 +82,7 @@ class SelectableSetTest extends WordSpec with PrivateMethodTester with Matchers 
     "take roughly constant time for removal" taggedAs (Performance) in {
       val small = 2000
       val large = 4000
-      def remove(n: Int, s: SelectableSet[Int])() = {
+      def remove(n: Int, s: SelectableSet[Int]) = {
         val copy = s.clone
         for { j <- 1 to n } copy.remove(j)
       }
@@ -90,8 +90,8 @@ class SelectableSetTest extends WordSpec with PrivateMethodTester with Matchers 
       for { j <- 1 to small } s1.add(j)
       val s2 = new HashSelectableSet[Int]
       for { j <- 1 to large } s2.add(j)
-      val time1 = measureTime(remove(small, s1), 20, 100)
-      val time2 = measureTime(remove(large, s2), 20, 100)
+      val time1 = measureTime(() => remove(small, s1), 20, 100)
+      val time2 = measureTime(() => remove(large, s2), 20, 100)
       // allow slack
       val slack = 1.2
       time2 / time1 should be < (large.toDouble / small * slack)
@@ -100,14 +100,14 @@ class SelectableSetTest extends WordSpec with PrivateMethodTester with Matchers 
     "take roughly constant time for searching" taggedAs (Performance) in {
       val small = 2000
       val large = 4000
-      def search(n: Int, s: SelectableSet[Int])() =
+      def search(n: Int, s: SelectableSet[Int]) =
         for { j <- 1 to 2 * n } s.contains(j) // search for both present and absent elements
       val s1 = new HashSelectableSet[Int]
       for { j <- 1 to small } s1.add(j)
       val s2 = new HashSelectableSet[Int]
       for { j <- 1 to large } s2.add(j)
-      val time1 = measureTime(search(small, s1), 20, 100)
-      val time2 = measureTime(search(large, s2), 20, 100)
+      val time1 = measureTime(() => search(small, s1), 20, 100)
+      val time2 = measureTime(() => search(large, s2), 20, 100)
       // allow slack
       val slack = 1.2
       time2 / time1 should be < (large.toDouble / small * slack)
@@ -116,22 +116,22 @@ class SelectableSetTest extends WordSpec with PrivateMethodTester with Matchers 
     "take roughly log n time for selection" taggedAs (Performance) in {
       val small = 1024
       val large = 2048
-      def select(n: Int, s: SelectableSet[Double])() =
+      def select(n: Int, s: SelectableSet[Double]) =
         for { j <- 1 to n } s.select()
       val s1 = new HashSelectableSet[Double]
       for { j <- 1 to small } s1.add(random.nextDouble())
       val s2 = new HashSelectableSet[Double]
       for { j <- 1 to large } s2.add(random.nextDouble())
-      val time1 = measureTime(select(small, s1), 20, 100)
-      val time2 = measureTime(select(large, s2), 20, 100)
+      val time1 = measureTime(() => select(small, s1), 20, 100)
+      val time2 = measureTime(() => select(large, s2), 20, 100)
       // allow slack
       val slack = 1.1
       time2 / time1 should be < (large.toDouble / small * log(large) / log(small) * slack)
     }
 
     "take roughly linear time for enumeration" taggedAs (Performance) in {
-      def enumerate(s: SelectableSet[Double])() =
-        s.toList
+      def enumerate(s: SelectableSet[Double]): List[Double] = s.toList
+
       val size1 = 1000
       val size2 = 2000
       val size3 = 3000
@@ -144,10 +144,10 @@ class SelectableSetTest extends WordSpec with PrivateMethodTester with Matchers 
       for { j <- 1 to size3 } s3.add(random.nextDouble())
       val s4 = new HashSelectableSet[Double]
       for { j <- 1 to size4 } s4.add(random.nextDouble())
-      val time1 = measureTime(enumerate(s1), 20, 100)
-      val time2 = measureTime(enumerate(s2), 20, 100)
-      val time3 = measureTime(enumerate(s3), 20, 100)
-      val time4 = measureTime(enumerate(s4), 20, 100)
+      val time1 = measureTime(() => enumerate(s1), 20, 100)
+      val time2 = measureTime(() => enumerate(s2), 20, 100)
+      val time3 = measureTime(() => enumerate(s3), 20, 100)
+      val time4 = measureTime(() => enumerate(s4), 20, 100)
       // For a linear function, the difference should be the same if the differences in sizes is the same;
       // we allow some slack
       val slack = 1.1

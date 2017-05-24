@@ -200,14 +200,14 @@ object Factory {
     List(SelectFactory.makeSimpleDistribution(atomicVar, probs))
   }
 
-  
+
   def parameterCheck(elem: Element[_], parameterized: Boolean): Boolean = {
     elem match {
       case parameter: DoubleParameter => parameterized
       case _ => false
     }
   }
-  
+
   /**
    * Invokes Factor constructors for a standard set of Elements. This method uses various
    * secondary factories.
@@ -343,11 +343,11 @@ object Factory {
           val ma = maComp.makeArray
           maComp.maxExpanded = Variable.cc(ma.numItems).range.regularValues.max
         // If the element is an apply, we need to populate the Apply map used by the factor creation
-        case applyComp: ApplyComponent[Value] =>
+        case applyComp: ApplyComponent[Value @unchecked] =>
           val apply = applyComp.apply
           val applyMap = LazyValues(elem.universe).getMap(apply)
           applyComp.setMap(applyMap)
-        case atomicComp: ValuesAtomicComponent[Value] =>
+        case atomicComp: ValuesAtomicComponent[Value @unchecked] =>
           // The range for this component was generated, but not its distribution
           // This computes the probability mass for each value in the range
           atomicComp.probs = atomicComp.discretize()

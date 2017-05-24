@@ -1,13 +1,13 @@
 /*
  * GeneralizedEM.scala
  * Expectation maximization algorithm using any ProbQueryAlgorithm as the inference algorithm.
- * 
+ *
  * Created By:      Michael Howard (mhoward@cra.com)
  * Creation Date:   Jun 1, 2013
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -35,7 +35,9 @@ import com.cra.figaro.algorithm.sampling.ProbEvidenceSampler
  * or maximization algorithm; see the code for details.
  */
 trait ExpectationMaximization extends Algorithm with ParameterLearner {
-  protected val paramMap: Map[Parameter[_], Seq[Double]] = Map(targetParameters.map(p => p -> p.zeroSufficientStatistics): _*)
+  protected val paramMap: Map[Parameter[_], Seq[Double]] =
+    Map[Parameter[_], Seq[Double]](targetParameters.map(p => p -> p.zeroSufficientStatistics): _*)
+
   protected def doExpectationStep(): Map[Parameter[_], Seq[Double]]
 
   protected[algorithm] def doStart(): Unit = {
@@ -91,7 +93,9 @@ trait OnlineExpectationMaximization extends Online with ExpectationMaximization 
 
   override def doStart = {}
 
-  protected var lastIterationStatistics: Map[Parameter[_], Seq[Double]] = Map(targetParameters.map(p => p -> p.zeroSufficientStatistics): _*)
+  protected var lastIterationStatistics: Map[Parameter[_], Seq[Double]] =
+    Map[Parameter[_], Seq[Double]](targetParameters.map(p => p -> p.zeroSufficientStatistics): _*)
+
   override val initial: Universe
   override val transition: Function0[Universe]
   protected var currentUniverse: Universe = initial
@@ -154,7 +158,7 @@ class OnlineExpectationMaximizationWithFactors(override val initial: Universe, o
 class GeneralizedEM(inferenceAlgorithmConstructor: Seq[Element[_]] => Universe => ProbQueryAlgorithm with OneTime, val universe: Universe, val targetParameters: Parameter[_]*)(val terminationCriteria: () => EMTerminationCriteria) extends ExpectationMaximization {
 
   //Dependent universe doesn't work the same way.
-  protected def doExpectationStep(): Map[Parameter[_], Seq[Double]] = {    
+  protected def doExpectationStep(): Map[Parameter[_], Seq[Double]] = {
     val inferenceTargets =
       universe.activeElements.filter(_.isInstanceOf[Parameterized[_]]).map(_.asInstanceOf[Parameterized[_]])
 
@@ -241,7 +245,7 @@ object EMWithBP {
     Variable.clearCache
     new ProbQueryBeliefPropagation(universe, targets: _*)(
       List(),
-      (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u)) 
+      (u: Universe, e: List[NamedEvidence[_]]) => () => ProbEvidenceSampler.computeProbEvidence(10000, e)(u))
       with OneTimeProbabilisticBeliefPropagation with OneTimeProbQuery with ParameterLearner { val iterations = numIterations }
   }
   /**

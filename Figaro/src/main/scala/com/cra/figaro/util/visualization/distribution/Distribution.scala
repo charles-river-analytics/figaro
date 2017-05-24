@@ -1,13 +1,13 @@
 /*
- * Distribution.scala 
+ * Distribution.scala
  * Setup and display distributions based on continuous element data
- * 
+ *
  * Created By:      Glenn Takata (gtakata@cra.com)
  * Creation Date:   Jul 6, 2015
- * 
+ *
  * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 package com.cra.figaro.util.visualization.distribution
@@ -18,7 +18,7 @@ import java.awt.geom.Rectangle2D
 import java.text.NumberFormat
 import javax.swing.BorderFactory
 import javax.swing.Box
-import scala.collection.JavaConversions
+import scala.collection.JavaConverters._
 import scala.swing._
 import scala.swing.BorderPanel.Position._
 import prefuse.Constants
@@ -58,7 +58,7 @@ class Distribution(val dataview: DataView, var color: String) extends BorderPane
   // fonts, colours, etc.
   UILib.setColor(peer, ColorLib.getColor(0, 0, 0), Color.BLACK);
   val itemRenderer = new DistributionRenderer(color, dataview)
-  
+
   // title
   val title = new Label(dataview.title)
   title.preferredSize = new Dimension(200, 20)
@@ -121,7 +121,7 @@ class Distribution(val dataview: DataView, var color: String) extends BorderPane
   };
 
   // add this update listener to the filter, so that when the filter changes (i.e.,
-  // the user adjusts the axis parameters, or enters a name for filtering), the 
+  // the user adjusts the axis parameters, or enters a name for filtering), the
   // visualization is updated
   filter.addExpressionListener(lstnr);
 
@@ -188,7 +188,7 @@ class Distribution(val dataview: DataView, var color: String) extends BorderPane
         val table = dataview.getTable
         val filter = ExpressionParser.predicate("Name = " + item.getSourceTuple.get("Name"))
         val rows = table.rows(filter)
-        for (item <- JavaConversions.asScalaIterator(table.tuples(rows))) {
+        for (item <- table.tuples(rows).asScala) {
           println(item)
         }
       }
@@ -215,9 +215,9 @@ class Distribution(val dataview: DataView, var color: String) extends BorderPane
     val xAxisHeight = 10;
     val displayHeight = height - xAxisHeight - insetHeight - 2 * viewYOffset
     val maxDisplayWidth = width - yAxisWidth - insetWidth - 2 * viewXOffset
-    
+
     val displayWidth = math.min(data.range.getExtent * 60, maxDisplayWidth)
-    
+
     val dataView: Rectangle2D = new Rectangle2D.Double(insets.left + yAxisWidth + viewXOffset, insets.top, displayWidth, displayHeight)
     val xView: Rectangle2D = new Rectangle2D.Double(insets.left + yAxisWidth + viewXOffset, insets.top + displayHeight + viewYOffset , displayWidth, xAxisHeight)
     val yView: Rectangle2D = new Rectangle2D.Double(insets.left, insets.top, yAxisWidth, displayHeight)
@@ -227,11 +227,11 @@ class Distribution(val dataview: DataView, var color: String) extends BorderPane
 
     xaxis.setLayoutBounds(dataView);
     xlabels.setLayoutBounds(xView)
-    
+
     yaxis.setLayoutBounds(dataView);
     ylabels.setLayoutBounds(yView)
 
     vis.run("update");
-    vis.run("xlabels");    
+    vis.run("xlabels");
   }
 }

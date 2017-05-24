@@ -1,13 +1,13 @@
 /*
- * UtilTest.scala   
- * Test of utility functions. 
- * 
+ * UtilTest.scala
+ * Test of utility functions.
+ *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
- * 
+ *
  * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
- * 
+ *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
@@ -55,7 +55,7 @@ class UtilTest extends WordSpec with Matchers {
 
     "given a list with zero total value" should {
       "throw a ZeroTotalUnnormalizedProbabilityException" in {
-        an [ZeroTotalUnnormalizedProbabilityException] should be thrownBy { normalize(List(0.0, 0.0)) } 
+        an [ZeroTotalUnnormalizedProbabilityException] should be thrownBy { normalize(List(0.0, 0.0)) }
       }
     }
   }
@@ -71,7 +71,7 @@ class UtilTest extends WordSpec with Matchers {
     "given an index that is greater than the sum of the probabilities" should {
       "throw InvalidMultinomialIndexException" in {
         val m = List(0.2 -> 'foo, 0.3 -> 'bar, 0.5 -> 'baz)
-        an [InvalidMultinomialIndexException] should be thrownBy { selectMultinomial(1.2, m) } 
+        an [InvalidMultinomialIndexException] should be thrownBy { selectMultinomial(1.2, m) }
       }
     }
   }
@@ -153,7 +153,7 @@ class UtilTest extends WordSpec with Matchers {
 
     "given a traversable, a value, and a set of indices such that some indices are too large" should {
       "throw IllegalArgumentException" in {
-        an [IllegalArgumentException] should be thrownBy { insertAtIndices(List(1, 2), List(0, 2, 5), 3) } 
+        an [IllegalArgumentException] should be thrownBy { insertAtIndices(List(1, 2), List(0, 2, 5), 3) }
       }
     }
   }
@@ -276,11 +276,11 @@ class UtilTest extends WordSpec with Matchers {
           16 -> List())
         val numEdges2 = 28
 
-        def reach(graph: Map[Int, List[Int]])() =
+        def reach(graph: Map[Int, List[Int]]) =
           reachable(graph, false, 1)
 
-        val time1 = measureTime(reach(graph1), 20, 100)
-        val time2 = measureTime(reach(graph2), 20, 100)
+        val time1 = measureTime(() => reach(graph1), 20, 100)
+        val time2 = measureTime(() => reach(graph2), 20, 100)
         val slack = 1.2
         time2 / time1 should be < (numEdges2.toDouble / numEdges1 * slack)
       }
