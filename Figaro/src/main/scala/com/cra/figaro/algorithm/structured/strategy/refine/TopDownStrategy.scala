@@ -26,6 +26,8 @@ import scala.collection.mutable
  * they belong to newly expanded subproblems, in which case they will be added without being refined. Another way of
  * saying this is that this strategy will not recursively refine subproblems. This strategy makes the assumption that
  * the collection contains all args of any component that the strategy refines.
+ * 
+ * Top-down strategies do not currently support models that use Chain function memoization recursively.
  * @param collection Collection of components to refine.
  * @param topLevel Top-level components to refine and work down from. Strictly speaking, it is not essential that these
  * components be top-level (i.e. have no args), but most components that are not top-level cannot be refined without
@@ -68,4 +70,29 @@ class TopDownStrategy(collection: ComponentCollection, topLevel: List[ProblemCom
 
   // Refine all components reachable from the top-level elements, excluding those already fully refined
   override def initialComponents: List[ProblemComponent[_]] = reachable.toList
+  
+  override def processChain(chainComp: ChainComponent[_, _]): Unit = {
+    // TODO because recursion works here differently, perhaps the shared inheritance should be reevaluated
+    // Decompose the parent to get values for expansion
+    val parentComp = collection(chainComp.chain.parent)
+    decompose(parentComp)
+    // Only visit the existing subproblems
+    val existingSubproblems = chainComp.subproblems.values
+    // Ensure expansions exist for each parent value, but don't visit the new subproblems
+    chainComp.expand()
+    // Decompose the target of each existing subproblem
+    for(subproblem <- existingSubproblems) {
+      decompose(collection(subproblem.target))
+    }
+    // Make range based on the refinement of the subproblems
+    generateRange(chainComp)
+    // All subproblems, previously or newly expanded
+    val subproblems = chainComp.subproblems.values
+    // The range for this component is complete if the range of the parent is complete (and therefore no further
+    // subproblems can be created), and the target for each subproblem has a complete range
+    chainComp.fullyEnumerated =
+      parentComp.fullyEnumerated && subproblems.forall { sp => collection(sp.target).fullyEnumerated }
+    // If all components in the subproblems are fully refined, then the chain component is also fully refined
+    chainComp.fullyRefined = chainComp.fullyEnumerated && subproblems.forall(_.fullyRefined)
+  }
 }
