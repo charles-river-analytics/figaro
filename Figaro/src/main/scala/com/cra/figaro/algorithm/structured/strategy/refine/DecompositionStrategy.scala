@@ -66,7 +66,7 @@ abstract class DecompositionStrategy(collection: ComponentCollection, done: muta
 
   /**
    * Recursively marks as unsolved any problem whose solution could have changed as a result of refinement by this
-   * strategy or any of its recursively generated strategyes.
+   * strategy or any of its recursively generated strategies.
    */
   protected def markProblemsUnsolved(): Unit = {
     // Start with the problems associated with each visited component
