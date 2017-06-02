@@ -1,33 +1,21 @@
-/*
- * Build.scala 
- * The Figaro project SBT build program.
- * 
- * Created By:      Michael Reposa (mreposa@cra.com)
- * Creation Date:   Feb 17, 2014
- * 
- * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
- * See http://www.cra.com or email figaro@cra.com for information.
- * 
- * See http://www.github.com/p2t2/figaro for a copy of the software license.
- */
-
 import sbt._
 import Keys._
+import sbt.Package.ManifestAttributes
+import com.typesafe.sbteclipse.core.EclipsePlugin._
 import sbtassembly.Plugin._
 import AssemblyKeys._
-import sbt.Package.ManifestAttributes
 import scoverage.ScoverageSbtPlugin._
-import com.typesafe.sbteclipse.plugin.EclipsePlugin.EclipseKeys
 
-object FigaroBuild extends Build {
+  name := "figaro-root"
 
-  override val settings = super.settings ++ Seq(
+  lazy val figaroSettings = Seq(
     organization := "com.cra.figaro",
     description := "Figaro: a language for probablistic programming",
     version := "4.2.0.0",
     scalaVersion := "2.11.7",
     crossPaths := true,
     publishMavenStyle := true,
+    retrieveManaged := true,
     pomExtra :=
 	<url>http://www.github.com/p2t2/figaro</url>
 	<developers>
@@ -64,12 +52,14 @@ object FigaroBuild extends Build {
   }
 
   lazy val root = Project("root", file("."))
+    .settings(figaroSettings)
     .settings(publishLocal := {})
     .settings(publish := {})
     .dependsOn(figaro, examples)
     .aggregate(figaro, examples)
 
   lazy val figaro = Project("Figaro", file("Figaro"))
+    .settings(figaroSettings)
     .settings (scalacOptions ++= Seq(
 	"-feature",
 	"-language:existentials",
@@ -90,8 +80,6 @@ object FigaroBuild extends Build {
       "com.storm-enroute" %% "scalameter" % "0.7" % "provided",
       "org.scalatest" %% "scalatest" % "2.2.4" % "provided, test"
     ))
-    // Copy all managed dependencies to \lib_managed directory
-    .settings(retrieveManaged := true)
     // Enable forking
     .settings(fork := true)
     // Increase max memory for JVM for both testing and runtime
@@ -122,6 +110,7 @@ object FigaroBuild extends Build {
       
   lazy val examples = Project("FigaroExamples", file("FigaroExamples"))
     .dependsOn(figaro)
+    .settings(figaroSettings)
     .settings(packageOptions := Seq(Package.JarManifest(examplesManifest)))
     // SBTEclipse settings
     .settings(EclipseKeys.eclipseOutput := Some("target/scala-2.11/classes"))
@@ -130,4 +119,3 @@ object FigaroBuild extends Build {
 
   lazy val detTest = config("det") extend(Test)
   lazy val nonDetTest = config("nonDet") extend(Test)
-}
