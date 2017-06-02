@@ -12,9 +12,8 @@
  */
 package com.cra.figaro.algorithm.structured.strategy.range
 
-import com.cra.figaro.algorithm.structured.ComponentCollection
 import com.cra.figaro.language._
-import com.cra.figaro.library.atomic.discrete.{AtomicBinomial, AtomicGeometric, AtomicPoisson}
+import com.cra.figaro.library.atomic.discrete._
 
 /**
  * Ranging strategies specify which method to use to range a particular atomic element.
@@ -25,12 +24,29 @@ abstract class RangingStrategy {
 
 object RangingStrategy {
   /**
-   * Default ranging strategy. Uses finite ranging for finite atomics, counting for infinite integer-valued atomics, and
-   * sampling for all other atomics.
+   * Default ranging strategy. Uses finite ranging for finite atomics, and sampling for all other atomics. This avoids
+   * ranging with *, which is only allowed for lazy inference.
    * @param numValues Number of values to count (for infinite integer-valued atomics) or sample (for sampled atomics) at
    * each iteration.
    */
   def default(numValues: Int) = new RangingStrategy {
+    override def apply[T](atomic: Atomic[T]): AtomicRanger[T] = {
+      atomic match {
+        case flip: AtomicFlip => new FiniteRanger(flip)
+        case select: AtomicSelect[T] => new FiniteRanger(select)
+        case binomial: AtomicBinomial => new FiniteRanger(binomial)
+        case atomic: Atomic[T] => new SamplingRanger(atomic, numValues)
+      }
+    }
+  }
+
+  /**
+   * Default lazy ranging strategy. Uses finite ranging for finite atomics, counting for infinite integer-valued
+   * atomics, and sampling for all other atomics.
+   * @param numValues Number of values to count (for infinite integer-valued atomics) or sample (for sampled atomics) at
+   * each iteration.
+   */
+  def defaultLazy(numValues: Int) = new RangingStrategy {
     override def apply[T](atomic: Atomic[T]): AtomicRanger[T] = {
       atomic match {
         case flip: AtomicFlip => new FiniteRanger(flip)

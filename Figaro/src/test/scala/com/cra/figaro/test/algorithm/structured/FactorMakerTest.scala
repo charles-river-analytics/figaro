@@ -871,10 +871,11 @@ class FactorMakerTest extends WordSpec with Matchers {
       }
     }
 
-    "given an atomic Geometric" should {
+    "given an atomic Geometric ranged by CountingRanger" should {
       "weight the first n values by their probability mass, and put the remaining mass on *" in {
         Universe.createNew()
         val cc = new ComponentCollection
+        cc.rangingStrategy = RangingStrategy.defaultLazy(1)
         val pr = new Problem(cc)
         val v1 = Geometric(0.7)
         pr.add(v1)
@@ -894,10 +895,11 @@ class FactorMakerTest extends WordSpec with Matchers {
       }
     }
 
-    "given an atomic Poisson" should {
+    "given an atomic Poisson ranged by CountingRanger" should {
       "weight the first n values by their probability mass, and put the remaining mass on *" in {
         Universe.createNew()
         val cc = new ComponentCollection
+        cc.rangingStrategy = RangingStrategy.defaultLazy(1)
         val pr = new Problem(cc)
         val v1 = Poisson(4.0)
         pr.add(v1)

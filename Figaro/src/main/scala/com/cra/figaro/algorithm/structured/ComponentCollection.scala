@@ -44,9 +44,9 @@ object ComponentHash {
  */
 class ComponentCollection {
   /**
-   * Ranging strategy for atomic components. Initially uses the default method with 1 value per ranging iteration.
+   * Ranging strategy for atomic components. Initially uses the default non-lazy method that samples infinite atomics.
    */
-  var rangingStrategy: RangingStrategy = RangingStrategy.default(1)
+  var rangingStrategy: RangingStrategy = RangingStrategy.default(ParticleGenerator.defaultNumSamplesFromAtomics)
 
  /** Indicates whether to create chain factors by decomposing the chain into several factors or a single factor
   * This defaults to false since all the existing code a decomposition
