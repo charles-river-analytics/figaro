@@ -37,7 +37,35 @@ abstract class LazyStructuredProbQueryAlgorithm(val universe: Universe, val quer
     val upperFactors = solutions.getOrElse(Upper, solutions(Lower))._1
     val jointLower = lowerFactors.foldLeft(Factory.unit(SumProductSemiring()))(_.product(_))
     val jointUpper = upperFactors.foldLeft(Factory.unit(SumProductSemiring()))(_.product(_))
-    val jointBounds = boundsFactor(jointLower, jointUpper)
+    // The factors must be over the same variables in the same order
+    val jointUpperIndexed =
+      if(jointLower.variables == jointUpper.variables) {
+        // The variables are already in the same order so we're done
+        jointUpper
+      }
+      else {
+        // The factors are over the same variables but in a different order
+        val lowerVars = jointLower.variables
+        val upperVars = jointUpper.variables
+        assert(lowerVars.toSet == upperVars.toSet)
+        // lowerToUpperPerm is viewed as a function Int => Int that takes the index of a variable in lowerVars and
+        // returns the index of the same variable in upperVars. In other words, it is the permutation such that
+        // lowerToUpperPerm.map(upperVars) == lowerVars. Indeed, we have that x.map(y.indexOf).map(y) == x for any
+        // pair of lists (x, y) that contain the same elements and no duplicates.
+        val lowerToUpperPerm = lowerVars.map(upperVars.indexOf)
+        assert(lowerToUpperPerm.map(upperVars) == lowerVars)
+        val numVars = lowerVars.length
+        // We'll take jointUpper and create an equivalent factor with the variables in the order of jointLower
+        val newJointUpper = jointUpper.createFactor(jointLower.parents, jointLower.output, SumProductSemiring())
+        for(previousIndices <- jointUpper.getIndices) {
+          // Just as lowerToUpperPerm maps upper variables to lower variables (see above), it also maps previous indices
+          // to new indices (i.e. indices in jointUpper to the corresponding indices in jointLower)
+          val newIndices = lowerToUpperPerm.map(previousIndices)
+          newJointUpper.set(newIndices, jointUpper.get(previousIndices))
+        }
+        newJointUpper
+      }
+    val jointBounds = boundsFactor(jointLower, jointUpperIndexed)
     targetFactors = queryTargets.map(target => (target, jointBounds.marginalizeTo(collection(target).variable))).toMap
   }
 
