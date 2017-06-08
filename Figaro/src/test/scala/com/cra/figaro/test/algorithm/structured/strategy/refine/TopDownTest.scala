@@ -14,6 +14,7 @@ package com.cra.figaro.test.algorithm.structured.strategy.refine
 
 import com.cra.figaro.algorithm.structured.strategy.refine._
 import com.cra.figaro.algorithm.structured._
+import com.cra.figaro.algorithm.structured.strategy.range.SamplingRanger
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.continuous.{Normal, Uniform}
 import com.cra.figaro.library.compound.If
@@ -29,9 +30,9 @@ class TopDownTest extends WordSpec with Matchers {
       val e2 = e1.map(_ + 1)
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e1, e2))
-      val c1 = cc(e1).asInstanceOf[SampledAtomicComponent[Double]]
+      val c1 = cc(e1)
       val c2 = cc(e2)
-      c1.samplesPerIteration = 10
+      c1.ranger.asInstanceOf[SamplingRanger[Double]].samplesPerIteration = 10
       new BottomUpStrategy(pr, pr.targetComponents).execute()
       new TopDownStrategy(cc, List(c1)).execute()
 
@@ -48,9 +49,9 @@ class TopDownTest extends WordSpec with Matchers {
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e3))
       pr.add(e2)
-      val c2 = cc(e2).asInstanceOf[SampledAtomicComponent[Double]]
+      val c2 = cc(e2)
       val c3 = cc(e3)
-      c2.samplesPerIteration = 10
+      c2.ranger.asInstanceOf[SamplingRanger[Double]].samplesPerIteration = 10
       new BottomUpStrategy(pr, pr.targetComponents).execute()
       new TopDownStrategy(cc, List(c2)).execute()
 
@@ -66,9 +67,9 @@ class TopDownTest extends WordSpec with Matchers {
       e2.addConstraint((d: Double) => d * d)
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e1, e2))
-      val c1 = cc(e1).asInstanceOf[SampledAtomicComponent[Double]]
+      val c1 = cc(e1)
       val c2 = cc(e2)
-      c1.samplesPerIteration = 15
+      c1.ranger.asInstanceOf[SamplingRanger[Double]].samplesPerIteration = 15
       new BottomUpStrategy(pr, pr.targetComponents).execute()
       new TopDownStrategy(cc, List(c1)).execute()
 
@@ -90,9 +91,9 @@ class TopDownTest extends WordSpec with Matchers {
       val e2 = Normal(e1, 1.0)
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e1, e2))
-      val c1 = cc(e1).asInstanceOf[SampledAtomicComponent[Double]]
+      val c1 = cc(e1)
       val c2 = cc(e2)
-      c1.samplesPerIteration = 10
+      c1.ranger.asInstanceOf[SamplingRanger[Double]].samplesPerIteration = 10
       new BottomUpStrategy(pr, pr.targetComponents).execute()
       val initialSubproblems = c2.subproblems
       new TopDownStrategy(cc, List(c1)).execute()

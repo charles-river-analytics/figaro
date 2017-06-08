@@ -32,6 +32,7 @@ import com.cra.figaro.library.collection.MakeArray
 import com.cra.figaro.library.compound.FoldLeft
 import com.cra.figaro.algorithm.factored.factors.factory.Factory.{makeConditionalSelector, makeTupleVarAndFactor}
 import com.cra.figaro.algorithm.structured.algorithm.structured.StructuredVE
+import com.cra.figaro.algorithm.structured.strategy.range._
 
 class FactorMakerTest extends WordSpec with Matchers {
   "Making a tuple variable and factor for a set of variables" should {
@@ -453,15 +454,15 @@ class FactorMakerTest extends WordSpec with Matchers {
         val v2 = Flip(v1)
         pr.add(v1)
         pr.add(v2)
-        val c1 = cc(v1).asInstanceOf[SampledAtomicComponent[Double]]
+        val c1 = cc(v1)
         val c2 = cc(v2)
-        c1.samplesPerIteration = 15
+        c1.ranger.asInstanceOf[SamplingRanger[Double]].samplesPerIteration = 15
         c1.generateRange()
         c2.generateRange()
 
         val List(factor) = c2.nonConstraintFactors(false)
         factor.variables should equal (List(c1.variable, c2.variable))
-        factor.size should equal (c1.samplesPerIteration * 2)
+        factor.size should equal (30)
         for { (p, index) <- c1.variable.range.zipWithIndex } {
           factor.get(List(index, 0)) should equal (p.value)
           factor.get(List(index, 1)) should equal (1 - p.value)
@@ -709,15 +710,15 @@ class FactorMakerTest extends WordSpec with Matchers {
         val v2 = Select(v1, false, true)
         pr.add(v1)
         pr.add(v2)
-        val c1 = cc(v1).asInstanceOf[SampledAtomicComponent[Array[Double]]]
+        val c1 = cc(v1)
         val c2 = cc(v2)
-        c1.samplesPerIteration = 15
+        c1.ranger.asInstanceOf[SamplingRanger[Array[Double]]].samplesPerIteration = 15
         c1.generateRange()
         c2.generateRange()
 
         val List(factor) = c2.nonConstraintFactors(false)
         factor.variables should equal (List(c1.variable, c2.variable))
-        factor.size should equal (c1.samplesPerIteration * 2)
+        factor.size should equal (30)
         for {
           (xprobs, i) <- c1.variable.range.zipWithIndex
           j <- 0 until c2.variable.range.size
@@ -829,9 +830,9 @@ class FactorMakerTest extends WordSpec with Matchers {
           val v2 = Binomial(3, v1)
           pr.add(v1)
           pr.add(v2)
-          val c1 = cc(v1).asInstanceOf[SampledAtomicComponent[Double]]
+          val c1 = cc(v1)
           val c2 = cc(v2)
-          c1.samplesPerIteration = 15
+          c1.ranger.asInstanceOf[SamplingRanger[Double]].samplesPerIteration = 15
           c1.generateRange()
           c2.expand() // need to do this so the atomic binomials for each of the beta values is added to the problem
           c2.generateRange()
@@ -840,7 +841,7 @@ class FactorMakerTest extends WordSpec with Matchers {
           val List(var1, var2, tupleVar) = tupleFactor.variables
           var1 should equal (c1.variable)
           var2 should equal (c2.variable)
-          factors.size should equal (c1.samplesPerIteration)
+          factors.size should equal (15)
           val vars = factors(0).variables
           vars.size should equal (2)
           vars(0) should equal (tupleVar)
@@ -870,15 +871,16 @@ class FactorMakerTest extends WordSpec with Matchers {
       }
     }
 
-    "given an atomic Geometric" should {
+    "given an atomic Geometric ranged by CountingRanger" should {
       "weight the first n values by their probability mass, and put the remaining mass on *" in {
         Universe.createNew()
         val cc = new ComponentCollection
+        cc.rangingStrategy = RangingStrategy.defaultLazy(1)
         val pr = new Problem(cc)
         val v1 = Geometric(0.7)
         pr.add(v1)
-        val c1 = cc(v1).asInstanceOf[CountingAtomicComponent]
-        c1.valuesPerIteration = 5
+        val c1 = cc(v1)
+        c1.ranger.asInstanceOf[CountingRanger].valuesPerIteration = 5
         c1.generateRange()
 
         val List(factor) = c1.nonConstraintFactors()
@@ -893,15 +895,16 @@ class FactorMakerTest extends WordSpec with Matchers {
       }
     }
 
-    "given an atomic Poisson" should {
+    "given an atomic Poisson ranged by CountingRanger" should {
       "weight the first n values by their probability mass, and put the remaining mass on *" in {
         Universe.createNew()
         val cc = new ComponentCollection
+        cc.rangingStrategy = RangingStrategy.defaultLazy(1)
         val pr = new Problem(cc)
         val v1 = Poisson(4.0)
         pr.add(v1)
-        val c1 = cc(v1).asInstanceOf[CountingAtomicComponent]
-        c1.valuesPerIteration = 5
+        val c1 = cc(v1)
+        c1.ranger.asInstanceOf[CountingRanger].valuesPerIteration = 5
         c1.generateRange()
 
         val List(factor) = c1.nonConstraintFactors()
@@ -926,8 +929,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         val pr = new Problem(cc)
         val v1 = Normal(0.0, 1.0)
         pr.add(v1)
-        val c1 = cc(v1).asInstanceOf[SampledAtomicComponent[Double]]
-        c1.samplesPerIteration = 5
+        val c1 = cc(v1)
+        c1.ranger.asInstanceOf[SamplingRanger[Double]].samplesPerIteration = 5
         c1.generateRange()
 
         val List(factor) = c1.nonConstraintFactors()

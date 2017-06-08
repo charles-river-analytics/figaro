@@ -347,10 +347,10 @@ object Factory {
           val apply = applyComp.apply
           val applyMap = LazyValues(elem.universe).getMap(apply)
           applyComp.setMap(applyMap)
-        case atomicComp: ValuesAtomicComponent[Value] =>
+        case atomicComp: AtomicComponent[Value] =>
           // The range for this component was generated, but not its distribution
           // This computes the probability mass for each value in the range
-          atomicComp.probs = atomicComp.discretize()
+          atomicComp.probs = atomicComp.ranger.discretize()
         case _ => ()
       }
       // Make the constraint and non-constraint factors for the element by calling the

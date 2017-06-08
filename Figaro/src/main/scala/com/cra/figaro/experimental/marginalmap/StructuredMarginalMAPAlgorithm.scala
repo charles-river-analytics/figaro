@@ -15,7 +15,8 @@ package com.cra.figaro.experimental.marginalmap
 import com.cra.figaro.algorithm.AlgorithmException
 import com.cra.figaro.algorithm.factored.factors.{Factor, Variable}
 import com.cra.figaro.algorithm.structured.algorithm._
-import com.cra.figaro.algorithm.structured.Lower
+import com.cra.figaro.algorithm.structured.solver._
+import com.cra.figaro.algorithm.structured.Bounds
 import com.cra.figaro.language._
 
 /**
@@ -28,20 +29,29 @@ abstract class StructuredMarginalMAPAlgorithm(val universe: Universe, val mapEle
 
   override def problemTargets = mapElements.toList
 
-  // Solutions contain MAP values of individual variables, and are precisely the problem's recording factors.
-  type ProcessedSolution = Map[Variable[_], Factor[_]]
+  // Solutions contain MPE values of individual variables, and are precisely the problem's recording factors.
+  protected var targetFactors: Map[Variable[_], Factor[_]] = Map()
 
-  override def extractSolution(): ProcessedSolution = problem.recordingFactors
+  override def processSolutions(solutions: Map[Bounds, Solution]): Unit = {
+    if(solutions.size > 1) {
+      throw new IllegalArgumentException("this model requires lower and upper bounds; " +
+        "use a lazy algorithm instead, or a ranging strategy that avoids *")
+    }
+    val (_, recordingFactors) = solutions.head._2
+    targetFactors = recordingFactors
+  }
 
   /**
    * Returns the most likely value for the target element.
    * Throws an IllegalArgumentException if the range of the target contains star.
    */
   def computeMostLikelyValue[T](target: Element[T]): T = {
-    // TODO is this really correct even if the target range doesn't contain star?
     val targetVar = collection(target).variable
-    if(targetVar.valueSet.hasStar) throw new IllegalArgumentException("target range contains *")
-    val factor = processedSolutions(Lower)(targetVar).asInstanceOf[Factor[T]]
+    if (targetVar.valueSet.hasStar) {
+      throw new IllegalArgumentException("target range contains *; " +
+        "use a lazy algorithm instead, or a ranging strategy that avoids *")
+    }
+    val factor = targetFactors(targetVar).asInstanceOf[Factor[T]]
     if (factor.size != 1) throw new AlgorithmException//("Final factor for most likely value has more than one entry")
     factor.get(List())
   }

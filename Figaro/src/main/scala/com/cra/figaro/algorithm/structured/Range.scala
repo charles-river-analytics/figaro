@@ -157,6 +157,7 @@ object Range {
       case cc: ChainComponent[_, V]  => chainRange(cc)
       case mc: MakeArrayComponent[V] => makeArrayRange(mc)
       case ac: ApplyComponent[V]     => applyRange(ac)
+      case ac: AtomicComponent[V]    => atomicRange(ac.atomic)
       case _                         => otherRange(component)
     }
   }
@@ -278,20 +279,33 @@ object Range {
     }
   }
 
+  private[figaro] def atomicRange[V](atomic: Atomic[V]): ValueSet[V] = {
+    atomic match {
+      case f: AtomicFlip  => withoutStar(Set(true, false))
+
+      case s: AtomicSelect[_] => withoutStar(Set(s.outcomes: _*))
+
+      case b: AtomicBinomial => ValueSet.withoutStar((0 to b.numTrials).toSet)
+
+      // Make values is hardcoded with depth. SFI should control iterative deepening, so call make values with infinite depth
+      case v: ValuesMaker[_] => v.makeValues(Int.MaxValue)
+
+      case _ =>
+        /* A new improvement - if we can't compute the values, we just make them *, so the rest of the computation can proceed */
+        withStar(Set())
+    }
+  }
+
   private def otherRange[V](component: ProblemComponent[V]): ValueSet[V] = {
     val collection = component.problem.collection
     component.element match {
       case c: Constant[_] => withoutStar(Set(c.constant))
-
-      case f: AtomicFlip  => withoutStar(Set(true, false))
 
       case f: ParameterizedFlip =>
         if (getRange(collection, f.parameter).hasStar) withStar(Set(true, false)) else withoutStar(Set(true, false))
 
       case f: CompoundFlip =>
         if (getRange(collection, f.prob).hasStar) withStar(Set(true, false)) else withoutStar(Set(true, false))
-
-      case s: AtomicSelect[_] => withoutStar(Set(s.outcomes: _*))
 
       case s: ParameterizedSelect[_] =>
         val values = Set(s.outcomes: _*)
@@ -300,8 +314,6 @@ object Range {
       case s: CompoundSelect[_] =>
         val values = Set(s.outcomes: _*)
         if (s.probs.map(getRange(collection, _)).exists(_.hasStar)) withStar(values) else withoutStar(values)
-
-      case b: AtomicBinomial => ValueSet.withoutStar((0 to b.numTrials).toSet)
 
       case d: AtomicDist[_] =>
         val componentSets = d.outcomes.map(getRange(collection, _))
@@ -350,12 +362,6 @@ object Range {
       case v: ValuesMaker[_] => {
         v.makeValues(Int.MaxValue)
       }
-
-      /*case a: Atomic[_] => {
-        val thisSampler = ParticleGenerator(a.universe)
-        val samples = thisSampler(a, numValues)
-        withoutStar(samples.unzip._2.toSet)
-      }*/
 
       case _ =>
         /* A new improvement - if we can't compute the values, we just make them *, so the rest of the computation can proceed */

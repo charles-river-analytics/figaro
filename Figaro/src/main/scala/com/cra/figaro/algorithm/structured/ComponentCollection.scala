@@ -13,12 +13,13 @@
 
 package com.cra.figaro.algorithm.structured
 
+import com.cra.figaro.algorithm.factored.ParticleGenerator
 import com.cra.figaro.language._
 import com.cra.figaro.library.collection.MakeArray
 
 import scala.collection.mutable.Map
 import com.cra.figaro.algorithm.factored.factors._
-import com.cra.figaro.library.atomic.discrete.{AtomicBinomial, AtomicGeometric, AtomicPoisson}
+import com.cra.figaro.algorithm.structured.strategy.range.RangingStrategy
 
 import scala.collection.mutable.HashMap
 /**
@@ -42,6 +43,11 @@ object ComponentHash {
  * To create a new component for an element, you need to say what problem it belongs to.
  */
 class ComponentCollection {
+  /**
+   * Ranging strategy for atomic components. Initially uses the default non-lazy method that samples infinite atomics.
+   */
+  var rangingStrategy: RangingStrategy = RangingStrategy.default(ParticleGenerator.defaultNumSamplesFromAtomics)
+
  /** Indicates whether to create chain factors by decomposing the chain into several factors or a single factor
   * This defaults to false since all the existing code a decomposition
   */
@@ -158,12 +164,7 @@ class ComponentCollection {
           case makeArray: MakeArray[_] => new MakeArrayComponent(problem, makeArray)
           case apply: Apply[T] => new ApplyComponent(problem, apply)
           // TODO make choice of ranging strategy configurable for atomics
-          case flip: AtomicFlip => new FiniteAtomicComponent(problem, flip)
-          case select: AtomicSelect[T] => new FiniteAtomicComponent(problem, select)
-          case binomial: AtomicBinomial => new FiniteAtomicComponent(problem, binomial)
-          case geometric: AtomicGeometric => new CountingAtomicComponent(problem, geometric)
-          case poisson: AtomicPoisson => new CountingAtomicComponent(problem, poisson)
-          case atomic: Atomic[T] => new SampledAtomicComponent(problem, atomic)
+          case atomic: Atomic[T] => new AtomicComponent(problem, atomic, rangingStrategy(atomic))
           case _ => new ProblemComponent(problem, element)
         }
       components += element -> component

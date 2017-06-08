@@ -37,7 +37,7 @@ import scala.collection.mutable
  * mutable set so that nested decomposition strategies can update any enclosing decomposition strategy with the
  * components that were processed.
  */
-private[figaro] abstract class DecompositionStrategy(collection: ComponentCollection, done: mutable.Set[ProblemComponent[_]])
+abstract class DecompositionStrategy(collection: ComponentCollection, done: mutable.Set[ProblemComponent[_]])
   extends RefiningStrategy(collection) {
 
   /**
@@ -66,7 +66,7 @@ private[figaro] abstract class DecompositionStrategy(collection: ComponentCollec
 
   /**
    * Recursively marks as unsolved any problem whose solution could have changed as a result of refinement by this
-   * strategy or any of its recursively generated strategyes.
+   * strategy or any of its recursively generated strategies.
    */
   protected def markProblemsUnsolved(): Unit = {
     // Start with the problems associated with each visited component
@@ -204,7 +204,7 @@ private[figaro] abstract class DecompositionStrategy(collection: ComponentCollec
     // An atomic element has no args; simply generate its range
     generateRange(atomicComp)
     // Decide if the component is fully enumerated/refined based on the ranging strategy used
-    atomicComp.fullyRefined = atomicComp.fullyRefinable()
+    atomicComp.fullyRefined = atomicComp.ranger.fullyRefinable()
     atomicComp.fullyEnumerated = atomicComp.fullyRefined
   }
 
