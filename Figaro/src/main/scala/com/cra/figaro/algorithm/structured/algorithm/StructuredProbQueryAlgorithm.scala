@@ -67,7 +67,7 @@ abstract class StructuredProbQueryAlgorithm(val universe: Universe, val queryTar
     (0.0 /: computeDistribution(target))(_ + get(_))
   }
 
-  def distribution(target: Element[_]*): (List[(String, ProblemComponent[_])], List[(Double, List[Extended[_]])]) = {
+  def distribution(target: List[Element[_]]): (List[(String, ProblemComponent[_])], List[(Double, List[Extended[_]])]) = {
     val targetVars = target.map(collection(_).variable)
     val jointFactor = problem.solution.foldLeft(Factory.unit(SumProductSemiring()))(_.product(_))
     val unnormalizedTargetFactor = jointFactor.marginalizeTo(targetVars: _*)
