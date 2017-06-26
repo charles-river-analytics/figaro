@@ -163,7 +163,6 @@ class ComponentCollection {
           case chain: Chain[_, T] => new ChainComponent(problem, chain)
           case makeArray: MakeArray[_] => new MakeArrayComponent(problem, makeArray)
           case apply: Apply[T] => new ApplyComponent(problem, apply)
-          // TODO make choice of ranging strategy configurable for atomics
           case atomic: Atomic[T] => new AtomicComponent(problem, atomic, rangingStrategy(atomic))
           case _ => new ProblemComponent(problem, element)
         }
