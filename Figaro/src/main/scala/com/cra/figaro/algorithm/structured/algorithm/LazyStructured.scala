@@ -35,9 +35,9 @@ trait LazyStructured extends StructuredAlgorithm {
 }
 
 trait AnytimeLazyStructured extends LazyStructured with AnytimeStructured {
-  override val rangingStrategy = RangingStrategy.defaultLazy(1)
+  override def rangingStrategy = RangingStrategy.defaultLazy(1)
 }
 
 trait OneTimeLazyStructured extends LazyStructured with OneTimeStructured {
-  override val rangingStrategy = RangingStrategy.defaultLazy(ParticleGenerator.defaultNumSamplesFromAtomics)
+  override def rangingStrategy = RangingStrategy.defaultLazy(ParticleGenerator.defaultNumSamplesFromAtomics)
 }
