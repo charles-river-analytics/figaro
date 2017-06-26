@@ -21,54 +21,53 @@ import com.cra.figaro.algorithm.lazyfactored.Extended
 import com.cra.figaro.algorithm.structured.solver.Solution
 
 abstract class StructuredProbQueryAlgorithm(val universe: Universe, val queryTargets: Element[_]*)
-    extends StructuredAlgorithm with ProbQueryAlgorithm {
+  extends StructuredAlgorithm with ProbQueryAlgorithm {
 
   override def problemTargets = queryTargets.toList
 
-  // Solutions are factors marginalized to individual targets.
-  protected var targetFactors: Map[Element[_], Factor[Double]] = Map()
+  // Solutions are unnormalized factors marginalized to individual targets.
+  protected var targetFactors: Map[Bounds, Map[Element[_], Factor[Double]]] = Map()
 
+  // For each of the bounds, marginalize to each target element
   override def processSolutions(solutions: Map[Bounds, Solution]): Unit = {
-    if(solutions.size > 1) {
-      throw new IllegalArgumentException("this model requires lower and upper bounds; " +
-        "use a lazy algorithm instead, or a ranging strategy that avoids *")
+    targetFactors = for((bounds, (solution, _)) <- solutions) yield {
+      val joint = solution.foldLeft(Factory.unit(SumProductSemiring()))(_.product(_))
+      val marginalsByTarget = queryTargets.map { target =>
+        val targetVar = collection(target).variable
+        val factor = joint.marginalizeTo(targetVar)
+        (target, factor)
+      }
+      bounds -> marginalsByTarget.toMap[Element[_], Factor[Double]]
     }
-    val (solution, _) = solutions.head._2
-    val joint = solution.foldLeft(Factory.unit(SumProductSemiring()))(_.product(_))
-    targetFactors = queryTargets.map(target => (target, marginalizedTargetFactor(target, joint))).toMap
   }
 
-  /**
-   * Compute the (normalized) marginalization of the joint factor to the given target element.
-   */
-  protected def marginalizedTargetFactor[T](target: Element[T], jointFactor: Factor[Double]): Factor[Double] = {
-    val targetVar = collection(target).variable
-    val unnormalizedTargetFactor = jointFactor.marginalizeTo(targetVar)
-    val z = unnormalizedTargetFactor.foldLeft(0.0, _ + _)
-    unnormalizedTargetFactor.mapTo((d: Double) => d / z)
-  }
+  protected def useBoundsString: String =
+    "use a lazy algorithm that computes bounds, or a ranging strategy that avoids *"
 
   /**
    * Computes the normalized distribution over a single target element.
-   * Throws an IllegalArgumentException if the range of the target contains star.
+   * Throws an IllegalArgumentException if the range of the target contains star, or if lower and upper bounds are needed.
    */
-  def computeDistribution[T](target: Element[T]): Stream[(Double, T)] = {
+  override def computeDistribution[T](target: Element[T]): Stream[(Double, T)] = {
     val targetVar = collection(target).variable
-    if (targetVar.valueSet.hasStar) {
-      throw new IllegalArgumentException("target range contains *; " +
-        "use a lazy algorithm instead, or a ranging strategy that avoids *")
+    if(targetVar.valueSet.hasStar) {
+      throw new IllegalArgumentException("target range contains *; " + useBoundsString)
     }
-    val factor = targetFactors(target)
-    val dist = factor.getIndices.map(indices => (factor.get(indices), targetVar.range(indices.head).value))
-    // normalization is unnecessary here because it is done in marginalizeTo
+    val solutions = targetFactors
+    if(solutions.size > 1) {
+      throw new IllegalArgumentException("this model requires lower and upper bounds; " + useBoundsString)
+    }
+    val factor = solutions.head._2(target)
+    val normalizer = factor.foldLeft(0.0, _ + _)
+    val dist = factor.getIndices.map(indices => (factor.get(indices) / normalizer, targetVar.range(indices.head).value))
     dist.toStream
   }
 
   /**
    * Computes the expectation of a given function for single target element.
-   * Throws an IllegalArgumentException if the range of the target contains star.
+   * Throws an IllegalArgumentException if the range of the target contains star, or if lower and upper bounds are needed.
    */
-  def computeExpectation[T](target: Element[T], function: T => Double): Double = {
+  override def computeExpectation[T](target: Element[T], function: T => Double): Double = {
     def get(pair: (Double, T)) = pair._1 * function(pair._2)
     (0.0 /: computeDistribution(target))(_ + get(_))
   }
