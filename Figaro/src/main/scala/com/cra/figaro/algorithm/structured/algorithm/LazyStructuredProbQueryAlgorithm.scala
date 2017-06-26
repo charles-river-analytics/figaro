@@ -134,7 +134,7 @@ abstract class LazyStructuredProbQueryAlgorithm(universe: Universe, queryTargets
 }
 
 trait OneTimeLazyStructuredProbQuery extends LazyStructuredProbQueryAlgorithm
-  with OneTimeStructuredProbQuery with OneTimeBoundsProbQuery
+  with OneTimeLazyStructured with OneTimeStructuredProbQuery with OneTimeBoundsProbQuery
 
 trait AnytimeLazyStructuredProbQuery extends LazyStructuredProbQueryAlgorithm
-  with AnytimeStructuredProbQuery with AnytimeBoundsProbQuery
+  with AnytimeLazyStructured with AnytimeStructuredProbQuery with AnytimeBoundsProbQuery
