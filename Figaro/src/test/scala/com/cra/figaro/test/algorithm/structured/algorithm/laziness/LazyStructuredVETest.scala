@@ -361,4 +361,73 @@ class LazyStructuredVETest extends WordSpec with Matchers {
       alg.kill()
     }
   }
+
+  "Anytime lazy structured variable elimination" should {
+    "increase depth with time" in {
+      Universe.createNew()
+      val elem = recursiveGeometric()
+      val alg = LazyStructuredVE(elem)
+      alg.start()
+      Thread.sleep(1000)
+      alg.stop()
+      val depth1 = alg.depth()
+      depth1 should be > 1
+      alg.resume()
+      Thread.sleep(1000)
+      alg.stop()
+      val depth2 = alg.depth()
+      depth2 should be > depth1
+      alg.kill()
+    }
+  }
+
+  "converge to the correct probability bounds" when {
+    "given a model without evidence" in {
+      Universe.createNew()
+      val geometric = recursiveGeometric()
+      val alg = LazyStructuredVE(geometric)
+      alg.start()
+      Thread.sleep(100)
+      alg.stop()
+      val (lower1, upper1) = alg.probabilityBounds(geometric, 1)
+      lower1 should be (0.5 +- 0.000000001)
+      upper1 should be > lower1
+
+      alg.resume()
+      while(alg.depth() < 30) Thread.sleep(100)
+      alg.stop()
+      val (lower2, upper2) = alg.probabilityBounds(geometric, 1)
+      lower2 should be (0.5 +- 0.000000001)
+      upper2 should be (0.5 +- 0.000000001)
+      upper2 should be >= lower2
+      alg.kill()
+    }
+  }
+
+  "converge to the correct expectation bounds" when {
+    "given a model with evidence" in {
+      Universe.createNew()
+      val geometric = recursiveGeometric()
+      geometric.addConstraint(1.0 / _)
+      val alg = LazyStructuredVE(geometric)
+
+      // Partition function is sum from n=1 to infinity of 1/(n*2^n) = log(2)
+      // Expectation is therefore sum from n=1 to infinity of 1/(n^2*2^n*log(2)) ~= 0.839995520
+      val actual = 0.839995520
+      alg.start()
+      Thread.sleep(100)
+      alg.stop()
+      val (lower1, upper1) = alg.expectationBounds(geometric, (i: Int) => 1.0 / i, Some(0.0), Some(1.0))
+      lower1 should be < actual
+      upper1 should be > actual
+
+      alg.resume()
+      while(alg.depth() < 30) Thread.sleep(100)
+      alg.stop()
+      val (lower, upper) = alg.expectationBounds(geometric, (i: Int) => 1.0 / i, Some(0.0), Some(1.0))
+      lower should be (actual +- 0.000000001)
+      upper should be (actual +- 0.000000001)
+      alg.kill()
+    }
+  }
 }
