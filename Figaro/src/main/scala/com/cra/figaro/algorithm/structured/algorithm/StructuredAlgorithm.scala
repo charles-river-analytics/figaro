@@ -38,11 +38,11 @@ abstract class StructuredAlgorithm extends Algorithm {
   def problemTargets: List[Element[_]]
 
   /**
-   * Strategy to use for ranging atomic components. This is only called once. Uses the default ranging strategy unless
-   * overwritten.
-   * @return A ranging strategy to be used for ranging all atomic components.
+   * Strategy to use for ranging atomic components. This is only called once. One-time algorithms use the default
+   * ranging strategy with `ParticleGenerator.defaultNumSamplesFromAtomics` values. Anytime algorithms use the default
+   * ranging strategy with one value per iteration.
    */
-  def rangingStrategy: RangingStrategy = RangingStrategy.default(ParticleGenerator.defaultNumSamplesFromAtomics)
+  def rangingStrategy: RangingStrategy
 
   /**
    * Strategy to use for refinement at a single iteration. This may return a new strategy for each iteration.
@@ -118,27 +118,13 @@ abstract class StructuredAlgorithm extends Algorithm {
   }
 }
 
-trait AnytimeStructured extends StructuredAlgorithm with Anytime
-
-trait OneTimeStructured extends StructuredAlgorithm with OneTime {
-  // One time structured algorithms run refinement and solving just once each.
-  override def run(): Unit = runStep()
+trait AnytimeStructured extends StructuredAlgorithm with Anytime {
+  override def rangingStrategy = RangingStrategy.default(1)
 }
 
-/**
- * Structured algorithms that are lazy. The only method this changes is the `checkConstraintBounds` method, where it
- * requires all constraints to be in the range [0.0, 1.0].
- */
-trait LazyStructured extends StructuredAlgorithm {
-  override def checkConstraintBounds(): Unit = {
-    // Look at the non constraint factors of the components not fully enumerated. This check is necessary because
-    // components not fully enumerated might later have constraints out of bounds when their ranges increase in size.
-    for(comp <- problem.components if !comp.fullyEnumerated) {
-      // Verify that all entries in the factors are in the range [0.0, 1.0].
-      for(factor <- comp.constraintFactors() ; indices <- factor.getIndices) {
-        val entry = factor.get(indices)
-        require(0.0 <= entry && entry <= 1.0, s"constraint for element ${comp.element} out of bounds: $entry")
-      }
-    }
-  }
+trait OneTimeStructured extends StructuredAlgorithm with OneTime {
+  override def rangingStrategy = RangingStrategy.default(ParticleGenerator.defaultNumSamplesFromAtomics)
+
+  // One time structured algorithms run refinement and solving just once each.
+  override def run(): Unit = runStep()
 }

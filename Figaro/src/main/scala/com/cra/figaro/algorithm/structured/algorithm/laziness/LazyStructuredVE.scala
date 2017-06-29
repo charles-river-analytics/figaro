@@ -11,7 +11,7 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
-package com.cra.figaro.algorithm.structured.algorithm.`lazy`
+package com.cra.figaro.algorithm.structured.algorithm.laziness
 
 import com.cra.figaro.language._
 import com.cra.figaro.algorithm.structured.solver._
