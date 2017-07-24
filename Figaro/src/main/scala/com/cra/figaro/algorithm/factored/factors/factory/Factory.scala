@@ -230,6 +230,8 @@ object Factory {
       case d: CompoundDist[_] => SelectFactory.makeFactors(cc, d)
       case s: IntSelector => SelectFactory.makeFactors(cc, s)
       case c: Chain[_, _] => ChainFactory.makeFactors(cc, c)
+      case a: And => ApplyFactory.makeAndFactors(cc, a)
+      case o: Or => ApplyFactory.makeOrFactors(cc, o)
       case a: Apply1[_, _] => ApplyFactory.makeFactors(cc, a)
       case a: Apply2[_, _, _] => ApplyFactory.makeFactors(cc, a)
       case a: Apply3[_, _, _, _] => ApplyFactory.makeFactors(cc, a)
