@@ -13,6 +13,7 @@
 
 package com.cra.figaro.library.compound
 
+import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.language._
 
 /**
@@ -35,9 +36,28 @@ class BooleanElement(elem: Element[Boolean]) {
   def unary_! = Apply(elem, (b: Boolean) => !b)
 }
 
+/**
+ * Trait for short-circuiting boolean functions. This implements an optimization on extended values for lazy factored
+ * inference: the result of applying the operator to * and a regular argument value can result in a regular result value
+ * if the result value is uniquely determined by the regular argument value.
+ */
+trait BooleanOperator extends Apply2[Boolean, Boolean, Boolean] {
+  /**
+   * Short-circuiting boolean function on extended values.
+   */
+  def extendedFn(xv1: Extended[Boolean], xv2: Extended[Boolean]): Extended[Boolean]
+}
+
 class And(name: Name[Boolean], arg1: Element[Boolean], arg2: Element[Boolean], collection: ElementCollection)
-  extends Apply2(name, arg1, arg2, (b1: Boolean, b2: Boolean) => b1 && b2, collection) {
+  extends Apply2(name, arg1, arg2, (b1: Boolean, b2: Boolean) => b1 && b2, collection) with BooleanOperator {
   override def toString = "(" + arg1 + "&&" + arg2 + ")"
+
+  override def extendedFn(xv1: Extended[Boolean], xv2: Extended[Boolean]): Extended[Boolean] = (xv1, xv2) match {
+    case (Regular(v1), Regular(v2)) => Regular(v1 && v2)
+    case (Regular(false), Star()) => Regular(false)
+    case (Star(), Regular(false)) => Regular(false)
+    case _ => Star()
+  }
 }
 
 object And {
@@ -52,8 +72,15 @@ object And {
 }
 
 class Or(name: Name[Boolean], arg1: Element[Boolean], arg2: Element[Boolean], collection: ElementCollection)
-  extends Apply2(name, arg1, arg2, (b1: Boolean, b2: Boolean) => b1 || b2, collection) {
+  extends Apply2(name, arg1, arg2, (b1: Boolean, b2: Boolean) => b1 || b2, collection) with BooleanOperator {
   override def toString = "(" + arg1 + "||" + arg2 + ")"
+
+  override def extendedFn(xv1: Extended[Boolean], xv2: Extended[Boolean]): Extended[Boolean] = (xv1, xv2) match {
+    case (Regular(v1), Regular(v2)) => Regular(v1 || v2)
+    case (Regular(true), Star()) => Regular(true)
+    case (Star(), Regular(true)) => Regular(true)
+    case _ => Star()
+  }
 }
 
 object Or {

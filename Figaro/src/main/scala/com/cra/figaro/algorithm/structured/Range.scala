@@ -206,35 +206,22 @@ object Range {
         applyMap.put(false, i.els.asInstanceOf[V])
         if (getRange(collection, i.test).hasStar) withStar(Set(i.thn, i.els)) else withoutStar(Set(i.thn, i.els))
 
-      case a: And =>
-        val vs1 = getRange(collection, a.arg1)
-        val vs2 = getRange(collection, a.arg2)
-        val baseResultSet =
-          for {
-            v1 <- vs1.regularValues
-            v2 <- vs2.regularValues
-          } yield {
-            applyMap.getOrElseUpdate((v1, v2), a.fn(v1, v2))
-          }
-        val resultSet =
-          if(vs1.regularValues.contains(false) || vs2.regularValues.contains(false)) baseResultSet + false
-          else baseResultSet
-        if (vs1.hasStar || vs2.hasStar) withStar(resultSet) else withoutStar(resultSet)
-
-      case o: Or =>
-        val vs1 = getRange(collection, o.arg1)
-        val vs2 = getRange(collection, o.arg2)
-        val baseResultSet =
-          for {
-            v1 <- vs1.regularValues
-            v2 <- vs2.regularValues
-          } yield {
-            applyMap.getOrElseUpdate((v1, v2), o.fn(v1, v2))
-          }
-        val resultSet =
-          if(vs1.regularValues.contains(true) || vs2.regularValues.contains(true)) baseResultSet + true
-          else baseResultSet
-        if (vs1.hasStar || vs2.hasStar) withStar(resultSet) else withoutStar(resultSet)
+      case b: BooleanOperator =>
+        val vs1 = getRange(collection, b.arg1)
+        val vs2 = getRange(collection, b.arg2)
+        for {
+          v1 <- vs1.regularValues
+          v2 <- vs2.regularValues
+        }  {
+          applyMap.getOrElseUpdate((v1, v2), b.fn(v1, v2))
+        }
+        val resultSet = for {
+          arg1XVal <- vs1.xvalues
+          arg2XVal <- vs2.xvalues
+        } yield {
+          b.extendedFn(arg1XVal, arg2XVal)
+        }
+        new ValueSet(resultSet)
 
       case a: Apply1[_, V] =>
         val vs1 = getRange(collection, a.arg1)

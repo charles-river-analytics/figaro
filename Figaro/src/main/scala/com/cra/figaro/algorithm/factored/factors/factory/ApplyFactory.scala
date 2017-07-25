@@ -18,7 +18,7 @@ import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.lazyfactored.{Regular, Star}
 import com.cra.figaro.language._
 import com.cra.figaro.algorithm.structured.ComponentCollection
-import com.cra.figaro.library.compound.{And, Or}
+import com.cra.figaro.library.compound.BooleanOperator
 
 /**
  * A Sub-Factory for Apply Elements
@@ -191,10 +191,10 @@ object ApplyFactory {
     List(factor)
   }
 
-  def makeAndFactors(cc: ComponentCollection, and: And): List[Factor[Double]] = {
-    val arg1Var = Factory.getVariable(cc, and.arg1)
-    val arg2Var = Factory.getVariable(cc, and.arg2)
-    val resultVar = Factory.getVariable(cc, and)
+  def makeBooleanFactors(cc: ComponentCollection, bool: BooleanOperator): List[Factor[Double]] = {
+    val arg1Var = Factory.getVariable(cc, bool.arg1)
+    val arg2Var = Factory.getVariable(cc, bool.arg2)
+    val resultVar = Factory.getVariable(cc, bool)
     cc.variableParents(resultVar) ++= Set(arg1Var, arg2Var)
     val factor = new SparseFactor[Double](List(arg1Var, arg2Var), List(resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
@@ -203,36 +203,7 @@ object ApplyFactory {
       (arg1Val, arg1Index) <- arg1Indices
       (arg2Val, arg2Index) <- arg2Indices
     } {
-      val resultVal = (arg1Val, arg2Val) match {
-        case (Regular(arg1), Regular(arg2)) => Regular(arg1 && arg2)
-        case (Regular(false), Star()) => Regular(false)
-        case (Star(), Regular(false)) => Regular(false)
-        case _ => Star()
-      }
-      val resultIndex = resultVar.range.indexOf(resultVal)
-      factor.set(List(arg1Index, arg2Index, resultIndex), 1.0)
-    }
-    List(factor)
-  }
-
-  def makeOrFactors(cc: ComponentCollection, or: Or): List[Factor[Double]] = {
-    val arg1Var = Factory.getVariable(cc, or.arg1)
-    val arg2Var = Factory.getVariable(cc, or.arg2)
-    val resultVar = Factory.getVariable(cc, or)
-    cc.variableParents(resultVar) ++= Set(arg1Var, arg2Var)
-    val factor = new SparseFactor[Double](List(arg1Var, arg2Var), List(resultVar))
-    val arg1Indices = arg1Var.range.zipWithIndex
-    val arg2Indices = arg2Var.range.zipWithIndex
-    for {
-      (arg1Val, arg1Index) <- arg1Indices
-      (arg2Val, arg2Index) <- arg2Indices
-    } {
-      val resultVal = (arg1Val, arg2Val) match {
-        case (Regular(arg1), Regular(arg2)) => Regular(arg1 || arg2)
-        case (Regular(true), Star()) => Regular(true)
-        case (Star(), Regular(true)) => Regular(true)
-        case _ => Star()
-      }
+      val resultVal = bool.extendedFn(arg1Val, arg2Val)
       val resultIndex = resultVar.range.indexOf(resultVal)
       factor.set(List(arg1Index, arg2Index, resultIndex), 1.0)
     }
