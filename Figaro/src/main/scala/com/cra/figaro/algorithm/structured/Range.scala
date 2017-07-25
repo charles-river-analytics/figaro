@@ -16,13 +16,11 @@ package com.cra.figaro.algorithm.structured
 import com.cra.figaro.algorithm.lazyfactored.ValueSet
 import com.cra.figaro.algorithm.lazyfactored.ValueSet._
 import com.cra.figaro.language._
-import com.cra.figaro.library.compound.FastIf
-import com.cra.figaro.util.{ MultiSet, homogeneousCartesianProduct }
+import com.cra.figaro.library.compound._
+import com.cra.figaro.util.{MultiSet, homogeneousCartesianProduct}
 import com.cra.figaro.util.HashMultiSet
 import com.cra.figaro.library.collection.FixedSizeArray
-import com.cra.figaro.library.atomic.discrete.{ AtomicBinomial, ParameterizedBinomialFixedNumTrials }
-import com.cra.figaro.library.compound.FoldLeft
-import com.cra.figaro.library.compound.IntSelector
+import com.cra.figaro.library.atomic.discrete.{AtomicBinomial, ParameterizedBinomialFixedNumTrials}
 import com.cra.figaro.algorithm.ValuesMaker
 
 object Range {
@@ -178,6 +176,7 @@ object Range {
             parentV <- parentVs.regularValues
             subproblem <- component.subproblems.get(parentV)
           } yield getRange(collection, subproblem.target)
+        // TODO think more closely about this...
         val fullyExpanded = parentVs.regularValues.forall(component.subproblems.contains(_))
         val starter: ValueSet[V] = if (parentVs.hasStar || !fullyExpanded) withStar(Set()) else withoutStar(Set())
         resultVs.foldLeft(starter)(_ ++ _)
@@ -206,6 +205,36 @@ object Range {
         applyMap.put(true, i.thn.asInstanceOf[V])
         applyMap.put(false, i.els.asInstanceOf[V])
         if (getRange(collection, i.test).hasStar) withStar(Set(i.thn, i.els)) else withoutStar(Set(i.thn, i.els))
+
+      case a: And =>
+        val vs1 = getRange(collection, a.arg1)
+        val vs2 = getRange(collection, a.arg2)
+        val baseResultSet =
+          for {
+            v1 <- vs1.regularValues
+            v2 <- vs2.regularValues
+          } yield {
+            applyMap.getOrElseUpdate((v1, v2), a.fn(v1, v2))
+          }
+        val resultSet =
+          if(vs1.regularValues.contains(false) || vs2.regularValues.contains(false)) baseResultSet + false
+          else baseResultSet
+        if (vs1.hasStar || vs2.hasStar) withStar(resultSet) else withoutStar(resultSet)
+
+      case o: Or =>
+        val vs1 = getRange(collection, o.arg1)
+        val vs2 = getRange(collection, o.arg2)
+        val baseResultSet =
+          for {
+            v1 <- vs1.regularValues
+            v2 <- vs2.regularValues
+          } yield {
+            applyMap.getOrElseUpdate((v1, v2), o.fn(v1, v2))
+          }
+        val resultSet =
+          if(vs1.regularValues.contains(true) || vs2.regularValues.contains(true)) baseResultSet + true
+          else baseResultSet
+        if (vs1.hasStar || vs2.hasStar) withStar(resultSet) else withoutStar(resultSet)
 
       case a: Apply1[_, V] =>
         val vs1 = getRange(collection, a.arg1)
