@@ -176,7 +176,7 @@ trait Anytime extends Algorithm {
     if (running) {      
       awaitResponse(runner ? "kill", messageTimeout.duration)      
       system.stop(runner)
-      system.shutdown
+      system.terminate()
     }
   }
   

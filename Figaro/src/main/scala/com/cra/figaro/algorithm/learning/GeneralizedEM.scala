@@ -35,7 +35,7 @@ import com.cra.figaro.algorithm.sampling.ProbEvidenceSampler
  * or maximization algorithm; see the code for details.
  */
 trait ExpectationMaximization extends Algorithm with ParameterLearner {
-  protected val paramMap: Map[Parameter[_], Seq[Double]] = Map(targetParameters.map(p => p -> p.zeroSufficientStatistics): _*)
+  protected val paramMap: Map[Parameter[_], Seq[Double]] = Map[Parameter[_], Seq[Double]](targetParameters.map(p => p -> p.zeroSufficientStatistics): _*)
   protected def doExpectationStep(): Map[Parameter[_], Seq[Double]]
 
   protected[algorithm] def doStart(): Unit = {
@@ -91,7 +91,7 @@ trait OnlineExpectationMaximization extends Online with ExpectationMaximization 
 
   override def doStart = {}
 
-  protected var lastIterationStatistics: Map[Parameter[_], Seq[Double]] = Map(targetParameters.map(p => p -> p.zeroSufficientStatistics): _*)
+  protected var lastIterationStatistics: Map[Parameter[_], Seq[Double]] = Map[Parameter[_], Seq[Double]](targetParameters.map(p => p -> p.zeroSufficientStatistics): _*)
   override val initial: Universe
   override val transition: Function0[Universe]
   protected var currentUniverse: Universe = initial

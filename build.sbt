@@ -13,6 +13,7 @@ import scoverage.ScoverageSbtPlugin._
     description := "Figaro: a language for probablistic programming",
     version := "5.0.0.0",
     scalaVersion := "2.12.2",
+    crossScalaVersions := Seq(scalaVersion.value, "2.11.8"),
     crossPaths := true,
     publishMavenStyle := true,
     retrieveManaged := true,
@@ -39,7 +40,7 @@ import scoverage.ScoverageSbtPlugin._
 	</scm>
   )
 
-  lazy val scalaMajorMinor = "2.12"
+  // lazy val scalaMajorMinor = "2.12"
 
   // Read exisiting Figaro MANIFEST.MF from file
   lazy val figaroManifest = Using.fileInputStream(file("Figaro/META-INF/MANIFEST.MF")) { 
@@ -72,18 +73,21 @@ import scoverage.ScoverageSbtPlugin._
       "asm" % "asm" % "3.3.1",
       "org.apache.commons" % "commons-math3" % "3.3",
       "net.sf.jsci" % "jsci" % "1.2",
-      "com.typesafe.akka" %% "akka-actor" % "2.3.14",
-      "org.scalanlp" %% "breeze" % "0.10",
-      "io.argonaut" %% "argonaut" % "6.0.4",
+      "com.typesafe.akka"      %% "akka-actor"    % "2.4.18",
+      "org.scalanlp" %% "breeze" % "0.13.1",
+      "io.argonaut" %% "argonaut" % "6.2",
       "org.prefuse" % "prefuse" % "beta-20071021",
-      "org.scala-lang.modules" %% "scala-swing" % "1.0.1",
-      "com.storm-enroute" %% "scalameter" % "0.7" % "provided",
-      "org.scalatest" %% "scalatest" % "2.2.4" % "provided, test"
+      "org.scala-lang.modules" %% "scala-swing" % "2.0.0",
+      "com.storm-enroute" %% "scalameter" % "0.8.2" % "provided",
+      "org.scalatest" %% "scalatest" % "3.0.3" % "provided, test"
     ))
+
+// "org.apache.commons"     %  "commons-math3" % "3.6.1",
+
     // Enable forking
     .settings(fork := true)
-    // Increase max memory for JVM for both testing and runtime
-    .settings(javaOptions in (Test,run) += "-Xmx6G")
+    // Increase max memory for JVM
+    .settings(javaOptions += "-Xmx6G")
     // test settings
     .settings(parallelExecution in Test := false)
     .settings(testOptions in Test += Tests.Argument("-oD"))
@@ -96,7 +100,8 @@ import scoverage.ScoverageSbtPlugin._
     // sbt-assembly settings
     .settings(assemblySettings: _*)
     .settings(test in assembly := {})
-    .settings(jarName in assembly := "figaro_" + scalaMajorMinor + "-" + version.value + "-fat.jar")
+    // .settings(jarName in assembly := "figaro_" + scalaMajorMinor + "-" + version.value + "-fat.jar")
+    .settings(jarName in assembly := "figaro_" + scalaBinaryVersion.value + "-" + version.value + "-fat.jar")
     .settings(assemblyOption in assembly ~= { _.copy(includeScala = false) })
     .settings(excludedJars in assembly := {
 	val cp = (fullClasspath in assembly).value
@@ -106,14 +111,20 @@ import scoverage.ScoverageSbtPlugin._
     .settings(testFrameworks += new TestFramework("org.scalameter.ScalaMeterFramework"))
     .settings(logBuffered := false)
     // SBTEclipse settings
-    .settings(EclipseKeys.eclipseOutput := Some("target/scala-2.11/classes"))
+    // .settings(EclipseKeys.eclipseOutput := Some("target/scala-2.11/classes"))
       
   lazy val examples = Project("FigaroExamples", file("FigaroExamples"))
     .dependsOn(figaro)
-    .settings(figaroSettings)
+    .settings(version := "5.0.0.0")
+    .settings (scalacOptions ++= Seq(
+	"-feature",
+	"-language:existentials",
+	"-deprecation",
+	"-language:postfixOps"
+    ))
     .settings(packageOptions := Seq(Package.JarManifest(examplesManifest)))
     // SBTEclipse settings
-    .settings(EclipseKeys.eclipseOutput := Some("target/scala-2.11/classes"))
+    // .settings(EclipseKeys.eclipseOutput := Some("target/scala-2.11/classes"))
     // Copy all managed dependencies to \lib_managed directory
     .settings(retrieveManaged := true)
 

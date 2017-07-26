@@ -186,7 +186,7 @@ object Dirichlet extends Creatable {
 
   //Needs to be a nested field or a jEmptyArray
   implicit def DirichletEncodeJson: EncodeJson[Dirichlet] = EncodeJson((d: Dirichlet) =>
-    ("name" := d.name.string) ->: ("alphaValues" := jArray((for (a <- d.alphaValues) yield { jNumber(a) }).toList)) ->: jEmptyObject)
+    ("name" := d.name.string) ->: ("alphaValues" := jArray((for (a <- d.alphaValues) yield { jNumber(a) }).toList.flatten)) ->: jEmptyObject)
 
   implicit def DirichletDecodeJson(implicit collection: ElementCollection): DecodeJson[AtomicDirichlet] =
     DecodeJson(c => for {
