@@ -11,8 +11,8 @@ import scoverage.ScoverageSbtPlugin._
   lazy val figaroSettings = Seq(
     organization := "com.cra.figaro",
     description := "Figaro: a language for probablistic programming",
-    version := "4.2.0.0",
-    scalaVersion := "2.11.7",
+    version := "5.0.0.0",
+    scalaVersion := "2.12.2",
     crossPaths := true,
     publishMavenStyle := true,
     retrieveManaged := true,
@@ -39,7 +39,7 @@ import scoverage.ScoverageSbtPlugin._
 	</scm>
   )
 
-  lazy val scalaMajorMinor = "2.11"
+  lazy val scalaMajorMinor = "2.12"
 
   // Read exisiting Figaro MANIFEST.MF from file
   lazy val figaroManifest = Using.fileInputStream(file("Figaro/META-INF/MANIFEST.MF")) { 
