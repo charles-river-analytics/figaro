@@ -17,8 +17,7 @@ import com.cra.figaro.language._
 import com.cra.figaro.algorithm.structured.solver._
 import com.cra.figaro.algorithm.structured.strategy.solve._
 import com.cra.figaro.algorithm.structured.algorithm._
-import com.cra.figaro.algorithm.structured.strategy.refine.RefiningStrategy
-import com.cra.figaro.algorithm.structured.strategy.refine.PartialBottomUpStrategy
+import com.cra.figaro.algorithm.structured.strategy.refine._
 
 abstract class LazyStructuredVE(universe: Universe, targets: Element[_]*)
   extends LazyStructuredProbQueryAlgorithm(universe, targets: _*) {
@@ -42,7 +41,7 @@ abstract class LazyStructuredVE(universe: Universe, targets: Element[_]*)
   }
 
   override def refiningStrategy(): RefiningStrategy =
-    new PartialBottomUpStrategy(depth(), problem, initialElements.map(collection(_)))
+    new ExpansionStrategy(problem, initialElements.map(collection(_)), depth())
 
   override def solvingStrategy(): SolvingStrategy =
     new ConstantStrategy(problem, structuredRaising, marginalVariableElimination)

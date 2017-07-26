@@ -311,6 +311,7 @@ object Factory {
       case d: CompoundDist[_] => SelectFactory.makeFactors(d)
       case s: IntSelector => SelectFactory.makeFactors(s)
       case c: Chain[_, _] => ChainFactory.makeFactors(c)
+      case b: BooleanOperator => ApplyFactory.makeBooleanFactors(b)
       case a: Apply1[_, _] => ApplyFactory.makeFactors(a)
       case a: Apply2[_, _, _] => ApplyFactory.makeFactors(a)
       case a: Apply3[_, _, _, _] => ApplyFactory.makeFactors(a)

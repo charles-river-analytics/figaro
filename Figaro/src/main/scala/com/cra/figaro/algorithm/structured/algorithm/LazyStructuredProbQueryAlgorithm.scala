@@ -12,6 +12,7 @@
  */
 package com.cra.figaro.algorithm.structured.algorithm
 
+import com.cra.figaro.algorithm.factored.factors.{Factor, Variable}
 import com.cra.figaro.algorithm.structured.{Lower, Upper}
 import com.cra.figaro.algorithm.{AnytimeBoundsProbQuery, BoundsProbQueryAlgorithm, OneTimeBoundsProbQuery}
 import com.cra.figaro.language._
@@ -24,30 +25,47 @@ abstract class LazyStructuredProbQueryAlgorithm(universe: Universe, queryTargets
     "use a bounding method instead, or a ranging strategy that avoids *"
 
   /**
-   * Computes bounds on each regular and extended value. The first entry contains bounds on each regular value as a list
-   * of triples (lower, upper, value). The second and third entries are, respectively, the lower and upper bounds on *.
-   * These are bounds on the probability mass that could be placed on values not yet in the range of the target.
+   * Get the marginalized lower/upper factors for a particular target. This method is intended to be called once per
+   * inference query, and avoids concurrency issues. It guarantees that the factors returned are consistent and from a
+   * single solving run. Returns a pair containing, respectively, the marginalized factor computed using lower
+   * constraint bounds, and the marginalized factor computed using upper constraint bounds.
    */
-  protected def regularAndStarBounds[T](target: Element[T]): (List[(Double, Double, T)], Double, Double) = {
+  protected def boundFactors[T](target: Element[T]): (Factor[Double], Factor[Double]) = {
     val solutions = targetFactors
-    // It's possible that no constraint variables contain *, in which case the Lower and Upper factors are the same;
-    // simply pick one and use it as both the lower and upper factors.
+    // It is possible that the lower and upper factors are the same, in which case the solutions will contain an entry
+    // for Lower or Upper, but not both. This returns the same factor both times.
     val lowerFactor = solutions.getOrElse(Lower, solutions(Upper))(target)
     val upperFactor = solutions.getOrElse(Upper, solutions(Lower))(target)
+    // The factors should be over the same variable, or should both be empty because the variable's range is {*}.
+    assert(lowerFactor.variables.size <= 1)
+    assert(lowerFactor.variables == upperFactor.variables)
+    (lowerFactor, upperFactor)
+  }
+
+  /**
+   * Computes bounds on each regular and extended value given lower and upper factors marginalized to a single variable.
+   * The first entry contains bounds on each regular value as a list of triples (lower, upper, value). The second and
+   * third entries are, respectively, the lower and upper bounds on *. These are bounds on the probability mass that
+   * could be placed on values not yet in the range of the target.
+   */
+  protected def regularAndStarBounds[T](lowerFactor: Factor[Double], upperFactor: Factor[Double]): (List[(Double, Double, T)], Double, Double) = {
+    val variable = lowerFactor.variables.headOption.asInstanceOf[Option[Variable[T]]]
+    // The factors are empty because the variable's range is {*}
+    if(variable.isEmpty) return (List(), 1.0, 1.0)
 
     // Lower and upper bounds on the partition function are given, respectively, by summing entries in the lower and
     // upper factors
     val partitionLower = lowerFactor.foldLeft(0.0, _ + _)
     val partitionUpper = upperFactor.foldLeft(0.0, _ + _)
 
-    val variable = collection(target).variable
-    val starIndex = variable.range.indexWhere(!_.isRegular)
+    val range = variable.get.range
+    val starIndex = range.indexWhere(!_.isRegular)
     // Entries in the lower and upper factors corresponding to *
     val starLower = if(starIndex >= 0) lowerFactor.get(List(starIndex)) else 0.0
     val starUpper = if(starIndex >= 0) upperFactor.get(List(starIndex)) else 0.0
 
     // List of bounds on each regular value
-    val regularBounds = for((xvalue, idx) <- variable.range.zipWithIndex if xvalue.isRegular) yield {
+    val regularBounds = for((xvalue, idx) <- range.zipWithIndex if xvalue.isRegular) yield {
       // Entries in the lower and upper factors corresponding to this regular value
       val valueLower = lowerFactor.get(List(idx))
       val valueUpper = upperFactor.get(List(idx))
@@ -73,30 +91,56 @@ abstract class LazyStructuredProbQueryAlgorithm(universe: Universe, queryTargets
   }
 
   override def computeAllProbabilityBounds[T](target: Element[T]): Stream[(Double, Double, T)] = {
-    regularAndStarBounds(target)._1.toStream
+    val (lowerFactor, upperFactor) = boundFactors(target)
+    regularAndStarBounds(lowerFactor, upperFactor)._1.toStream
   }
 
-  override def computeExpectationBounds[T](target: Element[T], function: (T) => Double, lower: Option[Double], upper: Option[Double]): (Double, Double) = {
-    val variable = collection(target).variable
-    val regularValues = variable.valueSet.regularValues
-    // The least evaluation of this function on a regular value in the range of this variable, or -Infinity
-    val leastRegular =
-      if(regularValues.isEmpty) Double.NegativeInfinity
+  /**
+   * Helper function to compute lower and upper bounds on the given function using the optional bounds given and the
+   * regular values of a target variable. If bounds are given, it checks that all regular values are within the desired
+   * bounds. Otherwise, it returns the strongest possible bounds given the current regular values. If there are no
+   * regular values, it returns (-Infinity, Infinity).
+   */
+  protected def boundFunction[T](regularValues: Set[T], function: (T) => Double, lower: Option[Double], upper: Option[Double]): (Double, Double) = {
+    val lowerBound =
+      if(lower.isDefined) {
+        // Return the given lower bound and require that every regular value is greater than or equal to it
+        val lowerValue = lower.get
+        for(rvalue <- regularValues) {
+          require(function(rvalue) >= lowerValue, s"regular value out of bounds: ${function(rvalue)} < $lowerValue")
+        }
+        lowerValue
+      }
+      // Return -Infinity if there are no regular values
+      else if(regularValues.isEmpty) Double.NegativeInfinity
+      // Return the least value of the function on the regular values
       else function(regularValues.minBy(function))
-    // The greatest evaluation of this function on a regular value in the range of this variable, or Infinity
-    val greatestRegular =
-      if(regularValues.isEmpty) Double.PositiveInfinity
+    val upperBound =
+      if(upper.isDefined) {
+        // Return the given upper bound and require that every regular value is less than or equal to it
+        val upperValue = upper.get
+        for(rvalue <- regularValues) {
+          require(function(rvalue) <= upperValue, s"regular value out of bounds: ${function(rvalue)} > $upperValue")
+        }
+        upperValue
+      }
+      // Return Infinity if there are no regular values
+      else if(regularValues.isEmpty) Double.PositiveInfinity
+      // Return the greatest value of the function on the regular values
       else function(regularValues.maxBy(function))
-    // Use the lower/upper bounds on the function if given; otherwise use the least/greatest values found
-    val actualLower = lower.getOrElse(leastRegular)
-    val actualUpper = upper.getOrElse(greatestRegular)
-    // If the lower and upper bounds are given (instead of computed from the regular values), we require that evaluating
-    // the function on all such regular values produces a result within the supplied bounds
-    require(actualLower <= leastRegular && actualUpper >= greatestRegular, "the given bounds " +
-      s"${(actualLower, actualUpper)} are tighter than the actual bounds ${(leastRegular, greatestRegular)}")
+    (lowerBound, upperBound)
+  }
 
-    // Get the bounds on regular and star values
-    val (regularBounds, lowerProbStar, upperProbStar) = regularAndStarBounds(target)
+  override def computeExpectationBounds[T](target: Element[T], function: (T) => Double,
+                                           lower: Option[Double], upper: Option[Double]): (Double, Double) = {
+    val (lowerFactor, upperFactor) = boundFactors(target)
+    // Both factors should be over the same variable, or they are both empty because the variable has range {*}
+    // In either case, this gets the set of regular values of the variable
+    val regularValues = lowerFactor.variables.headOption.map(_.valueSet.regularValues).getOrElse(Set())
+    // Get the function bounds
+    val (actualLower, actualUpper) = boundFunction(regularValues.asInstanceOf[Set[T]], function, lower, upper)
+    // Get the probability bounds on regular and star values
+    val (regularBounds, lowerProbStar, upperProbStar) = regularAndStarBounds[T](lowerFactor, upperFactor)
     // To compute lower or upper bounds on the expectation of the function, we essentially try to allocate as much
     // probability mass as possible to the values where the function is, respectively, as large or as small as possible.
     // First, we compute the total probability assigned to each value, regular or *.

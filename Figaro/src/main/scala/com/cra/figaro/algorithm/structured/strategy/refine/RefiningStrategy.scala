@@ -13,6 +13,7 @@
 package com.cra.figaro.algorithm.structured.strategy.refine
 
 import com.cra.figaro.algorithm.structured._
+import com.cra.figaro.util
 
 /**
  * A refining strategy takes an inference problem over a set of factors and improves it to better reflect the underlying
@@ -23,13 +24,32 @@ import com.cra.figaro.algorithm.structured._
  * solve.
  * @param collection Collection of components to refine.
  */
-abstract class RefiningStrategy(collection: ComponentCollection) {
+abstract class RefiningStrategy(val collection: ComponentCollection) {
   /**
    * Refine in place using this strategy. This will recursively mark as unsolved any problems whose solutions are no
    * longer applicable as a result of refinement. This also marks problem components as fully enumerated or refined
    * where applicable.
    */
   def execute(): Unit
+
+  /**
+   * Recursively marks as unsolved any problem whose solution could have changed as a result of refinement by this
+   * strategy or any of its recursively generated strategies.
+   */
+  protected def markProblemsUnsolved(problems: Set[Problem]): Unit = {
+    // From a subproblem, we must include the problems that use it
+    def problemGraph(pr: Problem): Set[Problem] = pr match {
+      case npr: NestedProblem[_] => collection.expandableComponents(npr).map(_.problem)
+      case _ => Set()
+    }
+    // We have to work our way up the whole problem graph marking problems as unsolved; reachable does this efficiently
+    val allUnsolvedProblems = util.reachable(problemGraph, true, problems.toSeq:_*)
+    // Mark each reachable problem as unsolved
+    for(pr <- allUnsolvedProblems) {
+      pr.solved = false
+      pr.solution = Nil
+    }
+  }
 
   /**
    * Process a component by generating its range, if it is not already fully enumerated. After calling this method, it
