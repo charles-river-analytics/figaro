@@ -726,7 +726,7 @@ class ElementsTest extends WordSpec with Matchers {
       }
     }
     
-    "correctly set the observation" should {
+    "an example" in {
       Universe.createNew()
       val x = Flip(0.3)
       x.observation should equal (None)

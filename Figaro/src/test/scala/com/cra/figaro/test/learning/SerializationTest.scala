@@ -27,7 +27,7 @@ class SerializationTest extends WordSpec with Matchers {
   "A Beta parameter" should {
     "serialize its name and alpha and beta values" in {
       val u = Universe.createNew()
-      val b = Beta(1,5)("b", u)
+      val b: Beta = Beta(1,5)("b", u)
       val jsonBeta = b.asJson
       println(jsonBeta.spaces2)
       val name = jsonBeta.field("name").get.as[String].value.get
@@ -53,7 +53,7 @@ class SerializationTest extends WordSpec with Matchers {
     "serialize its name and concentration parameters" in{
       val u = Universe.createNew()
      
-      val d = Dirichlet(1,2,3,4,5)("d", u)
+      val d: Dirichlet = Dirichlet(1,2,3,4,5)("d", u)
       val jsonDirichlet = d.asJson
       println(jsonDirichlet.spaces2)
       val name = jsonDirichlet.field("name").get.as[String].value.get
