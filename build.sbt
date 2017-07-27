@@ -72,6 +72,7 @@ import scoverage.ScoverageSbtPlugin._
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "asm" % "asm" % "3.3.1",
       "org.apache.commons" % "commons-math3" % "3.3",
+      // "org.apache.commons"     %  "commons-math3" % "3.6.1",
       "net.sf.jsci" % "jsci" % "1.2",
       "com.typesafe.akka"      %% "akka-actor"    % "2.4.18",
       "org.scalanlp" %% "breeze" % "0.13.1",
@@ -81,8 +82,6 @@ import scoverage.ScoverageSbtPlugin._
       "com.storm-enroute" %% "scalameter" % "0.8.2" % "provided",
       "org.scalatest" %% "scalatest" % "3.0.3" % "provided, test"
     ))
-
-// "org.apache.commons"     %  "commons-math3" % "3.6.1",
 
     // Enable forking
     .settings(fork := true)
@@ -110,12 +109,10 @@ import scoverage.ScoverageSbtPlugin._
     // ScalaMeter settings
     .settings(testFrameworks += new TestFramework("org.scalameter.ScalaMeterFramework"))
     .settings(logBuffered := false)
-    // SBTEclipse settings
-    // .settings(EclipseKeys.eclipseOutput := Some("target/scala-2.11/classes"))
       
   lazy val examples = Project("FigaroExamples", file("FigaroExamples"))
     .dependsOn(figaro)
-    .settings(version := "5.0.0.0")
+    .settings(figaroSettings)
     .settings (scalacOptions ++= Seq(
 	"-feature",
 	"-language:existentials",
@@ -123,10 +120,6 @@ import scoverage.ScoverageSbtPlugin._
 	"-language:postfixOps"
     ))
     .settings(packageOptions := Seq(Package.JarManifest(examplesManifest)))
-    // SBTEclipse settings
-    // .settings(EclipseKeys.eclipseOutput := Some("target/scala-2.11/classes"))
-    // Copy all managed dependencies to \lib_managed directory
-    .settings(retrieveManaged := true)
 
   lazy val detTest = config("det") extend(Test)
   lazy val nonDetTest = config("nonDet") extend(Test)
