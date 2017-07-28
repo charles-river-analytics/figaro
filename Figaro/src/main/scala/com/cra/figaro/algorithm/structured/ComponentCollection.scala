@@ -16,11 +16,13 @@ package com.cra.figaro.algorithm.structured
 import com.cra.figaro.algorithm.factored.ParticleGenerator
 import com.cra.figaro.language._
 import com.cra.figaro.library.collection.MakeArray
+import com.cra.figaro.util
 
 import scala.collection.mutable.Map
 import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.structured.strategy.range.RangingStrategy
 
+import scala.annotation.tailrec
 import scala.collection.mutable.HashMap
 /**
 * To speed up factor creation time, it's necessary to override the hashcode of component collections.
@@ -71,14 +73,45 @@ class ComponentCollection {
   var intermediates: Set[Variable[_]] = Set()
 
   /**
-   * A map from a function and parent value to the associated subproblem.
+   * A map from a function and parent value to the sequence of associated subproblems. A function and parent value are
+   * only expanded more than once if this particular expansion calls itself recursively, indirectly or directly. The
+   * sequence of subproblems is sorted by depth of expansion. So, the head of the sequence is the first subproblem to
+   * have been expanded. Furthermore, this gives rise to an invariant that a subproblem in the sequence uses all later
+   * subproblems in the sequence.
    */
-  val expansions: Map[(Function1[_, Element[_]], _), NestedProblem[_]] = Map()
+  val expansions: Map[(Function1[_, Element[_]], _), IndexedSeq[NestedProblem[_]]] = Map()
 
   /**
    * A map from a subproblem to the set of expandable components that use it.
    */
   val expandableComponents: Map[NestedProblem[_], Set[ExpandableComponent[_, _]]] = Map()
+
+  /**
+   * Tests if the adding the subproblem to the given component would create a cycle in the subproblem graph.
+   */
+  private def createsCycle(nestedProblem: NestedProblem[_], component: ExpandableComponent[_, _]): Boolean = {
+    // TODO consider using a dedicated incremental cycle detection data structure and algorithm for improved efficiency
+    // TODO consider a different version of ComponentCollection that avoids this computation for non-lazy algorithms
+    // For now, the current implementation just does a breadth first search from the component problem to see if there
+    // exists a path from nestedProblem to component via the problem graph
+    component.problem match {
+      case componentProblem: NestedProblem[_] =>
+        // Does nestedProblem ever use component.problem?
+        // Test by searching backwards from component.problem through the expandable components that use it
+        @tailrec def bfs(problems: Set[NestedProblem[_]]): Boolean = {
+          if(problems.contains(nestedProblem)) true
+          else if(problems.isEmpty) false
+          else {
+            // Map current problems to the set of problems that use them
+            val next = problems.flatMap(expandableComponents(_)).map(_.problem).collect{ case np: NestedProblem[_] => np }
+            bfs(next)
+          }
+        }
+
+        bfs(Set(componentProblem))
+      case _ => false
+    }
+  }
 
   /**
    *  Get the nested subproblem associated with a particular function and parent value. Checks in the cache if an
@@ -87,24 +120,24 @@ class ComponentCollection {
    *  components that use the returned subproblem.
    */
   private[structured] def expansion[P, V](component: ExpandableComponent[P, V], function: Function1[P, Element[V]], parentValue: P): NestedProblem[V] = {
-    expansions.get((function, parentValue)) match {
-      case Some(p) =>
-        if(p.open) {
-          // Make a new nested problem, but don't add it to expansions
-          val result = new NestedProblem(this, component.expandFunction(parentValue))
-          expandableComponents += result -> Set(component)
-          result
-        }
-        else {
-          // Return the cached problem
-          expandableComponents(p) += component
-          p.asInstanceOf[NestedProblem[V]]
-        }
+    val seq = expansions.getOrElse((function, parentValue), Vector())
+    // Look for the first copy of the appropriate subproblem that does not produce a cycle
+    // Note: it is unclear if/when this greedy solution is optimal. However, it guarantees that the number of copies of
+    // a subproblem is at most linear in the depth of expansion (as opposed to the possible exponential growth that
+    // results from using no memoization at all).
+    val resultOption = util.binarySearch(seq, (np: NestedProblem[_]) => !createsCycle(np, component))
+    resultOption match {
+      case Some(result) =>
+        // There exists a subproblem such that expanding to it does not create a cycle; return it
+        expandableComponents(result) += component
+        result.asInstanceOf[NestedProblem[V]]
       case None =>
-        // Make a new nested problem and add it to expansions
+        // All previously expanded copies of this subproblem create a cycle, or the subproblem has not yet been expanded
+        // at all (i.e. the sequence is empty)
+        // Make a new nested problem and add it to the end of the sequence before returning it
         val result = new NestedProblem(this, component.expandFunction(parentValue))
-        expansions += (function, parentValue) -> result
         expandableComponents += result -> Set(component)
+        expansions((function, parentValue)) = seq :+ result
         result
     }
   }

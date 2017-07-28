@@ -1168,8 +1168,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         val c4 = cc(v4)
         c1.generateRange()
         c4.expand()
-        val v2 = cc.expansions((v4.chainFunction, true)).target
-        val v3 = cc.expansions((v4.chainFunction, false)).target
+        val v2 = cc.expansions((v4.chainFunction, true)).head.target
+        val v3 = cc.expansions((v4.chainFunction, false)).head.target
         val c2 = cc(v2)
         val c3 = cc(v3)
         c2.generateRange()
@@ -1292,19 +1292,19 @@ class FactorMakerTest extends WordSpec with Matchers {
       c1.generateRange()
       c2.expand()
 
-      val pr1 = cc.expansions(v2.chainFunction, 1)
+      val pr1 = cc.expansions(v2.chainFunction, 1).head
       val subV1 = pr1.target
       val subC1 = cc(subV1)
       subC1.generateRange()
       new ConstantStrategy(pr1, structuredRaising, marginalVariableElimination).execute()
 
-      val pr2 = cc.expansions(v2.chainFunction, 2)
+      val pr2 = cc.expansions(v2.chainFunction, 2).head
       val subV2 = pr2.target
       val subC2 = cc(subV2)
       subC2.generateRange()
       new ConstantStrategy(pr2, structuredRaising, marginalVariableElimination).execute()
 
-      val pr3 = cc.expansions(v2.chainFunction, 3)
+      val pr3 = cc.expansions(v2.chainFunction, 3).head
       val subV3 = pr3.target
       val subC3 = cc(subV3)
       subC3.generateRange()
@@ -1346,12 +1346,12 @@ class FactorMakerTest extends WordSpec with Matchers {
       c1.generateRange()
       c2.expand()
 
-      val prf = cc.expansions(v2.chainFunction, false)
+      val prf = cc.expansions(v2.chainFunction, false).head
       val subVf = prf.target
       val subCf = cc(subVf)
       subCf.generateRange()
       new ConstantStrategy(prf, structuredRaising, marginalVariableElimination).execute()
-      val prt = cc.expansions(v2.chainFunction, true)
+      val prt = cc.expansions(v2.chainFunction, true).head
       val subVt = prt.target
       val subCt = cc(subVt)
       subCt.generateRange()
@@ -1394,17 +1394,17 @@ class FactorMakerTest extends WordSpec with Matchers {
       c1.generateRange()
       c2.expand()
 
-      val pr1 = cc.expansions(v2.chainFunction, 1)
+      val pr1 = cc.expansions(v2.chainFunction, 1).head
       val subV1 = pr1.target
       val subC1 = cc(subV1)
       subC1.generateRange()
       new ConstantStrategy(pr1, structuredRaising, marginalVariableElimination).execute()
-      val pr2 = cc.expansions(v2.chainFunction, 2)
+      val pr2 = cc.expansions(v2.chainFunction, 2).head
       val subV2 = pr2.target
       val subC2 = cc(subV2)
       subC2.generateRange()
       new ConstantStrategy(pr2, structuredRaising, marginalVariableElimination).execute()
-      val pr3 = cc.expansions(v2.chainFunction, 3)
+      val pr3 = cc.expansions(v2.chainFunction, 3).head
       // no range generation or factor creation
       new ConstantStrategy(pr3, structuredRaising, marginalVariableElimination).execute()
 
@@ -1457,7 +1457,7 @@ class FactorMakerTest extends WordSpec with Matchers {
       c1.generateRange() // will include true and *
       c2.expand()
 
-      val prt = cc.expansions(v2.chainFunction, true)
+      val prt = cc.expansions(v2.chainFunction, true).head
       val subVt = prt.target
       val subCt = cc(subVt)
       subCt.generateRange()
@@ -1502,12 +1502,12 @@ class FactorMakerTest extends WordSpec with Matchers {
       c1.generateRange()
       c2.generateRange()
       c3.expand()
-      val subPf = cc.expansions(v3.chainFunction, false)
+      val subPf = cc.expansions(v3.chainFunction, false).head
       val vPf = subPf.target
       val cPf = cc(vPf)
       cPf.generateRange()
       new ConstantStrategy(subPf, structuredRaising, marginalVariableElimination).execute()
-      val subPt = cc.expansions(v3.chainFunction, true)
+      val subPt = cc.expansions(v3.chainFunction, true).head
       val vPt = subPt.target
       val cPt = cc(vPt)
       cPt.generateRange()
