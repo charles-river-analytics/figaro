@@ -114,10 +114,9 @@ class ComponentCollection {
   }
 
   /**
-   *  Get the nested subproblem associated with a particular function and parent value. Checks in the cache if an
-   *  expansion exists and creates one if necessary. If the expansion in the cache is marked as open, this always
-   *  creates a new subproblem, but does not add it to the cache. This also adds the component to the set of expandable
-   *  components that use the returned subproblem.
+   *  Get the nested subproblem associated with a particular function and parent value. Checks in the cache if there is
+   *  an expansion that does not create a cyclic dependency. If such an expansion exists, it is returned. Otherwise, a
+   *  new expansion is created and stored in the collection.
    */
   private[structured] def expansion[P, V](component: ExpandableComponent[P, V], function: Function1[P, Element[V]], parentValue: P): NestedProblem[V] = {
     val seq = expansions.getOrElse((function, parentValue), Vector())
