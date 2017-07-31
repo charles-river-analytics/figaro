@@ -89,7 +89,7 @@ class ComponentCollection {
   /**
    * Tests if the adding the subproblem to the given component would create a cycle in the subproblem graph.
    */
-  private def createsCycle(nestedProblem: NestedProblem[_], component: ExpandableComponent[_, _]): Boolean = {
+  private[figaro] def createsCycle[P, V](component: ExpandableComponent[P, V], nestedProblem: NestedProblem[V]): Boolean = {
     // TODO consider using a dedicated incremental cycle detection data structure and algorithm for improved efficiency
     // TODO consider a different version of ComponentCollection that avoids this computation for non-lazy algorithms
     // For now, the current implementation just does a breadth first search from the component problem to see if there
@@ -119,12 +119,12 @@ class ComponentCollection {
    *  new expansion is created and stored in the collection.
    */
   private[structured] def expansion[P, V](component: ExpandableComponent[P, V], function: Function1[P, Element[V]], parentValue: P): NestedProblem[V] = {
-    val seq = expansions.getOrElse((function, parentValue), Vector())
+    val seq = expansions.getOrElse((function, parentValue), Vector()).asInstanceOf[IndexedSeq[NestedProblem[V]]]
     // Look for the first copy of the appropriate subproblem that does not produce a cycle
     // Note: it is unclear if/when this greedy solution is optimal. However, it guarantees that the number of copies of
     // a subproblem is at most linear in the depth of expansion (as opposed to the possible exponential growth that
     // results from using no memoization at all).
-    val resultOption = util.binarySearch(seq, (np: NestedProblem[_]) => !createsCycle(np, component))
+    val resultOption = util.binarySearch(seq, (np: NestedProblem[V]) => !createsCycle(component, np))
     resultOption match {
       case Some(result) =>
         // There exists a subproblem such that expanding to it does not create a cycle; return it
