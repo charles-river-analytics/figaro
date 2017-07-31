@@ -114,13 +114,9 @@ class ExpansionStrategy(problem: Problem, initialComponents: List[ProblemCompone
     // Recurse on subproblems
     val subproblems = chainComp.subproblems.values
     for(subproblem <- subproblems) {
-      // TODO see if this is still necessary
-      // Mark subproblem as open to avoid infinite recursion
-      subproblem.open = true
       val target = checkArg(subproblem.target)
       decompose(target, depth - 1)
       directUpdates(target) += chainComp
-      subproblem.open = false
     }
     // Make range based on the refinement of the subproblems
     generateRange(chainComp)
