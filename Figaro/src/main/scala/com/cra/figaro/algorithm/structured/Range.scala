@@ -176,7 +176,7 @@ object Range {
             parentV <- parentVs.regularValues
             subproblem <- component.subproblems.get(parentV)
           } yield getRange(collection, subproblem.target)
-        // TODO think more closely about this...
+        // If there do not exist subproblems for some parent values, then we must add * to the range
         val fullyExpanded = parentVs.regularValues.forall(component.subproblems.contains(_))
         val starter: ValueSet[V] = if (parentVs.hasStar || !fullyExpanded) withStar(Set()) else withoutStar(Set())
         resultVs.foldLeft(starter)(_ ++ _)
