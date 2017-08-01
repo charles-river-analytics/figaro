@@ -32,7 +32,6 @@ class FlatStrategy(collection: ComponentCollection, updates: Set[ProblemComponen
   extends RefiningStrategy(collection) {
 
   // TODO consider shared inheritance with ExpansionStrategy
-  // TODO see if Chain function memoization still breaks
 
   /**
    * Components that have been visited
@@ -85,12 +84,12 @@ class FlatStrategy(collection: ComponentCollection, updates: Set[ProblemComponen
    * @param chainComp Chain component to process. This should not be called on a component we previously processed,
    * including fully refined components.
    */
-  def processChain(chainComp: ChainComponent[_, _]): Unit = {
+  def processChain[P, V](chainComp: ChainComponent[P, V]): Unit = {
     // Decompose the parent to get values for expansion
     val parentComp = collection(chainComp.chain.parent)
     decompose(parentComp)
-    // Only visit the existing subproblems
-    val existingSubproblems = chainComp.subproblems.values
+    // Only visit the subproblems that already exist for the current set of parent values
+    val existingSubproblems = parentComp.range.regularValues.flatMap(chainComp.subproblems.get(_))
     // Ensure expansions exist for each parent value, but don't visit the new subproblems
     chainComp.expand()
     // Decompose the target of each existing subproblem
@@ -99,8 +98,9 @@ class FlatStrategy(collection: ComponentCollection, updates: Set[ProblemComponen
     }
     // Make range based on the refinement of the subproblems
     generateRange(chainComp)
+
     // All subproblems, previously or newly expanded
-    val subproblems = chainComp.subproblems.values
+    val subproblems = for(parentValue <- parentComp.range.regularValues) yield chainComp.subproblems(parentValue)
     // The range for this component is complete if the range of the parent is complete (and therefore no further
     // subproblems can be created), and the target for each subproblem has a complete range
     chainComp.fullyEnumerated =
@@ -114,21 +114,27 @@ class FlatStrategy(collection: ComponentCollection, updates: Set[ProblemComponen
    * @param maComp MakeArray component to process. This should not be called on a component we previously processed,
    * including fully refined components.
    */
-  def processMakeArray(maComp: MakeArrayComponent[_]): Unit = {
+  def processMakeArray[V](maComp: MakeArrayComponent[V]): Unit = {
     // Decompose the number of items component to get the maximum number of expansions
     val numItemsComp = collection(maComp.makeArray.numItems)
     decompose(numItemsComp)
-    // Ensure expansions exist up to the maximum number of items
+    // Only visit the items that have already been expanded
+    val maxExpanded = maComp.maxExpanded
+    // Ensure expansions exist up to the maximum number of items, but do not recurse on the potentially new ones
     maComp.expand()
-    // Decompose each of the items
-    val items = maComp.makeArray.items.take(maComp.maxExpanded).toList
-    val itemsComps = items.map(collection(_))
-    itemsComps.foreach(decompose)
+    // Decompose each of the existing items
+    for(item <- maComp.makeArray.items.take(maxExpanded)) {
+      val itemComp = collection(item)
+      decompose(itemComp)
+    }
     // Make range based on the ranges of the items
     generateRange(maComp)
+
+    // All item components used in the generation of this MakeArray, newly expanded or otherwise
+    val itemComps = for(item <- maComp.makeArray.items.take(maComp.maxExpanded)) yield collection(item)
     // The range for this component is complete if the number of items and each item have complete ranges
     // This also implies that the component is fully refined because there are no subproblems
-    maComp.fullyEnumerated = numItemsComp.fullyEnumerated && itemsComps.forall(_.fullyEnumerated)
+    maComp.fullyEnumerated = numItemsComp.fullyEnumerated && itemComps.forall(_.fullyEnumerated)
     maComp.fullyRefined = maComp.fullyEnumerated
   }
 
@@ -137,7 +143,7 @@ class FlatStrategy(collection: ComponentCollection, updates: Set[ProblemComponen
    * @param atomicComp Atomic component to process. This should not be called on a component we previously processed,
    * including fully refined components.
    */
-  def processAtomic(atomicComp: AtomicComponent[_]): Unit = {
+  def processAtomic[V](atomicComp: AtomicComponent[V]): Unit = {
     // An atomic element has no args; simply generate its range
     generateRange(atomicComp)
     // Decide if the component is fully enumerated/refined based on the ranging strategy used
@@ -150,7 +156,7 @@ class FlatStrategy(collection: ComponentCollection, updates: Set[ProblemComponen
    * @param comp Component to process. This should not be called on a component we previously processed, including fully
    * refined components.
    */
-  def process(comp: ProblemComponent[_]): Unit = {
+  def process[V](comp: ProblemComponent[V]): Unit = {
     // Decompose the args of this component
     val argComps = comp.element.args.map(collection(_))
     argComps.foreach(decompose)
