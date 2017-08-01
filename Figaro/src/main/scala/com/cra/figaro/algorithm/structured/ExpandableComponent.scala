@@ -30,8 +30,7 @@ abstract class ExpandableComponent[ParentValue, Value](problem: Problem, parent:
   def expand() {
     if (problem.collection.contains(parent)) {
       val parentValues = problem.collection(parent).range.regularValues
-      val unexpanded = parentValues -- subproblems.keySet
-      for (parentValue <- unexpanded) expand(parentValue)
+      for (parentValue <- parentValues if !subproblems.contains(parentValue)) expand(parentValue)
     }
   }
 
