@@ -13,14 +13,29 @@
 package com.cra.figaro.util.visualization.distribution
 
 import java.awt.Color
-import java.awt.event._
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import java.awt.event.MouseEvent
 import java.awt.geom.Rectangle2D
 import java.text.NumberFormat
+
+import scala.collection.JavaConverters
+import scala.swing.Alignment
+import scala.swing.BorderPanel
+import scala.swing.BorderPanel.Position.Center
+import scala.swing.BorderPanel.Position.North
+import scala.swing.BoxPanel
+import scala.swing.Component
+import scala.swing.Dimension
+import scala.swing.Label
+import scala.swing.Orientation
+
+import com.cra.figaro.util.visualization.DataView
+import com.cra.figaro.util.visualization.ResultsGUI.TAB_HEIGHT
+import com.cra.figaro.util.visualization.ResultsGUI.TAB_WIDTH
+
 import javax.swing.BorderFactory
 import javax.swing.Box
-import scala.collection.JavaConversions
-import scala.swing._
-import scala.swing.BorderPanel.Position._
 import prefuse.Constants
 import prefuse.Display
 import prefuse.Visualization
@@ -28,28 +43,20 @@ import prefuse.action.ActionList
 import prefuse.action.RepaintAction
 import prefuse.action.assignment.ColorAction
 import prefuse.action.filter.VisibilityFilter
-import prefuse.action.layout.AxisLayout
 import prefuse.action.layout.AxisLabelLayout
+import prefuse.action.layout.AxisLayout
 import prefuse.controls.ControlAdapter
-import prefuse.data.Table
 import prefuse.data.expression.AndPredicate
-import prefuse.data.expression.Expression
-import prefuse.data.expression.Predicate
 import prefuse.data.expression.parser.ExpressionParser
-import prefuse.data.io.CSVTableReader
-import prefuse.data.query.NumberRangeModel
 import prefuse.data.query.RangeQueryBinding
-import prefuse.render.RendererFactory
 import prefuse.render.AxisRenderer
+import prefuse.render.RendererFactory
 import prefuse.util.ColorLib
 import prefuse.util.FontLib
 import prefuse.util.UpdateListener
-import prefuse.util.ui.JFastLabel
 import prefuse.util.ui.UILib
 import prefuse.visual.VisualItem
 import prefuse.visual.expression.VisiblePredicate
-import com.cra.figaro.util.visualization.ResultsGUI._
-import com.cra.figaro.util.visualization.DataView
 
 /**
  * @author Glenn Takata (gtakata@cra.com)
@@ -188,7 +195,7 @@ class Distribution(val dataview: DataView, var color: String) extends BorderPane
         val table = dataview.getTable
         val filter = ExpressionParser.predicate("Name = " + item.getSourceTuple.get("Name"))
         val rows = table.rows(filter)
-        for (item <- JavaConversions.asScalaIterator(table.tuples(rows))) {
+        for (item <- JavaConverters.asScalaIterator(table.tuples(rows))) {
           println(item)
         }
       }

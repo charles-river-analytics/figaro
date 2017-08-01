@@ -68,7 +68,7 @@ class SelectableSetTest extends WordSpec with PrivateMethodTester with Matchers 
     "take roughly constant time for insertion" taggedAs (Performance) in {
       val small = 2000
       val large = 4000
-      def insert(n: Int)() = {
+      def insert(n: Int) = () => {
         val s = new HashSelectableSet[Int]
         for { j <- 1 to n } s.add(j)
       }
@@ -82,7 +82,7 @@ class SelectableSetTest extends WordSpec with PrivateMethodTester with Matchers 
     "take roughly constant time for removal" taggedAs (Performance) in {
       val small = 2000
       val large = 4000
-      def remove(n: Int, s: SelectableSet[Int])() = {
+      def remove(n: Int, s: SelectableSet[Int]) = () => {
         val copy = s.clone
         for { j <- 1 to n } copy.remove(j)
       }
@@ -100,8 +100,8 @@ class SelectableSetTest extends WordSpec with PrivateMethodTester with Matchers 
     "take roughly constant time for searching" taggedAs (Performance) in {
       val small = 2000
       val large = 4000
-      def search(n: Int, s: SelectableSet[Int])() =
-        for { j <- 1 to 2 * n } s.contains(j) // search for both present and absent elements
+      def search(n: Int, s: SelectableSet[Int]) =
+        () => for { j <- 1 to 2 * n } s.contains(j) // search for both present and absent elements
       val s1 = new HashSelectableSet[Int]
       for { j <- 1 to small } s1.add(j)
       val s2 = new HashSelectableSet[Int]
@@ -116,8 +116,8 @@ class SelectableSetTest extends WordSpec with PrivateMethodTester with Matchers 
     "take roughly log n time for selection" taggedAs (Performance) in {
       val small = 1024
       val large = 2048
-      def select(n: Int, s: SelectableSet[Double])() =
-        for { j <- 1 to n } s.select()
+      def select(n: Int, s: SelectableSet[Double]) =
+        () => for { j <- 1 to n } s.select()
       val s1 = new HashSelectableSet[Double]
       for { j <- 1 to small } s1.add(random.nextDouble())
       val s2 = new HashSelectableSet[Double]
@@ -130,8 +130,7 @@ class SelectableSetTest extends WordSpec with PrivateMethodTester with Matchers 
     }
 
     "take roughly linear time for enumeration" taggedAs (Performance) in {
-      def enumerate(s: SelectableSet[Double])() =
-        s.toList
+      def enumerate(s: SelectableSet[Double])= () => s.toList
       val size1 = 1000
       val size2 = 2000
       val size3 = 3000
