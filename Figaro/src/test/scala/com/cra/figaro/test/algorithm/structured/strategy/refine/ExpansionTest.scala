@@ -27,10 +27,8 @@ import com.cra.figaro.library.atomic.discrete._
 import com.cra.figaro.library.compound.If
 import org.scalatest.{Matchers, WordSpec}
 
-import scala.collection.mutable
-
 class ExpansionTest extends WordSpec with Matchers {
-  "A complete bottom-up strategy" should {
+  "A complete expansion strategy" should {
     "create ranges for all components" in {
       Universe.createNew()
       val e1 = Flip(0.3)
@@ -115,7 +113,7 @@ class ExpansionTest extends WordSpec with Matchers {
         val e2 = Flip(e1)
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1, e2))
-        new ExpansionStrategy(pr, true, pr.targetComponents).execute()
+        new ExpansionStrategy(pr, pr.targetComponents).execute()
       }*/
     }
 
@@ -204,32 +202,6 @@ class ExpansionTest extends WordSpec with Matchers {
         pr.solution should be(empty)
       }
     }
-
-    // TODO fix these
-//    "mark visited components as done" in {
-//      Universe.createNew()
-//      val e1 = Flip(0.3)
-//      val e2 = If(e1, Select(0.1 -> 1, 0.9 -> 2), discrete.Uniform(3, 4))
-//      val cc = new ComponentCollection
-//      val pr = new Problem(cc, List(e1, e2))
-//      val done = mutable.Set[ProblemComponent[_]]()
-//      new ExpansionStrategy(pr, pr.targetComponents, done).execute()
-//      done.size should be(4)
-//    }
-//
-//    "not decompose components in the done set" in {
-//      Universe.createNew()
-//      val e1 = discrete.Uniform(1, 2, 3)
-//      val cc = new ComponentCollection
-//      val pr = new Problem(cc, List(e1))
-//      val c1 = cc(e1)
-//      val done = mutable.Set[ProblemComponent[_]](c1)
-//      new ExpansionStrategy(pr, pr.targetComponents, done).execute()
-//
-//      c1.variable.valueSet.regularValues should be(empty)
-//      c1.nonConstraintFactors() should be(empty)
-//      c1.constraintFactors(Lower) should be(empty)
-//    }
 
     "correctly mark components as fully enumerated and refined" when {
       "a top-level component has finite support" in {
@@ -395,37 +367,6 @@ class ExpansionTest extends WordSpec with Matchers {
         cc(e3).fullyEnumerated should be(true)
         cc(e3).fullyRefined should be(false)
       }
-
-      // TODO fix
-//      "mark nested problems as open, then closed" in {
-//        Universe.createNew()
-//        val e1 = Flip(0.3)
-//        val e2 = If(e1, Constant(0), discrete.Uniform(1, 2))
-//        val cc = new ComponentCollection
-//        val pr = new Problem(cc, List(e2))
-//        // We test that the strategy marks the problem as open by putting a test inside the recursiveExecute method in
-//        // the recursing strategy. To ensure that the test is executed exactly twice, we have this counter.
-//        var counter = 0
-//        val strategy = new ExpansionStrategy(pr, pr.targetComponents) {
-//          override def recurse(nestedProblem: NestedProblem[_]): Option[DecompositionStrategy] = {
-//            val recursiveStrategy =
-//              new ExpansionStrategy(nestedProblem, nestedProblem.targetComponents) {
-//                override def recursiveExecute(): Unit = {
-//                  super.recursiveExecute()
-//                  counter += 1
-//                  nestedProblem.open should be(true)
-//                }
-//              }
-//            Some(recursiveStrategy)
-//          }
-//        }
-//        strategy.execute()
-//
-//        counter should equal(2)
-//        for(subproblem <- cc(e2).subproblems.values) {
-//          subproblem.open should be(false)
-//        }
-//      }
     }
 
     "memoize subproblems" in {
@@ -476,7 +417,7 @@ class ExpansionTest extends WordSpec with Matchers {
     else memoGeometric().map(_ + 1)
   }
 
-  "A partial bottom-up strategy" when {
+  "A partial expansion strategy" when {
     "called once" should {
       "produce the correct range" in {
         Universe.createNew()
@@ -522,6 +463,34 @@ class ExpansionTest extends WordSpec with Matchers {
         // Therefore, we should only recurse on subproblems of e1 twice
         cc(e1).range.regularValues should equal(Set(1, 2))
         cc(e2).range.regularValues should equal(Set(0, 1, 2))
+      }
+
+      "correctly backtrack when a component is processed multiple times at different depths" in {
+        Universe.createNew()
+        val g = (i: Int) => Select(0.5 -> i, 0.5 -> (i + 1))
+        val e1 = Flip(0.2)
+        val e2 = Chain(e1, (b: Boolean) => if(b) Constant(1) else Chain(g(0), g))
+        val e3 = Chain(e2, g)
+        val cc = new ComponentCollection
+        val pr = new Problem(cc, List(e3))
+        pr.add(e1)
+        pr.add(e2)
+        val c2 = cc(e2)
+        val c3 = cc(e3)
+        val strategy = new ExpansionStrategy(pr, pr.targetComponents, 1)
+        strategy.execute()
+
+        // Expanding this problem proceeds depth-first from e3. It first goes through the Chain parents, which means
+        // that e2 is processed before e3. At this point, the value set of e2 is {1,*}, and subproblems for g with
+        // parent values 0 and 1 have been created but not visited. When e3 gets visited, the subproblem of g with
+        // parent value 1 is visited at greater depth. This forces an update to e2, addint 2 to its range. Now, the
+        // subproblem of g with parent value 2 gets expanded and visited, too. This does not force an update to e2
+        // because e2 does not use the subproblem of g corresponding to the parent value 2. So, the end result is that
+        // the only subproblem not fully refined is the subproblem of g with parent value 0.
+        c2.range.hasStar should be(true)
+        c2.range.regularValues should equal(Set(1, 2))
+        c3.range.hasStar should be(true)
+        c3.range.regularValues should equal(Set(1, 2, 3))
       }
     }
 

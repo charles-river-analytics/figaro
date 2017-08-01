@@ -20,10 +20,8 @@ import com.cra.figaro.library.atomic.continuous.{Normal, Uniform}
 import com.cra.figaro.library.compound.If
 import org.scalatest.{Matchers, WordSpec}
 
-import scala.collection.mutable
-
 class FlatTest extends WordSpec with Matchers {
-  "A top-down strategy" should {
+  "A top-down flat refining strategy" should {
     "update ranges to be consistent" in {
       Universe.createNew()
       val e1 = Normal(0.0, 1.0)
@@ -109,27 +107,26 @@ class FlatTest extends WordSpec with Matchers {
       }
     }
 
-    // TODO fix
-//    "stop at fully refined components" in {
-//      Universe.createNew()
-//      val e1 = Uniform(0.0, 1.0)
-//      val e2 = Flip(e1)
-//      val e3 = If(e2, 1.0, 2.0)
-//      val e4 = e1 ++ e3
-//
-//      val cc = new ComponentCollection
-//      val pr = new Problem(cc, List(e4))
-//      new ExpansionStrategy(pr, pr.targetComponents).execute()
-//      val c1 = cc(e1)
-//      val c2 = cc(e2)
-//      val c4 = cc(e4)
-//      val done = mutable.Set[ProblemComponent[_]]()
-//      FlatStrategy.topDown(cc, c1).execute()
-//
-//      // e2 should be fully enumerated, which makes e3 fully refined
-//      // This should not stop e4 from getting refined, since it also uses e1 directly
-//      done should equal(Set(c1, c2, c4))
-//    }
+    "stop at fully refined components" in {
+      Universe.createNew()
+      val e1 = Uniform(0.0, 1.0)
+      val e2 = Flip(e1)
+      val e3 = If(e2, 1.0, 2.0)
+      val e4 = e1 ++ e3
+
+      val cc = new ComponentCollection
+      val pr = new Problem(cc, List(e4))
+      new ExpansionStrategy(pr, pr.targetComponents).execute()
+      val c1 = cc(e1)
+      val c2 = cc(e2)
+      val c4 = cc(e4)
+      val strategy = FlatStrategy.topDown(cc, c1)
+      strategy.execute()
+
+      // e2 should be fully enumerated, which makes e3 fully refined
+      // This should not stop e4 from getting refined, since it also uses e1 directly
+      strategy.done should equal(Set(c1, c2, c4))
+    }
 
     "ignore dependent elements not in the collection" in {
       Universe.createNew()
