@@ -44,9 +44,8 @@ class ExpansionStrategy(problem: Problem, initialComponents: List[ProblemCompone
   private[figaro] val directUpdates = mutable.Map[ProblemComponent[_], Set[ProblemComponent[_]]]().withDefaultValue(Set())
 
   /**
-   * Get the problem component associated with an element. This may involve adding the element to the collection if a
+   * Get the problem component associated with an element. This involves adding the element to the collection if a
    * problem component has not yet been created.
-   * @param element Element for which to return a problem component.
    */
   protected def checkArg[T](element: Element[T]): ProblemComponent[T] = {
     if(collection.contains(element)) collection(element)
@@ -87,11 +86,13 @@ class ExpansionStrategy(problem: Problem, initialComponents: List[ProblemCompone
         case maComp: MakeArrayComponent[_] =>
           processMakeArray(maComp, depth)
         case atomicComp: AtomicComponent[_] =>
-          processAtomic(atomicComp)
+          // For atomic components, the depth of expansion does not matter, as long as it is not -1.
+          // However, we only visit each atomic component once (to avoid indefinitely refining an infinite atomic).
+          if(!depths.contains(atomicComp)) processAtomic(atomicComp)
         case _ =>
           process(comp, depth)
       }
-      // Also used to track which comps/problems have been modified
+      // Also used to track which components/problems have been modified
       depths(comp) = depth
       // Update any dependencies in a top-down recursive manner
       val updatesNeeded = util.reachable((pc: ProblemComponent[_]) => directUpdates(pc), false, comp)
@@ -104,20 +105,50 @@ class ExpansionStrategy(problem: Problem, initialComponents: List[ProblemCompone
    * @param chainComp Chain component to process.
    * @param depth Depth of expansion with respect to this component.
    */
-  def processChain(chainComp: ChainComponent[_, _], depth: Int): Unit = {
-    // Decompose the parent to get values for expansion
+  def processChain[P, V](chainComp: ChainComponent[P, V], depth: Int): Unit = {
     val parentComp = checkArg(chainComp.chain.parent)
-    decompose(parentComp, depth)
-    directUpdates(parentComp) += chainComp
-    // Ensure expansions exist for each parent value
-    chainComp.expand()
-    // Recurse on subproblems
-    val subproblems = chainComp.subproblems.values
-    for(subproblem <- subproblems) {
+    // If updates to any of the component's arguments or subproblems force updates to other arguments or subproblems,
+    // we don't need/want them to propagate down to this component until all such components have been processed.
+    // We will add these back later.
+    directUpdates(parentComp) -= chainComp
+    for(parentValue <- parentComp.range.regularValues if chainComp.subproblems.contains(parentValue)) {
+      val subproblem = chainComp.subproblems(parentValue)
       val target = checkArg(subproblem.target)
-      decompose(target, depth - 1)
-      directUpdates(target) += chainComp
+      directUpdates(target) -= chainComp
     }
+
+    // Decompose the parent to get values for expansion
+    decompose(parentComp, depth)
+    // It is possible that visiting the subproblems results in a change in the range of the parent. If this happens, we
+    // have to start over again. This can only happen finitely many times when expanding to a finite depth, however.
+    // This is taken care of in the loop below.
+    var continue = true
+    while(continue) {
+      // Record the current regular values of the parent. These may change as a result of visiting the subproblems.
+      val parentValues = parentComp.range.regularValues
+      // Ensure expansions exist for each parent value
+      chainComp.expand()
+      // Recurse on subproblems for each parent value. It's possible for there to exist subproblems that are no longer
+      // used due to a change in range of the parent; we ignore these subproblems.
+      for(parentValue <- parentValues) {
+        val subproblem = chainComp.subproblems(parentValue)
+        val target = checkArg(subproblem.target)
+        decompose(target, depth - 1)
+      }
+      // If any new parent values were added, we repeat this process
+      continue = parentValues != parentComp.range.regularValues
+    }
+
+    // (Re-)insert this component as a component that may need updates
+    directUpdates(parentComp) += chainComp
+    // This simultaneously performs the insertion and gets all of the subproblems
+    val subproblems = for(parentValue <- parentComp.range.regularValues) yield {
+      val subproblem = chainComp.subproblems(parentValue)
+      val target = checkArg(subproblem.target)
+      directUpdates(target) += chainComp
+      subproblem
+    }
+
     // Make range based on the refinement of the subproblems
     generateRange(chainComp)
     // The range for this component is complete if the range of the parent is complete (and therefore no further
@@ -133,20 +164,46 @@ class ExpansionStrategy(problem: Problem, initialComponents: List[ProblemCompone
    * @param maComp MakeArray component to process.
    * @param depth Depth of expansion.
    */
-  def processMakeArray(maComp: MakeArrayComponent[_], depth: Int): Unit = {
+  def processMakeArray[V](maComp: MakeArrayComponent[V], depth: Int): Unit = {
     // Decompose the number of items component to get the maximum number of expansions
     val numItemsComp = checkArg(maComp.makeArray.numItems)
-    decompose(numItemsComp, depth)
-    directUpdates(numItemsComp) += maComp
-    // Ensure expansions exist up to the maximum number of items
-    maComp.expand()
-    // Decompose each of the items
-    val items = maComp.makeArray.items.take(maComp.maxExpanded).toList
-    val itemsComps = items.map(checkArg(_))
-    for(ic <- itemsComps) {
-      decompose(ic, depth - 1)
-      directUpdates(ic) += maComp
+    // If updates to any of the component's arguments force updates to other arguments, we don't need/want them to
+    // propagate down to this component until all such components have been processed. We will add these back later.
+    directUpdates(numItemsComp) -= maComp
+    for(item <- maComp.makeArray.items.take(maComp.maxExpanded)) {
+      val itemComp = checkArg(item)
+      directUpdates(itemComp) -= maComp
     }
+
+    // Decompose the parent to get the maximum number of items to expand
+    decompose(numItemsComp, depth)
+    // It is possible that visiting the items results in a change in the range of the number of items. If this happens,
+    // we have to start over again. This can only happen finitely many times when expanding to a finite depth, however.
+    // This is taken care of in the loop below.
+    var continue = true
+    while(continue) {
+      // Record the current maximum value of the parent. These may change as a result of visiting the items.
+      val maxExpanded = numItemsComp.range.regularValues.max
+      // Ensure enough expansions exist
+      maComp.expand()
+      // Decompose each of the items
+      for(item <- maComp.makeArray.items.take(maComp.maxExpanded)) {
+        val itemComp = checkArg(item)
+        decompose(itemComp, depth - 1)
+      }
+      // If greater values were added to the number of items component, we must repeat
+      continue = maxExpanded < numItemsComp.range.regularValues.max
+    }
+
+    // (Re-)insert this component as a component that may need updates
+    directUpdates(numItemsComp) += maComp
+    // This simultaneously performs the insertion and gets all of the items
+    val itemsComps = for(item <- maComp.makeArray.items.take(maComp.maxExpanded)) yield {
+      val itemComp = checkArg(item)
+      directUpdates(itemComp) += maComp
+      itemComp
+    }
+
     // Make range based on the ranges of the items
     generateRange(maComp)
     // The range for this component is complete if the number of items and each item have complete ranges
@@ -159,7 +216,7 @@ class ExpansionStrategy(problem: Problem, initialComponents: List[ProblemCompone
    * Generate the range for the given atomic component. Mark it as fully refined or enumerated if applicable.
    * @param atomicComp Atomic component to process.
    */
-  def processAtomic(atomicComp: AtomicComponent[_]): Unit = {
+  def processAtomic[V](atomicComp: AtomicComponent[V]): Unit = {
     // An atomic element has no args; simply generate its range
     generateRange(atomicComp)
     // Decide if the component is fully enumerated/refined based on the ranging strategy used
@@ -172,14 +229,23 @@ class ExpansionStrategy(problem: Problem, initialComponents: List[ProblemCompone
    * @param comp Component to process.
    * @param depth Depth of expansion.
    */
-  def process(comp: ProblemComponent[_], depth: Int): Unit = {
-    // Decompose the args of this component
+  def process[V](comp: ProblemComponent[V], depth: Int): Unit = {
     val argComps = comp.element.args.map(checkArg(_))
+    // If updates to any of this component's arguments force updates to other arguments, we don't need/want them to
+    // propagate down to this component until all such components have been processed. We will add these back later.
+    for(ac <- argComps) {
+      directUpdates(ac) -= comp
+    }
+    // Decompose the args of this component
     for(ac <- argComps) {
       // TODO should we decrement the depth when processing an Apply component?
       decompose(ac, depth)
+    }
+    // (Re-)insert this component as a component that may need updates
+    for(ac <- argComps) {
       directUpdates(ac) += comp
     }
+
     // Make range based on the ranges of the args
     generateRange(comp)
     // We need to know if all args are fully enumerated to determine the enumeration and refinement status
