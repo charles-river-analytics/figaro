@@ -50,6 +50,7 @@ import prefuse.visual.VisualItem
 import prefuse.visual.expression.VisiblePredicate
 import com.cra.figaro.util.visualization.ResultsGUI._
 import com.cra.figaro.util.visualization.DataView
+import scala.collection.JavaConverters
 
 /**
  * @author Glenn Takata (gtakata@cra.com)
@@ -192,7 +193,7 @@ class Histogram(val dataview: DataView, var color: String) extends BorderPanel {
         val table = dataview.getTable
         val filter = ExpressionParser.predicate("Name = " + item.getSourceTuple.get("Name"))
         val rows = table.rows(filter)
-        for (item <- JavaConversions.asScalaIterator(table.tuples(rows))) {
+        for (item <- JavaConverters.asScalaIterator(table.tuples(rows))) {
           println(item)
         }
       }

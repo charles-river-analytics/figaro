@@ -234,7 +234,7 @@ class VETest extends WordSpec with Matchers {
       }
       val factors1 = make(small)
       val factors2 = make(large)
-      def order(factors: Traversable[Factor[Double]])() =
+      def order(factors: Traversable[Factor[Double]]) = () =>
         VariableElimination.eliminationOrder(factors, List())._2
       val time1 = measureTime(order(factors1), 20, 100)
       val time2 = measureTime(order(factors2), 20, 100)

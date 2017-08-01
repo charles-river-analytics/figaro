@@ -22,6 +22,7 @@ import prefuse.util.ui.ValuedRangeModel
 import scala.collection.JavaConversions
 
 import com.cra.figaro.util.visualization.DataView
+import scala.collection.JavaConverters
 
 /**
  * @author Glenn Takata
@@ -35,7 +36,7 @@ class ResultsView[T](data: ResultsData) extends DataView {
   def nValues = data.distribution.size
   
   def range: ValuedRangeModel = {
-    val values = JavaConversions.asJavaCollection(data.distribution.map(_._2)).toArray()
+    val values = JavaConverters.asJavaCollection(data.distribution.map(_._2)).toArray()
     new ObjectRangeModel(values.asInstanceOf[Array[Object]])
   }
  

@@ -119,7 +119,7 @@ class PriorityMapTest extends WordSpec with Matchers {
     "take roughly log n time for inserting" taggedAs (Performance) in {
       val small = 256
       val large = 512
-      def insert(n: Int)() = {
+      def insert(n: Int) = () => {
         val h = new HeapPriorityMap[Int, Double]
         for { j <- 1 to n } h += j -> random.nextDouble()
       }
@@ -133,7 +133,7 @@ class PriorityMapTest extends WordSpec with Matchers {
     "take roughly log n time for extracting the minimum element" taggedAs (Performance) in {
       val small = 256
       val large = 512
-      def extract(pm: HeapPriorityMap[Int, Double])() = {
+      def extract(pm: HeapPriorityMap[Int, Double]) = () => {
         val pm2 = pm.clone
         while (pm2.nonEmpty) pm2.extractMin()
       }

@@ -30,7 +30,7 @@ class MultiValuedTest extends WordSpec with Matchers {
 
       val specialComponent1 = new Component { override val name = "Special 1" }
 
-      def makeComponent() = Select(0.2 -> specialComponent1, 0.8 -> new Component)
+      def makeComponent = () => Select(0.2 -> specialComponent1, 0.8 -> new Component)
 
       class Container extends ElementCollection {
         val components = MakeList(Select(0.3 -> 1, 0.7 -> 2), makeComponent)("components", this)
@@ -66,7 +66,7 @@ class MultiValuedTest extends WordSpec with Matchers {
 
       val specialComponent1 = new Component { override val name = "Special 1" }
 
-      def makeComponent() = Select(0.2 -> specialComponent1, 0.8 -> new Component)
+      def makeComponent = () => Select(0.2 -> specialComponent1, 0.8 -> new Component)
 
       class Container extends ElementCollection {
         val components = MakeList(Select(0.3 -> 1, 0.7 -> 2), makeComponent)("components", this)
@@ -102,7 +102,7 @@ class MultiValuedTest extends WordSpec with Matchers {
 
       val specialComponent1 = new Component { override val name = "Special 1" }
 
-      def makeComponent() = Select(0.2 -> specialComponent1, 0.8 -> new Component)
+      def makeComponent = () => Select(0.2 -> specialComponent1, 0.8 -> new Component)
 
       class Container extends ElementCollection {
         val components = MakeList(Select(0.3 -> 1, 0.7 -> 2), makeComponent)("components", this)
