@@ -1,5 +1,5 @@
 /*
- * FlatTest.scala
+ * FlatStrategyTest.scala
  * Tests for flat strategies.
  *
  * Created By:      William Kretschmer (kretsch@mit.edu)
@@ -20,7 +20,7 @@ import com.cra.figaro.library.atomic.continuous.{Normal, Uniform}
 import com.cra.figaro.library.compound.If
 import org.scalatest.{Matchers, WordSpec}
 
-class FlatTest extends WordSpec with Matchers {
+class FlatStrategyTest extends WordSpec with Matchers {
   "A top-down flat refining strategy" should {
     "update ranges to be consistent" in {
       Universe.createNew()

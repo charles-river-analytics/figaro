@@ -1,5 +1,5 @@
 /*
- * ExpansionTest.scala
+ * ExpansionStrategyTest.scala
  * Tests for expansion strategies.
  *
  * Created By:      William Kretschmer (kretsch@mit.edu)
@@ -27,7 +27,7 @@ import com.cra.figaro.library.atomic.discrete._
 import com.cra.figaro.library.compound.If
 import org.scalatest.{Matchers, WordSpec}
 
-class ExpansionTest extends WordSpec with Matchers {
+class ExpansionStrategyTest extends WordSpec with Matchers {
   "A complete expansion strategy" should {
     "create ranges for all components" in {
       Universe.createNew()
