@@ -46,6 +46,12 @@ object ComponentHash {
  */
 class ComponentCollection {
   /**
+   * An expansion is defined by a generative process (a function) that produces an element, and a parent value used as
+   * the argument to the function.
+   */
+  type Expansion = (_ => Element[_], _)
+
+  /**
    * Ranging strategy for atomic components. Initially uses the default non-lazy method that samples infinite atomics.
    */
   var rangingStrategy: RangingStrategy = RangingStrategy.default(ParticleGenerator.defaultNumSamplesFromAtomics)
@@ -73,72 +79,86 @@ class ComponentCollection {
   var intermediates: Set[Variable[_]] = Set()
 
   /**
-   * A map from a function and parent value to the sequence of associated subproblems. A function and parent value are
-   * only expanded more than once if this particular expansion calls itself recursively, indirectly or directly. The
-   * sequence of subproblems is sorted by depth of expansion. So, the head of the sequence is the first subproblem to
-   * have been expanded. Furthermore, this gives rise to an invariant that a subproblem in the sequence uses all later
-   * subproblems in the sequence.
+   * Maps an expansion to the set of expansions that it uses without incrementing depth. This is populated greedily, in
+   * the sense that an expansion will always try to use another expansion at the same depth if it does not create a
+   * cycle.
    */
-  val expansions: Map[(Function1[_, Element[_]], _), IndexedSeq[NestedProblem[_]]] = Map()
+  private[figaro] val expansionToLevel: Map[Expansion, Set[Expansion]] = Map()
 
   /**
-   * A map from a subproblem to the set of expandable components that use it.
+   * The complement of `expansionToLevel`. This maps an expansion `x` to the set of other expansions `y` with the
+   * property that expanding a subproblem for `y` from a subproblem for `x` must increment the depth.
    */
-  val expandableComponents: Map[NestedProblem[_], Set[ExpandableComponent[_, _]]] = Map()
+  private[figaro] val expansionToDeeper: Map[Expansion, Set[Expansion]] = Map()
 
   /**
-   * Tests if the adding the subproblem to the given component would create a cycle in the subproblem graph.
+   * Tests if there exists a path from `from` to `to` in the directed graph induced by `expansionToLevel`. This is
+   * generally used to test if adding an edge from `to` to `from` would create a cycle.
    */
-  private[figaro] def createsCycle[P, V](component: ExpandableComponent[P, V], nestedProblem: NestedProblem[V]): Boolean = {
+  private[figaro] def levelPathExists(from: Expansion, to: Expansion): Boolean = {
     // TODO consider using a dedicated incremental cycle detection data structure and algorithm for improved efficiency
     // TODO consider a different version of ComponentCollection that avoids this computation for non-lazy algorithms
-    // For now, the current implementation just does a breadth first search from the component problem to see if there
-    // exists a path from nestedProblem to component via the problem graph
-    component.problem match {
-      case componentProblem: NestedProblem[_] =>
-        // Does nestedProblem ever use component.problem?
-        // Test by searching backwards from component.problem through the expandable components that use it
-        @tailrec def bfs(problems: Set[NestedProblem[_]]): Boolean = {
-          if(problems.contains(nestedProblem)) true
-          else if(problems.isEmpty) false
-          else {
-            // Map current problems to the set of problems that use them
-            val next = problems.flatMap(expandableComponents(_)).map(_.problem).collect{ case np: NestedProblem[_] => np }
-            bfs(next)
-          }
-        }
-
-        bfs(Set(componentProblem))
-      case _ => false
+    @tailrec
+    def bfs(expansions: Set[Expansion]): Boolean = {
+      if(expansions.isEmpty) false
+      else if(expansions.contains(to)) true
+      else bfs(expansions.flatMap(expansionToLevel.getOrElseUpdate(_, Set())))
     }
+    bfs(Set(from))
   }
 
   /**
-   *  Get the nested subproblem associated with a particular function and parent value. Checks in the cache if there is
-   *  an expansion that does not create a cyclic dependency. If such an expansion exists, it is returned. Otherwise, a
-   *  new expansion is created and stored in the collection.
+   * Bijectively maps an expansion and a depth to a corresponding problem. The inverse map is `problemToExpansion`.
    */
-  private[structured] def expansion[P, V](component: ExpandableComponent[P, V], function: Function1[P, Element[V]], parentValue: P): NestedProblem[V] = {
-    val seq = expansions.getOrElse((function, parentValue), Vector()).asInstanceOf[IndexedSeq[NestedProblem[V]]]
-    // Look for the first copy of the appropriate subproblem that does not produce a cycle
-    // Note: it is unclear if/when this greedy solution is optimal. However, it guarantees that the number of copies of
-    // a subproblem is at most linear in the depth of expansion (as opposed to the possible exponential growth that
-    // results from using no memoization at all).
-    val resultOption = util.binarySearch(seq, (np: NestedProblem[V]) => !createsCycle(component, np))
-    resultOption match {
-      case Some(result) =>
-        // There exists a subproblem such that expanding to it does not create a cycle; return it
-        expandableComponents(result) += component
-        result.asInstanceOf[NestedProblem[V]]
-      case None =>
-        // All previously expanded copies of this subproblem create a cycle, or the subproblem has not yet been expanded
-        // at all (i.e. the sequence is empty)
-        // Make a new nested problem and add it to the end of the sequence before returning it
-        val result = new NestedProblem(this, component.expandFunction(parentValue))
-        expandableComponents += result -> Set(component)
-        expansions((function, parentValue)) = seq :+ result
-        result
+  private[figaro] val expansionToProblem: Map[(Expansion, Int), NestedProblem[_]] = Map()
+
+  /**
+   * Bijectively maps a subproblem to a corresponding expansion and a depth. The inverse map is `problemToExpansion`.
+   */
+  private[figaro] val problemToExpansion: Map[NestedProblem[_], (Expansion, Int)] = Map()
+
+  /**
+   * Maps a nested problem to the set of expandable components that use it as a subproblem.
+   */
+  private[figaro] val expandableComponents: Map[NestedProblem[_], Set[ExpandableComponent[_, _]]] = Map()
+
+  /**
+   *  Get the nested subproblem associated with a particular function and parent value. The depth of the returned
+   *  problem is either equal to the depth of the component's problem, or is incremented by one, depending on whether
+   *  the expansion belongs to `expansionToLevel` or `expansionToDeeper`. The returned subproblem is cached by depth.
+   */
+  private[figaro] def expansion[P, V](component: ExpandableComponent[P, V], function: P => Element[V], parentValue: P): NestedProblem[V] = {
+    val newExpansion = (function, parentValue)
+    val depth = component.problem match {
+      case np: NestedProblem[_] =>
+        // Get the expansion that produced this nested problem
+        val (npExpansion, npDepth) = problemToExpansion(np)
+        // Look to see if we previously decided to increment the depth or not when making this expansion
+        val level = expansionToLevel.getOrElseUpdate(npExpansion, Set())
+        val deeper = expansionToDeeper.getOrElseUpdate(npExpansion, Set())
+        val incrementDepth =
+          if(level.contains(newExpansion)) false
+          else if(deeper.contains(newExpansion)) true
+          else {
+            // See if keeping the same depth when moving from the nested problem's expansion to this expansion would
+            // create a cycle, by testing if there is a path in the other direction
+            val levelPath = levelPathExists(newExpansion, npExpansion)
+            // Cache this edge in the expansion graph
+            if(levelPath) expansionToDeeper(npExpansion) = deeper + newExpansion
+            else expansionToLevel(npExpansion) = level + newExpansion
+            levelPath
+          }
+        if(incrementDepth) npDepth + 1 else npDepth
+      case _ => 0
     }
+    // Get the subproblem cached by function, parent value, and depth
+    val result =
+      expansionToProblem.getOrElseUpdate((newExpansion, depth), new NestedProblem(this, component.expandFunction(parentValue)))
+    // Mark the subproblem as used by the component
+    expandableComponents(result) = expandableComponents.getOrElse(result, Set()) + component
+    // Record the expansion and depth associated with the returned problem
+    problemToExpansion(result) = (newExpansion, depth)
+    result.asInstanceOf[NestedProblem[V]]
   }
 
   /**

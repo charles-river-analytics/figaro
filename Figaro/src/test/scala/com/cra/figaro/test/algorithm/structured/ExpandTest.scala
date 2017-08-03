@@ -39,8 +39,11 @@ class ExpandTest extends WordSpec with Matchers {
       c4.expand(false)
 
       val spr = c4.subproblems(false)
-      cc.expansions((f, false)) should have size 1
-      cc.expansions((f, false)).head should be theSameInstanceAs spr
+      cc.expansionToProblem should have size 1
+      cc.expansionToProblem(((f, false), 0)) should be theSameInstanceAs spr
+      cc.problemToExpansion should have size 1
+      cc.problemToExpansion(spr) should equal ((f, false), 0)
+      cc.expandableComponents should have size 1
       cc.expandableComponents(spr) should equal(Set(c4))
     }
 
@@ -61,14 +64,17 @@ class ExpandTest extends WordSpec with Matchers {
         val c5 = cc(e5)
         val c6 = cc(e6)
         c5.expand(false)
-        cc.createsCycle(c6, c5.subproblems(false)) should equal(false)
         c6.expand(false)
 
         val spr5 = c5.subproblems(false)
         val spr6 = c6.subproblems(false)
+
         spr5 should be theSameInstanceAs spr6
-        cc.expansions((f, false)) should have size 1
-        cc.expansions((f, false)).head should be theSameInstanceAs spr5
+        cc.expansionToProblem should have size 1
+        cc.expansionToProblem(((f, false), 0)) should be theSameInstanceAs spr5
+        cc.problemToExpansion should have size 1
+        cc.problemToExpansion(spr5) should equal ((f, false), 0)
+        cc.expandableComponents should have size 1
         cc.expandableComponents(spr5) should equal(Set(c5, c6))
       }
 
@@ -89,6 +95,14 @@ class ExpandTest extends WordSpec with Matchers {
 
         val sprTrue = c2.subproblems(true)
         val sprFalse = c2.subproblems(false)
+        cc.expansionToProblem(((chainFunction, true), 0)) should equal(sprTrue)
+        cc.expansionToProblem(((chainFunction, false), 0)) should equal(sprFalse)
+        cc.problemToExpansion(sprTrue) should equal(((chainFunction, true), 0))
+        cc.problemToExpansion(sprFalse) should equal(((chainFunction, false), 0))
+        cc.expandableComponents(sprTrue) should equal(Set(c2))
+        cc.expandableComponents(sprFalse) should equal(Set(c2))
+
+        // Expand the components of the true subproblem
         val e2True = sprTrue.target.asInstanceOf[Chain[Boolean, Boolean]]
         val e1True = e2True.parent
         sprTrue.add(e1True)
@@ -98,16 +112,24 @@ class ExpandTest extends WordSpec with Matchers {
         c1True.generateRange()
 
         // The collection should not allow the true subproblem to use itself; this is a direct recursion.
-        cc.createsCycle(c2True, sprTrue) should equal(true)
+        cc.levelPathExists((chainFunction, true), (chainFunction, true)) should equal(true)
         c2True.expand(true)
+        cc.expansionToDeeper((chainFunction, true)) should equal(Set((chainFunction, true)))
         val sprTrueTrue = c2True.subproblems(true)
         sprTrueTrue should not equal sprTrue
-        // However, the collection should allow the true subproblem to use the false subproblem
-        cc.createsCycle(c2True, sprFalse) should equal(false)
+        cc.expansionToProblem(((chainFunction, true), 1)) should equal(sprTrueTrue)
+        cc.problemToExpansion(sprTrueTrue) should equal(((chainFunction, true), 1))
+        cc.expandableComponents(sprTrueTrue) should equal(Set(c2True))
+
+        // However, the collection should allow the true subproblem to use the depth 0 false subproblem
+        cc.levelPathExists((chainFunction, false), (chainFunction, true)) should equal(false)
         c2True.expand(false)
+        cc.expansionToLevel((chainFunction, true)) should equal(Set((chainFunction, false)))
         val sprTrueFalse = c2True.subproblems(false)
         sprTrueFalse should equal(sprFalse)
+        cc.expandableComponents(sprTrueFalse) should equal(Set(c2, c2True))
 
+        // Expand the components of the false subproblem
         val e2False = sprFalse.target.asInstanceOf[Chain[Boolean, Boolean]]
         val e1False = e2False.parent
         sprFalse.add(e1False)
@@ -117,14 +139,15 @@ class ExpandTest extends WordSpec with Matchers {
         c1False.generateRange()
 
         // This creates a cycle because we already allowed the true subproblem to use the false subproblem; this is
-        // an indirect recursion. However, we should be able to use the depth 2 true subproblem from here. This tests
-        // that the collection always finds the shallowest available subproblem before expanding a new one.
-        cc.createsCycle(c2False, sprTrue) should equal(true)
-        cc.createsCycle(c2False, sprTrueTrue) should equal(false)
+        // an indirect recursion. However, we should be able to use the depth 1 true subproblem from here. This tests
+        // that the collection increments the depth when a cycle would be created in the expansion graph.
+        cc.levelPathExists((chainFunction, true), (chainFunction, false)) should equal(true)
         c2False.expand(true)
+        cc.expansionToDeeper((chainFunction, false)) should equal(Set((chainFunction, true)))
         val sprFalseTrue = c2True.subproblems(true)
         sprFalseTrue should not equal sprTrue
         sprFalseTrue should equal(sprTrueTrue)
+        cc.expandableComponents(sprTrueTrue) should equal(Set(c2True, c2False))
       }
     }
 
@@ -159,8 +182,7 @@ class ExpandTest extends WordSpec with Matchers {
       c4.expand(false)
       c4.expand(false)
 
-      cc.expansions.size should equal(1)
-      cc.expansions.head._2.size should equal(1)
+      cc.expansionToProblem.size should equal(1)
     }
 
     "at one parent value, not add the parent" in {
