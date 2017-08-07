@@ -1,6 +1,6 @@
 /*
- * FlatStrategyTest.scala
- * Tests for flat strategies.
+ * TopDownStrategyTest.scala
+ * Tests for top-down strategies.
  *
  * Created By:      William Kretschmer (kretsch@mit.edu)
  * Creation Date:   Nov 29, 2016
@@ -20,8 +20,8 @@ import com.cra.figaro.library.atomic.continuous.{Normal, Uniform}
 import com.cra.figaro.library.compound.If
 import org.scalatest.{Matchers, WordSpec}
 
-class FlatStrategyTest extends WordSpec with Matchers {
-  "A top-down flat refining strategy" should {
+class TopDownStrategyTest extends WordSpec with Matchers {
+  "A top-down refining strategy" should {
     "update ranges to be consistent" in {
       Universe.createNew()
       val e1 = Normal(0.0, 1.0)
@@ -31,8 +31,8 @@ class FlatStrategyTest extends WordSpec with Matchers {
       val c1 = cc(e1)
       val c2 = cc(e2)
       c1.ranger.asInstanceOf[SamplingRanger[Double]].samplesPerIteration = 10
-      new ExpansionStrategy(pr, pr.targetComponents).execute()
-      FlatStrategy.topDown(cc, c1).execute()
+      new BacktrackingStrategy(pr, pr.targetComponents).execute()
+      new TopDownStrategy(cc, c1).execute()
 
       val c2ExpectedValues = c1.range.regularValues.map(_ + 1)
       c2.range.regularValues should equal(c2ExpectedValues)
@@ -50,8 +50,8 @@ class FlatStrategyTest extends WordSpec with Matchers {
       val c2 = cc(e2)
       val c3 = cc(e3)
       c2.ranger.asInstanceOf[SamplingRanger[Double]].samplesPerIteration = 10
-      new ExpansionStrategy(pr, pr.targetComponents).execute()
-      FlatStrategy.topDown(cc, c2).execute()
+      new BacktrackingStrategy(pr, pr.targetComponents).execute()
+      new TopDownStrategy(cc, c2).execute()
 
       val c3ExpectedValues = c2.range.regularValues.map(_ + 1) + (-1.0, 1.0)
       c3.range.regularValues should equal(c3ExpectedValues)
@@ -68,8 +68,8 @@ class FlatStrategyTest extends WordSpec with Matchers {
       val c1 = cc(e1)
       val c2 = cc(e2)
       c1.ranger.asInstanceOf[SamplingRanger[Double]].samplesPerIteration = 15
-      new ExpansionStrategy(pr, pr.targetComponents).execute()
-      FlatStrategy.topDown(cc, c1).execute()
+      new BacktrackingStrategy(pr, pr.targetComponents).execute()
+      new TopDownStrategy(cc, c1).execute()
 
       // Factor lists each over one variable; each factor should have size equal to the range of the variable
       // The range should have 30 values because we take 15 samples twice
@@ -92,9 +92,9 @@ class FlatStrategyTest extends WordSpec with Matchers {
       val c1 = cc(e1)
       val c2 = cc(e2)
       c1.ranger.asInstanceOf[SamplingRanger[Double]].samplesPerIteration = 10
-      new ExpansionStrategy(pr, pr.targetComponents).execute()
+      new BacktrackingStrategy(pr, pr.targetComponents).execute()
       val initialSubproblems = c2.subproblems
-      FlatStrategy.topDown(cc, c1).execute()
+      new TopDownStrategy(cc, c1).execute()
 
       val newSubproblems = c2.subproblems -- initialSubproblems.keySet
       // Make sure it creates the correct number of new subproblems
@@ -116,11 +116,11 @@ class FlatStrategyTest extends WordSpec with Matchers {
 
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e4))
-      new ExpansionStrategy(pr, pr.targetComponents).execute()
+      new BacktrackingStrategy(pr, pr.targetComponents).execute()
       val c1 = cc(e1)
       val c2 = cc(e2)
       val c4 = cc(e4)
-      val strategy = FlatStrategy.topDown(cc, c1)
+      val strategy = new TopDownStrategy(cc, c1)
       strategy.execute()
 
       // e2 should be fully enumerated, which makes e3 fully refined
@@ -135,9 +135,9 @@ class FlatStrategyTest extends WordSpec with Matchers {
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e1))
       // Because we start at e1, e2 should not get added to the collection here
-      new ExpansionStrategy(pr, pr.targetComponents).execute()
+      new BacktrackingStrategy(pr, pr.targetComponents).execute()
       val c1 = cc(e1)
-      FlatStrategy.topDown(cc, c1).execute()
+      new TopDownStrategy(cc, c1).execute()
       cc.contains(e2) should equal(false)
     }
   }
