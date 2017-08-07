@@ -1,6 +1,6 @@
 /*
- * ExpansionStrategy.scala
- * Strategies that refine by expanding recursively.
+ * BacktrackingStrategy.scala
+ * Refining strategies that backtrack to make consistent updates.
  *
  * Created By:      William Kretschmer (kretsch@mit.edu)
  * Creation Date:   Jul 24, 2017
@@ -19,8 +19,15 @@ import com.cra.figaro.util
 import scala.collection.mutable
 
 /**
- * Refining strategies that start with a list of components belonging to a single problem, working bottom-up to
- * expand the model lazily by recursing through subproblems.
+ * Refining strategies that start with a list of components belonging to a single problem, working bottom-up to expand
+ * the model lazily. "Backtracking" refers to the fact that this strategy propagates updates to ensure consistency. For
+ * example, if refining the subproblem of an expandable component forces the creation of new subproblems, then the
+ * strategy expands subproblems again until this process terminates.
+ *
+ * In terms of performance characteristics, it is known that there exist models with n components for which this
+ * strategy requires Omega(n^2^) time. However, upper bounds on running time, as well as sufficient conditions for this
+ * algorithm to take linear time, remain open. For an alternative lazy algorithm with better understood performance,
+ * consider `RecursionDepthStrategy`.
  * @param problem Problem to refine.
  * @param initialComponents List of components belonging to the problem from which to begin bottom-up decomposition.
  * @param maxDepth Maximum depth of expansion from the initial components given. Depth is decremented each time the
@@ -28,8 +35,8 @@ import scala.collection.mutable
  * returns * for the range of a component. Thus, setting the maximum depth to 0 corresponds to not recursing at all.
  * Defaults to `Int.MaxValue` for expansion of the entire model (does not terminate on infinite models).
  */
-class ExpansionStrategy(problem: Problem, initialComponents: List[ProblemComponent[_]],
-                        maxDepth: Int = Int.MaxValue) extends RefiningStrategy(problem.collection) {
+class BacktrackingStrategy(problem: Problem, initialComponents: List[ProblemComponent[_]],
+                           maxDepth: Int = Int.MaxValue) extends RefiningStrategy(problem.collection) {
 
   /**
    * Map from problem components to the greatest depth at which that component has been visited. This also implicitly
@@ -57,7 +64,7 @@ class ExpansionStrategy(problem: Problem, initialComponents: List[ProblemCompone
    */
   override def execute(): Unit = {
     for(ic <- initialComponents) {
-      decompose(ic, maxDepth)
+      refine(ic, maxDepth)
     }
     markProblemsUnsolved(depths.map(_._1.problem).toSet)
   }
@@ -78,7 +85,7 @@ class ExpansionStrategy(problem: Problem, initialComponents: List[ProblemCompone
    * is fully refined or has already been expanded to the desired depth, this method does nothing.
    * @param depth Depth of expansion with respect to this component.
    */
-  def decompose(comp: ProblemComponent[_], depth: Int): Unit = {
+  def refine(comp: ProblemComponent[_], depth: Int): Unit = {
     if (depth > depths.getOrElse(comp, -1) && !comp.fullyRefined) {
       comp match {
         case chainComp: ChainComponent[_, _] =>
@@ -118,7 +125,7 @@ class ExpansionStrategy(problem: Problem, initialComponents: List[ProblemCompone
     }
 
     // Decompose the parent to get values for expansion
-    decompose(parentComp, depth)
+    refine(parentComp, depth)
     // It is possible that visiting the subproblems results in a change in the range of the parent. If this happens, we
     // have to start over again. This can only happen finitely many times when expanding to a finite depth, however.
     // This is taken care of in the loop below.
@@ -133,7 +140,7 @@ class ExpansionStrategy(problem: Problem, initialComponents: List[ProblemCompone
       for(parentValue <- parentValues) {
         val subproblem = chainComp.subproblems(parentValue)
         val target = checkArg(subproblem.target)
-        decompose(target, depth - 1)
+        refine(target, depth - 1)
       }
       // If any new parent values were added, we repeat this process
       continue = parentValues != parentComp.range.regularValues
@@ -176,7 +183,7 @@ class ExpansionStrategy(problem: Problem, initialComponents: List[ProblemCompone
     }
 
     // Decompose the parent to get the maximum number of items to expand
-    decompose(numItemsComp, depth)
+    refine(numItemsComp, depth)
     // It is possible that visiting the items results in a change in the range of the number of items. If this happens,
     // we have to start over again. This can only happen finitely many times when expanding to a finite depth, however.
     // This is taken care of in the loop below.
@@ -189,7 +196,7 @@ class ExpansionStrategy(problem: Problem, initialComponents: List[ProblemCompone
       // Decompose each of the items
       for(item <- maComp.makeArray.items.take(maComp.maxExpanded)) {
         val itemComp = checkArg(item)
-        decompose(itemComp, depth - 1)
+        refine(itemComp, depth - 1)
       }
       // If greater values were added to the number of items component, we must repeat
       continue = maxExpanded < numItemsComp.range.regularValues.max
@@ -239,7 +246,7 @@ class ExpansionStrategy(problem: Problem, initialComponents: List[ProblemCompone
     // Decompose the args of this component
     for(ac <- argComps) {
       // TODO should we decrement the depth when processing an Apply component?
-      decompose(ac, depth)
+      refine(ac, depth)
     }
     // (Re-)insert this component as a component that may need updates
     for(ac <- argComps) {

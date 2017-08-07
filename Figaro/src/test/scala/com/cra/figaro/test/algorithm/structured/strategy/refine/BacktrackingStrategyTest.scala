@@ -1,6 +1,6 @@
 /*
- * ExpansionStrategyTest.scala
- * Tests for expansion strategies.
+ * BacktrackingStrategyTest.scala
+ * Tests for backtracking strategies.
  *
  * Created By:      William Kretschmer (kretsch@mit.edu)
  * Creation Date:   Oct 18, 2016
@@ -27,15 +27,15 @@ import com.cra.figaro.library.atomic.discrete._
 import com.cra.figaro.library.compound.If
 import org.scalatest.{Matchers, WordSpec}
 
-class ExpansionStrategyTest extends WordSpec with Matchers {
-  "A complete expansion strategy" should {
+class BacktrackingStrategyTest extends WordSpec with Matchers {
+  "A complete backtracking strategy" should {
     "create ranges for all components" in {
       Universe.createNew()
       val e1 = Flip(0.3)
       val e2 = If(e1, Constant(0), discrete.Uniform(2, 3, 4))
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e2))
-      new ExpansionStrategy(pr, pr.targetComponents).execute()
+      new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
       val c1 = cc(e1)
       val c2 = cc(e2)
@@ -57,7 +57,7 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
       val e2 = If(e1, Constant(0), discrete.Uniform(2, 3, 4))
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e2))
-      new ExpansionStrategy(pr, pr.targetComponents).execute()
+      new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
       val c1 = cc(e1)
       val c2 = cc(e2)
@@ -78,7 +78,7 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
       e1.addConstraint((i: Int) => 1.0 / i)
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e1))
-      new ExpansionStrategy(pr, pr.targetComponents).execute()
+      new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
       val c1 = cc(e1)
       c1.constraintFactors(Lower) should have size 1
@@ -94,7 +94,7 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
         val pr = new Problem(cc, List(e1, e2))
         val c1 = cc(e1)
         c1.ranger.asInstanceOf[SamplingRanger[Double]].samplesPerIteration = 25
-        new ExpansionStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         // Factor for e1 should contain sampled values
         // Its size should be the size of the range of the component
@@ -113,7 +113,7 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
         val e2 = Flip(e1)
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1, e2))
-        new ExpansionStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
       }*/
     }
 
@@ -129,10 +129,10 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
       c2.expand()
       // Decompose and solve the subproblem corresponding to true
       val spr = c2.subproblems(true)
-      new ExpansionStrategy(spr, spr.targetComponents).execute()
+      new BacktrackingStrategy(spr, spr.targetComponents).execute()
       new ConstantStrategy(spr, structuredRaising, marginalVariableElimination).execute()
       // This should not get rid of the solution
-      new ExpansionStrategy(pr, pr.targetComponents).execute()
+      new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
       spr.solved should be(true)
       val solution = spr.solution.head
@@ -152,7 +152,7 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
         val pr = new Problem(cc, List(e1))
         pr.solved = true
         pr.solution = dummySolution
-        new ExpansionStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         pr.solved should be(false)
         pr.solution should be(empty)
@@ -165,7 +165,7 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1, e2))
         // Create subproblems without refining them
-        new ExpansionStrategy(pr, pr.targetComponents, 0).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents, 0).execute()
 
         pr.solved = true
         pr.solution = dummySolution
@@ -173,7 +173,7 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
           subproblem.solved = true
           subproblem.solution = dummySolution
         }
-        new ExpansionStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         pr.solved should be(false)
         pr.solution should be(empty)
@@ -190,13 +190,13 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1, e2))
         // Create subproblems without refining them
-        new ExpansionStrategy(pr, pr.targetComponents, 0).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents, 0).execute()
 
         // We don't mark the nested problems as solved because this test is to ensure that we recursively go up the
         // problem tree without stopping at unsolved components
         pr.solved = true
         pr.solution = dummySolution
-        new ExpansionStrategy(cc(e2).subproblems(true), pr.targetComponents).execute()
+        new BacktrackingStrategy(cc(e2).subproblems(true), pr.targetComponents).execute()
 
         pr.solved should be(false)
         pr.solution should be(empty)
@@ -209,7 +209,7 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
         val e1 = Select(0.1 -> 1, 0.2 -> 3, 0.3 -> 5, 0.5 -> 7)
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
-        new ExpansionStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         cc(e1).fullyEnumerated should be(true)
         cc(e1).fullyRefined should be(true)
@@ -220,7 +220,7 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
         val e1 = Binomial(10, 0.3)
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
-        new ExpansionStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         cc(e1).fullyEnumerated should be(true)
         cc(e1).fullyRefined should be(true)
@@ -231,7 +231,7 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
         val e1 = Normal(0, 1)
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
-        new ExpansionStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         cc(e1).fullyEnumerated should be(false)
         cc(e1).fullyRefined should be(false)
@@ -242,7 +242,7 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
         val e1 = Poisson(3)
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
-        new ExpansionStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         cc(e1).fullyEnumerated should be(false)
         cc(e1).fullyRefined should be(false)
@@ -255,7 +255,7 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
         val e3 = e1 ++ e2
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e3))
-        new ExpansionStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         cc(e3).fullyEnumerated should be(true)
         cc(e3).fullyRefined should be(true)
@@ -268,7 +268,7 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
         val e3 = e1 ++ e2
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e3))
-        new ExpansionStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         cc(e3).fullyEnumerated should be(false)
         cc(e3).fullyRefined should be(false)
@@ -280,7 +280,7 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
         val e2 = Chain(e1, (d: Double) => if(d < 0) Flip(0.2) else Flip(0.7))
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e2))
-        new ExpansionStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         val c2 = cc(e2)
         c2.fullyEnumerated should be(false)
@@ -297,7 +297,7 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
         val e2 = If(e1, Constant(0.0), Normal(0, 1))
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e2))
-        new ExpansionStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         val c2 = cc(e2)
         c2.fullyEnumerated should be(false)
@@ -317,7 +317,7 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
         val e2 = Chain(e1, (i: Int) => FromRange(0, i))
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e2))
-        new ExpansionStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         val c2 = cc(e2)
         c2.fullyEnumerated should be(true)
@@ -335,7 +335,7 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
 
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e2))
-        new ExpansionStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         cc(e2).fullyEnumerated should be(true)
         cc(e2).fullyRefined should be(false)
@@ -349,7 +349,7 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
 
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e3))
-        new ExpansionStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         cc(e3).fullyEnumerated should be(true)
         cc(e3).fullyRefined should be(false)
@@ -362,7 +362,7 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
 
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e3))
-        new ExpansionStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         cc(e3).fullyEnumerated should be(true)
         cc(e3).fullyRefined should be(false)
@@ -378,7 +378,7 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
 
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e2, e3))
-      new ExpansionStrategy(pr, pr.targetComponents).execute()
+      new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
       cc(e2).subproblems should equal(cc(e3).subproblems)
     }
@@ -396,7 +396,7 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
 
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e1))
-      new ExpansionStrategy(pr, pr.targetComponents).execute()
+      new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
       val c1 = cc(e1)
       // Should contain Constant(0) and Constant(1)
@@ -417,14 +417,14 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
     else memoGeometric().map(_ + 1)
   }
 
-  "A partial expansion strategy" when {
+  "A partial backtracking strategy" when {
     "called once" should {
       "produce the correct range" in {
         Universe.createNew()
         val e1 = geometric()
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
-        new ExpansionStrategy(pr, pr.targetComponents, 3).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents, 3).execute()
 
         val c1 = cc(e1)
         c1.range.regularValues should equal(Set(1, 2, 3))
@@ -436,7 +436,7 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
         val e1 = geometric()
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
-        new ExpansionStrategy(pr, pr.targetComponents, 3).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents, 3).execute()
 
         val c1 = cc(e1).asInstanceOf[ChainComponent[Boolean, Int]]
         c1.fullyEnumerated should be(false)
@@ -457,7 +457,7 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
         val pr = new Problem(cc, List(e2))
         // Ensure that the global is added to the correct problem, even though this won't change the outcome of this test
         pr.add(e1)
-        new ExpansionStrategy(pr, pr.targetComponents, 3).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents, 3).execute()
 
         // Because e1 is only used as the result of a Chain, decomposing e2 should count as incrementing the depth
         // Therefore, we should only recurse on subproblems of e1 twice
@@ -477,7 +477,7 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
         pr.add(e2)
         val c2 = cc(e2)
         val c3 = cc(e3)
-        val strategy = new ExpansionStrategy(pr, pr.targetComponents, 1)
+        val strategy = new BacktrackingStrategy(pr, pr.targetComponents, 1)
         strategy.execute()
 
         // Expanding this problem proceeds depth-first from e3. It first goes through the Chain parents, which means
@@ -503,7 +503,7 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
         val c1 = cc(e1)
 
         for(depth <- 0 to 10) {
-          new ExpansionStrategy(pr, pr.targetComponents, depth).execute()
+          new BacktrackingStrategy(pr, pr.targetComponents, depth).execute()
           c1.range.hasStar should be(true)
           c1.range.regularValues should equal((1 to depth).toSet)
         }
@@ -514,7 +514,7 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
         val e1 = geometric()
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
-        new ExpansionStrategy(pr, pr.targetComponents, 1).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents, 1).execute()
         new ConstantStrategy(pr, structuredRaising, marginalVariableElimination).execute()
 
         val c1 = cc(e1).asInstanceOf[ChainComponent[Boolean, Int]]
@@ -522,7 +522,7 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
         c1.subproblems(true).solved should be(true)
         c1.subproblems(false).solved should be(true)
 
-        new ExpansionStrategy(pr, pr.targetComponents, 3).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents, 3).execute()
 
         pr.solved should be(false)
         // The first subproblem was fully refined so its solution should remain; the second subproblem was expanded
@@ -538,7 +538,7 @@ class ExpansionStrategyTest extends WordSpec with Matchers {
         val e1 = memoGeometric()
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
-        new ExpansionStrategy(pr, pr.targetComponents, 2).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents, 2).execute()
 
         val c1 = cc(e1).asInstanceOf[ChainComponent[Boolean, Int]]
         val nestedc1 = c1.subproblems(false).components.collectFirst{
