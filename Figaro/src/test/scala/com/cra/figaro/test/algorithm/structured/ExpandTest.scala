@@ -43,8 +43,8 @@ class ExpandTest extends WordSpec with Matchers {
       cc.expansionToProblem(((f, false), 0)) should be theSameInstanceAs spr
       cc.problemToExpansion should have size 1
       cc.problemToExpansion(spr) should equal ((f, false), 0)
-      cc.expandableComponents should have size 1
-      cc.expandableComponents(spr) should equal(Set(c4))
+      cc.expandsFrom should have size 1
+      cc.expandsFrom(spr) should equal(Set(pr))
     }
 
     "correctly detect cycles and return the appropriate copy of the subproblem" when {
@@ -74,8 +74,8 @@ class ExpandTest extends WordSpec with Matchers {
         cc.expansionToProblem(((f, false), 0)) should be theSameInstanceAs spr5
         cc.problemToExpansion should have size 1
         cc.problemToExpansion(spr5) should equal ((f, false), 0)
-        cc.expandableComponents should have size 1
-        cc.expandableComponents(spr5) should equal(Set(c5, c6))
+        cc.expandsFrom should have size 1
+        cc.expandsFrom(spr5) should equal(Set(pr))
       }
 
       "the subproblem uses itself recursively, either directly or indirectly" in {
@@ -99,8 +99,8 @@ class ExpandTest extends WordSpec with Matchers {
         cc.expansionToProblem(((chainFunction, false), 0)) should equal(sprFalse)
         cc.problemToExpansion(sprTrue) should equal(((chainFunction, true), 0))
         cc.problemToExpansion(sprFalse) should equal(((chainFunction, false), 0))
-        cc.expandableComponents(sprTrue) should equal(Set(c2))
-        cc.expandableComponents(sprFalse) should equal(Set(c2))
+        cc.expandsFrom(sprTrue) should equal(Set(pr))
+        cc.expandsFrom(sprFalse) should equal(Set(pr))
 
         // Expand the components of the true subproblem
         val e2True = sprTrue.target.asInstanceOf[Chain[Boolean, Boolean]]
@@ -119,7 +119,7 @@ class ExpandTest extends WordSpec with Matchers {
         sprTrueTrue should not equal sprTrue
         cc.expansionToProblem(((chainFunction, true), 1)) should equal(sprTrueTrue)
         cc.problemToExpansion(sprTrueTrue) should equal(((chainFunction, true), 1))
-        cc.expandableComponents(sprTrueTrue) should equal(Set(c2True))
+        cc.expandsFrom(sprTrueTrue) should equal(Set(sprTrue))
 
         // However, the collection should allow the true subproblem to use the depth 0 false subproblem
         cc.levelPathExists((chainFunction, false), (chainFunction, true)) should equal(false)
@@ -127,7 +127,7 @@ class ExpandTest extends WordSpec with Matchers {
         cc.expansionToLevel((chainFunction, true)) should equal(Set((chainFunction, false)))
         val sprTrueFalse = c2True.subproblems(false)
         sprTrueFalse should equal(sprFalse)
-        cc.expandableComponents(sprTrueFalse) should equal(Set(c2, c2True))
+        cc.expandsFrom(sprTrueFalse) should equal(Set(pr, sprTrue))
 
         // Expand the components of the false subproblem
         val e2False = sprFalse.target.asInstanceOf[Chain[Boolean, Boolean]]
@@ -147,7 +147,7 @@ class ExpandTest extends WordSpec with Matchers {
         val sprFalseTrue = c2True.subproblems(true)
         sprFalseTrue should not equal sprTrue
         sprFalseTrue should equal(sprTrueTrue)
-        cc.expandableComponents(sprTrueTrue) should equal(Set(c2True, c2False))
+        cc.expandsFrom(sprTrueTrue) should equal(Set(sprTrue, sprFalse))
       }
     }
 

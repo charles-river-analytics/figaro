@@ -39,7 +39,7 @@ abstract class RefiningStrategy(val collection: ComponentCollection) {
   protected def markProblemsUnsolved(problems: Set[Problem]): Unit = {
     // From a subproblem, we must include the problems that use it
     def problemGraph(pr: Problem): Set[Problem] = pr match {
-      case npr: NestedProblem[_] => collection.expandableComponents(npr).map(_.problem)
+      case npr: NestedProblem[_] => collection.expandsFrom(npr)
       case _ => Set()
     }
     // We have to work our way up the whole problem graph marking problems as unsolved; reachable does this efficiently

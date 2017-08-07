@@ -79,15 +79,15 @@ class ComponentCollection {
   var intermediates: Set[Variable[_]] = Set()
 
   /**
-   * Maps an expansion to the set of expansions that it uses without incrementing depth. This is populated greedily, in
-   * the sense that an expansion will always try to use another expansion at the same depth if it does not create a
-   * cycle.
+   * Maps an expansion to the set of expansions that it uses without incrementing recursion depth. This is populated
+   * greedily, in the sense that an expansion will always try to use another expansion at the same depth if it does not
+   * create a cycle.
    */
   private[figaro] val expansionToLevel: Map[Expansion, Set[Expansion]] = Map()
 
   /**
    * The complement of `expansionToLevel`. This maps an expansion `x` to the set of other expansions `y` with the
-   * property that expanding a subproblem for `y` from a subproblem for `x` must increment the depth.
+   * property that expanding a subproblem for `y` from a subproblem for `x` must increment the recursion depth.
    */
   private[figaro] val expansionToDeeper: Map[Expansion, Set[Expansion]] = Map()
 
@@ -108,28 +108,32 @@ class ComponentCollection {
   }
 
   /**
-   * Bijectively maps an expansion and a depth to a corresponding problem. The inverse map is `problemToExpansion`.
+   * Bijectively maps an expansion and a recursion depth to a corresponding problem. Intuitively, the recurison depth
+   * corresponds to the number of times an expansion has recursively called itself. The inverse map is
+   * `problemToExpansion`.
    */
   private[figaro] val expansionToProblem: Map[(Expansion, Int), NestedProblem[_]] = Map()
 
   /**
-   * Bijectively maps a subproblem to a corresponding expansion and a depth. The inverse map is `problemToExpansion`.
+   * Bijectively maps a subproblem to a corresponding expansion and a recursion depth. The inverse map is
+   * `expansionToProblem`.
    */
   private[figaro] val problemToExpansion: Map[NestedProblem[_], (Expansion, Int)] = Map()
 
   /**
-   * Maps a nested problem to the set of expandable components that use it as a subproblem.
+   * Maps a nested problem to the set of problems that use it through an expandable component.
    */
-  private[figaro] val expandableComponents: Map[NestedProblem[_], Set[ExpandableComponent[_, _]]] = Map()
+  private[figaro] val expandsFrom: Map[NestedProblem[_], Set[Problem]] = Map()
 
   /**
-   *  Get the nested subproblem associated with a particular function and parent value. The depth of the returned
-   *  problem is either equal to the depth of the component's problem, or is incremented by one, depending on whether
-   *  the expansion belongs to `expansionToLevel` or `expansionToDeeper`. The returned subproblem is cached by depth.
+   * Get the nested subproblem associated with a particular function and parent value. The recursion depth of the
+   * returned problem is either equal to the recursion depth of the component's problem, or is incremented by one,
+   * depending on whether the expansion belongs to `expansionToLevel` or `expansionToDeeper`. The returned subproblem is
+   * cached by recursion depth.
    */
   private[figaro] def expansion[P, V](component: ExpandableComponent[P, V], function: P => Element[V], parentValue: P): NestedProblem[V] = {
     val newExpansion = (function, parentValue)
-    val depth = component.problem match {
+    val recursionDepth = component.problem match {
       case np: NestedProblem[_] =>
         // Get the expansion that produced this nested problem
         val (npExpansion, npDepth) = problemToExpansion(np)
@@ -151,13 +155,13 @@ class ComponentCollection {
         if(incrementDepth) npDepth + 1 else npDepth
       case _ => 0
     }
-    // Get the subproblem cached by function, parent value, and depth
-    val result =
-      expansionToProblem.getOrElseUpdate((newExpansion, depth), new NestedProblem(this, component.expandFunction(parentValue)))
-    // Mark the subproblem as used by the component
-    expandableComponents(result) = expandableComponents.getOrElse(result, Set()) + component
-    // Record the expansion and depth associated with the returned problem
-    problemToExpansion(result) = (newExpansion, depth)
+    // Get the subproblem cached by function, parent value, and recursion depth
+    val result = expansionToProblem.getOrElseUpdate((newExpansion, recursionDepth),
+                                                    new NestedProblem(this, component.expandFunction(parentValue)))
+    // Mark the subproblem as used by the component's problem
+    expandsFrom(result) = expandsFrom.getOrElse(result, Set()) + component.problem
+    // Record the expansion and recursion depth associated with the returned problem
+    problemToExpansion(result) = (newExpansion, recursionDepth)
     result.asInstanceOf[NestedProblem[V]]
   }
 
