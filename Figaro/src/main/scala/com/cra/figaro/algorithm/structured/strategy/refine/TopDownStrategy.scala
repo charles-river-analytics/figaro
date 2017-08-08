@@ -31,7 +31,8 @@ class TopDownStrategy(collection: ComponentCollection, topLevel: ProblemComponen
 
 object TopDownStrategy {
   /**
-   * Use a top-down search to get the components in the collection that depend on the components given.
+   * Use a top-down search to get the components in the collection that depend on the components given, including the
+   * components given.
    * @param collection Collection of components to refine.
    * @param topLevel Top-level components to work down from.
    * @return A strategy that uses the given components to find all (directly or indirectly) dependent
@@ -41,17 +42,12 @@ object TopDownStrategy {
     // Used in computing the set of components that need updates after refining the top-level components.
     def children(comp: ProblemComponent[_]): Traversable[ProblemComponent[_]] = {
       val elem = comp.element
-      // Returns the component associated with the element if it is in the collection and not fully refined
-      // This isn't an anonymous function only because the Scala compiler can't figure out the types
-      def componentOption(child: Element[_]): Option[ProblemComponent[_]] = {
-        if(collection.contains(child)) {
-          val childComp = collection(child)
-          if(childComp.fullyRefined) None
-          else Some(childComp)
-        }
-        else None
-      }
-      elem.universe.directlyUsedBy(elem).flatMap(componentOption)
+      for {
+        child <- elem.universe.directlyUsedBy(elem)
+        if collection.contains(child)
+        childComp = collection(child)
+        if !childComp.fullyRefined
+      } yield childComp
     }
 
     util.reachable(children, true, topLevel:_*)
