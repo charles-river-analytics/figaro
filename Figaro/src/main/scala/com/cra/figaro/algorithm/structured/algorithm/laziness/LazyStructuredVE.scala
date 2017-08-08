@@ -17,6 +17,7 @@ import com.cra.figaro.language._
 import com.cra.figaro.algorithm.structured.solver._
 import com.cra.figaro.algorithm.structured.strategy.solve._
 import com.cra.figaro.algorithm.structured.algorithm._
+import com.cra.figaro.algorithm.structured.strategy.range.RangingStrategy
 import com.cra.figaro.algorithm.structured.strategy.refine._
 
 abstract class LazyStructuredVE(universe: Universe, targets: Element[_]*)
@@ -47,12 +48,17 @@ abstract class LazyStructuredVE(universe: Universe, targets: Element[_]*)
     new ConstantStrategy(problem, structuredRaising, marginalVariableElimination)
 }
 
-// One time lazy VE uses a fixed depth
-class OneTimeLazyVE(override val depth: Int, universe: Universe, targets: Element[_]*)
-  extends LazyStructuredVE(universe, targets: _*) with OneTimeLazyStructuredProbQuery
+// One time lazy structured VE uses a fixed depth
+class OneTimeLSVE(override val depth: Int, universe: Universe, targets: Element[_]*)
+  extends LazyStructuredVE(universe, targets: _*) with OneTimeLazyStructuredProbQuery {
 
-// Anytime lazy VE increases depth by the given increment at each iteration
-class AnytimeLazyVE(depthIncrement: Int, universe: Universe, targets: Element[_]*)
+  override def rangingStrategy: RangingStrategy = {
+    RangingStrategy.defaultLazy(depth)
+  }
+}
+
+// Anytime lazy structured VE increases depth by the given increment at each iteration
+class AnytimeLSVE(depthIncrement: Int, universe: Universe, targets: Element[_]*)
   extends LazyStructuredVE(universe, targets: _*) with AnytimeLazyStructuredProbQuery {
 
   // Current depth of expansion
@@ -62,6 +68,10 @@ class AnytimeLazyVE(depthIncrement: Int, universe: Universe, targets: Element[_]
     // Increment depth each time we create a refining strategy
     currentDepth += depthIncrement
     currentDepth
+  }
+
+  override def rangingStrategy: RangingStrategy = {
+    RangingStrategy.defaultLazy(depthIncrement)
   }
 }
 
@@ -76,7 +86,7 @@ object LazyStructuredVE {
     if (targets.isEmpty) throw new IllegalArgumentException("Cannot run VE with no targets")
     val universes = targets.map(_.universe).toSet
     if (universes.size > 1) throw new IllegalArgumentException("Cannot have targets in different universes")
-    new OneTimeLazyVE(depth, targets(0).universe, targets: _*)
+    new OneTimeLSVE(depth, targets(0).universe, targets: _*)
   }
 
   /**
@@ -88,7 +98,7 @@ object LazyStructuredVE {
     if (targets.isEmpty) throw new IllegalArgumentException("Cannot run VE with no targets")
     val universes = targets.map(_.universe).toSet
     if (universes.size > 1) throw new IllegalArgumentException("Cannot have targets in different universes")
-    new AnytimeLazyVE(1, targets(0).universe, targets: _*)
+    new AnytimeLSVE(1, targets(0).universe, targets: _*)
   }
 
   /**
@@ -102,6 +112,6 @@ object LazyStructuredVE {
     if (targets.isEmpty) throw new IllegalArgumentException("Cannot run VE with no targets")
     val universes = targets.map(_.universe).toSet
     if (universes.size > 1) throw new IllegalArgumentException("Cannot have targets in different universes")
-    new AnytimeLazyVE(depthIncrement, targets(0).universe, targets: _*)
+    new AnytimeLSVE(depthIncrement, targets(0).universe, targets: _*)
   }
 }
