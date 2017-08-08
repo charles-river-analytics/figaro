@@ -168,10 +168,10 @@ class LazyStructuredVETest extends WordSpec with Matchers {
     }
     
     "given a recursive geometric without evidence" should {
-      "produce the correct depth 6 probability bounds for each value" in {
+      "produce the correct depth 7 probability bounds for each value" in {
         Universe.createNew()
         val geometric = recursiveGeometric()
-        val alg = LazyStructuredVE(6, geometric)
+        val alg = LazyStructuredVE(7, geometric)
         alg.start()
         // Unassigned probability at this expansion
         val pUnexpanded = math.pow(0.5, 7)
@@ -188,10 +188,10 @@ class LazyStructuredVETest extends WordSpec with Matchers {
         alg.kill()
       }
 
-      "produce the correct depth 6 expectation bounds for a bounded function" in {
+      "produce the correct depth 7 expectation bounds for a bounded function" in {
         Universe.createNew()
         val geometric = recursiveGeometric()
-        val alg = LazyStructuredVE(6, geometric)
+        val alg = LazyStructuredVE(7, geometric)
         alg.start()
         // Unassigned probability at this expansion
         val pUnexpanded = math.pow(0.5, 7)
@@ -205,11 +205,11 @@ class LazyStructuredVETest extends WordSpec with Matchers {
     }
     
     "given a recursive geometric with a condition" should {
-      "produce the correct depth 6 probability bounds for each value" in {
+      "produce the correct depth 7 probability bounds for each value" in {
         Universe.createNew()
         val geometric = recursiveGeometric()
         geometric.addCondition(_ % 2 == 0)
-        val alg = LazyStructuredVE(6, geometric)
+        val alg = LazyStructuredVE(7, geometric)
         alg.start()
         // Unassigned probability at this expansion
         val pUnexpanded = math.pow(0.5, 7)
@@ -233,11 +233,11 @@ class LazyStructuredVETest extends WordSpec with Matchers {
         alg.kill()
       }
 
-      "produce the correct depth 6 expectation bounds for a bounded function" in {
+      "produce the correct depth 7 expectation bounds for a bounded function" in {
         Universe.createNew()
         val geometric = recursiveGeometric()
         geometric.addCondition(_ % 2 == 0)
-        val alg = LazyStructuredVE(6, geometric)
+        val alg = LazyStructuredVE(7, geometric)
         alg.start()
         // Unassigned probability at this expansion
         val pUnexpanded = math.pow(0.5, 7)
@@ -252,11 +252,11 @@ class LazyStructuredVETest extends WordSpec with Matchers {
     }
     
     "given a recursive geometric with a constraint" should {
-      "produce the correct depth 6 probability bounds for each value" in {
+      "produce the correct depth 7 probability bounds for each value" in {
         Universe.createNew()
         val geometric = recursiveGeometric()
         geometric.addConstraint(1.0 / _)
-        val alg = LazyStructuredVE(6, geometric)
+        val alg = LazyStructuredVE(7, geometric)
         alg.start()
         // Unassigned probability at this expansion
         val pUnexpanded = math.pow(0.5, 7)
@@ -273,11 +273,11 @@ class LazyStructuredVETest extends WordSpec with Matchers {
         alg.kill()
       }
 
-      "produce the correct depth 6 expectation bounds for a bounded function" in {
+      "produce the correct depth 7 expectation bounds for a bounded function" in {
         Universe.createNew()
         val geometric = recursiveGeometric()
         geometric.addConstraint(1.0 / _)
-        val alg = LazyStructuredVE(6, geometric)
+        val alg = LazyStructuredVE(7, geometric)
         alg.start()
         // Unassigned probability at this expansion
         val pUnexpanded = math.pow(0.5, 7)
@@ -391,7 +391,7 @@ class LazyStructuredVETest extends WordSpec with Matchers {
       alg.stop()
       val (lower1, upper1) = alg.probabilityBounds(geometric, 1)
       lower1 should be (0.5 +- 0.000000001)
-      upper1 should be > lower1
+      upper1 should be >= lower1
 
       alg.resume()
       while(alg.depth() < 30) Thread.sleep(100)
@@ -418,8 +418,8 @@ class LazyStructuredVETest extends WordSpec with Matchers {
       Thread.sleep(100)
       alg.stop()
       val (lower1, upper1) = alg.expectationBounds(geometric, (i: Int) => 1.0 / i, Some(0.0), Some(1.0))
-      lower1 should be < actual
-      upper1 should be > actual
+      lower1 should be <= actual
+      upper1 should be >= actual
 
       alg.resume()
       while(alg.depth() < 30) Thread.sleep(100)
