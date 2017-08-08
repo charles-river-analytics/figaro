@@ -356,6 +356,7 @@ class BacktrackingStrategyTest extends WordSpec with Matchers {
       }
 
       "a CompoundDist has an infinite parent but is fully enumerable" in {
+        Universe.createNew()
         val e1 = continuous.Uniform(0.1, 0.7)
         val e2 = continuous.Uniform(0.2, 0.3)
         val e3 = Dist((e1, Flip(0.3)), (e2, Flip(0.5)))
