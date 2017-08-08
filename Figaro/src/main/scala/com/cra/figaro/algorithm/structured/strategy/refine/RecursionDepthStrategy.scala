@@ -24,7 +24,9 @@ import com.cra.figaro.language._
  *
  * This strategy has the advantage that it guarantees no need for backtracking, because components are never visited
  * more than once. This is made possible by the fact that the depth of a component is known at the time of expansion;
- * i.e. it cannot change.
+ * i.e. it cannot change. However, this strategy is not universal: it cannot be applied to infinite models that do not
+ * use subproblem memoization. If a model uses a recursive process without Chain memoization, then every subproblem will
+ * have a recursion depth of 0. In this case, the strategy will not terminate.
  * @param problem Problem to refine.
  * @param initialComponents Components from which to begin the bottom-up refining process. Often, these are the set of
  * targets and evidence elements of a top-level problem. Refining proceeds by recursively refining the arguments of a
