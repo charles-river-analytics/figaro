@@ -13,7 +13,7 @@
 package com.cra.figaro.algorithm.structured.strategy.refine
 
 import com.cra.figaro.algorithm.structured._
-import com.cra.figaro.language.Element
+import com.cra.figaro.language._
 import com.cra.figaro.util
 
 /**
