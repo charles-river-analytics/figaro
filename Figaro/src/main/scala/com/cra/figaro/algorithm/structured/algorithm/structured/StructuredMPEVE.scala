@@ -1,5 +1,5 @@
 /*
- * StructuredVE.scala
+ * StructuredMPEVE.scala
  * A structured variable elimination algorithm.
  *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)

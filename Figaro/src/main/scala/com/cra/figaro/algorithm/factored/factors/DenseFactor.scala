@@ -1,5 +1,5 @@
 /*
- * BasicFactor.scala
+ * DenseFactor.scala
  * Default implementation of factors over values.
  *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)

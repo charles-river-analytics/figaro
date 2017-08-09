@@ -1,7 +1,6 @@
 /*
  * Collapsers.scala 
- * Three alternative collapsing strategies for collapsed Gibbs sampling. 
- * Each of these is a trait that must be mixed in to a CollapsedProbQueryGibbs.
+ * Three alternative collapsing strategies for collapsed Gibbs sampling. Each of these is a trait that must be mixed in to a CollapsedProbQueryGibbs.
  * 
  * Created By:    Cory Scott (cscott@cra.com)
  * Creation Date:   July 21, 2016

@@ -1,7 +1,6 @@
 /*
  * CollapsedProbQueryGibbs.scala 
- * Core class for the collapsed Gibbs sampler. All other Collapsed Gibbs samplers extend this class,
- * with traits mixed in to specify strategy.
+ * Core class for the collapsed Gibbs sampler. All other Collapsed Gibbs samplers extend this class, with traits mixed in to specify strategy.
  * 
  * Created By:    Cory Scott (cscott@cra.com)
  * Creation Date:   July 25, 2016
@@ -11,6 +10,7 @@
  * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
+
 package com.cra.figaro.experimental.collapsedgibbs
 
 import com.cra.figaro.algorithm.lazyfactored.{ LazyValues, ValueSet }
