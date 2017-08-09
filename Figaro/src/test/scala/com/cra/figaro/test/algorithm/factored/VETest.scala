@@ -5,7 +5,7 @@
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
  *
- * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
@@ -234,7 +234,7 @@ class VETest extends WordSpec with Matchers {
       }
       val factors1 = make(small)
       val factors2 = make(large)
-      def order(factors: Traversable[Factor[Double]])() =
+      def order(factors: Traversable[Factor[Double]]) = () =>
         VariableElimination.eliminationOrder(factors, List())._2
       val time1 = measureTime(order(factors1), 20, 100)
       val time2 = measureTime(order(factors2), 20, 100)

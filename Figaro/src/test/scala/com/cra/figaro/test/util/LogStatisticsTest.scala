@@ -1,5 +1,5 @@
 /*
- * LogStatistics.scala
+ * LogStatisticsTest.scala
  * Tests for statistics in log space.
  *
  * Created By:      William Kretschmer (kretsch@mit.edu)

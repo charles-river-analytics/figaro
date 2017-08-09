@@ -5,7 +5,7 @@
  * Created By:      Glenn Takata (gtakata@cra.com)
  * Creation Date:   Mar 16, 2015
  * 
- * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
@@ -22,6 +22,7 @@ import prefuse.util.ui.ValuedRangeModel
 import scala.collection.JavaConversions
 
 import com.cra.figaro.util.visualization.DataView
+import scala.collection.JavaConverters
 
 /**
  * @author Glenn Takata
@@ -35,7 +36,7 @@ class ResultsView[T](data: ResultsData) extends DataView {
   def nValues = data.distribution.size
   
   def range: ValuedRangeModel = {
-    val values = JavaConversions.asJavaCollection(data.distribution.map(_._2)).toArray()
+    val values = JavaConverters.asJavaCollection(data.distribution.map(_._2)).toArray()
     new ObjectRangeModel(values.asInstanceOf[Array[Object]])
   }
  

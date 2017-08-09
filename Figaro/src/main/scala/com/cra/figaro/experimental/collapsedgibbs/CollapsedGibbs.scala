@@ -1,16 +1,16 @@
 /*
  * CollapsedGibbs.scala 
- * An implementation of collapsed Gibbs sampling (on factor graphs) using the algorithm in 
- * "Dynamic Blocking and Collapsing for Gibbs Sampling" Gogate and Venugopal 2013
+ * An implementation of collapsed Gibbs sampling (on factor graphs) using the algorithm in "Dynamic Blocking and Collapsing for Gibbs Sampling" Gogate and Venugopal 2013
  * 
  * Created By:    Cory Scott (cscott@cra.com)
  * Creation Date:   June 27, 2016
  * 
- * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
+
 package com.cra.figaro.experimental.collapsedgibbs
 
 import com.cra.figaro.algorithm.lazyfactored.{ LazyValues, ValueSet }
