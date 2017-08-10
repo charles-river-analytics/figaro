@@ -14,11 +14,17 @@ package com.cra.figaro.algorithm.structured.algorithm
 
 import com.cra.figaro.algorithm._
 import com.cra.figaro.algorithm.factored.factors.{Factor, Variable}
-import com.cra.figaro.algorithm.structured.Bounds
+import com.cra.figaro.algorithm.structured.{Bounds, ComponentCollection}
 import com.cra.figaro.algorithm.structured.solver._
 import com.cra.figaro.language._
 
-abstract class StructuredMPEAlgorithm(val universe: Universe) extends StructuredAlgorithm with MPEAlgorithm {
+abstract class StructuredMPEAlgorithm(universe: Universe, collection: ComponentCollection)
+  extends StructuredAlgorithm(universe, collection) with MPEAlgorithm {
+
+  def this(universe: Universe) {
+    this(universe, new ComponentCollection)
+  }
+
   // This is an empty list because MPE works by eliminating all variables.
   override def problemTargets = List()
 

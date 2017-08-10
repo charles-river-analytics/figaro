@@ -16,7 +16,6 @@ package com.cra.figaro.algorithm.structured
 import com.cra.figaro.algorithm.factored.ParticleGenerator
 import com.cra.figaro.language._
 import com.cra.figaro.library.collection.MakeArray
-import com.cra.figaro.util
 
 import scala.collection.mutable.Map
 import com.cra.figaro.algorithm.factored.factors._
@@ -36,13 +35,12 @@ object ComponentHash {
 }
 
 /**
- * A collection of problem components. This data structure manages all the components being used in the solution of a top-level
- * problem and its nested subproblems.
- */
-
-/*
- * Every element exists in at most one component.
- * To create a new component for an element, you need to say what problem it belongs to.
+ * A collection of problem components. This data structure manages all the components being used in the solution of a
+ * top-level problem and its nested subproblems. Every element exists in at most one component. To create a new
+ * component for an element, you need to say what problem it belongs to.
+ *
+ * This class is intended for models that do not use chain function memoization recursively; for this purpose, use
+ * `RecursiveComponentCollection`.
  */
 class ComponentCollection {
   /**
@@ -79,37 +77,18 @@ class ComponentCollection {
   var intermediates: Set[Variable[_]] = Set()
 
   /**
-   * Maps an expansion to the set of expansions that it uses without incrementing recursion depth. This is populated
-   * greedily, in the sense that an expansion will always try to use another expansion at the same depth if it does not
-   * create a cycle.
+   * Get the recursion depth associated with adding the given expansion to the given expandable component. Intuitively,
+   * the recursion depth is meant to correspond to the number of times an expansion has recursively called itself;
+   * however, this quantity is free to be defined by the particular implementation of this collection. This quantity is
+   * used to create recursive expansions of a subproblem for different depths. It ensures that only one subproblem is
+   * created for each depth.
+   *
+   * By default, this method always returns 0, which is the default for non-recursive expansion.
    */
-  private[figaro] val expansionToLevel: Map[Expansion, Set[Expansion]] = Map()
+  private[figaro] def getRecursionDepth(value: ExpandableComponent[_, _], newExpansion: Expansion): Int = 0
 
   /**
-   * The complement of `expansionToLevel`. This maps an expansion `x` to the set of other expansions `y` with the
-   * property that expanding a subproblem for `y` from a subproblem for `x` must increment the recursion depth.
-   */
-  private[figaro] val expansionToDeeper: Map[Expansion, Set[Expansion]] = Map()
-
-  /**
-   * Tests if there exists a path from `from` to `to` in the directed graph induced by `expansionToLevel`. This is
-   * generally used to test if adding an edge from `to` to `from` would create a cycle.
-   */
-  private[figaro] def levelPathExists(from: Expansion, to: Expansion): Boolean = {
-    // TODO consider using a dedicated incremental cycle detection data structure and algorithm for improved efficiency
-    // TODO consider a different version of ComponentCollection that avoids this computation for non-lazy algorithms
-    @tailrec
-    def bfs(expansions: Set[Expansion]): Boolean = {
-      if(expansions.isEmpty) false
-      else if(expansions.contains(to)) true
-      else bfs(expansions.flatMap(expansionToLevel.getOrElseUpdate(_, Set())))
-    }
-    bfs(Set(from))
-  }
-
-  /**
-   * Bijectively maps an expansion and a recursion depth to a corresponding problem. Intuitively, the recurison depth
-   * corresponds to the number of times an expansion has recursively called itself. The inverse map is
+   * Bijectively maps an expansion and a recursion depth to a corresponding problem. The inverse map is
    * `problemToExpansion`.
    */
   private[figaro] val expansionToProblem: Map[(Expansion, Int), NestedProblem[_]] = Map()
@@ -133,31 +112,10 @@ class ComponentCollection {
    */
   private[figaro] def expansion[P, V](component: ExpandableComponent[P, V], function: P => Element[V], parentValue: P): NestedProblem[V] = {
     val newExpansion = (function, parentValue)
-    val recursionDepth = component.problem match {
-      case np: NestedProblem[_] =>
-        // Get the expansion that produced this nested problem
-        val (npExpansion, npDepth) = problemToExpansion(np)
-        // Look to see if we previously decided to increment the depth or not when making this expansion
-        val level = expansionToLevel.getOrElseUpdate(npExpansion, Set())
-        val deeper = expansionToDeeper.getOrElseUpdate(npExpansion, Set())
-        val incrementDepth =
-          if(level.contains(newExpansion)) false
-          else if(deeper.contains(newExpansion)) true
-          else {
-            // See if keeping the same depth when moving from the nested problem's expansion to this expansion would
-            // create a cycle, by testing if there is a path in the other direction
-            val levelPath = levelPathExists(newExpansion, npExpansion)
-            // Cache this edge in the expansion graph
-            if(levelPath) expansionToDeeper(npExpansion) = deeper + newExpansion
-            else expansionToLevel(npExpansion) = level + newExpansion
-            levelPath
-          }
-        if(incrementDepth) npDepth + 1 else npDepth
-      case _ => 0
-    }
+    val recursionDepth = getRecursionDepth(component, newExpansion)
     // Get the subproblem cached by function, parent value, and recursion depth
     val result = expansionToProblem.getOrElseUpdate((newExpansion, recursionDepth),
-                                                    new NestedProblem(this, component.expandFunction(parentValue)))
+      new NestedProblem(this, component.expandFunction(parentValue)))
     // Mark the subproblem as used by the component's problem
     expandsFrom(result) = expandsFrom.getOrElse(result, Set()) + component.problem
     // Record the expansion and recursion depth associated with the returned problem
@@ -185,13 +143,13 @@ class ComponentCollection {
    *  Throws an exception if the element is not associated with any component.
    */
   def apply[P, T](chain: Chain[P, T]): ChainComponent[P, T] = components(chain).asInstanceOf[ChainComponent[P, T]]
-  
+
     /**
    *  Get the component associated with this element in this collection.
    *  Throws an exception if the element is not associated with any component.
    */
   def apply[T](apply: Apply[T]): ApplyComponent[T] = components(apply).asInstanceOf[ApplyComponent[T]]
-  
+
   /**
    *  Get the component associated with this element in this collection.
    *  Throws an exception if the element is not associated with any component.
@@ -230,5 +188,71 @@ class ComponentCollection {
 
   private[structured] def remove[T](element: Element[T]) {
     components -= element
+  }
+}
+
+/**
+ * Component collections for models that recursively use chain function memoization.
+ */
+class RecursiveComponentCollection extends ComponentCollection {
+  /**
+   * Maps an expansion to the set of expansions that it uses without incrementing recursion depth. This is populated
+   * greedily, in the sense that an expansion will always try to use another expansion at the same depth if it does not
+   * create a cycle.
+   */
+  private[figaro] val expansionToLevel: Map[Expansion, Set[Expansion]] = Map()
+
+  /**
+   * The complement of `expansionToLevel`. This maps an expansion `x` to the set of other expansions `y` with the
+   * property that expanding a subproblem for `y` from a subproblem for `x` must increment the recursion depth.
+   */
+  private[figaro] val expansionToDeeper: Map[Expansion, Set[Expansion]] = Map()
+
+  /**
+   * Tests if there exists a path from `from` to `to` in the directed graph induced by `expansionToLevel`. This is
+   * generally used to test if adding an edge from `to` to `from` would create a cycle.
+   */
+  private[figaro] def levelPathExists(from: Expansion, to: Expansion): Boolean = {
+    // TODO consider using a dedicated incremental cycle detection data structure and algorithm for improved efficiency
+    // See e.g. Bender, Fineman, Gilbert, Tarjan (2011)
+    @tailrec
+    def bfs(expansions: Set[Expansion]): Boolean = {
+      if(expansions.isEmpty) false
+      else if(expansions.contains(to)) true
+      else bfs(expansions.flatMap(expansionToLevel.getOrElseUpdate(_, Set())))
+    }
+    bfs(Set(from))
+  }
+
+  /**
+   * Get the recursion depth for an expansion by checking to see if it is possible to use the same recurison depth as
+   * that associated with the given component. Otherwise, this increments the recursion depth by 1. This involves
+   * performing a search to see if the new expansion ever uses the expansion associated with the component's problem.
+   * Because this search can be expensive (in general, it may take linear time in the number of expansions), is is
+   * memoized.
+   */
+  override private[figaro] def getRecursionDepth(component: ExpandableComponent[_, _], newExpansion: Expansion): Int = {
+    component.problem match {
+      case np: NestedProblem[_] =>
+        // Get the expansion that produced this nested problem
+        val (npExpansion, npDepth) = problemToExpansion(np)
+        // Look to see if we previously decided to increment the depth or not when making this expansion
+        val level = expansionToLevel.getOrElseUpdate(npExpansion, Set())
+        val deeper = expansionToDeeper.getOrElseUpdate(npExpansion, Set())
+        val incrementDepth =
+          if(level.contains(newExpansion)) false
+          else if(deeper.contains(newExpansion)) true
+          else {
+            // See if keeping the same depth when moving from the nested problem's expansion to this expansion would
+            // create a cycle, by testing if there is a path in the other direction
+            val levelPath = levelPathExists(newExpansion, npExpansion)
+            // Cache this edge in the expansion graph
+            if(levelPath) expansionToDeeper(npExpansion) = deeper + newExpansion
+            else expansionToLevel(npExpansion) = level + newExpansion
+            levelPath
+          }
+        if(incrementDepth) npDepth + 1 else npDepth
+      case _ => 0
+    }
   }
 }

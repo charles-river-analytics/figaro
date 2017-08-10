@@ -16,7 +16,7 @@ import com.cra.figaro.algorithm.AlgorithmException
 import com.cra.figaro.algorithm.factored.factors.{Factor, Variable}
 import com.cra.figaro.algorithm.structured.algorithm._
 import com.cra.figaro.algorithm.structured.solver._
-import com.cra.figaro.algorithm.structured.Bounds
+import com.cra.figaro.algorithm.structured.{Bounds, ComponentCollection}
 import com.cra.figaro.language._
 
 /**
@@ -24,8 +24,12 @@ import com.cra.figaro.language._
  * @param universe Universe on which to perform inference.
  * @param mapElements Elements for which to compute MAP queries. Elements not in this sequence are summed over.
  */
-abstract class StructuredMarginalMAPAlgorithm(val universe: Universe, val mapElements: Element[_]*)
-  extends StructuredAlgorithm with MarginalMAPAlgorithm {
+abstract class StructuredMarginalMAPAlgorithm(universe: Universe, collection: ComponentCollection, val mapElements: Element[_]*)
+  extends StructuredAlgorithm(universe, collection) with MarginalMAPAlgorithm {
+
+  def this(universe: Universe, mapElements: Element[_]*) {
+    this(universe, new ComponentCollection, mapElements:_*)
+  }
 
   override def problemTargets = mapElements.toList
 

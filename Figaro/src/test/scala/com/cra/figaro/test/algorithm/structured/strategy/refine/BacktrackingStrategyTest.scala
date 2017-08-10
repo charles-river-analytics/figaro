@@ -537,7 +537,7 @@ class BacktrackingStrategyTest extends WordSpec with Matchers {
       "reuse the non-recursive part of the model, but produce a different subproblem for the recursive part" in {
         Universe.createNew()
         val e1 = memoGeometric()
-        val cc = new ComponentCollection
+        val cc = new RecursiveComponentCollection
         val pr = new Problem(cc, List(e1))
         new BacktrackingStrategy(pr, pr.targetComponents, 2).execute()
 

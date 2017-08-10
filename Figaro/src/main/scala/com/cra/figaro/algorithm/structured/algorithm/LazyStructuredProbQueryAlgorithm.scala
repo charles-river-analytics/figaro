@@ -13,13 +13,18 @@
 package com.cra.figaro.algorithm.structured.algorithm
 
 import com.cra.figaro.algorithm.factored.factors.{Factor, Variable}
-import com.cra.figaro.algorithm.structured.{Lower, Upper}
+import com.cra.figaro.algorithm.structured.{ComponentCollection, Lower, RecursiveComponentCollection, Upper}
 import com.cra.figaro.algorithm.{AnytimeBoundsProbQuery, BoundsProbQueryAlgorithm, OneTimeBoundsProbQuery}
 import com.cra.figaro.language._
 
-abstract class LazyStructuredProbQueryAlgorithm(universe: Universe, queryTargets: Element[_]*)
-  extends StructuredProbQueryAlgorithm(universe, queryTargets:_*)
+abstract class LazyStructuredProbQueryAlgorithm(universe: Universe, collection: ComponentCollection, queryTargets: Element[_]*)
+  extends StructuredProbQueryAlgorithm(universe, collection, queryTargets:_*)
   with LazyStructured with BoundsProbQueryAlgorithm {
+
+  // Important: the default constructor uses a recursive collection for recursive infinite models
+  def this(universe: Universe, queryTargets: Element[_]*) {
+    this(universe, new RecursiveComponentCollection, queryTargets:_*)
+  }
 
   override protected def useBoundsString: String =
     "use a bounding method instead, or a ranging strategy that avoids *"
