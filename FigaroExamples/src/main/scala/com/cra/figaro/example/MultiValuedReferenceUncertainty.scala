@@ -30,7 +30,7 @@ object MultiValuedReferenceUncertainty {
   val specialComponent1 = new Component
   val specialComponent2 = new Component
 
-  def makeComponent() = Select(0.1 -> specialComponent1, 0.2 -> specialComponent2, 0.7 -> new Component)
+  def makeComponent = () => Select(0.1 -> specialComponent1, 0.2 -> specialComponent2, 0.7 -> new Component)
 
   class Container extends ElementCollection {
     val components = MakeList(Select(0.5 -> 1, 0.5 -> 2), makeComponent)("components", this)
