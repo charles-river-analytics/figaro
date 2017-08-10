@@ -34,7 +34,7 @@ trait DecompositionStructuredAlgorithm extends OneTimeStructured {
   }
 
   override def refiningStrategy(): RefiningStrategy = {
-    new BacktrackingStrategy(problem, initialElements.map(collection(_)))
+    new RecursionDepthStrategy(problem, initialElements.map(collection(_)))
   }
 }
 
