@@ -292,34 +292,5 @@ package object util {
       Double.NegativeInfinity
     else
       logp
-
-  /**
-   * Find the first element of the sequence where the predicate evaluates to true, assuming that the predicate evaluates
-   * to false on indices `0 until n` and evaluates to true on indices `n until seq.length` for some `n`. Returns
-   * `Some(t)` if there exists such an element, and `None` otherwise.
-   */
-  def binarySearch[T](seq: IndexedSeq[T], predicate: T => Boolean): Option[T] = {
-    binarySearch(seq, predicate, 0, seq.length)
-  }
-
-  /**
-   * Find the first element of the sequence slice from `from` to `to` where the predicate evaluates to true. Thus
-   * assumes that the predicate evaluates to false on indices `from until n` and evaluates to true on indices
-   * `n until to` for some `n`. Returns `Some(t)` if there exists such an element, and `None` otherwise.
-   */
-  @tailrec
-  def binarySearch[T](seq: IndexedSeq[T], predicate: T => Boolean, from: Int, to: Int): Option[T] = {
-    if(to == from) None
-    else if(to == from + 1) {
-      val result = seq(from)
-      if(predicate(result)) Some(result)
-      else None
-    }
-    else {
-      val index = from + (to - from - 1) / 2
-      if(predicate(seq(index))) binarySearch(seq, predicate, from, index + 1)
-      else binarySearch(seq, predicate, index + 1, to)
-    }
-  }
 }
 

@@ -323,27 +323,4 @@ class UtilTest extends WordSpec with Matchers {
       argmax(List(4.0, 1.0, 3.0, 2.0)) should equal(0)
     }
   }
-
-  "Util.binarySearch" should {
-    "return the first item where the predicate evaluates to true" in {
-      // Test all possible sequences of length up to 50
-      for(length <- 0 to 20) {
-        val seq = 1 to length
-        // Search for each entry in the list
-        for(search <- seq) {
-          binarySearch(seq, (i: Int) => i >= search) should equal(Some(search))
-        }
-        // Also search for an entry not in the list
-        binarySearch(seq, (i: Int) => i > length) should equal(None)
-      }
-    }
-
-    "make roughly log_2(n) calls to the predicate on a large input" in {
-      var count = 0.0
-      val n = 1000000
-      binarySearch(1 to n, (i: Int) => {count += 1 ; i >= 123456}) should equal(Some(123456))
-      val log2 = math.log(n) / math.log(2)
-      count should be(log2 +- 2.0)
-    }
-  }
 }
