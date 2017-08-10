@@ -192,7 +192,10 @@ class ComponentCollection {
 }
 
 /**
- * Component collections for models that recursively use chain function memoization.
+ * Component collections for models that recursively use chain function memoization. This works by incrementing depth
+ * as little as possible. The collection maintains a graph of expansions that can use each other without incrementing
+ * the depth of recurison. Expansions are greedily added to this graph until one creates a cycle. Such an edge is
+ * instead recorded as an edge along which we must increment the depth when expanding.
  */
 class RecursiveComponentCollection extends ComponentCollection {
   /**
@@ -228,7 +231,7 @@ class RecursiveComponentCollection extends ComponentCollection {
    * Get the recursion depth for an expansion by checking to see if it is possible to use the same recurison depth as
    * that associated with the given component. Otherwise, this increments the recursion depth by 1. This involves
    * performing a search to see if the new expansion ever uses the expansion associated with the component's problem.
-   * Because this search can be expensive (in general, it may take linear time in the number of expansions), is is
+   * Because this search can be expensive (in general, it may take linear time in the number of expansions), it is
    * memoized.
    */
   override private[figaro] def getRecursionDepth(component: ExpandableComponent[_, _], newExpansion: Expansion): Int = {
