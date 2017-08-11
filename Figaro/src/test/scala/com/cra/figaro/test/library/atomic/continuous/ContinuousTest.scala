@@ -11,6 +11,13 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
+/*
+ * Additional Updates from our community
+ * 
+ * Synapski		Oct 13, 2014
+ * Cagdas Senol		Jul 3, 2016
+ */
+
 package com.cra.figaro.test.library.atomic.continuous
 
 import org.scalatest.Matchers

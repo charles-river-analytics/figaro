@@ -1,3 +1,24 @@
+//
+// build.sbt
+// Figaro SBT build script
+//
+// Created By:      Josh Serrin (jserrin@cra.com), Mike Reposa (mreposa@cra.com)
+// Creation Date:   Jan 17, 2014
+//
+// Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
+// See http://www.cra.com or email figaro@cra.com for information.
+//
+// See http://www.github.com/p2t2/figaro for a copy of the software license.
+//
+
+//
+// Additional Updates from our community
+// 
+// Martin Mauch		Dec 18, 2013
+// Dragisa Krsmanovic	May 24, 2014
+// Paul Philips		May 23, 2017
+//
+
 import sbt._
 import Keys._
 import sbt.Package.ManifestAttributes

@@ -10,6 +10,13 @@
  * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
+
+/*
+ * Additional Updates from our community
+ * 
+ * Paul Philips		May 23, 2017
+ */
+
 package com.cra.figaro.test.learning
 
 import org.scalatest.WordSpec
