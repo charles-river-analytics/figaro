@@ -318,7 +318,11 @@ To use a one-time (i.e., non-anytime) Gibbs sampling algorithm, simply provide t
 
 \section{Structured Factored Inference}
 
-Figaro also contains a set of algorithms known as structured factored inference (SFI) algorithms. These are not new algorithms per se, but rather a method of decomposing a model into a set of smaller sub--models that are solved recursively (i.e., structured) using one of Figaro's three existing factored algorithms (VE, BP, and Gibbs sampling). There is a rich and extensible library of the different strategies that can be applied to model that guide how a model is decomposed, and which algorithms are applied to the generated sub--models. However, we provide a base set of structured algorithms.
+Figaro contains a set of algorithms known as structured factored inference (SFI) algorithms. These are not new algorithms per se, but rather a method of decomposing a model into a set of smaller sub--models that are solved recursively (i.e., structured) using one of Figaro's three existing factored algorithms (VE, BP, and Gibbs sampling). There is a rich and extensible library of the different strategies that can be applied to model that guide how a model is decomposed, and which algorithms are applied to the generated sub--models. However, we provide a base set of structured algorithms.
+
+Figaro also includes an interface for lazy SFI (LSFI) algorithms, which extend from regular SFI algorithms. These are SFI algorithms that expand a bounded subset of the problem graph, quantifying the effect of the unexpanded portions of the model. This makes LSFI algorithms applicable to infinite or recursive models. Lazy expansion works with the addition of a special value called \texttt{*} (pronounced ``star''), which represents an uncomputed or unexplored value. LSFI algorithms use \texttt{*} to produce bounds on queries, rather than exact queries. Possible queries include bounds on the probability of a value, bounds on the probability of a predicate evaluating to true, or bounds on the expectation of a bounded function over the values of an element. To produce correct bounds, LSFI algorithms require that all constraints are between 0 and 1; otherwise an exception will be thrown.
+
+\subsection{Basic SFI algorithms}
 
 The basic structured algorithm will decompose a model based on Chains. That is, every Chain defined in the model creates at most \textit{n} sub--models, one for each value of the parent of the Chain. Each of these sub--models is recursively decomposed. When a sub--model can no longer be decomposed, a solving strategy is applied to the sub--model. Figaro comes with a set of strategies that either applies the same algorithm to each model or chooses to apply either VE, BP, or Gibbs sampling based on some heuristics.
 
@@ -347,6 +351,179 @@ The algorithm can them be used like a normal Figaro algorithm. There are also st
 \end{flushleft}
 
 Where the first argument is the threshold that determines when VE is run (e.g., the cost of running VE is less than the threshold). The second argument controls when to choose between BP and Gibbs sampling. If the fraction of the model that is deterministic is greater than the second argument, then BP is run, otherwise Gibbs is run. The following arguments are the number of BP and Gibbs iterations to perform, and the final argument is the query target.
+
+Additional SFI and LSFI algorithms are found in the \texttt{com.cra.fig\-aro.algorithm.structured.algorithm} package; see the Scaladoc for details on configuring them.
+
+\subsection{Function memoization}
+
+SFI caches sub--problems across Chains by looking at the particular function and parent value that produced the sub--problem. However, some care needs to be taken to use this optimization correctly. Consider the following example:
+
+\begin{flushleft}
+\texttt{import com.cra.figaro.language.\_
+\newline 
+\newline val e1 = Select(0.1 -> 1, 0.2 -> 2, 0.3 -> 3, 0.4 -> 4)
+\newline val e2 = Select(0.4 -> 2, 0.2 -> 3, 0.4 -> 4)
+\newline def expand(i: Int): Element[Int] = Select(0.5 -> i, 0.5 -> i + 1)
+\newline val e3 = Chain(e1, expand)
+\newline val e4 = Chain(e2, expand)
+}
+\end{flushleft}
+
+Notice how \texttt{e3} and \texttt{e4} use the same function to produce a child Element. This type of reuse is an opportunity to use SFI's automatic memoization. Unfortunately, SFI will not recognize this equivalence because SFI memoizes on the basis of reference equality of functions. Indeed, equality testing of functions in Scala currently only returns true if the functions point to the same reference in memory. This is the case even if the two functions appear to compute the same values on inputs. Here, turning the \texttt{expand} method into a function actually creates a new instance of an \texttt{Int => Element[Int]} both times it is called. To take advantage of SFI memoization, one must instead define the model like this:
+
+\begin{flushleft}
+\texttt{import com.cra.figaro.language.\_
+\newline 
+\newline val e1 = Select(0.1 -> 1, 0.2 -> 2, 0.3 -> 3, 0.4 -> 4)
+\newline val e2 = Select(0.4 -> 2, 0.2 -> 3, 0.4 -> 4)
+\newline val expand = (i: Int) => Select(0.5 -> i, 0.5 -> i + 1)
+\newline val e3 = Chain(e1, expand)
+\newline val e4 = Chain(e2, expand)
+}
+\end{flushleft}
+
+This ensures that both Chains use the same function.
+
+\subsection{The process of SFI}
+\label{SFI_process}
+
+SFI consists of two steps: refining and solving. The refining step involves generating ranges for each element and decomposing Chains into smaller problems. The solving step involves traversing the graph of problems and applying a solver to each problem until the top-level problem has a solution. Refining and solving are done by a strategy. SFI algorithms are also supplied with a ranging strategy for creating ranges on an element-by-element basis. The basic algorithms described above choose reasonable defaults for each strategy, but in general strategies are customizable. Figaro includes several built-in ranging, refining, and solving strategies. Users also have the ability to define custom strategies, including model-specific strategies.
+
+Each SFI algorithm is associated with a central data structure: a \texttt{ComponentCollection}. A component collection maintains a set of problem components (SFI wrappers for elements) and a graph of sub--problems. Figaro offers two implementations: the standard \texttt{Component\-Collection}, and a \texttt{RecursiveComponentCollection} class for recursive models. The non-recursive collection is provided as the default for regular SFI; the recursive collection is used by default in LSFI. The non-recursive collection has guaranteed linear time performance, but fails on models containing a Chain function that calls itself recursively. An example model that contains such a recursive call is shown below:
+
+\begin{flushleft}
+\marginpar{This example can be found in InfiniteExpectation.scala}
+\texttt{// Prior on the probability of termination at each iteration
+\newline val prob = Beta(1, 5)
+\newline
+\newline // A simple recursive element that uses Chain function memoization
+\newline def recursiveElement(): Element[Int] = Chain(Flip(prob), recursiveFunction)
+\newline val recursiveFunction: Boolean => Element[Int] = (b: Boolean) => \{
+\newline\tab if(b) Constant(0)
+\newline\tab else recursiveElement().map(i => (i + 1) \% 3)
+\newline \}
+\newline val elem = recursiveElement()}
+\end{flushleft}
+
+For these recursive models, \texttt{RecursiveComponentCollection} is available instead. Such a collection may take quadratic time in the number of expansions into sub--problems, but on many models it does not produce significant overhead compared to the non-recursive implementation. For more details regarding the implementations of these two types of collections, see the Scaladoc.
+
+Component collections offer one additional optimization. In many cases, when creating factors for sub--problems of a Chain, it is possible to combine the solutions to sub--problems into a single factor representing a conditional probability distribution. This reduces memory and inference costs when applicable. One can enable this optimization by setting the boolean flag \texttt{useSingleChainFactor} to \texttt{true} in the component collection associated with an algorithm. This flag is disabled by default, however all of Figaro's basic built-in SFI algorithms enable it.
+
+Figaro offers both one-time and anytime SFI algorithms. One-time SFI algorithms perform a single pass of refining and solving. Most of the default algorithms included are one-time algorithms. Anytime SFI algorithms alternate refining and solving to produce better solutions over time. This is particularly useful for LSFI, where one might choose to incrementally expand more of the model at each iteration. Alternatively, anytime SFI is applicable to models containing elements with infinite support, as it allows the algorithm to choose better finite approximations of these distributions at each iteration.
+
+\subsection{Atomic rangers}
+
+SFI algorithms operate on discrete factor graphs. Generating such a factor graph requires computing a finite range for each element involved. For elements with finite support, this range is often just the entire support; for elements with infinite support, this is typically a finite approximation. Ranging currently proceeds by generating ranges for atomic elements (i.e. elements that use no other elements in their generation), then propagating ranges deterministically through other elements, including Chain, Apply, and Dist.
+
+More precisely, SFI algorithms require each atomic element to define a distribution over a finite range. If using LSFI, this range is also allowed to contain \texttt{*}, but regular SFI will throw an exception if a query is made to an element with range containing \texttt{*}. Ranging for a particular atomic element of type \texttt{T} is handled by an implementation of \texttt{AtomicRang\-er[T]}. \texttt{AtomicRanger} specifies two methods: \texttt{discretize()} and \texttt{fullyRefinable()}. The \texttt{discretize()} method returns a distribution over extended values of type \texttt{T} (i.e. either a regular value or \texttt{*}). The distribution is represented as a map from extended values to probabilities, with the property that the probabilities must sum to 1. This method is called once each time a refining strategy generates the range of an atomic element. Thus, if one wants to incrementally refine an infinite element (e.g. using an anytime SFI algorithm that refines once per iteration), it is up to the \texttt{AtomicRanger} to return an incrementally better discretization each time the method is called. The \texttt{fullyRefinable()} method returns a boolean indicating if \texttt{discretize()} returns a complete distribution that cannot be refined further. Generally, this is only true for rangers over finite-support elements that enumerate the entire distribution.
+
+Figaro includes several implementations of \texttt{AtomicRanger}.
+
+The \texttt{FiniteRanger} class returns a complete distribution for Figaro's built-in atomic elements with finite range (including Flip, Select, and Binomial). Otherwise, it returns a distribution that assigns probability 1 to \texttt{*}.
+
+The \texttt{SamplingRanger} class approximates a distribution by sampling, returning a uniform distribution over the sampled values. It takes additional samples with each call to \texttt{discretize()}, and returns a distribution containing all previously sampled values. The number of samples to take per iteration is configurable.
+
+The \texttt{CountingRanger} class is only applicable to atomic distributions of type \texttt{Int} that have support over all integers greater than or equal to \texttt{lower} for some integer \texttt{lower}. Among Figaro's built-in elements, this applies only to Geometric and Poisson distributions. This ranger incrementally counts from \texttt{lower} to a variable (exclusive) upper bound that increases by \texttt{valuesPerIteration} each time the \texttt{discretize()} method is called. Probabilities are assigned to these counted values according to the actual underlying distribution, and all remaining probability mass is placed on \texttt{*}. Because \texttt{CountingRanger} can return ranges with \texttt{*}, it is only applicable to LSFI.
+
+One can also define custom rangers. For example, the following defines an incremental ``binning'' ranger for a Beta distribution (recall that the support of a Beta distribution is the interval $[0,1]$):
+
+\begin{flushleft}
+\marginpar{This example can be found in InfiniteExpectation.scala}
+\texttt{class BetaBinningRanger(beta: AtomicBeta, valuesPerIteration: Int) extends AtomicRanger(beta) \{
+\newline\tab  val dist = new BetaDistribution(beta.aValue, beta.bValue)
+\newline
+\newline\tab  // This is not fully refinable because it acts on an 
+\newline\tab  // element that has infinite range
+\newline\tab  override def fullyRefinable() = false
+\newline
+\newline\tab  // Total number of values (bins) to use at the current
+\newline\tab  // iteration
+\newline\tab  var totalValues: Int = 0
+\newline
+\newline\tab  override def discretize() = \{
+\newline\tab\tab    // Take additional values each iteration
+\newline\tab\tab    totalValues += valuesPerIteration
+\newline\tab\tab    // Make equally-spaced bins, each weighted by the
+\newline\tab\tab    // prior probability of sampling from that bin
+\newline\tab\tab    val probs = for(i <- 0 until totalValues) yield \{
+\newline\tab\tab\tab      // Lower and upper bounds on this bin
+\newline\tab\tab\tab      val lower = i.toDouble / totalValues
+\newline\tab\tab\tab      val upper = (i+1).toDouble / totalValues
+\newline\tab\tab\tab      // Assign the value to the middle of the bin
+\newline\tab\tab\tab      val mid = (lower + upper) / 2
+\newline\tab\tab\tab      Regular(mid) -> dist.probability(lower, upper)
+\newline\tab\tab    \}
+\newline\tab\tab    // This returns a discrete distribution that
+\newline\tab\tab    // approximates the Beta distribution given
+\newline\tab\tab    probs.toMap[Extended[Double], Double]
+\newline\tab  \}
+\newline\}
+}
+\end{flushleft}
+
+Notice the call to the constructor \texttt{Regular(mid)}. \texttt{Regular[T]} is one of the subtypes of \texttt{Extended[T]}, the other being \texttt{Star}.
+
+\subsection{Ranging strategies}
+
+Atomic rangers are assigned to atomic elements by a ranging strategy. Specifically, the \texttt{RangingStrategy} class defines a single abstract method with signature \texttt{apply[T](atomic: Atomic[T]): AtomicRang\-er[T]}. Each SFI algorithm is provided with a single \texttt{RangingStrategy}.
+
+Figaro provides two ranging strategies. The default ranging strategy uses \texttt{FiniteRanger} for built-in finite atomic elements, and otherwise uses \texttt{SamplingRanger}. Such a strategy is obtained by calling \texttt{RangingStrategy.default(numValues)}, where \texttt{numValues} is the number of additional samples to take at each iteration.
+
+The default \textit{lazy} strategy (intended for LSFI) works the same way, except that it applies the \texttt{CountingRanger} to Geometric and Poisson elements. Such a strategy is obtained by calling \texttt{RangingStrategy.def\-aultLazy(numValues)}, where \texttt{numValues} is the number of additional values (from Geometric or Poisson elements) or samples (from other atomic elements) to take at each iteration.
+
+Of course, one can also define a custom ranging strategy. For example, the following defines a ranging strategy that applies \texttt{FiniteRanger} to Flip elements, and applies the binning strategy defined in the previous section to Beta elements (for a model containing only Flip and Beta elements):
+
+\begin{flushleft}
+\marginpar{This example can be found in InfiniteExpectation.scala}
+\texttt{new RangingStrategy \{
+\newline\tab  override def apply[T](atomic: Atomic[T]):
+\newline\tab\tab    AtomicRanger[T] = \{
+\newline\tab\tab    atomic match \{
+\newline\tab\tab\tab      case flip: AtomicFlip =>
+\newline\tab\tab\tab\tab        new FiniteRanger(flip)
+\newline\tab\tab\tab      case beta: AtomicBeta =>
+\newline\tab\tab\tab\tab        new BetaBinningRanger(beta, valuesPerIteration)
+\newline\tab\tab    \}
+\newline\tab  \}
+\newline\}
+}
+\end{flushleft}
+
+This definition assigns an atomic ranger to each element by its type. However, one could also assign atomic rangers by reference to specify a unique ranger for each atomic element in the model.
+
+\subsection{Refining strategies}
+
+Recall that refining strategies have two jobs: to generate ranges for elements relevant to the query, and to expand sub--problems through Chains. Refining strategies operate on a component collection, and define a single \texttt{execute()} method that performs the refinement.
+
+The most generally applicable refining strategy is \texttt{Backtracking\-Strategy}, which performs both expansion and rangin. It takes as input a list of problem components and a maximum depth of expansion. This depth parameter enables lazy partial expansion: starting from a depth of 0 at the top-level, the strategy performs a depth-first search through elements in the model, incrementing the depth each time it enters a sub--problem. It is called a ``backtracking'' strategy because it uses backtracking to propagate updates when an element is visited multiple times at different depths. This backtracking process can cause the algorithm to take superlinear time on some models.
+
+An alternative strategy with similar applications is \texttt{RecursionDepth\-Strategy}. It performs the same kind of depth-first expansion, but defines ``depth'' slightly differently. This uses a notion of depth that is essentially the number of \textit{recursive} calls to a particular sub--problem. This definition applies to recursive models, such as the one defined above in Section \ref{SFI_process}. Notice how the function \texttt{recursiveFunction} explicitly uses itself recursively. This strategy would increment the depth of expansion each time the function calls itself through a Chain. Note that it is essential to use function memoization on infinite models used with this strategy, as otherwise the strategy cannot detect the recursion. Consider an alternative implementation of the model:
+
+\begin{flushleft}
+\texttt{def recursiveElement(): Element[Int] = Chain(Flip(prob), (b: Boolean) => \{
+\newline\tab if(b) Constant(0)
+\newline\tab else recursiveElement().map(i => (i + 1) \% 3)
+\newline \})
+}
+\end{flushleft}
+
+As a result of failing to use function memoization, the strategy will proceed as if no recursive calls were made, and will fail to terminate. However, when \texttt{RecursionDepthStrategy} is applicable, the need for backtracking is eliminated, often yielding better performance.
+
+Another included strategy is \texttt{FlatStrategy}. This takes a set of existing components in the component collection and updates the range for each one. This will not update the ranges of any other components; thus a \texttt{FlatStrategy} will not enter sub--problems to refine them. Closely related is \texttt{TopDownStrategy} which also takes a fixed set of components to update. Instead of updating only these components, it also propagates updates to all dependent components in the component collection, ensuring consistency across generated ranges.
+
+\subsection{Solving strategies}
+
+The most basic solving strategy is \texttt{ConstantStrategy}, which solves in a uniform manner. It takes three arguments: an inference problem to solve, a factor solver, and a raising criteria. The factor solver can be one of Figaro's built in solvers, which include variable elimination, belief propagation, and Gibbs sampling. The raising criteria is a decision function to decide whether to solve or ``raise'' a sub--problem into a higher-level problem without solving. Solving a sub--problem enables reusing the solution elsewhere in the model, and often induces a better elimination order. Nevertheless, raising is available for the occasional cases where it is known to perform better. Figaro includes several built-in raising criteria: \texttt{structuredRaising} (always solves), \texttt{flatRaising} (always raises), and \texttt{raiseIfGlobal} (raises if a sub--problem uses globals, i.e. elements declared in a higher-level problem).
+
+More generally, one can subclass \texttt{RaisingStrategy} for additional flexibility. Here, one can override the \texttt{eliminate} method to combine inference strategies; this is how the hybrid strategies \texttt{VEBPGibbsStrat\-egy}, \texttt{VEBPStrategy}, and \texttt{VEGibbsStrategy} are implemented. Additionally, one can override the \texttt{recurse} method to choose different strategies for recursively solving each sub--problem. See the Scaladoc for more information regarding the specifications of these methods and how to override them.
+
+It is important to note that if using LSFI one must use a \textit{non-normalizing} solver for the top-level problem to produce correct bounds on a query. Currently, the only non-normalizing solver implemented in Figaro is variable elimination.
+
+\subsection{Customizing SFI algorithms}
+
+One can customize SFI algorithms by extending from one of the base abstract classes (e.g. \texttt{LazyStructuredProbQueryAlgorithm}) and mixing in the appropriate one-time or anytime traits. This leaves the user to define the ranging, refining, and solving strategies to use. It is important to note that whereas a single ranging strategy is used over the course of inference, most refining and solving strategies are not reusable. Thus, for anytime SFI, one should generally override the \texttt{refiningStrategy()} and \texttt{solvingStrategy()} methods to return a new strategy for each iteration of inference.
+
+Examples showing creation and use of custom SFI algorithms are provided in the \texttt{lazystructured} package in the Figaro examples. Relevant classes for building custom SFI algorithms are found in the \texttt{com.cra.figaro.algorithm.structured} package: one can find the base algorithms in the \texttt{algorithm} package, the various strategies in the \texttt{strategy} package, and the included solvers in the \texttt{solver} package.
 
 \section{Probability of evidence algorithms}
 
