@@ -484,7 +484,7 @@ class BacktrackingStrategyTest extends WordSpec with Matchers {
         // Expanding this problem proceeds depth-first from e3. It first goes through the Chain parents, which means
         // that e2 is processed before e3. At this point, the value set of e2 is {1,*}, and subproblems for g with
         // parent values 0 and 1 have been created but not visited. When e3 gets visited, the subproblem of g with
-        // parent value 1 is visited at greater depth. This forces an update to e2, addint 2 to its range. Now, the
+        // parent value 1 is visited at greater depth. This forces an update to e2, adding 2 to its range. Now, the
         // subproblem of g with parent value 2 gets expanded and visited, too. This does not force an update to e2
         // because e2 does not use the subproblem of g corresponding to the parent value 2. So, the end result is that
         // the only subproblem not fully refined is the subproblem of g with parent value 0.
@@ -492,6 +492,26 @@ class BacktrackingStrategyTest extends WordSpec with Matchers {
         c2.range.regularValues should equal(Set(1, 2))
         c3.range.hasStar should be(true)
         c3.range.regularValues should equal(Set(1, 2, 3))
+      }
+
+      "not backtrack through a component visited at depth -1" in {
+        Universe.createNew()
+        val e1 = Flip(0.5)
+        val e2 = Select(0.1 -> 1, 0.9 -> 2)
+        val e3 = Chain(e1, (b: Boolean) => Apply(e2, (i: Int) => if(b) i else -i))
+        val cc = new ComponentCollection
+        val pr = new Problem(cc, List(e3, e2))
+        val c2 = cc(e2)
+        val c3 = cc(e3)
+        val strategy = new BacktrackingStrategy(pr, pr.targetComponents, 0)
+        strategy.execute()
+
+        // The Apply in each subproblem gets visited at depth -1. Thus, we don't add it as a direct update of e2. As a
+        // result, even though we explicitly visit e2 separately, we should not backtrack to update e3.
+        c2.range.regularValues should equal(Set(1, 2))
+        c2.range.hasStar should be(false)
+        c3.range.regularValues should be(empty)
+        c3.range.hasStar should be(true)
       }
     }
 
