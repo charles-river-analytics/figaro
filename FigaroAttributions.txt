@@ -19,8 +19,8 @@ Brian Ruttenberg
 Cory Scott
 Josh Serrin
 Amy Sliva
-Aaron Zakem
 Glenn Takata
+Aaron Zakem
 
 External Contributors
 ---------------------
@@ -31,6 +31,6 @@ Paul Philips
 Tadayoshi Sato
 Çağdaş Şenol
 Viliam Simko
-Maciej Szymkiewicz
 Synapski
+Maciej Szymkiewicz
 Kartik Thakore
