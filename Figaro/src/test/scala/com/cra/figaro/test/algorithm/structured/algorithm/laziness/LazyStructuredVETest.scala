@@ -370,12 +370,12 @@ class LazyStructuredVETest extends WordSpec with Matchers {
       alg.start()
       Thread.sleep(1000)
       alg.stop()
-      val depth1 = alg.depth()
+      val depth1 = alg.currentDepth
       depth1 should be > 1
       alg.resume()
       Thread.sleep(1000)
       alg.stop()
-      val depth2 = alg.depth()
+      val depth2 = alg.currentDepth
       depth2 should be > depth1
       alg.kill()
     }
@@ -394,11 +394,11 @@ class LazyStructuredVETest extends WordSpec with Matchers {
       upper1 should be >= lower1
 
       alg.resume()
-      while(alg.depth() < 30) Thread.sleep(100)
+      while(alg.currentDepth < 10) Thread.sleep(100)
       alg.stop()
       val (lower2, upper2) = alg.probabilityBounds(geometric, 1)
       lower2 should be (0.5 +- 0.000000001)
-      upper2 should be (0.5 +- 0.000000001)
+      upper2 should be (0.5 +- 0.0001)
       upper2 should be >= lower2
       alg.kill()
     }
@@ -422,11 +422,11 @@ class LazyStructuredVETest extends WordSpec with Matchers {
       upper1 should be >= actual
 
       alg.resume()
-      while(alg.depth() < 30) Thread.sleep(100)
+      while(alg.currentDepth < 10) Thread.sleep(100)
       alg.stop()
       val (lower, upper) = alg.expectationBounds(geometric, (i: Int) => 1.0 / i, Some(0.0), Some(1.0))
-      lower should be (actual +- 0.000000001)
-      upper should be (actual +- 0.000000001)
+      lower should be (actual +- 0.0001)
+      upper should be (actual +- 0.0001)
       alg.kill()
     }
   }

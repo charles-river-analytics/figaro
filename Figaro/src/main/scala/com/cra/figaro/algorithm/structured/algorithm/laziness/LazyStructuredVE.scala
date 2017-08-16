@@ -62,7 +62,7 @@ class AnytimeLSVE(depthIncrement: Int, universe: Universe, targets: Element[_]*)
   extends LazyStructuredVE(universe, targets: _*) with AnytimeLazyStructuredProbQuery {
 
   // Current depth of expansion
-  private var currentDepth = 0
+  var currentDepth = 0
 
   override def depth(): Int = {
     // Increment depth each time we create a refining strategy
