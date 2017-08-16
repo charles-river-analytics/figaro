@@ -47,38 +47,174 @@ class ExpandTest extends WordSpec with Matchers {
       cc.expandsFrom(spr) should equal(Set(pr))
     }
 
+    "correctly update the collection for a subproblem that does not use itself recursively" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Flip(0.2)
+      val e2 = Flip(0.3)
+      val e3 = Constant(1)
+      val e4 = Uniform(2, 3)
+      val f = (b: Boolean) => if (b) e3 else e4
+      val e5 = Chain(e1, f)
+      val e6 = Chain(e2, f)
+      pr.add(e5)
+      pr.add(e6)
+      val c5 = cc(e5)
+      val c6 = cc(e6)
+      c5.expand(false)
+      c6.expand(false)
+
+      val spr5 = c5.subproblems(false)
+      val spr6 = c6.subproblems(false)
+
+      spr5 should be theSameInstanceAs spr6
+      cc.expansionToProblem should have size 1
+      cc.expansionToProblem(((f, false), 0)) should be theSameInstanceAs spr5
+      cc.problemToExpansion should have size 1
+      cc.problemToExpansion(spr5) should equal ((f, false), 0)
+      cc.expandsFrom should have size 1
+      cc.expandsFrom(spr5) should equal(Set(pr))
+    }
+
     "correctly detect cycles and return the appropriate copy of the subproblem" when {
-      "the subproblem does not use itself recursively" in {
+      "using an incrementing collection" in {
         Universe.createNew()
-        val cc = new ComponentCollection
+        val cc = new IncrementingCollection
         val pr = new Problem(cc)
-        val e1 = Flip(0.2)
-        val e2 = Flip(0.3)
-        val e3 = Constant(1)
-        val e4 = Uniform(2, 3)
-        val f = (b: Boolean) => if (b) e3 else e4
-        val e5 = Chain(e1, f)
-        val e6 = Chain(e2, f)
-        pr.add(e5)
-        pr.add(e6)
-        val c5 = cc(e5)
-        val c6 = cc(e6)
-        c5.expand(false)
-        c6.expand(false)
+        // A simple branching program that calls itself recursively through one of two subproblems
+        val e2 = recursiveElement()
+        val e1 = e2.parent
+        pr.add(e1)
+        pr.add(e2)
+        val c1 = cc(e1)
+        val c2 = cc(e2)
+        c1.generateRange()
+        c2.expand(true)
+        c2.expand(false)
 
-        val spr5 = c5.subproblems(false)
-        val spr6 = c6.subproblems(false)
+        val sprTrue = c2.subproblems(true)
+        val sprFalse = c2.subproblems(false)
+        cc.expansionToProblem(((chainFunction, true), 0)) should equal(sprTrue)
+        cc.expansionToProblem(((chainFunction, false), 0)) should equal(sprFalse)
+        cc.problemToExpansion(sprTrue) should equal(((chainFunction, true), 0))
+        cc.problemToExpansion(sprFalse) should equal(((chainFunction, false), 0))
+        cc.expandsFrom(sprTrue) should equal(Set(pr))
+        cc.expandsFrom(sprFalse) should equal(Set(pr))
 
-        spr5 should be theSameInstanceAs spr6
-        cc.expansionToProblem should have size 1
-        cc.expansionToProblem(((f, false), 0)) should be theSameInstanceAs spr5
-        cc.problemToExpansion should have size 1
-        cc.problemToExpansion(spr5) should equal ((f, false), 0)
-        cc.expandsFrom should have size 1
-        cc.expandsFrom(spr5) should equal(Set(pr))
+        // Expand the components of the true subproblem
+        val e2True = sprTrue.target.asInstanceOf[Chain[Boolean, Boolean]]
+        val e1True = e2True.parent
+        sprTrue.add(e1True)
+        sprTrue.add(e2True)
+        val c1True = cc(e1True)
+        val c2True = cc(e2True)
+        c1True.generateRange()
+
+        c2True.expand(true)
+        val sprTrueTrue = c2True.subproblems(true)
+        sprTrueTrue should not equal sprTrue
+        cc.expansionToProblem(((chainFunction, true), 1)) should equal(sprTrueTrue)
+        cc.problemToExpansion(sprTrueTrue) should equal(((chainFunction, true), 1))
+        cc.expandsFrom(sprTrueTrue) should equal(Set(sprTrue))
+
+        c2True.expand(false)
+        val sprTrueFalse = c2True.subproblems(false)
+        sprTrueFalse should not equal sprFalse
+        cc.expansionToProblem(((chainFunction, false), 1)) should equal(sprTrueFalse)
+        cc.problemToExpansion(sprTrueFalse) should equal(((chainFunction, false), 1))
+        cc.expandsFrom(sprTrueFalse) should equal(Set(sprTrue))
+
+        // Expand the components of the false subproblem
+        val e2False = sprFalse.target.asInstanceOf[Chain[Boolean, Boolean]]
+        val e1False = e2False.parent
+        sprFalse.add(e1False)
+        sprFalse.add(e2False)
+        val c1False = cc(e1False)
+        val c2False = cc(e2False)
+        c1False.generateRange()
+
+        // Here, we should reuse the depth 1 expansions from above
+        c2False.expand(true)
+        val sprFalseTrue = c2True.subproblems(true)
+        sprFalseTrue should not equal sprTrue
+        sprFalseTrue should equal(sprTrueTrue)
+        cc.expandsFrom(sprTrueTrue) should equal(Set(sprTrue, sprFalse))
       }
 
-      "the subproblem uses itself recursively, either directly or indirectly" in {
+      "using a minimally incrementing collection" in {
+        Universe.createNew()
+        val cc = new MinimalIncrementingCollection
+        val pr = new Problem(cc)
+        // A simple branching program that calls itself recursively through one of two subproblems
+        val e2 = recursiveElement()
+        val e1 = e2.parent
+        pr.add(e1)
+        pr.add(e2)
+        val c1 = cc(e1)
+        val c2 = cc(e2)
+        c1.generateRange()
+        c2.expand(true)
+        c2.expand(false)
+
+        val sprTrue = c2.subproblems(true)
+        val sprFalse = c2.subproblems(false)
+        cc.expansionToProblem(((chainFunction, true), 0)) should equal(sprTrue)
+        cc.expansionToProblem(((chainFunction, false), 0)) should equal(sprFalse)
+        cc.problemToExpansion(sprTrue) should equal(((chainFunction, true), 0))
+        cc.problemToExpansion(sprFalse) should equal(((chainFunction, false), 0))
+        cc.expandsFrom(sprTrue) should equal(Set(pr))
+        cc.expandsFrom(sprFalse) should equal(Set(pr))
+
+        // Expand the components of the true subproblem
+        val e2True = sprTrue.target.asInstanceOf[Chain[Boolean, Boolean]]
+        val e1True = e2True.parent
+        sprTrue.add(e1True)
+        sprTrue.add(e2True)
+        val c1True = cc(e1True)
+        val c2True = cc(e2True)
+        c1True.generateRange()
+
+        // The collection should not allow the true subproblem to use itself; this is a direct recursion.
+        //cc.levelPathExists((chainFunction, true), (chainFunction, true)) should equal(true)
+        c2True.expand(true)
+        //cc.expansionToDeeper((chainFunction, true)) should equal(Set((chainFunction, true)))
+        val sprTrueTrue = c2True.subproblems(true)
+        sprTrueTrue should not equal sprTrue
+        cc.expansionToProblem(((chainFunction, true), 1)) should equal(sprTrueTrue)
+        cc.problemToExpansion(sprTrueTrue) should equal(((chainFunction, true), 1))
+        cc.expandsFrom(sprTrueTrue) should equal(Set(sprTrue))
+
+        // However, the collection should allow the true subproblem to use the depth 0 false subproblem
+        //cc.levelPathExists((chainFunction, false), (chainFunction, true)) should equal(false)
+        c2True.expand(false)
+        //cc.expansionToLevel((chainFunction, true)) should equal(Set((chainFunction, false)))
+        val sprTrueFalse = c2True.subproblems(false)
+        sprTrueFalse should equal(sprFalse)
+        cc.expandsFrom(sprTrueFalse) should equal(Set(pr, sprTrue))
+
+        // Expand the components of the false subproblem
+        val e2False = sprFalse.target.asInstanceOf[Chain[Boolean, Boolean]]
+        val e1False = e2False.parent
+        sprFalse.add(e1False)
+        sprFalse.add(e2False)
+        val c1False = cc(e1False)
+        val c2False = cc(e2False)
+        c1False.generateRange()
+
+        // This creates a cycle because we already allowed the true subproblem to use the false subproblem; this is
+        // an indirect recursion. However, we should be able to use the depth 1 true subproblem from here. This tests
+        // that the collection increments the depth when a cycle would be created in the expansion graph.
+        //cc.levelPathExists((chainFunction, true), (chainFunction, false)) should equal(true)
+        c2False.expand(true)
+        //cc.expansionToDeeper((chainFunction, false)) should equal(Set((chainFunction, true)))
+        val sprFalseTrue = c2True.subproblems(true)
+        sprFalseTrue should not equal sprTrue
+        sprFalseTrue should equal(sprTrueTrue)
+        cc.expandsFrom(sprTrueTrue) should equal(Set(sprTrue, sprFalse))
+      }
+
+      "using a selective incrementing collection" in {
         Universe.createNew()
         val cc = new SelectiveIncrementingCollection
         val pr = new Problem(cc)

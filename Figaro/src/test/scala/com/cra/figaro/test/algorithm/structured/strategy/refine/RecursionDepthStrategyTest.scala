@@ -421,7 +421,144 @@ class RecursionDepthStrategyTest extends WordSpec with Matchers {
     else memoGeometric().map(_ + 1)
   }
 
-  "A partial recursion depth strategy" when {
+  "A partial recursion depth strategy with an incrementing collection" when {
+    "called once" should {
+      "produce the correct range" in {
+        Universe.createNew()
+        val e1 = memoGeometric()
+        val cc = new IncrementingCollection
+        val pr = new Problem(cc, List(e1))
+        new RecursionDepthStrategy(pr, pr.targetComponents, 3).execute()
+
+        val c1 = cc(e1)
+        // After n recursive calls, the range of c1 is [1,..,n+1] because the depth 0 true subproblem is always
+        // expanded, and depth i false subproblem uses the depth i + 1 true subproblem
+        c1.range.regularValues should equal(Set(1, 2, 3, 4))
+        c1.range.hasStar should be(true)
+      }
+
+      "mark components as fully refined and enumerated" in {
+        Universe.createNew()
+        val e1 = memoGeometric()
+        val cc = new IncrementingCollection
+        val pr = new Problem(cc, List(e1))
+        new RecursionDepthStrategy(pr, pr.targetComponents, 3).execute()
+
+        val c1 = cc(e1).asInstanceOf[ChainComponent[Boolean, Int]]
+        c1.fullyEnumerated should be(false)
+        c1.fullyRefined should be(false)
+        val prt = c1.subproblems(true)
+        cc(prt.target).fullyEnumerated should be(true)
+        prt.fullyRefined should be(true)
+        val prf = c1.subproblems(false)
+        cc(prf.target).fullyEnumerated should be(false)
+        prf.fullyRefined should be(false)
+      }
+
+      "use the correct definition of depth with respect to globals" in {
+        Universe.createNew()
+        val e1 = memoGeometric()
+        val e2 = If(Flip(0.5), Constant(0), e1)
+        val cc = new IncrementingCollection
+        val pr = new Problem(cc, List(e2))
+        // Ensure that the global is added to the correct problem, even though this won't change the outcome of this test
+        pr.add(e1)
+        new RecursionDepthStrategy(pr, pr.targetComponents, 3).execute()
+
+        // Depth gets incremented everywhere; see the two tests above
+        cc(e1).range.regularValues should equal(Set(1, 2, 3, 4))
+        cc(e2).range.regularValues should equal(Set(0, 1, 2, 3, 4))
+      }
+
+      "correctly expand when a component is used multiple times at different depths, but non-recursively" in {
+        Universe.createNew()
+        val g = (i: Int) => Select(0.5 -> i, 0.5 -> (i + 1))
+        val e1 = Flip(0.2)
+        val e2 = Chain(e1, (b: Boolean) => if(b) Constant(1) else Chain(g(0), g))
+        val e3 = Chain(e2, g)
+        val cc = new IncrementingCollection
+        val pr = new Problem(cc, List(e3))
+        pr.add(e1)
+        pr.add(e2)
+        val c2 = cc(e2)
+        val c3 = cc(e3)
+        val strategy = new RecursionDepthStrategy(pr, pr.targetComponents, 0)
+        strategy.execute()
+
+        // Recall that the collection increments depth everywhere; thus all but the subproblems used directly by the
+        // top-level are not refined
+        c2.fullyRefined should be(false)
+        c2.fullyEnumerated should be(false)
+        c2.range.regularValues should equal(Set(1))
+        c2.range.hasStar should be(true)
+        c3.fullyRefined should be(false)
+        c3.fullyEnumerated should be(false)
+        c3.range.regularValues should equal(Set(1, 2))
+        c2.range.hasStar should be(true)
+      }
+    }
+
+    "called at increasing depth" should {
+      "produce the correct range" in {
+        Universe.createNew()
+        val e1 = memoGeometric()
+        val cc = new IncrementingCollection
+        val pr = new Problem(cc, List(e1))
+        val c1 = cc(e1)
+
+        for(depth <- 0 to 10) {
+          new RecursionDepthStrategy(pr, pr.targetComponents, depth).execute()
+          c1.range.hasStar should be(true)
+          c1.range.regularValues should equal((1 to (depth + 1)).toSet)
+        }
+      }
+
+      "preserve only the relevant solutions" in {
+        Universe.createNew()
+        val e1 = memoGeometric()
+        val cc = new IncrementingCollection
+        val pr = new Problem(cc, List(e1))
+        new RecursionDepthStrategy(pr, pr.targetComponents, 1).execute()
+        new ConstantStrategy(pr, structuredRaising, marginalVariableElimination).execute()
+
+        val c1 = cc(e1).asInstanceOf[ChainComponent[Boolean, Int]]
+        pr.solved should be(true)
+        c1.subproblems(true).solved should be(true)
+        c1.subproblems(false).solved should be(true)
+
+        new RecursionDepthStrategy(pr, pr.targetComponents, 3).execute()
+
+        pr.solved should be(false)
+        // The first subproblem was fully refined so its solution should remain; the second subproblem was expanded
+        // further so its solution should be removed
+        c1.subproblems(true).solved should be(true)
+        c1.subproblems(false).solved should be(false)
+      }
+    }
+
+    "given a recursive model that uses the same function at each recursion" should {
+      "reuse the non-recursive part of the model, but produce a different subproblem for the recursive part" in {
+        Universe.createNew()
+        val e1 = memoGeometric()
+        val cc = new IncrementingCollection
+        val pr = new Problem(cc, List(e1))
+        new RecursionDepthStrategy(pr, pr.targetComponents, 2).execute()
+
+        val c1 = cc(e1).asInstanceOf[ChainComponent[Boolean, Int]]
+        val nestedc1 = c1.subproblems(false).components.collectFirst{
+          case chainComp: ChainComponent[_, _] => chainComp
+        }.get.asInstanceOf[ChainComponent[Boolean, Int]]
+
+        // Sanity check; verify that the chain functions are the same (which normally induces memoization)
+        c1.chain.chainFunction should equal(nestedc1.chain.chainFunction)
+        // The subproblems should not be reused because the depth gets incremented everywhere
+        nestedc1.subproblems(true) should not equal c1.subproblems(true)
+        nestedc1.subproblems(false) should not equal c1.subproblems(false)
+      }
+    }
+  }
+
+  "A partial recursion depth strategy with a selective incrementing collection" when {
     "called once" should {
       "produce the correct range" in {
         Universe.createNew()
@@ -538,6 +675,140 @@ class RecursionDepthStrategyTest extends WordSpec with Matchers {
         Universe.createNew()
         val e1 = memoGeometric()
         val cc = new SelectiveIncrementingCollection
+        val pr = new Problem(cc, List(e1))
+        new RecursionDepthStrategy(pr, pr.targetComponents, 2).execute()
+
+        val c1 = cc(e1).asInstanceOf[ChainComponent[Boolean, Int]]
+        val nestedc1 = c1.subproblems(false).components.collectFirst{
+          case chainComp: ChainComponent[_, _] => chainComp
+        }.get.asInstanceOf[ChainComponent[Boolean, Int]]
+
+        // Sanity check; verify that the chain functions are the same (which normally induces memoization)
+        c1.chain.chainFunction should equal(nestedc1.chain.chainFunction)
+        // The subproblem corresponding to parent value true is non-recursive, but corresponding to false is recursive
+        nestedc1.subproblems(true) should equal(c1.subproblems(true))
+        nestedc1.subproblems(false) should not equal c1.subproblems(false)
+      }
+    }
+  }
+
+  "A partial recursion depth strategy with a minimal incrementing collection" when {
+    "called once" should {
+      "produce the correct range" in {
+        Universe.createNew()
+        val e1 = memoGeometric()
+        val cc = new MinimalIncrementingCollection
+        val pr = new Problem(cc, List(e1))
+        new RecursionDepthStrategy(pr, pr.targetComponents, 3).execute()
+
+        val c1 = cc(e1)
+        // After n recursive calls, the range of c1 is [1,..,n+2] because the depth 0 true subproblem is always
+        // expanded, and it is also used by the depth 0 false subproblem
+        c1.range.regularValues should equal(Set(1, 2, 3, 4, 5))
+        c1.range.hasStar should be(true)
+      }
+
+      "mark components as fully refined and enumerated" in {
+        Universe.createNew()
+        val e1 = memoGeometric()
+        val cc = new MinimalIncrementingCollection
+        val pr = new Problem(cc, List(e1))
+        new RecursionDepthStrategy(pr, pr.targetComponents, 3).execute()
+
+        val c1 = cc(e1).asInstanceOf[ChainComponent[Boolean, Int]]
+        c1.fullyEnumerated should be(false)
+        c1.fullyRefined should be(false)
+        val prt = c1.subproblems(true)
+        cc(prt.target).fullyEnumerated should be(true)
+        prt.fullyRefined should be(true)
+        val prf = c1.subproblems(false)
+        cc(prf.target).fullyEnumerated should be(false)
+        prf.fullyRefined should be(false)
+      }
+
+      "use the correct definition of depth with respect to globals" in {
+        Universe.createNew()
+        val e1 = memoGeometric()
+        val e2 = If(Flip(0.5), Constant(0), e1)
+        val cc = new MinimalIncrementingCollection
+        val pr = new Problem(cc, List(e2))
+        // Ensure that the global is added to the correct problem, even though this won't change the outcome of this test
+        pr.add(e1)
+        new RecursionDepthStrategy(pr, pr.targetComponents, 3).execute()
+
+        // Depth only gets incremented through recursive calls; see the two tests above
+        cc(e1).range.regularValues should equal(Set(1, 2, 3, 4, 5))
+        cc(e2).range.regularValues should equal(Set(0, 1, 2, 3, 4, 5))
+      }
+
+      "correctly expand when a component is used multiple times at different depths, but non-recursively" in {
+        Universe.createNew()
+        val g = (i: Int) => Select(0.5 -> i, 0.5 -> (i + 1))
+        val e1 = Flip(0.2)
+        val e2 = Chain(e1, (b: Boolean) => if(b) Constant(1) else Chain(g(0), g))
+        val e3 = Chain(e2, g)
+        val cc = new MinimalIncrementingCollection
+        val pr = new Problem(cc, List(e3))
+        pr.add(e1)
+        pr.add(e2)
+        val c2 = cc(e2)
+        val c3 = cc(e3)
+        val strategy = new RecursionDepthStrategy(pr, pr.targetComponents, 0)
+        strategy.execute()
+
+        // Because this model uses no recursive calls, the entire model should be expanded
+        c2.fullyRefined should be(true)
+        c2.fullyEnumerated should be(true)
+        c2.range.regularValues should equal(Set(0, 1, 2))
+        c3.fullyRefined should be(true)
+        c3.fullyEnumerated should be(true)
+        c3.range.regularValues should equal(Set(0, 1, 2, 3))
+      }
+    }
+
+    "called at increasing depth" should {
+      "produce the correct range" in {
+        Universe.createNew()
+        val e1 = memoGeometric()
+        val cc = new MinimalIncrementingCollection
+        val pr = new Problem(cc, List(e1))
+        val c1 = cc(e1)
+
+        for(depth <- 0 to 10) {
+          new RecursionDepthStrategy(pr, pr.targetComponents, depth).execute()
+          c1.range.hasStar should be(true)
+          c1.range.regularValues should equal((1 to (depth + 2)).toSet)
+        }
+      }
+
+      "preserve only the relevant solutions" in {
+        Universe.createNew()
+        val e1 = memoGeometric()
+        val cc = new MinimalIncrementingCollection
+        val pr = new Problem(cc, List(e1))
+        new RecursionDepthStrategy(pr, pr.targetComponents, 1).execute()
+        new ConstantStrategy(pr, structuredRaising, marginalVariableElimination).execute()
+
+        val c1 = cc(e1).asInstanceOf[ChainComponent[Boolean, Int]]
+        pr.solved should be(true)
+        c1.subproblems(true).solved should be(true)
+        c1.subproblems(false).solved should be(true)
+
+        new RecursionDepthStrategy(pr, pr.targetComponents, 3).execute()
+
+        pr.solved should be(false)
+        // The first subproblem was fully refined so its solution should remain; the second subproblem was expanded
+        // further so its solution should be removed
+        c1.subproblems(true).solved should be(true)
+        c1.subproblems(false).solved should be(false)
+      }
+    }
+
+    "given a recursive model that uses the same function at each recursion" should {
+      "reuse the non-recursive part of the model, but produce a different subproblem for the recursive part" in {
+        Universe.createNew()
+        val e1 = memoGeometric()
+        val cc = new MinimalIncrementingCollection
         val pr = new Problem(cc, List(e1))
         new RecursionDepthStrategy(pr, pr.targetComponents, 2).execute()
 

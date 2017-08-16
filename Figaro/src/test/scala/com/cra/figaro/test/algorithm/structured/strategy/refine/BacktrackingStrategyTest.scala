@@ -554,23 +554,63 @@ class BacktrackingStrategyTest extends WordSpec with Matchers {
     }
 
     "given a recursive model that uses the same function at each recursion" should {
-      "reuse the non-recursive part of the model, but produce a different subproblem for the recursive part" in {
-        Universe.createNew()
-        val e1 = memoGeometric()
-        val cc = new SelectiveIncrementingCollection
-        val pr = new Problem(cc, List(e1))
-        new BacktrackingStrategy(pr, pr.targetComponents, 2).execute()
+      "correctly reuse the non-recursive part of the model, but produce a different subproblem for the recursive part" when {
+        "using an incrementing collection" in {
+          Universe.createNew()
+          val e1 = memoGeometric()
+          val cc = new IncrementingCollection
+          val pr = new Problem(cc, List(e1))
+          new BacktrackingStrategy(pr, pr.targetComponents, 2).execute()
 
-        val c1 = cc(e1).asInstanceOf[ChainComponent[Boolean, Int]]
-        val nestedc1 = c1.subproblems(false).components.collectFirst{
-          case chainComp: ChainComponent[_, _] => chainComp
-        }.get.asInstanceOf[ChainComponent[Boolean, Int]]
+          val c1 = cc(e1).asInstanceOf[ChainComponent[Boolean, Int]]
+          val nestedc1 = c1.subproblems(false).components.collectFirst{
+            case chainComp: ChainComponent[_, _] => chainComp
+          }.get.asInstanceOf[ChainComponent[Boolean, Int]]
 
-        // Sanity check; verify that the chain functions are the same (which normally induces memoization)
-        c1.chain.chainFunction should equal(nestedc1.chain.chainFunction)
-        // The subproblem corresponding to parent value true is non-recursive, but corresponding to false is recursive
-        nestedc1.subproblems(true) should equal(c1.subproblems(true))
-        nestedc1.subproblems(false) should not equal c1.subproblems(false)
+          // Sanity check; verify that the chain functions are the same (which normally induces memoization)
+          c1.chain.chainFunction should equal(nestedc1.chain.chainFunction)
+          // The subproblems should not be reused because the depth gets incremented everywhere
+          nestedc1.subproblems(true) should not equal c1.subproblems(true)
+          nestedc1.subproblems(false) should not equal c1.subproblems(false)
+        }
+
+        "using a selective incrementing collection" in {
+          Universe.createNew()
+          val e1 = memoGeometric()
+          val cc = new SelectiveIncrementingCollection
+          val pr = new Problem(cc, List(e1))
+          new BacktrackingStrategy(pr, pr.targetComponents, 2).execute()
+
+          val c1 = cc(e1).asInstanceOf[ChainComponent[Boolean, Int]]
+          val nestedc1 = c1.subproblems(false).components.collectFirst{
+            case chainComp: ChainComponent[_, _] => chainComp
+          }.get.asInstanceOf[ChainComponent[Boolean, Int]]
+
+          // Sanity check; verify that the chain functions are the same (which normally induces memoization)
+          c1.chain.chainFunction should equal(nestedc1.chain.chainFunction)
+          // The subproblem corresponding to parent value true is non-recursive, but corresponding to false is recursive
+          nestedc1.subproblems(true) should equal(c1.subproblems(true))
+          nestedc1.subproblems(false) should not equal c1.subproblems(false)
+        }
+
+        "using a minimally incrementing collection" in {
+          Universe.createNew()
+          val e1 = memoGeometric()
+          val cc = new MinimalIncrementingCollection
+          val pr = new Problem(cc, List(e1))
+          new BacktrackingStrategy(pr, pr.targetComponents, 2).execute()
+
+          val c1 = cc(e1).asInstanceOf[ChainComponent[Boolean, Int]]
+          val nestedc1 = c1.subproblems(false).components.collectFirst{
+            case chainComp: ChainComponent[_, _] => chainComp
+          }.get.asInstanceOf[ChainComponent[Boolean, Int]]
+
+          // Sanity check; verify that the chain functions are the same (which normally induces memoization)
+          c1.chain.chainFunction should equal(nestedc1.chain.chainFunction)
+          // The subproblem corresponding to parent value true is non-recursive, but corresponding to false is recursive
+          nestedc1.subproblems(true) should equal(c1.subproblems(true))
+          nestedc1.subproblems(false) should not equal c1.subproblems(false)
+        }
       }
     }
   }
