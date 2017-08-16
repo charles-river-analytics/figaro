@@ -193,11 +193,32 @@ class ComponentCollection {
 
 /**
  * Component collections for models that recursively use chain function memoization. This works by incrementing depth
- * as little as possible. The collection maintains a graph of expansions that can use each other without incrementing
- * the depth of recurison. Expansions are greedily added to this graph until one creates a cycle. Such an edge is
- * instead recorded as an edge along which we must increment the depth when expanding.
+ * at every expansion. Thus, if the maximum depth of expansion is d, then there can be up to d copies of each expansion.
  */
-class RecursiveComponentCollection extends ComponentCollection {
+class IncrementingCollection extends ComponentCollection {
+
+  /**
+   * Get the recursion depth for expansion by incrementing the depth associated with the component's problem.
+   */
+  override private[figaro] def getRecursionDepth(component: ExpandableComponent[_, _], newExpansion: Expansion): Int = {
+    component.problem match {
+      case np: NestedProblem[_] =>
+        // Get the expansion that produced this nested problem and increment it
+        val (_, npDepth) = problemToExpansion(np)
+        npDepth + 1
+      // Base case: start with 0 when expanding from a top-level problem
+      case _ => 0
+    }
+  }
+}
+
+/**
+ * Component collections for models that recursively use chain function memoization. This works by incrementing depth at
+ * as few edges as possible in the graph of expansions. The collection maintains a graph of expansions that can use each
+ * other without incrementing the depth of recurison. Expansions are greedily added to this graph until one creates a
+ * cycle. Such an edge is instead recorded as an edge along which we must increment the depth when expanding.
+ */
+class SelectiveIncrementingCollection extends ComponentCollection {
   /**
    * Maps an expansion to the set of expansions that it uses without incrementing recursion depth. This is populated
    * greedily, in the sense that an expansion will always try to use another expansion at the same depth if it does not
@@ -257,5 +278,81 @@ class RecursiveComponentCollection extends ComponentCollection {
         if(incrementDepth) npDepth + 1 else npDepth
       case _ => 0
     }
+  }
+}
+
+/**
+ * Component collections for models that recursively use chain function memoization. When expanding a subproblem, this
+ * works by computing the least depth that does not create a cycle in the graph of subproblems.
+ *
+ * This maintains the invariant that if an expansion exists at depth d > 0, then an expansion also exists at depth
+ * d - 1. Furthermore, the expansion at depth d - 1 directly or indirectly uses the expansion at depth d. This invariant
+ * makes it possible to find the least depth that does not create a cycle by performing exponential search.
+ */
+class MinimalIncrementingCollection extends ComponentCollection {
+
+  /**
+   * Tests if the adding the subproblem to the given component would create a cycle in the subproblem graph.
+   */
+  private[figaro] def createsCycle(nestedProblem: NestedProblem[_], component: ExpandableComponent[_, _]): Boolean = {
+    // TODO consider using a dedicated incremental cycle detection data structure and algorithm for improved efficiency
+    // For now, the current implementation just does a breadth first search from the component problem to see if there
+    // exists a path from nestedProblem to component via the problem graph
+    component.problem match {
+      case componentProblem: NestedProblem[_] =>
+        // Does nestedProblem ever use component.problem?
+        // Test by searching backwards from component.problem through the expandable components that use it
+        @tailrec def bfs(problems: Set[NestedProblem[_]]): Boolean = {
+          if(problems.contains(nestedProblem)) true
+          else if(problems.isEmpty) false
+          else {
+            // Map current problems to the set of problems that use them
+            val next = problems.flatMap(expandsFrom(_)).collect{ case np: NestedProblem[_] => np }
+            bfs(next)
+          }
+        }
+
+        bfs(Set(componentProblem))
+      case _ => false
+    }
+  }
+
+  /**
+   * Get the recursion depth for an expansion by looking for the least recursion depth that does not create a cycle in
+   * the subproblem graph.
+   */
+  override private[figaro] def getRecursionDepth(component: ExpandableComponent[_, _], newExpansion: Expansion): Int = {
+    // Tests if expanding into the copy of this new expansion at this particular depth would create a cycle
+    def depthCreatesCycle(depth: Int): Boolean = {
+      expansionToProblem.get((newExpansion, depth)).exists(createsCycle(_, component))
+    }
+
+    // Look for the least depth that does NOT create a cycle by exponential search
+    // lo: current lower bound; i.e. all depths strictly less than lo create a cycle
+    // hi: current upper bound for the exponential search, but not yet known to be a depth that does not produce a cycle
+    @tailrec
+    def exponentialSearch(lo: Int, hi: Int): Int = {
+      // If (hi - 1) depth creates a cycle, then so do all other depths in the semi-open interval [lo, hi)
+      // So, we repeat the search, this time with an inclusive lower bound of hi
+      if(depthCreatesCycle(hi - 1)) exponentialSearch(hi, hi * 2)
+      // Otherwise, the least depth that does not create a cycle must be in [lo, hi)
+      else binarySearch(lo, hi)
+    }
+
+    // Look for the least depth within the bounds that does NOT create a cycle by binary search
+    // Assumes that the least depth that does not create a cycle is in [lo, hi)
+    @tailrec
+    def binarySearch(lo: Int, hi: Int): Int = {
+      if(hi == lo + 1) lo
+      else {
+        val mid = lo + (hi - lo - 1) / 2
+        if(depthCreatesCycle(mid)) binarySearch(mid + 1, hi)
+        else binarySearch(lo, mid + 1)
+      }
+    }
+
+    // This successively searches the intervals [0,1); [1,2); [2,4); [4,8); etc.
+    // Note: 0 is the "base case"; i.e. a expansion will be created at depth 0 first if it hasn't been expanded yet
+    exponentialSearch(0, 1)
   }
 }

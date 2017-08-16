@@ -426,7 +426,7 @@ class RecursionDepthStrategyTest extends WordSpec with Matchers {
       "produce the correct range" in {
         Universe.createNew()
         val e1 = memoGeometric()
-        val cc = new RecursiveComponentCollection
+        val cc = new SelectiveIncrementingCollection
         val pr = new Problem(cc, List(e1))
         new RecursionDepthStrategy(pr, pr.targetComponents, 3).execute()
 
@@ -440,7 +440,7 @@ class RecursionDepthStrategyTest extends WordSpec with Matchers {
       "mark components as fully refined and enumerated" in {
         Universe.createNew()
         val e1 = memoGeometric()
-        val cc = new RecursiveComponentCollection
+        val cc = new SelectiveIncrementingCollection
         val pr = new Problem(cc, List(e1))
         new RecursionDepthStrategy(pr, pr.targetComponents, 3).execute()
 
@@ -459,7 +459,7 @@ class RecursionDepthStrategyTest extends WordSpec with Matchers {
         Universe.createNew()
         val e1 = memoGeometric()
         val e2 = If(Flip(0.5), Constant(0), e1)
-        val cc = new RecursiveComponentCollection
+        val cc = new SelectiveIncrementingCollection
         val pr = new Problem(cc, List(e2))
         // Ensure that the global is added to the correct problem, even though this won't change the outcome of this test
         pr.add(e1)
@@ -476,7 +476,7 @@ class RecursionDepthStrategyTest extends WordSpec with Matchers {
         val e1 = Flip(0.2)
         val e2 = Chain(e1, (b: Boolean) => if(b) Constant(1) else Chain(g(0), g))
         val e3 = Chain(e2, g)
-        val cc = new RecursiveComponentCollection
+        val cc = new SelectiveIncrementingCollection
         val pr = new Problem(cc, List(e3))
         pr.add(e1)
         pr.add(e2)
@@ -499,7 +499,7 @@ class RecursionDepthStrategyTest extends WordSpec with Matchers {
       "produce the correct range" in {
         Universe.createNew()
         val e1 = memoGeometric()
-        val cc = new RecursiveComponentCollection
+        val cc = new SelectiveIncrementingCollection
         val pr = new Problem(cc, List(e1))
         val c1 = cc(e1)
 
@@ -513,7 +513,7 @@ class RecursionDepthStrategyTest extends WordSpec with Matchers {
       "preserve only the relevant solutions" in {
         Universe.createNew()
         val e1 = memoGeometric()
-        val cc = new RecursiveComponentCollection
+        val cc = new SelectiveIncrementingCollection
         val pr = new Problem(cc, List(e1))
         new RecursionDepthStrategy(pr, pr.targetComponents, 1).execute()
         new ConstantStrategy(pr, structuredRaising, marginalVariableElimination).execute()
@@ -537,7 +537,7 @@ class RecursionDepthStrategyTest extends WordSpec with Matchers {
       "reuse the non-recursive part of the model, but produce a different subproblem for the recursive part" in {
         Universe.createNew()
         val e1 = memoGeometric()
-        val cc = new RecursiveComponentCollection
+        val cc = new SelectiveIncrementingCollection
         val pr = new Problem(cc, List(e1))
         new RecursionDepthStrategy(pr, pr.targetComponents, 2).execute()
 

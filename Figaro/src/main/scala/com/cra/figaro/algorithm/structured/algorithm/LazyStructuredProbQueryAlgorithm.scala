@@ -13,7 +13,7 @@
 package com.cra.figaro.algorithm.structured.algorithm
 
 import com.cra.figaro.algorithm.factored.factors.{Factor, Variable}
-import com.cra.figaro.algorithm.structured.{ComponentCollection, Lower, RecursiveComponentCollection, Upper}
+import com.cra.figaro.algorithm.structured.{ComponentCollection, Lower, SelectiveIncrementingCollection, Upper}
 import com.cra.figaro.algorithm.{AnytimeBoundsProbQuery, BoundsProbQueryAlgorithm, OneTimeBoundsProbQuery}
 import com.cra.figaro.language._
 
@@ -23,7 +23,7 @@ abstract class LazyStructuredProbQueryAlgorithm(universe: Universe, collection: 
 
   // Important: the default constructor uses a recursive collection for recursive infinite models
   def this(universe: Universe, queryTargets: Element[_]*) {
-    this(universe, new RecursiveComponentCollection, queryTargets:_*)
+    this(universe, new SelectiveIncrementingCollection, queryTargets:_*)
   }
 
   override protected def useBoundsString: String =

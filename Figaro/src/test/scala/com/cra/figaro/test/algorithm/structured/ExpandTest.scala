@@ -80,7 +80,7 @@ class ExpandTest extends WordSpec with Matchers {
 
       "the subproblem uses itself recursively, either directly or indirectly" in {
         Universe.createNew()
-        val cc = new RecursiveComponentCollection
+        val cc = new SelectiveIncrementingCollection
         val pr = new Problem(cc)
         // A simple branching program that calls itself recursively through one of two subproblems
         val e2 = recursiveElement()
