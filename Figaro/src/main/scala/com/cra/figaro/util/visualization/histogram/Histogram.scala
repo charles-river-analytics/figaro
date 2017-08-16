@@ -25,7 +25,7 @@ import java.awt.geom.Rectangle2D
 import java.text.NumberFormat
 import javax.swing.BorderFactory
 import javax.swing.Box
-import scala.collection.JavaConversions
+import scala.collection.JavaConverters._
 import scala.swing._
 import scala.swing.BorderPanel.Position._
 import prefuse.Constants
@@ -57,7 +57,6 @@ import prefuse.visual.VisualItem
 import prefuse.visual.expression.VisiblePredicate
 import com.cra.figaro.util.visualization.ResultsGUI._
 import com.cra.figaro.util.visualization.DataView
-import scala.collection.JavaConverters
 
 /**
  * @author Glenn Takata (gtakata@cra.com)
@@ -200,7 +199,7 @@ class Histogram(val dataview: DataView, var color: String) extends BorderPanel {
         val table = dataview.getTable
         val filter = ExpressionParser.predicate("Name = " + item.getSourceTuple.get("Name"))
         val rows = table.rows(filter)
-        for (item <- JavaConverters.asScalaIterator(table.tuples(rows))) {
+        for (item <- table.tuples(rows).asScala) {
           println(item)
         }
       }

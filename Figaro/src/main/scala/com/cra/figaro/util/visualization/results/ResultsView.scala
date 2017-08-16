@@ -19,17 +19,15 @@
 
 package com.cra.figaro.util.visualization.results
 
-import scala.collection.JavaConversions._
 import prefuse.Constants
 import prefuse.data.Table
 import prefuse.data.Tuple
 import prefuse.data.io.CSVTableReader
 import prefuse.data.query.{NumberRangeModel, ObjectRangeModel}
 import prefuse.util.ui.ValuedRangeModel
-import scala.collection.JavaConversions
+import scala.collection.JavaConverters._
 
 import com.cra.figaro.util.visualization.DataView
-import scala.collection.JavaConverters
 
 /**
  * @author Glenn Takata
@@ -43,7 +41,7 @@ class ResultsView[T](data: ResultsData) extends DataView {
   def nValues = data.distribution.size
   
   def range: ValuedRangeModel = {
-    val values = JavaConverters.asJavaCollection(data.distribution.map(_._2)).toArray()
+    val values = data.distribution.map(_._2).asJava.toArray
     new ObjectRangeModel(values.asInstanceOf[Array[Object]])
   }
  

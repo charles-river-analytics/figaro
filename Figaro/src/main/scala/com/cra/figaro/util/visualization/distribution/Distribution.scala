@@ -26,7 +26,7 @@ import java.awt.event.MouseEvent
 import java.awt.geom.Rectangle2D
 import java.text.NumberFormat
 
-import scala.collection.JavaConverters
+import scala.collection.JavaConverters._
 import scala.swing.Alignment
 import scala.swing.BorderPanel
 import scala.swing.BorderPanel.Position.Center
@@ -202,7 +202,7 @@ class Distribution(val dataview: DataView, var color: String) extends BorderPane
         val table = dataview.getTable
         val filter = ExpressionParser.predicate("Name = " + item.getSourceTuple.get("Name"))
         val rows = table.rows(filter)
-        for (item <- JavaConverters.asScalaIterator(table.tuples(rows))) {
+        for (item <- table.tuples(rows).asScala) {
           println(item)
         }
       }
