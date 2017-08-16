@@ -11,6 +11,14 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
+/*
+ * Additional Updates from our community
+ * 
+ * Martin Mauch		Dec 19, 2013
+ * Cagdas Senol		May 30, 2016
+ * Paul Philips		May 23, 2017
+ */
+
 package com.cra.figaro.test.language
 
 import org.scalatest.Matchers

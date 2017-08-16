@@ -11,6 +11,12 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
+/*
+ * Additional Updates from our community
+ * 
+ * Thomas Ounnas	Sep 13, 2015
+ */
+
 package com.cra.figaro.example
 
 import com.cra.figaro.algorithm.factored._

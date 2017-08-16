@@ -11,6 +11,12 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
+/*
+ * Additional Updates from our community
+ * 
+ * Martin Mauch		Dec 19, 2013
+ */
+
 package com.cra.figaro.language
 
 import com.cra.figaro.library.compound._
