@@ -40,9 +40,9 @@ class ExpandTest extends WordSpec with Matchers {
 
       val spr = c4.subproblems(false)
       cc.expansionToProblem should have size 1
-      cc.expansionToProblem(((f, false), 0)) should be theSameInstanceAs spr
+      cc.expansionToProblem(((f, false), 1)) should be theSameInstanceAs spr
       cc.problemToExpansion should have size 1
-      cc.problemToExpansion(spr) should equal ((f, false), 0)
+      cc.problemToExpansion(spr) should equal ((f, false), 1)
       cc.expandsFrom should have size 1
       cc.expandsFrom(spr) should equal(Set(pr))
     }
@@ -70,9 +70,9 @@ class ExpandTest extends WordSpec with Matchers {
 
       spr5 should be theSameInstanceAs spr6
       cc.expansionToProblem should have size 1
-      cc.expansionToProblem(((f, false), 0)) should be theSameInstanceAs spr5
+      cc.expansionToProblem(((f, false), 1)) should be theSameInstanceAs spr5
       cc.problemToExpansion should have size 1
-      cc.problemToExpansion(spr5) should equal ((f, false), 0)
+      cc.problemToExpansion(spr5) should equal ((f, false), 1)
       cc.expandsFrom should have size 1
       cc.expandsFrom(spr5) should equal(Set(pr))
     }
@@ -95,10 +95,10 @@ class ExpandTest extends WordSpec with Matchers {
 
         val sprTrue = c2.subproblems(true)
         val sprFalse = c2.subproblems(false)
-        cc.expansionToProblem(((chainFunction, true), 0)) should equal(sprTrue)
-        cc.expansionToProblem(((chainFunction, false), 0)) should equal(sprFalse)
-        cc.problemToExpansion(sprTrue) should equal(((chainFunction, true), 0))
-        cc.problemToExpansion(sprFalse) should equal(((chainFunction, false), 0))
+        cc.expansionToProblem(((chainFunction, true), 1)) should equal(sprTrue)
+        cc.expansionToProblem(((chainFunction, false), 1)) should equal(sprFalse)
+        cc.problemToExpansion(sprTrue) should equal(((chainFunction, true), 1))
+        cc.problemToExpansion(sprFalse) should equal(((chainFunction, false), 1))
         cc.expandsFrom(sprTrue) should equal(Set(pr))
         cc.expandsFrom(sprFalse) should equal(Set(pr))
 
@@ -114,15 +114,15 @@ class ExpandTest extends WordSpec with Matchers {
         c2True.expand(true)
         val sprTrueTrue = c2True.subproblems(true)
         sprTrueTrue should not equal sprTrue
-        cc.expansionToProblem(((chainFunction, true), 1)) should equal(sprTrueTrue)
-        cc.problemToExpansion(sprTrueTrue) should equal(((chainFunction, true), 1))
+        cc.expansionToProblem(((chainFunction, true), 2)) should equal(sprTrueTrue)
+        cc.problemToExpansion(sprTrueTrue) should equal(((chainFunction, true), 2))
         cc.expandsFrom(sprTrueTrue) should equal(Set(sprTrue))
 
         c2True.expand(false)
         val sprTrueFalse = c2True.subproblems(false)
         sprTrueFalse should not equal sprFalse
-        cc.expansionToProblem(((chainFunction, false), 1)) should equal(sprTrueFalse)
-        cc.problemToExpansion(sprTrueFalse) should equal(((chainFunction, false), 1))
+        cc.expansionToProblem(((chainFunction, false), 2)) should equal(sprTrueFalse)
+        cc.problemToExpansion(sprTrueFalse) should equal(((chainFunction, false), 2))
         cc.expandsFrom(sprTrueFalse) should equal(Set(sprTrue))
 
         // Expand the components of the false subproblem
@@ -159,10 +159,10 @@ class ExpandTest extends WordSpec with Matchers {
 
         val sprTrue = c2.subproblems(true)
         val sprFalse = c2.subproblems(false)
-        cc.expansionToProblem(((chainFunction, true), 0)) should equal(sprTrue)
-        cc.expansionToProblem(((chainFunction, false), 0)) should equal(sprFalse)
-        cc.problemToExpansion(sprTrue) should equal(((chainFunction, true), 0))
-        cc.problemToExpansion(sprFalse) should equal(((chainFunction, false), 0))
+        cc.expansionToProblem(((chainFunction, true), 1)) should equal(sprTrue)
+        cc.expansionToProblem(((chainFunction, false), 1)) should equal(sprFalse)
+        cc.problemToExpansion(sprTrue) should equal(((chainFunction, true), 1))
+        cc.problemToExpansion(sprFalse) should equal(((chainFunction, false), 1))
         cc.expandsFrom(sprTrue) should equal(Set(pr))
         cc.expandsFrom(sprFalse) should equal(Set(pr))
 
@@ -181,8 +181,8 @@ class ExpandTest extends WordSpec with Matchers {
         //cc.expansionToDeeper((chainFunction, true)) should equal(Set((chainFunction, true)))
         val sprTrueTrue = c2True.subproblems(true)
         sprTrueTrue should not equal sprTrue
-        cc.expansionToProblem(((chainFunction, true), 1)) should equal(sprTrueTrue)
-        cc.problemToExpansion(sprTrueTrue) should equal(((chainFunction, true), 1))
+        cc.expansionToProblem(((chainFunction, true), 2)) should equal(sprTrueTrue)
+        cc.problemToExpansion(sprTrueTrue) should equal(((chainFunction, true), 2))
         cc.expandsFrom(sprTrueTrue) should equal(Set(sprTrue))
 
         // However, the collection should allow the true subproblem to use the depth 0 false subproblem
@@ -231,10 +231,10 @@ class ExpandTest extends WordSpec with Matchers {
 
         val sprTrue = c2.subproblems(true)
         val sprFalse = c2.subproblems(false)
-        cc.expansionToProblem(((chainFunction, true), 0)) should equal(sprTrue)
-        cc.expansionToProblem(((chainFunction, false), 0)) should equal(sprFalse)
-        cc.problemToExpansion(sprTrue) should equal(((chainFunction, true), 0))
-        cc.problemToExpansion(sprFalse) should equal(((chainFunction, false), 0))
+        cc.expansionToProblem(((chainFunction, true), 1)) should equal(sprTrue)
+        cc.expansionToProblem(((chainFunction, false), 1)) should equal(sprFalse)
+        cc.problemToExpansion(sprTrue) should equal(((chainFunction, true), 1))
+        cc.problemToExpansion(sprFalse) should equal(((chainFunction, false), 1))
         cc.expandsFrom(sprTrue) should equal(Set(pr))
         cc.expandsFrom(sprFalse) should equal(Set(pr))
 
@@ -253,8 +253,8 @@ class ExpandTest extends WordSpec with Matchers {
         cc.expansionToDeeper((chainFunction, true)) should equal(Set((chainFunction, true)))
         val sprTrueTrue = c2True.subproblems(true)
         sprTrueTrue should not equal sprTrue
-        cc.expansionToProblem(((chainFunction, true), 1)) should equal(sprTrueTrue)
-        cc.problemToExpansion(sprTrueTrue) should equal(((chainFunction, true), 1))
+        cc.expansionToProblem(((chainFunction, true), 2)) should equal(sprTrueTrue)
+        cc.problemToExpansion(sprTrueTrue) should equal(((chainFunction, true), 2))
         cc.expandsFrom(sprTrueTrue) should equal(Set(sprTrue))
 
         // However, the collection should allow the true subproblem to use the depth 0 false subproblem

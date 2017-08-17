@@ -431,9 +431,9 @@ class RecursionDepthStrategyTest extends WordSpec with Matchers {
         new RecursionDepthStrategy(pr, pr.targetComponents, 3).execute()
 
         val c1 = cc(e1)
-        // After n recursive calls, the range of c1 is [1,..,n+1] because the depth 0 true subproblem is always
-        // expanded, and depth i false subproblem uses the depth i + 1 true subproblem
-        c1.range.regularValues should equal(Set(1, 2, 3, 4))
+        // After n recursive calls, the range of c1 is [1,..,n] because the depth 1 true subproblem is always expanded,
+        // and depth i false subproblem uses the depth i + 1 true subproblem
+        c1.range.regularValues should equal(Set(1, 2, 3))
         c1.range.hasStar should be(true)
       }
 
@@ -465,9 +465,9 @@ class RecursionDepthStrategyTest extends WordSpec with Matchers {
         pr.add(e1)
         new RecursionDepthStrategy(pr, pr.targetComponents, 3).execute()
 
-        // Depth gets incremented everywhere; see the two tests above
-        cc(e1).range.regularValues should equal(Set(1, 2, 3, 4))
-        cc(e2).range.regularValues should equal(Set(0, 1, 2, 3, 4))
+        // Depth starts at 1 for subproblems and gets incremented everywhere; see the two tests above
+        cc(e1).range.regularValues should equal(Set(1, 2, 3))
+        cc(e2).range.regularValues should equal(Set(0, 1, 2, 3))
       }
 
       "correctly expand when a component is used multiple times at different depths, but non-recursively" in {
@@ -482,7 +482,7 @@ class RecursionDepthStrategyTest extends WordSpec with Matchers {
         pr.add(e2)
         val c2 = cc(e2)
         val c3 = cc(e3)
-        val strategy = new RecursionDepthStrategy(pr, pr.targetComponents, 0)
+        val strategy = new RecursionDepthStrategy(pr, pr.targetComponents, 1)
         strategy.execute()
 
         // Recall that the collection increments depth everywhere; thus all but the subproblems used directly by the
@@ -506,10 +506,10 @@ class RecursionDepthStrategyTest extends WordSpec with Matchers {
         val pr = new Problem(cc, List(e1))
         val c1 = cc(e1)
 
-        for(depth <- 0 to 10) {
+        for(depth <- 1 to 10) {
           new RecursionDepthStrategy(pr, pr.targetComponents, depth).execute()
           c1.range.hasStar should be(true)
-          c1.range.regularValues should equal((1 to (depth + 1)).toSet)
+          c1.range.regularValues should equal((1 to depth).toSet)
         }
       }
 
@@ -568,9 +568,9 @@ class RecursionDepthStrategyTest extends WordSpec with Matchers {
         new RecursionDepthStrategy(pr, pr.targetComponents, 3).execute()
 
         val c1 = cc(e1)
-        // After n recursive calls, the range of c1 is [1,..,n+2] because the depth 0 true subproblem is always
-        // expanded, and it is also used by the depth 0 false subproblem
-        c1.range.regularValues should equal(Set(1, 2, 3, 4, 5))
+        // After n recursive calls, the range of c1 is [1,..,n+1] because the depth 1 true subproblem is always
+        // expanded, and it is also used by the depth 1 false subproblem
+        c1.range.regularValues should equal(Set(1, 2, 3, 4))
         c1.range.hasStar should be(true)
       }
 
@@ -602,9 +602,9 @@ class RecursionDepthStrategyTest extends WordSpec with Matchers {
         pr.add(e1)
         new RecursionDepthStrategy(pr, pr.targetComponents, 3).execute()
 
-        // Depth only gets incremented through recursive calls; see the two tests above
-        cc(e1).range.regularValues should equal(Set(1, 2, 3, 4, 5))
-        cc(e2).range.regularValues should equal(Set(0, 1, 2, 3, 4, 5))
+        // Depth starts at 1 for subproblems and only gets incremented through recursive calls; see the two tests above
+        cc(e1).range.regularValues should equal(Set(1, 2, 3, 4))
+        cc(e2).range.regularValues should equal(Set(0, 1, 2, 3, 4))
       }
 
       "correctly expand when a component is used multiple times at different depths, but non-recursively" in {
@@ -619,7 +619,7 @@ class RecursionDepthStrategyTest extends WordSpec with Matchers {
         pr.add(e2)
         val c2 = cc(e2)
         val c3 = cc(e3)
-        val strategy = new RecursionDepthStrategy(pr, pr.targetComponents, 0)
+        val strategy = new RecursionDepthStrategy(pr, pr.targetComponents, 1)
         strategy.execute()
 
         // Because this model uses no recursive calls, the entire model should be expanded
@@ -640,10 +640,10 @@ class RecursionDepthStrategyTest extends WordSpec with Matchers {
         val pr = new Problem(cc, List(e1))
         val c1 = cc(e1)
 
-        for(depth <- 0 to 10) {
+        for(depth <- 1 to 10) {
           new RecursionDepthStrategy(pr, pr.targetComponents, depth).execute()
           c1.range.hasStar should be(true)
-          c1.range.regularValues should equal((1 to (depth + 2)).toSet)
+          c1.range.regularValues should equal((1 to (depth + 1)).toSet)
         }
       }
 
@@ -702,9 +702,9 @@ class RecursionDepthStrategyTest extends WordSpec with Matchers {
         new RecursionDepthStrategy(pr, pr.targetComponents, 3).execute()
 
         val c1 = cc(e1)
-        // After n recursive calls, the range of c1 is [1,..,n+2] because the depth 0 true subproblem is always
-        // expanded, and it is also used by the depth 0 false subproblem
-        c1.range.regularValues should equal(Set(1, 2, 3, 4, 5))
+        // After n recursive calls, the range of c1 is [1,..,n+1] because the depth 1 true subproblem is always
+        // expanded, and it is also used by the depth 1 false subproblem
+        c1.range.regularValues should equal(Set(1, 2, 3, 4))
         c1.range.hasStar should be(true)
       }
 
@@ -736,9 +736,9 @@ class RecursionDepthStrategyTest extends WordSpec with Matchers {
         pr.add(e1)
         new RecursionDepthStrategy(pr, pr.targetComponents, 3).execute()
 
-        // Depth only gets incremented through recursive calls; see the two tests above
-        cc(e1).range.regularValues should equal(Set(1, 2, 3, 4, 5))
-        cc(e2).range.regularValues should equal(Set(0, 1, 2, 3, 4, 5))
+        // Depth starts at 1 for subproblems and only gets incremented through recursive calls; see the two tests above
+        cc(e1).range.regularValues should equal(Set(1, 2, 3, 4))
+        cc(e2).range.regularValues should equal(Set(0, 1, 2, 3, 4))
       }
 
       "correctly expand when a component is used multiple times at different depths, but non-recursively" in {
@@ -753,7 +753,7 @@ class RecursionDepthStrategyTest extends WordSpec with Matchers {
         pr.add(e2)
         val c2 = cc(e2)
         val c3 = cc(e3)
-        val strategy = new RecursionDepthStrategy(pr, pr.targetComponents, 0)
+        val strategy = new RecursionDepthStrategy(pr, pr.targetComponents, 1)
         strategy.execute()
 
         // Because this model uses no recursive calls, the entire model should be expanded
@@ -774,10 +774,10 @@ class RecursionDepthStrategyTest extends WordSpec with Matchers {
         val pr = new Problem(cc, List(e1))
         val c1 = cc(e1)
 
-        for(depth <- 0 to 10) {
+        for(depth <- 1 to 10) {
           new RecursionDepthStrategy(pr, pr.targetComponents, depth).execute()
           c1.range.hasStar should be(true)
-          c1.range.regularValues should equal((1 to (depth + 2)).toSet)
+          c1.range.regularValues should equal((1 to (depth + 1)).toSet)
         }
       }
 
