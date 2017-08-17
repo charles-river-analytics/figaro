@@ -18,25 +18,23 @@ import com.cra.figaro.language._
 /**
  * Strategies that refine lazily to a fixed recursion depth, as defined in `ComponentCollection`. That is, they refine
  * any component belonging to a problem for which the recursion depth associated with that subproblem is at most the
- * depth given. Note that recursion depth is not the number of expansions that this strategy proceeds through before
- * stopping. Rather, it is the maximum number of times the strategy proceeds through ''recursive'' calls; i.e. calls
- * by a function and parent value to itself.
+ * depth given.
  *
  * This strategy has the advantage that it guarantees no need for backtracking, because components are never visited
  * more than once. This is made possible by the fact that the depth of a component is known at the time of expansion;
- * i.e. it cannot change. However, this strategy is not universal: it cannot be applied to infinite models that do not
- * use subproblem memoization. If a model uses a recursive process without Chain memoization, then every subproblem will
- * have a recursion depth of 0. In this case, the strategy will not terminate.
+ * i.e. it cannot change. However, this strategy is not universal: it may fail when a model uses a recursive process for
+ * which the associated component collection fails to increment the depth. For example, if one uses a recursive model
+ * without Chain function memoization and uses a `SelectiveIncrementingCollection`, the collection will not increment
+ * the depth at so-called recursive calls. A `RecursionDepthStrategy` running on such a model will fail to terminate.
  * @param problem Problem to refine.
  * @param initialComponents Components from which to begin the bottom-up refining process. Often, these are the set of
  * targets and evidence elements of a top-level problem. Refining proceeds by recursively refining the arguments of a
  * component before generating the range of the component. This continues until the maximum recursion depth is reached.
- * @param maxDepth Nonnegative maximum recursion depth for recursive subproblems. Defaults to 0, which corresponds to
- * refining all non-recursive expansions reachable from `initialComponents`. Thus, the default will fully expand finite
- * models.
+ * @param maxDepth Nonnegative maximum recursion depth for recursive subproblems. Defaults to `Int.MaxValue` for
+ * expansion of the entire model (does not terminate on infinite models).
  */
 class RecursionDepthStrategy(problem: Problem, override val initialComponents: Traversable[ProblemComponent[_]],
-                             maxDepth: Int = 0) extends DepthFirstStrategy(problem.collection) {
+                             maxDepth: Int = Int.MaxValue) extends DepthFirstStrategy(problem.collection) {
 
   /**
    * Get the recursion depth associated with a problem, according to the collection.
