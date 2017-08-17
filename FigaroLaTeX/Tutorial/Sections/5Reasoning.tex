@@ -212,7 +212,14 @@ Figaro allows the user to specify which elements get proposed using a \emph{prop
 
 Metropolis-Hastings takes two additional optional arguments. The first represents the burn-in, which is the number of proposal steps the algorithm goes through before collecting samples, while the second is the number of proposal steps between samples. The default burn-in is 0, while the default interval is 1. These arguments appear before the query elements.
 
-To use a one-time (i.e., non-anytime) Metropolis-Hastings algorithm, simply provide the number of samples as the first argument.
+To use a one-time (i.e., non-anytime) Metropolis-Hastings algorithm, simply provide the number of samples as the first argument. When using the one-time Metropolis-Hastings algorithm, if the supplied constraints are bound between 0 and 1, the \emph{constraintsBound} Boolean flag should be set to \emph{true} to optimize the algorithm's efficiency prior to starting the algorithm. For example:
+
+\begin{flushleft}
+\texttt{val mh = MetropolisHastings(200000, ProposalScheme.default, e2)
+\newline mh.constraintsBound = true
+\newline mh.start()
+}
+\end{flushleft}
 
 Metropolis-Hastings also provides a one-line query shortcut.
 
