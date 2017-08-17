@@ -142,6 +142,7 @@ When this call terminates, you can use \texttt{bp} to answer the same queries as
 Continuous elements are handled in BP the same was as in variable elimination (abstractions or sampled).
 
 \section{Lazy factored inference}
+\label{LazyFactoredInference}
 
 Ordinarily, factored inference algorithms like variable elimination and belief propagation cannot be applied to infinitely recursive models. It's easy to define such models, such as probabilistic grammars for natural language, in Figaro. Figaro provides lazy factored inference algorithms that expand the factor graph to a bounded depth and precisely quantify the effect of the unexplored part of the graph on the query. It uses this information to compute lower and upper bounds on the probability of the query. 
 
@@ -318,15 +319,27 @@ To use a one-time (i.e., non-anytime) Gibbs sampling algorithm, simply provide t
 
 \section{Structured Factored Inference}
 
-Figaro contains a set of algorithms known as structured factored inference (SFI) algorithms. These are not new algorithms per se, but rather a method of decomposing a model into a set of smaller sub--models that are solved recursively (i.e., structured) using one of Figaro's three existing factored algorithms (VE, BP, and Gibbs sampling). There is a rich and extensible library of the different strategies that can be applied to model that guide how a model is decomposed, and which algorithms are applied to the generated sub--models. However, we provide a base set of structured algorithms.
+Figaro contains a set of algorithms known as structured factored inference (SFI) algorithms. These are not new algorithms per se, but rather a method of decomposing a model into a set of smaller sub--models that are solved recursively (i.e., structured) using one of Figaro's three existing factored algorithms (VE, BP, and Gibbs sampling). There is a rich and extensible library of the different strategies that guide how a model is decomposed, and which algorithms are applied to the generated sub--models. However, we provide a base set of structured algorithms.
 
-Figaro also includes an interface for lazy SFI (LSFI) algorithms, which extend from regular SFI algorithms. These are SFI algorithms that expand a bounded subset of the problem graph, quantifying the effect of the unexpanded portions of the model. This makes LSFI algorithms applicable to infinite or recursive models. Lazy expansion works with the addition of a special value called \texttt{*} (pronounced ``star''), which represents an uncomputed or unexplored value. LSFI algorithms use \texttt{*} to produce bounds on queries, rather than exact queries. Possible queries include bounds on the probability of a value, bounds on the probability of a predicate evaluating to true, or bounds on the expectation of a bounded function over the values of an element. To produce correct bounds, LSFI algorithms require that all constraints are between 0 and 1; otherwise an exception will be thrown.
+Figaro also includes an interface for lazy SFI (LSFI) algorithms, which combine the functionality of lazy factored inference (Section \ref{LazyFactoredInference}) and SFI. LSFI can operate on infinite or recursive models, where it produces bounds on queries rather than an exact queries. Possible queries include bounds on the probability of a value, bounds on the probability of a predicate evaluating to true, or bounds on the expectation of a bounded function over the values of an element. Note that in order to produce correct bounds, LSFI algorithms require that all constraints are between 0 and 1; otherwise an exception will be thrown.
+
+\subsection{The process of SFI: ranging, refining, solving}
+
+SFI proceeds in two steps: refining and solving. Refining includes the process of decomposing the model into sub--models, and also involves computing a finite range for each element. The refining process to use is specified by a strategy, but refining strategies also make calls to an algorithm-defined ranging strategy as a subroutine.
+
+Currently, all built-in refining strategies decompose a model by its Chains. More specifically, refining strategies create sub--models for Chains, one for each value of the parent of a Chain.
+
+The solving step involves traversing the graph of sub--models and applying a factored algorithm to each sub--model until the top-level model has a solution to its inference problem. Solving is likewise defined by a strategy.
+
+Figaro includes a number of built-in ranging, refining, and solving strategies, but as we will see later, these strategies are configurable in general.
+
+\subsection{One-time and anytime SFI}
+
+Figaro offers both one-time and anytime SFI algorithms. One-time SFI algorithms perform a single pass of refining and solving. Most of the default algorithms included are one-time algorithms. Anytime SFI algorithms alternate refining and solving repeatedly to produce better solutions over time. This is particularly useful for LSFI, where one might choose to incrementally expand more of the model at each iteration. Alternatively, anytime SFI is applicable to models containing elements with infinite support, as it allows the algorithm to choose better finite approximations of these distributions at each iteration.
 
 \subsection{Basic SFI algorithms}
 
-The basic structured algorithm will decompose a model based on Chains. That is, every Chain defined in the model creates at most \textit{n} sub--models, one for each value of the parent of the Chain. Each of these sub--models is recursively decomposed. When a sub--model can no longer be decomposed, a solving strategy is applied to the sub--model. Figaro comes with a set of strategies that either applies the same algorithm to each model or chooses to apply either VE, BP, or Gibbs sampling based on some heuristics.
-
-To create an SFI algorithm that uses the same algorithm for each sub--model, use:
+Though SFI is intended to be highly configurable, Figaro also contains several complete algorithms that work with reasonable defaults. The basic structured algorithm recursively decomposes a model by its Chains until the entire model is decomposed. A lazy variant works similarly, but only recursively decomposes to a finite depth. To create such an SFI algorithm that uses the same algorithm for each sub--model, use:
 
 \begin{flushleft}
 \texttt{import com.cra.figaro.language.\_
@@ -341,7 +354,9 @@ To create an SFI algorithm that uses the same algorithm for each sub--model, use
 }
 \end{flushleft}
 
-The algorithm can them be used like a normal Figaro algorithm. There are also structured BP and Gibbs algorithms. To use a strategy that automatically chooses between VE, BP, and Gibbs sampling, use:
+The algorithm can then be used like a normal one-time Figaro algorithm. There are also one-time structured BP and Gibbs algorithms, as well as a lazy structured VE algorithm with one-time and anytime variants.
+
+To use a strategy that automatically chooses between VE, BP, and Gibbs sampling, use:
 
 \begin{flushleft}
 \texttt{
@@ -350,13 +365,46 @@ The algorithm can them be used like a normal Figaro algorithm. There are also st
 }
 \end{flushleft}
 
-Where the first argument is the threshold that determines when VE is run (e.g., the cost of running VE is less than the threshold). The second argument controls when to choose between BP and Gibbs sampling. If the fraction of the model that is deterministic is greater than the second argument, then BP is run, otherwise Gibbs is run. The following arguments are the number of BP and Gibbs iterations to perform, and the final argument is the query target.
+Where the first argument is the threshold that determines when VE is run (e.g., the cost of running VE is less than the threshold). The second argument controls when to choose between BP and Gibbs sampling. If the fraction of deterministic elements in the model is greater than the second argument, then BP is run, otherwise Gibbs is run. The following arguments are the number of BP and Gibbs iterations to perform, and the final argument is the query target.
 
 Additional SFI and LSFI algorithms are found in the \texttt{com.cra.fig\-aro.algorithm.structured.algorithm} package; see the Scaladoc for details on configuring them.
 
-\subsection{Function memoization}
+\subsection{Custom SFI algorithms}
 
-SFI caches sub--problems across Chains by looking at the particular function and parent value that produced the sub--problem. However, some care needs to be taken to use this optimization correctly. Consider the following example:
+The previous sections cover the basics of SFI, and are sufficient for users looking to use the base algorithms described above. Nevertheless, advanced users may want to customize SFI algorithms for better performance on particular models. The sections that follow describe the inner workings of SFI in technical detail, explaining the configuration options for each part of the SFI process.
+
+One can customize SFI algorithms by extending from one of the base abstract classes (e.g. \texttt{LazyStructuredProbQueryAlgorithm}) and mixing in the appropriate one-time or anytime traits. This leaves the user to define the ranging, refining, and solving strategies to use. It is important to note that whereas a single ranging strategy is used over the course of inference, most refining and solving strategies are not reusable. Thus, for anytime SFI, one should generally override the \texttt{refiningStrategy()} and \texttt{solvingStrategy()} methods to return a new strategy for each iteration of inference, like so:
+
+\begin{flushleft}
+\texttt{import com.cra.figaro.algorithm.structured.algorithm.\_
+\newline import com.cra.figaro.algorithm.structured.solver.\_
+\newline import com.cra.figaro.algorithm.structured.strategy.range.\_
+\newline import com.cra.figaro.algorithm.structured.strategy.refine.\_
+\newline import com.cra.figaro.algorithm.structured.strategy.solve.\_
+\newline
+\newline val alg =
+\newline\tab new StructuredProbQueryAlgorithm(universe, elements:\_*)
+\newline\tab   with AnytimeStructuredProbQuery \{
+\newline
+\newline\tab   // Lazy val to avoid uninitialized value bug
+\newline\tab   // Alternatively one could make this a def
+\newline\tab   override lazy val rangingStrategy: RangingStrategy = ...
+\newline
+\newline\tab   override def refiningStrategy(): RefiningStrategy = ...
+\newline
+\newline\tab   override def solvingStrategy(): SolvingStrategy = ...
+\newline\}
+}
+\end{flushleft}
+
+As one can see above, relevant classes for building custom SFI algorithms are found in the \texttt{com.cra.figaro.algorithm.structured} package. One can find the base algorithms in the \texttt{algorithm} package, the various strategies in the \texttt{strategy} package, and the included solvers in the \texttt{solver} package. The relevant algorithms, strategies, and solvers are all additionally documented in the Scaladoc.
+
+Additional examples showing creation and use of custom SFI algorithms are provided in the \texttt{lazystructured} package in the Figaro examples. 
+
+\subsection{Function memoization}
+\label{FunctionMemoization}
+
+SFI caches sub--models across Chains by looking at the particular function and parent value that produced the sub--model. However, some care needs to be taken to use this optimization correctly. Consider the following example:
 
 \begin{flushleft}
 \texttt{import com.cra.figaro.language.\_
@@ -384,38 +432,44 @@ Notice how \texttt{e3} and \texttt{e4} use the same function to produce a child 
 
 This ensures that both Chains use the same function.
 
-\subsection{The process of SFI}
-\label{SFI_process}
+\subsection{Component collections}
+\label{ComponentCollections}
 
-SFI consists of two steps: refining and solving. The refining step involves generating ranges for each element and decomposing Chains into smaller problems. The solving step involves traversing the graph of problems and applying a solver to each problem until the top-level problem has a solution. Refining and solving are done by a strategy. SFI algorithms are also supplied with a ranging strategy for creating ranges on an element-by-element basis. The basic algorithms described above choose reasonable defaults for each strategy, but in general strategies are customizable. Figaro includes several built-in ranging, refining, and solving strategies. Users also have the ability to define custom strategies, including model-specific strategies.
+Each SFI algorithm is associated with a central data structure: a \texttt{Com\-ponentCollection}. A component collection maintains a set of problem components (SFI wrappers for elements) and a graph of sub--problems (SFI sub--models). Figaro offers several implementations of component collections, some of which are applicable to different classes of models. This collection is specified in the constructor to an SFI algorithm, but Figaro also includes default constructors that assign a collection type based on the choice between SFI and LSFI.
 
-Each SFI algorithm is associated with a central data structure: a \texttt{ComponentCollection}. A component collection maintains a set of problem components (SFI wrappers for elements) and a graph of sub--problems. Figaro offers two implementations: the standard \texttt{Component\-Collection}, and a \texttt{RecursiveComponentCollection} class for recursive models. The non-recursive collection is provided as the default for regular SFI; the recursive collection is used by default in LSFI. The non-recursive collection has guaranteed linear time performance, but fails on models containing a Chain function that calls itself recursively. An example model that contains such a recursive call is shown below:
+The basic implementation is \texttt{ComponentCollection}, which applies only to non-recursive models. This non-recursive collection is provided as the default for regular SFI, and guarantees runtime linear in the number of expansions. However, it fails on models containing a Chain function that calls itself recursively. An example model that contains such a recursive call is shown below:
 
 \begin{flushleft}
 \marginpar{This example can be found in InfiniteExpectation.scala}
-\texttt{// Prior on the probability of termination at each iteration
+\texttt{// Prior on the probability of termination at each
+\newline // iteration
 \newline val prob = Beta(1, 5)
 \newline
-\newline // A simple recursive element that uses Chain function memoization
-\newline def recursiveElement(): Element[Int] = Chain(Flip(prob), recursiveFunction)
-\newline val recursiveFunction: Boolean => Element[Int] = (b: Boolean) => \{
-\newline\tab if(b) Constant(0)
-\newline\tab else recursiveElement().map(i => (i + 1) \% 3)
-\newline \}
+\newline // A simple recursive element that uses Chain function
+\newline // memoization
+\newline def recursiveElement(): Element[Int] = Chain(Flip(prob),
+\newline \tab recursiveFunction)
+\newline val recursiveFunction: Boolean => Element[Int] =
+\newline\tab (b: Boolean) => \{
+\newline\tab\tab if(b) Constant(0)
+\newline\tab\tab else recursiveElement().map(i => (i + 1) \% 3)
+\newline\tab \}
 \newline val elem = recursiveElement()}
 \end{flushleft}
 
-For these recursive models, \texttt{RecursiveComponentCollection} is available instead. Such a collection may take quadratic time in the number of expansions into sub--problems, but on many models it does not produce significant overhead compared to the non-recursive implementation. For more details regarding the implementations of these two types of collections, see the Scaladoc.
+For these recursive models, Figaro offers several other implementations. Each implementation makes a trade-off between the performance of the refining and solving steps. The most basic collection (and the default for LSFI) is \texttt{IncrementingCollection}. This collection offers the least refining overhead among the collections that support recursive models, but sometimes results in a large solving overhead. In contrast, \texttt{SelectiveIncrementingCollection} and \texttt{MinimalIncre\-mentingCollection} try to reuse sub--problems more intelligently, potentially improving performance by reducing the number of sub--problems that need to be solved. However, doing so requires performing a search on the problem graph each time a sub--problem is expanded, potentially incurring overall quadratic refining costs. The difference between these last two implementations is that \texttt{MinimalIncre\-mentingCollection} incurs this cost every time a particular function is expanded from one problem into a sub--problem, which can happen multiple times at different depths. However, \texttt{SelectiveIncrementing\-Collection} only incurs this cost the \textit{first} time such an expansion is made; each successive identical expansion at greater depths will take constant time. Nevertheless, \texttt{MinimalIncrementingCollection} potentially reuses more subproblems, so once again there is a trade-off.
+
+In general, it is difficult to predict which of these three recursive collections will yield the best performance on a particular model. The trade-offs are also not strictly related to runtime: the trade-offs that benefit solving time often also yield stronger bounds on a particular query. For this reason, it may be best to experiment with all three collection types to determine which one produces the fastest convergence to the desired bounds. More details regarding the differences in implementation for these recursive collections are available in the Scaladoc. These classes are located in the \texttt{com.cra.figaro.algorithm.\-structured} package.
 
 Component collections offer one additional optimization. In many cases, when creating factors for sub--problems of a Chain, it is possible to combine the solutions to sub--problems into a single factor representing a conditional probability distribution. This reduces memory and inference costs when applicable. One can enable this optimization by setting the boolean flag \texttt{useSingleChainFactor} to \texttt{true} in the component collection associated with an algorithm. This flag is disabled by default, however all of Figaro's basic built-in SFI algorithms enable it.
-
-Figaro offers both one-time and anytime SFI algorithms. One-time SFI algorithms perform a single pass of refining and solving. Most of the default algorithms included are one-time algorithms. Anytime SFI algorithms alternate refining and solving to produce better solutions over time. This is particularly useful for LSFI, where one might choose to incrementally expand more of the model at each iteration. Alternatively, anytime SFI is applicable to models containing elements with infinite support, as it allows the algorithm to choose better finite approximations of these distributions at each iteration.
 
 \subsection{Atomic rangers}
 
 SFI algorithms operate on discrete factor graphs. Generating such a factor graph requires computing a finite range for each element involved. For elements with finite support, this range is often just the entire support; for elements with infinite support, this is typically a finite approximation. Ranging currently proceeds by generating ranges for atomic elements (i.e. elements that use no other elements in their generation), then propagating ranges deterministically through other elements, including Chain, Apply, and Dist.
 
-More precisely, SFI algorithms require each atomic element to define a distribution over a finite range. If using LSFI, this range is also allowed to contain \texttt{*}, but regular SFI will throw an exception if a query is made to an element with range containing \texttt{*}. Ranging for a particular atomic element of type \texttt{T} is handled by an implementation of \texttt{AtomicRang\-er[T]}. \texttt{AtomicRanger} specifies two methods: \texttt{discretize()} and \texttt{fullyRefinable()}. The \texttt{discretize()} method returns a distribution over extended values of type \texttt{T} (i.e. either a regular value or \texttt{*}). The distribution is represented as a map from extended values to probabilities, with the property that the probabilities must sum to 1. This method is called once each time a refining strategy generates the range of an atomic element. Thus, if one wants to incrementally refine an infinite element (e.g. using an anytime SFI algorithm that refines once per iteration), it is up to the \texttt{AtomicRanger} to return an incrementally better discretization each time the method is called. The \texttt{fullyRefinable()} method returns a boolean indicating if \texttt{discretize()} returns a complete distribution that cannot be refined further. Generally, this is only true for rangers over finite-support elements that enumerate the entire distribution.
+When using LSFI only, ranges are allowed to contain a special value called \texttt{*} (pronounced ``star''). \texttt{*} essentially represents missing or uncomputed values. LSFI automatically uses \texttt{*} to quantify the effects of unexpanded sub--models in a partially expanded model. Regular SFI will throw an exception if a query is made to an element with range containing \texttt{*}.
+
+SFI algorithms require each atomic element to define a distribution over a finite range. If using LSFI, this range can contain \texttt{*}. Ranging for a particular atomic element of type \texttt{T} is handled by an implementation of \texttt{AtomicRanger[T]}. \texttt{AtomicRanger} specifies two methods: \texttt{discretize()} and \texttt{fullyRefinable()}. The \texttt{discretize()} method returns a distribution over extended values of type \texttt{T} (i.e. either a regular value or \texttt{*}). The distribution is represented as a map from extended values to probabilities, with the property that the probabilities must sum to 1. This method is called once each time a refining strategy generates the range of an atomic element. Thus, if one wants to incrementally refine an infinite element (e.g. using an anytime SFI algorithm that refines once per iteration), it is up to the \texttt{AtomicRanger} to return an incrementally better discretization each time the method is called. The \texttt{fullyRefinable()} method returns a boolean indicating if \texttt{discretize()} returns a complete distribution that cannot be refined further. Generally, this is only true for rangers over finite-support elements that enumerate the entire distribution.
 
 Figaro includes several implementations of \texttt{AtomicRanger}.
 
@@ -461,7 +515,7 @@ One can also define custom rangers. For example, the following defines an increm
 }
 \end{flushleft}
 
-Notice the call to the constructor \texttt{Regular(mid)}. \texttt{Regular[T]} is one of the subtypes of \texttt{Extended[T]}, the other being \texttt{Star}.
+Notice the call to the constructor \texttt{Regular(mid)}. \texttt{Regular[T]} is one of the subtypes of \texttt{Extended[T]}, the other being \texttt{Star} (i.e. \texttt{*}).
 
 \subsection{Ranging strategies}
 
@@ -489,41 +543,53 @@ Of course, one can also define a custom ranging strategy. For example, the follo
 }
 \end{flushleft}
 
-This definition assigns an atomic ranger to each element by its type. However, one could also assign atomic rangers by reference to specify a unique ranger for each atomic element in the model.
+This definition assigns an atomic ranger to each element by its type. However, one could also assign atomic rangers by reference, e.g. to specify a unique ranger for each atomic element in the model.
 
 \subsection{Refining strategies}
 
 Recall that refining strategies have two jobs: to generate ranges for elements relevant to the query, and to expand sub--problems through Chains. Refining strategies operate on a component collection, and define a single \texttt{execute()} method that performs the refinement.
 
-The most generally applicable refining strategy is \texttt{Backtracking\-Strategy}, which performs both expansion and rangin. It takes as input a list of problem components and a maximum depth of expansion. This depth parameter enables lazy partial expansion: starting from a depth of 0 at the top-level, the strategy performs a depth-first search through elements in the model, incrementing the depth each time it enters a sub--problem. It is called a ``backtracking'' strategy because it uses backtracking to propagate updates when an element is visited multiple times at different depths. This backtracking process can cause the algorithm to take superlinear time on some models.
+The most generally applicable refining strategy is \texttt{Backtracking\-Strategy}, which performs both expansion and ranging. It takes as input a list of problem components and a maximum depth of expansion. This depth parameter enables lazy partial expansion: starting from a depth of 0 at the top-level, the strategy performs a depth-first search through elements in the model. The strategy increments its own depth each time it enters a sub--problem. It is called a ``backtracking'' strategy because it uses backtracking to propagate updates when an element is visited multiple times at different depths. This backtracking process can cause the algorithm to take superlinear time on some models.
 
-An alternative strategy with similar applications is \texttt{RecursionDepth\-Strategy}. It performs the same kind of depth-first expansion, but defines ``depth'' slightly differently. This uses a notion of depth that is essentially the number of \textit{recursive} calls to a particular sub--problem. This definition applies to recursive models, such as the one defined above in Section \ref{SFI_process}. Notice how the function \texttt{recursiveFunction} explicitly uses itself recursively. This strategy would increment the depth of expansion each time the function calls itself through a Chain. Note that it is essential to use function memoization on infinite models used with this strategy, as otherwise the strategy cannot detect the recursion. Consider an alternative implementation of the model:
+An alternative strategy with similar applications is \texttt{RecursionDepth\-Strategy}. It performs the same kind of depth-first expansion, but uses a notion of depth that is instead defined by the associated component collection. The exact definition depends on the type of component collection (and indeed, it is precisely this definition that makes the distinction between each of the component collection types). The main benefit of \texttt{RecursionDepthStrategy} is that it does not need to perform backtracking, often resulting in substantially better performance.
+
+There is just one type of failure mode for \texttt{RecursionDepthStrategy} that prevents it from being as general as \texttt{BacktrackingStrategy}. If using a \texttt{SelectiveIncrementingCollection} or \texttt{MinimalIncrementing\-Collection} (\ref{ComponentCollections}) on a recursive model that does \textit{not} use function memoization (\ref{FunctionMemoization}), then \texttt{RecursionDepthStrategy} will fail to terminate. An example of such a recursive model that fails to use function memoization is given below:
 
 \begin{flushleft}
-\texttt{def recursiveElement(): Element[Int] = Chain(Flip(prob), (b: Boolean) => \{
-\newline\tab if(b) Constant(0)
-\newline\tab else recursiveElement().map(i => (i + 1) \% 3)
-\newline \})
+\texttt{def recursiveElement(): Element[Int] = Chain(Flip(0.5),
+\newline\tab (b: Boolean) => \{
+\newline\tab\tab if(b) Constant(0)
+\newline\tab\tab else recursiveElement().map(\_ + 1)
+\newline\tab \})
+\newline val elem = recursiveElement()
 }
 \end{flushleft}
 
-As a result of failing to use function memoization, the strategy will proceed as if no recursive calls were made, and will fail to terminate. However, when \texttt{RecursionDepthStrategy} is applicable, the need for backtracking is eliminated, often yielding better performance.
+An appropriate transformation into a use of function memoization might look like this:
 
-Another included strategy is \texttt{FlatStrategy}. This takes a set of existing components in the component collection and updates the range for each one. This will not update the ranges of any other components; thus a \texttt{FlatStrategy} will not enter sub--problems to refine them. Closely related is \texttt{TopDownStrategy} which also takes a fixed set of components to update. Instead of updating only these components, it also propagates updates to all dependent components in the component collection, ensuring consistency across generated ranges.
+\begin{flushleft}
+\texttt{val recursiveFunction: Boolean => Element[Int] =
+\newline\tab (b: Boolean) => \{
+\newline\tab\tab if(b) Constant(0)
+\newline\tab\tab else recursiveElement().map(\_ + 1)
+\newline\tab \})
+\newline def recursiveElement(): Element[Int] = Chain(Flip(0.5),
+\newline\tab recursiveFunction)
+\newline val elem = recursiveElement()
+}
+\end{flushleft}
+
+The reason for this failure mode is that these two collection types only increment the depth at \textit{recursive} calls by a reference-equal Chain function. In contrast, \texttt{IncrementingCollection} always increments the depth blindly at expansions. For this reason, \texttt{RecursionDepthStrategy} always works with \texttt{IncrementingCollection}. This combination of a component collection and refining strategy is in fact the default for built-in LSFI algorithms.
+
+Another included strategy is \texttt{FlatStrategy}. This takes a set of existing components in the component collection and updates the range for each one. This will not update the ranges of any other components; thus a \texttt{FlatStrategy} will not enter sub--problems to refine them. Closely related is \texttt{TopDownStrategy} which also takes a fixed set of components to update. Instead of updating only these components, it also propagates updates to all dependent components in the component collection, ensuring consistency across generated ranges. These strategies can be useful for refining infinite-ranged elements in models that have fully expanded their sub--models.
 
 \subsection{Solving strategies}
 
-The most basic solving strategy is \texttt{ConstantStrategy}, which solves in a uniform manner. It takes three arguments: an inference problem to solve, a factor solver, and a raising criteria. The factor solver can be one of Figaro's built in solvers, which include variable elimination, belief propagation, and Gibbs sampling. The raising criteria is a decision function to decide whether to solve or ``raise'' a sub--problem into a higher-level problem without solving. Solving a sub--problem enables reusing the solution elsewhere in the model, and often induces a better elimination order. Nevertheless, raising is available for the occasional cases where it is known to perform better. Figaro includes several built-in raising criteria: \texttt{structuredRaising} (always solves), \texttt{flatRaising} (always raises), and \texttt{raiseIfGlobal} (raises if a sub--problem uses globals, i.e. elements declared in a higher-level problem).
+The most basic solving strategy is \texttt{ConstantStrategy}, which solves in a uniform manner. It takes three arguments: an inference problem to solve, a factor solver, and a raising criteria. The factor solver can be one of Figaro's built in solvers, which include Variable Elimination, Belief Propagation, and Gibbs sampling. The raising criteria is a decision function to decide whether to solve or ``raise'' a sub--problem into a higher-level problem without solving. Solving a sub--problem enables reusing the solution elsewhere in the model, and often induces a better elimination order. Nevertheless, raising is available for the occasional cases where it is known to perform better. Figaro includes several built-in raising criteria: \texttt{structuredRaising} (always solves), \texttt{flatRaising} (always raises), and \texttt{raiseIfGlobal} (raises if a sub--problem uses \textit{globals}, i.e. elements declared in a higher-level problem).
 
-More generally, one can subclass \texttt{RaisingStrategy} for additional flexibility. Here, one can override the \texttt{eliminate} method to combine inference strategies; this is how the hybrid strategies \texttt{VEBPGibbsStrat\-egy}, \texttt{VEBPStrategy}, and \texttt{VEGibbsStrategy} are implemented. Additionally, one can override the \texttt{recurse} method to choose different strategies for recursively solving each sub--problem. See the Scaladoc for more information regarding the specifications of these methods and how to override them.
+More generally, one can subclass \texttt{RaisingStrategy} for additional flexibility. Here, one can override the \texttt{eliminate} method, which takes a set of factors and eliminates any number of variables to produce a solution. This is how the hybrid strategies \texttt{VEBPGibbsStrategy}, \texttt{VEBP\-Strategy}, and \texttt{VEGibbsStrategy} are implemented. Additionally, one can override the \texttt{recurse} method of \texttt{RaisingStrategy}, which specifies the strategy to use to solve a sub--problem. This allows one to, for example, use one solver for the top--level problem, and a different solver for each nested problem. See the \texttt{RaisingStrategy} Scaladoc for more information regarding the specifications of these methods and how to override them.
 
-It is important to note that if using LSFI one must use a \textit{non-normalizing} solver for the top-level problem to produce correct bounds on a query. Currently, the only non-normalizing solver implemented in Figaro is variable elimination.
-
-\subsection{Customizing SFI algorithms}
-
-One can customize SFI algorithms by extending from one of the base abstract classes (e.g. \texttt{LazyStructuredProbQueryAlgorithm}) and mixing in the appropriate one-time or anytime traits. This leaves the user to define the ranging, refining, and solving strategies to use. It is important to note that whereas a single ranging strategy is used over the course of inference, most refining and solving strategies are not reusable. Thus, for anytime SFI, one should generally override the \texttt{refiningStrategy()} and \texttt{solvingStrategy()} methods to return a new strategy for each iteration of inference.
-
-Examples showing creation and use of custom SFI algorithms are provided in the \texttt{lazystructured} package in the Figaro examples. Relevant classes for building custom SFI algorithms are found in the \texttt{com.cra.figaro.algorithm.structured} package: one can find the base algorithms in the \texttt{algorithm} package, the various strategies in the \texttt{strategy} package, and the included solvers in the \texttt{solver} package.
+It is important to note that if using LSFI, one must use a \textit{non-normalizing} solver for the top-level problem to produce correct bounds on a query. Currently, the only non-normalizing solver implemented in Figaro is Variable Elimination.
 
 \section{Probability of evidence algorithms}
 
