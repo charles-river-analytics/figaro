@@ -11,6 +11,12 @@
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 
+/*
+ * Additional Updates from our community
+ * 
+ * Kartik Thakore	Jul 21, 2015
+ */
+
 package com.cra.figaro.algorithm.sampling
 
 import com.cra.figaro.algorithm._

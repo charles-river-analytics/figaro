@@ -1,0 +1,36 @@
+﻿Figaro was created by Dr. Avi Pfeffer
+
+Charles River Analytics Contributors
+------------------------------------
+David Blumstein
+Lisa Cordiero
+Jeff Druce
+Dan Garant
+Joe Gorman
+Lauren Hinkle
+Michael Howard
+Lee Kellogg
+William Kretschmer
+Kenny Lu
+Steve Marotta
+Alison O'Connor
+Karen Pfautz
+Brian Ruttenberg
+Cory Scott
+Josh Serrin
+Amy Sliva
+Glenn Takata
+Aaron Zakem
+
+External Contributors
+---------------------
+Dragisa Krsmanovic
+Martin Mauch
+Thomas Ounnas
+Paul Philips
+Tadayoshi Sato
+Çağdaş Şenol
+Viliam Simko
+Synapski
+Maciej Szymkiewicz
+Kartik Thakore
