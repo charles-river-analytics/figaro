@@ -28,7 +28,7 @@ class InfiniteExpectationTest extends WordSpec with Matchers {
       val depthIncrement = 5
       val valuesPerIteration = 5
       val alg = new AnytimeLSVE(depthIncrement, model.universe, model.prob) {
-        override def rangingStrategy = new RangingStrategy {
+        override lazy val rangingStrategy = new RangingStrategy {
           override def apply[T](atomic: Atomic[T]): AtomicRanger[T] = {
             atomic match {
               case flip: AtomicFlip => new FiniteRanger(flip)

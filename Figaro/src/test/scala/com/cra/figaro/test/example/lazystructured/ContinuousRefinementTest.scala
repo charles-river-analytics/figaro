@@ -41,7 +41,7 @@ class ContinuousRefinementTest extends WordSpec with Matchers {
         lazy val atomicComponents = List(e1, e3, e4).map(collection(_))
 
         // Range by sampling 10 times from continuous atomic elements at each iteration
-        override def rangingStrategy: RangingStrategy = {
+        override lazy val rangingStrategy: RangingStrategy = {
           RangingStrategy.default(10)
         }
 
