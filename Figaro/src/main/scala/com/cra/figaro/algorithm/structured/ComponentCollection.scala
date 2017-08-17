@@ -83,9 +83,9 @@ class ComponentCollection {
    * used to create recursive expansions of a subproblem for different depths. It ensures that only one subproblem is
    * created for each depth.
    *
-   * By default, this method always returns 0, which is the default for non-recursive expansion.
+   * By default, this method always returns 1, which is the default for non-recursive expansion.
    */
-  private[figaro] def getRecursionDepth(value: ExpandableComponent[_, _], newExpansion: Expansion): Int = 0
+  private[figaro] def getRecursionDepth(value: ExpandableComponent[_, _], newExpansion: Expansion): Int = 1
 
   /**
    * Bijectively maps an expansion and a recursion depth to a corresponding problem. The inverse map is
@@ -206,8 +206,8 @@ class IncrementingCollection extends ComponentCollection {
         // Get the expansion that produced this nested problem and increment it
         val (_, npDepth) = problemToExpansion(np)
         npDepth + 1
-      // Base case: start with 0 when expanding from a top-level problem
-      case _ => 0
+      // Base case: start with 1 when expanding from a top-level problem
+      case _ => 1
     }
   }
 }
@@ -276,7 +276,7 @@ class SelectiveIncrementingCollection extends ComponentCollection {
             levelPath
           }
         if(incrementDepth) npDepth + 1 else npDepth
-      case _ => 0
+      case _ => 1
     }
   }
 }
@@ -285,7 +285,7 @@ class SelectiveIncrementingCollection extends ComponentCollection {
  * Component collections for models that recursively use chain function memoization. When expanding a subproblem, this
  * works by computing the least depth that does not create a cycle in the graph of subproblems.
  *
- * This maintains the invariant that if an expansion exists at depth d > 0, then an expansion also exists at depth
+ * This maintains the invariant that if an expansion exists at depth d > 1, then an expansion also exists at depth
  * d - 1. Furthermore, the expansion at depth d - 1 directly or indirectly uses the expansion at depth d. This invariant
  * makes it possible to find the least depth that does not create a cycle by performing exponential search.
  */
@@ -329,12 +329,12 @@ class MinimalIncrementingCollection extends ComponentCollection {
 
     // Look for the least depth that does NOT create a cycle by exponential search
     // lo: current lower bound; i.e. all depths strictly less than lo create a cycle
-    // hi: current upper bound for the exponential search, but not yet known to be a depth that does not produce a cycle
     @tailrec
-    def exponentialSearch(lo: Int, hi: Int): Int = {
+    def exponentialSearch(lo: Int): Int = {
+      val hi = 2 * lo
       // If (hi - 1) depth creates a cycle, then so do all other depths in the semi-open interval [lo, hi)
       // So, we repeat the search, this time with an inclusive lower bound of hi
-      if(depthCreatesCycle(hi - 1)) exponentialSearch(hi, hi * 2)
+      if(depthCreatesCycle(hi - 1)) exponentialSearch(hi)
       // Otherwise, the least depth that does not create a cycle must be in [lo, hi)
       else binarySearch(lo, hi)
     }
@@ -351,8 +351,8 @@ class MinimalIncrementingCollection extends ComponentCollection {
       }
     }
 
-    // This successively searches the intervals [0,1); [1,2); [2,4); [4,8); etc.
-    // Note: 0 is the "base case"; i.e. a expansion will be created at depth 0 first if it hasn't been expanded yet
-    exponentialSearch(0, 1)
+    // This successively searches the intervals [1,2); [2,4); [4,8); etc.
+    // Note: 1 is the "base case"; i.e. a expansion will be created at depth 1 first if it hasn't been expanded yet
+    exponentialSearch(1)
   }
 }

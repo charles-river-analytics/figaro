@@ -20,13 +20,7 @@ import com.cra.figaro.library.compound.If
 class LazyStructuredVETest extends WordSpec with Matchers {
   // Two-level chain model
   def twoLevelChain(): Element[Boolean] = {
-    val fl1 = Flip(0.1)
-    val fl2 = Flip(0.2)
-    val fl3 = Flip(0.3)
-    val fl4 = Flip(0.4)
-    val fl5 = Flip(0.5)
-    val innerIf = If(fl3, fl4, fl5)
-    If(fl1, fl2, innerIf)
+    If(Flip(0.1), Flip(0.2), If(Flip(0.3), Flip(0.4), Flip(0.5)))
   }
   
   // Recursive geometric distribution

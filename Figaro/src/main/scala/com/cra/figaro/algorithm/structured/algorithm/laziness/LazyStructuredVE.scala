@@ -42,7 +42,7 @@ abstract class LazyStructuredVE(universe: Universe, targets: Element[_]*)
   }
 
   override def refiningStrategy(): RefiningStrategy =
-    new BacktrackingStrategy(problem, initialElements.map(collection(_)), depth())
+    new RecursionDepthStrategy(problem, initialElements.map(collection(_)), depth())
 
   override def solvingStrategy(): SolvingStrategy =
     new ConstantStrategy(problem, structuredRaising, marginalVariableElimination)
