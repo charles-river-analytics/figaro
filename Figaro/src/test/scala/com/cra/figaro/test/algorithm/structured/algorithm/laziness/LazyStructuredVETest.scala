@@ -23,13 +23,16 @@ class LazyStructuredVETest extends WordSpec with Matchers {
     If(Flip(0.1), Flip(0.2), If(Flip(0.3), Flip(0.4), Flip(0.5)))
   }
   
-  // Recursive geometric distribution
-  def recursiveGeometric(): Element[Int] = Chain(Flip(0.5), memoGeometricFunc)
+  // Recursive memoized geometric distribution
+  def memoRecursiveGeometric(): Element[Int] = Chain(Flip(0.5), memoGeometricFunc)
   val memoGeometricFunc: Boolean => Element[Int] = (b: Boolean) => {
     if(b) Constant(1)
-    else recursiveGeometric().map(_ + 1)
+    else memoRecursiveGeometric().map(_ + 1)
   }
-  
+
+  // Recursive non-memoized geometric distribution
+  def recursiveGeometric(): Element[Int] = If(Flip(0.5), Constant(1), recursiveGeometric().map(_ + 1))
+
   "One time lazy structured variable elimination" when {
     "given a simple two-level chain with no evidence" should {
       "produce the correct depth 1 approximation" in {
@@ -42,7 +45,7 @@ class LazyStructuredVETest extends WordSpec with Matchers {
       	alg.probabilityBounds(outerIf, true)._2 should be (0.92 +- 0.000000001)
       	alg.probabilityBounds(outerIf, false)._2 should be (0.98 +- 0.000000001)
       }
-        
+
       "produce the correct depth 2 perfect answer" in {
       	Universe.createNew()
       	val outerIf = twoLevelChain()
@@ -59,7 +62,7 @@ class LazyStructuredVETest extends WordSpec with Matchers {
         alg.probability(outerIf, false) should be ((1 - pOuter) +- 0.000000001)
 
         alg.kill()
-      } 
+      }
     }
 
     "given a simple two-level chain with a condition" should {
@@ -84,10 +87,10 @@ class LazyStructuredVETest extends WordSpec with Matchers {
       	alg.probabilityBounds(apply, false)._1 should be (falseLower +- 0.000000001)
       	alg.probabilityBounds(apply, true)._2 should be ((1 - falseLower) +- 0.000000001)
       	alg.probabilityBounds(apply, false)._2 should be ((1 - trueLower) +- 0.000000001)
-        
+
         alg.kill()
       }
-      
+
       "produce the correct depth 2 perfect answer" in {
       	Universe.createNew()
       	val outerIf = twoLevelChain()
@@ -96,7 +99,7 @@ class LazyStructuredVETest extends WordSpec with Matchers {
       	check.observe(true)
         val alg = LazyStructuredVE(2, apply)
       	alg.start()
-      	val pInner = 0.3 * 0.4 + 0.7 * 0.5 
+      	val pInner = 0.3 * 0.4 + 0.7 * 0.5
       	val pOuterT = 0.1 * 0.2 + 0.9 * pInner
       	val pOuterF = 1.0 - pOuterT
       	val qOuterT = pOuterT * 0.6
@@ -109,9 +112,9 @@ class LazyStructuredVETest extends WordSpec with Matchers {
         // The lower and upper bounds are equal, so we should also get the exact answer using the probability method
         alg.probability(apply, true) should be (pOuter +- 0.000000001)
         alg.probability(apply, false) should be ((1 - pOuter) +- 0.000000001)
-        
+
         alg.kill()
-      } 
+      }
     }
 
     "given a simple two-level chain with a constraint" should {
@@ -133,17 +136,17 @@ class LazyStructuredVETest extends WordSpec with Matchers {
       	alg.probabilityBounds(outerIf, false)._1 should be (falseLower +- 0.000000001)
       	alg.probabilityBounds(outerIf, true)._2 should be ((1 - falseLower) +- 0.000000001)
       	alg.probabilityBounds(outerIf, false)._2 should be ((1 - trueLower) +- 0.000000001)
-        
+
         alg.kill()
       }
-      
+
       "produce the correct depth 2 perfect answer" in {
       	Universe.createNew()
       	val outerIf = twoLevelChain()
       	outerIf.addConstraint((b: Boolean) => if (b) 0.6; else 0.3)
         val alg = LazyStructuredVE(2, outerIf)
       	alg.start()
-      	val pInner = 0.3 * 0.4 + 0.7 * 0.5 
+      	val pInner = 0.3 * 0.4 + 0.7 * 0.5
       	val pOuterT = 0.1 * 0.2 + 0.9 * pInner
       	val pOuterF = 1.0 - pOuterT
       	val qOuterT = pOuterT * 0.6
@@ -156,11 +159,11 @@ class LazyStructuredVETest extends WordSpec with Matchers {
         // The lower and upper bounds are equal, so we should also get the exact answer using the probability method
         alg.probability(outerIf, true) should be (pOuter +- 0.000000001)
         alg.probability(outerIf, false) should be ((1 - pOuter) +- 0.000000001)
-        
+
         alg.kill()
-      } 
+      }
     }
-    
+
     "given a recursive geometric without evidence" should {
       "produce the correct depth 7 probability bounds for each value" in {
         Universe.createNew()
@@ -197,7 +200,7 @@ class LazyStructuredVETest extends WordSpec with Matchers {
         alg.kill()
       }
     }
-    
+
     "given a recursive geometric with a condition" should {
       "produce the correct depth 7 probability bounds for each value" in {
         Universe.createNew()
@@ -244,7 +247,7 @@ class LazyStructuredVETest extends WordSpec with Matchers {
         alg.kill()
       }
     }
-    
+
     "given a recursive geometric with a constraint" should {
       "produce the correct depth 7 probability bounds for each value" in {
         Universe.createNew()
@@ -270,6 +273,130 @@ class LazyStructuredVETest extends WordSpec with Matchers {
       "produce the correct depth 7 expectation bounds for a bounded function" in {
         Universe.createNew()
         val geometric = recursiveGeometric()
+        geometric.addConstraint(1.0 / _)
+        val alg = LazyStructuredVE(7, geometric)
+        alg.start()
+        // Unassigned probability at this expansion
+        val pUnexpanded = math.pow(0.5, 7)
+        val normalizer = (1 to 7).map(i => math.pow(0.5, i) / i).sum + pUnexpanded
+
+        val (lower, upper) = alg.expectationBounds(geometric, (i: Int) => 1.0 / i, 0.0, 1.0)
+        val baseExpectation = (1 to 7).map(i => math.pow(0.5, i) / (i * i * normalizer)).sum
+        lower should be (baseExpectation +- 0.000000001)
+        upper should be ((baseExpectation + (pUnexpanded / normalizer)) +- 0.000000001)
+        alg.kill()
+      }
+    }
+
+    "given a memoized recursive geometric without evidence" should {
+      "produce the correct depth 7 probability bounds for each value" in {
+        Universe.createNew()
+        val geometric = memoRecursiveGeometric()
+        val alg = LazyStructuredVE(7, geometric)
+        alg.start()
+        // Unassigned probability at this expansion
+        val pUnexpanded = math.pow(0.5, 7)
+
+        val allBounds = alg.allProbabilityBounds(geometric)
+        val regularValues = allBounds.map(_._3).toSet
+        regularValues should equal((1 to 7).toSet)
+        for((lower, upper, value) <- allBounds) {
+          // True probability of this value
+          val pValue = math.pow(0.5, value)
+          lower should be (pValue +- 0.000000001)
+          upper should be ((pValue + pUnexpanded) +- 0.000000001)
+        }
+        alg.kill()
+      }
+
+      "produce the correct depth 7 expectation bounds for a bounded function" in {
+        Universe.createNew()
+        val geometric = memoRecursiveGeometric()
+        val alg = LazyStructuredVE(7, geometric)
+        alg.start()
+        // Unassigned probability at this expansion
+        val pUnexpanded = math.pow(0.5, 7)
+
+        val (lower, upper) = alg.expectationBounds(geometric, (i: Int) => 1.0 / i, 0.0, 1.0)
+        val baseExpectation = (1 to 7).map(i => math.pow(0.5, i) / i).sum
+        lower should be (baseExpectation +- 0.000000001)
+        upper should be ((baseExpectation + pUnexpanded) +- 0.000000001)
+        alg.kill()
+      }
+    }
+
+    "given a memoized recursive geometric with a condition" should {
+      "produce the correct depth 7 probability bounds for each value" in {
+        Universe.createNew()
+        val geometric = memoRecursiveGeometric()
+        geometric.addCondition(_ % 2 == 0)
+        val alg = LazyStructuredVE(7, geometric)
+        alg.start()
+        // Unassigned probability at this expansion
+        val pUnexpanded = math.pow(0.5, 7)
+        val normalizer = math.pow(0.5, 2) + math.pow(0.5, 4) + math.pow(0.5, 6) + pUnexpanded
+
+        val allBounds = alg.allProbabilityBounds(geometric)
+        val regularValues = allBounds.map(_._3).toSet
+        regularValues should equal((1 to 7).toSet)
+        for((lower, upper, value) <- allBounds) {
+          if(value % 2 == 0) {
+            // True prior probability of this value
+            val pValue = math.pow(0.5, value)
+            lower should be ((pValue / normalizer) +- 0.000000001)
+            upper should be (((pValue + pUnexpanded) / normalizer) +- 0.000000001)
+          }
+          else {
+            lower should be (0.0 +- 0.000000001)
+            upper should be ((pUnexpanded / normalizer) +- 0.000000001)
+          }
+        }
+        alg.kill()
+      }
+
+      "produce the correct depth 7 expectation bounds for a bounded function" in {
+        Universe.createNew()
+        val geometric = memoRecursiveGeometric()
+        geometric.addCondition(_ % 2 == 0)
+        val alg = LazyStructuredVE(7, geometric)
+        alg.start()
+        // Unassigned probability at this expansion
+        val pUnexpanded = math.pow(0.5, 7)
+        val normalizer = math.pow(0.5, 2) + math.pow(0.5, 4) + math.pow(0.5, 6) + pUnexpanded
+
+        val (lower, upper) = alg.expectationBounds(geometric, (i: Int) => 1.0 / i, 0.0, 1.0)
+        val baseExpectation = (2 to 6 by 2).map(i => math.pow(0.5, i) / (i * normalizer)).sum
+        lower should be (baseExpectation +- 0.000000001)
+        upper should be ((baseExpectation + (pUnexpanded / normalizer)) +- 0.000000001)
+        alg.kill()
+      }
+    }
+
+    "given a memoized recursive geometric with a constraint" should {
+      "produce the correct depth 7 probability bounds for each value" in {
+        Universe.createNew()
+        val geometric = memoRecursiveGeometric()
+        geometric.addConstraint(1.0 / _)
+        val alg = LazyStructuredVE(7, geometric)
+        alg.start()
+        // Unassigned probability at this expansion
+        val pUnexpanded = math.pow(0.5, 7)
+        val normalizer = (1 to 7).map(i => math.pow(0.5, i) / i).sum + pUnexpanded
+
+        val allBounds = alg.allProbabilityBounds(geometric)
+        val regularValues = allBounds.map(_._3).toSet
+        regularValues should equal((1 to 7).toSet)
+        for((lower, upper, value) <- allBounds) {
+          val pValue = math.pow(0.5, value) / value
+          lower should be ((pValue / normalizer) +- 0.000000001)
+          upper should be (((pValue + pUnexpanded) / normalizer) +- 0.000000001)
+        }
+        alg.kill()
+      }
+
+      "produce the correct depth 7 expectation bounds for a bounded function" in {
+        Universe.createNew()
+        val geometric = memoRecursiveGeometric()
         geometric.addConstraint(1.0 / _)
         val alg = LazyStructuredVE(7, geometric)
         alg.start()
@@ -356,72 +483,135 @@ class LazyStructuredVETest extends WordSpec with Matchers {
     }
   }
 
-  "Anytime lazy structured variable elimination" should {
-    "increase depth with time" in {
-      Universe.createNew()
-      val elem = recursiveGeometric()
-      val alg = LazyStructuredVE(elem)
-      alg.start()
-      Thread.sleep(1000)
-      alg.stop()
-      val depth1 = alg.currentDepth
-      depth1 should be > 1
-      alg.resume()
-      Thread.sleep(1000)
-      alg.stop()
-      val depth2 = alg.currentDepth
-      depth2 should be > depth1
-      alg.kill()
+  "Anytime lazy structured variable elimination" when {
+    "given a recursive geometric" should {
+      "increase depth with time" in {
+        Universe.createNew()
+        val elem = recursiveGeometric()
+        val alg = LazyStructuredVE(elem)
+        alg.start()
+        Thread.sleep(1000)
+        alg.stop()
+        val depth1 = alg.currentDepth
+        depth1 should be > 1
+        alg.resume()
+        Thread.sleep(1000)
+        alg.stop()
+        val depth2 = alg.currentDepth
+        depth2 should be > depth1
+        alg.kill()
+      }
+
+      "converge to the correct probability bounds given evidence" in {
+        Universe.createNew()
+        val geometric = recursiveGeometric()
+        val alg = LazyStructuredVE(geometric)
+        alg.start()
+        Thread.sleep(100)
+        alg.stop()
+        val (lower1, upper1) = alg.probabilityBounds(geometric, 1)
+        lower1 should be(0.5 +- 0.000000001)
+        upper1 should be >= lower1
+
+        alg.resume()
+        while (alg.currentDepth < 10) Thread.sleep(100)
+        alg.stop()
+        val (lower2, upper2) = alg.probabilityBounds(geometric, 1)
+        lower2 should be(0.5 +- 0.000000001)
+        upper2 should be(0.5 +- 0.0001)
+        upper2 should be >= lower2
+        alg.kill()
+      }
+
+      "converge to the correct expectation bounds given evidence" in {
+        Universe.createNew()
+        val geometric = recursiveGeometric()
+        geometric.addConstraint(1.0 / _)
+        val alg = LazyStructuredVE(geometric)
+
+        // Partition function is sum from n=1 to infinity of 1/(n*2^n) = log(2)
+        // Expectation is therefore sum from n=1 to infinity of 1/(n^2*2^n*log(2)) ~= 0.839995520
+        val actual = 0.839995520
+        alg.start()
+        Thread.sleep(100)
+        alg.stop()
+        val (lower1, upper1) = alg.expectationBounds(geometric, (i: Int) => 1.0 / i, 0.0, 1.0)
+        lower1 should be <= actual
+        upper1 should be >= actual
+
+        alg.resume()
+        while (alg.currentDepth < 10) Thread.sleep(100)
+        alg.stop()
+        val (lower, upper) = alg.expectationBounds(geometric, (i: Int) => 1.0 / i, 0.0, 1.0)
+        lower should be(actual +- 0.0001)
+        upper should be(actual +- 0.0001)
+        alg.kill()
+      }
     }
-  }
 
-  "converge to the correct probability bounds" when {
-    "given a model without evidence" in {
-      Universe.createNew()
-      val geometric = recursiveGeometric()
-      val alg = LazyStructuredVE(geometric)
-      alg.start()
-      Thread.sleep(100)
-      alg.stop()
-      val (lower1, upper1) = alg.probabilityBounds(geometric, 1)
-      lower1 should be (0.5 +- 0.000000001)
-      upper1 should be >= lower1
+    "given a recursive memoized geometric" should {
+      "increase depth with time" in {
+        Universe.createNew()
+        val elem = memoRecursiveGeometric()
+        val alg = LazyStructuredVE(elem)
+        alg.start()
+        Thread.sleep(1000)
+        alg.stop()
+        val depth1 = alg.currentDepth
+        depth1 should be > 1
+        alg.resume()
+        Thread.sleep(1000)
+        alg.stop()
+        val depth2 = alg.currentDepth
+        depth2 should be > depth1
+        alg.kill()
+      }
 
-      alg.resume()
-      while(alg.currentDepth < 10) Thread.sleep(100)
-      alg.stop()
-      val (lower2, upper2) = alg.probabilityBounds(geometric, 1)
-      lower2 should be (0.5 +- 0.000000001)
-      upper2 should be (0.5 +- 0.0001)
-      upper2 should be >= lower2
-      alg.kill()
-    }
-  }
+      "converge to the correct probability bounds given evidence" in {
+        Universe.createNew()
+        val geometric = memoRecursiveGeometric()
+        val alg = LazyStructuredVE(geometric)
+        alg.start()
+        Thread.sleep(100)
+        alg.stop()
+        val (lower1, upper1) = alg.probabilityBounds(geometric, 1)
+        lower1 should be(0.5 +- 0.000000001)
+        upper1 should be >= lower1
 
-  "converge to the correct expectation bounds" when {
-    "given a model with evidence" in {
-      Universe.createNew()
-      val geometric = recursiveGeometric()
-      geometric.addConstraint(1.0 / _)
-      val alg = LazyStructuredVE(geometric)
+        alg.resume()
+        while (alg.currentDepth < 10) Thread.sleep(100)
+        alg.stop()
+        val (lower2, upper2) = alg.probabilityBounds(geometric, 1)
+        lower2 should be(0.5 +- 0.000000001)
+        upper2 should be(0.5 +- 0.0001)
+        upper2 should be >= lower2
+        alg.kill()
+      }
 
-      // Partition function is sum from n=1 to infinity of 1/(n*2^n) = log(2)
-      // Expectation is therefore sum from n=1 to infinity of 1/(n^2*2^n*log(2)) ~= 0.839995520
-      val actual = 0.839995520
-      alg.start()
-      Thread.sleep(100)
-      alg.stop()
-      val (lower1, upper1) = alg.expectationBounds(geometric, (i: Int) => 1.0 / i, 0.0, 1.0)
-      lower1 should be <= actual
-      upper1 should be >= actual
+      "converge to the correct expectation bounds given evidence" in {
+        Universe.createNew()
+        val geometric = memoRecursiveGeometric()
+        geometric.addConstraint(1.0 / _)
+        val alg = LazyStructuredVE(geometric)
 
-      alg.resume()
-      while(alg.currentDepth < 10) Thread.sleep(100)
-      alg.stop()
-      val (lower, upper) = alg.expectationBounds(geometric, (i: Int) => 1.0 / i, 0.0, 1.0)
-      lower should be (actual +- 0.0001)
-      upper should be (actual +- 0.0001)
-      alg.kill()
+        // Partition function is sum from n=1 to infinity of 1/(n*2^n) = log(2)
+        // Expectation is therefore sum from n=1 to infinity of 1/(n^2*2^n*log(2)) ~= 0.839995520
+        val actual = 0.839995520
+        alg.start()
+        Thread.sleep(100)
+        alg.stop()
+        val (lower1, upper1) = alg.expectationBounds(geometric, (i: Int) => 1.0 / i, 0.0, 1.0)
+        lower1 should be <= actual
+        upper1 should be >= actual
+
+        alg.resume()
+        while (alg.currentDepth < 10) Thread.sleep(100)
+        alg.stop()
+        val (lower, upper) = alg.expectationBounds(geometric, (i: Int) => 1.0 / i, 0.0, 1.0)
+        lower should be(actual +- 0.0001)
+        upper should be(actual +- 0.0001)
+        alg.kill()
+      }
     }
   }
 }
