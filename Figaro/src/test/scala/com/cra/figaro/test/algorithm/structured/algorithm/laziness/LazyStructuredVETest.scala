@@ -196,7 +196,7 @@ class LazyStructuredVETest extends WordSpec with Matchers {
         // Unassigned probability at this expansion
         val pUnexpanded = math.pow(0.5, 7)
 
-        val (lower, upper) = alg.expectationBounds(geometric, (i: Int) => 1.0 / i, Some(0.0), Some(1.0))
+        val (lower, upper) = alg.expectationBounds(geometric, (i: Int) => 1.0 / i, 0.0, 1.0)
         val baseExpectation = (1 to 7).map(i => math.pow(0.5, i) / i).sum
         lower should be (baseExpectation +- 0.000000001)
         upper should be ((baseExpectation + pUnexpanded) +- 0.000000001)
@@ -243,7 +243,7 @@ class LazyStructuredVETest extends WordSpec with Matchers {
         val pUnexpanded = math.pow(0.5, 7)
         val normalizer = math.pow(0.5, 2) + math.pow(0.5, 4) + math.pow(0.5, 6) + pUnexpanded
 
-        val (lower, upper) = alg.expectationBounds(geometric, (i: Int) => 1.0 / i, Some(0.0), Some(1.0))
+        val (lower, upper) = alg.expectationBounds(geometric, (i: Int) => 1.0 / i, 0.0, 1.0)
         val baseExpectation = (2 to 6 by 2).map(i => math.pow(0.5, i) / (i * normalizer)).sum
         lower should be (baseExpectation +- 0.000000001)
         upper should be ((baseExpectation + (pUnexpanded / normalizer)) +- 0.000000001)
@@ -283,7 +283,7 @@ class LazyStructuredVETest extends WordSpec with Matchers {
         val pUnexpanded = math.pow(0.5, 7)
         val normalizer = (1 to 7).map(i => math.pow(0.5, i) / i).sum + pUnexpanded
 
-        val (lower, upper) = alg.expectationBounds(geometric, (i: Int) => 1.0 / i, Some(0.0), Some(1.0))
+        val (lower, upper) = alg.expectationBounds(geometric, (i: Int) => 1.0 / i, 0.0, 1.0)
         val baseExpectation = (1 to 7).map(i => math.pow(0.5, i) / (i * i * normalizer)).sum
         lower should be (baseExpectation +- 0.000000001)
         upper should be ((baseExpectation + (pUnexpanded / normalizer)) +- 0.000000001)
@@ -417,14 +417,14 @@ class LazyStructuredVETest extends WordSpec with Matchers {
       alg.start()
       Thread.sleep(100)
       alg.stop()
-      val (lower1, upper1) = alg.expectationBounds(geometric, (i: Int) => 1.0 / i, Some(0.0), Some(1.0))
+      val (lower1, upper1) = alg.expectationBounds(geometric, (i: Int) => 1.0 / i, 0.0, 1.0)
       lower1 should be <= actual
       upper1 should be >= actual
 
       alg.resume()
       while(alg.currentDepth < 10) Thread.sleep(100)
       alg.stop()
-      val (lower, upper) = alg.expectationBounds(geometric, (i: Int) => 1.0 / i, Some(0.0), Some(1.0))
+      val (lower, upper) = alg.expectationBounds(geometric, (i: Int) => 1.0 / i, 0.0, 1.0)
       lower should be (actual +- 0.0001)
       upper should be (actual +- 0.0001)
       alg.kill()

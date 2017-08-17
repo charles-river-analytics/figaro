@@ -101,49 +101,34 @@ abstract class LazyStructuredProbQueryAlgorithm(universe: Universe, collection: 
   }
 
   /**
-   * Helper function to compute lower and upper bounds on the given function using the optional bounds given and the
-   * regular values of a target variable. If bounds are given, it checks that all regular values are within the desired
-   * bounds. Otherwise, it returns the strongest possible bounds given the current regular values. If there are no
-   * regular values, it returns (-Infinity, Infinity).
+   * Helper function to compute lower and upper bounds on the given values using the optional bounds given and the
+   * double values of a target variable. If bounds are given, it checks that all regular values are within the desired
+   * bounds. Otherwise, it returns the strongest possible bounds given the current values. If there are no values, it
+   * returns (-Infinity, Infinity).
    */
-  protected def boundFunction[T](regularValues: Set[T], function: (T) => Double, lower: Option[Double], upper: Option[Double]): (Double, Double) = {
-    val lowerBound =
-      if(lower.isDefined) {
-        // Return the given lower bound and require that every regular value is greater than or equal to it
-        val lowerValue = lower.get
-        for(rvalue <- regularValues) {
-          require(function(rvalue) >= lowerValue, s"regular value out of bounds: ${function(rvalue)} < $lowerValue")
-        }
-        lowerValue
+  protected def boundValues(values: Set[Double], bounds: Option[(Double, Double)]): (Double, Double) = {
+    if(bounds.isDefined) {
+      val (lower, upper) = bounds.get
+      for(value <- values) {
+        require(lower <= value && value <= upper, s"value out of bounds: $value} not in [$lower,$upper]")
       }
-      // Return -Infinity if there are no regular values
-      else if(regularValues.isEmpty) Double.NegativeInfinity
-      // Return the least value of the function on the regular values
-      else function(regularValues.minBy(function))
-    val upperBound =
-      if(upper.isDefined) {
-        // Return the given upper bound and require that every regular value is less than or equal to it
-        val upperValue = upper.get
-        for(rvalue <- regularValues) {
-          require(function(rvalue) <= upperValue, s"regular value out of bounds: ${function(rvalue)} > $upperValue")
-        }
-        upperValue
-      }
-      // Return Infinity if there are no regular values
-      else if(regularValues.isEmpty) Double.PositiveInfinity
-      // Return the greatest value of the function on the regular values
-      else function(regularValues.maxBy(function))
-    (lowerBound, upperBound)
+      (lower, upper)
+    }
+    else if(values.isEmpty) {
+      (Double.NegativeInfinity, Double.PositiveInfinity)
+    }
+    else {
+      (values.min, values.max)
+    }
   }
 
-  override def computeExpectationBounds[T](target: Element[T], function: (T) => Double,
-                                           lower: Option[Double], upper: Option[Double]): (Double, Double) = {
+  override def computeExpectationBounds[T](target: Element[T], function: (T) => Double, bounds: Option[(Double, Double)]): (Double, Double) = {
     val (lowerFactor, upperFactor) = boundFactors(target)
     // Both factors should be over the same variable, or they are both empty because the variable has range {*}
     // In either case, this gets the set of regular values of the variable
     val regularValues = lowerFactor.variables.headOption.map(_.valueSet.regularValues).getOrElse(Set())
     // Get the function bounds
-    val (actualLower, actualUpper) = boundFunction(regularValues.asInstanceOf[Set[T]], function, lower, upper)
+    val (actualLower, actualUpper) = boundValues(regularValues.asInstanceOf[Set[T]].map(function), bounds)
     // Get the probability bounds on regular and star values
     val (regularBounds, lowerProbStar, upperProbStar) = regularAndStarBounds[T](lowerFactor, upperFactor)
     // To compute lower or upper bounds on the expectation of the function, we essentially try to allocate as much

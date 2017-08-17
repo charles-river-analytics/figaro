@@ -46,7 +46,7 @@ object InfiniteExpectation {
     for(_ <- 1 to 20) {
       Thread.sleep(1000)
       // The bounds produced here are only approximate because the element is continuous
-      println(alg.expectationBounds(model.prob, (d: Double) => d, Some(0.0), Some(1.0)))
+      println(alg.expectationBounds(model.prob, (d: Double) => d, 0.0, 1.0))
     }
     alg.stop()
     alg.kill()

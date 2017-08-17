@@ -40,7 +40,7 @@ class InfiniteExpectationTest extends WordSpec with Matchers {
       alg.start()
       Thread.sleep(10000)
       alg.stop()
-      val (lower, upper) = alg.expectationBounds(model.prob, (d: Double) => d, Some(0.0), Some(1.0))
+      val (lower, upper) = alg.expectationBounds(model.prob, (d: Double) => d, 0.0, 1.0)
       // If the value of prob is x, the probability that the condition is satisfied is the sum from n=0 to infinity of
       // x*(1-x)^3n, which converges to 1/(x^2-3x+3)
       // The posterior density of e1 is proportional to (1-x)^4/(x^2-3x+3), which integrates to 0.0803

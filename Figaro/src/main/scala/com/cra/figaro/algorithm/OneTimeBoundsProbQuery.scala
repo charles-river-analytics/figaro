@@ -23,8 +23,8 @@ trait OneTimeBoundsProbQuery extends BoundsProbQueryAlgorithm with OneTimeProbQu
     computeAllProbabilityBounds(target)
   }
 
-  protected def doExpectationBounds[T](target: Element[T], function: T => Double, lower: Option[Double], upper: Option[Double]): (Double, Double) = {
-    computeExpectationBounds(target, function, lower, upper)
+  protected def doExpectationBounds[T](target: Element[T], function: T => Double, bounds: Option[(Double, Double)]): (Double, Double) = {
+    computeExpectationBounds(target, function, bounds)
   }
 
   protected def doProbabilityBounds[T](target: Element[T], predicate: T => Boolean): (Double, Double) = {

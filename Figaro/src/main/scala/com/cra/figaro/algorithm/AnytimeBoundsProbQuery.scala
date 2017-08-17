@@ -33,7 +33,7 @@ trait AnytimeBoundsProbQuery extends BoundsProbQueryAlgorithm with AnytimeProbQu
   /**
    * A message instructing the handler to compute bounds on the expectation of the target element under the given function.
    */
-  case class ComputeExpectationBounds[T](target: Element[T], function: T => Double, lower: Option[Double], upper: Option[Double]) extends Service
+  case class ComputeExpectationBounds[T](target: Element[T], function: T => Double, bounds: Option[(Double, Double)]) extends Service
 
   /**
    * A message from the handler containing the bounds on the expectation of the previously requested element and function.
@@ -62,8 +62,8 @@ trait AnytimeBoundsProbQuery extends BoundsProbQueryAlgorithm with AnytimeProbQu
         Projection(computeProjection(target))
       case ComputeAllProbabilityBounds(target) =>
         AllProbabilityBounds(computeAllProbabilityBounds(target))
-      case ComputeExpectationBounds(target, function, lower, upper) =>
-        ExpectationBounds(computeExpectationBounds(target, function, lower, upper))
+      case ComputeExpectationBounds(target, function, bounds) =>
+        ExpectationBounds(computeExpectationBounds(target, function, bounds))
       case ComputeProbabilityBounds(target, predicate) =>
         ProbabilityBounds(computeProbabilityBounds(target, predicate))
     }
@@ -75,16 +75,16 @@ trait AnytimeBoundsProbQuery extends BoundsProbQueryAlgorithm with AnytimeProbQu
     }
   }
 
-  protected def doExpectationBounds[T](target: Element[T], function: T => Double, lower: Option[Double], upper: Option[Double]): (Double, Double) = {
-    awaitResponse(runner ? Handle(ComputeExpectationBounds(target, function, lower, upper)), messageTimeout.duration) match {
-      case ExpectationBounds(bounds) => bounds
-      case _ => (Double.NegativeInfinity, Double.PositiveInfinity)
+  protected def doExpectationBounds[T](target: Element[T], function: T => Double, bounds: Option[(Double, Double)]): (Double, Double) = {
+    awaitResponse(runner ? Handle(ComputeExpectationBounds(target, function, bounds)), messageTimeout.duration) match {
+      case ExpectationBounds(result) => result
+      case _ => bounds.getOrElse((Double.NegativeInfinity, Double.PositiveInfinity))
     }
   }
 
   protected def doProbabilityBounds[T](target: Element[T], predicate: T => Boolean): (Double, Double) = {
     awaitResponse(runner ? Handle(ComputeProbabilityBounds(target, predicate)), messageTimeout.duration) match {
-      case ProbabilityBounds(bounds) => bounds
+      case ProbabilityBounds(result) => result
       case _ => (0.0, 1.0)
     }
   }
