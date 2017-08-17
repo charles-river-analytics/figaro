@@ -31,8 +31,8 @@ import scala.annotation.tailrec
  */
 // proposalScheme might evaluate to a different step each time it is called; making it by name gets the right effect.
 abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: ProposalScheme, annealSchedule: Schedule,
-  burnIn: Int, interval: Int)
-  extends MetropolisHastings(universe, proposalScheme, burnIn, interval, List(): _*) with MPEAlgorithm {
+                                          burnIn: Int, interval: Int)
+    extends MetropolisHastings(universe, proposalScheme, burnIn, interval, List(): _*) with MPEAlgorithm {
   import MetropolisHastings._
 
   private var lastTemperature = 1.0
@@ -40,6 +40,7 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
   private var transProb = 0.0
   protected var bestEnergy: Double = Double.MinValue
   protected var currentEnergy: Double = _
+  constraintsBound = false
 
   /**
    * The last computed transition probability.
@@ -66,23 +67,30 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
       lastTemperature = annealSchedule.temperature(lastTemperature, sampleCount)
       transProb = newState.proposalProb + lastTemperature * newState.modelProb
       if (debug) println("Transition Probability of " + transProb)
-      log(random.nextDouble) < transProb
+      acceptProbability < transProb
     }
   }
 
   override protected def mhStep(): State = {
-    val newStateUnconstrained = proposeAndUpdate()
-    val newState = State(newStateUnconstrained.oldValues, newStateUnconstrained.oldRandomness,
-      newStateUnconstrained.proposalProb, newStateUnconstrained.modelProb + computeScores, newStateUnconstrained.dissatisfied, newStateUnconstrained.visitOrder )
-    if (decideToAccept(newState)) {
-      accepts += 1
-      accept(newState)
-      currentEnergy += newState.modelProb
-    } else {
-      rejects += 1
-      undo(newState)
+    try {
+      val newStateUnconstrained = proposeAndUpdate()
+      val newState = State(newStateUnconstrained.oldValues, newStateUnconstrained.oldRandomness,
+        newStateUnconstrained.proposalProb, newStateUnconstrained.modelProb + computeScores, newStateUnconstrained.dissatisfied, newStateUnconstrained.reverseVisitOrder)
+      if (decideToAccept(newState)) {
+        accepts += 1
+        accept(newState)
+        currentEnergy += newState.modelProb
+      } else {
+        throw new RejectState(newState)
+      }
+      newState
+    } catch {
+      case reject: RejectState => {
+        rejects += 1
+        undo(reject.state)
+        reject.state
+      }
     }
-    newState
   }
 
   private def saveState: Map[Element[_], Any] = {
@@ -100,7 +108,7 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
    * Produce a single sample.
    */
   override def sample(): (Boolean, Sample) = {
-    val nextState = mhStep()    
+    val nextState = mhStep()
 
     if (dissatisfied.isEmpty) {
       sampleCount += 1
@@ -123,7 +131,7 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
       currentEnergy += nextState.modelProb
     }
     initUpdates()
-    if (dissatisfied.nonEmpty) bestEnergy = Double.MinValue else bestEnergy = currentEnergy 
+    if (dissatisfied.nonEmpty) bestEnergy = Double.MinValue else bestEnergy = currentEnergy
   }
 
   def mostLikelyValue[T](target: Element[T]): T = {
@@ -150,9 +158,9 @@ abstract class MetropolisHastingsAnnealer(universe: Universe, proposalScheme: Pr
  *
  */
 class AnytimeMetropolisHastingsAnnealer(universe: Universe,
-  scheme: ProposalScheme, annealSchedule: Schedule, burnIn: Int, interval: Int)
-  extends MetropolisHastingsAnnealer(universe, scheme, annealSchedule, burnIn, interval)
-  with AnytimeMPESampler {
+                                        scheme: ProposalScheme, annealSchedule: Schedule, burnIn: Int, interval: Int)
+    extends MetropolisHastingsAnnealer(universe, scheme, annealSchedule, burnIn, interval)
+    with AnytimeMPESampler {
   /**
    * Initialize the annealer.
    */
@@ -179,9 +187,9 @@ class AnytimeMetropolisHastingsAnnealer(universe: Universe,
  *
  */
 class OneTimeMetropolisHastingsAnnealer(universe: Universe, myNumSamples: Int, scheme: ProposalScheme, annealSchedule: Schedule,
-  burnIn: Int, interval: Int)
-  extends MetropolisHastingsAnnealer(universe, scheme, annealSchedule, burnIn, interval)
-  with OneTimeMPESampler {
+                                        burnIn: Int, interval: Int)
+    extends MetropolisHastingsAnnealer(universe, scheme, annealSchedule, burnIn, interval)
+    with OneTimeMPESampler {
 
   val numSamples = myNumSamples
 
@@ -235,7 +243,7 @@ object MetropolisHastingsAnnealer {
    * number of burn-in samples, and interval between samples.
    */
   def apply(numSamples: Int, scheme: ProposalScheme, annealSchedule: Schedule,
-    burnIn: Int, interval: Int)(implicit universe: Universe) =
+            burnIn: Int, interval: Int)(implicit universe: Universe) =
     new OneTimeMetropolisHastingsAnnealer(universe, numSamples, scheme, annealSchedule, burnIn, interval: Int)
 
 }

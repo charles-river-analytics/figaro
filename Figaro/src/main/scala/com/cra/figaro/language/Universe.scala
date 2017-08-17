@@ -32,7 +32,8 @@ import scala.collection.generic.Shrinkable
  */
 class Universe(val parentElements: List[Element[_]] = List()) extends ElementCollection {
 
-  /** The universe to which elements in this universe belongs, which is, of course, this universe.
+  /**
+   * The universe to which elements in this universe belongs, which is, of course, this universe.
    */
   override val universe = this
 
@@ -134,6 +135,11 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
   }
 
   /**
+   * Returns the set of elements that the given element directly uses in its generation, without recursing.
+   */
+  def directlyUses(elem: Element[_]): Set[Element[_]] = myUses.getOrElse(elem, Set())
+
+  /**
    * Returns the set of elements that use the given element in their generation, either directly or
    * recursively.
    */
@@ -159,7 +165,7 @@ class Universe(val parentElements: List[Element[_]] = List()) extends ElementCol
   }
 
   private[figaro] def deregisterUses[T, U](user: Element[T], used: Element[U]): Unit = {
-    if(used.universe == this){
+    if (used.universe == this) {
       if (myUses.contains(user)) myUses(user) -= used
       if (myUsedBy.contains(used)) myUsedBy(used) -= user
       myRecursiveUsedBy.clear
@@ -363,7 +369,7 @@ object Universe {
 //This could go in Evidence instead of here.
 object AssertEvidence {
 
-    /**
+  /**
    * Assert the given evidence associated with references to elements in the collection.
    */
   def apply(evidencePairs: Seq[NamedEvidence[_]]): Unit = {
@@ -379,7 +385,7 @@ object AssertEvidence {
    *   This method makes sure to assert the evidence on all possible resolutions of the reference.
    */
   def apply[T](reference: Reference[T], evidence: Evidence[T], contingency: Element.Contingency = List()): Unit = {
-    Universe.universe.assertEvidence(reference,evidence,contingency)
+    Universe.universe.assertEvidence(reference, evidence, contingency)
   }
 
 }

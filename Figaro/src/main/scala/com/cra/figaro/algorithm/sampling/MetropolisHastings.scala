@@ -32,8 +32,8 @@ import com.cra.figaro.library.collection.Container
  */
 // proposalScheme might evaluate to a different step each time it is called; making it by name gets the right effect.
 abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalScheme, burnIn: Int, interval: Int,
-  targets: Element[_]*)
-  extends BaseUnweightedSampler(universe, targets: _*) {
+                                  targets: Element[_]*)
+    extends BaseUnweightedSampler(universe, targets: _*) {
   import MetropolisHastings._
 
   // Used for debugging
@@ -59,6 +59,23 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
    */
   var debug = false
 
+  /* Stores the topologically sorted list of updates needed for a given set of proposed elements */
+  protected var proposedElementsSortedUpdates: Map[Iterable[Element[_]], List[Element[_]]] = Map()
+
+  /* Stores the list of elements used by each proposed element */
+  protected var elementsUsedBy: Map[Element[_], Set[Element[_]]] = Map()
+
+  /**
+   * Set this flag to true when constraints are bound between 0 and 1
+   * to enable early rejection of states with constrained elements.
+   */
+  var constraintsBound = false
+
+  protected var acceptProbability = 0.0
+  protected var constraintsSum = 0.0
+  protected var oldPropProb = 0.0
+  protected var oldModelProb = 0.0
+
   private def newState: State = State(Map(), Map(), 0.0, 0.0, scala.collection.mutable.Set(), List())
 
   protected val fastTargets = targets.toSet
@@ -66,16 +83,16 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
   protected var chainCache: Cache = new MHCache(universe)
 
   /*
-   * We continually update the values of elements while making a proposal. In order to be able to undo it, we need to
-   * store the old value.
+   * We continually update the values of elements while making a proposal. In order to undo it, we must store the old value.
    * We keep track of the improvement in the constraints for the new proposal compared to the original value.
-   * We keep track of which elements do not have their condition satisfied by the new proposal.
+   * We also keep track of which elements do not have their condition satisfied by the new proposal.
    */
   private def attemptChange[T](state: State, elem: Element[T]): State = {
-
-    // Don't generate a new value for an observed element because it won't agree with the observation
-    // For a compound element we can't do this because we have to condition the arguments by the
-    // probability of generating the correct value.
+    val newOldValues = state.oldValues + (elem -> elem.value)
+    /* Do not generate a new value for an observed element because it will not agree with the observation.
+     * For a compound element we cannot do this because we have to condition the arguments by the
+     * probability of generating the correct value.
+     */
     val newValue = if (elem.observation.isEmpty || !elem.isInstanceOf[Atomic[_]]) {
       chainCache(elem) match {
         case None => elem.generateValue(elem.randomness)
@@ -84,15 +101,41 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
           result.value
       }
     } else elem.observation.get
-
-    // if an old value is already stored, don't overwrite it
-    val newOldValues = if (state.oldValues contains elem) state.oldValues; else state.oldValues + (elem -> elem.value)
-    val newDissatisfied = if (elem.condition(newValue)) state.dissatisfied -= elem; else state.dissatisfied += elem
     elem.value = newValue
-    State(newOldValues, state.oldRandomness, state.proposalProb, state.modelProb, newDissatisfied, state.visitOrder :+ elem)
+
+    /* Early rejection of states is possible when attempting to change constrained or conditioned elements.
+     * If the constraints are bound between 0 and 1 (indicated by the constraintsBound flag), 
+     * there were previously no conditions dissatisfied, and there is a constraint on the element, then
+     * early rejection occurs (via the throwable RejectState object) if the logical statement is true.
+     * If the element has a condition on it, and that condition was newly dissatisfied, we also reject early.
+     */
+    var newDissatisfied = state.dissatisfied
+    if (constraintsBound && state.dissatisfied.isEmpty && !elem.allConstraints.isEmpty) {
+      val constraintValue = elem.constraintValue
+      if (constraintValue < (acceptProbability + constraintsSum
+        + (oldModelProb - state.modelProb)
+        + (state.proposalProb - oldPropProb))) {
+        val result = State(newOldValues, state.oldRandomness, state.proposalProb, state.modelProb, state.dissatisfied, elem +: state.reverseVisitOrder)
+        throw new RejectState(result)
+      } else {
+        constraintsSum -= constraintValue
+      }
+    } else if (elem.condition(newValue)) {
+      newDissatisfied -= elem
+    } else if (!elem.condition(newValue)) {
+      newDissatisfied += elem
+      if (!(state.dissatisfied contains elem)) {
+        val result = State(newOldValues, state.oldRandomness, state.proposalProb, state.modelProb, newDissatisfied, elem +: state.reverseVisitOrder)
+        throw new RejectState(result)
+      }
+    }
+
+    State(newOldValues, state.oldRandomness, state.proposalProb, state.modelProb, newDissatisfied, elem +: state.reverseVisitOrder)
   }
 
   private def propose[T](state: State, elem: Element[T]): State = {
+    oldPropProb = state.proposalProb
+    oldModelProb = state.modelProb
     if (elem.intervention.isDefined) {
       state
     } else {
@@ -108,9 +151,8 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
           val newOldRandomness = {
             state.oldRandomness + (elem -> elem.randomness)
           }
-          val newProb = state.proposalProb + log(proposalProb)
           elem.randomness = randomness
-          State(state.oldValues, newOldRandomness, newProb, state.modelProb + log(modelProb), state.dissatisfied, state.visitOrder)
+          State(state.oldValues, newOldRandomness, state.proposalProb + log(proposalProb), state.modelProb + log(modelProb), state.dissatisfied, state.reverseVisitOrder)
         }
       val result = attemptChange(state1, elem)
       if (debug) println("old randomness = " + oldRandomness +
@@ -142,7 +184,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
       val newOldRandomness2 =
         if (newOldRandomness1 contains elem2) newOldRandomness1
         else newOldRandomness1 + (elem2 -> oldRandomness2)
-      State(state.oldValues, newOldRandomness2, state.proposalProb, state.modelProb, state.dissatisfied, state.visitOrder)
+      State(state.oldValues, newOldRandomness2, state.proposalProb, state.modelProb, state.dissatisfied, state.reverseVisitOrder)
     }
     val state2 = attemptChange(state1, elem1)
     val result = attemptChange(state2, elem2)
@@ -159,7 +201,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
 
   private def continue(state: State, rest: Option[ProposalScheme]): State =
     rest match {
-      case None => state
+      case None       => state
       case Some(step) => runStep(state, step)
     }
 
@@ -192,10 +234,6 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
   protected def runScheme(): State = runStep(newState, proposalScheme)
 
   /*
-   * To update an element, first we update the element itself, then update all elements that directly use it.
-   * If we update elements in directlyUsedBy order, we are guaranteed that if both x and y use a changed element,
-   * and if y uses x, then the last update of y will come after the last update of target.
-   *
    * Updating an element itself requires generating its value using the current randomness and setting its value. An
    * alternative implementation would also propose changing the randomness element. We choose not to do that, because
    * we believe the proposal scheme should fully specify which elements have their randomness changed. To make our
@@ -210,50 +248,68 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
     else {
       if (debug) println("Updating " + elem.name.string)
       val oldValue = elem.value
-      val result = attemptChange(state, elem) // compare to propose
+      val result = attemptChange(state, elem)
       if (debug) println("randomness = " + elem.randomness + ", old value = " + oldValue + ", new value = " + elem.value)
       result
     }
   }
 
   /*
-   * Update a set of elements after a proposal given the current state.
-   * Since elements must be updated in generative order, we have to ensure the arguments 
-   * of an element are updated being an element itself. To do that, we check the intersection
-   * of the an element's arguments with the elements that still need to be updated. If the intersection
-   * is not empty, we recursively update the intersecting elements. Once those updates are completed,
-   * we update an element and move on to the next element in the set.
-   */
-  @tailrec
-  private def updateMany(state: State, currentStack: List[Element[_]], currentArgs: Set[Element[_]], updateQ: Set[Element[_]]): State = {
-
-    if (currentStack.isEmpty && currentArgs.isEmpty && updateQ.isEmpty) state
-
-    else if (currentStack.isEmpty && currentArgs.isEmpty && updateQ.nonEmpty) {
-      val argsRemaining = universe.uses(updateQ.head).intersect(updateQ.tail)
-      updateMany(state, List(updateQ.head), argsRemaining.toSet, updateQ.tail -- argsRemaining)
-    } else if (currentStack.nonEmpty && currentArgs.isEmpty) {
-      val newState = updateOne(state, currentStack.head)
-      updateMany(newState, currentStack.tail, currentArgs, updateQ)
-    } else {
-      val argsRemaining = universe.uses(currentArgs.head).intersect(currentArgs.tail)
-      if (argsRemaining.isEmpty) {
-        val newState = updateOne(state, currentArgs.head)
-        updateMany(newState, currentStack, currentArgs.tail, updateQ)
-      } else {
-        updateMany(state, currentArgs.head +: currentStack, currentArgs.tail, updateQ)
-      }
-    }
-  }
-
-  /*
-   * A single step of MetropolisHastings consists of proposing according to the scheme and updating any elements that depend on those
+   * A single step of MetropolisHastings lists of proposing according to the scheme and updating any elements that depend on those
    * changed.
    */
   protected def proposeAndUpdate(): State = {
+    /* Before making any proposals, choose the acceptProbability */
+    acceptProbability = log(random.nextDouble)
+
     val state1 = runScheme()
-    val updatesNeeded = state1.oldValues.keySet flatMap (elem => universe.usedBy(elem))
-    updateMany(state1, List(), Set(), updatesNeeded.toSet)
+
+    val proposedElements = state1.oldValues.keySet
+    for (elem <- proposedElements) {
+
+      /* elementsUsedBy stores the list of elements used by each proposed element.
+       * If an element is being proposed for the first time, it will not appear in elementsUsedBy (or proposedElementsSortedUpdates).
+       * Therefore, the element and its usedBy list can simply be added to elementsUsedBy. 
+       * This is true for all first time proposals for permanent elements and temporary elements.
+       * Temporary elements most often go through this process as they are brand new elements upon creation.
+       */
+      val usedBy = universe.usedBy(elem).toSet
+      if (!elementsUsedBy.contains(elem)) {
+        elementsUsedBy += (elem -> usedBy)
+      } else if (usedBy != elementsUsedBy(elem)) {
+        /*  An element's usedBy list can change in between proposals, so we must compare its latest usedBy list to its previous 
+         *  usedBy list (as stored in elementsUsedBy). If the two lists do not match, the element is invalidated and we must remove 
+         *  its stored sorted update lists for all proposed element sets that contain the invalidated element. We also overwrite the old
+         *  usedBy list in elementsUsedBy with the new list.
+         */
+        if (debug) println("Invalidating " + elem.toNameString)
+        println("Invalidating " + elem.toNameString)
+        val invalidatedSets = proposedElementsSortedUpdates.keySet.filter(key => key.toSet.contains(elem))
+        proposedElementsSortedUpdates --= invalidatedSets
+        elementsUsedBy += (elem -> usedBy)
+      }
+    }
+
+    /* proposedElementsSortedUpdate stores the topologically list of updates needed for a given set of proposed elements.
+     * If proposedElementsSortedUpdate does not contain the set of proposed elements, we must store and store the updates needed.
+     */
+    if (!proposedElementsSortedUpdates.contains(proposedElements)) {
+      val updatesNeeded = proposedElements flatMap (elem => elementsUsedBy.getOrElse(elem, Set()))
+      val topologicallySorted = TopSort.topologicallySort(updatesNeeded, universe)
+      proposedElementsSortedUpdates += (proposedElements -> topologicallySorted)
+    }
+
+    /* We must retrieve the list of updates needed, and update one element at at time. */
+    var state = state1
+    var updatesNeeded = proposedElementsSortedUpdates(proposedElements)
+    if (constraintsBound) {
+      constraintsSum = updatesNeeded.map(e => e.constraintValue).sum
+    }
+    while (updatesNeeded.nonEmpty) {
+      state = updateOne(state, updatesNeeded.head)
+      updatesNeeded = updatesNeeded.tail
+    }
+    state
   }
 
   protected var dissatisfied: Set[Element[_]] = _
@@ -291,13 +347,13 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
 
   protected def undo(state: State): Unit = {
     if (debug) println("Rejecting!\n")
-
-    state.visitOrder.foreach { elem =>
+    val visitOrder = state.reverseVisitOrder.reverse
+    visitOrder.foreach { elem =>
       elem match {
         case c: Chain[_, _] => {
           chainCache(c) match {
             case Some(result) => c.value = result.value.asInstanceOf[c.Value]
-            case None => throw new AlgorithmException
+            case None         => throw new AlgorithmException
           }
         }
         case _ => {
@@ -321,7 +377,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
     if (nothingNewDissatisfied && somethingOldSatisfied) true
     else if (!nothingNewDissatisfied && !somethingOldSatisfied) false
     else {
-      log(random.nextDouble) < (newState.proposalProb + newState.modelProb)
+      acceptProbability < (newState.proposalProb + newState.modelProb)
     }
   }
 
@@ -329,18 +385,28 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
     universe.constrainedElements.foreach(e => currentConstraintValues += (e -> e.constraintValue))
   }
 
+  /* TODO
+   * 
+   */
   protected def mhStep(): State = {
-    val newStateUnconstrained = proposeAndUpdate()
-    val newState = State(newStateUnconstrained.oldValues, newStateUnconstrained.oldRandomness,
-      newStateUnconstrained.proposalProb, newStateUnconstrained.modelProb + computeScores, newStateUnconstrained.dissatisfied, newStateUnconstrained.visitOrder)
-    if (decideToAccept(newState)) {
-      accepts += 1
-      accept(newState)
-    } else {
-      rejects += 1
-      undo(newState)
+    try {
+      val newStateUnconstrained = proposeAndUpdate()
+      val newState = State(newStateUnconstrained.oldValues, newStateUnconstrained.oldRandomness,
+        newStateUnconstrained.proposalProb, newStateUnconstrained.modelProb + computeScores, newStateUnconstrained.dissatisfied, newStateUnconstrained.reverseVisitOrder)
+      if (decideToAccept(newState)) {
+        accepts += 1
+        accept(newState)
+      } else {
+        throw new RejectState(newState)
+      }
+      newState
+    } catch {
+      case reject: RejectState => {
+        rejects += 1
+        undo(reject.state)
+        reject.state
+      }
     }
-    newState
   }
 
   /**
@@ -393,7 +459,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
     for { i <- 1 to numSamples } {
       val newStateUnconstrained = proposeAndUpdate()
       val state1 = State(newStateUnconstrained.oldValues, newStateUnconstrained.oldRandomness,
-        newStateUnconstrained.proposalProb, newStateUnconstrained.modelProb + computeScores, newStateUnconstrained.dissatisfied, newStateUnconstrained.visitOrder)
+        newStateUnconstrained.proposalProb, newStateUnconstrained.modelProb + computeScores, newStateUnconstrained.dissatisfied, newStateUnconstrained.reverseVisitOrder)
       if (decideToAccept(state1)) {
         accepts += 1
         // collect results for the new state and restore the original state
@@ -432,10 +498,10 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
  *
  */
 class AnytimeMetropolisHastings(universe: Universe,
-  scheme: ProposalScheme, burnIn: Int, interval: Int,
-  targets: Element[_]*)
-  extends MetropolisHastings(universe, scheme, burnIn, interval, targets: _*)
-  with UnweightedSampler with AnytimeProbQuerySampler {
+                                scheme: ProposalScheme, burnIn: Int, interval: Int,
+                                targets: Element[_]*)
+    extends MetropolisHastings(universe, scheme, burnIn, interval, targets: _*)
+    with UnweightedSampler with AnytimeProbQuerySampler {
   /**
    * Initialize the sampler.
    */
@@ -453,9 +519,9 @@ class AnytimeMetropolisHastings(universe: Universe,
  *
  */
 class OneTimeMetropolisHastings(universe: Universe, myNumSamples: Int, scheme: ProposalScheme,
-  burnIn: Int, interval: Int, targets: Element[_]*)
-  extends MetropolisHastings(universe, scheme, burnIn, interval, targets: _*)
-  with UnweightedSampler with OneTimeProbQuerySampler {
+                                burnIn: Int, interval: Int, targets: Element[_]*)
+    extends MetropolisHastings(universe, scheme, burnIn, interval, targets: _*)
+    with UnweightedSampler with OneTimeProbQuerySampler {
 
   val numSamples = myNumSamples
 
@@ -511,7 +577,7 @@ object MetropolisHastings {
    * number of burn-in samples, and interval between samples with the given target query elements.
    */
   def apply(numSamples: Int, scheme: ProposalScheme,
-    burnIn: Int, interval: Int, targets: Element[_]*)(implicit universe: Universe) =
+            burnIn: Int, interval: Int, targets: Element[_]*)(implicit universe: Universe) =
     new OneTimeMetropolisHastings(universe, numSamples, scheme, burnIn, interval: Int, targets: _*)
 
   /**
@@ -544,9 +610,11 @@ object MetropolisHastings {
   }
 
   private[figaro] case class State(oldValues: Map[Element[_], Any],
-    oldRandomness: Map[Element[_], Any],
-    proposalProb: Double,
-    modelProb: Double,
-    dissatisfied: scala.collection.mutable.Set[Element[_]],
-    visitOrder: List[Element[_]])
+                                   oldRandomness: Map[Element[_], Any],
+                                   proposalProb: Double,
+                                   modelProb: Double,
+                                   dissatisfied: scala.collection.mutable.Set[Element[_]],
+                                   reverseVisitOrder: List[Element[_]])
+
+  case class RejectState(state: State) extends Throwable
 }
