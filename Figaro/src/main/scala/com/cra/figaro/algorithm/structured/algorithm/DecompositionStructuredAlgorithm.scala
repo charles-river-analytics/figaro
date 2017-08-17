@@ -17,7 +17,7 @@ import com.cra.figaro.language._
 
 /**
  * One time structured algorithms that use a single bottom-up refining strategy to decompose the entire model. This uses
- * the default range sizer, and does not create parameterized factors.
+ * the default ranging strategy, and does not create parameterized factors.
  */
 trait DecompositionStructuredAlgorithm extends OneTimeStructured {
   /**

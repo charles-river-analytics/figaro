@@ -36,9 +36,8 @@ abstract class StructuredAlgorithm(val universe: Universe, val collection: Compo
   def problemTargets: List[Element[_]]
 
   /**
-   * Strategy to use for ranging atomic components. This is only called once. One-time algorithms use the default
-   * ranging strategy with `ParticleGenerator.defaultNumSamplesFromAtomics` values. Anytime algorithms use the default
-   * ranging strategy with one value per iteration.
+   * Strategy to use for ranging atomic components. This is only called once. Note that this is called during
+   * initialization, so subclasses that override this can declare this as a `lazy val` or a `def` but not a `val`.
    */
   def rangingStrategy: RangingStrategy
 
@@ -113,10 +112,16 @@ abstract class StructuredAlgorithm(val universe: Universe, val collection: Compo
 }
 
 trait AnytimeStructured extends StructuredAlgorithm with Anytime {
+  /**
+   * Uses the default ranging strategy with one value per iteration.
+   */
   override def rangingStrategy = RangingStrategy.default(1)
 }
 
 trait OneTimeStructured extends StructuredAlgorithm with OneTime {
+  /**
+   * Uses the default ranging strategy with `ParticleGenerator.defaultNumSamplesFromAtomics` values.
+   */
   override def rangingStrategy = RangingStrategy.default(ParticleGenerator.defaultNumSamplesFromAtomics)
 
   // One time structured algorithms run refinement and solving just once each.
