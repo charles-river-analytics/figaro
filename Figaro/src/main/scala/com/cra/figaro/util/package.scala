@@ -19,6 +19,7 @@
 
 package com.cra.figaro
 
+import scala.annotation.tailrec
 import scala.collection.mutable.Map
 
 package object util {

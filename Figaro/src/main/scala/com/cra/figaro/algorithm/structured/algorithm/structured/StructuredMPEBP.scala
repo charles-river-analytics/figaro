@@ -1,6 +1,6 @@
 /*
  * StructuredMPEBP.scala
- * A structured variable elimination algorithm.
+ * A structured MPE belief propagation algorithm.
  *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   March 1, 2015

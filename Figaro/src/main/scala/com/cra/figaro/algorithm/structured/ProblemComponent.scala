@@ -123,4 +123,15 @@ class ApplyComponent[Value](problem: Problem, val apply: Apply[Value]) extends P
   private var applyMap = scala.collection.mutable.Map[Any, Value]()
   def getMap() = applyMap
   def setMap(m: scala.collection.mutable.Map[Any, Value]) = applyMap = m
+
+  override def generateRange() = {
+    // Figaro semantics allow creation of elements in the function of an Apply. All such elements created must be added
+    // to the same problem as the Apply.
+    apply.universe.pushContext(apply)
+    super.generateRange()
+    apply.universe.popContext(apply)
+    val contextElements = apply.directContextContents
+    contextElements.foreach(problem.add(_))
+    contextElements.clear()
+  }
 }

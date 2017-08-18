@@ -17,6 +17,7 @@ import com.cra.figaro.language._
 import com.cra.figaro.algorithm._
 import com.cra.figaro.util._
 import com.cra.figaro.library.compound._
+
 import scala.collection.mutable.Map
 import scala.collection.SortedSet
 import ValueSet._
@@ -68,6 +69,23 @@ class LazyValues(universe: Universe, paramaterized: Boolean = false) {
         val componentSets = d.outcomes.map(storedValues(_))
         componentSets.reduce(_ ++ _)
       //case i: FastIf[_] => withoutStar(Set(i.thn, i.els))
+      case b: BooleanOperator =>
+        val applyMap = getMap(b)
+        val vs1 = LazyValues(b.arg1.universe).storedValues(b.arg1)
+        val vs2 = LazyValues(b.arg2.universe).storedValues(b.arg2)
+        for {
+          arg1Val <- vs1.regularValues
+          arg2Val <- vs2.regularValues
+        } {
+          applyMap((arg1Val, arg2Val)) = b.fn(arg1Val, arg2Val)
+        }
+        val resultSet = for {
+          arg1XVal <- vs1.xvalues
+          arg2XVal <- vs2.xvalues
+        } yield {
+          b.extendedFn(arg1XVal, arg2XVal)
+        }
+        new ValueSet(resultSet)
       case a: Apply1[_, _] =>
         val applyMap = getMap(a)
         val vs1 = LazyValues(a.arg1.universe).storedValues(a.arg1)

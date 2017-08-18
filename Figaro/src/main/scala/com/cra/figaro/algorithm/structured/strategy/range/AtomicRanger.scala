@@ -129,8 +129,8 @@ class CountingRanger(atomic: Atomic[Int], val lower: Int, var valuesPerIteration
     }
     // All remaining unaccounted probability mass goes to *
     val starProb = 1.0 - regularTotal
-    assert(starProb >= 0)
-    regularValues.toMap[Extended[Int], Double].updated(Star(), starProb)
+    if(starProb > 0.0) regularValues.toMap[Extended[Int], Double].updated(Star(), starProb)
+    else regularValues.toMap
   }
 
   // A component with possibly infinite range is not fully refinable

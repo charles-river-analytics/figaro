@@ -32,14 +32,14 @@ trait BoundsProbQueryAlgorithm extends ProbQueryAlgorithm {
    * of the target. The function is assumed to be bounded between the specified lower and upper bounds, if provided.
    * Otherwise, the lower and upper bounds of the function using the current known values of the target are used.
    */
-  def computeExpectationBounds[T](target: Element[T], function: T => Double, lower: Option[Double], upper: Option[Double]): (Double, Double)
+  def computeExpectationBounds[T](target: Element[T], function: T => Double, bounds: Option[(Double, Double)]): (Double, Double)
 
   /**
    * Return an estimate of the probability of the bounds on the predicate under the marginal probability distribution
    * of the target.
    */
   def computeProbabilityBounds[T](target: Element[T], predicate: T => Boolean): (Double, Double) = {
-    computeExpectationBounds(target, (t: T) => if(predicate(t)) 1.0 else 0.0, Some(0.0), Some(1.0))
+    computeExpectationBounds(target, (t: T) => if(predicate(t)) 1.0 else 0.0, Some((0.0, 1.0)))
   }
 
 
@@ -50,7 +50,7 @@ trait BoundsProbQueryAlgorithm extends ProbQueryAlgorithm {
 
   protected def doAllProbabilityBounds[T](target: Element[T]): Stream[(Double, Double, T)]
 
-  protected def doExpectationBounds[T](target: Element[T], function: T => Double, lower: Option[Double], upper: Option[Double]): (Double, Double)
+  protected def doExpectationBounds[T](target: Element[T], function: T => Double, bounds: Option[(Double, Double)]): (Double, Double)
 
   protected def doProbabilityBounds[T](target: Element[T], predicate: (T) => Boolean): (Double, Double)
 
@@ -70,21 +70,36 @@ trait BoundsProbQueryAlgorithm extends ProbQueryAlgorithm {
 
   /**
    * Return an estimate of the bounds on the expectation of the function under the marginal probability distribution
-   * of the target. The function is assumed to be bounded between the specified lower and upper bounds, if provided.
-   * Otherwise, the lower and upper bounds of the function using the current known values of the target are used.
+   * of the target. The function is assumed to be bounded between the specified lower and upper bounds.
    * @param target Element for which to compute bounds.
    * @param function Function whose expectation is computed.
-   * @param lower Optional lower bound on the function. Defaults to None.
-   * @param upper Optional upper bound on the function. Defaults to None.
+   * @param lower Lower bound on the function.
+   * @param upper Upper bound on the function.
    * @throws NotATargetException if called on a target that is not in the list of targets of the algorithm.
    * @throws AlgorithmInactiveException if the algorithm is inactive.
    * @throws IllegalArgumentException if the bounds given on the function are tighter than the actual bounds on the
    * function, using the current known values of the target.
    * @return Bounds on the expectation of this function for this element.
    */
-  def expectationBounds[T](target: Element[T], function: T => Double, lower: Option[Double] = None, upper: Option[Double] = None): (Double, Double) = {
+  def expectationBounds[T](target: Element[T], function: T => Double, lower: Double, upper: Double): (Double, Double) = {
     check(target)
-    doExpectationBounds(target, function, lower, upper)
+    doExpectationBounds(target, function, Some((lower, upper)))
+  }
+
+  /**
+   * Return an estimate of the bounds on the expectation of the function under the marginal probability distribution
+   * of the target. The function is assumed to be bounded according to the currently known values of the target. Thus,
+   * one should generally only use this when the range of the target is finite and known beforehand. Otherwise, one can
+   * use the overloaded version of this method that specifies explicit bounds on the function.
+   * @param target Element for which to compute bounds.
+   * @param function Function whose expectation is computed.
+   * @throws NotATargetException if called on a target that is not in the list of targets of the algorithm.
+   * @throws AlgorithmInactiveException if the algorithm is inactive.
+   * @return Bounds on the expectation of this function for this element.
+   */
+  def expectationBounds[T](target: Element[T], function: T => Double): (Double, Double) = {
+    check(target)
+    doExpectationBounds(target, function, None)
   }
 
   /**

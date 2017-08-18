@@ -30,6 +30,8 @@ import com.cra.figaro.library.compound.IntSelector
 import com.cra.figaro.algorithm.structured._
 import com.cra.figaro.algorithm.structured.strategy.range.{CountingRanger, RangingStrategy, SamplingRanger}
 
+import scala.collection.mutable
+
 
 class RangeTest extends WordSpec with Matchers {
   "Setting the range of a component" should {
@@ -427,6 +429,72 @@ class RangeTest extends WordSpec with Matchers {
       cc.contains(e1) should equal (false)
     }
 
+    "for a BooleanOperator with added arguments without *, set the range to the image of the function on the argument values" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Flip(0.1)
+      val e2 = Flip(0.2)
+      val e3 = e1 && e2
+      pr.add(e1)
+      pr.add(e2)
+      pr.add(e3)
+      val c1 = cc(e1)
+      val c2 = cc(e2)
+      val c3 = cc(e3)
+      c1.generateRange()
+      c2.generateRange()
+      c3.generateRange()
+
+      c3.range.hasStar should equal (false)
+      c3.range.regularValues should equal (Set(true, false))
+    }
+
+    "for a BooleanOperator with an added argument that contains *, set the range to the image of the function on the extended values" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Constant(false)
+      val e2 = Flip(0.2)
+      val e3 = Flip(0.3)
+      val e4 = Dist(0.2 -> e2, 0.3 -> e3)
+      val e5 = e1 && e4
+      // e3 is not added to the problem, so the range of e4 is {true, false, *}
+      pr.add(e1)
+      pr.add(e2)
+      pr.add(e4)
+      pr.add(e5)
+      val c1 = cc(e1)
+      val c2 = cc(e2)
+      val c4 = cc(e4)
+      val c5 = cc(e5)
+      c1.generateRange()
+      c2.generateRange()
+      c4.generateRange()
+      c5.generateRange()
+
+      c5.range.hasStar should equal (false)
+      c5.range.regularValues should equal (Set(false))
+    }
+
+    "for a BooleanOperator with an unadded argument, set the range to the image of the function on the extended values" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Flip(0.1)
+      val e2 = Flip(0.2)
+      val e3 = e1 || e2
+      pr.add(e2)
+      pr.add(e3)
+      val c2 = cc(e2)
+      val c3 = cc(e3)
+      c2.generateRange()
+      c3.generateRange()
+
+      c3.range.hasStar should equal (true)
+      c3.range.regularValues should equal (Set(true))
+    }
+
     "for an Apply1 with an added argument without *, set the range to the image of the function on the argument values" in {
       Universe.createNew()
       val cc = new ComponentCollection
@@ -815,6 +883,48 @@ class RangeTest extends WordSpec with Matchers {
       c6.range.hasStar should equal (true)
       c6.range.regularValues should equal (Set())
       cc.contains(e2) should equal (false)
+    }
+
+    "for an Apply, cache the apply function so it is called only once per parent value" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Select(0.2 -> 1, 0.3 -> 2, 0.5 -> 3)
+      var count = 0
+      val e2 = Apply(e1, (i: Int) => {
+        count += 1
+        i / 2
+      })
+      pr.add(e1)
+      pr.add(e2)
+      val c1 = cc(e1)
+      val c2 = cc(e2)
+      c1.generateRange()
+      c2.generateRange()
+      c2.generateRange()
+      count should equal(3)
+    }
+
+    "for an Apply, place any elements created in the Apply function in the same problem" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Select(0.2 -> 1, 0.3 -> 2, 0.5 -> 3)
+      val created = mutable.Set[Element[_]]()
+      val e2 = Apply(e1, (i: Int) => {
+        created += Flip(0.5)
+        i / 2
+      })
+      pr.add(e1)
+      pr.add(e2)
+      val c1 = cc(e1)
+      val c2 = cc(e2)
+      c1.generateRange()
+      c2.generateRange()
+      created should have size 3
+      for(e <- created) {
+        cc(e).problem should equal(pr)
+      }
     }
 
     "for an Inject with added arguments without *, set the range to lists of the cartesian product of the ranges of the arguments" in {

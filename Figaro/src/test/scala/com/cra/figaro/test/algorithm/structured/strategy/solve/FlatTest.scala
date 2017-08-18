@@ -36,8 +36,8 @@ class FlatTest extends WordSpec with Matchers {
         })        
         val cc = new ComponentCollection
         val problem = new Problem(cc, List(r1))
-        val decompose = new BottomUpStrategy(problem, problem.components)
-        decompose.execute()
+        val expand = new BacktrackingStrategy(problem, problem.components)
+        expand.execute()
         val solve = new ConstantStrategy(problem, flatRaising, marginalVariableElimination)
         val factors = solve.nonConstraintFactors()
         factors.foreach(f => println(f.toReadableString))

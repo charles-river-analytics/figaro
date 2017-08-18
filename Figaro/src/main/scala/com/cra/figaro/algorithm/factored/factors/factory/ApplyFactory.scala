@@ -15,8 +15,10 @@ package com.cra.figaro.algorithm.factored.factors.factory
 
 import com.cra.figaro.algorithm.PointMapper
 import com.cra.figaro.algorithm.factored.factors._
+import com.cra.figaro.algorithm.lazyfactored.{Regular, Star}
 import com.cra.figaro.language._
 import com.cra.figaro.algorithm.structured.ComponentCollection
+import com.cra.figaro.library.compound.BooleanOperator
 
 /**
  * A Sub-Factory for Apply Elements
@@ -64,7 +66,6 @@ object ApplyFactory {
     val factor = new SparseFactor[Double](List(arg1Var, arg2Var), List(resultVar))
     val arg1Indices = arg1Var.range.zipWithIndex
     val arg2Indices = arg2Var.range.zipWithIndex
-    val resultIndices = resultVar.range.zipWithIndex
     for {
       (arg1Val, arg1Index) <- arg1Indices
       (arg2Val, arg2Index) <- arg2Indices
@@ -171,14 +172,12 @@ object ApplyFactory {
     val arg3Indices = arg3Var.range.zipWithIndex
     val arg4Indices = arg4Var.range.zipWithIndex
     val arg5Indices = arg5Var.range.zipWithIndex
-    val resultIndices = resultVar.range.zipWithIndex
     for {
       (arg1Val, arg1Index) <- arg1Indices
       (arg2Val, arg2Index) <- arg2Indices
       (arg3Val, arg3Index) <- arg3Indices
       (arg4Val, arg4Index) <- arg4Indices
       (arg5Val, arg5Index) <- arg5Indices
-      (resultVal, resultIndex) <- resultIndices
     } {
       if (arg1Val.isRegular && arg2Val.isRegular && arg3Val.isRegular && arg4Val.isRegular && arg5Val.isRegular) {
         val resultVal = mapper.map(applyMap((arg1Val.value, arg2Val.value, arg3Val.value, arg4Val.value, arg5Val.value)), applyValues.regularValues)
@@ -192,4 +191,22 @@ object ApplyFactory {
     List(factor)
   }
 
+  def makeBooleanFactors(cc: ComponentCollection, bool: BooleanOperator): List[Factor[Double]] = {
+    val arg1Var = Factory.getVariable(cc, bool.arg1)
+    val arg2Var = Factory.getVariable(cc, bool.arg2)
+    val resultVar = Factory.getVariable(cc, bool)
+    cc.variableParents(resultVar) ++= Set(arg1Var, arg2Var)
+    val factor = new SparseFactor[Double](List(arg1Var, arg2Var), List(resultVar))
+    val arg1Indices = arg1Var.range.zipWithIndex
+    val arg2Indices = arg2Var.range.zipWithIndex
+    for {
+      (arg1Val, arg1Index) <- arg1Indices
+      (arg2Val, arg2Index) <- arg2Indices
+    } {
+      val resultVal = bool.extendedFn(arg1Val, arg2Val)
+      val resultIndex = resultVar.range.indexOf(resultVal)
+      factor.set(List(arg1Index, arg2Index, resultIndex), 1.0)
+    }
+    List(factor)
+  }
 }

@@ -1,6 +1,6 @@
 /*
  * StructuredMPEVE.scala
- * A structured variable elimination algorithm.
+ * A structured MPE variable elimination algorithm.
  *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   March 1, 2015

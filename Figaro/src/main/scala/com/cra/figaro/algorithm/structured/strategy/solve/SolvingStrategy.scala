@@ -39,13 +39,9 @@ abstract class SolvingStrategy(problem: Problem) {
    * @return Constraint factors for solving.
    */
   def constraintFactors(bounds: Bounds): List[Factor[Double]] = {
-    problem match {
-      // Nested problems can't have evidence
-      case np: NestedProblem[_] =>
-        List()
-      case _ =>
-        problem.components.flatMap(_.constraintFactors(bounds))
-    }
+    // Nested problems can't have evidence
+    if(problem.isInstanceOf[NestedProblem[_]]) List()
+    else problem.components.flatMap(_.constraintFactors(bounds))
   }
 
   /**

@@ -1,6 +1,6 @@
 /*
  * StructuredVEBPGibbsChooser.scala
- * A hybrid algorithm that chooses between variable elimination and Gibbs sampling for each component.
+ * A hybrid algorithm that chooses between VE, BP, and Gibbs sampling for each component.
  *
  * Created By:      William kretschmer (kretsch@mit.edu)
  * Creation Date:   Aug 11, 2015

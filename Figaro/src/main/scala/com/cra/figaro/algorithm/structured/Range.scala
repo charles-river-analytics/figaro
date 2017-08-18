@@ -22,13 +22,11 @@ package com.cra.figaro.algorithm.structured
 import com.cra.figaro.algorithm.lazyfactored.ValueSet
 import com.cra.figaro.algorithm.lazyfactored.ValueSet._
 import com.cra.figaro.language._
-import com.cra.figaro.library.compound.FastIf
-import com.cra.figaro.util.{ MultiSet, homogeneousCartesianProduct }
+import com.cra.figaro.library.compound._
+import com.cra.figaro.util.{MultiSet, homogeneousCartesianProduct}
 import com.cra.figaro.util.HashMultiSet
 import com.cra.figaro.library.collection.FixedSizeArray
-import com.cra.figaro.library.atomic.discrete.{ AtomicBinomial, ParameterizedBinomialFixedNumTrials }
-import com.cra.figaro.library.compound.FoldLeft
-import com.cra.figaro.library.compound.IntSelector
+import com.cra.figaro.library.atomic.discrete.{AtomicBinomial, ParameterizedBinomialFixedNumTrials}
 import com.cra.figaro.algorithm.ValuesMaker
 
 object Range {
@@ -184,6 +182,7 @@ object Range {
             parentV <- parentVs.regularValues
             subproblem <- component.subproblems.get(parentV)
           } yield getRange(collection, subproblem.target)
+        // If there do not exist subproblems for some parent values, then we must add * to the range
         val fullyExpanded = parentVs.regularValues.forall(component.subproblems.contains(_))
         val starter: ValueSet[V] = if (parentVs.hasStar || !fullyExpanded) withStar(Set()) else withoutStar(Set())
         resultVs.foldLeft(starter)(_ ++ _)
@@ -212,6 +211,23 @@ object Range {
         applyMap.put(true, i.thn.asInstanceOf[V])
         applyMap.put(false, i.els.asInstanceOf[V])
         if (getRange(collection, i.test).hasStar) withStar(Set(i.thn, i.els)) else withoutStar(Set(i.thn, i.els))
+
+      case b: BooleanOperator =>
+        val vs1 = getRange(collection, b.arg1)
+        val vs2 = getRange(collection, b.arg2)
+        for {
+          v1 <- vs1.regularValues
+          v2 <- vs2.regularValues
+        }  {
+          applyMap.getOrElseUpdate((v1, v2), b.fn(v1, v2))
+        }
+        val resultSet = for {
+          arg1XVal <- vs1.xvalues
+          arg2XVal <- vs2.xvalues
+        } yield {
+          b.extendedFn(arg1XVal, arg2XVal)
+        }
+        new ValueSet(resultSet)
 
       case a: Apply1[_, V] =>
         val vs1 = getRange(collection, a.arg1)
