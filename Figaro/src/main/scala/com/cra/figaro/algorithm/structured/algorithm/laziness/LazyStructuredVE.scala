@@ -1,6 +1,6 @@
 /*
  * LazyStructuredVE.scala
- * A structured variable elimination algorithm.
+ * A lazy structured variable elimination algorithm.
  *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   March 1, 2015
