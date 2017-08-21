@@ -27,6 +27,7 @@ import com.cra.figaro.algorithm.sampling.ProposalScheme
 import com.cra.figaro.algorithm.factored.VariableElimination
 import com.cra.figaro.language.Select
 import com.cra.figaro.language.Apply
+import com.cra.figaro.library.atomic.continuous.Normal
 
 class InvalidationTest extends WordSpec with Matchers with PrivateMethodTester {
   "Invalidating MetropolisHastings" should {
@@ -49,9 +50,38 @@ class InvalidationTest extends WordSpec with Matchers with PrivateMethodTester {
         }
       })("q", universe)
 
-      val w1 = Apply(f1, (b: Boolean) => if (b) false else true)
-      val w2 = Apply(f2, (b: Boolean) => if (b) false else true)
-      val w3 = Apply(q, (b: Boolean) => if (b) false else true)
+      val w1 = Chain(Normal(0.0, 1.0), (d: Double) => {
+        if (d > 2) Chain(f1, (b: Boolean) => {
+          if (b) Flip(0.1) else Flip(0.2)
+        })
+        else {
+          Chain(f2, (b: Boolean) => {
+            if (b) Flip(0.6) else Flip(0.8)
+          })
+        }
+      })
+
+      val w2 = Chain(Normal(0.0, 1.0), (d: Double) => {
+        if (d > 2) Chain(f1, (b: Boolean) => {
+          if (b) Flip(0.1) else Flip(0.2)
+        })
+        else {
+          Chain(f2, (b: Boolean) => {
+            if (b) Flip(0.6) else Flip(0.8)
+          })
+        }
+      })
+
+      val w3 = Chain(Normal(0.0, 1.0), (d: Double) => {
+        if (d > 2) Chain(f1, (b: Boolean) => {
+          if (b) Flip(0.1) else Flip(0.2)
+        })
+        else {
+          Chain(f2, (b: Boolean) => {
+            if (b) Flip(0.6) else Flip(0.8)
+          })
+        }
+      })
 
       val result = (1.0 / 3.0 * 0.5) + (2.0 / 3.0 * 0.8)
 

@@ -29,7 +29,18 @@ import com.cra.figaro.library.collection.Container
  * @param burnIn The number of iterations to run before samples are collected
  * @param interval The number of iterations to perform between collecting samples
  *
- * TODO: Calling sequence
+ * A summary of the call sequence:
+ * call doInitialize, which primes the universe to make sure all elements have a generated value, including constraintValues
+ * call doSample for each sample specified
+ * 	from doSample, call mhStep, which returns a new state that can either be accepted or rejected
+ * 		from mhStep, call proposeAndUpdate, which returns a new state after proposals and changes
+ * 			from proposeAndUpdate, call runScheme
+ * 				from runScheme, call runStep according to the proposal scheme to return the current state
+ * 			from proposeAndUpdate, call updateOne for every proposed element and element used by a proposed element
+ * 				from updateOne, call attemptChange, which changes an element's value and randomness and either returns the new state
+ * 				or rejects the new state early (jumps up to mhStep)
+ * 		from mhStep, call decideToAccept, which determines whether to accept or reject the new state
+ * 	  from mhStep, handle rejected states by undoing the modified state to its original form
  */
 // proposalScheme might evaluate to a different step each time it is called; making it by name gets the right effect.
 abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalScheme, burnIn: Int, interval: Int,
@@ -84,7 +95,7 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
   protected var chainCache: Cache = new MHCache(universe)
 
   /*
-   * We continually update the values of elements while making a proposal. In order to undo it, we must store the old value.
+   * We continually update the values of elements while making a proposal. In order to undo it, we must store the old value.cityside austin
    * We keep track of the improvement in the constraints for the new proposal compared to the original value.
    * We also keep track of which elements do not have their condition satisfied by the new proposal.
    */
