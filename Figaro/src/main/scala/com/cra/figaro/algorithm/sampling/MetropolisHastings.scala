@@ -296,7 +296,6 @@ abstract class MetropolisHastings(universe: Universe, proposalScheme: ProposalSc
          *  usedBy list in elementsUsedBy with the new list.
          */
         if (debug) println("Invalidating " + elem.toNameString)
-        println("Invalidating " + elem.toNameString)
         val invalidatedSets = proposedElementsSortedUpdates.keySet.filter(key => key.toSet.contains(elem))
         proposedElementsSortedUpdates --= invalidatedSets
         elementsUsedBy += (elem -> usedBy)
