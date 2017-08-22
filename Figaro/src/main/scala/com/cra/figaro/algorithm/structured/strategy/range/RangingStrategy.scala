@@ -1,6 +1,6 @@
 /*
  * RangingStrategy.scala
- * Class to choose
+ * Class to choose rangers for atomic elements.
  *
  * Created By:      William Kretschmer (kretsch@mit.edu)
  * Creation Date:   May 18, 2017

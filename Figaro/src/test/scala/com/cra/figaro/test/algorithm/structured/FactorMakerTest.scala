@@ -1168,8 +1168,8 @@ class FactorMakerTest extends WordSpec with Matchers {
         val c4 = cc(v4)
         c1.generateRange()
         c4.expand()
-        val v2 = cc.expansions((v4.chainFunction, true)).target
-        val v3 = cc.expansions((v4.chainFunction, false)).target
+        val v2 = c4.subproblems(true).target
+        val v3 = c4.subproblems(false).target
         val c2 = cc(v2)
         val c3 = cc(v3)
         c2.generateRange()
@@ -1292,19 +1292,19 @@ class FactorMakerTest extends WordSpec with Matchers {
       c1.generateRange()
       c2.expand()
 
-      val pr1 = cc.expansions(v2.chainFunction, 1)
+      val pr1 = c2.subproblems(1)
       val subV1 = pr1.target
       val subC1 = cc(subV1)
       subC1.generateRange()
       new ConstantStrategy(pr1, structuredRaising, marginalVariableElimination).execute()
 
-      val pr2 = cc.expansions(v2.chainFunction, 2)
+      val pr2 = c2.subproblems(2)
       val subV2 = pr2.target
       val subC2 = cc(subV2)
       subC2.generateRange()
       new ConstantStrategy(pr2, structuredRaising, marginalVariableElimination).execute()
 
-      val pr3 = cc.expansions(v2.chainFunction, 3)
+      val pr3 = c2.subproblems(3)
       val subV3 = pr3.target
       val subC3 = cc(subV3)
       subC3.generateRange()
@@ -1346,12 +1346,12 @@ class FactorMakerTest extends WordSpec with Matchers {
       c1.generateRange()
       c2.expand()
 
-      val prf = cc.expansions(v2.chainFunction, false)
+      val prf = c2.subproblems(false)
       val subVf = prf.target
       val subCf = cc(subVf)
       subCf.generateRange()
       new ConstantStrategy(prf, structuredRaising, marginalVariableElimination).execute()
-      val prt = cc.expansions(v2.chainFunction, true)
+      val prt = c2.subproblems(true)
       val subVt = prt.target
       val subCt = cc(subVt)
       subCt.generateRange()
@@ -1375,7 +1375,6 @@ class FactorMakerTest extends WordSpec with Matchers {
       factor.get(List(v1t,v21)) should be (0.1 +- 0.0001)
       factor.get(List(v1t,v22)) should be (0.9 +- 0.0001)
       factor.get(List(v1t,v23)) should be (0.0 +- 0.0001)
-
     }
   }
 
@@ -1394,17 +1393,17 @@ class FactorMakerTest extends WordSpec with Matchers {
       c1.generateRange()
       c2.expand()
 
-      val pr1 = cc.expansions(v2.chainFunction, 1)
+      val pr1 = c2.subproblems(1)
       val subV1 = pr1.target
       val subC1 = cc(subV1)
       subC1.generateRange()
       new ConstantStrategy(pr1, structuredRaising, marginalVariableElimination).execute()
-      val pr2 = cc.expansions(v2.chainFunction, 2)
+      val pr2 = c2.subproblems(2)
       val subV2 = pr2.target
       val subC2 = cc(subV2)
       subC2.generateRange()
       new ConstantStrategy(pr2, structuredRaising, marginalVariableElimination).execute()
-      val pr3 = cc.expansions(v2.chainFunction, 3)
+      val pr3 = c2.subproblems(3)
       // no range generation or factor creation
       new ConstantStrategy(pr3, structuredRaising, marginalVariableElimination).execute()
 
@@ -1430,7 +1429,6 @@ class FactorMakerTest extends WordSpec with Matchers {
       factor.get(List(v13,v2f)) should be (0.0 +- 0.0001)
       factor.get(List(v13,v2t)) should be (0.0 +- 0.0001)
       factor.get(List(v13,v2Star)) should be (1.0 +- 0.0001)
-
     }
   }
 
@@ -1457,7 +1455,7 @@ class FactorMakerTest extends WordSpec with Matchers {
       c1.generateRange() // will include true and *
       c2.expand()
 
-      val prt = cc.expansions(v2.chainFunction, true)
+      val prt = c2.subproblems(true)
       val subVt = prt.target
       val subCt = cc(subVt)
       subCt.generateRange()
@@ -1502,12 +1500,12 @@ class FactorMakerTest extends WordSpec with Matchers {
       c1.generateRange()
       c2.generateRange()
       c3.expand()
-      val subPf = cc.expansions(v3.chainFunction, false)
+      val subPf = c3.subproblems(false)
       val vPf = subPf.target
       val cPf = cc(vPf)
       cPf.generateRange()
       new ConstantStrategy(subPf, structuredRaising, marginalVariableElimination).execute()
-      val subPt = cc.expansions(v3.chainFunction, true)
+      val subPt = c3.subproblems(true)
       val vPt = subPt.target
       val cPt = cc(vPt)
       cPt.generateRange()
@@ -1528,6 +1526,105 @@ class FactorMakerTest extends WordSpec with Matchers {
       val v2 = Flip(0.5)
       val v3 = Chain(v2, (b: Boolean) => if (b) v1 else Constant(2))
       StructuredVE.probability(v3, 1) should equal (0.5)
+    }
+  }
+
+  "given a boolean operator without *" should {
+    "produce a sparse factor that matches the argument to the result via the function" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val v1 = Flip(0.1)
+      val v2 = Flip(0.2)
+      val v3 = v1 && v2
+      pr.add(v1)
+      pr.add(v2)
+      pr.add(v3)
+      val c1 = cc(v1)
+      val c2 = cc(v2)
+      val c3 = cc(v3)
+      c1.generateRange()
+      c2.generateRange()
+      c3.generateRange()
+
+      val List(factor) = c3.nonConstraintFactors()
+      val v1Vals = c1.variable.range
+      val v2Vals = c2.variable.range
+      val v3Vals = c3.variable.range
+      val v1t = v1Vals indexOf Regular(true)
+      val v1f = v1Vals indexOf Regular(false)
+      val v2t = v2Vals indexOf Regular(true)
+      val v2f = v2Vals indexOf Regular(false)
+      val v3t = v3Vals indexOf Regular(true)
+      val v3f = v3Vals indexOf Regular(false)
+
+      factor.get(List(v1t, v2t, v3t)) should equal(1.0)
+      factor.contains(List(v1t, v2t, v3f)) should equal(false)
+      factor.contains(List(v1t, v2f, v3t)) should equal(false)
+      factor.get(List(v1t, v2f, v3f)) should equal(1.0)
+      factor.contains(List(v1f, v2t, v3t)) should equal(false)
+      factor.get(List(v1f, v2t, v3f)) should equal(1.0)
+      factor.contains(List(v1f, v2f, v3t)) should equal(false)
+      factor.get(List(v1f, v2f, v3f)) should equal(1.0)
+    }
+  }
+
+  "given a boolean operator with *" should {
+    "produce a sparse factor that matches the argument to the result via the function on extended values" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Flip(0.1)
+      val e2 = Flip(0.2)
+      val e3 = Flip(0.3)
+      val e4 = Dist(0.2 -> e2, 0.3 -> e3)
+      val e5 = e1 || e4
+      // e3 is not added to the problem, so the range of e4 is {true, false, *}
+      pr.add(e1)
+      pr.add(e2)
+      pr.add(e4)
+      pr.add(e5)
+      val c1 = cc(e1)
+      val c2 = cc(e2)
+      val c4 = cc(e4)
+      val c5 = cc(e5)
+      c1.generateRange()
+      c2.generateRange()
+      c4.generateRange()
+      c5.generateRange()
+
+      val List(factor) = c5.nonConstraintFactors()
+      val v1Vals = c1.variable.range
+      val v4Vals = c4.variable.range
+      val v5Vals = c5.variable.range
+
+      val v1t = v1Vals indexOf Regular(true)
+      val v1f = v1Vals indexOf Regular(false)
+      val v4t = v4Vals indexOf Regular(true)
+      val v4f = v4Vals indexOf Regular(false)
+      val v4s = v4Vals indexWhere(!_.isRegular)
+      val v5t = v5Vals indexOf Regular(true)
+      val v5f = v5Vals indexOf Regular(false)
+      val v5s = v5Vals indexWhere(!_.isRegular)
+
+      factor.get(List(v1t, v4t, v5t)) should equal(1.0)
+      factor.contains(List(v1t, v4t, v5f)) should equal(false)
+      factor.contains(List(v1t, v4t, v5s)) should equal(false)
+      factor.get(List(v1t, v4f, v5t)) should equal(1.0)
+      factor.contains(List(v1t, v4f, v5f)) should equal(false)
+      factor.contains(List(v1t, v4f, v5s)) should equal(false)
+      factor.get(List(v1t, v4s, v5t)) should equal(1.0)
+      factor.contains(List(v1t, v4s, v5f)) should equal(false)
+      factor.contains(List(v1t, v4s, v5s)) should equal(false)
+      factor.get(List(v1f, v4t, v5t)) should equal(1.0)
+      factor.contains(List(v1f, v4t, v5f)) should equal(false)
+      factor.contains(List(v1f, v4t, v5s)) should equal(false)
+      factor.contains(List(v1f, v4f, v5t)) should equal(false)
+      factor.get(List(v1f, v4f, v5f)) should equal(1.0)
+      factor.contains(List(v1f, v4f, v5s)) should equal(false)
+      factor.contains(List(v1f, v4s, v5t)) should equal(false)
+      factor.contains(List(v1f, v4s, v5f)) should equal(false)
+      factor.get(List(v1f, v4s, v5s)) should equal(1.0)
     }
   }
 

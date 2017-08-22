@@ -24,13 +24,11 @@ import com.cra.figaro.language._
 /**
  * Structured algorithms that perform inference on a problem by a sequence of refining and solving steps. The algorithm
  * runs in a single universe.
+ * @param universe Universe to which elements in the corresponding problem belong.
+ * @param collection Collection of problem components for this inference problem. Defaults to a new, empty, collection
+ * for non-recursive models.
  */
-abstract class StructuredAlgorithm extends Algorithm {
-  /**
-   * Universe to which elements in the corresponding problem belong.
-   */
-  def universe: Universe
-
+abstract class StructuredAlgorithm(val universe: Universe, val collection: ComponentCollection) extends Algorithm {
   /**
    * List of targets that should not be eliminated when solving the problem.
    * @return Targets for the problem.
@@ -38,9 +36,8 @@ abstract class StructuredAlgorithm extends Algorithm {
   def problemTargets: List[Element[_]]
 
   /**
-   * Strategy to use for ranging atomic components. This is only called once. One-time algorithms use the default
-   * ranging strategy with `ParticleGenerator.defaultNumSamplesFromAtomics` values. Anytime algorithms use the default
-   * ranging strategy with one value per iteration.
+   * Strategy to use for ranging atomic components. This is only called once. Note that this is called during
+   * initialization, so subclasses that override this can declare this as a `lazy val` or a `def` but not a `val`.
    */
   def rangingStrategy: RangingStrategy
 
@@ -84,12 +81,8 @@ abstract class StructuredAlgorithm extends Algorithm {
    */
   def processSolutions(solutions: Map[Bounds, Solution]): Unit
 
-  /**
-   * Collection containing all components that the problem or its subproblems use.
-   */
-  val collection = new ComponentCollection()
+  // Set the ranging strategy before adding any components
   collection.rangingStrategy = rangingStrategy
-
   /**
    * Inference problem to be solved.
    */
@@ -119,10 +112,16 @@ abstract class StructuredAlgorithm extends Algorithm {
 }
 
 trait AnytimeStructured extends StructuredAlgorithm with Anytime {
+  /**
+   * Uses the default ranging strategy with one value per iteration.
+   */
   override def rangingStrategy = RangingStrategy.default(1)
 }
 
 trait OneTimeStructured extends StructuredAlgorithm with OneTime {
+  /**
+   * Uses the default ranging strategy with `ParticleGenerator.defaultNumSamplesFromAtomics` values.
+   */
   override def rangingStrategy = RangingStrategy.default(ParticleGenerator.defaultNumSamplesFromAtomics)
 
   // One time structured algorithms run refinement and solving just once each.

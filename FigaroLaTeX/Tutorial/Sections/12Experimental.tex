@@ -1,0 +1,48 @@
+% Chapter XII
+
+\chapter{Experimental Features} % Chapter title
+
+\label{Experimental} % For referencing the chapter elsewhere, use 
+
+Figaro contains a number of experimental features and algorithms that generally work but have not been validated to the level necessary for official support. These methods are not supported by the Figaro team and may be changed at any time, though we anticipate officially moving them into the main Figaro package once the Figaro team is confident of their correctness.
+
+\section{Marginal-MAP}
+Marginal maximum a posteriori (Marginal--MAP) is an algorithm that combines marginal inference with MLE reasoning. In Marginal--MAP, the user specifies a set of variables to maximize after all non--query variables are marginalized away. Oftentimes Marginal-MAP is preferable to using an MLE algorithm since there are usually variables in the model that the user does not care about maximizing, and hence they can be marginalized out. Figaro contains several experimental Marginal--MAP algorithms, such as a BP--, sampling--, and SFI--based algorithms.
+
+To use a BP--based Marginal--MAP algorithm, you create an instance similar to many other algorithms:
+
+\begin{flushleft}
+\texttt{import com.cra.figaro.language.\_
+\newline import
+\newline com.cra.figaro.experimental.marginalmap.MarginalMAPBeliefPropagation
+\newline
+\newline val e1 = Flip(0.5)
+\newline e1.setConstraint((b: Boolean) => if (b) 3.0; else 1.0)
+\newline val e2 = If(e1, Flip(0.4), Flip(0.9))
+\newline val e3 = If(e1, Flip(0.52), Flip(0.4))
+\newline val e4 = e2 === e3
+\newline e4.observe(true)
+\newline
+\newline val alg = MarginalMAPBeliefPropagation(20, e1)
+\newline alg.start()
+\newline println(alg.mostLikelyValue(e1))
+}
+\end{flushleft}
+
+Please see the Scaladoc in the experimental package for more details on running Marginal--MAP algorithms.
+
+\section{Collapsed Gibbs Sampling}
+Collapsed Gibbs sampling is a variant of Gibbs sampling where some variables are marginalized out (or collapsed) before sampling from the conditional probability distribution for a variable. The method of collapsing and which variables to collapse can vary widely. In the experimental package, Figaro has a collapsed Gibbs sampler with several strategies for collapsing. Using collapsed Gibbs sampling with the default collapser is similar to many other algorithms:
+\begin{flushleft}
+\texttt{import
+\newline com.cra.figaro.experimental.collapsedgibbs.CollapsedGibbs
+\newline
+\newline val alg = CollapsedGibbs(100, element)
+\newline alg.start()
+}
+\end{flushleft}
+The default collapser uses a heuristic based on the Hellinger distance
+to collapse the model to a smaller size.
+
+\section{Normal Proposals for Metropolis--Hastings}
+The experimental package also contains a set of univariate, continuous elements that are customized for better Metropolis--Hastings sampling performance. These elements are exactly like their counterparts in the \texttt{com.cra.figaro.library.atomic.continuous} package except that their \texttt{nextRandomness} function has been redefined to propose a new value for the element that is normally distributed from the current value. In general, this results in better Metropolis--Hastings performance since the sampler can more efficiently move through the state space.

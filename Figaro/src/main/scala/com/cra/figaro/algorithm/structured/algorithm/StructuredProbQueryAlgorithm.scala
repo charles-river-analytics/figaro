@@ -20,8 +20,12 @@ import com.cra.figaro.algorithm.structured._
 import com.cra.figaro.algorithm.lazyfactored.Extended
 import com.cra.figaro.algorithm.structured.solver.Solution
 
-abstract class StructuredProbQueryAlgorithm(val universe: Universe, val queryTargets: Element[_]*)
-  extends StructuredAlgorithm with ProbQueryAlgorithm {
+abstract class StructuredProbQueryAlgorithm(universe: Universe, collection: ComponentCollection, val queryTargets: Element[_]*)
+  extends StructuredAlgorithm(universe, collection) with ProbQueryAlgorithm {
+
+  def this(universe: Universe, queryTargets: Element[_]*) {
+    this(universe, new ComponentCollection, queryTargets:_*)
+  }
 
   override def problemTargets = queryTargets.toList
 

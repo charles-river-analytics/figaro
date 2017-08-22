@@ -35,9 +35,15 @@ trait LazyStructured extends StructuredAlgorithm {
 }
 
 trait AnytimeLazyStructured extends LazyStructured with AnytimeStructured {
+  /**
+   * Uses the default lazy ranging strategy with one value per iteration.
+   */
   override def rangingStrategy = RangingStrategy.defaultLazy(1)
 }
 
 trait OneTimeLazyStructured extends LazyStructured with OneTimeStructured {
+  /**
+   * Uses the default lazy ranging strategy with `ParticleGenerator.defaultNumSamplesFromAtomics` values.
+   */
   override def rangingStrategy = RangingStrategy.defaultLazy(ParticleGenerator.defaultNumSamplesFromAtomics)
 }

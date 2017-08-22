@@ -1,6 +1,6 @@
 /*
- * BottomUpTest.scala
- * Tests for bottom-up strategies.
+ * BacktrackingStrategyTest.scala
+ * Tests for backtracking strategies.
  *
  * Created By:      William Kretschmer (kretsch@mit.edu)
  * Creation Date:   Oct 18, 2016
@@ -27,17 +27,15 @@ import com.cra.figaro.library.atomic.discrete._
 import com.cra.figaro.library.compound.If
 import org.scalatest.{Matchers, WordSpec}
 
-import scala.collection.mutable
-
-class BottomUpTest extends WordSpec with Matchers {
-  "A complete bottom-up strategy" should {
+class BacktrackingStrategyTest extends WordSpec with Matchers {
+  "A complete backtracking strategy" should {
     "create ranges for all components" in {
       Universe.createNew()
       val e1 = Flip(0.3)
       val e2 = If(e1, Constant(0), discrete.Uniform(2, 3, 4))
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e2))
-      new BottomUpStrategy(pr, pr.targetComponents).execute()
+      new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
       val c1 = cc(e1)
       val c2 = cc(e2)
@@ -59,7 +57,7 @@ class BottomUpTest extends WordSpec with Matchers {
       val e2 = If(e1, Constant(0), discrete.Uniform(2, 3, 4))
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e2))
-      new BottomUpStrategy(pr, pr.targetComponents).execute()
+      new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
       val c1 = cc(e1)
       val c2 = cc(e2)
@@ -80,7 +78,7 @@ class BottomUpTest extends WordSpec with Matchers {
       e1.addConstraint((i: Int) => 1.0 / i)
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e1))
-      new BottomUpStrategy(pr, pr.targetComponents).execute()
+      new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
       val c1 = cc(e1)
       c1.constraintFactors(Lower) should have size 1
@@ -96,7 +94,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val pr = new Problem(cc, List(e1, e2))
         val c1 = cc(e1)
         c1.ranger.asInstanceOf[SamplingRanger[Double]].samplesPerIteration = 25
-        new BottomUpStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         // Factor for e1 should contain sampled values
         // Its size should be the size of the range of the component
@@ -115,7 +113,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val e2 = Flip(e1)
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1, e2))
-        new BottomUpStrategy(pr, true, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
       }*/
     }
 
@@ -131,10 +129,10 @@ class BottomUpTest extends WordSpec with Matchers {
       c2.expand()
       // Decompose and solve the subproblem corresponding to true
       val spr = c2.subproblems(true)
-      new BottomUpStrategy(spr, spr.targetComponents).execute()
+      new BacktrackingStrategy(spr, spr.targetComponents).execute()
       new ConstantStrategy(spr, structuredRaising, marginalVariableElimination).execute()
       // This should not get rid of the solution
-      new BottomUpStrategy(pr, pr.targetComponents).execute()
+      new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
       spr.solved should be(true)
       val solution = spr.solution.head
@@ -154,7 +152,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val pr = new Problem(cc, List(e1))
         pr.solved = true
         pr.solution = dummySolution
-        new BottomUpStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         pr.solved should be(false)
         pr.solution should be(empty)
@@ -167,7 +165,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1, e2))
         // Create subproblems without refining them
-        new PartialBottomUpStrategy(0, pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents, 0).execute()
 
         pr.solved = true
         pr.solution = dummySolution
@@ -175,7 +173,7 @@ class BottomUpTest extends WordSpec with Matchers {
           subproblem.solved = true
           subproblem.solution = dummySolution
         }
-        new BottomUpStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         pr.solved should be(false)
         pr.solution should be(empty)
@@ -192,42 +190,17 @@ class BottomUpTest extends WordSpec with Matchers {
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1, e2))
         // Create subproblems without refining them
-        new PartialBottomUpStrategy(0, pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents, 0).execute()
 
         // We don't mark the nested problems as solved because this test is to ensure that we recursively go up the
         // problem tree without stopping at unsolved components
         pr.solved = true
         pr.solution = dummySolution
-        new BottomUpStrategy(cc(e2).subproblems(true), pr.targetComponents).execute()
+        new BacktrackingStrategy(cc(e2).subproblems(true), pr.targetComponents).execute()
 
         pr.solved should be(false)
         pr.solution should be(empty)
       }
-    }
-
-    "mark visited components as done" in {
-      Universe.createNew()
-      val e1 = Flip(0.3)
-      val e2 = If(e1, Select(0.1 -> 1, 0.9 -> 2), discrete.Uniform(3, 4))
-      val cc = new ComponentCollection
-      val pr = new Problem(cc, List(e1, e2))
-      val done = mutable.Set[ProblemComponent[_]]()
-      new BottomUpStrategy(pr, pr.targetComponents, done).execute()
-      done.size should be(4)
-    }
-
-    "not decompose components in the done set" in {
-      Universe.createNew()
-      val e1 = discrete.Uniform(1, 2, 3)
-      val cc = new ComponentCollection
-      val pr = new Problem(cc, List(e1))
-      val c1 = cc(e1)
-      val done = mutable.Set[ProblemComponent[_]](c1)
-      new BottomUpStrategy(pr, pr.targetComponents, done).execute()
-
-      c1.variable.valueSet.regularValues should be(empty)
-      c1.nonConstraintFactors() should be(empty)
-      c1.constraintFactors(Lower) should be(empty)
     }
 
     "correctly mark components as fully enumerated and refined" when {
@@ -236,7 +209,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val e1 = Select(0.1 -> 1, 0.2 -> 3, 0.3 -> 5, 0.5 -> 7)
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
-        new BottomUpStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         cc(e1).fullyEnumerated should be(true)
         cc(e1).fullyRefined should be(true)
@@ -247,7 +220,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val e1 = Binomial(10, 0.3)
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
-        new BottomUpStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         cc(e1).fullyEnumerated should be(true)
         cc(e1).fullyRefined should be(true)
@@ -258,7 +231,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val e1 = Normal(0, 1)
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
-        new BottomUpStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         cc(e1).fullyEnumerated should be(false)
         cc(e1).fullyRefined should be(false)
@@ -269,7 +242,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val e1 = Poisson(3)
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
-        new BottomUpStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         cc(e1).fullyEnumerated should be(false)
         cc(e1).fullyRefined should be(false)
@@ -282,7 +255,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val e3 = e1 ++ e2
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e3))
-        new BottomUpStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         cc(e3).fullyEnumerated should be(true)
         cc(e3).fullyRefined should be(true)
@@ -295,7 +268,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val e3 = e1 ++ e2
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e3))
-        new BottomUpStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         cc(e3).fullyEnumerated should be(false)
         cc(e3).fullyRefined should be(false)
@@ -307,12 +280,12 @@ class BottomUpTest extends WordSpec with Matchers {
         val e2 = Chain(e1, (d: Double) => if(d < 0) Flip(0.2) else Flip(0.7))
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e2))
-        new BottomUpStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         val c2 = cc(e2)
         c2.fullyEnumerated should be(false)
         c2.fullyRefined should be(false)
-        for((value, subproblem) <- c2.subproblems) {
+        for((_, subproblem) <- c2.subproblems) {
           cc(subproblem.target).fullyEnumerated should be(true)
           subproblem.fullyRefined should be(true)
         }
@@ -324,7 +297,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val e2 = If(e1, Constant(0.0), Normal(0, 1))
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e2))
-        new BottomUpStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         val c2 = cc(e2)
         c2.fullyEnumerated should be(false)
@@ -344,12 +317,12 @@ class BottomUpTest extends WordSpec with Matchers {
         val e2 = Chain(e1, (i: Int) => FromRange(0, i))
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e2))
-        new BottomUpStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         val c2 = cc(e2)
         c2.fullyEnumerated should be(true)
         c2.fullyRefined should be(true)
-        for((value, subproblem) <- c2.subproblems) {
+        for((_, subproblem) <- c2.subproblems) {
           cc(subproblem.target).fullyEnumerated should be(true)
           subproblem.fullyRefined should be(true)
         }
@@ -362,7 +335,7 @@ class BottomUpTest extends WordSpec with Matchers {
 
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e2))
-        new BottomUpStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         cc(e2).fullyEnumerated should be(true)
         cc(e2).fullyRefined should be(false)
@@ -376,53 +349,24 @@ class BottomUpTest extends WordSpec with Matchers {
 
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e3))
-        new BottomUpStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         cc(e3).fullyEnumerated should be(true)
         cc(e3).fullyRefined should be(false)
       }
 
       "a CompoundDist has an infinite parent but is fully enumerable" in {
+        Universe.createNew()
         val e1 = continuous.Uniform(0.1, 0.7)
         val e2 = continuous.Uniform(0.2, 0.3)
         val e3 = Dist((e1, Flip(0.3)), (e2, Flip(0.5)))
 
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e3))
-        new BottomUpStrategy(pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
         cc(e3).fullyEnumerated should be(true)
         cc(e3).fullyRefined should be(false)
-      }
-
-      "mark nested problems as open, then closed" in {
-        Universe.createNew()
-        val e1 = Flip(0.3)
-        val e2 = If(e1, Constant(0), discrete.Uniform(1, 2))
-        val cc = new ComponentCollection
-        val pr = new Problem(cc, List(e2))
-        // We test that the strategy marks the problem as open by putting a test inside the recursiveExecute method in
-        // the recursing strategy. To ensure that the test is executed exactly twice, we have this counter.
-        var counter = 0
-        val strategy = new BottomUpStrategy(pr, pr.targetComponents) {
-          override def recurse(nestedProblem: NestedProblem[_]): Option[DecompositionStrategy] = {
-            val recursiveStrategy =
-              new BottomUpStrategy(nestedProblem, nestedProblem.targetComponents) {
-                override def recursiveExecute(): Unit = {
-                  super.recursiveExecute()
-                  counter += 1
-                  nestedProblem.open should be(true)
-                }
-              }
-            Some(recursiveStrategy)
-          }
-        }
-        strategy.execute()
-
-        counter should equal(2)
-        for(subproblem <- cc(e2).subproblems.values) {
-          subproblem.open should be(false)
-        }
       }
     }
 
@@ -435,7 +379,7 @@ class BottomUpTest extends WordSpec with Matchers {
 
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e2, e3))
-      new BottomUpStrategy(pr, pr.targetComponents).execute()
+      new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
       cc(e2).subproblems should equal(cc(e3).subproblems)
     }
@@ -453,7 +397,7 @@ class BottomUpTest extends WordSpec with Matchers {
 
       val cc = new ComponentCollection
       val pr = new Problem(cc, List(e1))
-      new BottomUpStrategy(pr, pr.targetComponents).execute()
+      new BacktrackingStrategy(pr, pr.targetComponents).execute()
 
       val c1 = cc(e1)
       // Should contain Constant(0) and Constant(1)
@@ -474,14 +418,14 @@ class BottomUpTest extends WordSpec with Matchers {
     else memoGeometric().map(_ + 1)
   }
 
-  "A partial bottom-up strategy" when {
+  "A partial backtracking strategy" when {
     "called once" should {
       "produce the correct range" in {
         Universe.createNew()
         val e1 = geometric()
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
-        new PartialBottomUpStrategy(3, pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents, 3).execute()
 
         val c1 = cc(e1)
         c1.range.regularValues should equal(Set(1, 2, 3))
@@ -493,7 +437,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val e1 = geometric()
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
-        new PartialBottomUpStrategy(3, pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents, 3).execute()
 
         val c1 = cc(e1).asInstanceOf[ChainComponent[Boolean, Int]]
         c1.fullyEnumerated should be(false)
@@ -514,12 +458,60 @@ class BottomUpTest extends WordSpec with Matchers {
         val pr = new Problem(cc, List(e2))
         // Ensure that the global is added to the correct problem, even though this won't change the outcome of this test
         pr.add(e1)
-        new PartialBottomUpStrategy(3, pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents, 3).execute()
 
         // Because e1 is only used as the result of a Chain, decomposing e2 should count as incrementing the depth
         // Therefore, we should only recurse on subproblems of e1 twice
         cc(e1).range.regularValues should equal(Set(1, 2))
         cc(e2).range.regularValues should equal(Set(0, 1, 2))
+      }
+
+      "correctly backtrack when a component is processed multiple times at different depths" in {
+        Universe.createNew()
+        val g = (i: Int) => Select(0.5 -> i, 0.5 -> (i + 1))
+        val e1 = Flip(0.2)
+        val e2 = Chain(e1, (b: Boolean) => if(b) Constant(1) else Chain(g(0), g))
+        val e3 = Chain(e2, g)
+        val cc = new ComponentCollection
+        val pr = new Problem(cc, List(e3))
+        pr.add(e1)
+        pr.add(e2)
+        val c2 = cc(e2)
+        val c3 = cc(e3)
+        val strategy = new BacktrackingStrategy(pr, pr.targetComponents, 1)
+        strategy.execute()
+
+        // Expanding this problem proceeds depth-first from e3. It first goes through the Chain parents, which means
+        // that e2 is processed before e3. At this point, the value set of e2 is {1,*}, and subproblems for g with
+        // parent values 0 and 1 have been created but not visited. When e3 gets visited, the subproblem of g with
+        // parent value 1 is visited at greater depth. This forces an update to e2, adding 2 to its range. Now, the
+        // subproblem of g with parent value 2 gets expanded and visited, too. This does not force an update to e2
+        // because e2 does not use the subproblem of g corresponding to the parent value 2. So, the end result is that
+        // the only subproblem not fully refined is the subproblem of g with parent value 0.
+        c2.range.hasStar should be(true)
+        c2.range.regularValues should equal(Set(1, 2))
+        c3.range.hasStar should be(true)
+        c3.range.regularValues should equal(Set(1, 2, 3))
+      }
+
+      "not backtrack through a component visited at depth -1" in {
+        Universe.createNew()
+        val e1 = Flip(0.5)
+        val e2 = Select(0.1 -> 1, 0.9 -> 2)
+        val e3 = Chain(e1, (b: Boolean) => Apply(e2, (i: Int) => if(b) i else -i))
+        val cc = new ComponentCollection
+        val pr = new Problem(cc, List(e3, e2))
+        val c2 = cc(e2)
+        val c3 = cc(e3)
+        val strategy = new BacktrackingStrategy(pr, pr.targetComponents, 0)
+        strategy.execute()
+
+        // The Apply in each subproblem gets visited at depth -1. Thus, we don't add it as a direct update of e2. As a
+        // result, even though we explicitly visit e2 separately, we should not backtrack to update e3.
+        c2.range.regularValues should equal(Set(1, 2))
+        c2.range.hasStar should be(false)
+        c3.range.regularValues should be(empty)
+        c3.range.hasStar should be(true)
       }
     }
 
@@ -532,7 +524,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val c1 = cc(e1)
 
         for(depth <- 0 to 10) {
-          new PartialBottomUpStrategy(depth, pr, pr.targetComponents).execute()
+          new BacktrackingStrategy(pr, pr.targetComponents, depth).execute()
           c1.range.hasStar should be(true)
           c1.range.regularValues should equal((1 to depth).toSet)
         }
@@ -543,7 +535,7 @@ class BottomUpTest extends WordSpec with Matchers {
         val e1 = geometric()
         val cc = new ComponentCollection
         val pr = new Problem(cc, List(e1))
-        new PartialBottomUpStrategy(1, pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents, 1).execute()
         new ConstantStrategy(pr, structuredRaising, marginalVariableElimination).execute()
 
         val c1 = cc(e1).asInstanceOf[ChainComponent[Boolean, Int]]
@@ -551,7 +543,7 @@ class BottomUpTest extends WordSpec with Matchers {
         c1.subproblems(true).solved should be(true)
         c1.subproblems(false).solved should be(true)
 
-        new PartialBottomUpStrategy(3, pr, pr.targetComponents).execute()
+        new BacktrackingStrategy(pr, pr.targetComponents, 3).execute()
 
         pr.solved should be(false)
         // The first subproblem was fully refined so its solution should remain; the second subproblem was expanded
@@ -562,23 +554,63 @@ class BottomUpTest extends WordSpec with Matchers {
     }
 
     "given a recursive model that uses the same function at each recursion" should {
-      "reuse the non-recursive part of the model, but produce a different subproblem for the recursive part" in {
-        Universe.createNew()
-        val e1 = memoGeometric()
-        val cc = new ComponentCollection
-        val pr = new Problem(cc, List(e1))
-        new PartialBottomUpStrategy(2, pr, pr.targetComponents).execute()
+      "correctly reuse the non-recursive part of the model, but produce a different subproblem for the recursive part" when {
+        "using an incrementing collection" in {
+          Universe.createNew()
+          val e1 = memoGeometric()
+          val cc = new IncrementingCollection
+          val pr = new Problem(cc, List(e1))
+          new BacktrackingStrategy(pr, pr.targetComponents, 2).execute()
 
-        val c1 = cc(e1).asInstanceOf[ChainComponent[Boolean, Int]]
-        val nestedc1 = c1.subproblems(false).components.collectFirst{
-          case chainComp: ChainComponent[_, _] => chainComp
-        }.get.asInstanceOf[ChainComponent[Boolean, Int]]
+          val c1 = cc(e1).asInstanceOf[ChainComponent[Boolean, Int]]
+          val nestedc1 = c1.subproblems(false).components.collectFirst{
+            case chainComp: ChainComponent[_, _] => chainComp
+          }.get.asInstanceOf[ChainComponent[Boolean, Int]]
 
-        // Sanity check; verify that the chain functions are the same (which normally induces memoization)
-        c1.chain.chainFunction should equal(nestedc1.chain.chainFunction)
-        // The subproblem corresponding to parent value true is non-recursive, but corresponding to false is recursive
-        nestedc1.subproblems(true) should equal(c1.subproblems(true))
-        nestedc1.subproblems(false) should not equal c1.subproblems(false)
+          // Sanity check; verify that the chain functions are the same (which normally induces memoization)
+          c1.chain.chainFunction should equal(nestedc1.chain.chainFunction)
+          // The subproblems should not be reused because the depth gets incremented everywhere
+          nestedc1.subproblems(true) should not equal c1.subproblems(true)
+          nestedc1.subproblems(false) should not equal c1.subproblems(false)
+        }
+
+        "using a selective incrementing collection" in {
+          Universe.createNew()
+          val e1 = memoGeometric()
+          val cc = new SelectiveIncrementingCollection
+          val pr = new Problem(cc, List(e1))
+          new BacktrackingStrategy(pr, pr.targetComponents, 2).execute()
+
+          val c1 = cc(e1).asInstanceOf[ChainComponent[Boolean, Int]]
+          val nestedc1 = c1.subproblems(false).components.collectFirst{
+            case chainComp: ChainComponent[_, _] => chainComp
+          }.get.asInstanceOf[ChainComponent[Boolean, Int]]
+
+          // Sanity check; verify that the chain functions are the same (which normally induces memoization)
+          c1.chain.chainFunction should equal(nestedc1.chain.chainFunction)
+          // The subproblem corresponding to parent value true is non-recursive, but corresponding to false is recursive
+          nestedc1.subproblems(true) should equal(c1.subproblems(true))
+          nestedc1.subproblems(false) should not equal c1.subproblems(false)
+        }
+
+        "using a minimally incrementing collection" in {
+          Universe.createNew()
+          val e1 = memoGeometric()
+          val cc = new MinimalIncrementingCollection
+          val pr = new Problem(cc, List(e1))
+          new BacktrackingStrategy(pr, pr.targetComponents, 2).execute()
+
+          val c1 = cc(e1).asInstanceOf[ChainComponent[Boolean, Int]]
+          val nestedc1 = c1.subproblems(false).components.collectFirst{
+            case chainComp: ChainComponent[_, _] => chainComp
+          }.get.asInstanceOf[ChainComponent[Boolean, Int]]
+
+          // Sanity check; verify that the chain functions are the same (which normally induces memoization)
+          c1.chain.chainFunction should equal(nestedc1.chain.chainFunction)
+          // The subproblem corresponding to parent value true is non-recursive, but corresponding to false is recursive
+          nestedc1.subproblems(true) should equal(c1.subproblems(true))
+          nestedc1.subproblems(false) should not equal c1.subproblems(false)
+        }
       }
     }
   }

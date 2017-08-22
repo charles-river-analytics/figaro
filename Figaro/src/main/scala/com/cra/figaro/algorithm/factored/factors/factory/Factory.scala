@@ -236,6 +236,7 @@ object Factory {
       case d: CompoundDist[_] => SelectFactory.makeFactors(cc, d)
       case s: IntSelector => SelectFactory.makeFactors(cc, s)
       case c: Chain[_, _] => ChainFactory.makeFactors(cc, c)
+      case b: BooleanOperator => ApplyFactory.makeBooleanFactors(cc, b)
       case a: Apply1[_, _] => ApplyFactory.makeFactors(cc, a)
       case a: Apply2[_, _, _] => ApplyFactory.makeFactors(cc, a)
       case a: Apply3[_, _, _, _] => ApplyFactory.makeFactors(cc, a)
@@ -340,7 +341,7 @@ object Factory {
           val chainMap = LazyValues(elem.universe).getMap(chain)
           chainMap.foreach(f => {
             val subproblem = new NestedProblem(Variable.cc, f._2)
-            Variable.cc.expansions += (chain.chainFunction, f._1) -> subproblem
+            Variable.cc.expansionToProblem += ((chain.chainFunction, f._1), 0) -> subproblem
             chainComp.subproblems = chainComp.subproblems.updated(f._1, subproblem)
           })
         // If the element is a MakeArray, we need mark that it has been expanded. Note that
