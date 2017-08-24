@@ -32,7 +32,7 @@ import scoverage.ScoverageSbtPlugin._
   lazy val figaroSettings = Seq(
     organization := "com.cra.figaro",
     description := "Figaro: a language for probablistic programming",
-    version := "5.0.0.0",
+    version := "5.1.0.0",
     scalaVersion := "2.12.2",
     crossScalaVersions := Seq(scalaVersion.value, "2.11.8"),
     crossPaths := true,
