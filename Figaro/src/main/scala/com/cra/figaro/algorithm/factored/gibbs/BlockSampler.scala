@@ -5,7 +5,7 @@
  * Created By:      William Kretschmer (kretsch@mit.edu)
  * Creation Date:   July 14, 2015
  *
- * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
@@ -123,7 +123,7 @@ class SimpleBlockSampler(blockInfo: Gibbs.BlockInfo)
    * Takes a logarithmic factor and returns a non-logarithmic factor
    */
   def normalizeFactor(factor: Factor[Double]): Factor[Double] = {
-    val normalizingConstant = semiring.sumMany(factor.contents.values)
+    val normalizingConstant = semiring.sumMany(factor.getContents())
     if(normalizingConstant == semiring.zero) throw new ZeroTotalUnnormalizedProbabilityException
     factor.mapTo((d: Double) => math.exp(d - normalizingConstant), SumProductSemiring())
   }
@@ -177,8 +177,8 @@ trait FactorProduct extends SimpleBlockSampler {
   lazy val ord = new Ordering[Factor[Double]] {
     def compare(x: Factor[Double], y: Factor[Double]): Int = {
       // Prioritize the factor with the fewest average entries per variable, i.e. most variables per entry
-      val xSize = math.pow(x.contents.size, 1.0 / x.numVars.toDouble)
-      val ySize = math.pow(y.contents.size, 1.0 / y.numVars.toDouble)
+      val xSize = math.pow(x.size, 1.0 / x.numVars.toDouble)
+      val ySize = math.pow(y.size, 1.0 / y.numVars.toDouble)
       math.signum(ySize - xSize).toInt
     }
   }

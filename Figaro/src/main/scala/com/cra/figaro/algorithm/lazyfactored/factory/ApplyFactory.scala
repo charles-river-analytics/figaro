@@ -5,7 +5,7 @@
  * Created By:      Glenn Takata (gtakata@cra.com)
  * Creation Date:   Dec 15, 2014
  * 
- * Copyright 2014 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
@@ -17,6 +17,7 @@ import com.cra.figaro.algorithm.PointMapper
 import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.lazyfactored._
 import com.cra.figaro.language._
+import com.cra.figaro.library.compound.BooleanOperator
 
 /**
  * A Sub-Factory for Apply Elements
@@ -196,6 +197,25 @@ object ApplyFactory {
         val resultIndex = resultVar.range.indexWhere(!_.isRegular) 
         factor.set(List(arg1Index, arg2Index, arg3Index, arg4Index, arg5Index, resultIndex), 1.0)
       }   
+    }
+    List(factor)
+  }
+
+  def makeBooleanFactors(bool: BooleanOperator)(implicit mapper: PointMapper[Boolean]): List[Factor[Double]] = {
+    val arg1Var = Variable(bool.arg1)
+    val arg2Var = Variable(bool.arg2)
+    val resultVar = Variable(bool)
+    val applyValues = LazyValues(bool.universe).storedValues(bool)
+    val factor = new SparseFactor[Double](List(arg1Var, arg2Var), List(resultVar))
+    val arg1Indices = arg1Var.range.zipWithIndex
+    val arg2Indices = arg2Var.range.zipWithIndex
+    for {
+      (arg1Val, arg1Index) <- arg1Indices
+      (arg2Val, arg2Index) <- arg2Indices
+    } {
+      val resultVal = bool.extendedFn(arg1Val, arg2Val)
+      val resultIndex = resultVar.range.indexOf(resultVal)
+      factor.set(List(arg1Index, arg2Index, resultIndex), 1.0)
     }
     List(factor)
   }

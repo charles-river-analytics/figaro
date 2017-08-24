@@ -5,10 +5,16 @@
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
  * 
- * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
+
+/*
+ * Additional Updates from our community
+ * 
+ * Synapski		Oct 13, 2014
  */
 
 package com.cra.figaro.library.atomic.continuous
@@ -21,11 +27,15 @@ import scala.math._
  * A normal distribution in which the mean and variance are constants.
  */
 class AtomicNormal(name: Name[Double], val mean: Double, val variance: Double, collection: ElementCollection)
-  extends Element[Double](name, collection) with Atomic[Double] {
+  extends Element[Double](name, collection) with Atomic[Double] with Normal {
   lazy val standardDeviation = sqrt(variance)
 
   type Randomness = Double
+  
+  def meanValue: Double = mean
 
+  def varianceValue: Double = variance
+  
   def generateRandomness() = {
     val u1 = random.nextDouble()
     val u2 = random.nextDouble()

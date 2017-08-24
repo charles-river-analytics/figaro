@@ -5,10 +5,16 @@
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   March 1, 2015
  *
- * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
+
+/*
+ * Additional Updates from our community
+ * 
+ * Paul Philips		May 23, 2017
  */
 
 package com.cra.figaro.algorithm.structured
@@ -16,14 +22,11 @@ package com.cra.figaro.algorithm.structured
 import com.cra.figaro.algorithm.lazyfactored.ValueSet
 import com.cra.figaro.algorithm.lazyfactored.ValueSet._
 import com.cra.figaro.language._
-import com.cra.figaro.library.compound.FastIf
-import com.cra.figaro.util.{ MultiSet, homogeneousCartesianProduct }
+import com.cra.figaro.library.compound._
+import com.cra.figaro.util.{MultiSet, homogeneousCartesianProduct}
 import com.cra.figaro.util.HashMultiSet
-import com.cra.figaro.algorithm.factored.ParticleGenerator
 import com.cra.figaro.library.collection.FixedSizeArray
-import com.cra.figaro.library.atomic.discrete.{ AtomicBinomial, ParameterizedBinomialFixedNumTrials }
-import com.cra.figaro.library.compound.FoldLeft
-import com.cra.figaro.library.compound.IntSelector
+import com.cra.figaro.library.atomic.discrete.{AtomicBinomial, ParameterizedBinomialFixedNumTrials}
 import com.cra.figaro.algorithm.ValuesMaker
 
 object Range {
@@ -153,12 +156,13 @@ object Range {
     helper(ValueSet.withoutStar(Set(fold.start)), fold.elements)
   }
 
-  def apply[V](component: ProblemComponent[V], numValues: Int): ValueSet[V] = {
+  def apply[V](component: ProblemComponent[V]): ValueSet[V] = {
     component match {
       case cc: ChainComponent[_, V]  => chainRange(cc)
       case mc: MakeArrayComponent[V] => makeArrayRange(mc)
       case ac: ApplyComponent[V]     => applyRange(ac)
-      case _                         => otherRange(component, numValues)
+      case ac: AtomicComponent[V]    => atomicRange(ac.atomic)
+      case _                         => otherRange(component)
     }
   }
 
@@ -178,6 +182,7 @@ object Range {
             parentV <- parentVs.regularValues
             subproblem <- component.subproblems.get(parentV)
           } yield getRange(collection, subproblem.target)
+        // If there do not exist subproblems for some parent values, then we must add * to the range
         val fullyExpanded = parentVs.regularValues.forall(component.subproblems.contains(_))
         val starter: ValueSet[V] = if (parentVs.hasStar || !fullyExpanded) withStar(Set()) else withoutStar(Set())
         resultVs.foldLeft(starter)(_ ++ _)
@@ -203,7 +208,26 @@ object Range {
     component.element match {
 
       case i: FastIf[_] =>
+        applyMap.put(true, i.thn.asInstanceOf[V])
+        applyMap.put(false, i.els.asInstanceOf[V])
         if (getRange(collection, i.test).hasStar) withStar(Set(i.thn, i.els)) else withoutStar(Set(i.thn, i.els))
+
+      case b: BooleanOperator =>
+        val vs1 = getRange(collection, b.arg1)
+        val vs2 = getRange(collection, b.arg2)
+        for {
+          v1 <- vs1.regularValues
+          v2 <- vs2.regularValues
+        }  {
+          applyMap.getOrElseUpdate((v1, v2), b.fn(v1, v2))
+        }
+        val resultSet = for {
+          arg1XVal <- vs1.xvalues
+          arg2XVal <- vs2.xvalues
+        } yield {
+          b.extendedFn(arg1XVal, arg2XVal)
+        }
+        new ValueSet(resultSet)
 
       case a: Apply1[_, V] =>
         val vs1 = getRange(collection, a.arg1)
@@ -277,20 +301,33 @@ object Range {
     }
   }
 
-  private def otherRange[V](component: ProblemComponent[V], numValues: Int): ValueSet[V] = {
+  private[figaro] def atomicRange[V](atomic: Atomic[V]): ValueSet[V] = {
+    atomic match {
+      case f: AtomicFlip  => withoutStar(Set(true, false))
+
+      case s: AtomicSelect[_] => withoutStar(Set(s.outcomes: _*))
+
+      case b: AtomicBinomial => ValueSet.withoutStar((0 to b.numTrials).toSet)
+
+      // Make values is hardcoded with depth. SFI should control iterative deepening, so call make values with infinite depth
+      case v: ValuesMaker[_] => v.makeValues(Int.MaxValue)
+
+      case _ =>
+        /* A new improvement - if we can't compute the values, we just make them *, so the rest of the computation can proceed */
+        withStar(Set())
+    }
+  }
+
+  private def otherRange[V](component: ProblemComponent[V]): ValueSet[V] = {
     val collection = component.problem.collection
     component.element match {
       case c: Constant[_] => withoutStar(Set(c.constant))
-
-      case f: AtomicFlip  => withoutStar(Set(true, false))
 
       case f: ParameterizedFlip =>
         if (getRange(collection, f.parameter).hasStar) withStar(Set(true, false)) else withoutStar(Set(true, false))
 
       case f: CompoundFlip =>
         if (getRange(collection, f.prob).hasStar) withStar(Set(true, false)) else withoutStar(Set(true, false))
-
-      case s: AtomicSelect[_] => withoutStar(Set(s.outcomes: _*))
 
       case s: ParameterizedSelect[_] =>
         val values = Set(s.outcomes: _*)
@@ -299,8 +336,6 @@ object Range {
       case s: CompoundSelect[_] =>
         val values = Set(s.outcomes: _*)
         if (s.probs.map(getRange(collection, _)).exists(_.hasStar)) withStar(values) else withoutStar(values)
-
-      case b: AtomicBinomial => ValueSet.withoutStar((0 to b.numTrials).toSet)
 
       case d: AtomicDist[_] =>
         val componentSets = d.outcomes.map(getRange(collection, _))
@@ -348,12 +383,6 @@ object Range {
       // Make values is hardcoded with depth. SFI should control iterative deepening, so call make values with infinite depth
       case v: ValuesMaker[_] => {
         v.makeValues(Int.MaxValue)
-      }
-
-      case a: Atomic[_] => {
-        val thisSampler = ParticleGenerator(a.universe)
-        val samples = thisSampler(a, numValues)
-        withoutStar(samples.unzip._2.toSet)
       }
 
       case _ =>

@@ -5,10 +5,17 @@
  * Created By:      Brian Ruttenberg (bruttenberg@cra.com)
  * Creation Date:   Jan 15, 2014
  * 
- * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
+
+/*
+ * Additional Updates from our community
+ * 
+ * Cagdas Senol		Jul 3, 2016
+ * Cagdas Senol		Jul 16, 2016
  */
 
 package com.cra.figaro.test.experimental.particlebp
@@ -134,7 +141,7 @@ class PBPTest extends WordSpec with Matchers {
       val msgs = bpb.getLastMessagesToNode(n)
       msgs.size should be > 1
       msgs(1).numVars should be(1)
-      msgs(1).contents.map(_._2).sum should be(0.0 +- .01)
+      msgs(1).getContents().sum should be(0.0 +- .01)
     }
 
     "with no conditions or constraints produce the correct result for a one time algorithm" in {

@@ -5,7 +5,7 @@
  * Created By:      Brian Ruttenberg (bruttenberg@cra.com)
  * Creation Date:   Jan 15, 2014
  * 
- * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
@@ -194,7 +194,7 @@ trait ProbabilisticBeliefPropagation extends BeliefPropagation[Double] {
    *  Normalize a factor.
    */
   def normalize(factor: Factor[Double]): Factor[Double] = {
-    val z = logSpaceSemiring().sumMany(factor.contents.values)
+    val z = logSpaceSemiring().sumMany(factor.getContents())
     // Since we're in log space, d - z = log(exp(d)/exp(z))
     factor.mapTo((d: Double) => if (z != logSpaceSemiring().zero) d - z else logSpaceSemiring().zero)
   }

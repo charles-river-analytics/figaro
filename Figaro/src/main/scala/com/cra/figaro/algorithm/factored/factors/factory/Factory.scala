@@ -5,10 +5,16 @@
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
  *
- * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
+
+/*
+ * Additional Updates from our community
+ * 
+ * Paul Philips		May 23, 2017
  */
 
 package com.cra.figaro.algorithm.factored.factors.factory
@@ -70,7 +76,7 @@ object Factory {
       val newFactor =
         factor match {
           case s: SparseFactor[Double] => new SparseFactor[Double](newVariables, List())
-          case b: BasicFactor[Double] => new BasicFactor[Double](newVariables, List())
+          case b: DenseFactor[Double] => new DenseFactor[Double](newVariables, List())
         }
       for { indices <- factor.getIndices } { newFactor.set(indices, factor.get(indices)) }
       newFactor
@@ -81,7 +87,7 @@ object Factory {
    * The mutliplicative identity factor.
    */
   def unit[T: TypeTag](semiring: Semiring[T]): Factor[T] = {
-    val result = new BasicFactor[T](List(), List(), semiring)
+    val result = new DenseFactor[T](List(), List(), semiring)
     result.set(List(), semiring.one)
     result
   }
@@ -110,13 +116,13 @@ object Factory {
   }
 
   /**
-   * Create a BasicFactor from the supplied parent and children variables
+   * Create a DenseFactor from the supplied parent and children variables
    */
   def defaultFactor[T: TypeTag](parents: List[Variable[_]], children: List[Variable[_]], _semiring: Semiring[T] = SumProductSemiring().asInstanceOf[Semiring[T]]) =
-    new BasicFactor[T](parents, children, _semiring)
+    new DenseFactor[T](parents, children, _semiring)
 
   private def makeFactors[T](cc: ComponentCollection, const: Constant[T]): List[Factor[Double]] = {
-    val factor = new BasicFactor[Double](List(), List(getVariable(cc, const)))
+    val factor = new DenseFactor[Double](List(), List(getVariable(cc, const)))
     factor.set(List(0), 1.0)
     List(factor)
   }
@@ -177,7 +183,7 @@ object Factory {
     val inputVariables = inject.args map (getVariable(cc, _))
     val resultVariable = getVariable(cc, inject)
     //    val variables = resultVariable :: inputVariables
-    val factor = new BasicFactor[Double](inputVariables, List(resultVariable))
+    val factor = new DenseFactor[Double](inputVariables, List(resultVariable))
     factor.fillByRule(rule _)
     List(factor)
   }
@@ -187,24 +193,17 @@ object Factory {
     // The parameter should have one possible value, which is its expected value
     val paramVar = getVariable(cc, param)
     assert(paramVar.range.size == 1)
-    val factor = new BasicFactor[Double](List(), List(paramVar))
+    val factor = new DenseFactor[Double](List(), List(paramVar))
     factor.set(List(0), 1.0)
     List(factor)
   }
 
   private def makeFactors[T](cc: ComponentCollection, atomic: Atomic[T]): List[Factor[Double]] = {
     val atomicVar = getVariable(cc, atomic)
-    val pbpSampler = ParticleGenerator(atomic.universe)
-    // Note, don't need number of samples because values should have already been expanded on it
-    // (and values will initiate the sampling)
-    val samples = pbpSampler(atomic)
-    if (atomicVar.range.exists(!_.isRegular)) {
-      assert(atomicVar.range.size == 1) // Select's range must either be a list of regular values or {*}
-      StarFactory.makeStarFactor(cc, atomic)
-    } else {
-      val probs = SelectFactory.getProbs(cc, atomic, samples)
-      List(SelectFactory.makeSimpleDistribution(atomicVar, probs))
-    }
+    val atomicComp = cc(atomic)
+    // Map each extended value to its probability density, preserving the order of the list
+    val probs = atomicVar.range.map(atomicComp.probs)
+    List(SelectFactory.makeSimpleDistribution(atomicVar, probs))
   }
 
   
@@ -220,36 +219,38 @@ object Factory {
    * secondary factories.
    */
   def concreteFactors[T](cc: ComponentCollection, elem: Element[T], parameterized: Boolean): List[Factor[Double]] = {
-    (elem, parameterized) match {
-      case (flip: ParameterizedFlip, _) => DistributionFactory.makeFactors(cc, flip, parameterized)
-      case (pSelect: ParameterizedSelect[_], _) => SelectFactory.makeFactors(cc, pSelect, parameterized)
-      case (pBin: ParameterizedBinomialFixedNumTrials, _) => DistributionFactory.makeFactors(cc, pBin, parameterized)
-      case (parameter: DoubleParameter, true) => makeParameterFactors(cc, parameter)
-      case (array: ArrayParameter, true) => makeParameterFactors(cc, array)
-      case (constant: Constant[_], _) => makeFactors(cc, constant)
-      case (f: AtomicFlip, _) => DistributionFactory.makeFactors(cc, f)
-      case (f: CompoundFlip, _) => DistributionFactory.makeFactors(cc, f)
-      case (ab: AtomicBinomial, _) => DistributionFactory.makeFactors(cc, ab)
-      case (s: AtomicSelect[_], _) => SelectFactory.makeFactors(cc, s)
-      case (s: CompoundSelect[_], _) => SelectFactory.makeFactors(cc, s)
-      case (d: AtomicDist[_], _) => SelectFactory.makeFactors(cc, d)
-      case (d: CompoundDist[_], _) => SelectFactory.makeFactors(cc, d)
-      case (s: IntSelector, _) => SelectFactory.makeFactors(cc, s)
-      case (c: Chain[_, _], _) => ChainFactory.makeFactors(cc, c)
-      case (a: Apply1[_, _], _) => ApplyFactory.makeFactors(cc, a)
-      case (a: Apply2[_, _, _], _) => ApplyFactory.makeFactors(cc, a)
-      case (a: Apply3[_, _, _, _], _) => ApplyFactory.makeFactors(cc, a)
-      case (a: Apply4[_, _, _, _, _], _) => ApplyFactory.makeFactors(cc, a)
-      case (a: Apply5[_, _, _, _, _, _], _) => ApplyFactory.makeFactors(cc, a)
-      case (i: Inject[_], _) => makeFactors(cc, i)
-      case (r: SingleValuedReferenceElement[_], _) => ComplexFactory.makeFactors(cc, r)
-      case (r: MultiValuedReferenceElement[_], _) => ComplexFactory.makeFactors(cc, r)
-      case (r: Aggregate[_, _], _) => ComplexFactory.makeFactors(cc, r)
+    // TODO have factor creation for all atomics use the new method above
+    elem match {
+      case flip: ParameterizedFlip => DistributionFactory.makeFactors(cc, flip, parameterized)
+      case pSelect: ParameterizedSelect[_] => SelectFactory.makeFactors(cc, pSelect, parameterized)
+      case pBin: ParameterizedBinomialFixedNumTrials => DistributionFactory.makeFactors(cc, pBin, parameterized)
+      case parameter: DoubleParameter if parameterized => makeParameterFactors(cc, parameter)
+      case array: ArrayParameter if parameterized => makeParameterFactors(cc, array)
+      case constant: Constant[_] => makeFactors(cc, constant)
+      case f: AtomicFlip => DistributionFactory.makeFactors(cc, f)
+      case f: CompoundFlip => DistributionFactory.makeFactors(cc, f)
+      case ab: AtomicBinomial => DistributionFactory.makeFactors(cc, ab)
+      case s: AtomicSelect[_] => SelectFactory.makeFactors(cc, s)
+      case s: CompoundSelect[_] => SelectFactory.makeFactors(cc, s)
+      case d: AtomicDist[_] => SelectFactory.makeFactors(cc, d)
+      case d: CompoundDist[_] => SelectFactory.makeFactors(cc, d)
+      case s: IntSelector => SelectFactory.makeFactors(cc, s)
+      case c: Chain[_, _] => ChainFactory.makeFactors(cc, c)
+      case b: BooleanOperator => ApplyFactory.makeBooleanFactors(cc, b)
+      case a: Apply1[_, _] => ApplyFactory.makeFactors(cc, a)
+      case a: Apply2[_, _, _] => ApplyFactory.makeFactors(cc, a)
+      case a: Apply3[_, _, _, _] => ApplyFactory.makeFactors(cc, a)
+      case a: Apply4[_, _, _, _, _] => ApplyFactory.makeFactors(cc, a)
+      case a: Apply5[_, _, _, _, _, _] => ApplyFactory.makeFactors(cc, a)
+      case i: Inject[_] => makeFactors(cc, i)
+      case r: SingleValuedReferenceElement[_] => ComplexFactory.makeFactors(cc, r)
+      case r: MultiValuedReferenceElement[_] => ComplexFactory.makeFactors(cc, r)
+      case r: Aggregate[_, _] => ComplexFactory.makeFactors(cc, r)
       //case m: MakeList[_] => ComplexFactory.makeFactors(cc, m)
-      case (m: MakeArray[_], _) => ComplexFactory.makeFactors(cc, m)
-      case (f: FoldLeft[_, _], _) => ComplexFactory.makeFactors(cc, f)
-      case (f: FactorMaker[_], _) => f.makeFactors
-      case (a: Atomic[_], _) => makeFactors(cc, a)
+      case m: MakeArray[_] => ComplexFactory.makeFactors(cc, m)
+      case f: FoldLeft[_, _] => ComplexFactory.makeFactors(cc, f)
+      case f: FactorMaker[_] => f.makeFactors
+      case a: Atomic[_] => makeFactors(cc, a)
 
       case _ => throw new UnsupportedAlgorithmException(elem)
     }
@@ -257,13 +258,14 @@ object Factory {
 
   private def makeAbstract[T](cc: ComponentCollection, atomic: Atomic[T], abstraction: Abstraction[T]): List[Factor[Double]] = {
     val variable = getVariable(cc, atomic)
+    assert(!variable.valueSet.hasStar, "can't make abstract factors with *")
     val values = variable.range.map(_.value)
     val densityMap = scala.collection.mutable.Map[T, Double]()
     for { v <- values } {
       val currentDensity = densityMap.getOrElse(v, 0.0)
       densityMap.update(v, currentDensity + atomic.density(v))
     }
-    val factor = new BasicFactor[Double](List(), List(variable))
+    val factor = new DenseFactor[Double](List(), List(variable))
     for { (v, i) <- values.zipWithIndex } {
       factor.set(List(i), densityMap(v))
     }
@@ -314,7 +316,7 @@ object Factory {
       result
     }
     val variables = uses map (cc(_).variable)
-    val factor = new BasicFactor[Double](variables, List())
+    val factor = new DenseFactor[Double](variables, List())
     factor.fillByRule(rule _)
     factor
   }
@@ -323,42 +325,49 @@ object Factory {
    * Make factors for a particular element. This function wraps the SFI method of creating factors using component collections
    */
   def makeFactorsForElement[Value](elem: Element[_], upper: Boolean = false, parameterized: Boolean = false) = {
-    Variable(elem)
+    val variable = Variable(elem)
     val comp = Variable.cc(elem)
-    elem match {
-      // If the element is a chain, we need to create subproblems for each value of the chain
-      // to create factors accordingly
-      case c: Chain[_, _] => {
-        val chainMap = LazyValues(elem.universe).getMap(c)
-        chainMap.foreach(f => {
-          val subproblem = new NestedProblem(Variable.cc, f._2)
-          Variable.cc.expansions += (c.chainFunction, f._1) -> subproblem
-        })
-      }
-      // If the element is a MakeArray, we need mark that it has been expanded. Note that
-      // the normal Values call will expand the MakeArray, we are just setting the max expansion here
-      case ma: MakeArray[_] => {
-        val maC = Variable.cc(ma)
-        maC.maxExpanded = Variable.cc(ma.numItems).range.regularValues.max
-      }
-      // If the element is an apply, we need to populate the Apply map used by the factor creation
-      case a: Apply[Value] => {
-        val applyComp = comp.asInstanceOf[ApplyComponent[Value]]
-        val applyMap = LazyValues(elem.universe).getMap(a)
-        applyComp.setMap(applyMap)
-      }
-      case _ => ()
+    if (elem.intervention.isDefined) {
+      val factor = new DenseFactor[Double](List(), List(variable))
+      factor.set(List(0), 1.0)
+      List(factor)
     }
-    // Make the constraint and non-constraint factors for the element by calling the
-    // component factor makers    
-    val constraint = if (upper) {
-      comp.makeConstraintFactors(Upper)
-      comp.constraintFactors(Upper)
-    } else {
-      comp.makeConstraintFactors(Lower)
-      comp.constraintFactors(Lower)
+    else {
+      comp match {
+        // If the element is a chain, we need to create subproblems for each value of the chain
+        // to create factors accordingly
+        case chainComp: ChainComponent[_, _] =>
+          val chain = chainComp.chain
+          val chainMap = LazyValues(elem.universe).getMap(chain)
+          chainMap.foreach(f => {
+            val subproblem = new NestedProblem(Variable.cc, f._2)
+            Variable.cc.expansionToProblem += ((chain.chainFunction, f._1), 0) -> subproblem
+            chainComp.subproblems = chainComp.subproblems.updated(f._1, subproblem)
+          })
+        // If the element is a MakeArray, we need mark that it has been expanded. Note that
+        // the normal Values call will expand the MakeArray, we are just setting the max expansion here
+        case maComp: MakeArrayComponent[_] =>
+          val ma = maComp.makeArray
+          maComp.maxExpanded = Variable.cc(ma.numItems).range.regularValues.max
+        // If the element is an apply, we need to populate the Apply map used by the factor creation
+        case applyComp: ApplyComponent[Value] =>
+          val apply = applyComp.apply
+          val applyMap = LazyValues(elem.universe).getMap(apply)
+          applyComp.setMap(applyMap)
+        case atomicComp: AtomicComponent[Value] =>
+          // The range for this component was generated, but not its distribution
+          // This computes the probability mass for each value in the range
+          atomicComp.probs = atomicComp.ranger.discretize()
+        case _ => ()
+      }
+      // Make the constraint and non-constraint factors for the element by calling the
+      // component factor makers
+      val constraint = if (upper) {
+        comp.constraintFactors(Upper)
+      } else {
+        comp.constraintFactors(Lower)
+      }
+      constraint ::: comp.nonConstraintFactors(parameterized)
     }
-    comp.makeNonConstraintFactors(parameterized)
-    constraint ::: comp.nonConstraintFactors
   }
 }

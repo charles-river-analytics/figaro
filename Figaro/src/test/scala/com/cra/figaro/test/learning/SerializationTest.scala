@@ -5,11 +5,18 @@
  * Created By:      Michael Howard (mhoward@cra.com)
  * Creation Date:   Mar 5, 2015
  * 
- * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
+
+/*
+ * Additional Updates from our community
+ * 
+ * Paul Philips		May 23, 2017
+ */
+
 package com.cra.figaro.test.learning
 
 import org.scalatest.WordSpec
@@ -27,7 +34,7 @@ class SerializationTest extends WordSpec with Matchers {
   "A Beta parameter" should {
     "serialize its name and alpha and beta values" in {
       val u = Universe.createNew()
-      val b = Beta(1,5)("b", u)
+      val b: Beta = Beta(1,5)("b", u)
       val jsonBeta = b.asJson
       println(jsonBeta.spaces2)
       val name = jsonBeta.field("name").get.as[String].value.get
@@ -53,7 +60,7 @@ class SerializationTest extends WordSpec with Matchers {
     "serialize its name and concentration parameters" in{
       val u = Universe.createNew()
      
-      val d = Dirichlet(1,2,3,4,5)("d", u)
+      val d: Dirichlet = Dirichlet(1,2,3,4,5)("d", u)
       val jsonDirichlet = d.asJson
       println(jsonDirichlet.spaces2)
       val name = jsonDirichlet.field("name").get.as[String].value.get

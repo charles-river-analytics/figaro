@@ -5,29 +5,32 @@
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   March 1, 2015
  *
- * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 package com.cra.figaro.test.algorithm.structured
 
-import org.scalatest.{WordSpec, Matchers}
+import org.scalatest.{Matchers, WordSpec}
 import com.cra.figaro.language._
-import com.cra.figaro.library.atomic.discrete.Uniform
+import com.cra.figaro.library.atomic.discrete.{Binomial, Geometric, Poisson, Uniform}
 import com.cra.figaro.library.compound.If
 import com.cra.figaro.algorithm.lazyfactored.ValueSet._
 import com.cra.figaro.util.MultiSet
 import com.cra.figaro.algorithm.factored.ParticleGenerator
+import com.cra.figaro.algorithm.lazyfactored.{Regular, Star}
 import com.cra.figaro.library.atomic.continuous.Normal
 import com.cra.figaro.library.collection.MakeArray
 import com.cra.figaro.library.collection.FixedSizeArray
 import com.cra.figaro.library.atomic.continuous.Beta
 import com.cra.figaro.library.atomic.continuous.Dirichlet
-import com.cra.figaro.library.atomic.discrete.Binomial
 import com.cra.figaro.library.compound.FoldLeft
 import com.cra.figaro.library.compound.IntSelector
 import com.cra.figaro.algorithm.structured._
+import com.cra.figaro.algorithm.structured.strategy.range.{CountingRanger, RangingStrategy, SamplingRanger}
+
+import scala.collection.mutable
 
 
 class RangeTest extends WordSpec with Matchers {
@@ -426,6 +429,72 @@ class RangeTest extends WordSpec with Matchers {
       cc.contains(e1) should equal (false)
     }
 
+    "for a BooleanOperator with added arguments without *, set the range to the image of the function on the argument values" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Flip(0.1)
+      val e2 = Flip(0.2)
+      val e3 = e1 && e2
+      pr.add(e1)
+      pr.add(e2)
+      pr.add(e3)
+      val c1 = cc(e1)
+      val c2 = cc(e2)
+      val c3 = cc(e3)
+      c1.generateRange()
+      c2.generateRange()
+      c3.generateRange()
+
+      c3.range.hasStar should equal (false)
+      c3.range.regularValues should equal (Set(true, false))
+    }
+
+    "for a BooleanOperator with an added argument that contains *, set the range to the image of the function on the extended values" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Constant(false)
+      val e2 = Flip(0.2)
+      val e3 = Flip(0.3)
+      val e4 = Dist(0.2 -> e2, 0.3 -> e3)
+      val e5 = e1 && e4
+      // e3 is not added to the problem, so the range of e4 is {true, false, *}
+      pr.add(e1)
+      pr.add(e2)
+      pr.add(e4)
+      pr.add(e5)
+      val c1 = cc(e1)
+      val c2 = cc(e2)
+      val c4 = cc(e4)
+      val c5 = cc(e5)
+      c1.generateRange()
+      c2.generateRange()
+      c4.generateRange()
+      c5.generateRange()
+
+      c5.range.hasStar should equal (false)
+      c5.range.regularValues should equal (Set(false))
+    }
+
+    "for a BooleanOperator with an unadded argument, set the range to the image of the function on the extended values" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Flip(0.1)
+      val e2 = Flip(0.2)
+      val e3 = e1 || e2
+      pr.add(e2)
+      pr.add(e3)
+      val c2 = cc(e2)
+      val c3 = cc(e3)
+      c2.generateRange()
+      c3.generateRange()
+
+      c3.range.hasStar should equal (true)
+      c3.range.regularValues should equal (Set(true))
+    }
+
     "for an Apply1 with an added argument without *, set the range to the image of the function on the argument values" in {
       Universe.createNew()
       val cc = new ComponentCollection
@@ -814,6 +883,48 @@ class RangeTest extends WordSpec with Matchers {
       c6.range.hasStar should equal (true)
       c6.range.regularValues should equal (Set())
       cc.contains(e2) should equal (false)
+    }
+
+    "for an Apply, cache the apply function so it is called only once per parent value" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Select(0.2 -> 1, 0.3 -> 2, 0.5 -> 3)
+      var count = 0
+      val e2 = Apply(e1, (i: Int) => {
+        count += 1
+        i / 2
+      })
+      pr.add(e1)
+      pr.add(e2)
+      val c1 = cc(e1)
+      val c2 = cc(e2)
+      c1.generateRange()
+      c2.generateRange()
+      c2.generateRange()
+      count should equal(3)
+    }
+
+    "for an Apply, place any elements created in the Apply function in the same problem" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      val pr = new Problem(cc)
+      val e1 = Select(0.2 -> 1, 0.3 -> 2, 0.5 -> 3)
+      val created = mutable.Set[Element[_]]()
+      val e2 = Apply(e1, (i: Int) => {
+        created += Flip(0.5)
+        i / 2
+      })
+      pr.add(e1)
+      pr.add(e2)
+      val c1 = cc(e1)
+      val c2 = cc(e2)
+      c1.generateRange()
+      c2.generateRange()
+      created should have size 3
+      for(e <- created) {
+        cc(e).problem should equal(pr)
+      }
     }
 
     "for an Inject with added arguments without *, set the range to lists of the cartesian product of the ranges of the arguments" in {
@@ -1656,19 +1767,101 @@ class RangeTest extends WordSpec with Matchers {
       cc.contains(e1) should equal (false)
     }
 
-    "for an atomic element, set the range to contain the right number of particles" in {
-      val universe = Universe.createNew()
-      val pg = ParticleGenerator(universe)
+    "for an atomic Geometric, when using CountingRanger, take the first n values" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      cc.rangingStrategy = RangingStrategy.defaultLazy(1)
+      val pr = new Problem(cc)
+      val v1 = Geometric(0.7)
+      pr.add(v1)
+      val c1 = cc(v1)
+      val ranger = c1.ranger.asInstanceOf[CountingRanger]
+      // 8 total values taken
+      ranger.valuesPerIteration = 3
+      c1.generateRange()
+      ranger.valuesPerIteration = 5
+      c1.generateRange()
+
+      c1.probs should have size 9
+      for(n <- 1 to 8) {
+        val mass = math.pow(0.7, n - 1) * 0.3
+        c1.probs(Regular(n)) should equal (mass +- 0.00001)
+      }
+      c1.probs(Star()) should equal (math.pow(0.7, 8) +- 0.00001)
+      c1.range.hasStar should equal (true)
+      c1.range.regularValues should equal ((1 to 8).toSet)
+    }
+
+    "for an atomic Poisson, when using CountingRanger, take the first n values" in {
+      Universe.createNew()
+      val cc = new ComponentCollection
+      cc.rangingStrategy = RangingStrategy.defaultLazy(1)
+      val pr = new Problem(cc)
+      val v1 = Poisson(4.0)
+      pr.add(v1)
+      val c1 = cc(v1)
+      val ranger = c1.ranger.asInstanceOf[CountingRanger]
+      // 8 total values taken
+      ranger.valuesPerIteration = 3
+      c1.generateRange()
+      ranger.valuesPerIteration = 5
+      c1.generateRange()
+
+      c1.probs should have size 9
+      var prob = math.pow(math.E, -4.0)
+      var starProb = 1.0
+      for(n <- 0 until 8) {
+        c1.probs(Regular(n)) should equal (prob +- 0.00001)
+        starProb -= prob
+        prob = prob * 4.0 / (n + 1)
+      }
+      c1.probs(Star()) should equal (starProb +- 0.00001)
+      c1.range.hasStar should equal (true)
+      c1.range.regularValues should equal ((0 until 8).toSet)
+    }
+
+    "for a continuous atomic, take samples" in {
+      Universe.createNew()
       val cc = new ComponentCollection
       val pr = new Problem(cc)
-      val e1 = Normal(0, 1)
-      pr.add(e1)
-      val c1 = cc(e1)
-      c1.generateRange(5)
+      val v1 = Normal(0.0, 1.0)
+      pr.add(v1)
+      val c1 = cc(v1)
+      val ranger = c1.ranger.asInstanceOf[SamplingRanger[Double]]
+      // 8 total samples taken
+      ranger.samplesPerIteration = 3
+      c1.generateRange()
+      ranger.samplesPerIteration = 5
+      c1.generateRange()
 
-      c1.range.hasStar should equal (false)
-      c1.range.regularValues.size should equal (5)
+      c1.probs should have size 8
+      for((xvalue, prob) <- c1.probs) {
+        xvalue.isRegular should equal (true)
+        prob should equal (0.125 +- 0.00001)
+      }
+      c1.range.xvalues should equal(c1.probs.keySet)
     }
+  }
+
+  "for any atomic, take the default number of samples" in {
+    Universe.createNew()
+    val cc = new ComponentCollection
+    val pr = new Problem(cc)
+    val v1 = Normal(0.0, 1.0)
+    pr.add(v1)
+    val c1 = cc(v1)
+    val ranger = c1.ranger.asInstanceOf[SamplingRanger[Double]]
+    val numSamples = ParticleGenerator.defaultNumSamplesFromAtomics
+    ranger.samplesPerIteration should equal(numSamples)
+    c1.generateRange()
+
+    c1.probs should have size numSamples
+    val prob = 1.0 / numSamples
+    for((xvalue, prob) <- c1.probs) {
+      xvalue.isRegular should equal (true)
+      prob should equal (prob +- 0.00001)
+    }
+    c1.range.xvalues should equal(c1.probs.keySet)
   }
 
   class EC1(universe: Universe) extends ElementCollection

@@ -5,7 +5,7 @@
  * Created By:      Glenn Takata (gtakata@cra.com)
  * Creation Date:   Dec 15, 2014
  *
- * Copyright 2014 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
@@ -97,7 +97,7 @@ object ComplexFactory {
       val injectRange = if (incomplete) withStar(resultValues); else withoutStar(resultValues)
 
       val resultVariable = Factory.makeVariable(cc, injectRange)
-      val factor = new BasicFactor[Double](inputVariables, List(resultVariable))
+      val factor = new DenseFactor[Double](inputVariables, List(resultVariable))
       factor.fillByRule(rule _)
       (resultVariable, factor)
     }

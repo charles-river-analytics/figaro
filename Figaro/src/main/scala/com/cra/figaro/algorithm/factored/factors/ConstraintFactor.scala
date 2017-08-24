@@ -5,7 +5,7 @@
  * Created By:      Glenn Takata (gtakata@cra.com)
  * Creation Date:   Feb 25, 2015
  * 
- * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
@@ -19,7 +19,7 @@ import scala.collection.mutable.Map
 import scala.util.control.Breaks._
 import com.cra.figaro.language.Element
 import com.cra.figaro.algorithm.lazyfactored.Extended
-import scala.reflect.runtime.universe._
+//import scala.reflect.runtime.universe._
 
 /**
  * Constraint Factor. A factor is associated with a set of variables and specifies a value for every
@@ -27,7 +27,7 @@ import scala.reflect.runtime.universe._
  * 
  * This factor is used to model constraints on elements.
  */
-class ConstraintFactor[T](parents: List[Variable[_]], output: List[Variable[_]], _semiring: Semiring[T] = SumProductSemiring().asInstanceOf[Semiring[T]])(implicit tag: TypeTag[T])
-  extends BasicFactor[T](parents, output, _semiring){
+class ConstraintFactor[T](parents: List[Variable[_]], output: List[Variable[_]], _semiring: Semiring[T] = SumProductSemiring().asInstanceOf[Semiring[T]])//(implicit tag: TypeTag[T])
+  extends DenseFactor[T](parents, output, _semiring){
     override val isConstraint = true
 } 

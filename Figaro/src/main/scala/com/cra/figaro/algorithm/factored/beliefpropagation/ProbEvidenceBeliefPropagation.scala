@@ -5,7 +5,7 @@
  * Created By:      Brian Ruttenberg (bruttenberg@cra.com)
  * Creation Date:   Jan 15, 2015
  * 
- * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
@@ -64,7 +64,7 @@ trait ProbEvidenceBeliefPropagation extends ProbabilisticBeliefPropagation with 
     val factorNodes = factorGraph.getNodes.filter(_.isInstanceOf[FactorNode]).toList
     val varNodes = factorGraph.getNodes.filter(_.isInstanceOf[VariableNode]).toList
 
-    val nonZeroEvidence = factorNodes.exists(p => beliefMap(p).contents.exists(_._2 != Double.NegativeInfinity))
+    val nonZeroEvidence = factorNodes.exists(p => beliefMap(p).getContents().exists(_ != Double.NegativeInfinity))
 
     if (nonZeroEvidence) {
       val betheEnergy = -1 * factorNodes.map(f => {

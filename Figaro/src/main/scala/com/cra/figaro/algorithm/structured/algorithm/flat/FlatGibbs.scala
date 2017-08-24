@@ -5,7 +5,7 @@
  * Created By:      William Kretschmer (kretsch@mit.edu)
  * Creation Date:   Aug 8, 2015
  *
- * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
@@ -14,29 +14,16 @@
 package com.cra.figaro.algorithm.structured.algorithm.flat
 
 import com.cra.figaro.language._
-import com.cra.figaro.algorithm.factored.factors.SumProductSemiring
-import com.cra.figaro.algorithm.structured._
-import com.cra.figaro.algorithm.structured.strategy._
 import com.cra.figaro.algorithm.structured.solver._
 import com.cra.figaro.algorithm.structured.strategy.solve._
 import com.cra.figaro.algorithm.structured.algorithm._
-import com.cra.figaro.algorithm.structured.strategy.decompose._
-import com.cra.figaro.algorithm.factored.factors.factory._
 import com.cra.figaro.algorithm.factored.gibbs._
 import com.cra.figaro.algorithm.factored.gibbs.BlockSampler
 
 class FlatGibbs(universe: Universe, numSamples: Int, burnIn: Int, interval: Int, blockToSampler: Gibbs.BlockSamplerCreator, targets: Element[_]*)
-  extends StructuredProbQueryAlgorithm(universe, targets: _*) {
+  extends StructuredProbQueryAlgorithm(universe, targets: _*) with DecompositionProbQuery {
 
-  val semiring = SumProductSemiring()
-
-  def run() {   
-    val strategy = DecompositionStrategy.recursiveFlattenStrategy(problem, new ConstantStrategy(marginalGibbs(numSamples, burnIn, interval, blockToSampler)), defaultRangeSizer, Lower, false)
-    strategy.execute(initialComponents)
-    val joint = problem.solution.foldLeft(Factory.unit(semiring))(_.product(_))
-    targets.foreach(t => marginalizeToTarget(t, joint))
-  }
-
+  def solvingStrategy() = new ConstantStrategy(problem, flatRaising, marginalGibbs(numSamples, burnIn, interval, blockToSampler))
 }
 
 object FlatGibbs {

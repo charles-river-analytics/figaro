@@ -5,10 +5,16 @@
  * Created By:      Michael Howard (mhoward@cra.com)
  * Creation Date:   Oct 29, 2014
  * 
- * Copyright 2014 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
+
+/*
+ * Additional Updates from our community
+ * 
+ * Paul Philips		May 23, 2017
  */
 
 package com.cra.figaro.patterns.learning
@@ -187,7 +193,7 @@ object ModelParameters {
    */
   implicit val decodeJson: DecodeJson[Parameter[_]] = DecodeJson { c =>
     c.downField("Beta").as[AtomicBeta] |||
-    c.downField("Dirichlet").as[AtomicDirichlet]
+    c.downField("Dirichlet").as[Parameter[_]]
   }
   
   /**

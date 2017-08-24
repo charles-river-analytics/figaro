@@ -5,10 +5,16 @@
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Feb 25, 2011
  * 
- * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
+
+/*
+ * Additional Updates from our community
+ * 
+ * Synapski		Oct 13, 2014
  */
 
 package com.cra.figaro.library.atomic.continuous
@@ -24,9 +30,12 @@ import JSci.maths.SpecialMath.{ gamma, logGamma }
  * Theta defaults to 1.
  */
 class AtomicGamma(name: Name[Double], k: Double, theta: Double = 1.0, collection: ElementCollection)
-  extends Element[Double](name, collection) with Atomic[Double] {
+  extends Element[Double](name, collection) with Atomic[Double] with Gamma {
   type Randomness = Double
 
+  def kValue = k
+  def thetaValue = theta
+  
   def generateRandomness() = Util.generateGamma(k)
 
   def generateValue(rand: Randomness) =

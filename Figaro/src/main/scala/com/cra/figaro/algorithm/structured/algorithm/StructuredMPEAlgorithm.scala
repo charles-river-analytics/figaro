@@ -1,55 +1,61 @@
 /*
- * StructuredAlgorithm.scala
- * Abstract class for algorithms that are structured
+ * StructuredMPEAlgorithm.scala
+ * SFI algorithms that compute MPE queries.
  *
  * Created By:      Brian Ruttenberg (bruttenberg@cra.com)
  * Creation Date:   December 30, 2015
  *
- * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 package com.cra.figaro.algorithm.structured.algorithm
 
-import com.cra.figaro.algorithm.Algorithm
+import com.cra.figaro.algorithm._
+import com.cra.figaro.algorithm.factored.factors.{Factor, Variable}
+import com.cra.figaro.algorithm.structured.{Bounds, ComponentCollection}
+import com.cra.figaro.algorithm.structured.solver._
 import com.cra.figaro.language._
-import scala.collection.mutable.Map
-import com.cra.figaro.algorithm.factored.factors.Factor
-import com.cra.figaro.algorithm.factored.factors.Semiring
-import com.cra.figaro.algorithm.structured.Problem
-import com.cra.figaro.algorithm.structured.ComponentCollection
-import com.cra.figaro.algorithm.OneTimeMPE
-import com.cra.figaro.algorithm.AlgorithmException
 
-abstract class StructuredMPEAlgorithm(val universe: Universe) extends Algorithm with OneTimeMPE {
+abstract class StructuredMPEAlgorithm(universe: Universe, collection: ComponentCollection)
+  extends StructuredAlgorithm(universe, collection) with MPEAlgorithm {
 
-  def run(): Unit
+  def this(universe: Universe) {
+    this(universe, new ComponentCollection)
+  }
 
-  val semiring: Semiring[Double]
+  // This is an empty list because MPE works by eliminating all variables.
+  override def problemTargets = List()
 
-  //val targetFactors: Map[Element[_], Factor[Double]] = Map()
+  // Solutions contain MPE values of individual variables, and are precisely the problem's recording factors.
+  protected var targetFactors: Map[Variable[_], Factor[_]] = Map()
 
-  val cc: ComponentCollection = new ComponentCollection
-
-  val problem = new Problem(cc, List())
-  // We have to add all active elements to the problem since these elements, if they are every used, need to have components created at the top level problem
-  universe.permanentElements.foreach(problem.add(_))
-  val evidenceElems = universe.conditionedElements ::: universe.constrainedElements
-
-  def initialComponents() = (universe.permanentElements ++ evidenceElems).distinct.map(cc(_))
+  override def processSolutions(solutions: Map[Bounds, Solution]): Unit = {
+    if(solutions.size > 1) {
+      throw new IllegalArgumentException("this model requires lower and upper bounds; " +
+        "use a lazy algorithm instead, or a ranging strategy that avoids *")
+    }
+    val (_, recordingFactors) = solutions.head._2
+    targetFactors = recordingFactors
+  }
 
   /**
    * Returns the most likely value for the target element.
+   * Throws an IllegalArgumentException if the range of the target contains star.
    */
   def mostLikelyValue[T](target: Element[T]): T = {
-    val targetVar = cc(target).variable
-    val factor = problem.recordingFactors(targetVar).asInstanceOf[Factor[T]]
+    val targetVar = collection(target).variable
+    if (targetVar.valueSet.hasStar) {
+      throw new IllegalArgumentException("target range contains *; " +
+        "use a lazy algorithm instead, or a ranging strategy that avoids *")
+    }
+    val factor = targetFactors(targetVar).asInstanceOf[Factor[T]]
     if (factor.size != 1) throw new AlgorithmException//("Final factor for most likely value has more than one entry")
     factor.get(List())
   }
- 
-
 }
 
+trait OneTimeStructuredMPE extends StructuredMPEAlgorithm with OneTimeStructured with OneTimeMPE
 
+trait AnytimeStructuredMPE extends StructuredMPEAlgorithm with AnytimeStructured with AnytimeMPE

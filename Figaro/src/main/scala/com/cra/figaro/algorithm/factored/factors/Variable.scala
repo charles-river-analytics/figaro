@@ -5,7 +5,7 @@
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
  *
- * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
@@ -15,10 +15,13 @@ package com.cra.figaro.algorithm.factored.factors
 
 import com.cra.figaro.algorithm._
 import com.cra.figaro.language._
+
 import scala.collection.mutable.Map
-import com.cra.figaro.algorithm.lazyfactored.{ LazyValues, Extended, ValueSet }
+import com.cra.figaro.algorithm.lazyfactored.{Extended, LazyValues, ValueSet}
 import com.cra.figaro.algorithm.structured._
+import com.cra.figaro.algorithm.structured.strategy.range.ValuesRanger
 import com.cra.figaro.library.collection.MakeArray
+
 import scala.collection.mutable.HashMap
 
 /**
@@ -98,7 +101,10 @@ object Variable {
   private def makeComponent[T](elem: Element[T]): ProblemComponent[T] = elem match {
     case chain: Chain[_, T] => new ChainComponent(problem, chain)
     case makeArray: MakeArray[_] => new MakeArrayComponent(problem, makeArray).asInstanceOf[ProblemComponent[T]]
-    case apply: Apply[_] => new ApplyComponent(problem, apply)
+    case apply: Apply[T] => new ApplyComponent(problem, apply)
+    // This is subtle: we must use the atomic ranger type that generates a distribution based on the range given,
+    // rather than one that generates its own range
+    case atomic: Atomic[T] => new AtomicComponent(problem, atomic, new ValuesRanger(atomic, cc))
     case _ => new ProblemComponent(problem, elem)
   }
 

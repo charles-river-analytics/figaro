@@ -1,6 +1,6 @@
 /*
  * StructuredMarginalMAPAlgorithm.scala
- * Abstract class for structured marginal MAP algorithms.
+ * SFI algorithms that compute marginal MAP queries.
  *
  * Created By:      William Kretschmer (kretsch@mit.edu)
  * Creation Date:   Jun 3, 2016
@@ -12,40 +12,57 @@
  */
 package com.cra.figaro.experimental.marginalmap
 
-import com.cra.figaro.algorithm.{Algorithm, AlgorithmException}
-import com.cra.figaro.algorithm.factored.factors.Factor
-import com.cra.figaro.algorithm.structured.{ComponentCollection, Problem}
+import com.cra.figaro.algorithm.AlgorithmException
+import com.cra.figaro.algorithm.factored.factors.{Factor, Variable}
+import com.cra.figaro.algorithm.structured.algorithm._
+import com.cra.figaro.algorithm.structured.solver._
+import com.cra.figaro.algorithm.structured.{Bounds, ComponentCollection}
 import com.cra.figaro.language._
 
 /**
  * A structured marginal MAP algorithm.
  * @param universe Universe on which to perform inference.
- * @param mapElements Elements for which to compute MAP queries. Elements not in this list are summed over.
+ * @param mapElements Elements for which to compute MAP queries. Elements not in this sequence are summed over.
  */
-abstract class StructuredMarginalMAPAlgorithm(val universe: Universe, val mapElements: List[Element[_]])
-  extends Algorithm with OneTimeMarginalMAP {
+abstract class StructuredMarginalMAPAlgorithm(universe: Universe, collection: ComponentCollection, val mapElements: Element[_]*)
+  extends StructuredAlgorithm(universe, collection) with MarginalMAPAlgorithm {
 
-  def run(): Unit
+  def this(universe: Universe, mapElements: Element[_]*) {
+    this(universe, new ComponentCollection, mapElements:_*)
+  }
 
-  val cc: ComponentCollection = new ComponentCollection
+  override def problemTargets = mapElements.toList
 
-  // Targets are our MAP elements, since the first step is to eliminate the other elements
-  val problem = new Problem(cc, mapElements)
-  
-  // We have to add all active elements to the problem since these elements, if they are every used, need to have components created at the top level problem
-  universe.permanentElements.foreach(problem.add(_))
-  val evidenceElems = universe.conditionedElements ::: universe.constrainedElements
+  // Solutions contain MPE values of individual variables, and are precisely the problem's recording factors.
+  protected var targetFactors: Map[Variable[_], Factor[_]] = Map()
 
-  def initialComponents() = (problem.targets ++ evidenceElems).distinct.map(cc(_))
+  override def processSolutions(solutions: Map[Bounds, Solution]): Unit = {
+    if(solutions.size > 1) {
+      throw new IllegalArgumentException("this model requires lower and upper bounds; " +
+        "use a lazy algorithm instead, or a ranging strategy that avoids *")
+    }
+    val (_, recordingFactors) = solutions.head._2
+    targetFactors = recordingFactors
+  }
 
+  /**
+   * Returns the most likely value for the target element.
+   * Throws an IllegalArgumentException if the range of the target contains star.
+   */
   def computeMostLikelyValue[T](target: Element[T]): T = {
-    val targetVar = cc(target).variable
-    val factor = problem.recordingFactors(targetVar).asInstanceOf[Factor[T]]
+    val targetVar = collection(target).variable
+    if (targetVar.valueSet.hasStar) {
+      throw new IllegalArgumentException("target range contains *; " +
+        "use a lazy algorithm instead, or a ranging strategy that avoids *")
+    }
+    val factor = targetFactors(targetVar).asInstanceOf[Factor[T]]
     if (factor.size != 1) throw new AlgorithmException//("Final factor for most likely value has more than one entry")
     factor.get(List())
   }
- 
-
 }
 
+trait OneTimeStructuredMarginalMAP extends StructuredMarginalMAPAlgorithm with OneTimeStructured with OneTimeMarginalMAP
 
+trait AnytimeStructuredMarginalMAP extends StructuredMarginalMAPAlgorithm with AnytimeStructured with AnytimeMarginalMAP
+
+trait DecompositionMarginalMAP extends OneTimeStructuredMarginalMAP with DecompositionStructuredAlgorithm

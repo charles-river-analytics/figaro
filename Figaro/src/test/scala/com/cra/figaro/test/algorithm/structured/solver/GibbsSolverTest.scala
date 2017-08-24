@@ -5,21 +5,21 @@
  * Created By:      William Kretschmer (kretsch@mit.edu)
  * Creation Date:   Aug 21, 2015
  *
- * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
  */
 package com.cra.figaro.test.algorithm.structured.solver
 
-import org.scalatest.{WordSpec, Matchers}
+import org.scalatest.{Matchers, WordSpec}
 import com.cra.figaro.algorithm.factored.factors._
 import com.cra.figaro.algorithm.lazyfactored.Regular
 import com.cra.figaro.algorithm.factored.gibbs.BlockSampler
 import com.cra.figaro.language._
 import com.cra.figaro.library.atomic.discrete.Uniform
 import com.cra.figaro.library.compound.If
-import com.cra.figaro.algorithm.factored.factors.factory.Factory
+import com.cra.figaro.algorithm.factored.factors.factory.{ChainFactory, Factory}
 import com.cra.figaro.algorithm.structured.strategy.solve._
 import com.cra.figaro.algorithm.structured._
 import com.cra.figaro.algorithm.structured.solver._
@@ -41,18 +41,11 @@ class GibbsSolverTest extends WordSpec with Matchers {
         c1.generateRange()
         c2.generateRange()
         c3.generateRange()
-        // Make factors so variables have known parents
-        c1.makeNonConstraintFactors()
-        c2.makeNonConstraintFactors()
-        c3.makeNonConstraintFactors()
-        c1.makeConstraintFactors()
-        c2.makeConstraintFactors()
-        c3.makeConstraintFactors()
         val v1 = c1.variable
         val v2 = c2.variable
         val v3 = c3.variable
 
-        val solver = new GibbsSolver(pr, Set(), Set(v2 , v3), pr.components.flatMap(_.nonConstraintFactors), 1, 0, 1, BlockSampler.default)
+        val solver = new GibbsSolver(pr, Set(), Set(v2 , v3), pr.components.flatMap(_.nonConstraintFactors()), 1, 0, 1, BlockSampler.default)
         // Call initialize to set solver.variables so createBlocks may be called
         solver.initialize()
         solver.createBlocks().map(_.toSet) should contain theSameElementsAs List(Set(v1, v3), Set(v2, v3))
@@ -75,21 +68,12 @@ class GibbsSolverTest extends WordSpec with Matchers {
         c3.generateRange()
         c4.expand()
         c4.generateRange()
-        // Make factors so variables have known parents
-        c1.makeNonConstraintFactors()
-        c2.makeNonConstraintFactors()
-        c3.makeNonConstraintFactors()
-        c4.makeNonConstraintFactors()
-        c1.makeConstraintFactors()
-        c2.makeConstraintFactors()
-        c3.makeConstraintFactors()
-        c4.makeConstraintFactors()
         val v1 = c1.variable
         val v2 = c2.variable
         val v3 = c3.variable
         val v4 = c4.variable
 
-        val solver = new GibbsSolver(pr, Set(), Set(v4), pr.components.flatMap(_.nonConstraintFactors), 1, 0, 1, BlockSampler.default)
+        val solver = new GibbsSolver(pr, Set(), Set(v4), pr.components.flatMap(_.nonConstraintFactors()), 1, 0, 1, BlockSampler.default)
         // Call initialize to set solver.variables so createBlocks may be called
         solver.initialize()
         val v5 = (solver.variables -- Set(v1, v2, v3, v4)).head
@@ -110,23 +94,23 @@ class GibbsSolverTest extends WordSpec with Matchers {
         val c2 = cc(e2)
         val c3 = cc(e3)
         c1.generateRange()
-        c1.makeNonConstraintFactors()
         c2.expand()
         for((_, spr) <- c2.subproblems) {
           val target = cc(spr.target)
           target.generateRange()
-          target.makeNonConstraintFactors()
-          spr.solve(new ConstantStrategy(marginalVariableElimination))
+          new ConstantStrategy(spr, structuredRaising, marginalVariableElimination).execute()
         }
         c2.generateRange()
-        c2.makeNonConstraintFactors()
         c3.generateRange()
-        c3.makeNonConstraintFactors()
         val v1 = c1.variable
         val v2 = c2.variable
         val v3 = c3.variable
 
-        val solver = new GibbsSolver(pr, Set(), Set(v3), pr.components.flatMap(_.nonConstraintFactors), 1, 0, 1, BlockSampler.default)
+        val factors = pr.components.flatMap {
+          case chainComp: ChainComponent[_, _] => ChainFactory.makeSingleFactor(cc, chainComp.chain)
+          case comp => comp.nonConstraintFactors()
+        }
+        val solver = new GibbsSolver(pr, Set(), Set(v3), factors, 1, 0, 1, BlockSampler.default)
         // Call initialize to set solver.variables so createBlocks may be called
         solver.initialize()
         // Chain should not be blocked with parent, but should still be blocked with its deterministic children
@@ -152,19 +136,15 @@ class GibbsSolverTest extends WordSpec with Matchers {
         val c2 = cc(e2)
         val c3 = cc(e3)
         c1.generateRange()
-        c1.makeNonConstraintFactors()
         c2.expand()
         for((_, spr) <- c2.subproblems) {
           val target = cc(spr.target)
           target.generateRange()
-          target.makeNonConstraintFactors()
-          spr.solve(new ConstantStrategy(marginalVariableElimination))
+          new ConstantStrategy(spr, structuredRaising, marginalVariableElimination).execute()
         }
         c2.generateRange()
-        c2.makeNonConstraintFactors()
         c3.generateRange()
-        c3.makeNonConstraintFactors()
-        pr.solve(new ConstantStrategy(marginalGibbs(10000, 0, 1, BlockSampler.default)))
+        new ConstantStrategy(pr, structuredRaising, marginalGibbs(10000, 0, 1, BlockSampler.default)).execute()
 
         val result = multiplyAll(pr.solution)
         result.variables should equal (List(c3.variable))
@@ -192,13 +172,7 @@ class GibbsSolverTest extends WordSpec with Matchers {
         c1.generateRange()
         c2.generateRange()
         c3.generateRange()
-        c1.makeNonConstraintFactors()
-        c2.makeNonConstraintFactors()
-        c3.makeNonConstraintFactors()
-        c1.makeConstraintFactors()
-        c2.makeConstraintFactors()
-        c3.makeConstraintFactors()
-        pr.solve(new ConstantStrategy(marginalGibbs(10000, 0, 1, BlockSampler.default)))
+        new ConstantStrategy(pr, structuredRaising, marginalGibbs(10000, 0, 1, BlockSampler.default)).execute()
 
         pr.globals should equal (Set(c2))
         pr.solved should equal (true)
@@ -225,13 +199,7 @@ class GibbsSolverTest extends WordSpec with Matchers {
         c1.generateRange()
         c2.generateRange()
         c3.generateRange()
-        c1.makeNonConstraintFactors()
-        c2.makeNonConstraintFactors()
-        c3.makeNonConstraintFactors()
-        c1.makeConstraintFactors()
-        c2.makeConstraintFactors()
-        c3.makeConstraintFactors()
-        pr.solve(new ConstantStrategy(marginalGibbs(10000, 0, 1, BlockSampler.default)))
+        new ConstantStrategy(pr, structuredRaising, marginalGibbs(10000, 0, 1, BlockSampler.default)).execute()
 
         pr.globals should equal (Set(c2, c3))
         val result = multiplyAll(pr.solution)
@@ -277,13 +245,7 @@ class GibbsSolverTest extends WordSpec with Matchers {
         c1.generateRange()
         c2.generateRange()
         c3.generateRange()
-        c1.makeNonConstraintFactors()
-        c2.makeNonConstraintFactors()
-        c3.makeNonConstraintFactors()
-        c1.makeConstraintFactors()
-        c2.makeConstraintFactors()
-        c3.makeConstraintFactors()
-        pr.solve(new ConstantStrategy(marginalGibbs(10000, 0, 1, BlockSampler.default)))
+        new ConstantStrategy(pr, structuredRaising, marginalGibbs(10000, 0, 1, BlockSampler.default)).execute()
 
         pr.globals should equal  (Set(c1))
         val result = multiplyAll(pr.solution)
@@ -321,13 +283,7 @@ class GibbsSolverTest extends WordSpec with Matchers {
         c1.generateRange()
         c2.generateRange()
         c3.generateRange()
-        c1.makeNonConstraintFactors()
-        c2.makeNonConstraintFactors()
-        c3.makeNonConstraintFactors()
-        c1.makeConstraintFactors()
-        c2.makeConstraintFactors()
-        c3.makeConstraintFactors()
-        pr.solve(new ConstantStrategy(marginalGibbs(10000, 0, 1, BlockSampler.default)))
+        new ConstantStrategy(pr, structuredRaising, marginalGibbs(10000, 0, 1, BlockSampler.default)).execute()
 
         pr.globals should equal  (Set(c1))
         val result = multiplyAll(pr.solution)
@@ -366,13 +322,7 @@ class GibbsSolverTest extends WordSpec with Matchers {
         c1.generateRange()
         c2.generateRange()
         c3.generateRange()
-        c1.makeNonConstraintFactors()
-        c2.makeNonConstraintFactors()
-        c3.makeNonConstraintFactors()
-        c1.makeConstraintFactors()
-        c2.makeConstraintFactors()
-        c3.makeConstraintFactors()
-        pr.solve(new ConstantStrategy(marginalGibbs(10000, 0, 1, BlockSampler.default)))
+        new ConstantStrategy(pr, structuredRaising, marginalGibbs(10000, 0, 1, BlockSampler.default)).execute()
 
         pr.globals should equal  (Set(c1))
         val result = multiplyAll(pr.solution)
@@ -411,13 +361,7 @@ class GibbsSolverTest extends WordSpec with Matchers {
         c1.generateRange()
         c2.generateRange()
         c3.generateRange()
-        c1.makeNonConstraintFactors()
-        c2.makeNonConstraintFactors()
-        c3.makeNonConstraintFactors()
-        c1.makeConstraintFactors()
-        c2.makeConstraintFactors()
-        c3.makeConstraintFactors()
-        pr.solve(new ConstantStrategy(marginalGibbs(10000, 0, 1, BlockSampler.default)))
+        new ConstantStrategy(pr, structuredRaising, marginalGibbs(10000, 0, 1, BlockSampler.default)).execute()
 
         pr.globals should equal  (Set(c1))
         val result = multiplyAll(pr.solution)
@@ -457,13 +401,7 @@ class GibbsSolverTest extends WordSpec with Matchers {
         c11.generateRange()
         c12.generateRange()
         c2.generateRange()
-        c11.makeNonConstraintFactors()
-        c12.makeNonConstraintFactors()
-        c2.makeNonConstraintFactors()
-        c11.makeConstraintFactors()
-        c12.makeConstraintFactors()
-        c2.makeConstraintFactors()
-        pr.solve(new ConstantStrategy(marginalGibbs(10000, 0, 1, BlockSampler.default)))
+        new ConstantStrategy(pr, structuredRaising, marginalGibbs(10000, 0, 1, BlockSampler.default)).execute()
 
         pr.globals should equal (Set(c2))
         val result = multiplyAll(pr.solution)
@@ -490,11 +428,7 @@ class GibbsSolverTest extends WordSpec with Matchers {
         val c2 = cc(e2)
         c1.generateRange()
         c2.generateRange()
-        c1.makeNonConstraintFactors()
-        c2.makeNonConstraintFactors()
-        c1.makeConstraintFactors()
-        c2.makeConstraintFactors()
-        pr.solve(new ConstantStrategy(marginalGibbs(10000, 0, 1, BlockSampler.default)))
+        new ConstantStrategy(pr, structuredRaising, marginalGibbs(10000, 0, 1, BlockSampler.default)).execute()
         val result = multiplyAll(pr.solution)
         val c2IndexT = c2.variable.range.indexOf(Regular(true))
         val c2IndexF = c2.variable.range.indexOf(Regular(false))
@@ -532,19 +466,7 @@ class GibbsSolverTest extends WordSpec with Matchers {
       cf3.generateRange()
       cd.expand()
       cd.generateRange()
-      cf1.makeNonConstraintFactors()
-      cf2.makeNonConstraintFactors()
-      ce1.makeNonConstraintFactors()
-      ce2.makeNonConstraintFactors()
-      cf3.makeNonConstraintFactors()
-      cd.makeNonConstraintFactors()
-      cf1.makeConstraintFactors()
-      cf2.makeConstraintFactors()
-      ce1.makeConstraintFactors()
-      ce2.makeConstraintFactors()
-      cf3.makeConstraintFactors()
-      cd.makeConstraintFactors()
-      pr.solve(new ConstantStrategy(marginalGibbs(10000, 0, 1, BlockSampler.default)))
+      new ConstantStrategy(pr, structuredRaising, marginalGibbs(10000, 0, 1, BlockSampler.default)).execute()
 
       // Probability that f1 is true = 0.6
       // Probability that e1 is true = 1.0
@@ -574,13 +496,7 @@ class GibbsSolverTest extends WordSpec with Matchers {
       cf.generateRange()
       ca.expand()
       ca.generateRange()
-      cu.makeNonConstraintFactors()
-      cf.makeNonConstraintFactors()
-      ca.makeNonConstraintFactors()
-      cu.makeConstraintFactors()
-      cf.makeConstraintFactors()
-      ca.makeConstraintFactors()
-      pr.solve(new ConstantStrategy(marginalGibbs(10000, 0, 1, BlockSampler.default)))
+      new ConstantStrategy(pr, structuredRaising, marginalGibbs(10000, 0, 1, BlockSampler.default)).execute()
       val result = multiplyAll(pr.solution)
       val fIndexT = cf.variable.range.indexOf(Regular(true))
       val fIndexF = cf.variable.range.indexOf(Regular(false))
@@ -609,15 +525,7 @@ class GibbsSolverTest extends WordSpec with Matchers {
       c3.generateRange()
       c4.expand()
       c4.generateRange()
-      c1.makeNonConstraintFactors()
-      c2.makeNonConstraintFactors()
-      c3.makeNonConstraintFactors()
-      c4.makeNonConstraintFactors()
-      c1.makeConstraintFactors()
-      c2.makeConstraintFactors()
-      c3.makeConstraintFactors()
-      c4.makeConstraintFactors()
-      pr.solve(new ConstantStrategy(marginalGibbs(10000, 0, 1, BlockSampler.default)))
+      new ConstantStrategy(pr, structuredRaising, marginalGibbs(10000, 0, 1, BlockSampler.default)).execute()
       val result = multiplyAll(pr.solution)
       val c4Index1 = c4.variable.range.indexOf(Regular(1))
       result.get(List(c4Index1)) should be ((0.3 * 0.1 + 0.7 * 0.7) +- tol)
@@ -641,16 +549,8 @@ class GibbsSolverTest extends WordSpec with Matchers {
       c2.generateRange()
       c3.generateRange()
       c4.generateRange()
-      c1.makeConstraintFactors()
-      c2.makeConstraintFactors()
-      c3.makeConstraintFactors()
-      c4.makeConstraintFactors()
-      c1.makeNonConstraintFactors()
-      c2.makeNonConstraintFactors()
-      c3.makeNonConstraintFactors()
-      c4.subproblems.values.foreach(_.solve(new ConstantStrategy(marginalGibbs(10000, 0, 1, BlockSampler.default))))
-      c4.makeNonConstraintFactors()
-      pr.solve(new ConstantStrategy(marginalGibbs(10000, 0, 1, BlockSampler.default)))
+      //c4.subproblems.values.foreach(new ConstantStrategy(_, marginalGibbs(10000, 0, 1, BlockSampler.default)).execute())
+      new ConstantStrategy(pr, structuredRaising, marginalGibbs(10000, 0, 1, BlockSampler.default)).execute()
       val result = multiplyAll(pr.solution)
       val c4Index1 = c4.variable.range.indexOf(Regular(1))
       result.get(List(c4Index1)) should be ((0.3 * 0.1 + 0.7 * 0.7) +- tol)
@@ -678,15 +578,7 @@ class GibbsSolverTest extends WordSpec with Matchers {
       c3.generateRange()
       c4.expand()
       c4.generateRange()
-      c1.makeConstraintFactors()
-      c2.makeConstraintFactors()
-      c3.makeConstraintFactors()
-      c4.makeConstraintFactors()
-      c1.makeNonConstraintFactors()
-      c2.makeNonConstraintFactors()
-      c3.makeNonConstraintFactors()
-      c4.makeNonConstraintFactors()
-      pr.solve(new ConstantStrategy(marginalGibbs(10000, 0, 1, BlockSampler.default)))
+      new ConstantStrategy(pr, structuredRaising, marginalGibbs(10000, 0, 1, BlockSampler.default)).execute()
 
       val result = multiplyAll(pr.solution)
       val c1IndexT = c1.variable.range.indexOf(Regular(true))
@@ -716,16 +608,8 @@ class GibbsSolverTest extends WordSpec with Matchers {
       c2.generateRange()
       c3.generateRange()
       c4.generateRange()
-      c1.makeConstraintFactors()
-      c2.makeConstraintFactors()
-      c3.makeConstraintFactors()
-      c4.makeConstraintFactors()
-      c1.makeNonConstraintFactors()
-      c2.makeNonConstraintFactors()
-      c3.makeNonConstraintFactors()
-      c4.subproblems.values.foreach(_.solve(new ConstantStrategy(marginalGibbs(10000, 0, 1, BlockSampler.default))))
-      c4.makeNonConstraintFactors()
-      pr.solve(new ConstantStrategy(marginalGibbs(10000, 0, 1, BlockSampler.default)))
+      //c4.subproblems.values.foreach(new ConstantStrategy(_, marginalGibbs(10000, 0, 1, BlockSampler.default)).execute())
+      new ConstantStrategy(pr, structuredRaising, marginalGibbs(10000, 0, 1, BlockSampler.default)).execute()
 
       val result = multiplyAll(pr.solution)
       val c1IndexT = c1.variable.range.indexOf(Regular(true))
@@ -756,15 +640,7 @@ class GibbsSolverTest extends WordSpec with Matchers {
       c3.generateRange()
       c4.expand()
       c4.generateRange()
-      c1.makeConstraintFactors()
-      c2.makeConstraintFactors()
-      c3.makeConstraintFactors()
-      c4.makeConstraintFactors()
-      c1.makeNonConstraintFactors()
-      c2.makeNonConstraintFactors()
-      c3.makeNonConstraintFactors()
-      c4.makeNonConstraintFactors()
-      pr.solve(new ConstantStrategy(marginalGibbs(10000, 0, 1, BlockSampler.default)))
+      new ConstantStrategy(pr, structuredRaising, marginalGibbs(10000, 0, 1, BlockSampler.default)).execute()
 
       val result = multiplyAll(pr.solution)
       val c4Index1 = c4.variable.range.indexOf(Regular(1))
@@ -798,15 +674,7 @@ class GibbsSolverTest extends WordSpec with Matchers {
       c3.generateRange()
       c4.expand()
       c4.generateRange()
-      c1.makeConstraintFactors()
-      c2.makeConstraintFactors()
-      c3.makeConstraintFactors()
-      c4.makeConstraintFactors()
-      c1.makeNonConstraintFactors()
-      c2.makeNonConstraintFactors()
-      c3.makeNonConstraintFactors()
-      c4.makeNonConstraintFactors()
-      pr.solve(new ConstantStrategy(marginalGibbs(10000, 0, 1, BlockSampler.default)))
+      new ConstantStrategy(pr, structuredRaising, marginalGibbs(10000, 0, 1, BlockSampler.default)).execute()
 
       val result = multiplyAll(pr.solution)
       val c1IndexT = c1.variable.range.indexOf(Regular(true))
@@ -816,7 +684,8 @@ class GibbsSolverTest extends WordSpec with Matchers {
       (pT / (pT + pF)) should be (0.3 +- tol)
     }
 
-    "with a model using chain and a condition on one of the outcome elements, when the outcomes are nested, correctly condition the result" in {
+    // These tests are invalid because nested evidence is disallowed
+    /*"with a model using chain and a condition on one of the outcome elements, when the outcomes are nested, correctly condition the result" in {
       Universe.createNew()
       val e1 = Flip(0.3)
       val e2 = Select(0.1 -> 1, 0.9 -> 2)
@@ -836,16 +705,8 @@ class GibbsSolverTest extends WordSpec with Matchers {
       c2.generateRange()
       c3.generateRange()
       c4.generateRange()
-      c1.makeConstraintFactors()
-      c2.makeConstraintFactors()
-      c3.makeConstraintFactors()
-      c4.makeConstraintFactors()
-      c1.makeNonConstraintFactors()
-      c2.makeNonConstraintFactors()
-      c3.makeNonConstraintFactors()
-      c4.subproblems.values.foreach(_.solve(new ConstantStrategy(marginalGibbs(10000, 0, 1, BlockSampler.default))))
-      c4.makeNonConstraintFactors()
-      pr.solve(new ConstantStrategy(marginalGibbs(10000, 0, 1, BlockSampler.default)))
+      //c4.subproblems.values.foreach(new ConstantStrategy(_, marginalGibbs(10000, 0, 1, BlockSampler.default)).execute())
+      new ConstantStrategy(pr, structuredRaising, marginalGibbs(10000, 0, 1, BlockSampler.default)).execute()
 
       val result = multiplyAll(pr.solution)
       val c4Index1 = c4.variable.range.indexOf(Regular(1))
@@ -878,16 +739,8 @@ class GibbsSolverTest extends WordSpec with Matchers {
       c2.generateRange()
       c3.generateRange()
       c4.generateRange()
-      c1.makeConstraintFactors()
-      c2.makeConstraintFactors()
-      c3.makeConstraintFactors()
-      c4.makeConstraintFactors()
-      c1.makeNonConstraintFactors()
-      c2.makeNonConstraintFactors()
-      c3.makeNonConstraintFactors()
-      c4.subproblems.values.foreach(_.solve(new ConstantStrategy(marginalGibbs(10000, 0, 1, BlockSampler.default))))
-      c4.makeNonConstraintFactors()
-      pr.solve(new ConstantStrategy(marginalGibbs(10000, 0, 1, BlockSampler.default)))
+      //c4.subproblems.values.foreach(new ConstantStrategy(_, marginalGibbs(10000, 0, 1, BlockSampler.default)).execute())
+      new ConstantStrategy(pr, structuredRaising, marginalGibbs(10000, 0, 1, BlockSampler.default)).execute()
 
       val result = multiplyAll(pr.solution)
       val c1IndexT = c1.variable.range.indexOf(Regular(true))
@@ -896,7 +749,7 @@ class GibbsSolverTest extends WordSpec with Matchers {
       val pF = result.get(List(c1IndexF))
       (pT / (pT + pF)) should be (0.3 +- tol)
     }
-
+    */
   }
 
   def multiplyAll(factors: List[Factor[Double]]): Factor[Double] = factors.foldLeft(Factory.unit(SumProductSemiring()))(_.product(_))

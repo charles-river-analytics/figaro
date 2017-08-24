@@ -5,10 +5,16 @@
  * Created By:      Michael Howard (mhoward@cra.com)
  * Creation Date:   Jun 1, 2013
  * 
- * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
+
+/*
+ * Additional Updates from our community
+ * 
+ * Paul Philips		May 23, 2017
  */
 
 package com.cra.figaro.algorithm.learning
@@ -35,7 +41,7 @@ import com.cra.figaro.algorithm.sampling.ProbEvidenceSampler
  * or maximization algorithm; see the code for details.
  */
 trait ExpectationMaximization extends Algorithm with ParameterLearner {
-  protected val paramMap: Map[Parameter[_], Seq[Double]] = Map(targetParameters.map(p => p -> p.zeroSufficientStatistics): _*)
+  protected val paramMap: Map[Parameter[_], Seq[Double]] = Map[Parameter[_], Seq[Double]](targetParameters.map(p => p -> p.zeroSufficientStatistics): _*)
   protected def doExpectationStep(): Map[Parameter[_], Seq[Double]]
 
   protected[algorithm] def doStart(): Unit = {
@@ -91,7 +97,7 @@ trait OnlineExpectationMaximization extends Online with ExpectationMaximization 
 
   override def doStart = {}
 
-  protected var lastIterationStatistics: Map[Parameter[_], Seq[Double]] = Map(targetParameters.map(p => p -> p.zeroSufficientStatistics): _*)
+  protected var lastIterationStatistics: Map[Parameter[_], Seq[Double]] = Map[Parameter[_], Seq[Double]](targetParameters.map(p => p -> p.zeroSufficientStatistics): _*)
   override val initial: Universe
   override val transition: Function0[Universe]
   protected var currentUniverse: Universe = initial

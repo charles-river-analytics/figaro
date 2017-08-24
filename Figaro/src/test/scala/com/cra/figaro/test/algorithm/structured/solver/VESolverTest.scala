@@ -5,7 +5,7 @@
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   March 1, 2015
  *
- * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
@@ -43,13 +43,7 @@ class VESolverTest extends WordSpec with Matchers {
         c1.generateRange()
         c2.generateRange()
         c3.generateRange()
-        c1.makeNonConstraintFactors()
-        c2.makeNonConstraintFactors()
-        c3.makeNonConstraintFactors()
-        c1.makeConstraintFactors()
-        c2.makeConstraintFactors()
-        c3.makeConstraintFactors()
-        pr.solve(new ConstantStrategy(marginalVariableElimination))
+        new ConstantStrategy(pr, structuredRaising, marginalVariableElimination).execute()
 
         pr.globals should equal(Set(c2))
         pr.solved should equal(true)
@@ -76,13 +70,7 @@ class VESolverTest extends WordSpec with Matchers {
         c1.generateRange()
         c2.generateRange()
         c3.generateRange()
-        c1.makeNonConstraintFactors()
-        c2.makeNonConstraintFactors()
-        c3.makeNonConstraintFactors()
-        c1.makeConstraintFactors()
-        c2.makeConstraintFactors()
-        c3.makeConstraintFactors()
-        pr.solve(new ConstantStrategy(marginalVariableElimination))
+        new ConstantStrategy(pr, structuredRaising, marginalVariableElimination).execute()
 
         pr.globals should equal(Set(c2, c3))
         val result = multiplyAll(pr.solution)
@@ -128,13 +116,7 @@ class VESolverTest extends WordSpec with Matchers {
         c1.generateRange()
         c2.generateRange()
         c3.generateRange()
-        c1.makeNonConstraintFactors()
-        c2.makeNonConstraintFactors()
-        c3.makeNonConstraintFactors()
-        c1.makeConstraintFactors()
-        c2.makeConstraintFactors()
-        c3.makeConstraintFactors()
-        pr.solve(new ConstantStrategy(marginalVariableElimination))
+        new ConstantStrategy(pr, structuredRaising, marginalVariableElimination).execute()
 
         pr.globals should equal(Set(c1))
         val result = multiplyAll(pr.solution)
@@ -167,13 +149,7 @@ class VESolverTest extends WordSpec with Matchers {
         c1.generateRange()
         c2.generateRange()
         c3.generateRange()
-        c1.makeNonConstraintFactors()
-        c2.makeNonConstraintFactors()
-        c3.makeNonConstraintFactors()
-        c1.makeConstraintFactors()
-        c2.makeConstraintFactors()
-        c3.makeConstraintFactors()
-        pr.solve(new ConstantStrategy(marginalVariableElimination))
+        new ConstantStrategy(pr, structuredRaising, marginalVariableElimination).execute()
 
         pr.globals should equal(Set(c1))
         val result = multiplyAll(pr.solution)
@@ -207,13 +183,7 @@ class VESolverTest extends WordSpec with Matchers {
         c1.generateRange()
         c2.generateRange()
         c3.generateRange()
-        c1.makeNonConstraintFactors()
-        c2.makeNonConstraintFactors()
-        c3.makeNonConstraintFactors()
-        c1.makeConstraintFactors()
-        c2.makeConstraintFactors()
-        c3.makeConstraintFactors()
-        pr.solve(new ConstantStrategy(marginalVariableElimination))
+        new ConstantStrategy(pr, structuredRaising, marginalVariableElimination).execute()
 
         pr.globals should equal(Set(c1))
         val result = multiplyAll(pr.solution)
@@ -247,13 +217,7 @@ class VESolverTest extends WordSpec with Matchers {
         c1.generateRange()
         c2.generateRange()
         c3.generateRange()
-        c1.makeNonConstraintFactors()
-        c2.makeNonConstraintFactors()
-        c3.makeNonConstraintFactors()
-        c1.makeConstraintFactors()
-        c2.makeConstraintFactors()
-        c3.makeConstraintFactors()
-        pr.solve(new ConstantStrategy(marginalVariableElimination))
+        new ConstantStrategy(pr, structuredRaising, marginalVariableElimination).execute()
 
         pr.globals should equal(Set(c1))
         val result = multiplyAll(pr.solution)
@@ -288,13 +252,7 @@ class VESolverTest extends WordSpec with Matchers {
         c11.generateRange()
         c12.generateRange()
         c2.generateRange()
-        c11.makeNonConstraintFactors()
-        c12.makeNonConstraintFactors()
-        c2.makeNonConstraintFactors()
-        c11.makeConstraintFactors()
-        c12.makeConstraintFactors()
-        c2.makeConstraintFactors()
-        pr.solve(new ConstantStrategy(marginalVariableElimination))
+        new ConstantStrategy(pr, structuredRaising, marginalVariableElimination).execute()
 
         pr.globals should equal(Set(c2))
         val result = multiplyAll(pr.solution)
@@ -318,11 +276,7 @@ class VESolverTest extends WordSpec with Matchers {
         val c2 = cc(e2)
         c1.generateRange()
         c2.generateRange()
-        c1.makeNonConstraintFactors()
-        c2.makeNonConstraintFactors()
-        c1.makeConstraintFactors()
-        c2.makeConstraintFactors()
-        pr.solve(new ConstantStrategy(marginalVariableElimination))
+        new ConstantStrategy(pr, structuredRaising, marginalVariableElimination).execute()
         val result = multiplyAll(pr.solution)
         val c2IndexT = c2.variable.range.indexOf(Regular(true))
         val c2IndexF = c2.variable.range.indexOf(Regular(false))
@@ -355,17 +309,7 @@ class VESolverTest extends WordSpec with Matchers {
       ce1.generateRange()
       ce2.generateRange()
       cd.generateRange()
-      cf1.makeNonConstraintFactors()
-      cf2.makeNonConstraintFactors()
-      ce1.makeNonConstraintFactors()
-      ce2.makeNonConstraintFactors()
-      cd.makeNonConstraintFactors()
-      cf1.makeConstraintFactors()
-      cf2.makeConstraintFactors()
-      ce1.makeConstraintFactors()
-      ce2.makeConstraintFactors()
-      cd.makeConstraintFactors()
-      pr.solve(new ConstantStrategy(marginalVariableElimination))
+      new ConstantStrategy(pr, structuredRaising, marginalVariableElimination).execute()
 
       // Probability that f1 is true = 0.6
       // Probability that e1 is true = 1.0
@@ -395,13 +339,7 @@ class VESolverTest extends WordSpec with Matchers {
       cf.generateRange()
       ca.expand()
       ca.generateRange()
-      cu.makeNonConstraintFactors()
-      cf.makeNonConstraintFactors()
-      ca.makeNonConstraintFactors()
-      cu.makeConstraintFactors()
-      cf.makeConstraintFactors()
-      ca.makeConstraintFactors()
-      pr.solve(new ConstantStrategy(marginalVariableElimination))
+      new ConstantStrategy(pr, structuredRaising, marginalVariableElimination).execute()
       val result = multiplyAll(pr.solution)
       val fIndexT = cf.variable.range.indexOf(Regular(true))
       val fIndexF = cf.variable.range.indexOf(Regular(false))
@@ -430,15 +368,7 @@ class VESolverTest extends WordSpec with Matchers {
       c3.generateRange()
       c4.expand()
       c4.generateRange()
-      c1.makeNonConstraintFactors()
-      c2.makeNonConstraintFactors()
-      c3.makeNonConstraintFactors()
-      c4.makeNonConstraintFactors()
-      c1.makeConstraintFactors()
-      c2.makeConstraintFactors()
-      c3.makeConstraintFactors()
-      c4.makeConstraintFactors()
-      pr.solve(new ConstantStrategy(marginalVariableElimination))
+      new ConstantStrategy(pr, structuredRaising, marginalVariableElimination).execute()
       val result = multiplyAll(pr.solution)
       val c4Index1 = c4.variable.range.indexOf(Regular(1))
       result.get(List(c4Index1)) should be((0.3 * 0.1 + 0.7 * 0.7) +- 0.000000001)
@@ -462,16 +392,8 @@ class VESolverTest extends WordSpec with Matchers {
       c2.generateRange()
       c3.generateRange()
       c4.generateRange()
-      c1.makeConstraintFactors()
-      c2.makeConstraintFactors()
-      c3.makeConstraintFactors()
-      c4.makeConstraintFactors()
-      c1.makeNonConstraintFactors()
-      c2.makeNonConstraintFactors()
-      c3.makeNonConstraintFactors()
-      c4.subproblems.values.foreach(_.solve(new ConstantStrategy(marginalVariableElimination)))
-      c4.makeNonConstraintFactors()
-      pr.solve(new ConstantStrategy(marginalVariableElimination))
+      //c4.subproblems.values.foreach(new ConstantStrategy(_, marginalVariableElimination).execute())
+      new ConstantStrategy(pr, structuredRaising, marginalVariableElimination).execute()
       val result = multiplyAll(pr.solution)
       val c4Index1 = c4.variable.range.indexOf(Regular(1))
       result.get(List(c4Index1)) should be((0.3 * 0.1 + 0.7 * 0.7) +- 0.000000001)
@@ -499,15 +421,7 @@ class VESolverTest extends WordSpec with Matchers {
       c3.generateRange()
       c4.expand()
       c4.generateRange()
-      c1.makeConstraintFactors()
-      c2.makeConstraintFactors()
-      c3.makeConstraintFactors()
-      c4.makeConstraintFactors()
-      c1.makeNonConstraintFactors()
-      c2.makeNonConstraintFactors()
-      c3.makeNonConstraintFactors()
-      c4.makeNonConstraintFactors()
-      pr.solve(new ConstantStrategy(marginalVariableElimination))
+      new ConstantStrategy(pr, structuredRaising, marginalVariableElimination).execute()
 
       val result = multiplyAll(pr.solution)
       val c1IndexT = c1.variable.range.indexOf(Regular(true))
@@ -537,16 +451,8 @@ class VESolverTest extends WordSpec with Matchers {
       c2.generateRange()
       c3.generateRange()
       c4.generateRange()
-      c1.makeConstraintFactors()
-      c2.makeConstraintFactors()
-      c3.makeConstraintFactors()
-      c4.makeConstraintFactors()
-      c1.makeNonConstraintFactors()
-      c2.makeNonConstraintFactors()
-      c3.makeNonConstraintFactors()
-      c4.subproblems.values.foreach(_.solve(new ConstantStrategy(marginalVariableElimination)))
-      c4.makeNonConstraintFactors()
-      pr.solve(new ConstantStrategy(marginalVariableElimination))
+      //c4.subproblems.values.foreach(new ConstantStrategy(_, marginalVariableElimination).execute())
+      new ConstantStrategy(pr, structuredRaising, marginalVariableElimination).execute()
 
       val result = multiplyAll(pr.solution)
       val c1IndexT = c1.variable.range.indexOf(Regular(true))
@@ -577,15 +483,7 @@ class VESolverTest extends WordSpec with Matchers {
       c3.generateRange()
       c4.expand()
       c4.generateRange()
-      c1.makeConstraintFactors()
-      c2.makeConstraintFactors()
-      c3.makeConstraintFactors()
-      c4.makeConstraintFactors()
-      c1.makeNonConstraintFactors()
-      c2.makeNonConstraintFactors()
-      c3.makeNonConstraintFactors()
-      c4.makeNonConstraintFactors()
-      pr.solve(new ConstantStrategy(marginalVariableElimination))
+      new ConstantStrategy(pr, structuredRaising, marginalVariableElimination).execute()
 
       val result = multiplyAll(pr.solution)
       val c4Index1 = c4.variable.range.indexOf(Regular(1))
@@ -619,15 +517,7 @@ class VESolverTest extends WordSpec with Matchers {
         c3.generateRange()
         c4.expand()
         c4.generateRange()
-        c1.makeConstraintFactors()
-        c2.makeConstraintFactors()
-        c3.makeConstraintFactors()
-        c4.makeConstraintFactors()
-        c1.makeNonConstraintFactors()
-        c2.makeNonConstraintFactors()
-        c3.makeNonConstraintFactors()
-        c4.makeNonConstraintFactors()
-        pr.solve(new ConstantStrategy(marginalVariableElimination))
+        new ConstantStrategy(pr, structuredRaising, marginalVariableElimination).execute()
 
         val result = multiplyAll(pr.solution)
         val c1IndexT = c1.variable.range.indexOf(Regular(true))
@@ -637,7 +527,8 @@ class VESolverTest extends WordSpec with Matchers {
         (pT / (pT + pF)) should be(0.3 +- 0.000000001)
       }
 
-    "with a model using chain and a condition on one of the outcome elements, when the outcomes are nested, correctly condition the result" in {
+    // These tests are invalid because nested evidence is disallowed
+    /*"with a model using chain and a condition on one of the outcome elements, when the outcomes are nested, correctly condition the result" in {
       Universe.createNew()
       val e1 = Flip(0.3)
       val e2 = Select(0.1 -> 1, 0.9 -> 2)
@@ -659,16 +550,8 @@ class VESolverTest extends WordSpec with Matchers {
       c2.generateRange()
       c3.generateRange()
       c4.generateRange()
-      c1.makeConstraintFactors()
-      c2.makeConstraintFactors()
-      c3.makeConstraintFactors()
-      c4.makeConstraintFactors()
-      c1.makeNonConstraintFactors()
-      c2.makeNonConstraintFactors()
-      c3.makeNonConstraintFactors()
-      c4.subproblems.values.foreach(_.solve(new ConstantStrategy(marginalVariableElimination)))
-      c4.makeNonConstraintFactors()
-      pr.solve(new ConstantStrategy(marginalVariableElimination))
+      //c4.subproblems.values.foreach(new ConstantStrategy(_, marginalVariableElimination).execute())
+      new ConstantStrategy(pr, structuredRaising, marginalVariableElimination).execute()
 
       val result = multiplyAll(pr.solution)
       val c4Index1 = c4.variable.range.indexOf(Regular(1))
@@ -703,17 +586,9 @@ class VESolverTest extends WordSpec with Matchers {
         c2.generateRange()
         c3.generateRange()
         c4.generateRange()
-        c1.makeConstraintFactors()
-        c2.makeConstraintFactors()
-        c3.makeConstraintFactors()
-        c4.makeConstraintFactors()
-        c1.makeNonConstraintFactors()
-        c2.makeNonConstraintFactors()
-        c3.makeNonConstraintFactors()
-        c4.subproblems.values.foreach(_.solve(new ConstantStrategy(marginalVariableElimination)))
-        c4.makeNonConstraintFactors()
-        pr.solve(new ConstantStrategy(marginalVariableElimination))
-
+        //c4.subproblems.values.foreach(new ConstantStrategy(_, marginalVariableElimination).execute())
+        new ConstantStrategy(pr, structuredRaising, mpeVariableElimination).execute()
+      
         val result = multiplyAll(pr.solution)
         val c1IndexT = c1.variable.range.indexOf(Regular(true))
         val c1IndexF = c1.variable.range.indexOf(Regular(false))
@@ -721,7 +596,7 @@ class VESolverTest extends WordSpec with Matchers {
         val pF = result.get(List(c1IndexF))
         (pT / (pT + pF)) should be(0.3 +- 0.000000001)
       }
-
+    */
   }
 
   "Running MPE VariableElimination" when {
@@ -746,10 +621,6 @@ class VESolverTest extends WordSpec with Matchers {
         c2.generateRange()
         c3.generateRange()
         c4.generateRange()
-        c1.makeNonConstraintFactors()
-        c2.makeNonConstraintFactors()
-        c3.makeNonConstraintFactors()
-        c4.makeNonConstraintFactors()
         // p(e1=.2,e2=T,e3=T,e4=T) = 0.75 * 0.2 * 0.2 = .03
         // p(e1=.2,e2=F,e3=F,e4=T) = 0.75 * 0.8 * 0.8 = .48
         // p(e1=.3,e2=T,e3=T,e4=T) = 0.25 * 0.3 * 0.3 = .0225
@@ -760,7 +631,7 @@ class VESolverTest extends WordSpec with Matchers {
         // p(e1=.3,e2=F,e3=T,e4=F) = 0.25 * 0.7 * 0.3 = .0525
         // MPE: e1=.2,e2=F,e3=F,e4=T
         // If we leave e1 un-eliminated, we should end up with a factor that has e1=.2 at .48 and e1=.3 at .1225
-        pr.solve(new ConstantStrategy(mpeVariableElimination))
+        new ConstantStrategy(pr, structuredRaising, mpeVariableElimination).execute()
         val f = pr.solution reduceLeft (_.product(_))
         f.numVars should equal(1)
         f.get(List(0)) should be({ if (c1.variable.range(0).value == .2) 0.48 else 0.1225 } +- 0.000000001)
@@ -789,10 +660,6 @@ class VESolverTest extends WordSpec with Matchers {
         c2.generateRange()
         c3.generateRange()
         c4.generateRange()
-        c1.makeNonConstraintFactors()
-        c2.makeNonConstraintFactors()
-        c3.makeNonConstraintFactors()
-        c4.makeNonConstraintFactors()
         // p(e1=.2,e2=T,e3=T,e4=T) = 0.75 * 0.2 * 0.2 = .03
         // p(e1=.2,e2=F,e3=F,e4=T) = 0.75 * 0.8 * 0.8 = .48
         // p(e1=.3,e2=T,e3=T,e4=T) = 0.25 * 0.3 * 0.3 = .0225
@@ -802,7 +669,7 @@ class VESolverTest extends WordSpec with Matchers {
         // p(e1=.3,e2=T,e3=F,e4=F) = 0.25 * 0.3 * 0.7 = .0525
         // p(e1=.3,e2=F,e3=T,e4=F) = 0.25 * 0.7 * 0.3 = .0525
         // MPE: e1=.2,e2=F,e3=F,e4=T
-        pr.solve(new ConstantStrategy(mpeVariableElimination))
+        new ConstantStrategy(pr, structuredRaising, mpeVariableElimination).execute()
         pr.recordingFactors(c1.variable).get(List()).asInstanceOf[Double] should be(0.2 +- .0000001)
         pr.recordingFactors(c2.variable).get(List()).asInstanceOf[Boolean] should be(false)
         pr.recordingFactors(c3.variable).get(List()).asInstanceOf[Boolean] should be(false)
@@ -831,20 +698,12 @@ class VESolverTest extends WordSpec with Matchers {
         c2.generateRange()
         c3.generateRange()
         c4.generateRange()
-        c1.makeConstraintFactors()
-        c2.makeConstraintFactors()
-        c3.makeConstraintFactors()
-        c4.makeConstraintFactors()
-        c1.makeNonConstraintFactors()
-        c2.makeNonConstraintFactors()
-        c3.makeNonConstraintFactors()
-        c4.makeNonConstraintFactors()
         // p(e1=.2,e2=T,e3=T,e4=T) = 0.75 * 0.2 * 0.2 = .03
         // p(e1=.2,e2=F,e3=F,e4=T) = 0.75 * 0.8 * 0.8 = .48
         // p(e1=.3,e2=T,e3=T,e4=T) = 0.25 * 0.3 * 0.3 = .0225
         // p(e1=.3,e2=F,e3=F,e4=T) = 0.25 * 0.7 * 0.7 = .1225     
         // MPE: e1=.2,e2=F,e3=F,e4=T
-        pr.solve(new ConstantStrategy(mpeVariableElimination))
+        new ConstantStrategy(pr, structuredRaising, mpeVariableElimination).execute()
         pr.recordingFactors(c1.variable).get(List()).asInstanceOf[Double] should be(0.2 +- .0000001)
         pr.recordingFactors(c2.variable).get(List()).asInstanceOf[Boolean] should be(false)
         pr.recordingFactors(c3.variable).get(List()).asInstanceOf[Boolean] should be(false)

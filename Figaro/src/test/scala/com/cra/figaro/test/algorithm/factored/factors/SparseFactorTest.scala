@@ -5,7 +5,7 @@
  * Created By:      Glenn Takata (gtakata@cra.com)
  * Creation Date:   Mar 20, 2015
  * 
- * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
@@ -209,7 +209,7 @@ class SparseFactorTest extends WordSpec with Matchers with PrivateMethodTester {
         f1.set(List(0), 0.5)
         f1.set(List(1), 0.5)
 
-        val f2 = new BasicFactor[Double](List(f, f), List(e))
+        val f2 = new DenseFactor[Double](List(f, f), List(e))
         f2.set(List(0, 0, 0), 1.0)
         f2.set(List(0, 0, 1), 0.0)
         f2.set(List(0, 1, 0), 0.0)

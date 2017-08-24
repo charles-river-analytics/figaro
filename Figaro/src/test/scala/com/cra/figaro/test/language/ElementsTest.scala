@@ -5,10 +5,18 @@
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
  * 
- * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
+
+/*
+ * Additional Updates from our community
+ * 
+ * Martin Mauch		Dec 19, 2013
+ * Cagdas Senol		May 30, 2016
+ * Paul Philips		May 23, 2017
  */
 
 package com.cra.figaro.test.language
@@ -726,7 +734,7 @@ class ElementsTest extends WordSpec with Matchers {
       }
     }
     
-    "correctly set the observation" should {
+    "an example" in {
       Universe.createNew()
       val x = Flip(0.3)
       x.observation should equal (None)

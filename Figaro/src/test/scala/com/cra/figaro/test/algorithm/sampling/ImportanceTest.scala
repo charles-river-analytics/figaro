@@ -5,10 +5,16 @@
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
  * 
- * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
+
+/*
+ * Additional Updates from our community
+ * 
+ * Cagdas Senol		Jul 16, 2016
  */
 
 package com.cra.figaro.test.algorithm.sampling
@@ -455,6 +461,42 @@ class ImportanceTest extends WordSpec with Matchers with PrivateMethodTester {
       // If likelihood weighting is not working, stopping and querying the algorithm requires waiting for a non-rejected sample
       (time1 - time0) should be <= (500L)
       alg.shutdown
+    }
+  }
+
+  "Sampling a model with an intervention and evidence" should {
+    "not condition the intervention variable on the evidence" in {
+      Universe.createNew()
+      val a = Flip(0.1)
+      val b = If(a, Flip(0.2), Flip(0.3))
+      val c = If(b, Flip(0.4), Flip(0.5))
+      val d = If(c, Flip(0.6), Flip(0.7))
+      b.intervene(true)
+      d.observe(true)
+      Importance.probability(b, true) should equal (1.0)
+    }
+
+    "produce the correct posterior on a variable that is neither intervention nor evidence" in {
+      Universe.createNew()
+      val a = Flip(0.1)
+      val b = If(a, Flip(0.2), Flip(0.3))
+      val c = If(b, Flip(0.4), Flip(0.5))
+      val d = If(c, Flip(0.6), Flip(0.7))
+      b.intervene(true)
+      d.observe(true)
+      val answer = 0.4 * 0.6 / (0.4 * 0.6 + 0.6 * 0.7)
+      Importance.probability(c, true) should be (answer +- 0.02)
+    }
+
+    "given a variable that has both evidence and an intervention created after the evidence, ignore the evidence" in {
+      Universe.createNew()
+      val a = Flip(0.1)
+      val b = If(a, Flip(0.2), Flip(0.3))
+      val c = If(b, Flip(0.4), Flip(0.5))
+      val d = If(c, Flip(0.6), Flip(0.7))
+      b.observe(false)
+      b.intervene(true)
+      Importance.probability(c, true) should be (0.4 +- 0.02)
     }
   }
 

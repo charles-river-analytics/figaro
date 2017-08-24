@@ -5,7 +5,7 @@
  * Created By:      Glenn Takata (gtakata@cra.com)
  * Creation Date:   Dec 15, 2014
  * 
- * Copyright 2014 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
@@ -91,7 +91,7 @@ object SelectFactory {
   def makeFactors[T](select: IntSelector): List[Factor[Double]] = {
     val elementVar = Variable(select)
     val counterVar = Variable(select.counter)
-    val comb = new BasicFactor[Double](List(counterVar), List(elementVar))
+    val comb = new DenseFactor[Double](List(counterVar), List(elementVar))
     comb.fillByRule((l: List[Any]) => {
       val counterValue :: elementValue :: _ = l.asInstanceOf[List[Extended[Int]]]
       if (counterValue.isRegular && elementValue.isRegular) {
@@ -134,11 +134,11 @@ object SelectFactory {
   }
 
   /**
-   * Constructs a BasicFactor from a probability distribution. It assumes that the probabilities
+   * Constructs a DenseFactor from a probability distribution. It assumes that the probabilities
    * are assigned to the Variable in the same order as it's values.
    */
   def makeSimpleDistribution[T](target: Variable[T], probs: List[Double]): Factor[Double] = {
-    val factor = new BasicFactor[Double](List(), List(target))
+    val factor = new DenseFactor[Double](List(), List(target))
     for { (prob, index) <- probs.zipWithIndex } {
       factor.set(List(index), prob)
     }
@@ -148,7 +148,7 @@ object SelectFactory {
   private def makeComplexDistribution[T](target: Variable[T], probElems: List[Element[Double]]): Factor[Double] = {
     val probVars: List[Variable[Double]] = probElems map (Variable(_))
     val nVars = probVars.size
-    val factor = new BasicFactor[Double](probVars, List(target))
+    val factor = new DenseFactor[Double](probVars, List(target))
     val probVals: List[List[Extended[Double]]] = probVars map (_.range)
     for { indices <- factor.getIndices } {
       // unnormalized is a list, one for each probability element, 

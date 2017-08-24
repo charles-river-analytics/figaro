@@ -5,7 +5,7 @@
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
  *
- * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
@@ -30,12 +30,7 @@ object ChainFactory {
   import com.cra.figaro.algorithm.factored.factors.factory.Factory
 
   def makeFactors[T, U](cc: ComponentCollection, chain: Chain[T, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {
-    val chainComp = cc(chain)
-    if (chainComp.allSubproblemsEliminatedCompletely && cc.useSingleChainFactor) {
-      makeSingleFactor[T, U](cc, chain)(mapper)
-    } else {
-      makeMultipleFactors[T, U](cc, chain)(mapper)
-    }
+    makeMultipleFactors(cc, chain)(mapper)
   }
 
   def makeMultipleFactors[T, U](cc: ComponentCollection, chain: Chain[T, U])(implicit mapper: PointMapper[U]): List[Factor[Double]] = {
@@ -44,7 +39,7 @@ object ChainFactory {
     val chainVar = Factory.getVariable(cc, chain)
     val (pairVar, pairFactor) = Factory.makeTupleVarAndFactor(cc, Some(chain), parentVar, chainVar)
     cc.variableParents(pairVar) = Set(parentVar, chainVar)
-    var tempFactors = parentVar.range.zipWithIndex flatMap (pair => {
+    val tempFactors = parentVar.range.zipWithIndex flatMap (pair => {
       val (parentVal, parentIndex) = pair
       if (parentVal.isRegular) {
         // We need to create an actual variable to represent the outcome of the chain.
@@ -54,7 +49,7 @@ object ChainFactory {
         // If the outcome element is defined inside the chain, it will actually be different in every expansion,
         // even though the formal variable is the same. But if the outcome element is defined outside the chain,
         // it is a global that will be the same every time, so the actual variable is the variable of this global.
-        val nestedProblem = cc.expansions((chain.chainFunction, parentVal.value))
+        val nestedProblem = chainComp.subproblems(parentVal.value)
         val outcomeElem = nestedProblem.target.asInstanceOf[Element[U]]
         val formalVar = Factory.getVariable(cc, outcomeElem)
         val actualVar = if (!nestedProblem.global(formalVar)) Factory.makeVariable(cc, formalVar.valueSet) else formalVar
@@ -76,7 +71,7 @@ object ChainFactory {
     val chainComp = cc(chain)
     val parentVar = Factory.getVariable(cc, chain.parent)
     val childVar = Factory.getVariable(cc, chain)
-    val factor = new BasicFactor[Double](List(parentVar), List(childVar))
+    val factor = new DenseFactor[Double](List(parentVar), List(childVar))
     for { parentIndex <- 0 until parentVar.range.length } {
       val parentXV = parentVar.range(parentIndex)
       if (parentXV.isRegular && chainComp.subproblems.contains(parentXV.value) && !chainComp.subproblems(parentXV.value).solution.isEmpty) {

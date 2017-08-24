@@ -5,10 +5,17 @@
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
  * 
- * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
+
+/*
+ * Additional Updates from our community
+ * 
+ * Synapski		Oct 13, 2014
+ * Cagdas Senol		Jul 3, 2016
  */
 
 package com.cra.figaro.test.library.atomic.continuous
@@ -32,17 +39,24 @@ class ContinuousTest extends WordSpec with Matchers {
 
   def varStatistic(value: Double, target: Double, n: Int) = {
     val df = n - 1
-    
+
     // df * sample value / target value is distributed as chisq with df degrees of freedom
     val chisq = df * value / target
-    
+
     // (chisq - df) / sqrt(2 * df) is approximately N(0, 1) for high df
     val stat = (chisq - df) / math.sqrt(2 * df)
-    
+
     stat
   }
-  
+
   "A AtomicUniform" should {
+    "implement the Continuous trait" in {
+      Universe.createNew()
+      val elem = Uniform(0.0, 2.0)
+
+      elem shouldBe a [Continuous[_]]
+    }
+
     "have value within a range with probability equal to the fraction represented by the range" taggedAs (NonDeterministic) in {
       val ndtest = new NDTest {
         override def oneTest = {
@@ -98,6 +112,15 @@ class ContinuousTest extends WordSpec with Matchers {
   }
 
   "A CompoundUniform" should {
+    "implement the Continuous trait" in {
+      Universe.createNew()
+      val lower = Uniform(0.0, 1.0)
+      val upper = Constant(2.0)
+      val uniformComplex = Uniform(lower, upper)
+
+      uniformComplex shouldBe a [Continuous[_]]
+    }
+
     "have value equal to the expectation over the parents of the uniform probability" taggedAs (NonDeterministic) in {
       val ndtest = new NDTest {
         override def oneTest = {
@@ -129,6 +152,13 @@ class ContinuousTest extends WordSpec with Matchers {
   }
 
   "An AtomicNormal" should {
+    "implement the Continuous trait" in {
+      Universe.createNew()
+      val elem = Normal(1.0, 2.0)
+
+      elem shouldBe a [Continuous[_]]
+    }
+
     "have value within a range with probability equal to the cumulative probability of the upper minus the lower" taggedAs (NonDeterministic) in {
       val ndtest = new NDTest {
         override def oneTest = {
@@ -183,6 +213,13 @@ class ContinuousTest extends WordSpec with Matchers {
   }
 
   "A CompoundNormalMean" should {
+    "implement the Continuous trait" in {
+      Universe.createNew()
+      val elem = Normal(Select(0.5 -> 0.5, 0.5 -> 1.0), 2.0)
+
+      elem shouldBe a [Continuous[_]]
+    }
+
     "have value within a range with probability equal to the expectation over the mean of the" +
       "cumulative probability of the upper minus the lower" taggedAs (NonDeterministic) in {
         val ndtest = new NDTest {
@@ -213,6 +250,13 @@ class ContinuousTest extends WordSpec with Matchers {
   }
 
   "A CompoundNormalVariance" should {
+    "implement the Continuous trait" in {
+      Universe.createNew()
+      val elem = Normal(2.0, Select(0.5 -> 2.0, 0.5 -> 3.0))
+
+      elem shouldBe a [Continuous[_]]
+    }
+
     //Need to work this out on paper.
     "have value within a range with probability equal to the expectation over the mean and variance of the" +
       "cumulative probability of the upper minus the lower" in {
@@ -244,6 +288,13 @@ class ContinuousTest extends WordSpec with Matchers {
   }
 
   "A CompoundNormal" should {
+    "implement the Continuous trait" in {
+      Universe.createNew()
+      val elem = Normal(Select(0.5 -> 0.5, 0.5 -> 1.0), Select(0.5 -> 2.0, 0.5 -> 3.0))
+
+      elem shouldBe a [Continuous[_]]
+    }
+
     "have value within a range with probability equal to the expectation over the mean and variance of the" +
       "cumulative probability of the upper minus the lower" taggedAs (NonDeterministic) in {
         val ndtest = new NDTest {
@@ -335,7 +386,7 @@ class ContinuousTest extends WordSpec with Matchers {
           alg.stop()
           alg.kill
           update(result1, NDTest.TTEST, "CompoundNormalTestResultsMean", 2.5, alpha)
-          
+
           val stat = varStatistic(result2, 2.0, 100)
           update(stat, NDTest.TTEST, "CompoundNormalTestResultsVar", 0.0, alpha)
         }
@@ -369,6 +420,12 @@ class ContinuousTest extends WordSpec with Matchers {
     //      val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
     //      alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
     //    }
+    "implement the Continuous trait" in {
+      Universe.createNew()
+      val elem = MultivariateNormal(means, covariances)
+
+      elem shouldBe a [Continuous[_]]
+    }
 
     "have the correct density" in {
       Universe.createNew()
@@ -430,13 +487,23 @@ class ContinuousTest extends WordSpec with Matchers {
   }
 
   "A KernelDensity" should {
+    "implement the Continuous trait" in {
+      Universe.createNew()
+      val bandwidth = 2.0
+      val data = Seq(1.0, 2.0, 3.0)
+
+      val elem = KernelDensity(data, bandwidth)
+
+      elem shouldBe a [Continuous[_]]
+    }
+
     "have the correct density" in {
       Universe.createNew()
-      
+
       val bandwidth = 2.0
       val data = Seq(1.0, 2.0, 3.0)
       val dataDistrs = data.map(d => new NormalDistribution(d, bandwidth))
-      
+
       val elem = KernelDensity(data, bandwidth)
       val result = elem.density(2.5)
       val target = dataDistrs.map(dist => dist.probability(2.5)).sum / 3.0
@@ -463,7 +530,7 @@ class ContinuousTest extends WordSpec with Matchers {
           }
           val sampleStdDev = deviations.sum / (deviations.length - 1)
           // selected indices should be uniform
-          val indDistr = selectedIndices.groupBy(d=>d).mapValues(s => 1.0 * s.length / selectedIndices.length)
+          val indDistr = selectedIndices.groupBy(d => d).mapValues(s => 1.0 * s.length / selectedIndices.length)
 
           update(sampleStdDev, NDTest.TTEST, "KernelDensityTestResultsStdDev", 2.3, alpha)
           update(indDistr(0), NDTest.TTEST, "KernelDensityTestResultsSampleDistr1", 0.33, alpha)
@@ -479,8 +546,8 @@ class ContinuousTest extends WordSpec with Matchers {
       Universe.createNew()
       KernelDensity(Seq(1, 2, 3), 2.0).toString should equal("KernelDensity(bandwidth=" + 2.0 + ")")
     }
-  }  
-  
+  }
+
   "An AtomicMultivariateNormal" should {
     val means = List(1.0, 2.0)
     val covariances = List(List(.25, .15), List(.15, .25))
@@ -504,6 +571,13 @@ class ContinuousTest extends WordSpec with Matchers {
     //      val targetProb = dist.cumulative(1.2) - dist.cumulative(0.7)
     //      alg.probability(elem, (d: Double) => 0.7 <= d && d < 1.2) should be(targetProb +- 0.01)
     //    }
+
+    "implement the Continuous trait" in {
+      Universe.createNew()
+      val elem = MultivariateNormal(means, covariances)
+
+      elem shouldBe a [Continuous[_]]
+    }
 
     "have the correct density" in {
       Universe.createNew()
@@ -567,6 +641,13 @@ class ContinuousTest extends WordSpec with Matchers {
   }
 
   "An AtomicExponential" should {
+    "implement the Continuous trait" in {
+      Universe.createNew()
+      val elem = Exponential(2.0)
+
+      elem shouldBe a [Continuous[_]]
+    }
+
     "have value within a range with probability equal to the cumulative probability of the upper minus the lower" taggedAs (NonDeterministic) in {
       val ndtest = new NDTest {
         override def oneTest = {
@@ -621,6 +702,13 @@ class ContinuousTest extends WordSpec with Matchers {
   }
 
   "An CompoundExponential" should {
+    "implement the Continuous trait" in {
+      Universe.createNew()
+      val elem = Exponential(Select(0.5 -> 1.0, 0.5 -> 2.0))
+
+      elem shouldBe a [Continuous[_]]
+    }
+
     "have value within a range with probability equal to the expectation over the mean of the" +
       "cumulative probability of the upper minus the lower" taggedAs (NonDeterministic) in {
         val ndtest = new NDTest {
@@ -708,6 +796,14 @@ class ContinuousTest extends WordSpec with Matchers {
   }
 
   "A AtomicGamma" when {
+    "implement the Continuous trait" in {
+      Universe.createNew()
+      val k = 2.5
+      val elem = Gamma(k)
+
+      elem shouldBe a [Continuous[_]]
+    }
+
     "k > 1.0, theta = 1.0" should {
       "have value within a range with probability equal to the cumulative probability of the upper minus the lower" taggedAs (NonDeterministic) in {
         val ndtest = new NDTest {
@@ -908,6 +1004,13 @@ class ContinuousTest extends WordSpec with Matchers {
   }
 
   "A CompoundGammaK" should {
+    "implement the Continuous trait" in {
+      Universe.createNew()
+      val elem = Gamma(Select(0.5 -> 2.0, 0.5 -> 3.0))
+
+      elem shouldBe a [Continuous[_]]
+    }
+
     "have value within a range with probability equal to the expectation over k of the" +
       "cumulative probability of the upper minus the lower" taggedAs (NonDeterministic) in {
         val ndtest = new NDTest {
@@ -938,6 +1041,13 @@ class ContinuousTest extends WordSpec with Matchers {
   }
 
   "A CompoundGamma" should {
+    "implement the Continuous trait" in {
+      Universe.createNew()
+      val elem = Gamma(Select(0.5 -> 0.5, 0.5 -> 1.0), Constant(1.0))
+
+      elem shouldBe a [Continuous[_]]
+    }
+
     "have value within a range with probability equal to the expectation over k and theta of the" +
       "cumulative probability of the upper minus the lower" taggedAs (NonDeterministic) in {
         val ndtest = new NDTest {
@@ -1032,6 +1142,13 @@ class ContinuousTest extends WordSpec with Matchers {
   }
 
   "A AtomicBeta" should {
+    "implement the Continuous trait" in {
+      Universe.createNew()
+      val elem = Beta(1.2, 0.5)
+
+      elem shouldBe a [Continuous[_]]
+    }
+
     "have value within a range with probability equal to the cumulative probability of the upper minus the lower" taggedAs (NonDeterministic) in {
       val ndtest = new NDTest {
         override def oneTest = {
@@ -1091,6 +1208,13 @@ class ContinuousTest extends WordSpec with Matchers {
   }
 
   "A CompoundBeta" should {
+    "implement the Continuous trait" in {
+      Universe.createNew()
+      val elem = Beta(Select(0.5 -> 0.5, 0.5 -> 1.0), Select(0.5 -> 2.0, 0.5 -> 3.0))
+
+      elem shouldBe a [Continuous[_]]
+    }
+
     "have value within a range with probability equal to the expectation over a and b of the" +
       "cumulative probability of the upper minus the lower" taggedAs (NonDeterministic) in {
         val ndtest = new NDTest {
@@ -1186,6 +1310,13 @@ class ContinuousTest extends WordSpec with Matchers {
 
   // We can test Dirichlets using the special case where alpha.length = 2
   "A AtomicDirichlet" should {
+    "implement the Continuous trait" in {
+      Universe.createNew()
+      val elem = Dirichlet(1.2, 0.5)
+
+      elem shouldBe a [Continuous[_]]
+    }
+
     "have value within a range with probability equal to the cumulative probability of the upper minus the lower" taggedAs (NonDeterministic) in {
       val ndtest = new NDTest {
         override def oneTest = {
@@ -1258,6 +1389,15 @@ class ContinuousTest extends WordSpec with Matchers {
   }
 
   "A CompoundDirichlet" should {
+    "implement the Continuous trait" in {
+      Universe.createNew()
+      val alpha = Select(0.5 -> 0.7, 0.5 -> 1.2)
+      val beta = Constant(0.5)
+      val elem = Dirichlet(alpha, beta)
+
+      elem shouldBe a [Continuous[_]]
+    }
+
     "have value within a range with probability equal to the expectation over the alphas " +
       "of the cumulative probability of the upper minus the lower" taggedAs (NonDeterministic) in {
         val ndtest = new NDTest {

@@ -5,7 +5,7 @@
  * Created By:      Glenn Takata (gtakata@cra.com)
  * Creation Date:   Mar 22, 2015
  *
- * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
@@ -53,7 +53,7 @@ object ChainFactory {
         // We create a dummy factor for that variable.
         // Then we use makeSelection with the dummy variable
         val dummy = new Variable(ValueSet.withStar[U](Set()))
-        val dummyFactor = new BasicFactor[Double](List(), List(dummy))
+        val dummyFactor = new DenseFactor[Double](List(), List(dummy))
         dummyFactor.set(List(0), 1.0)
         tempFactors.append(makeSelection(chain, selectorVar, parentSize, parentIndex, dummy, selector), dummyFactor)
       }

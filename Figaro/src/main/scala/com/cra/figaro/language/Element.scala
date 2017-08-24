@@ -5,10 +5,16 @@
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
  *
- * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
+
+/*
+ * Additional Updates from our community
+ * 
+ * Martin Mauch		Dec 19, 2013
  */
 
 package com.cra.figaro.language
@@ -242,6 +248,16 @@ abstract class Element[T](val name: Name[T], val collection: ElementCollection) 
    * observation. However, it can have a constraint.
    */
   private[figaro] var observation: Option[Value] = None
+
+  /*
+   * Interventions are used for causal reasoning. They cut off dependencies of this element on its arguments
+   * and set a specific value.
+   */
+  private[figaro] var intervention: Option[Value] = None
+
+  def intervene(v: Value) { intervention = Some(v); value = v }
+
+  def unintervene() { intervention = None }
 
   /*
    * Testing whether a condition is satisfied can use any type of value. The condition can only be satisfied if the value has the right type and the condition returns true.

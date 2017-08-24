@@ -5,7 +5,7 @@
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   March 1, 2015
  *
- * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
@@ -70,9 +70,10 @@ class BPSolver(problem: Problem, toEliminate: Set[Variable[_]], toPreserve: Set[
   }
 
   def makeRecordingFactor[U](v: Variable[U]): Factor[U] = {
-    val bf = new BasicFactor[U](List(), List())
-    val maxInd = beliefMap(VariableNode(v)).contents.maxBy(_._2)._1
-    val maxValue = v.range(maxInd(0))
+    val bf = new DenseFactor[U](List(), List())
+    val factor = beliefMap(VariableNode(v))
+    val maxInd = factor.getIndices.foldLeft((List[Int](), Double.NegativeInfinity))( (c: (List[Int], Double), l: List[Int]) => if (factor.get(l) > c._2) (l, factor.get(l)) else c)    
+    val maxValue = v.range(maxInd._1.head)
     bf.set(List(), maxValue.value.asInstanceOf[v.Value])
     bf
   }

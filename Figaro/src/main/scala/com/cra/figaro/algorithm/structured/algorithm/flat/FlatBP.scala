@@ -1,11 +1,11 @@
 /*
  * FlatBP.scala
- * A structured factored inference algorithm using belief propagation.
+ * A flat belief propagation algorithm.
  *
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   March 1, 2015
  *
- * Copyright 2015 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
@@ -13,27 +13,14 @@
 package com.cra.figaro.algorithm.structured.algorithm.flat
 
 import com.cra.figaro.language._
-import com.cra.figaro.algorithm.factored.factors.SumProductSemiring
-import com.cra.figaro.algorithm.structured._
-import com.cra.figaro.algorithm.structured.strategy._
 import com.cra.figaro.algorithm.structured.solver._
 import com.cra.figaro.algorithm.structured.strategy.solve._
 import com.cra.figaro.algorithm.structured.algorithm._
-import com.cra.figaro.algorithm.structured.strategy.decompose._
-import com.cra.figaro.algorithm.factored.factors.factory._
 
-class FlatBP(universe: Universe, iterations: Int, targets: Element[_]*) extends StructuredProbQueryAlgorithm(universe, targets:_*) {
-
-  val semiring = SumProductSemiring()
+class FlatBP(universe: Universe, iterations: Int, targets: Element[_]*) extends StructuredProbQueryAlgorithm(universe, targets:_*)
+  with DecompositionProbQuery {
   
-  def run() {    
-    val strategy = DecompositionStrategy.recursiveFlattenStrategy(problem, new ConstantStrategy(marginalBeliefPropagation(iterations)), defaultRangeSizer, Lower, false)
-    strategy.execute(initialComponents)
-    val joint = problem.solution.foldLeft(Factory.unit(semiring))(_.product(_))  
-    targets.foreach(t => marginalizeToTarget(t, joint))
-  }
-
-  
+  def solvingStrategy() = new ConstantStrategy(problem, flatRaising, marginalBeliefPropagation(iterations))
 }
 
 object FlatBP {

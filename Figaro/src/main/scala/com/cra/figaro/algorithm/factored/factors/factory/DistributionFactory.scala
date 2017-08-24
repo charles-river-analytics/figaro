@@ -5,7 +5,7 @@
  * Created By:      Glenn Takata (gtakata@cra.com)
  * Creation Date:   Dec 15, 2014
  *
- * Copyright 2014 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
@@ -33,7 +33,7 @@ object DistributionFactory {
       assert(flipVar.range.size == 1) // Flip's range must either be {T,F} or {*}
       StarFactory.makeStarFactor(cc, flip)
     } else {
-      val factor = new BasicFactor[Double](List(), List(flipVar))
+      val factor = new DenseFactor[Double](List(), List(flipVar))
       val i = flipVar.range.indexOf(Regular(true))
       factor.set(List(i), flip.prob)
       factor.set(List(1 - i), 1.0 - flip.prob)
@@ -51,7 +51,7 @@ object DistributionFactory {
   }
 
   private def makeCompoundFlip(flipVar: Variable[Boolean], probVar: Variable[Double]): List[Factor[Double]] = {
-    val factor = new BasicFactor[Double](List(probVar), List(flipVar))
+    val factor = new DenseFactor[Double](List(probVar), List(flipVar))
     val parentVals = probVar.range
     if (flipVar.range.exists(!_.isRegular)) {
       val falseIndex = flipVar.range.indexOf(Regular(false))
@@ -88,7 +88,7 @@ object DistributionFactory {
   def makeFactors(cc: ComponentCollection, flip: ParameterizedFlip, parameterized: Boolean): List[Factor[Double]] = {
     if (parameterized) {
       val flipVar = Factory.getVariable(cc, flip)
-      val factor = new BasicFactor[Double](List(),List(flipVar))
+      val factor = new DenseFactor[Double](List(),List(flipVar))
       val prob = flip.parameter.MAPValue
       if (flipVar.range.forall(_.isRegular)) {
         val i = flipVar.range.indexOf(Regular(true))
@@ -115,7 +115,7 @@ object DistributionFactory {
    */
   def makeFactors(cc: ComponentCollection, binomial: AtomicBinomial): List[Factor[Double]] = {
       val binVar = Factory.getVariable(cc, binomial)
-      val factor = new BasicFactor[Double](List(), List(binVar))
+      val factor = new DenseFactor[Double](List(), List(binVar))
       for { (xvalue, index) <- binVar.range.zipWithIndex } {
         factor.set(List(index), binomial.density(xvalue.value))
       }
@@ -128,7 +128,7 @@ object DistributionFactory {
   def makeFactors(cc: ComponentCollection, binomial: ParameterizedBinomialFixedNumTrials, parameterized: Boolean): List[Factor[Double]] = {
     if (parameterized) {
       val binVar = Factory.getVariable(cc, binomial)
-      val factor = new BasicFactor[Double](List(),List(binVar))
+      val factor = new DenseFactor[Double](List(),List(binVar))
       if (binVar.range.exists(!_.isRegular)) { // parameter must not have been added since it's an atomic beta
         for { (xvalue, index) <- binVar.range.zipWithIndex } {
           val entry = if (xvalue.isRegular) 0.0 else 1.0
@@ -144,7 +144,7 @@ object DistributionFactory {
     } else {
       val binVar = Factory.getVariable(cc, binomial)
       if (binVar.range.exists(!_.isRegular)) { // parameter must not have been added since it's an atomic beta
-        val factor = new BasicFactor[Double](List(),List(binVar))
+        val factor = new DenseFactor[Double](List(),List(binVar))
         for { (xvalue, index) <- binVar.range.zipWithIndex } {
           val entry = if (xvalue.isRegular) 0.0 else 1.0
           factor.set(List(index), entry)

@@ -5,7 +5,7 @@
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Dec 27, 2013
  *
- * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
@@ -17,6 +17,7 @@ import com.cra.figaro.language._
 import com.cra.figaro.algorithm._
 import com.cra.figaro.util._
 import com.cra.figaro.library.compound._
+
 import scala.collection.mutable.Map
 import scala.collection.SortedSet
 import ValueSet._
@@ -59,16 +60,33 @@ class LazyValues(universe: Universe, paramaterized: Boolean = false) {
   }
 
   private def concreteValues[T](element: Element[T], depth: Int, numArgSamples: Int, numTotalSamples: Int): ValueSet[T] =
-    (element, paramaterized) match {
-      case (p: Parameter[_], true) => ValueSet.withoutStar(Set(p.MAPValue))
-      case (c: Constant[_], _)     => withoutStar(Set(c.constant))
-      case (f: Flip, _)            => withoutStar(Set(true, false))
-      case (d: Select[_, _], _)    => withoutStar(Set(d.outcomes: _*))
-      case (d: Dist[_, _], _) =>
+    element match {
+      case p: Parameter[_] if paramaterized => ValueSet.withoutStar(Set(p.MAPValue))
+      case c: Constant[_]     => withoutStar(Set(c.constant))
+      case f: Flip            => withoutStar(Set(true, false))
+      case d: Select[_, _]    => withoutStar(Set(d.outcomes: _*))
+      case d: Dist[_, _] =>
         val componentSets = d.outcomes.map(storedValues(_))
         componentSets.reduce(_ ++ _)
       //case i: FastIf[_] => withoutStar(Set(i.thn, i.els))
-      case (a: Apply1[_, _], _) =>
+      case b: BooleanOperator =>
+        val applyMap = getMap(b)
+        val vs1 = LazyValues(b.arg1.universe).storedValues(b.arg1)
+        val vs2 = LazyValues(b.arg2.universe).storedValues(b.arg2)
+        for {
+          arg1Val <- vs1.regularValues
+          arg2Val <- vs2.regularValues
+        } {
+          applyMap((arg1Val, arg2Val)) = b.fn(arg1Val, arg2Val)
+        }
+        val resultSet = for {
+          arg1XVal <- vs1.xvalues
+          arg2XVal <- vs2.xvalues
+        } yield {
+          b.extendedFn(arg1XVal, arg2XVal)
+        }
+        new ValueSet(resultSet)
+      case a: Apply1[_, _] =>
         val applyMap = getMap(a)
         val vs1 = LazyValues(a.arg1.universe).storedValues(a.arg1)
         val resultsSet =
@@ -78,7 +96,7 @@ class LazyValues(universe: Universe, paramaterized: Boolean = false) {
             getOrElseInsert(applyMap, arg1Val, a.fn(arg1Val))
           }
         if (vs1.hasStar) withStar(resultsSet); else withoutStar(resultsSet)
-      case (a: Apply2[_, _, _], _) =>
+      case a: Apply2[_, _, _] =>
         val applyMap = getMap(a)
         val vs1 = LazyValues(a.arg1.universe).storedValues(a.arg1)
         val vs2 = LazyValues(a.arg2.universe).storedValues(a.arg2)
@@ -93,7 +111,7 @@ class LazyValues(universe: Universe, paramaterized: Boolean = false) {
             getOrElseInsert(applyMap, (arg1Val, arg2Val), a.fn(arg1Val, arg2Val))
           }
         if (vs1.hasStar || vs2.hasStar) withStar(resultsList.toSet); else withoutStar(resultsList.toSet)
-      case (a: Apply3[_, _, _, _], _) =>
+      case a: Apply3[_, _, _, _] =>
         val applyMap = getMap(a)
         val vs1 = LazyValues(a.arg1.universe).storedValues(a.arg1)
         val vs2 = LazyValues(a.arg2.universe).storedValues(a.arg2)
@@ -110,7 +128,7 @@ class LazyValues(universe: Universe, paramaterized: Boolean = false) {
             getOrElseInsert(applyMap, (arg1Val, arg2Val, arg3Val), a.fn(arg1Val, arg2Val, arg3Val))
           }
         if (vs1.hasStar || vs2.hasStar || vs3.hasStar) withStar(resultsList.toSet); else withoutStar(resultsList.toSet)
-      case (a: Apply4[_, _, _, _, _], _) =>
+      case a: Apply4[_, _, _, _, _] =>
         val applyMap = getMap(a)
         val vs1 = LazyValues(a.arg1.universe).storedValues(a.arg1)
         val vs2 = LazyValues(a.arg2.universe).storedValues(a.arg2)
@@ -129,7 +147,7 @@ class LazyValues(universe: Universe, paramaterized: Boolean = false) {
             getOrElseInsert(applyMap, (arg1Val, arg2Val, arg3Val, arg4Val), a.fn(arg1Val, arg2Val, arg3Val, arg4Val))
           }
         if (vs1.hasStar || vs2.hasStar || vs3.hasStar || vs4.hasStar) withStar(resultsList.toSet); else withoutStar(resultsList.toSet)
-      case (a: Apply5[_, _, _, _, _, _], _) =>
+      case a: Apply5[_, _, _, _, _, _] =>
         val applyMap = getMap(a)
         val vs1 = LazyValues(a.arg1.universe).storedValues(a.arg1)
         val vs2 = LazyValues(a.arg2.universe).storedValues(a.arg2)
@@ -150,7 +168,7 @@ class LazyValues(universe: Universe, paramaterized: Boolean = false) {
             getOrElseInsert(applyMap, (arg1Val, arg2Val, arg3Val, arg4Val, arg5Val), a.fn(arg1Val, arg2Val, arg3Val, arg4Val, arg5Val))
           }
         if (vs1.hasStar || vs2.hasStar || vs3.hasStar || vs4.hasStar || vs5.hasStar) withStar(resultsList.toSet); else withoutStar(resultsList.toSet)
-      case (c: Chain[_, _], _) =>
+      case c: Chain[_, _] =>
 
         def findChainValues[T, U](chain: Chain[T, U], cmap: Map[T, Element[U]], pVals: ValueSet[T], samples: Int): Set[ValueSet[U]] = {
           val chainVals = pVals.regularValues.map { parentVal =>
@@ -176,16 +194,16 @@ class LazyValues(universe: Universe, paramaterized: Boolean = false) {
         val startVS: ValueSet[c.Value] =
           if (parentVS.hasStar) withStar[c.Value](Set()); else withoutStar[c.Value](Set())
         resultVSs.foldLeft(startVS)(_ ++ _)
-      case (i: Inject[_], _) =>
+      case i: Inject[_] =>
         val elementVSs = i.args.map(arg => LazyValues(arg.universe).storedValues(arg))
         val incomplete = elementVSs.exists(_.hasStar)
         val elementValues = elementVSs.toList.map(_.regularValues.toList)
         val resultValues = homogeneousCartesianProduct(elementValues: _*).toSet.asInstanceOf[Set[i.Value]]
         if (incomplete) withStar(resultValues); else withoutStar(resultValues)
-      case (v: ValuesMaker[_], _) => {
+      case v: ValuesMaker[_] => {
         v.makeValues(depth)
       }
-      case (a: Atomic[_], _) => {
+      case a: Atomic[_] => {
         val thisSampler = ParticleGenerator(universe)
         val samples = thisSampler(a, numArgSamples)
         withoutStar(samples.unzip._2.toSet)

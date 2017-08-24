@@ -5,7 +5,7 @@
  * Created By:      Brian Ruttenberg (bruttenberg@cra.com)
  * Creation Date:   Oct 8, 2014
  * 
- * Copyright 2014 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  * 
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
@@ -48,6 +48,16 @@ class ParticleGenerator(de: DensityEstimator, val numSamplesFromAtomics: Int, va
   def sampledElements(): Set[Element[_]] = sampleMap.keySet.toSet
 
   /**
+   * Returns the number of samples that have been taken for the given element
+   */
+  def samplesTaken(elem: Element[_]): Int = {
+    sampleMap.get(elem) match {
+      case Some((_, count)) => count
+      case _ => 0
+    }
+  }
+
+  /**
    * Clears all of the samples for elements in this sampler
    */
   def clear() = sampleMap.clear
@@ -58,31 +68,63 @@ class ParticleGenerator(de: DensityEstimator, val numSamplesFromAtomics: Int, va
   def update(elem: Element[_], numSamples: Int, samples: List[(Double, _)]) = sampleMap.update(elem, (samples, numSamples))
 
   /**
-   * Retrieves the samples for an element using the default number of samples.
+   * Retrieves the stored samples for an element if there are any. Otherwise, this takes the default number of samples,
+   * then stores the and returns result.
    */
-  def apply[T](elem: Element[T]): List[(Double, T)] = apply(elem, numSamplesFromAtomics)
+  def apply[T](elem: Element[T]): List[(Double, T)] = {
+    sampleMap.get(elem) match {
+      case Some(e) => e._1.asInstanceOf[List[(Double, T)]]
+      case None => apply(elem, numSamplesFromAtomics)
+    }
+  }
 
   /**
-   * Retrieves the samples for an element using the indicated number of samples
+   * Retrieves the samples for an element using the indicated number of samples. If the stored result has at least as
+   * many samples as numSamples, this returns the stored result. Otherwise, this takes additional samples. It then
+   * stores and returns the combined result.
    */
   def apply[T](elem: Element[T], numSamples: Int): List[(Double, T)] = {
     sampleMap.get(elem) match {
-      case Some(e) => {
-        e.asInstanceOf[(List[(Double, T)], Int)]._1
-      }
-      case None => {
+      case Some(e) =>
+        val prevSamples = e._1.asInstanceOf[List[(Double, T)]]
+        val prevNumSamples = e._2
+        // Return if we cached at least as many samples as needed
+        if(prevNumSamples >= numSamples) prevSamples
+        else {
+          // Take additional samples equal to the difference between what is stored and what is needed
+          val extraNumSamples = numSamples - prevNumSamples
+          val sampler = ElementSampler(elem, extraNumSamples)
+          sampler.start()
+          val extraSamples = sampler.computeDistribution(elem).toList
+          // Weight the distributions according to the proportion of total samples taken that they represent.
+          val prevSamplesWeighted = prevSamples.map{case (prob, value) => (prob * prevNumSamples / numSamples, value)}
+          val extraSamplesWeighted = extraSamples.map{case (prob, value) => (prob * extraNumSamples / numSamples, value)}
+          // Sum together the weighted distributions by value
+          val groupedByValue = (prevSamplesWeighted ::: extraSamplesWeighted).groupBy(_._2)
+          val result = for((value, list) <- groupedByValue.toList) yield {
+            // Sum the probabilities corresponding to a single value
+            val totalProb = list.unzip._1.sum
+            (totalProb, value)
+          }
+          // Cache the new result
+          update(elem, numSamples, result)
+          sampler.kill()
+          result
+        }
+      case None =>
+        // Compute samples
         if (!warningIssued) {
           println("Warning: you are using a factored algorithm with continuous or infinite elements. The element will be sampled " + numSamples + " times")
           warningIssued = true
         }
         val sampler = ElementSampler(elem, numSamples)
-        sampler.start
+        sampler.start()
         val result = sampler.computeDistribution(elem).toList
+        // Cache the result
         sampleMap += elem -> (result, numSamples)
         elem.universe.register(sampleMap)
-        sampler.kill
+        sampler.kill()
         result
-      }
     }
   }
 

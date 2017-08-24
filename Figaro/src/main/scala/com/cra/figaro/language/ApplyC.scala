@@ -1,10 +1,24 @@
+/*
+ * ApplyC.scala
+ * This class is a workaround for adding easier type inference to Apply class.  Since Apply object is already using apply method with different number of arguments it is not easy to find a workaround adding currying support to apply methods in Apply class.
+ * 
+ * Created By:      Avi Pfeffer (apfeffer@cra.com)
+ * Creation Date:   Jan 1, 2009
+ * 
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * See http://www.cra.com or email figaro@cra.com for information.
+ * 
+ * See http://www.github.com/p2t2/figaro for a copy of the software license.
+ */
+
+/*
+ * Additional Updates from our community
+ * 
+ * Cagdas Senol		May 30, 2016
+ */
+
 package com.cra.figaro.language
 
-/**
-  * This class is a workaround for adding easier type inference to Apply class
-  * Since Apply object is already using apply method with different number of arguments
-  * it is not easy to find a workaround adding currying support to apply methods in Apply class
-  */
 object ApplyC {
   /**
     * Application of a function to one argument.

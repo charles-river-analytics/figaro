@@ -5,7 +5,7 @@
  * Created By:      Avi Pfeffer (apfeffer@cra.com)
  * Creation Date:   Jan 1, 2009
  *
- * Copyright 2013 Avrom J. Pfeffer and Charles River Analytics, Inc.
+ * Copyright 2017 Avrom J. Pfeffer and Charles River Analytics, Inc.
  * See http://www.cra.com or email figaro@cra.com for information.
  *
  * See http://www.github.com/p2t2/figaro for a copy of the software license.
@@ -18,9 +18,13 @@ import scala.collection.mutable.Map
 import com.cra.figaro.language._
 import com.cra.figaro.algorithm.lazyfactored.Extended
 import scala.reflect.runtime.universe._
+import scala.collection.mutable.WrappedArray
+import scala.reflect.ClassTag
+import scala.collection.mutable.ArraySeq
 
 /**
- * Default implementation of Factor. 
+ * Trait for a common implementation of Factors. BasicFactor is still a trait because it does not yet define the underlying 
+ * data store of the factor 
  * 
  * A factor is associated with a set of variables and specifies a value for every combination of assignments to those variables. 
  * Factors are parameterized by the types of values they contain.
@@ -30,30 +34,17 @@ import scala.reflect.runtime.universe._
  * @param semiring A Semiring class that defines the operations (sum/max, product) to be used in this factor. This defaults to
  * SumProductSemiring
  */
-class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_]], val semiring: Semiring[T] = SumProductSemiring().asInstanceOf[Semiring[T]])
-  extends Factor[T] {
+trait BasicFactor[T] extends Factor[T] {
 
-  override def createFactor[T](parents: List[Variable[_]], output: List[Variable[_]], _semiring: Semiring[T] = semiring): Factor[T] =
-    new BasicFactor[T](parents, output, _semiring)
-
-  /**
-   * Get the value associated with a row. The row is identified by an list of indices
-   * into the ranges of the variables over which the factor is defined.
-   */
-  def get(indices: List[Int]): T = {
-    contents.get(indices) match {
-      case Some(value) => value
-      case _ => semiring.zero
-    }
-  }
-
+  val semiring: Semiring[T]
+    
   /**
    * Convert the contents of the target by applying the given function to all elements of this factor.
    */
   override def mapTo[U](fn: T => U, _semiring: Semiring[U] = semiring): Factor[U] = {
     val newFactor = createFactor[U](parents, output, _semiring)
-    for { (key, value) <- contents } {
-      newFactor.set(key, fn(value))
+    for { key <- getIndices } {
+      newFactor.set(key, fn(get(key)))
     }
     newFactor
   }
@@ -116,7 +107,7 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
       case _:SparseFactor[T] => that.combination(this, (a,b) => op(b, a))
       case _ => {
         val (allParents, allChildren, indexMap1, indexMap2) = unionVars(that)
-        val result: Factor[T] = that.createFactor(allParents, allChildren)
+        val result: Factor[T] = that.createFactor[T](allParents, allChildren, semiring)
 
         val numVars = result.numVars
         
@@ -143,7 +134,7 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
       val newParents = parents.filterNot(_ == variable)
       val newOutput = output.filterNot(_ == variable)
 
-      val result = createFactor[T](newParents, newOutput)
+      val result = createFactor(newParents, newOutput)
       val numVars = result.numVars
       val indexMap: List[Int] = result.variables map (variables.indexOf(_))
 
@@ -238,10 +229,10 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
       val newVariableLocations = factor.variables.distinct.map((v: Variable[_]) => repeats(v)(0))
       val repeatedVariables = repeats.values.filter(_.size > 1)
       for (row <- factor.getIndices) {
-        contents.get(row) match {
-          case Some(value) => {
+        contentsContains (row) match {
+          case true => {
             if (checkRow(row, repeatedVariables)) {
-              reduced.set(newVariableLocations.map(row(_)), value)
+              reduced.set(newVariableLocations.map(row(_)), get(row))
             }
           }
           case _ =>
@@ -272,7 +263,7 @@ class BasicFactor[T](val parents: List[Variable[_]], val output: List[Variable[_
         val maxValueLength = valueLengths.foldLeft(4)(_ max _)
         (maxValueLength max variable.id.toString.length) + 2 // add 2 for spaces
       }
-    val resultWidth = contents.values.map(_.toString.length).foldLeft(4)(_ max _) + 2
+    val resultWidth = getContents.map(_.toString.length).foldLeft(4)(_ max _) + 2
     def addBorderRow() {
       for { width <- valueWidths } { result.append("|" + "-" * width) }
       result.append("|" + "-" * resultWidth + "|\n") //

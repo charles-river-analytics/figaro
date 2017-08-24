@@ -40,7 +40,7 @@ trait MarginalMAPAlgorithm extends Algorithm {
    */
   protected def doMostLikelyValue[T](target: Element[T]): T
 
-  private def check[T](target: Element[T]): Unit = {
+  protected def check[T](target: Element[T]): Unit = {
     if (!active) throw new AlgorithmInactiveException
     if (!(mapElements contains target)) throw new NotATargetException(target)
   }
