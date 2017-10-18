@@ -159,7 +159,8 @@ object SelectFactory {
    */
   def makeSimpleDistribution[T](target: Variable[T], probs: List[Double]): Factor[Double] = {
     val factor = new DenseFactor[Double](List(), List(target))
-    for { (prob, index) <- probs.zipWithIndex } {
+    val sum = probs.sum
+    for { (prob, index) <- probs.map(_/sum).zipWithIndex } {
       factor.set(List(index), prob)
     }
     factor
