@@ -189,11 +189,18 @@ class LazyValues(universe: Universe, paramaterized: Boolean = false) {
         val parentVS = LazyValues(c.parent.universe).storedValues(c.parent)
         val samplesPerValue = math.max(1, (numTotalSamples.toDouble / parentVS.regularValues.size).toInt)
 
-        val resultVSs = findChainValues(c, chainMap, parentVS, samplesPerValue)
+        val resultVSs = findChainValues(c, chainMap, parentVS, numTotalSamples).reduce(_ ++ _)        
+        val limitValues = universe.uses(c).exists({case cont: Continuous[_] => true; case _ => false})
+        val limitedResults = if (limitValues) {          
+          val subset = com.cra.figaro.util.random.shuffle(resultVSs.regularValues.toList).take(numTotalSamples).toSet
+          withoutStar[c.Value](subset)
+        } else {
+          resultVSs
+        }
 
-        val startVS: ValueSet[c.Value] =
-          if (parentVS.hasStar) withStar[c.Value](Set()); else withoutStar[c.Value](Set())
-        resultVSs.foldLeft(startVS)(_ ++ _)
+        val startVS: ValueSet[c.Value] = if (parentVS.hasStar) withStar[c.Value](Set()); else withoutStar[c.Value](Set())
+        startVS ++ limitedResults               
+        
       case i: Inject[_] =>
         val elementVSs = i.args.map(arg => LazyValues(arg.universe).storedValues(arg))
         val incomplete = elementVSs.exists(_.hasStar)
