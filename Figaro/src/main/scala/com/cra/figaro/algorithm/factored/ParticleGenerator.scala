@@ -29,7 +29,7 @@ import com.cra.figaro.algorithm.factored.factors.Factor
  * @param maxNumSamplesAtChain Maximum number of samples on the output of chains
  * @param de An instance to compute the density estimate of point during resampling
  */
-class ParticleGenerator(de: DensityEstimator, val numSamplesFromAtomics: Int, val maxNumSamplesAtChain: Int) {
+class ParticleGenerator(de: DensityEstimator, val numSamplesFromAtomics: Int, val maxNumSamplesAtChain: Int, val maxNumSamplesAtApply: Int) {
 
   @deprecated("numArgSamples is deprecated. Please use numSamplesFromAtomics", "4.1")
   val numArgSamples = numSamplesFromAtomics
@@ -231,6 +231,12 @@ object ParticleGenerator {
   @deprecated("defaultTotalSamples is deprecated. Please use defaultMaxNumSamplesAtChain", "4.1")
   var defaultTotalSamples = defaultMaxNumSamplesAtChain
 
+  /**
+   * Maximum number of particles to generate through an apply. By default, we square the number of 
+   * atomic samples which would not prune any two parameter apply's
+   */
+  var defaultMaxNumSamplesAtApply = defaultNumSamplesFromAtomics*defaultNumSamplesFromAtomics
+  
   private val samplerMap: Map[Universe, ParticleGenerator] = Map()
 
   /**
@@ -246,11 +252,11 @@ object ParticleGenerator {
   /**
    * Create a new particle generator for the given universe, using the given density estimatore, number of argument samples and total number of samples
    */
-  def apply(univ: Universe, de: DensityEstimator, numSamplesFromAtomics: Int, maxNumSamplesAtChain: Int): ParticleGenerator =
+  def apply(univ: Universe, de: DensityEstimator, numSamplesFromAtomics: Int, maxNumSamplesAtChain: Int, maxNumSamplesAtApply: Int): ParticleGenerator =
     samplerMap.get(univ) match {
       case Some(e) => e
       case None => {
-        samplerMap += (univ -> new ParticleGenerator(de, numSamplesFromAtomics, maxNumSamplesAtChain))
+        samplerMap += (univ -> new ParticleGenerator(de, numSamplesFromAtomics, maxNumSamplesAtChain, maxNumSamplesAtApply))
         univ.registerUniverse(samplerMap)
         samplerMap(univ)
       }
@@ -260,13 +266,13 @@ object ParticleGenerator {
    * Create a new particle generate for a universe using a constant density estimator and default samples
    */
   def apply(univ: Universe): ParticleGenerator = apply(univ, new ConstantDensityEstimator,
-    defaultNumSamplesFromAtomics, defaultMaxNumSamplesAtChain)
+    defaultNumSamplesFromAtomics, defaultMaxNumSamplesAtChain, defaultMaxNumSamplesAtApply)
 
   /**
    * Create a new particle generator for a universe using a constant density estimator and the number of argument samples and total number of samples
    */
-  def apply(univ: Universe, numSamplesFromAtomics: Int, maxNumSamplesAtChain: Int): ParticleGenerator = apply(univ, new ConstantDensityEstimator,
-    numSamplesFromAtomics, maxNumSamplesAtChain)
+  def apply(univ: Universe, numSamplesFromAtomics: Int, maxNumSamplesAtChain: Int, maxNumSamplesAtApply: Int = defaultMaxNumSamplesAtApply): ParticleGenerator = apply(univ, new ConstantDensityEstimator,
+    numSamplesFromAtomics, maxNumSamplesAtChain, maxNumSamplesAtApply)
 
   /**
    * Check if a particle generate exists for this universe

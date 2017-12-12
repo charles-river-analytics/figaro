@@ -35,7 +35,7 @@ import com.cra.figaro.algorithm.factored.ParticleGenerator
  * of elements in the universe to any desired depth.
  */
 class LazyValues(universe: Universe, paramaterized: Boolean = false) {
-  private def values[T](element: Element[T], depth: Int, numArgSamples: Int, numTotalSamples: Int): ValueSet[T] = {
+  private def values[T](element: Element[T], depth: Int, numSamplesFromAtomics: Int, maxNumSamplesAtChain: Int, maxNumSamplesAtApply: Int): ValueSet[T] = {
     // In some cases (e.g. CompoundFlip), we might know the value of an element without getting the values of its arguments.
     // However, future algorithms rely on the values of the arguments having been gotten already.
     // Therefore, we compute the values of the arguments (to a lesser depth) first,
@@ -44,27 +44,27 @@ class LazyValues(universe: Universe, paramaterized: Boolean = false) {
     // Override the argument list for chains since the resultElement of the chain will be processed as the chain is processed
     val elementArgs = element match {
       case c: Chain[_, _] => List(c.parent)
-      case _              => element.args
+      case _ => element.args
     }
 
     for { arg <- elementArgs } {
-      LazyValues(arg.universe)(arg, depth - 1, numArgSamples, numTotalSamples)
+      LazyValues(arg.universe)(arg, depth - 1, numSamplesFromAtomics, maxNumSamplesAtChain, maxNumSamplesAtApply)
       usedBy(arg) = usedBy.getOrElse(arg, Set()) + element
     }
 
     Abstraction.fromPragmas(element.pragmas) match {
-      case None              => concreteValues(element, depth, numArgSamples, numTotalSamples)
-      case Some(abstraction) => abstractValues(element, abstraction, depth, numArgSamples, numTotalSamples)
+      case None => concreteValues(element, depth, numSamplesFromAtomics, maxNumSamplesAtChain, maxNumSamplesAtApply)
+      case Some(abstraction) => abstractValues(element, abstraction, depth, numSamplesFromAtomics, maxNumSamplesAtChain, maxNumSamplesAtApply)
     }
 
   }
 
-  private def concreteValues[T](element: Element[T], depth: Int, numArgSamples: Int, numTotalSamples: Int): ValueSet[T] =
+  private def concreteValues[T](element: Element[T], depth: Int, numSamplesFromAtomics: Int, maxNumSamplesAtChain: Int, maxNumSamplesAtApply: Int): ValueSet[T] =
     element match {
       case p: Parameter[_] if paramaterized => ValueSet.withoutStar(Set(p.MAPValue))
-      case c: Constant[_]     => withoutStar(Set(c.constant))
-      case f: Flip            => withoutStar(Set(true, false))
-      case d: Select[_, _]    => withoutStar(Set(d.outcomes: _*))
+      case c: Constant[_] => withoutStar(Set(c.constant))
+      case f: Flip => withoutStar(Set(true, false))
+      case d: Select[_, _] => withoutStar(Set(d.outcomes: _*))
       case d: Dist[_, _] =>
         val componentSets = d.outcomes.map(storedValues(_))
         componentSets.reduce(_ ++ _)
@@ -86,6 +86,71 @@ class LazyValues(universe: Universe, paramaterized: Boolean = false) {
           b.extendedFn(arg1XVal, arg2XVal)
         }
         new ValueSet(resultSet)
+      
+      case a: Apply[_] =>
+        val results = applyValues(a)
+        val resultsAsSet = results.regularValues.asInstanceOf[Set[a.Value]]
+        
+        val limitValues = universe.uses(a).exists({ case cont: Continuous[_] => true; case _ => false })
+        val limitedResults = if (limitValues) {
+          com.cra.figaro.util.random.shuffle(resultsAsSet.toList).take(maxNumSamplesAtApply).toSet         
+        } else {
+          resultsAsSet
+        }
+        if (results.hasStar) withStar(limitedResults) else withoutStar(limitedResults)
+      case c: Chain[_, _] =>
+
+        def findChainValues[T, U](chain: Chain[T, U], cmap: Map[T, Element[U]], pVals: ValueSet[T]): Set[ValueSet[U]] = {
+          val chainVals = pVals.regularValues.map { parentVal =>
+            val resultElem = getOrElseInsert(cmap, parentVal, chain.getUncached(parentVal))
+            val result = LazyValues(resultElem.universe)(resultElem, depth - 1, numSamplesFromAtomics, maxNumSamplesAtChain, maxNumSamplesAtApply)
+            usedBy(resultElem) = usedBy.getOrElse(resultElem, Set()) + element
+            result
+          }
+          val newParentVals = LazyValues(chain.parent.universe).storedValues(chain.parent)
+          if (newParentVals == pVals) {
+            chainVals
+          } else {
+            findChainValues(chain, cmap, newParentVals)
+          }
+        }
+
+        val chainMap = getMap(c)
+        val parentVS = LazyValues(c.parent.universe).storedValues(c.parent)        
+
+        val resultVSs = findChainValues(c, chainMap, parentVS).fold(withoutStar[c.Value](Set()))((c, n) => c ++ n)
+        val limitValues = universe.uses(c).exists({ case cont: Continuous[_] => true; case _ => false })
+        val limitedResults = if (limitValues) {
+          val subset = com.cra.figaro.util.random.shuffle(resultVSs.regularValues.toList).take(maxNumSamplesAtChain).toSet
+          withoutStar[c.Value](subset)
+        } else {
+          resultVSs
+        }
+
+        val startVS: ValueSet[c.Value] = if (parentVS.hasStar) withStar[c.Value](Set()); else withoutStar[c.Value](Set())
+        startVS ++ limitedResults
+
+      case i: Inject[_] =>
+        val elementVSs = i.args.map(arg => LazyValues(arg.universe).storedValues(arg))
+        val incomplete = elementVSs.exists(_.hasStar)
+        val elementValues = elementVSs.toList.map(_.regularValues.toList)
+        val resultValues = homogeneousCartesianProduct(elementValues: _*).toSet.asInstanceOf[Set[i.Value]]
+        if (incomplete) withStar(resultValues); else withoutStar(resultValues)
+      case v: ValuesMaker[_] => {
+        v.makeValues(depth)
+      }
+      case a: Atomic[_] => {
+        val thisSampler = ParticleGenerator(universe)
+        val samples = thisSampler(a, numSamplesFromAtomics)
+        withoutStar(samples.unzip._2.toSet)
+      }
+      case _ =>
+        /* A new improvement - if we can't compute the values, we just make them *, so the rest of the computation can proceed */
+        withStar(Set())
+    }
+
+  private def applyValues(element: Apply[_]) = {
+    element match {
       case a: Apply1[_, _] =>
         val applyMap = getMap(a)
         val vs1 = LazyValues(a.arg1.universe).storedValues(a.arg1)
@@ -168,53 +233,11 @@ class LazyValues(universe: Universe, paramaterized: Boolean = false) {
             getOrElseInsert(applyMap, (arg1Val, arg2Val, arg3Val, arg4Val, arg5Val), a.fn(arg1Val, arg2Val, arg3Val, arg4Val, arg5Val))
           }
         if (vs1.hasStar || vs2.hasStar || vs3.hasStar || vs4.hasStar || vs5.hasStar) withStar(resultsList.toSet); else withoutStar(resultsList.toSet)
-      case c: Chain[_, _] =>
-
-        def findChainValues[T, U](chain: Chain[T, U], cmap: Map[T, Element[U]], pVals: ValueSet[T], samples: Int): Set[ValueSet[U]] = {
-          val chainVals = pVals.regularValues.map { parentVal =>
-            val resultElem = getOrElseInsert(cmap, parentVal, chain.getUncached(parentVal))
-            val result = LazyValues(resultElem.universe)(resultElem, depth - 1, samples, samples)
-            usedBy(resultElem) = usedBy.getOrElse(resultElem, Set()) + element
-            result
-          }
-          val newParentVals = LazyValues(chain.parent.universe).storedValues(chain.parent)
-          if (newParentVals == pVals) {
-            chainVals
-          } else {
-            findChainValues(chain, cmap, newParentVals, samples)
-          }
-        }
-
-        val chainMap = getMap(c)
-        val parentVS = LazyValues(c.parent.universe).storedValues(c.parent)
-        val samplesPerValue = math.max(1, (numTotalSamples.toDouble / parentVS.regularValues.size).toInt)
-
-        val resultVSs = findChainValues(c, chainMap, parentVS, samplesPerValue)
-
-        val startVS: ValueSet[c.Value] =
-          if (parentVS.hasStar) withStar[c.Value](Set()); else withoutStar[c.Value](Set())
-        resultVSs.foldLeft(startVS)(_ ++ _)
-      case i: Inject[_] =>
-        val elementVSs = i.args.map(arg => LazyValues(arg.universe).storedValues(arg))
-        val incomplete = elementVSs.exists(_.hasStar)
-        val elementValues = elementVSs.toList.map(_.regularValues.toList)
-        val resultValues = homogeneousCartesianProduct(elementValues: _*).toSet.asInstanceOf[Set[i.Value]]
-        if (incomplete) withStar(resultValues); else withoutStar(resultValues)
-      case v: ValuesMaker[_] => {
-        v.makeValues(depth)
-      }
-      case a: Atomic[_] => {
-        val thisSampler = ParticleGenerator(universe)
-        val samples = thisSampler(a, numArgSamples)
-        withoutStar(samples.unzip._2.toSet)
-      }
-      case _ =>
-        /* A new improvement - if we can't compute the values, we just make them *, so the rest of the computation can proceed */
-        withStar(Set())
     }
+  }
 
   private def abstractValues[T](element: Element[T], abstraction: Abstraction[T], depth: Int,
-                                numArgSamples: Int, numTotalSamples: Int): ValueSet[T] = {
+    numSamplesFromAtomics: Int, maxNumSamplesAtChain: Int, maxNumSamplesAtApply: Int): ValueSet[T] = {
     val (inputs, hasStar): (List[T], Boolean) = {
       element match {
         case _: Atomic[_] =>
@@ -223,7 +246,7 @@ class LazyValues(universe: Universe, paramaterized: Boolean = false) {
               yield element.generateValue(element.generateRandomness)
           (values.toList, false)
         case _ =>
-          val values = concreteValues(element, depth, numArgSamples, numTotalSamples)
+          val values = concreteValues(element, depth, numSamplesFromAtomics, maxNumSamplesAtChain, maxNumSamplesAtApply)
           (values.regularValues.toList, values.hasStar)
       }
     }
@@ -255,16 +278,16 @@ class LazyValues(universe: Universe, paramaterized: Boolean = false) {
    * or if a previous call has resulted in a result with no Star, the previous result is reused.
    */
   def apply[T](element: Element[T], depth: Int): ValueSet[T] = {
-    val (numArgSamples, numTotalSamples) = if (ParticleGenerator.exists(universe)) {
+    val (numSamplesFromAtomics, maxNumSamplesAtChain, maxNumSamplesAtApply) = if (ParticleGenerator.exists(universe)) {
       val pg = ParticleGenerator(universe)
-      (pg.numSamplesFromAtomics, pg.maxNumSamplesAtChain)
+      (pg.numSamplesFromAtomics, pg.maxNumSamplesAtChain, pg.maxNumSamplesAtApply)
     } else {
-      (ParticleGenerator.defaultNumSamplesFromAtomics, ParticleGenerator.defaultMaxNumSamplesAtChain)
+      (ParticleGenerator.defaultNumSamplesFromAtomics, ParticleGenerator.defaultMaxNumSamplesAtChain, ParticleGenerator.defaultMaxNumSamplesAtApply)
     }
-    apply(element, depth, numArgSamples, numTotalSamples)
+    apply(element, depth, numSamplesFromAtomics, maxNumSamplesAtChain, maxNumSamplesAtApply)
   }
 
-  def apply[T](element: Element[T], depth: Int, numArgSamples: Int, numTotalSamples: Int): ValueSet[T] = {
+  def apply[T](element: Element[T], depth: Int, numSamplesFromAtomics: Int, maxNumSamplesAtChain: Int, maxNumSamplesAtApply: Int): ValueSet[T] = {
     val myDepth = requiredDepths.getOrElse(element, -1).max(depth)
     if (LazyValues.debug) {
       println("Computing values for " + element.toNameString + "@" + element.hashCode + ", depth = " + myDepth)
@@ -276,7 +299,7 @@ class LazyValues(universe: Universe, paramaterized: Boolean = false) {
         }
         result.asInstanceOf[ValueSet[T]]
       case _ =>
-        val vs = if (myDepth >= 0) values(element, myDepth, numArgSamples, numTotalSamples); else withStar[T](Set())
+        val vs = if (myDepth >= 0) values(element, myDepth, numSamplesFromAtomics, maxNumSamplesAtChain, maxNumSamplesAtApply); else withStar[T](Set())
         memoValues += element -> (vs, myDepth)
         if (LazyValues.debug) {
           println("Newly computed values for " + element.toNameString + ": " + vs)
@@ -325,7 +348,7 @@ class LazyValues(universe: Universe, paramaterized: Boolean = false) {
   def storedValues[T](element: Element[T]): ValueSet[T] = {
     memoValues.get(element) match {
       case Some((result, _)) => result.asInstanceOf[ValueSet[T]]
-      case None              => new ValueSet[T](Set())
+      case None => new ValueSet[T](Set())
     }
   }
 

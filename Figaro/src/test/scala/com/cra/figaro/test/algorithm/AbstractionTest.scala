@@ -110,6 +110,8 @@ class AbstractionTest extends WordSpec with Matchers {
     "given a chain whose results are atomic elements using a regular discretization scheme" should {
       "produce a sequence ranging from the minimum to maximum of all the results" in {
         Universe.createNew()
+        ParticleGenerator.defaultMaxNumSamplesAtChain = 200
+        ParticleGenerator.defaultNumSamplesFromAtomics = 100
         def f(d: Double) = {
           val u = Uniform(d, d + 1)
           u.addPragma(Abstraction(100)(AbstractionScheme.RegularDiscretization))
@@ -127,6 +129,9 @@ class AbstractionTest extends WordSpec with Matchers {
     "given an Apply2 whose arguments are atomic elements using a regular discretization scheme" should {
       "produce a sequence ranging from the minimum to maximum of all the results" in {
         Universe.createNew()
+        ParticleGenerator.defaultMaxNumSamplesAtChain = 10000
+        ParticleGenerator.defaultMaxNumSamplesAtApply = 10000
+        ParticleGenerator.defaultNumSamplesFromAtomics = 100
         val u = Uniform(0.0, 2.0)
         u.addPragma(Abstraction(200)(AbstractionScheme.RegularDiscretization))
         val a = Apply(u, u, ((d1: Double, d2: Double) => d1 * d2))
