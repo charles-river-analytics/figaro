@@ -244,7 +244,7 @@ abstract class ProbQueryParticleBeliefPropagation(numArgSamples: Int, numTotalSa
   
   val densityEstimator = new AutomaticDensityEstimator
 
-  val pbpSampler = ParticleGenerator(universe, densityEstimator, numArgSamples, numTotalSamples)
+  val pbpSampler = ParticleGenerator(universe, densityEstimator, numArgSamples, numTotalSamples, ParticleGenerator.defaultMaxNumSamplesAtApply)
 
   /**
    * Getting factors for PBP returns an empty list, since all of the factor creation is handled inside of

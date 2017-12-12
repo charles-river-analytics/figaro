@@ -69,7 +69,7 @@ class PBPTest extends WordSpec with Matchers {
       def mean(p: List[(Double, Double)]) = (0.0 /: p)((c: Double, n: (Double, Double)) => c + n._1 * n._2)
       Universe.createNew()
       val n = Normal(0.0, 1.0)
-      val pbpSampler = ParticleGenerator(Universe.universe, new AutomaticDensityEstimator, 100, 100)
+      val pbpSampler = ParticleGenerator(Universe.universe, new AutomaticDensityEstimator, 100, 100, 100*100)
       val samples = pbpSampler(n)
       pbpSampler.resample(n, samples, List(samples), 0.05)
       val newSamples = pbpSampler(n)

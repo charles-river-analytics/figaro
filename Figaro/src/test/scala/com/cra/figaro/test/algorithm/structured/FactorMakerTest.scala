@@ -513,11 +513,11 @@ class FactorMakerTest extends WordSpec with Matchers {
         val i2 = vals.indexOf(Regular(2))
         val i5 = vals.indexOf(Regular(5))
         val i4 = vals.indexOf(Regular(4))
-        factor.get(List(i1)) should equal(0.2)
-        factor.get(List(i0)) should equal(0.3)
-        factor.get(List(i2)) should equal(0.1)
-        factor.get(List(i5)) should equal(0.05)
-        factor.get(List(i4)) should equal(0.35)
+        factor.get(List(i1)) should equal(0.2 +- 0.000000001)
+        factor.get(List(i0)) should equal(0.3 +- 0.000000001)
+        factor.get(List(i2)) should equal(0.1 +- 0.000000001)
+        factor.get(List(i5)) should equal(0.05 +- 0.000000001)
+        factor.get(List(i4)) should equal(0.35 +- 0.000000001)
       }
     }
 
