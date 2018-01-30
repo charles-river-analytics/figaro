@@ -16,14 +16,14 @@ package com.cra.figaro.algorithm.lazyfactored
 /**
  * A value set that possibly contains unspecified values.
  */
-class ValueSet[T](val xvalues: Set[Extended[T]]) {
+class ValueSet[T](val xvalues: Set[Extended[T]], val normalizer: Double = 1.0) {
   /**
    * Add an extended value to this value set.
    * If the extended value is a Star and the value set already contains a Star, we do not add it,
    * since there is no need for more than one Star. 
    */  
   def +(x: Extended[T]): ValueSet[T] = {
-    if (!x.isRegular && hasStar) this; else new ValueSet(xvalues + x) 
+    if (!x.isRegular && hasStar) this; else new ValueSet(xvalues + x, normalizer) 
   }
   
   /**
@@ -31,8 +31,8 @@ class ValueSet[T](val xvalues: Set[Extended[T]]) {
    * If both have a Star, only one Star is kept in the result.
    */
   def ++(that: ValueSet[T]): ValueSet[T] = {
-    if (hasStar && that.hasStar) new ValueSet(xvalues ++ that.xvalues.filter(_.isRegular))
-    else new ValueSet(xvalues ++ that.xvalues)
+    if (hasStar && that.hasStar) new ValueSet(xvalues ++ that.xvalues.filter(_.isRegular), normalizer)
+    else new ValueSet(xvalues ++ that.xvalues,  normalizer)
   }
   
   /**
@@ -72,21 +72,21 @@ class ValueSet[T](val xvalues: Set[Extended[T]]) {
         case _ => Star[U]
       }
     }
-    new ValueSet(xvalues.map(xf(_)))
+    new ValueSet(xvalues.map(xf(_)), normalizer)
   }
   
   override def toString = "{" + xvalues.mkString(", ") + "}"
 }
 
 object ValueSet {
-  def withoutStar[T](values: Set[T]) = {
+  def withoutStar[T](values: Set[T], normalizer: Double = 1.0) = {
     val xs: Set[Extended[T]] = values.map(Regular(_))
-    new ValueSet(xs)
+    new ValueSet(xs, normalizer)
   }
   
-  def withStar[T](values: Set[T]) = {
+  def withStar[T](values: Set[T], normalizer: Double = 1.0) = {
     val xs: Set[Extended[T]] = values.map(Regular(_))
-    new ValueSet(xs + Star[T])
+    new ValueSet(xs + Star[T], normalizer)
   }
 }
 

@@ -99,6 +99,7 @@ object Factory {
    */
   def makeTupleVarAndFactor(cc: ComponentCollection, chain: Option[Chain[_, _]], inputs: Variable[_]*): (Variable[List[Extended[_]]], Factor[Double]) = {
     val inputList: List[Variable[_]] = inputs.toList
+    val normalizer = inputList.map(_.valueSet.normalizer).product
     // Subtlety alert: In the tuple, we can't just map inputs with * to *. We need to remember which input was *.
     // Therefore, instead, we make the value a regular value consisting of a list of extended values.
     val tupleRangeRegular: List[List[_]] = cartesianProduct(inputList.map(_.range): _*)
@@ -110,7 +111,7 @@ object Factory {
       val tupleIndex = pair._2
       val inputIndices =
         for { (input, value) <- inputList.zip(tupleVal) } yield input.range.indexOf(value)
-      tupleFactor.set(inputIndices ::: List(tupleIndex), 1.0)
+      tupleFactor.set(inputIndices ::: List(tupleIndex), normalizer)
     }
     (tupleVar, tupleFactor)
   }

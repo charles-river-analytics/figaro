@@ -92,12 +92,12 @@ class LazyValues(universe: Universe, paramaterized: Boolean = false) {
         val resultsAsSet = results.regularValues.asInstanceOf[Set[a.Value]]
         
         val limitValues = universe.uses(a).exists({ case cont: Continuous[_] => true; case _ => false })
-        val limitedResults = if (limitValues) {
-          com.cra.figaro.util.random.shuffle(resultsAsSet.toList).take(maxNumSamplesAtApply).toSet         
+        val (limitedResults, normalizer) = if (limitValues && resultsAsSet.size > maxNumSamplesAtApply) {
+          (com.cra.figaro.util.random.shuffle(resultsAsSet.toList).take(maxNumSamplesAtApply).toSet, resultsAsSet.size.toDouble/maxNumSamplesAtApply.toDouble)
         } else {
-          resultsAsSet
+          (resultsAsSet, 1.0)
         }
-        if (results.hasStar) withStar(limitedResults) else withoutStar(limitedResults)
+        if (results.hasStar) withStar(limitedResults, normalizer) else withoutStar(limitedResults, normalizer)
       case c: Chain[_, _] =>
 
         def findChainValues[T, U](chain: Chain[T, U], cmap: Map[T, Element[U]], pVals: ValueSet[T]): Set[ValueSet[U]] = {
@@ -120,14 +120,14 @@ class LazyValues(universe: Universe, paramaterized: Boolean = false) {
 
         val resultVSs = findChainValues(c, chainMap, parentVS).fold(withoutStar[c.Value](Set()))((c, n) => c ++ n)
         val limitValues = universe.uses(c).exists({ case cont: Continuous[_] => true; case _ => false })
-        val limitedResults = if (limitValues) {
+        val (limitedResults, normalizer) = if (limitValues && resultVSs.regularValues.size > maxNumSamplesAtChain) {
           val subset = com.cra.figaro.util.random.shuffle(resultVSs.regularValues.toList).take(maxNumSamplesAtChain).toSet
-          withoutStar[c.Value](subset)
+          (withoutStar[c.Value](subset), resultVSs.regularValues.size.toDouble/maxNumSamplesAtChain.toDouble)
         } else {
-          resultVSs
+          (resultVSs, 1.0)
         }
 
-        val startVS: ValueSet[c.Value] = if (parentVS.hasStar) withStar[c.Value](Set()); else withoutStar[c.Value](Set())
+        val startVS: ValueSet[c.Value] = if (parentVS.hasStar) withStar[c.Value](Set(), normalizer); else withoutStar[c.Value](Set(), normalizer)
         startVS ++ limitedResults
 
       case i: Inject[_] =>
