@@ -43,7 +43,7 @@ object ApplyFactory {
       if (arg1Val.isRegular) {
         val resultVal = mapper.map(applyMap(arg1Val.value), applyValues.regularValues)
         val resultIndex = resultVar.range.indexWhere(xval => xval.isRegular && xval.value == resultVal)
-        if (resultIndex >= 0) factor.set(List(arg1Index, resultIndex), 1.0)
+        if (resultIndex >= 0) factor.set(List(arg1Index, resultIndex), resultVar.valueSet.normalizer)
       } else if (!arg1Val.isRegular) {
         val resultNotRegularIndex = resultVar.range.indexWhere(!_.isRegular)
         if (resultNotRegularIndex >= 0) factor.set(List(arg1Index, resultNotRegularIndex), 1.0)
@@ -73,7 +73,7 @@ object ApplyFactory {
       if (arg1Val.isRegular && arg2Val.isRegular) {
         val resultVal = mapper.map(applyMap((arg1Val.value, arg2Val.value)), applyValues.regularValues)
         val resultIndex = resultVar.range.indexWhere(xval => xval.isRegular && xval.value == resultVal)
-        if (resultIndex >= 0) factor.set(List(arg1Index, arg2Index, resultIndex), 1.0)
+        if (resultIndex >= 0) factor.set(List(arg1Index, arg2Index, resultIndex), resultVar.valueSet.normalizer)
       } else if ((!arg1Val.isRegular || !arg2Val.isRegular)) {
         val resultNotRegularIndex = resultVar.range.indexWhere(!_.isRegular)
         if (resultNotRegularIndex >= 0) factor.set(List(arg1Index, arg2Index, resultNotRegularIndex), 1.0)
@@ -107,7 +107,7 @@ object ApplyFactory {
       if (arg1Val.isRegular && arg2Val.isRegular && arg3Val.isRegular) {
         val resultVal = mapper.map(applyMap((arg1Val.value, arg2Val.value, arg3Val.value)), applyValues.regularValues)
         val resultIndex = resultVar.range.indexWhere(xval => xval.isRegular && xval.value == resultVal)
-        if (resultIndex >= 0) factor.set(List(arg1Index, arg2Index, arg3Index, resultIndex), 1.0)
+        if (resultIndex >= 0) factor.set(List(arg1Index, arg2Index, arg3Index, resultIndex), resultVar.valueSet.normalizer)
       } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular)) {
         val resultNotRegularIndex = resultVar.range.indexWhere(!_.isRegular)
         if (resultNotRegularIndex >= 0) factor.set(List(arg1Index, arg2Index, arg3Index, resultNotRegularIndex), 1.0)
@@ -143,7 +143,7 @@ object ApplyFactory {
       if (arg1Val.isRegular && arg2Val.isRegular && arg3Val.isRegular && arg4Val.isRegular) {
         val resultVal = mapper.map(applyMap((arg1Val.value, arg2Val.value, arg3Val.value, arg4Val.value)), applyValues.regularValues)
         val resultIndex = resultVar.range.indexWhere(xval => xval.isRegular && xval.value == resultVal)
-        if (resultIndex >= 0) factor.set(List(arg1Index, arg2Index, arg3Index, arg4Index, resultIndex), 1.0)
+        if (resultIndex >= 0) factor.set(List(arg1Index, arg2Index, arg3Index, arg4Index, resultIndex), resultVar.valueSet.normalizer)
       } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular)) {
         val resultNotRegularIndex = resultVar.range.indexWhere(!_.isRegular)
         if (resultNotRegularIndex >= 0) factor.set(List(arg1Index, arg2Index, arg3Index, arg4Index, resultNotRegularIndex), 1.0)
@@ -182,7 +182,7 @@ object ApplyFactory {
       if (arg1Val.isRegular && arg2Val.isRegular && arg3Val.isRegular && arg4Val.isRegular && arg5Val.isRegular) {
         val resultVal = mapper.map(applyMap((arg1Val.value, arg2Val.value, arg3Val.value, arg4Val.value, arg5Val.value)), applyValues.regularValues)
         val resultIndex = resultVar.range.indexWhere(xval => xval.isRegular && xval.value == resultVal)
-        if (resultIndex >= 0) factor.set(List(arg1Index, arg2Index, arg3Index, arg4Index, arg5Index, resultIndex), 1.0)
+        if (resultIndex >= 0) factor.set(List(arg1Index, arg2Index, arg3Index, arg4Index, arg5Index, resultIndex), resultVar.valueSet.normalizer)
       } else if ((!arg1Val.isRegular || !arg2Val.isRegular || !arg3Val.isRegular || !arg4Val.isRegular || !arg5Val.isRegular)) {
         val resultNotRegularIndex = resultVar.range.indexWhere(!_.isRegular)
         if (resultNotRegularIndex >= 0) factor.set(List(arg1Index, arg2Index, arg3Index, arg4Index, arg5Index, resultNotRegularIndex), 1.0)
