@@ -91,17 +91,13 @@ import scoverage.ScoverageSbtPlugin._
     .settings(packageOptions := Seq(Package.JarManifest(figaroManifest)))
     .settings(libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "asm" % "asm" % "3.3.1",
-      "org.apache.commons" % "commons-math3" % "3.3",
-      // "org.apache.commons"     %  "commons-math3" % "3.6.1",
+      "org.apache.commons" % "commons-math3" % "3.6.1",
       "net.sf.jsci" % "jsci" % "1.2",
-      "com.typesafe.akka"      %% "akka-actor"    % "2.4.18",
-      "org.scalanlp" %% "breeze" % "0.13.1",
-      "io.argonaut" %% "argonaut" % "6.2",
-      "org.prefuse" % "prefuse" % "beta-20071021",
-      "org.scala-lang.modules" %% "scala-swing" % "2.0.0",
-      "com.storm-enroute" %% "scalameter" % "0.8.2" % "provided",
-      "org.scalatest" %% "scalatest" % "3.0.3" % "provided, test"
+      "com.typesafe.akka" %% "akka-actor" % "2.5.12",
+      "org.scalanlp" %% "breeze" % "0.13.2",
+      "io.argonaut" %% "argonaut" % "6.2.1",
+      "com.storm-enroute" %% "scalameter" % "0.9" % "provided",
+      "org.scalatest" %% "scalatest" % "3.0.5" % "provided, test"
     ))
 
     // Enable forking
