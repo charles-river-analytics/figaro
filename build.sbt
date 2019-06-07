@@ -33,7 +33,7 @@ import scoverage.ScoverageSbtPlugin._
     organization := "com.cra.figaro",
     description := "Figaro: a language for probablistic programming",
     version := "5.1.0.0",
-    scalaVersion := "2.12.2",
+    scalaVersion := "2.12.8",
     crossScalaVersions := Seq(scalaVersion.value, "2.11.8"),
     crossPaths := true,
     publishMavenStyle := true,
@@ -93,11 +93,11 @@ import scoverage.ScoverageSbtPlugin._
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.apache.commons" % "commons-math3" % "3.6.1",
       "net.sf.jsci" % "jsci" % "1.2",
-      "com.typesafe.akka" %% "akka-actor" % "2.5.12",
+      "com.typesafe.akka" %% "akka-actor" % "2.5.23",
       "org.scalanlp" %% "breeze" % "0.13.2",
-      "io.argonaut" %% "argonaut" % "6.2.1",
+      "io.argonaut" %% "argonaut" % "6.2.3",
       "com.storm-enroute" %% "scalameter" % "0.9" % "provided",
-      "org.scalatest" %% "scalatest" % "3.0.5" % "provided, test"
+      "org.scalatest" %% "scalatest" % "3.0.7" % "provided, test"
     ))
 
     // Enable forking
