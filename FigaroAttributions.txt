@@ -24,6 +24,7 @@ Aaron Zakem
 
 External Contributors
 ---------------------
+Dakota Cintron
 Dragisa Krsmanovic
 Martin Mauch
 Thomas Ounnas
