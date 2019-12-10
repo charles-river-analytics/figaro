@@ -61,8 +61,6 @@ import scoverage.ScoverageSbtPlugin._
 	</scm>
   )
 
-  // lazy val scalaMajorMinor = "2.12"
-
   // Read exisiting Figaro MANIFEST.MF from file
   lazy val figaroManifest = Using.fileInputStream(file("Figaro/META-INF/MANIFEST.MF")) { 
     in => new java.util.jar.Manifest(in)
@@ -93,11 +91,11 @@ import scoverage.ScoverageSbtPlugin._
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.apache.commons" % "commons-math3" % "3.6.1",
       "net.sf.jsci" % "jsci" % "1.2",
-      "com.typesafe.akka" %% "akka-actor" % "2.5.23",
-      "org.scalanlp" %% "breeze" % "0.13.2",
+      "com.typesafe.akka" %% "akka-actor" % "2.6.1",
+      "org.scalanlp" %% "breeze" % "1.0",
       "io.argonaut" %% "argonaut" % "6.2.3",
-      "com.storm-enroute" %% "scalameter" % "0.9" % "provided",
-      "org.scalatest" %% "scalatest" % "3.0.7" % "provided, test"
+      "com.storm-enroute" %% "scalameter" % "0.19" % "provided",
+      "org.scalatest" %% "scalatest" % "3.0.8" % "provided, test"
     ))
 
     // Enable forking
