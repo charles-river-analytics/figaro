@@ -290,5 +290,80 @@ class ParticleFilterTest extends WordSpec with PrivateMethodTester with Matchers
         }
       }
     }
+
+    "conditioning and cloning" should {
+      "create the correct belief state" in {
+        val static = createNew()
+        val statSnap = new Snapshot
+        statSnap.restore(static)
+        val universe1 = createNew()
+        val f1 = Flip(0.1)("f1", universe1)
+        val f2 = Flip(0.2)("f2", universe1)
+
+        def trans(previous: Universe): Universe = {
+          val universe2 = createNew()
+          val x1 = Flip(0.1)("f1", universe2)
+          val x2 = Flip(0.2)("f2", universe2)
+          universe2
+        }
+
+        val pf1 = ParticleFilter(universe1, trans, 3)
+        f1.set(false)
+        f2.set(false)
+        val dynSnap1 = new Snapshot
+        dynSnap1.store(universe1)
+        pf1.beliefState(0) = new State(dynSnap1, statSnap)
+        f1.set(false)
+        f2.set(true)
+        val dynSnap2 = new Snapshot
+        dynSnap2.store(universe1)
+        pf1.beliefState(1) = new State(dynSnap2, statSnap)
+        f1.set(true)
+        f2.set(true)
+        val dynSnap3 = new Snapshot
+        dynSnap3.store(universe1)
+        pf1.beliefState(2) = new State(dynSnap3, statSnap)
+        val ref1: Reference[Boolean] = "f1"
+        val ref2: Reference[Boolean] = "f2"
+        val pf2 = pf1.conditionAndClone(List((ref1, false)), 5)
+
+        val bs = pf2.beliefState
+        bs.length should be(6)
+        bs(0).get(ref1) should be (false)
+        bs(0).get(ref2) should be (false)
+        bs(1).get(ref1) should be (false)
+        bs(1).get(ref2) should be (true)
+        bs(2).get(ref1) should be (false)
+        bs(2).get(ref2) should be (false)
+        bs(3).get(ref1) should be (false)
+        bs(3).get(ref2) should be (true)
+        bs(4).get(ref1) should be (false)
+        bs(4).get(ref2) should be (false)
+        bs(5).get(ref1) should be (false)
+        bs(5).get(ref2) should be (true)
+      }
+
+      "result in correct prediction from the current and conditioned universe" in {
+        val universe = createNew()
+        val x = Flip(0.5)("x", universe)
+
+        def trans(prev: Universe): Universe = {
+          val next = createNew()
+          val x = Apply(prev.get[Boolean]("x"), (x: Boolean) => x)("x", next)
+          next
+        }
+
+        val pf1 = ParticleFilter(universe, trans, 100)
+        pf1.run()
+        pf1.advanceTime()
+        val r: Reference[Boolean] = "x"
+        val pf2 = pf1.conditionAndClone(List((r, false)))
+        pf1.advanceTime()
+        pf2.advanceTime()
+        pf2.currentProbability(r, true) should be (0.0)
+        pf1.currentProbability(r, true) should be > (0.0)
+
+      }
+    }
   }
 }

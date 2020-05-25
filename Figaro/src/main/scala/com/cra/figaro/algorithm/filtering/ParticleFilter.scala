@@ -213,6 +213,36 @@ class OneTimeParticleFilter(static: Universe = new Universe(), initial: Universe
     currentUniverse = newWindow.current
     lw.deregisterDependencies()
   }
+
+
+  /**
+    * Clone this particle filter, enabling parallel inference or forward projection to this one.
+    * The new particle filter can be conditioned on a property, enabling what-if queries and projections.
+    * If the property is false for all particles, an IllegalArgumentException is raised.
+    * Optionally, the call can specify the number of particles for the new particle filter,
+    * which defaults to the original. The actual number used will be the least multiple of the number of
+    * particles satisfying the property that is greater than or equal to the target number of particles.
+    */
+  def conditionAndClone(property: Seq[(Reference[_], _)], numParticles: Int = this.numParticles): OneTimeParticleFilter = {
+    def checkState(state: State): Boolean = {
+      for { (reference, value) <- property } {
+        if (state.get(reference) != value) return false
+      }
+      return true
+    }
+
+    val okParticles = beliefState.filter(checkState)
+    val n = okParticles.length
+    if (n == 0) throw new IllegalArgumentException("Impossible condition")
+    val actualNumParticles = (n * math.ceil(numParticles.toFloat / n)).toInt
+    val result = new OneTimeParticleFilter(static, currentUniverse, transition, actualNumParticles)
+    result.logProbEvidence = logProbEvidence
+    for (i <- 0 until actualNumParticles) {
+      result.beliefState(i) = okParticles(i % n)
+    }
+    return result
+  }
+
 }
 
 object ParticleFilter {
@@ -262,7 +292,6 @@ object ParticleFilter {
 
   /** Reference to parallel implementation. */
   def par = ParParticleFilter
-
 }
 
 /**
