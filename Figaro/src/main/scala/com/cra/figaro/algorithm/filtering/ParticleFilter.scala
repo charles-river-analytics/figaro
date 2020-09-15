@@ -234,11 +234,11 @@ class OneTimeParticleFilter(static: Universe = new Universe(), initial: Universe
     val okParticles = beliefState.filter(checkState)
     val n = okParticles.length
     if (n == 0) throw new IllegalArgumentException("Impossible condition")
-    val actualNumParticles = (n * math.ceil(numParticles.toFloat / n)).toInt
-    val result = new OneTimeParticleFilter(static, currentUniverse, transition, actualNumParticles)
+    val result = new OneTimeParticleFilter(static, currentUniverse, transition, numParticles)
     result.logProbEvidence = logProbEvidence
-    for (i <- 0 until actualNumParticles) {
-      result.beliefState(i) = okParticles(i % n)
+    for (i <- 0 until numParticles) {
+      val j = scala.util.Random.nextInt(n)
+      result.beliefState(i) = okParticles(j)
     }
     return result
   }
