@@ -53,7 +53,7 @@ object FairDice {
 
   /* This data represents 50 rolls of two dice.
    * The first two numbers in each triple are a choice of dice 1, 2 or 3.
-   * The second number is the sum of the two dice.
+   * The third number is the sum of the two dice.
    * D1 always lands on 1
    * D2 always lands on 2
    * D3 always lands on 6
